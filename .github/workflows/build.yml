@@ -90,13 +90,13 @@ jobs:
       - name: Set AGENT_VERSION from hash (workaround)
         run: echo "AGENT_VERSION=${{ steps.hash.outputs.hash }}" >> $GITHUB_ENV
       - name: Run docker-compose
-        run: docker-compose up --exit-code-from agent
+        run: docker compose up --exit-code-from agent
       - name: Copy results
-        run: docker-compose cp agent:/tmp/simulation_results.json .
+        run: docker compose cp agent:/tmp/simulation_results.json .
       - name: Stop docker-compose
         # always run this step, to clean up even on error
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
       # add rendered JSON as comment to the pull request
       - name: Add simulation results as comment
         if: github.event_name == 'pull_request'
