@@ -34,7 +34,7 @@ services:
       - ros
 
   agent:
-    image: ghcr.io/ll7/paf22:${AGENT_VERSION:-latest}
+    image: ghcr.io/una-auxme/paf23:${AGENT_VERSION:-latest}
     init: true
     tty: true
     logging:
