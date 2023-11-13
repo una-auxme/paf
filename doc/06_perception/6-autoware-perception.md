@@ -33,9 +33,9 @@ Autoware has a giant repo of detection mechanism which implemtents the following
 - Single-Shot-Detectors
 - ....
 
-Some more detailed docs can be found here: (https://autowarefoundation.github.io/autoware.universe/main/perception/traffic_light_classifier/)
+Some more detailed docs can be found [here](https://autowarefoundation.github.io/autoware.universe/main/perception/traffic_light_classifier/).
 
 ## 3. Conclusion
 
 Overall Autoware is very complex and not well enough documented to grasp every single concept in detail on the first look. Since they implemented a lot of different mechanisms,
-Autoware can be considered as a good reference if youre looking for ideas. 
+Autoware can be considered as a good reference if youre looking for ideas.
