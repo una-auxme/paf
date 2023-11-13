@@ -1,7 +1,6 @@
 # Sprint 0: Research Samuel Kühnel
 
-# Pylot
-
+## Pylot
 
 ## Planning
 
@@ -10,28 +9,28 @@
 - **Freenet-Optimal-Trajecotry-Planner**: CPP code with Python wrapper ([GitHub](https://github.com/erdos-project/frenet_optimal_trajectory_planner))
 → Predefined line that is used for orientation → Can avoid obstacles!
 - **RRT\*-Planner**: RRT* algorithm to plan the path ([GitHub](https://github.com/erdos-project/rrt_star_planner))
-    - Creates random nodes
-    - Adds nodes to the graph that are not blocked by objects on the road
-    - Generally terminates as soon as a node is found in the target area
-    - RRT*: Searches for the shortest path
+  - Creates random nodes
+  - Adds nodes to the graph that are not blocked by objects on the road
+  - Generally terminates as soon as a node is found in the target area
+  - RRT*: Searches for the shortest path
 - **Hybrid A\* planner**: Hybrid A* algorithm for route planning ([GitHub](https://github.com/erdos-project/hybrid_astar_planner))
-    - Calculates the shortest path between two nodes from a graph
-    - Similar to Dijkstra's algorithm
-    - Nodes are estimated based on their costs and promising nodes are selected first
-    - Hybrid A* algorithm: Not always optimal solution, but in the neighborhood of the optimal solution.
+  - Calculates the shortest path between two nodes from a graph
+  - Similar to Dijkstra's algorithm
+  - Nodes are estimated based on their costs and promising nodes are selected first
+  - Hybrid A* algorithm: Not always optimal solution, but in the neighborhood of the optimal solution.
 
-# PAF 21-2
+## PAF 21-2
 
-# Perception
+### Perception
 
-## Obstacle detection
+### Obstacle detection
 
 - Detect objects via semantic lidar sensor
 - Provides x and y coordinates, as well as distance value
 - Additional information on position change in a time interval → Calculation of speed possible
 - Detects the object and returns either the value "Vehicle" or "Pedestrian"
 
-## TrafficLightDetection
+### TrafficLightDetection
 
 ![diagramm.png](https://github.com/ll7/paf21-2/raw/main/docs/imgs/trafficlightdetection_diagram.jpg)
 
@@ -46,7 +45,7 @@
 - Yellow painted traffic lights distort traffic light phase detection → **Solution**: Filter out red and green sections beforehand using masks and convert remaining image to grayscale and add masks again.
 - **Problem without solution**: European traffic lights can sometimes not be recognized at the stop line.
 
-# Resumee
+## Resumee
 
 ### Perception
 
