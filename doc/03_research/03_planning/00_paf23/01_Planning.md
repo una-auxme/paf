@@ -6,7 +6,7 @@ Finding the optimal path from start to goal, taking into account the static and 
 
 ### [PAF21 - 2](https://github.com/ll7/paf21-2)
 
-![Planning](Assets/Planning_paf21.png)
+![Planning](Planning_paf21.png)
 
 Input:
 
@@ -55,7 +55,7 @@ Map Manager
 
 ### [Autoware](https://github.com/autowarefoundation/autoware)
 
-![https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/](Assets/Planning.png)
+![https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/](Planning.png)
 
 Input:
 
