@@ -1,6 +1,5 @@
 # Research: [Autoware Acting](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/control/#autoware-control-design)
 
-
 ### Inputs
 * Odometry (position and orientation, from Localization module)
 * Trajectory (output of Planning)
@@ -9,13 +8,9 @@
 *  (“vehicle signal commands” directly into Vehicle Interface
 	* Handbrake, Hazard Lights, Headlights, Horn, Stationary Locking, Turn Indicators, Wipers etc.)
 #### General Component Architecture:
-
 ![Node diagram](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/images/Control-Bus-ODD-Architecture.drawio.svg) 
 #### With the Control Module:
-
 ![control-component](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/control/image/control-component.drawio.svg)
-
-
 ### [Trajectory Follower](https://autowarefoundation.github.io/autoware.universe/main/control/trajectory_follower_base/)
 * generates control command to follow reference trajectory from Planning
 * computes lateral (steering) and longitudinal (velocity) controls separately
