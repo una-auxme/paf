@@ -28,9 +28,7 @@ RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
-# https://github.com/nylser/carla-leaderboard-PythonAPI/releases/download/v1.0.0/PythonAPI.zip
-# https://github.com/carla-simulator/carla/archive/refs/tags/0.9.15.zip
-RUN wget https://github.com/samuelkuehnel/carla-automation-API/releases/download/v1.0.0/PythonAPI.zip \
+RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
   && mkdir -p /opt/carla \
@@ -67,7 +65,7 @@ ENV CUDA_HOME=/usr/local/cuda-11.7
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
-ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
+ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
 
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
@@ -113,26 +111,24 @@ ENV PATH=$PATH:/home/$USERNAME/.local/bin
 
 # install simple_pid
 RUN python -m pip install pip --upgrade \
-    && python -m pip install simple_pid pygame transformations
+    && python -m pip install simple_pid pygame transformations roslibpy lxml
 
-# install the scenario runner from GitHub leaderboard-2.0 branch -> && git checkout 7b5894c8a1d6886405ff5c2126bbf5832b274275
+# install the scenario runner from GitHub leaderboard-2.0 branch
 ENV CARLA_ROOT=/opt/carla
 ENV SCENARIO_RUNNER_ROOT=/opt/scenario_runner
 RUN sudo mkdir $SCENARIO_RUNNER_ROOT && sudo chown $USERNAME:$USERNAME $SCENARIO_RUNNER_ROOT
-RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT && cd $SCENARIO_RUNNER_ROOT && cd -
+RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
 RUN echo 'pexpect' >> $SCENARIO_RUNNER_ROOT/requirements.txt && \
     python -m pip install -r $SCENARIO_RUNNER_ROOT/requirements.txt
 
-# install the leaderboard from GitHub leaderboard-2.0 branch -> && git checkout 3f27e94446cbd53225715258c710bec9c051c5b7 
+# install the leaderboard from GitHub leaderboard-2.0 branch
 ENV LEADERBOARD_ROOT=/opt/leaderboard
 RUN sudo mkdir $LEADERBOARD_ROOT && sudo chown $USERNAME:$USERNAME $LEADERBOARD_ROOT
-RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/leaderboard.git $LEADERBOARD_ROOT && cd $LEADERBOARD_ROOT && cd -
+RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/leaderboard.git $LEADERBOARD_ROOT
 RUN python -m pip install -r $LEADERBOARD_ROOT/requirements.txt
 RUN sudo mkdir /opt/leaderboard-py3 && sudo chown $USERNAME:$USERNAME /opt/leaderboard-py3 && \
     ln -s $LEADERBOARD_ROOT/leaderboard /opt/leaderboard-py3/leaderboard && \
     ln -s $SCENARIO_RUNNER_ROOT/srunner /opt/leaderboard-py3/srunner
-
-RUN python -m pip install roslibpy lxml
 
 # environment variables for the leaderboard_evaluator
 ENV ROUTES=$LEADERBOARD_ROOT/data/routes_devtest.xml
@@ -153,7 +149,7 @@ RUN echo /catkin_ws/install/lib/python3/dist-packages >> /home/$USERNAME/.local/
     echo /opt/ros/noetic/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/ros/noetic/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/leaderboard-py3 >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
-    echo /opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
+    echo /opt/carla/PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/carla/PythonAPI/carla >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth
 
 RUN sudo mkdir /workspace && sudo chown $USERNAME:$USERNAME /workspace
@@ -165,7 +161,7 @@ COPY --chown=$USERNAME:$USERNAME ./code/requirements.txt /workspace/
 ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
 ENV IABN_FORCE_CUDA=1
 
-RUN source ~/.bashrc && cat /workspace/requirements.txt | xargs -n 1 -L 1 pip install
+RUN source ~/.bashrc && pip install torch==1.13.1 && pip install -r /workspace/requirements.txt
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
