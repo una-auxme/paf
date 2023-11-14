@@ -28,6 +28,7 @@ RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
+# https://github.com/carla-simulator/carla/archive/refs/tags/0.9.15.zip
 RUN wget https://github.com/nylser/carla-leaderboard-PythonAPI/releases/download/v1.0.0/PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
@@ -113,18 +114,18 @@ ENV PATH=$PATH:/home/$USERNAME/.local/bin
 RUN python -m pip install pip --upgrade \
     && python -m pip install simple_pid pygame transformations
 
-# install the scenario runner from GitHub leaderboard-2.0 branch
+# install the scenario runner from GitHub leaderboard-2.0 branch -> && git checkout 7b5894c8a1d6886405ff5c2126bbf5832b274275
 ENV CARLA_ROOT=/opt/carla
 ENV SCENARIO_RUNNER_ROOT=/opt/scenario_runner
 RUN sudo mkdir $SCENARIO_RUNNER_ROOT && sudo chown $USERNAME:$USERNAME $SCENARIO_RUNNER_ROOT
-RUN git clone https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT && cd $SCENARIO_RUNNER_ROOT && git checkout 7b5894c8a1d6886405ff5c2126bbf5832b274275 && cd -
+RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT && cd $SCENARIO_RUNNER_ROOT && cd -
 RUN echo 'pexpect' >> $SCENARIO_RUNNER_ROOT/requirements.txt && \
     python -m pip install -r $SCENARIO_RUNNER_ROOT/requirements.txt
 
-# install the leaderboard from GitHub leaderboard-2.0 branch
+# install the leaderboard from GitHub leaderboard-2.0 branch -> && git checkout 3f27e94446cbd53225715258c710bec9c051c5b7 
 ENV LEADERBOARD_ROOT=/opt/leaderboard
 RUN sudo mkdir $LEADERBOARD_ROOT && sudo chown $USERNAME:$USERNAME $LEADERBOARD_ROOT
-RUN git clone https://github.com/carla-simulator/leaderboard.git $LEADERBOARD_ROOT && cd $LEADERBOARD_ROOT && git checkout 3f27e94446cbd53225715258c710bec9c051c5b7 && cd -
+RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/leaderboard.git $LEADERBOARD_ROOT && cd $LEADERBOARD_ROOT && cd -
 RUN python -m pip install -r $LEADERBOARD_ROOT/requirements.txt
 RUN sudo mkdir /opt/leaderboard-py3 && sudo chown $USERNAME:$USERNAME /opt/leaderboard-py3 && \
     ln -s $LEADERBOARD_ROOT/leaderboard /opt/leaderboard-py3/leaderboard && \
