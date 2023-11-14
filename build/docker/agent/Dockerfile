@@ -28,8 +28,9 @@ RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
+# https://github.com/nylser/carla-leaderboard-PythonAPI/releases/download/v1.0.0/PythonAPI.zip
 # https://github.com/carla-simulator/carla/archive/refs/tags/0.9.15.zip
-RUN wget https://github.com/nylser/carla-leaderboard-PythonAPI/releases/download/v1.0.0/PythonAPI.zip \
+RUN wget https://github.com/samuelkuehnel/carla-automation-API/releases/download/v1.0.0/PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
   && mkdir -p /opt/carla \
@@ -66,7 +67,7 @@ ENV CUDA_HOME=/usr/local/cuda-11.7
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
-ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.13-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
+ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
 
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
