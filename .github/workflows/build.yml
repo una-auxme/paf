@@ -15,7 +15,7 @@ jobs:
     outputs:
       version: ${{ steps.build.version.outputs.version }}
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -37,6 +37,15 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version and push tag
+        # only run on push to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: tag
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: main
 
       - name: Get commit hash
         id: hash
