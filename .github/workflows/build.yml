@@ -15,7 +15,7 @@ jobs:
     outputs:
       version: ${{ steps.build.version.outputs.version }}
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
