@@ -28,7 +28,7 @@ RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
-RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI.zip \
+RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
   && mkdir -p /opt/carla \
@@ -65,7 +65,7 @@ ENV CUDA_HOME=/usr/local/cuda-11.7
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
-ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
+ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
 
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
@@ -149,7 +149,7 @@ RUN echo /catkin_ws/install/lib/python3/dist-packages >> /home/$USERNAME/.local/
     echo /opt/ros/noetic/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/ros/noetic/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/leaderboard-py3 >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
-    echo /opt/carla/PythonAPI/carla/dist/carla-0.9.15-py3.7-linux-x86_64.egg >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
+    echo /opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/carla/PythonAPI/carla >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth
 
 RUN sudo mkdir /workspace && sudo chown $USERNAME:$USERNAME /workspace
