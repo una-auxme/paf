@@ -1,5 +1,9 @@
 # Perception
 
-This folder contains all the results of our research on perception:
+This folder contains all the results of research on perception:
 
-* [Basics](./02_basics.md)
+* **PAF22**
+  * [Basics](./02_basics.md)
+  * [First implementation plan](./03_first_implementation_plan.md)
+* **PAF23**
+  * [Pylot](./04_pylot.md)
