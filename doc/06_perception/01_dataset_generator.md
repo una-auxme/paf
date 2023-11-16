@@ -15,14 +15,14 @@ Korbinian Stein
 
 <!-- TOC -->
 
-* [Dataset generator](#dataset-generator)
-  * [Author](#author)
-  * [Date](#date)
-  * [Necessary adjustments](#necessary-adjustments)
-    * [Dockerfile](#dockerfile)
-    * [docker-compose.yml](#docker-composeyml)
-  * [Usage](#usage)
-    * [Using with leaderboard](#using-with-leaderboard)
+- [Dataset generator](#dataset-generator)
+  - [Author](#author)
+  - [Date](#date)
+  - [Necessary adjustments](#necessary-adjustments)
+    - [Dockerfile](#dockerfile)
+    - [docker-compose.yml](#docker-composeyml)
+  - [Usage](#usage)
+    - [Using with leaderboard](#using-with-leaderboard)
 
 <!-- TOC -->
 
@@ -102,6 +102,9 @@ camera images in four directions: `[center, left, right, back]`.
 
 We then store these images in the output directory can be specified with the `--output-dir`
 flag.
+
+Specify the desired map via `--town` and use `TownXX` with XX being 01, 02, ..., 07, 10, 11, 12.
+Default value is `Town12` like used in leaderboard 2.0.
 
 ### Using with leaderboard
 
