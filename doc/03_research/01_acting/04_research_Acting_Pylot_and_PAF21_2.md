@@ -1,30 +1,29 @@
 # PAF Research: Robert Fischer
 
-# PAF22:
+## PAF22
 
 ## Acting
 
 - Longitudinal control
-    - PID controller
+  - PID controller
 - Lateral control
-    - Pure Pursuit controller
-    
+  - Pure Pursuit controller
+
     ![Untitled](../../00_assets/research_assetes/pure_pursuit.png)
-    
+
     - Stanley controller
-    
+
     ![Untitled](../../00_assets/research_assetes/stanley_controller.png)
-    
 
 ### [List of Inputs/Outputs](https://github.com/una-auxme/paf23/blob/main/doc/03_research/01_acting/02_acting_implementation.md#list-of-inputsoutputs)
 
 - Subscribes to:
-    - [nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) : to get the current position and heading
-    - [nav_msgs/Path Message](https://docs.ros.org/en/api/nav_msgs/html/msg/Path.html) : to get the current trajectory
-    - emergency breaking msg : to initiate emergency breaking
-    - speed limit msg : to get the maximum velocity
+  - [nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) : to get the current position and heading
+  - [nav_msgs/Path Message](https://docs.ros.org/en/api/nav_msgs/html/msg/Path.html) : to get the current trajectory
+  - emergency breaking msg : to initiate emergency breaking
+  - speed limit msg : to get the maximum velocity
 - Publishes:
-    - [CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehiclecontrolmsg) : to actually control the vehicles throttle, steering
+  - [CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehiclecontrolmsg) : to actually control the vehicles throttle, steering
 
 ### [Challenges](https://github.com/una-auxme/paf23/blob/main/doc/03_research/01_acting/02_acting_implementation.md#challenges)
 
@@ -36,19 +35,19 @@ A short list of challenges for the implementation of a basic acting domain and h
 - Longitudinal control => a simple PID controller should suffice
 - lateral control => Pure Pursuit as well as Stanley controller should be implemented, following tests can show, where to use each controller.
 - additional features:
-    - emergency breaking => this command is supposed to bypass longitudinal and lateral controllers (and should use the bug discoverd by [paf21-2](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#bugabuses))
-    - additional functionality mostly should be added here .
+  - emergency breaking => this command is supposed to bypass longitudinal and lateral controllers (and should use the bug discoverd by [paf21-2](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#bugabuses))
+  - additional functionality mostly should be added here .
 
-# PAF21_2 Acting:
+## PAF21_2 Acting
 
 ### [Standardroutine](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#standardroutine)
 
 ![Untitled](../../00_assets/research_assetes/standard_routine_paf21_2.png)
 
 - Longitudinal control
-    - PID controller
+  - PID controller
 - Lateral control
-    - Stanley controller
+  - Stanley controller
 
  → CarlaEgoVehicleControl-Message an Carla
 
@@ -56,7 +55,7 @@ A short list of challenges for the implementation of a basic acting domain and h
 
 Timer und Schwellenwerte um Stuck Situation zu erkennen
 
-→ paar meter rückwärts ohne lenken 
+→ paar meter rückwärts ohne lenken
 
 - **Funktionsweise:**
     1. **Initialisierung:**
@@ -73,80 +72,80 @@ Timer und Schwellenwerte um Stuck Situation zu erkennen
     5. **Rückkehr zum Normalbetrieb:**
         - Nach erfolgreicher Anwendung der Unstuck-Routine kehrt das Fahrzeug zum normalen Betrieb zurück.
 - **Notwendige Überlegungen:**
-    - Schwelle ist entscheidend, um sicherzustellen, dass das Fahrzeug nicht aufgrund minimaler Geschwindigkeitsunterschiede als festgefahren betrachtet wird.
-    - Timer stellt sicher, dass die Unstuck-Routine nicht sofort ausgelöst wird, sondern nur nach einer vordefinierten Zeit.
+  - Schwelle ist entscheidend, um sicherzustellen, dass das Fahrzeug nicht aufgrund minimaler Geschwindigkeitsunterschiede als festgefahren betrachtet wird.
+  - Timer stellt sicher, dass die Unstuck-Routine nicht sofort ausgelöst wird, sondern nur nach einer vordefinierten Zeit.
 
 ### [Deadlock](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#deadlock)
 
 - **Herausforderung:**
-    - Mögliche Situationen, in denen der Actor aufgrund von Unstimmigkeiten in der Planung und Perception in einer festgefahrenen Lage endet.
+  - Mögliche Situationen, in denen der Actor aufgrund von Unstimmigkeiten in der Planung und Perception in einer festgefahrenen Lage endet.
 - **Ursachen für Deadlocks:**
-    - Unstimmigkeiten zwischen der Planung der Perception, insbesondere bei Interaktionen mit anderen Verkehrsteilnehmern.
-    - Unvorhergesehene Ereignisse, die nicht durch Standard- oder Unstuck-Routine gelöst werden können.
+  - Unstimmigkeiten zwischen der Planung der Perception, insbesondere bei Interaktionen mit anderen Verkehrsteilnehmern.
+  - Unvorhergesehene Ereignisse, die nicht durch Standard- oder Unstuck-Routine gelöst werden können.
 - **Perception-Paket:**
-    - Verantwortlich für sichere Durchquerung durch Sensoren, insbesondere Hinderniserkennung.
-    - Kann Unstimmigkeiten mit der Planung verursachen.
+  - Verantwortlich für sichere Durchquerung durch Sensoren, insbesondere Hinderniserkennung.
+  - Kann Unstimmigkeiten mit der Planung verursachen.
 - **Plannning-Paket:**
-    - Plant optimale Routen unter Berücksichtigung der besten und schnellsten Wege.
-    - Kann zu unverhofftem Verhalten führen, wie dem Überqueren der Gegenfahrbahn.
+  - Plant optimale Routen unter Berücksichtigung der besten und schnellsten Wege.
+  - Kann zu unverhofftem Verhalten führen, wie dem Überqueren der Gegenfahrbahn.
 - **Deadlock-Szenarien:**
-    - Zyklische Wartesituationen, z. B. wenn ein Fahrzeug auf der Gegenfahrbahn wartet und gleichzeitig auf uns wartet.
+  - Zyklische Wartesituationen, z. B. wenn ein Fahrzeug auf der Gegenfahrbahn wartet und gleichzeitig auf uns wartet.
 - **Deadlock-Vermeidungsstrategie:**
-    - Zustandsmaschine als Lösung, unabhängig von anderen Paketen.
-    - Laufender Timer überwacht die Dauer, in der sich das Fahrzeug nicht bewegt.
-    - Überschreitung eines Schwellwerts führt zur Aktivierung der Deadlock-Routine.
+  - Zustandsmaschine als Lösung, unabhängig von anderen Paketen.
+  - Laufender Timer überwacht die Dauer, in der sich das Fahrzeug nicht bewegt.
+  - Überschreitung eines Schwellwerts führt zur Aktivierung der Deadlock-Routine.
 - **Deadlock-Routine:**
-    - Stoppt alle Aktivitäten des Actors.
-    - Führt schrittweise Manöver durch: Rückwärtsfahren, Warten, Vorwärtsfahren.
-    - Ziel ist die Befreiung aus festgefahrenen Situationen.
+  - Stoppt alle Aktivitäten des Actors.
+  - Führt schrittweise Manöver durch: Rückwärtsfahren, Warten, Vorwärtsfahren.
+  - Ziel ist die Befreiung aus festgefahrenen Situationen.
 - **Optimierung der Zeitparameter:**
-    - Kritisch, um unnötige Deadlock-Routine-Auslösungen zu vermeiden.
-    - Zu kurze Zeiten können zu falschen Deadlock-Erkennungen führen.
-    - Zu lange Zeiten können wertvolle Zeit bei der Zielerreichung kosten.
+  - Kritisch, um unnötige Deadlock-Routine-Auslösungen zu vermeiden.
+  - Zu kurze Zeiten können zu falschen Deadlock-Erkennungen führen.
+  - Zu lange Zeiten können wertvolle Zeit bei der Zielerreichung kosten.
 - **Zusammenfassung:**
-    - Die Deadlock-Vermeidungsstrategie basiert auf einer intelligenten Zustandsmaschine und einem Timer, um das Fahrzeug aus komplexen oder simpleren festgefahrenen Situationen zu befreien.
-    - Die Optimierung der Zeitparameter ist entscheidend für die Wirksamkeit der Deadlock-Vermeidung, um unnötige Unterbrechungen zu verhindern und gleichzeitig effizient zum Ziel zu gelangen.
+  - Die Deadlock-Vermeidungsstrategie basiert auf einer intelligenten Zustandsmaschine und einem Timer, um das Fahrzeug aus komplexen oder simpleren festgefahrenen Situationen zu befreien.
+  - Die Optimierung der Zeitparameter ist entscheidend für die Wirksamkeit der Deadlock-Vermeidung, um unnötige Unterbrechungen zu verhindern und gleichzeitig effizient zum Ziel zu gelangen.
 
 ### [Verfolgung von Hindernissen](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#verfolgung-von-hindernissen)
 
 - **Herausforderungen:**
-    - Zahlreiche Verkehrsteilnehmer erfordern angepasstes Verhalten für sichere Fahrt.
+  - Zahlreiche Verkehrsteilnehmer erfordern angepasstes Verhalten für sichere Fahrt.
 - **Vorteilhaftes Verhalten:**
-    - **Bleibe in der Mitte der Spur:**
-        - Zentrale Positionierung für optimale Sicherheit.
-    - **Fahre niemandem auf:**
-        - Vermeide Kollisionen durch sicheres Abstandhalten.
-    - **Behalte die Fußgänger im Auge:**
-        - Aufmerksamkeit auf Fußgänger, um Kollisionen zu vermeiden.
-    - **Passe dich anderen an:**
-        - Flexibles Verhalten gegenüber anderen Verkehrsteilnehmern.
-    - **Sei kein Bully:**
-        - Vermeide aggressives Verhalten gegenüber anderen Fahrzeugen oder Fußgängern.
+  - **Bleibe in der Mitte der Spur:**
+    - Zentrale Positionierung für optimale Sicherheit.
+  - **Fahre niemandem auf:**
+    - Vermeide Kollisionen durch sicheres Abstandhalten.
+  - **Behalte die Fußgänger im Auge:**
+    - Aufmerksamkeit auf Fußgänger, um Kollisionen zu vermeiden.
+  - **Passe dich anderen an:**
+    - Flexibles Verhalten gegenüber anderen Verkehrsteilnehmern.
+  - **Sei kein Bully:**
+    - Vermeide aggressives Verhalten gegenüber anderen Fahrzeugen oder Fußgängern.
 - **Message-Format (PafObstacleFollowInfo.msg):**
-    - **speed (float32):**
-        - Aktuelle Geschwindigkeit des Actors.
-    - **distance (float32):**
-        - Entfernung zu einem Hindernis vor dem Fahrzeug.
-    - **no_target (bool):**
-        - Signalisiert, ob ein Hindernis vor dem Fahrzeug ist (False) oder ob das Ziel verschwunden ist (True).
-    - **is_vehicle (bool):**
-        - Kennzeichnet, ob das Hindernis ein Fahrzeug ist.
+  - **speed (float32):**
+    - Aktuelle Geschwindigkeit des Actors.
+  - **distance (float32):**
+    - Entfernung zu einem Hindernis vor dem Fahrzeug.
+  - **no_target (bool):**
+    - Signalisiert, ob ein Hindernis vor dem Fahrzeug ist (False) oder ob das Ziel verschwunden ist (True).
+  - **is_vehicle (bool):**
+    - Kennzeichnet, ob das Hindernis ein Fahrzeug ist.
 - **Umsetzung des Verhaltens:**
-    - **Hindernisvorhanden (no_target=False):**
-        - Geschwindigkeit anpassen und Pfad weiterverfolgen.
-    - **Ziel verschwunden (no_target=True):**
-        - Rückkehr zum Normalbetrieb.
-    - **Entfernung zum Hindernis (distance):**
-        - Ignorieren, wenn zu weit entfernt.
-        - Abstand halten, wenn gefährlich nahe.
-    - **Anpassung der Geschwindigkeit (speed):**
-        - Gleiche Geschwindigkeit wie das Hindernis, um sicher zu folgen.
-        - Kontrollierte Annäherung, wenn notwendig etwas schneller als das Hindernis.
+  - **Hindernisvorhanden (no_target=False):**
+    - Geschwindigkeit anpassen und Pfad weiterverfolgen.
+  - **Ziel verschwunden (no_target=True):**
+    - Rückkehr zum Normalbetrieb.
+  - **Entfernung zum Hindernis (distance):**
+    - Ignorieren, wenn zu weit entfernt.
+    - Abstand halten, wenn gefährlich nahe.
+  - **Anpassung der Geschwindigkeit (speed):**
+    - Gleiche Geschwindigkeit wie das Hindernis, um sicher zu folgen.
+    - Kontrollierte Annäherung, wenn notwendig etwas schneller als das Hindernis.
 - **Spezialfall - Fußgänger (is_vehicle=False):**
-    - Vermeidung von rücksichtslosem Verhalten.
-    - Physik-bedingte unvorhersehbare Situationen verhindern.
-    - Kontrollierte Annäherung, um das Ziel erfolgreich zu erreichen.
-    - Beachtung der Sicherheitsregeln, um Fahrzeugfunktionalität zu erhalten.
+  - Vermeidung von rücksichtslosem Verhalten.
+  - Physik-bedingte unvorhersehbare Situationen verhindern.
+  - Kontrollierte Annäherung, um das Ziel erfolgreich zu erreichen.
+  - Beachtung der Sicherheitsregeln, um Fahrzeugfunktionalität zu erhalten.
 
 ### [Messages](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#messages)
 
@@ -155,26 +154,26 @@ Timer und Schwellenwerte um Stuck Situation zu erkennen
 ### [StanleyController](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#stanleycontroller)
 
 - **Zuständigkeit:**
-    - Bestimmung des Lenkeinschlags für autonomes Fahren.
+  - Bestimmung des Lenkeinschlags für autonomes Fahren.
 - **Berechnung von Heading Error und Crosstrack Error:**
-    - Basierend auf dem Paper "[Comparison of lateral controllers for autonomous vehicle: experimental results](https://hal.archives-ouvertes.fr/hal-02459398/document)".
-    - **Heading Error:**
-        - Maß für Abweichung der Ausrichtung des Fahrzeugs von der gewünschten Richtung.
-    - **Crosstrack Error:**
-        - Maß für seitliche Abweichung des Fahrzeugs von der geplanten Fahrspur.
+  - Basierend auf dem Paper "[Comparison of lateral controllers for autonomous vehicle: experimental results](https://hal.archives-ouvertes.fr/hal-02459398/document)".
+  - **Heading Error:**
+    - Maß für Abweichung der Ausrichtung des Fahrzeugs von der gewünschten Richtung.
+  - **Crosstrack Error:**
+    - Maß für seitliche Abweichung des Fahrzeugs von der geplanten Fahrspur.
 - **Implementierung:**
-    - Übernommen von [Gruppe 2](https://github.com/ll7/psaf2/wiki/Path-Tracking-Algorithmen#stanley-methode) aus dem Vorjahr.
-    - Dokumentation der Implementierung vorhanden.
+  - Übernommen von [Gruppe 2](https://github.com/ll7/psaf2/wiki/Path-Tracking-Algorithmen#stanley-methode) aus dem Vorjahr.
+  - Dokumentation der Implementierung vorhanden.
 - **Eignung für Geschwindigkeiten:**
-    - Sehr gut für niedrige und mittlere Geschwindigkeiten beim Vorwärtsfahren.
-    - Bei hohen Geschwindigkeiten (>100) neigt das Fahrzeug zum Wobbeln.
-    - Rückwärtsfahren ist möglich, aber wurde nicht optimal eingebaut.
+  - Sehr gut für niedrige und mittlere Geschwindigkeiten beim Vorwärtsfahren.
+  - Bei hohen Geschwindigkeiten (>100) neigt das Fahrzeug zum Wobbeln.
+  - Rückwärtsfahren ist möglich, aber wurde nicht optimal eingebaut.
 - **Rückwärtstests:**
-    - Testinformationen für das Rückwärtsfahren verfügbar, aber nicht von uns benötigt.
-    - Rückwärtsfahren nicht als Hauptanwendungsfokus.
+  - Testinformationen für das Rückwärtsfahren verfügbar, aber nicht von uns benötigt.
+  - Rückwärtsfahren nicht als Hauptanwendungsfokus.
 - **Optimierungspotenzial:**
-    - Potenzielle Optimierungen könnten erforderlich sein, um Wobbeln bei hohen Geschwindigkeiten zu reduzieren.
-    - Rückwärtsfahren könnte bei Bedarf weiter optimiert werden.
+  - Potenzielle Optimierungen könnten erforderlich sein, um Wobbeln bei hohen Geschwindigkeiten zu reduzieren.
+  - Rückwärtsfahren könnte bei Bedarf weiter optimiert werden.
 
 ### [PID Controller](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#pid-controller)
 
@@ -184,17 +183,17 @@ Timer und Schwellenwerte um Stuck Situation zu erkennen
 ### [Emergency Modus](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#emergency-modus)
 
 - **Zweck:**
-    - Sofortige Vollbremsung im Notfall.
+  - Sofortige Vollbremsung im Notfall.
 - **Auslösung:**
-    - Nachricht von Planning oder Perception an den Actor signalisiert einen Notfall.
-    - Actor führt eine Vollbremsung durch, um schnell zum Stillstand zu kommen.
+  - Nachricht von Planning oder Perception an den Actor signalisiert einen Notfall.
+  - Actor führt eine Vollbremsung durch, um schnell zum Stillstand zu kommen.
 - **Ende des Notfalls:**
-    - Vollbremsung wird gestoppt, wenn eine Nachricht den Notfall als aufgelöst erklärt.
+  - Vollbremsung wird gestoppt, wenn eine Nachricht den Notfall als aufgelöst erklärt.
 - **Kommunikation zwischen Komponenten:**
-    - Planning oder Perception sendet Nachricht an den Actor, um den Notfall zu signalisieren.
-    - Nachfolgende Nachricht informiert darüber, dass der Notfall vorbei ist.
+  - Planning oder Perception sendet Nachricht an den Actor, um den Notfall zu signalisieren.
+  - Nachfolgende Nachricht informiert darüber, dass der Notfall vorbei ist.
 - **Automatische Beendigung des Emergency Modus:**
-    - Vollbremsung dauert an, bis eine Nachricht den Notfall als aufgelöst erklärt.
+  - Vollbremsung dauert an, bis eine Nachricht den Notfall als aufgelöst erklärt.
 
 Schnellstes Bremsen durch Testing festgestellt [HIER](https://github.com/ll7/paf21-2/blob/main/docs/paf_actor/backwards/braking.md)
 
@@ -205,21 +204,21 @@ Schnellstes Bremsen durch Testing festgestellt [HIER](https://github.com/ll7/paf
 
 Tipp: Beim Einparken kann die Notbremse helfen, um seitlich in die Lücke zu rutschen ;)
 
-# Pylot Acting (Control):
+## Pylot Acting (Control)
 
 [pylot.control package — Pylot 0.2 documentation](https://pylot.readthedocs.io/en/latest/pylot.control.html#subpackages) doesnt show any useful documentation
 
 [Control — Pylot 0.2 documentation](https://pylot.readthedocs.io/en/latest/control.html) same; doesnt show useful documentation
 
-## Control Types:
+## Control Types
 
-### PID:
+### PID
 
 Follows waypoints using a PID controller.
 
 implements a longitudinal and lateral controller
 
-### MPC:
+### MPC
 
 - Utilizes model predictive control for speed and waypoint following.
 - Predicts future states using a kinematic model to optimize control inputs.
@@ -229,20 +228,19 @@ implements a longitudinal and lateral controller
 
 • cost function can be designed to account for driving comfort
 
-### Carla_Autopilot:
+### Carla_Autopilot
 
 - Uses CARLA auto pilot for driving on predefined routes.
 - Independent of the planning component, relying on CARLA agent for navigation.
 - Useful for testing components like perception or prediction without control concerns.
 
-## Basic Cotrol Code:
+## Basic Cotrol Code
 
 ### **[control_eval_operator.py](https://github.com/erdos-project/pylot/blob/master/pylot/control/control_eval_operator.py)**
 
 """Operator that computes the accuracy metrics using reference waypoints
 and the achieved waypoints.
 
-```
 Args:
     pose_stream (:py:class:`erdos.ReadStream`): The stream on which the
         vehicle transform is received.
@@ -251,13 +249,10 @@ Args:
     flags (absl.flags): Object to be used to access absl flags.
 """
 
-```
-
 ### **[messages.py](https://github.com/erdos-project/pylot/blob/master/pylot/control/messages.py)**
 
 """This class represents a message to be used to send control commands.
 
-```
 Args:
     steer (:obj:`float`): Steer angle between [-1.0, 1.0].
     throttle (:obj:`float`): Throttle command between [0.0, 1.0].
@@ -268,8 +263,6 @@ Args:
         the message.
 """
 
-```
-
 ### **[pid.py](https://github.com/erdos-project/pylot/blob/master/pylot/control/pid.py)**
 
 This module implements a longitudinal and lateral controller
@@ -278,7 +271,6 @@ This module implements a longitudinal and lateral controller
 
 Operator that uses PID to follow a list of waypoints.
 
-```
 The operator waits for the pose and waypoint streams to receive a watermark
 message for timestamp t, and then it computes and sends a control command.
 
@@ -294,15 +286,14 @@ Args:
         messages.
     flags (absl.flags): Object to be used to access absl flags.
 
-```
-
 ### **[utils.py](https://github.com/erdos-project/pylot/blob/master/pylot/control/utils.py)**
 
 a module that contains some utility functions for the control package, such as converting between different coordinate systems, computing the distance and angle between two points, and clipping the control inputs to the limits1
 
-## MPC Control Code:
+## MPC Control Code
 
-The MPC Operator is a component of the Pylot Carla project that uses model predictive control to drive the vehicle. It works by solving an optimization problem that minimizes the **deviation from the desired waypoints** and **speed limit**, while **respecting the physical constraints** of the vehicle. The MPC Operator has the following steps:
+The MPC Operator is a component of the Pylot Carla project that uses model predictive control to drive the vehicle. It works by solving an optimization problem that minimizes the **deviation from the desired waypoints** and **speed limit**, while **respecting the physical constraints** of the vehicle.
+The MPC Operator has the following steps:
 
 - Receive the waypoints and speed limit from the Planning Operator. The waypoints are a list of coordinates that define the path to follow, and the speed limit is the maximum allowed speed on the road.
 - Convert the waypoints from the world coordinate system to the vehicle coordinate system. This makes it easier to compute the error and the control inputs.
