@@ -2,7 +2,7 @@ import os
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from .fpn.two_way_fpn import TwoWayFpn
-import pytorch_lightning as pl
+import lightning as pl
 from .backbone.modify_efficientnet import \
     generate_backbone_EfficientPS, \
     output_feature_size

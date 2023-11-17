@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+"""
 import pathlib
 import numpy as np
 import ros_compatibility as roscomp
@@ -13,25 +13,25 @@ from sensor_msgs.msg import Image
 
 from panoptic_segmentation.efficientps import EfficientPS as EfficientPS
 from panoptic_segmentation.train_net import add_custom_param
-from panoptic_segmentation.efficientps.panoptic_segmentation_module import \
-    panoptic_segmentation_module
+from panoptic_segmentation.efficientps.panoptic_segmentation_module
+import panoptic_segmentation_module
 
 from detectron2.config import get_cfg
 import torchvision.transforms.functional as F
 from detectron2.structures import Instances, BitMasks, Boxes
 
-CFG_FILE_PATH = pathlib.Path(
-    __file__).parent / "panoptic_segmentation" / "config.yaml"
-MODEL_PATH = pathlib.Path(
-    __file__).parent.parent / \
-             "models/panoptic_segmentation/efficientps.ckpt"
+CFG_FILE_PATH = pathlib.Path(__file__).parent /
+"panoptic_segmentation" / "config.yaml"
+
+MODEL_PATH = pathlib.Path(__file__).parent.parent /
+"src/panoptic_segmentation/efficientps/model.pth"
 
 
 class SegmentationNode(CompatibleNode):
-    """
+
     This node runs the panoptic segmentation model on
     the camera images and publishes the segmented results.
-    """
+
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -44,12 +44,13 @@ class SegmentationNode(CompatibleNode):
 
         self.model, self.transform, self.model_cfg = self.load_model()
         # warm up
-        self.predict(np.zeros((720, 1280, 3)))
+        #self.predict(np.zeros((720, 1280, 3)))
 
-        self.setup_camera_subscriptions()
-        self.setup_camera_publishers()
+        #self.setup_camera_subscriptions()
+        #self.setup_camera_publishers()
 
     def setup_camera_subscriptions(self):
+
         self.new_subscription(
             msg_type=numpy_msg(Image),
             callback=self.handle_camera_image,
@@ -58,6 +59,7 @@ class SegmentationNode(CompatibleNode):
         )
 
     def setup_camera_publishers(self):
+
         self.publisher = self.new_publisher(
             msg_type=numpy_msg(Image),
             topic=f"/paf/{self.role_name}/{self.side}/segmented_image",
@@ -66,6 +68,7 @@ class SegmentationNode(CompatibleNode):
 
     @staticmethod
     def load_model():
+
         cfg = get_cfg()
         cfg['train'] = False
         add_custom_param(cfg)
@@ -76,18 +79,21 @@ class SegmentationNode(CompatibleNode):
             A.Normalize(mean=cfg.TRANSFORM.NORMALIZE.MEAN,
                         std=cfg.TRANSFORM.NORMALIZE.STD),
         ])
-
-        model = EfficientPS.load_from_checkpoint(
+        "model = EfficientPS.load_from_checkpoint(
             cfg=cfg,
             checkpoint_path=str(MODEL_PATH)
         )
+        model = EfficientPS(cfg)
+        model.load_state_dict(torch.load(MODEL_PATH))
+        print(model)
         model.eval()
         model.freeze()
-        model.to(torch.device("cuda:0"))
+        model.to(torch.device("cuda:0")) #add device definition before
 
-        return model, transform, cfg
+        return model, transform, None
 
     def predict(self, image: np.ndarray):
+
         self.loginfo(f"predicting image shape: {image.shape}")
         # expand
         # image = np.expand_dims(image, axis=0)
@@ -113,7 +119,9 @@ class SegmentationNode(CompatibleNode):
 
         result = segmented_result.cpu().numpy()
         # self.loginfo(f"predictions: {prediction.shape}")
-        return result
+        return resultskip python linting
+code/perception/src/p_testing_node.py:17:27: W291 trailing w
+        self.loginfo("predicting something")
 
     def handle_camera_image(self, image):
         self.loginfo(f"got image from camera {self.side}")
@@ -149,6 +157,8 @@ class SegmentationNode(CompatibleNode):
 
         self.publisher.publish(msg)
         self.loginfo(f"prediction shape: {prediction.shape}")
+        self.loginfo("reveived image from camera")
+        pass
 
     def run(self):
         self.spin()
@@ -168,3 +178,5 @@ if __name__ == "__main__":
     # finally:
 #       roscomp.shutdown()
 #
+
+"""

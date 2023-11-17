@@ -7,6 +7,7 @@
     </include>
 
     <!-- planning -->
+
     <include file="$(find planning_runner)/launch/planning_runner.launch">
     </include>
 
@@ -14,7 +15,6 @@
         <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
         <arg name="role_name" value="$(arg role_name)"/>
     </include>
-
     <!-- acting -->
     <include file="$(find acting)/launch/acting.launch">
         <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
@@ -22,5 +22,5 @@
     </include>
 
 
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
+   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
 </launch>
