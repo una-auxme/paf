@@ -1,29 +1,35 @@
 '''
-Docs: https://docs.ultralytics.com/modes/predict/, https://docs.ultralytics.com/tasks/detect/#models
+Docs: https://docs.ultralytics.com/modes/predict/, https://docs.ultralytics.com/tasks/detect/#models, https://docs.ultralytics.com/models/yolo-nas
 '''
 
 import os
 from globals import IMAGE_BASE_FOLDER, IMAGES_FOR_TEST
-from ultralytics import YOLO
+from ultralytics import NAS, YOLO
 from PIL import Image
+import torch
 
-ALL_MODELS = [
-    'yolov8n',
-    'yolov8s',
-    'yolov8m',
-    'yolov8l',
-    'yolov8x',
-]
+ALL_MODELS = {
+    'yolov8n': YOLO,
+    'yolov8s': YOLO,
+    'yolov8m': YOLO,
+    'yolov8l': YOLO,
+    'yolov8x': YOLO,
+    'yolo_nas_l': NAS,
+    'yolo_nas_m': NAS,
+    'yolo_nas_s': NAS,
+}
 
-for m in ALL_MODELS:
-    print('Selected model: ' + m)
-    model_path = os.path.join('yolo', m + '.pt')
-    model = YOLO(model_path)
 
-    for p in IMAGES_FOR_TEST:
-        image_path = os.path.join(IMAGE_BASE_FOLDER, IMAGES_FOR_TEST[p])
-        img = Image.open(image_path)
+with torch.inference_mode():
+    for m, wrapper in ALL_MODELS.items():
+        print('Selected model: ' + m)
+        model_path = os.path.join('yolo', m + '.pt')
+        model = wrapper(model_path)
 
-        results = model.predict(source=img, save=True, save_conf=True, line_width=1, half=True)
+        for p in IMAGES_FOR_TEST:
+            image_path = os.path.join(IMAGE_BASE_FOLDER, IMAGES_FOR_TEST[p])
+            img = Image.open(image_path)
 
-    del model
+            _ = model.predict(source=img, save=True, save_conf=True, line_width=1, half=True)
+
+        del model

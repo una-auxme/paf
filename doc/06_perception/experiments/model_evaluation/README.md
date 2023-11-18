@@ -18,6 +18,8 @@ cp object_detection/packages/tf2/setup.py .
 python -m pip install .
 ```
 
+For the YOLO-NAS models, also run `pip install super-gradients==3.1.1`. It is recommended to run these models in a seperate venv, e.g. with `python -m venv venv_yolo` to not mix package versions
+
 ## Usage
 
 Simply start `yolo.py`, `pt.py` or `pylot.py` to run the respective models and let it save the results.
@@ -113,23 +115,29 @@ Only the inference time was measured.
 The model versions are different sizes of the same model.
 The following models were evaluated (sorted descending by recognition performance):
 
-1. yolov8x
-2. yolov8l
-3. yolov8m
-4. yolov8s
-5. yolov8n
+1. yolo-nas-l
+2. yolo-nas-m
+3. yolo-nas-s
+4. yolov8x
+5. yolov8l
+6. yolov8m
+7. yolov8s
+8. yolov8n
 
 Images with boundary boxes: [Google Drive](https://drive.google.com/drive/folders/1u6T0Q3kd9FqjiBWMqzlT-3-fglMqlkBB?usp=sharing)
 
 #### Summary
 
-|         | Cyclists | Traffic lights | Cars | Noise | Speed |
-|---------|----------|----------------|------|-------|-------|
-| yolov8x | ++       | ++             | ++   | ++    | +     |
-| yolov8l | ++       | ++             | ++   | ++    | +     |
-| yolov8m | ++       | ++             | ++   | +     | ++    |
-| yolov8s | +        | +              | ++   | ++    | ++    |
-| yolov8n | +        | -              | +    | ++    | ++    |
+| Model      | Cyclists | Traffic lights | Cars | Noise | Speed |
+|------------|----------|----------------|------|-------|-------|
+| yolo-nas-l | ++       | ++             | ++   | ++    | +     |
+| yolo-nas-m | ++       | ++             | ++   | ++    | +     |
+| yolo-nas-s | ++       | ++             | ++   | ++    | +     |
+| yolov8x    | ++       | ++             | ++   | ++    | +     |
+| yolov8l    | ++       | ++             | ++   | ++    | +     |
+| yolov8m    | ++       | ++             | ++   | +     | ++    |
+| yolov8s    | +        | +              | ++   | ++    | ++    |
+| yolov8n    | +        | -              | +    | ++    | ++    |
 
 #### Recognition
 
@@ -137,26 +145,33 @@ All model version performed very well. Only the smallest (`v8n`) version missed 
 
 The same can be said for traffic lights - `v8x`, `v8l` and `v8m` saw them from a larger distance, while `v8n` and `v8s` needed more proximity.
 
-Throughout all vesion, almost no noise was present, without tweaking any values.
+The YOLO-NAS family of models are similar to the best `v8` version but with higher confidence scores.
+
+Throughout all versions, almost no noise (random wrong/duplicate predictions ) was present, without tweaking any values - only some noise with `v8m`.
 
 #### Computation speed
 
 These values are meant to be compared between the models, not as a representative performance indicator in general.
 Only the inference time was measured.
 
-| Model   | Time | FPS  |
-|---------|------|------|
-| yolov8n | ~2ms | 500  |
-| yolov8s | ~2ms | 500  |
-| yolov8m | ~3ms | ~333 |
-| yolov8l | ~4ms | 250  |
-| yolov8x | ~6ms | ~166 |
+| Model      | Time | FPS  |
+|------------|------|------|
+| yolov8n    | ~2ms | 500  |
+| yolov8s    | ~2ms | 500  |
+| yolov8m    | ~3ms | ~333 |
+| yolov8l    | ~4ms | 250  |
+| yolov8x    | ~6ms | ~166 |
+| yolo-nas-l | ~6ms | ~166 |
+| yolo-nas-m | ~6ms | ~166 |
+| yolo-nas-s | ~7ms | ~142 |
 
 ## Conclusion
 
 Comparing all models with each other, YOLOv8 is currently by far the winner of the comparison. It has the best speed, lowest noise, most detail and reliable recognition - while also being the easiest to use and configure (compare the .py files yourself).
 
 Since the `v8m` version is sometimes to sensitive and the `v8x` version is the largest/slowest, the `v8l` version is a good middle ground, if performance is important.
+
+If the best detection results are the most important, the `v8x` version and `nas` family should be analyzed further with more images and situations.
 
 | ![1619_TF_faster-rcnn.jpg](asset-copies/1619_TF_faster-rcnn.jpg) |
 |:--:|
@@ -165,3 +180,5 @@ Since the `v8m` version is sometimes to sensitive and the `v8x` version is the l
 | ^ *Pytorch - Faster RCNN Resnet50 FPN V2 (45ms)* ^ |
 | ![1619_yolov8x.jpg](asset-copies/1619_yolov8x.jpg) |
 | ^ *YOLOv8x (6ms)* ^ |
+| ![1619_yolo_nas_l.jpg](asset-copies/1619_yolo_nas_l.jpg) |
+| ^ *YOLO-nas-l (7ms)* ^ |
