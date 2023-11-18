@@ -1,10 +1,22 @@
-# All major changes introduced with leaderboard 2.0
+# Overview leaderboard 2.0
+
+**Summary:** New Features and changes made with the CARLA leaderboard-2.0
+
+---
+
+## Author
+
+Samuel Kühnel
+
+## Date
+
+17.11.2023
+
+## General Information
 
 Leaderboard 1.0             |  Leaderboard 2.0
 :-------------------------:|:-------------------------:
 ![leaderboard-1](../../00_assets/leaderboard-1.png)  |  ![leaderboard-2](../../00_assets/leaderboard-2.png)
-
-## General Information
 
 As shown in the images above the new leaderboard seems to have way more traffic than the previous version. The leaderboard 2.0 uses an enhanced version of CARLA 0.9.14. So be aware that even if the documentation mentions this version tag, there are probably features missing.
 Therefore it is recommended to use the latest version.
