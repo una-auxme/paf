@@ -115,29 +115,33 @@ Only the inference time was measured.
 The model versions are different sizes of the same model.
 The following models were evaluated (sorted descending by recognition performance):
 
-1. yolo-nas-l
-2. yolo-nas-m
-3. yolo-nas-s
-4. yolov8x
-5. yolov8l
-6. yolov8m
-7. yolov8s
-8. yolov8n
+1. yolo-rtdetr-x
+2. yolo-rtdetr-l
+3. yolo-nas-l
+4. yolo-nas-m
+5. yolo-nas-s
+6. yolov8x / yolov8x-seg
+7. yolov8l
+8. yolov8m
+9. yolov8s
+10. yolov8n
 
 Images with boundary boxes: [Google Drive](https://drive.google.com/drive/folders/1u6T0Q3kd9FqjiBWMqzlT-3-fglMqlkBB?usp=sharing)
 
 #### Summary
 
-| Model      | Cyclists | Traffic lights | Cars | Noise | Speed |
-|------------|----------|----------------|------|-------|-------|
-| yolo-nas-l | ++       | ++             | ++   | ++    | +     |
-| yolo-nas-m | ++       | ++             | ++   | ++    | +     |
-| yolo-nas-s | ++       | ++             | ++   | ++    | +     |
-| yolov8x    | ++       | ++             | ++   | ++    | +     |
-| yolov8l    | ++       | ++             | ++   | ++    | +     |
-| yolov8m    | ++       | ++             | ++   | +     | ++    |
-| yolov8s    | +        | +              | ++   | ++    | ++    |
-| yolov8n    | +        | -              | +    | ++    | ++    |
+| Model         | Cyclists | Traffic lights | Cars | Noise | Speed |
+|---------------|----------|----------------|------|-------|-------|
+| yolo-rtdetr-x | ++       | ++             | ++   | +     | -     |
+| yolo-rtdetr-l | ++       | ++             | ++   | +     | -     |
+| yolo-nas-l    | ++       | ++             | ++   | ++    | +     |
+| yolo-nas-m    | ++       | ++             | ++   | ++    | +     |
+| yolo-nas-s    | ++       | ++             | ++   | ++    | +     |
+| yolov8x/-seg  | ++       | ++             | ++   | ++    | +     |
+| yolov8l       | ++       | ++             | ++   | ++    | +     |
+| yolov8m       | ++       | ++             | ++   | +     | ++    |
+| yolov8s       | +        | +              | ++   | ++    | ++    |
+| yolov8n       | +        | -              | +    | ++    | ++    |
 
 #### Recognition
 
@@ -145,7 +149,9 @@ All model version performed very well. Only the smallest (`v8n`) version missed 
 
 The same can be said for traffic lights - `v8x`, `v8l` and `v8m` saw them from a larger distance, while `v8n` and `v8s` needed more proximity.
 
-The YOLO-NAS family of models are similar to the best `v8` version but with higher confidence scores.
+The `YOLO-NAS` family of models are similar to the best `v8` version but with higher confidence scores.
+
+`RT-DETR` recognized a little more details and with higher confidence. But at the same time, they have more noise and see irrelevant objects (can be filtered though).
 
 Throughout all versions, almost no noise (random wrong/duplicate predictions ) was present, without tweaking any values - only some noise with `v8m`.
 
@@ -154,16 +160,18 @@ Throughout all versions, almost no noise (random wrong/duplicate predictions ) w
 These values are meant to be compared between the models, not as a representative performance indicator in general.
 Only the inference time was measured.
 
-| Model      | Time | FPS  |
-|------------|------|------|
-| yolov8n    | ~2ms | 500  |
-| yolov8s    | ~2ms | 500  |
-| yolov8m    | ~3ms | ~333 |
-| yolov8l    | ~4ms | 250  |
-| yolov8x    | ~6ms | ~166 |
-| yolo-nas-l | ~6ms | ~166 |
-| yolo-nas-m | ~6ms | ~166 |
-| yolo-nas-s | ~7ms | ~142 |
+| Model         | Time   | FPS  |
+|---------------|--------|------|
+| yolov8n       | ~2ms   | 500  |
+| yolov8s       | ~2ms   | 500  |
+| yolov8m       | ~3ms   | ~333 |
+| yolov8l       | ~4ms   | 250  |
+| yolov8x/-seg  | ~6/7ms | ~166 |
+| yolo-nas-l    | ~6ms   | ~166 |
+| yolo-nas-m    | ~6ms   | ~166 |
+| yolo-nas-s    | ~7ms   | ~142 |
+| yolo-rtdetr-l | ~13ms  | ~77  |
+| yolo-rtdetr-x | ~16ms  | ~62  |
 
 ## Conclusion
 
@@ -173,6 +181,8 @@ Since the `v8m` version is sometimes to sensitive and the `v8x` version is the l
 
 If the best detection results are the most important, the `v8x` version and `nas` family should be analyzed further with more images and situations.
 
+For segmentation, also `sam` and `fast-sam` was tested. `Sam` needs multiple seconds for inference and is like `fast-sam` not suitable at all for Carla, as they segment the entire image and e.g. segment individual windows of a car or building.
+
 | ![1619_TF_faster-rcnn.jpg](asset-copies/1619_TF_faster-rcnn.jpg) |
 |:--:|
 | ^ *Pylot - Faster RCNN (26ms)* ^ |
@@ -180,5 +190,9 @@ If the best detection results are the most important, the `v8x` version and `nas
 | ^ *Pytorch - Faster RCNN Resnet50 FPN V2 (45ms)* ^ |
 | ![1619_yolov8x.jpg](asset-copies/1619_yolov8x.jpg) |
 | ^ *YOLOv8x (6ms)* ^ |
+| ![1619_yolov8x_seg.jpg](asset-copies/1619_yolov8x_seg.jpg) |
+| ^ *YOLOv8x-Seg (7ms)* ^ |
 | ![1619_yolo_nas_l.jpg](asset-copies/1619_yolo_nas_l.jpg) |
 | ^ *YOLO-nas-l (7ms)* ^ |
+| ![1619_yolo_nas_l.jpg](asset-copies/1619_yolo_rtdetr_x.jpg) |
+| ^ *YOLO-rtdetr-x (16ms)* ^ |

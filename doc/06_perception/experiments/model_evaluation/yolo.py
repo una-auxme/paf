@@ -4,7 +4,7 @@ Docs: https://docs.ultralytics.com/modes/predict/, https://docs.ultralytics.com/
 
 import os
 from globals import IMAGE_BASE_FOLDER, IMAGES_FOR_TEST
-from ultralytics import NAS, YOLO
+from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 from PIL import Image
 import torch
 
@@ -17,6 +17,11 @@ ALL_MODELS = {
     'yolo_nas_l': NAS,
     'yolo_nas_m': NAS,
     'yolo_nas_s': NAS,
+    'rtdetr-l': RTDETR,
+    'rtdetr-x': RTDETR,
+    'yolov8x-seg': YOLO,
+    'sam-l': SAM,
+    'FastSAM-x': FastSAM,
 }
 
 
