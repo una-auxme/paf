@@ -100,12 +100,6 @@ for m in ALL_MODELS:
         label_id_offset = -1
         image_np_with_detections = image_np.copy()
 
-        # Use keypoints if available in detections
-        keypoints, keypoint_scores = None, None
-        if 'boxes' in result:
-            keypoints = result['boxes']
-            keypoint_scores = result['scores'][0]
-
         viz_utils.visualize_boxes_and_labels_on_image_array(
             image_np_with_detections[0],
             result['boxes'][0],
