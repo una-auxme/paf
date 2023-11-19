@@ -16,8 +16,8 @@ Alexander Hellmann-Schweikardt
 
 ## [Components](https://github.com/una-auxme/paf23/tree/main/code/acting/src/acting)
 
-> General ToDo: Many Subscriber functions are either Set or Get which seems inconsistent
-> General ToDo: Some code can be beautified and commented better
+> * General ToDo: Many Subscriber functions are either Set or Get which seems inconsistent
+> * General ToDo: Some code can be beautified and commented better
 
 ### stanley_controller.py
 
@@ -32,14 +32,14 @@ Alexander Hellmann-Schweikardt
 * Stanley Controller with Kce = 0.1 and Kv = 1
 * Gets closest point on **trajectory** and the target heading from **trajectory**
 * Calculate position error (cross_err) with **current_pos** and heading error (heading_err) with **current_heading**
-* Calculate steering angle with Stanley Controller and errors steering = heading_err + atan((Kce *cross_err) / current_velocity* Kv)
+* Calculate steering angle with Stanley Controller and errors steering = heading_err + atan((Kce \* cross_err) / current_velocity \* Kv)
 * steering_angle = steering_angle * -1
 * **stanley_steer** = steering_angle
 * **stanley_debug** = heading, trajectory_heading, cross_err, heading_err and steering_angle
 
-> ToDo: Tune Controllerparameter
-> ToDo: Check if Controller is used correctly (equation and all)
-> ToDo: Check why steering_angle needs * -1
+> * ToDo: Tune Controllerparameter
+> * ToDo: Check if Controller is used correctly (equation and all)
+> * ToDo: Check why steering_angle needs * -1
 
 ### pure_pursuit_controller.py
 
@@ -55,18 +55,18 @@ Alexander Hellmann-Schweikardt
 * Pure Pursuit Controller with Kld = 1.0, look_ahead_dist = 3.5 and l_vehicle = 2.85
 * MIN_LD_V = (float) 3.0
   * if **Speed** < MIN_LD_V : look_ahead_distance += 0
-  * else look_ahead_distance += Kld * (**Speed** - MIN_LD_V)
+  * else look_ahead_distance += Kld \* (**Speed** - MIN_LD_V)
 * creates vector from **current_pos** to next waypoint on **trajectory**
 * get target heading from vector-angle
 * alpha = target heading - **current_heading**
-* steering_angle = atan( ( 2 *l_vehicle* sin (alpha) ) / look_ahead_distance)
+* steering_angle = atan( ( 2 \* l_vehicle \* sin (alpha) ) / look_ahead_distance)
 * **pure_pursuit_steer** = steering_angle
 * **pure_pursuit_steer_target_wp** = target waypoint pose from trajectory
 * **pure_p_debug** = heading, target heading, look_ahead_distance and steering angle
 
-> ToDo: Check out Controller parameters and test tuning for better results
-> ToDo: Check, if Controller is used correctly (equation and all)
-> ToDo: Check, where pure_pursuit_steer_target_wp is used and why. Is it for Debugging only?
+> * ToDo: Check out Controller parameters and test tuning for better results
+> * ToDo: Check, if Controller is used correctly (equation and all)
+> * ToDo: Check, where pure_pursuit_steer_target_wp is used and why. Is it for Debugging only?
 
 ### velocity_controller.py
 
@@ -88,9 +88,9 @@ Alexander Hellmann-Schweikardt
 * **throttle** is calculated with **Speed** using the PID but also 0 <= **throttle** <= 1
 * **speed_limit** = speed_limit
   
-> ToDo: Check out Controller parameters and test tuning for better results (Use of PID Controller, but Ki = 0 -> why?)
-> ToDo: Check, how good the Speedlimit-Getter from the OpenDrive Map really works
-> ToDo: Check if equations are correct
+> * ToDo: Check out Controller parameters and test tuning for better results (Use of PID Controller, but Ki = 0 -> why?)
+> * ToDo: Check, how good the Speedlimit-Getter from the OpenDrive Map really works
+> * ToDo: Check if equations are correct
 
 ### vehicle_controller.py
 
@@ -110,7 +110,7 @@ Alexander Hellmann-Schweikardt
 * MAX_STEER_ANGLE: float = 0.75
 * Steering:
   * Choose_Controller by current Speed on *Sigmoid Curve* around STANLEY_CONTROLLER_MIN_V -> p_stanley (how much “stanley” steering is used 0 < p < 1, see image)
-  * steering = p_stanley ***stanley_steering** + (1-p_stanley)* **pure_pursuit_steer**
+  * steering = p_stanley \* **stanley_steering** + (1-p_stanley) \* **pure_pursuit_steer**
   * since this is only the total steering, another PID Controller Kp = 0.5 Ki = 0.1 Kd = 0.1 with range[-MAX_STEER_ANGLE; MAX_STEER_ANGLE] is used to steer “smoothly”
     * steer = PID(steering) with 0 as “workingpoint”
     * CAREFUL: in function map_steering another parameter tune_k = -5 is used for tuning again
@@ -126,11 +126,11 @@ Alexander Hellmann-Schweikardt
 
 ![stanley_anteil.png](https://github.com/una-auxme/paf23/blob/main/doc/00_assets/acting/stanley_anteil.png?raw=true)
 
-> ToDo: Check out Controller parameters and test tuning for better results
-> ToDo: Check strange steering behavior Controller implementation with extra Tuningparameter
-> ToDo: Throttle: Code says no backwards-driving is possible yet, needs implementation
-> ToDo: Check why gear is seemingly repeatedly set to =1 in Loop, not regarding speed or anything
-> ToDo: Emergency breaking seems poorly implemented with many strange values like steer=90°, throttle = 1 (full throttle on braking?), reverse = true etc.
+> * ToDo: Check out Controller parameters and test tuning for better results
+> * ToDo: Check strange steering behavior Controller implementation with extra Tuningparameter
+> * ToDo: Throttle: Code says no backwards-driving is possible yet, needs implementation
+> * ToDo: Check why gear is seemingly repeatedly set to =1 in Loop, not regarding speed or anything
+> * ToDo: Emergency breaking seems poorly implemented with many strange values like steer=90°, throttle = 1 (full throttle on braking?), reverse = true etc.
 
 ### [acc.py (Adaptive Cruise Control)](https://github.com/una-auxme/paf23/blob/main/doc/05_acting/02_acc.md)
 
@@ -146,12 +146,12 @@ Alexander Hellmann-Schweikardt
 * Turns off after 1s of no new acc_distance published or acc_distance < 0 published
 * publishes targetspeed max_velocity of 0 if turned off
 * maybe needs more investigation on how good this actually works, formula is provided, see link
-* Triggers emergency break if acc_distance < 0.5 * optimal distance.
+* Triggers emergency break if acc_distance < 0.5 \* optimal distance.
 * Testdummy available: [AccDistancePublisherDummy](https://github.com/una-auxme/paf23/blob/main/code/acting/src/acting/acc_distance_publisher_dummy.py)
 
-> ToDo: Check, if parameter and equations are used correctly
-> ToDo: Generally double-check for correctness
-> ToDo: Check, if needed, if Testdummy is correctly used/implemented
+> * ToDo: Check, if parameter and equations are used correctly
+> * ToDo: Generally double-check for correctness
+> * ToDo: Check, if needed, if Testdummy is correctly used/implemented
 
 ### acting_velocity_publisher.py
 
@@ -168,7 +168,7 @@ Alexander Hellmann-Schweikardt
 * MAX_VELOCITY: float = 25.0 = 90km/h
 * Until PARKING_DUR is over, **max_velocity** = PARKING_V
 * After PARKING_DUR is over, calculate following:
-  * look_ahead_distance = max (**Speed** * 2 , 1) in Meters
+  * look_ahead_distance = max (**Speed** \* 2 , 1) in Meters
   * get closest target point on **trajectory** based on the distance of look_ahead_distance
   * get vector from **current_pos** to target point
   * get angle of vector (heading)
@@ -176,10 +176,10 @@ Alexander Hellmann-Schweikardt
   * alpha_sum = Sum of the last 9 alphas
 * **max_velocity** = 3 , 8, 14, MAX_VELOCITY, depending on calculated alpha_sum, the sharper the curve to drive, the lower the maximum safe-to-drive velocity
 
-> ToDo: Check if parameters for max_velocity setting and for curve detection etc. are well tuned
-> ToDo: Check parkingbehavior for correctness (and if it is really needed)
-> ToDo: Check, why the curve detection uses the Sum over the last 9 heading-differences
-> ToDo: Speed is Subscribed to twice in Code, why?
+> * ToDo: Check if parameters for max_velocity setting and for curve detection etc. are well tuned
+> * ToDo: Check parkingbehavior for correctness (and if it is really needed)
+> * ToDo: Check, why the curve detection uses the Sum over the last 9 heading-differences
+> * ToDo: Speed is Subscribed to twice in Code, why?
 
 ## Zusatzkomponenten
 
@@ -193,7 +193,7 @@ Alexander Hellmann-Schweikardt
 * **_clean_route_duplicates(route: List[Tuple[float, float]], min_dist: float) -> List[Tuple[float, float]]**: Remove duplicates in the given List of tuples, if the distance between them is less than min_dist.
 * **interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5)**: Interpolate the given route with points inbetween,holding the specified distance interval threshold.
 
-> ToDo: Generally double-check for correctness (seems good)
+> * ToDo: Generally double-check for correctness (seems good)
 
 ### helper_functions.py
 
@@ -206,7 +206,7 @@ Alexander Hellmann-Schweikardt
 * **normalize_angle(angle: float) -> float**: Normalizes an angle to [-pi, pi]
 * **calc_egocar_yaw(pose: PoseStamped) -> float**: Calculates the yaw of the ego vehicle
 
-> ToDo: Generally double-check for correctness
+> * ToDo: Generally double-check for correctness
 
 ### MainFramePublisher.py
 
@@ -217,10 +217,10 @@ Alexander Hellmann-Schweikardt
   * **transform**: broadcasts heroframe-transform via TransformBroadcaster
 * This node handles the translation from the static main frame to the moving hero frame. The hero frame always moves and rotates as the ego vehicle does. The hero frame is used by sensors like the lidar. Rviz also uses the hero frame. The main frame is used for planning
 * rotation = - **current_heading**
-* position x = cos(rotation) ***current_pos**.x + sin(rotation)* **current_pos**.y
-* position y = sin(rotation) ***current_pos**.x + cos(rotation)* **current_pos**.y
+* position x = cos(rotation) \* **current_pos**.x + sin(rotation) \* **current_pos**.y
+* position y = sin(rotation) \* **current_pos**.x + cos(rotation) \* **current_pos**.y
 * position z = - **current_pos**.z
 * rot_quat = rot as quaternion
 * **transform** = position x/y/z, rot_quat, Timestamp(now), “global”, “hero”
 
-> ToDo: Generally double-check for correctnes
+> * ToDo: Generally double-check for correctnes
