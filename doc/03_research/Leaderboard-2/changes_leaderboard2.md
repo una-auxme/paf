@@ -34,9 +34,9 @@ These maps consist of different regions e.g. downtown zone with high bulidngs ar
 
 The evaluation of submissions will be done on a secret map **town 14** that is kept secret but is designed similar to town 12 and 13.
 
-### Szenarios and training database
+### Scenarios and training database
 
-The new leaderboard comes with a large set of (new) szenarios that the autonomous agent has to accomplish. Some examples are merging lanes, emergency vehilces or Accidents. For each of the new scenrios CARLA provides logs from a $100 \%$ finish.
+The new leaderboard comes with a large set of (new) scenarios that the autonomous agent has to accomplish. Some examples are merging lanes, emergency vehicles or accidents. For each of the new scenrios CARLA provides logs from a 100% finish.
 
 These logs ca be used by the _training database creation tool_. With this python script the user is able to do the test runs and collect sensor data. The user is able to specify a list of sensors, weather, destination folder for saved sensor data and the logs that will be used to do the run.
 
