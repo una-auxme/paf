@@ -9,3 +9,4 @@ This folder contains all the results of research on planning:
   * [State machine design](./06_state_machine_design.md)
 * **PAF23**
   * [PAF21-1 Planning](./08_paf21-1.md)
+  * [Pylot Planning](./09_Research_Pylot_Planning.md)
