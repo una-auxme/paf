@@ -34,3 +34,7 @@ This template functions a template for who to build knowledge articles for every
 ### [`template_wiki_page_empty.md`](./templates/template_wiki_page_empty.md)
 
 This template functions a template for who to build knowledge articles for everyone to understand. The basic structure should be kept for all articles. This template is empty and can be used straight forward.
+
+## Discord Webhook
+
+[Discord Webhook Documentation](./11_discord_webhook.md)
