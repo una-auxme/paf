@@ -1,0 +1,6 @@
+tensorflow[and-cuda]
+torch
+torchvision
+torchaudio
+ultralytics
+six
