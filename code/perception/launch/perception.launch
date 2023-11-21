@@ -2,7 +2,7 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.1" />
-
+<!--
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
@@ -47,4 +47,5 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
+  -->
 </launch>

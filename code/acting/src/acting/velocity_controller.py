@@ -113,13 +113,13 @@ class VelocityController(CompatibleNode):
                               f"default value {SPEED_LIMIT_DEFAULT}")
                 # return
                 self.__max_velocity = SPEED_LIMIT_DEFAULT
-
+            
             if self.__current_velocity is None:
                 self.logdebug("VehicleController hasn't received "
                               "current_velocity yet and can therefore not"
                               "publish a throttle value")
                 return
-
+            """
             if self.__trajectory is None:
                 self.logdebug("VehicleController hasn't received "
                               "trajectory yet and can therefore not"
@@ -142,8 +142,10 @@ class VelocityController(CompatibleNode):
                 self.logerr("Velocity controller doesn't support backward "
                             "driving yet.")
                 return
-            v = min(self.__max_velocity, self.__max_tree_v)
-            v = min(v, self.__speed_limit)
+            """
+            #v = min(self.__max_velocity, self.__max_tree_v)
+            #v = min(v, self.__speed_limit)
+            v = self.__max_velocity
 
             pid.setpoint = v
             throttle = pid(self.__current_velocity)

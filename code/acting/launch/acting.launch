@@ -2,7 +2,7 @@
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.1" />
-
+<!--
     <node pkg="acting" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -12,7 +12,7 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-
+-->
     <node pkg="acting" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -45,13 +45,21 @@
         <param name="role_name" value="$(arg role_name)" />
     </node-->
 
-   <node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
+    <node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
         <param name="role_name" value="$(arg role_name)" />
         <param name="enabled" value="False" /> <!-- set to True to publish dummy velocities for testing-->
-   </node>
+    </node>
 
-  <node pkg="acting" type="acc.py" name="Acc" output="screen">
+<!--
+    <node pkg="acting" type="acc.py" name="Acc" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
-  </node>
+    </node>
+-->
+
+    <node pkg="acting" type="max_velocity_Dummy.py" name="dummy_const_vel_pub" output="screen">
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+
 </launch>
