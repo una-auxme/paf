@@ -112,8 +112,8 @@ Alexander Hellmann-Schweikardt
   * Choose_Controller by current Speed on *Sigmoid Curve* around STANLEY_CONTROLLER_MIN_V -> p_stanley (how much “stanley” steering is used 0 < p < 1, see image)
   * steering = p_stanley \* **stanley_steering** + (1-p_stanley) \* **pure_pursuit_steer**
   * since this is only the total steering, another PID Controller Kp = 0.5 Ki = 0.1 Kd = 0.1 with range[-MAX_STEER_ANGLE; MAX_STEER_ANGLE] is used to steer “smoothly”
-    * steer = PID(steering) with 0 as “workingpoint”
-    * CAREFUL: in function map_steering another parameter tune_k = -5 is used for tuning again
+  * steer = PID(steering) with 0 as “workingpoint”
+  * CAREFUL: in function map_steering another parameter tune_k = -5 is used for tuning again
 * Throttle:
   * if **throttle** > 0 : brake = 0 and throttle = **throttle**
   * else (**throttle** <= 0): brake = abs(**throttle**) and throttle = 0
