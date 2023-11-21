@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-import math
+
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
-from rospy import Publisher, Subscriber
+from rospy import Publisher
 from std_msgs.msg import Float32
 
 MAX_VELOCITY: float = 20.0
 STEERING: float = 0.0
 
+
 class DummyVelocityPublisher(CompatibleNode):
     """
-    This node publishes a constant max_velocity for Debugging and Parametertuning.
+    This node publishes a constant max_velocity
+    for Debugging and Parametertuning.
     """
 
     def __init__(self):
@@ -22,17 +24,16 @@ class DummyVelocityPublisher(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/max_velocity",
             qos_profile=1)
-        
+
         self.stanley_steer_pub: Publisher = self.new_publisher(
-        Float32,
-        f"/paf/{self.role_name}/stanley_steer",
-        qos_profile=1)
+            Float32,
+            f"/paf/{self.role_name}/stanley_steer",
+            qos_profile=1)
 
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
-        Float32,
-        f"/paf/{self.role_name}/pure_pursuit_steer",
-        qos_profile=1)
-        
+            Float32,
+            f"/paf/{self.role_name}/pure_pursuit_steer",
+            qos_profile=1)
 
     def run(self):
         """
@@ -40,6 +41,7 @@ class DummyVelocityPublisher(CompatibleNode):
         :return:
         """
         self.loginfo('DUMMY_constant-velocity_publisher node running')
+
         def loop(timer_event=None):
             """
             Publishes velocity limits calculated in acting based on
@@ -54,11 +56,13 @@ class DummyVelocityPublisher(CompatibleNode):
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
+
 def main(args=None):
     """
     Main function starts the node
     :param args:
     """
+
     roscomp.init('dummy_const_vel_pub', args=args)
     try:
         node = DummyVelocityPublisher()
