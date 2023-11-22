@@ -161,7 +161,7 @@ COPY --chown=$USERNAME:$USERNAME ./code/requirements.txt /workspace/
 ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
 ENV IABN_FORCE_CUDA=1
 
-RUN source ~/.bashrc && pip install torch==1.13.1 && pip install -r /workspace/requirements.txt
+RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
