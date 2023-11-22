@@ -2,6 +2,8 @@
 
 """
 This node publishes a dummy trajectory between predefined points.
+TODO: Implement this dummy to post a trajectory of serpentine-lines
+to check if the steering controllers work
 """
 
 import ros_compatibility as roscomp
@@ -34,6 +36,7 @@ class DummyTrajectoryPub(CompatibleNode):
         self.path_msg.header.stamp = rospy.Time.now()
         self.path_msg.header.frame_id = "global"
 
+        """
         # Static trajectory for testing purposes
         self.initial_trajectory = [
             (986.0, -5442.0),
@@ -59,6 +62,22 @@ class DummyTrajectoryPub(CompatibleNode):
             (1464.6, -5580.0),
             (1664.6, -5580.0)
         ]
+        """
+        startx = 986.0
+        starty = -5442.0
+        self.initial_trajectory = [
+            (startx, starty),
+            (startx, starty-10),
+            (startx-2, starty-20),
+            (startx, starty-30),
+            (startx+2, starty-40),
+            (startx, starty-50),
+            (startx-2, starty-60),
+            (startx, starty-70),
+            (startx+2, starty-80),
+            (startx, starty-90),
+            (startx, starty-1000),
+        ]
 
         self.updated_trajectory(self.initial_trajectory)
 
@@ -67,6 +86,16 @@ class DummyTrajectoryPub(CompatibleNode):
             Path,
             "/paf/" + self.role_name + "/trajectory",
             qos_profile=1)
+
+        self.current_pos_sub = self.new_subscription(
+            msg_type=PoseStamped,
+            topic="/paf/" + self.role_name + "/current_pos",
+            callback=self.__current_position_callback,
+            qos_profile=1)
+
+        self.x = 0
+        self.y = 0
+        self.z = 0
 
     def updated_trajectory(self, target_trajectory):
         """
@@ -88,7 +117,7 @@ class DummyTrajectoryPub(CompatibleNode):
 
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 37.6
+            pos.pose.position.z = 37.6  # why??
 
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
@@ -96,7 +125,18 @@ class DummyTrajectoryPub(CompatibleNode):
             pos.pose.orientation.z = 0
             pos.pose.orientation.w = 0
 
+            # print(pos)
+
             self.path_msg.poses.append(pos)
+
+    def __current_position_callback(self, data: PoseStamped):
+        agent = data.pose.position
+        self.x = agent.x
+        self.y = agent.y
+        self.z = agent.z
+        # print("x: "+ str(agent.x))
+        # print("y: "+ str(agent.y))
+        # print("z: "+ str(agent.z))
 
     def run(self):
         """

@@ -60,6 +60,11 @@ class StanleyController(CompatibleNode):
             f"/paf/{self.role_name}/stanley_debug",
             qos_profile=1)
 
+        self.poserror_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/position_error",
+            qos_profile=1)
+
         self.__position: (float, float) = None  # x, y
         self.__last_pos: (float, float) = None
         self.__path: Path = None
@@ -186,6 +191,7 @@ class StanleyController(CompatibleNode):
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
         # <-
+        self.poserror_publisher.publish(cross_err)
 
         return steering_angle
 

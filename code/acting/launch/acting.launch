@@ -2,7 +2,7 @@
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.1" />
-<!--
+
     <node pkg="acting" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -12,7 +12,7 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
--->
+
     <node pkg="acting" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -28,12 +28,11 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    <!--
+
     <node pkg="acting" type="DummyTrajectoryPublisher.py" name="DummyTrajectoryPublisher" output="screen">
         <param name="control_loop_rate" value="1" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    -->
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
         <param name="control_loop_rate" value="0.05" />
@@ -61,5 +60,7 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
+
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/carla/hero/Speed /paf/hero/max_velocity /paf/hero/position_error"/>
 
 </launch>

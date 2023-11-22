@@ -176,6 +176,7 @@ class VelocityController(CompatibleNode):
         self.__speed_limits_OD = data.data
 
     def __current_position_callback(self, data: PoseStamped):
+        """
         if len(self.__speed_limits_OD) < 1 or self.__trajectory is None:
             return
 
@@ -194,6 +195,7 @@ class VelocityController(CompatibleNode):
             self.__speed_limit = \
                 self.__speed_limits_OD[self.__current_wp_index]
             self.speed_limit_pub.publish(self.__speed_limit)
+        """
 
 
 def main(args=None):

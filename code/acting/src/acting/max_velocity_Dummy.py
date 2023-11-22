@@ -3,10 +3,12 @@
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher
+import rospy
 from std_msgs.msg import Float32
 
-MAX_VELOCITY: float = 20.0
-STEERING: float = 0.0
+MAX_VELOCITY_HIGH: float = 5.0
+MAX_VELOCITY_LOW: float = 5.0
+STEERING: float = 0.0  # TODO: NO NEED IF TRAJECTORY DUMMY WORKS
 
 
 class DummyVelocityPublisher(CompatibleNode):
@@ -35,6 +37,10 @@ class DummyVelocityPublisher(CompatibleNode):
             f"/paf/{self.role_name}/pure_pursuit_steer",
             qos_profile=1)
 
+        self.checkpoint_time = rospy.get_time()
+        self.switchVelocity = False
+        self.driveVel = MAX_VELOCITY_HIGH
+
     def run(self):
         """
         Starts the main loop of the node
@@ -49,9 +55,23 @@ class DummyVelocityPublisher(CompatibleNode):
             :param timer_event: Timer event from ROS
             :return:
             """
-            self.velocity_pub.publish(MAX_VELOCITY)
-            self.stanley_steer_pub.publish(STEERING)
-            self.pure_pursuit_steer_pub.publish(STEERING)
+
+            # letzter timecheck < aktuelle Zeit - 20 Sekunden
+            # = mehr Zeit vergangen als 20 Sekunden
+            if (self.checkpoint_time < rospy.get_time() - 40.0):
+                self.checkpoint_time = rospy.get_time()
+
+                if (self.switchVelocity):
+                    self.switchVelocity = False
+                    self.driveVel = MAX_VELOCITY_HIGH
+
+                else:
+                    self.switchVelocity = True
+                    self.driveVel = MAX_VELOCITY_LOW
+
+            self.velocity_pub.publish(self.driveVel)
+            # self.stanley_steer_pub.publish(STEERING)
+            # self.pure_pursuit_steer_pub.publish(STEERING)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
