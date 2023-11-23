@@ -16,6 +16,6 @@ jobs:
           # to the issue
           project-url: https://github.com/orgs/una-auxme/projects/3
           # https://github.com/orgs/<orgName>/projects/<projectNumber>
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           # labeled: bug, needs-triage
           # label-operator: OR
