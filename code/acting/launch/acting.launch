@@ -61,6 +61,8 @@
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
-    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/carla/hero/Speed /paf/hero/max_velocity /paf/hero/position_error"/>
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_speed" args="/carla/hero/Speed /paf/hero/max_velocity"/>
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_trajectoryfollowing" args="/paf/hero/current_x /paf/hero/current_target_wp"/>
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/carla/hero/vehicle_control_cmd/steer /paf/hero/target_steering"/>
 
 </launch>

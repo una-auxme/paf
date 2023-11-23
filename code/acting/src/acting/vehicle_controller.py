@@ -9,6 +9,9 @@ from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32
 from simple_pid import PID
 
+STEERING_CONTROLLERTEST: bool = True   # Steering-Controllers tested alone
+CONTROLLER_TESTED: int = 1  # 1 = PPC alone ; 2 = SC alone
+
 PURE_PURSUIT_CONTROLLER: int = 1
 STANLEY_CONTROLLER: int = 2
 STANLEY_CONTROLLER_MIN_V: float = 4.0  # ~14kph
@@ -93,6 +96,11 @@ class VehicleController(CompatibleNode):
             self.__set_stanley_steer,
             qos_profile=1)
 
+        self.target_steering_publisher: Publisher = self.new_publisher(
+            Float32,
+            f'/paf/{self.role_name}/target_steering',
+            qos_profile=1)
+
         self.__emergency: bool = False
         self.__throttle: float = 0.0
         self.__velocity: float = 0.0
@@ -107,7 +115,7 @@ class VehicleController(CompatibleNode):
         """
         self.status_pub.publish(True)
         self.loginfo('VehicleController node running')
-        pid = PID(0.5, 0.1, 0.1, setpoint=0)
+        pid = PID(0.5, 0.1, 0.1, setpoint=0)    # TODO: tune parameters
         pid.output_limits = (-MAX_STEER_ANGLE, MAX_STEER_ANGLE)
 
         def loop(timer_event=None) -> None:
@@ -119,7 +127,13 @@ class VehicleController(CompatibleNode):
             if self.__emergency:  # emergency is already handled in
                 # __emergency_break()
                 return
-            p_stanley = self.__choose_controller()
+            if (STEERING_CONTROLLERTEST):
+                if (CONTROLLER_TESTED == 2):
+                    p_stanley = 1
+                elif (CONTROLLER_TESTED == 1):
+                    p_stanley = 0
+            else:
+                p_stanley = self.__choose_controller()
             if p_stanley < 0.5:
                 self.logdebug('Using PURE_PURSUIT_CONTROLLER')
                 self.controller_pub.publish(float(PURE_PURSUIT_CONTROLLER))
@@ -148,6 +162,9 @@ class VehicleController(CompatibleNode):
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
             self.control_publisher.publish(message)
+            print(steer)
+            print(message.steer)
+            self.target_steering_publisher.publish(steer)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -159,7 +176,7 @@ class VehicleController(CompatibleNode):
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
         :return: float for steering in [-1, 1]
         """
-        tune_k = -5  # factor for tuning todo: tune
+        tune_k = -5  # factor for tuning TODO: tune
         r = 1 / (math.pi / 2)
         steering_float = steering_angle * r * tune_k
         return steering_float

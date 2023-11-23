@@ -60,9 +60,14 @@ class StanleyController(CompatibleNode):
             f"/paf/{self.role_name}/stanley_debug",
             qos_profile=1)
 
-        self.poserror_publisher: Publisher = self.new_publisher(
+        self.targetwp_publisher: Publisher = self.new_publisher(
             Float32,
-            f"/paf/{self.role_name}/position_error",
+            f"/paf/{self.role_name}/current_target_wp",
+            qos_profile=1)
+
+        self.currentx_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/current_x",
             qos_profile=1)
 
         self.__position: (float, float) = None  # x, y
@@ -191,8 +196,8 @@ class StanleyController(CompatibleNode):
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
         # <-
-        self.poserror_publisher.publish(cross_err)
-
+        self.targetwp_publisher.publish((closest_point.pose.position.x))
+        self.currentx_publisher.publish(self.__position[0])
         return steering_angle
 
     def __get_closest_point_index(self) -> int:
