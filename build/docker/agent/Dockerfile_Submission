@@ -163,6 +163,8 @@ RUN source ~/.bashrc && pip install torch==1.13.1 && pip install -r /workspace/r
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
+RUN rm -rf /workspace/code/perception/src/dataset_generator.py \
+    && rm -rf /workspace/code/planning/global_planner/src/dev_global_route.py
 
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
