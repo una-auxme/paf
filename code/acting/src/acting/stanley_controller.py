@@ -196,8 +196,10 @@ class StanleyController(CompatibleNode):
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
         # <-
-        self.targetwp_publisher.publish((closest_point.pose.position.x))
-        self.currentx_publisher.publish(self.__position[0])
+
+        # 2 more debugging messages: TODO: maybe put into DEBUGGER NODE?
+        self.targetwp_publisher.publish((closest_point.pose.position.x-984.5))
+        self.currentx_publisher.publish(self.__position[0]-984.5)
         return steering_angle
 
     def __get_closest_point_index(self) -> int:

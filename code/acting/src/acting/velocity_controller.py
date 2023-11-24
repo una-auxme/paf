@@ -9,7 +9,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 from nav_msgs.msg import Path
 
 # TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 6  # 36.0
+SPEED_LIMIT_DEFAULT: float = 10  # 36.0
 
 
 class VelocityController(CompatibleNode):

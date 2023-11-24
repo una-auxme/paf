@@ -29,7 +29,7 @@
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
-    <node pkg="acting" type="DummyTrajectoryPublisher.py" name="DummyTrajectoryPublisher" output="screen">
+    <node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
         <param name="control_loop_rate" value="1" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
@@ -38,11 +38,6 @@
         <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-
-    <!--node pkg="acting" type="DummyTrajectorySub.py" name="DummyTrajectorySub" output="screen">
-        <param name="control_loop_rate" value="1" />
-        <param name="role_name" value="$(arg role_name)" />
-    </node-->
 
     <node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
         <param name="role_name" value="$(arg role_name)" />
@@ -56,13 +51,8 @@
     </node>
 -->
 
-    <node pkg="acting" type="max_velocity_Dummy.py" name="dummy_const_vel_pub" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <param name="role_name" value="$(arg role_name)" />
-    </node>
-
     <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_speed" args="/carla/hero/Speed /paf/hero/max_velocity"/>
     <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_trajectoryfollowing" args="/paf/hero/current_x /paf/hero/current_target_wp"/>
-    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/carla/hero/vehicle_control_cmd/steer /paf/hero/target_steering"/>
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/carla/hero/vehicle_control_cmd/steer /paf/hero/target_steering_debug"/>
 
 </launch>

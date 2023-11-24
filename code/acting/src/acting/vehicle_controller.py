@@ -9,9 +9,6 @@ from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32
 from simple_pid import PID
 
-STEERING_CONTROLLERTEST: bool = True   # Steering-Controllers tested alone
-CONTROLLER_TESTED: int = 1  # 1 = PPC alone ; 2 = SC alone
-
 PURE_PURSUIT_CONTROLLER: int = 1
 STANLEY_CONTROLLER: int = 2
 STANLEY_CONTROLLER_MIN_V: float = 4.0  # ~14kph
@@ -96,17 +93,29 @@ class VehicleController(CompatibleNode):
             self.__set_stanley_steer,
             qos_profile=1)
 
+        # Testing / Debugging -->
         self.target_steering_publisher: Publisher = self.new_publisher(
             Float32,
-            f'/paf/{self.role_name}/target_steering',
+            f'/paf/{self.role_name}/target_steering_debug',
             qos_profile=1)
+
+        self.controller_selector_sub: Subscriber = self.new_subscription(
+            Float32,
+            f'/paf/{self.role_name}/controller_selector_debug',
+            self.__set_controller,
+            qos_profile=1)
+        # <-- Testing / Debugging
 
         self.__emergency: bool = False
         self.__throttle: float = 0.0
         self.__velocity: float = 0.0
         self.__pure_pursuit_steer: float = 0.0
         self.__stanley_steer: float = 0.0
-        self.__current_steer: float = 0.0  # todo: check emergency behaviour
+        self.__current_steer: float = 0.0
+
+        self.controller_testing: bool = False
+        self.controller_selected_debug: int = 1
+        # TODO: check emergency behaviour
 
     def run(self):
         """
@@ -127,13 +136,15 @@ class VehicleController(CompatibleNode):
             if self.__emergency:  # emergency is already handled in
                 # __emergency_break()
                 return
-            if (STEERING_CONTROLLERTEST):
-                if (CONTROLLER_TESTED == 2):
+            if (self.controller_testing):
+                if (self.controller_selected_debug == 2):
                     p_stanley = 1
-                elif (CONTROLLER_TESTED == 1):
+                elif (self.controller_selected_debug == 1):
                     p_stanley = 0
             else:
+                print("hier??!")
                 p_stanley = self.__choose_controller()
+            print(p_stanley)
             if p_stanley < 0.5:
                 self.logdebug('Using PURE_PURSUIT_CONTROLLER')
                 self.controller_pub.publish(float(PURE_PURSUIT_CONTROLLER))
@@ -162,9 +173,7 @@ class VehicleController(CompatibleNode):
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
             self.control_publisher.publish(message)
-            print(steer)
-            print(message.steer)
-            self.target_steering_publisher.publish(steer)
+            self.target_steering_publisher.publish(steer)  # debugging
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -241,6 +250,10 @@ class VehicleController(CompatibleNode):
 
     def __set_stanley_steer(self, data: Float32):
         self.__stanley_steer = data.data
+
+    def __set_controller(self, data: Float32):
+        self.controller_testing = True
+        self.controller_selected_debug = data.data
 
     def sigmoid(self, x: float):
         """
