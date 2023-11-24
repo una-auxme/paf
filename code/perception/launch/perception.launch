@@ -2,6 +2,12 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.1" />
+  
+  <!--just for testing purposes -> delete when pushing to main-->
+  <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debugger" output="screen">
+    <param name="control_loop_rate" value="0.1" />
+    <param name="role_name" value="$(arg role_name)" />
+  </node>
 
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />

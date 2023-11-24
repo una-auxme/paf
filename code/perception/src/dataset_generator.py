@@ -246,21 +246,15 @@ def create_argparse():
         help='set up an empty world and spawn ego vehicle',
         default=False
     )
-    argparser.add_argument(
-        '--town',
-        metavar='T',
-        default='Town12',
-        help='town to load'
-    )
     return argparser
 
 
 if __name__ == '__main__':
-    towns = {"Town01", "Town02", "Town03", "Town04", "Town05", "Town06",
-             "Town07", "Town10", "Town11", "Town12"}
+    towns = ["Town01", "Town02", "Town03", "Town04", "Town05", "Town06",
+             "Town07", "Town10", "Town11", "Town12"]
+    town = towns[2]
     argparser = create_argparse()
     args = argparser.parse_args()
-    town = args.town
     output_dir = args.output_dir
     host = args.host
     port = args.port
@@ -268,11 +262,10 @@ if __name__ == '__main__':
 
     client = carla.Client(host, port)
     client.set_timeout(30)
-    world = client.load_world(town) if use_empty_world else client.get_world()
+    world = client.load_world(town)
     world.wait_for_tick()
 
-    output_dir = os.path.join(output_dir, world.get_map().name[-2:])
-    print("Saving images to {}".format(output_dir))
+    output_dir = os.path.join(output_dir, town[-2:])
 
     if use_empty_world:
         ego_vehicle = setup_empty_world(client)
