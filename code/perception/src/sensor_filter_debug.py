@@ -13,6 +13,11 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32
 from coordinate_transformation import CoordinateTransformer, GeoRef
 from tf.transformations import euler_from_quaternion
+from std_msgs.msg import Float32MultiArray
+
+import carla
+import rospy
+#from carla_msgs.msg import CarlaLo
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
@@ -22,6 +27,7 @@ class PositionPublisherNode(CompatibleNode):
     Node publishes a filtered gps signal.
     This is achieved using a rolling average.
     """
+    
 
     def __init__(self):
         """
@@ -30,6 +36,11 @@ class PositionPublisherNode(CompatibleNode):
         """
 
         super(PositionPublisherNode, self).__init__('ekf_translation')
+        #self.current_pos = PoseStamped()
+        self.ideal_corrent_pos = PoseStamped()
+        self.carla_current_pos = PoseStamped()
+        self.ideal_imu_data = Imu()
+
         self.loginfo("Position publisher node started")
 
         # basic info
@@ -78,6 +89,135 @@ class PositionPublisherNode(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/ideal_current_heading",
             qos_profile=1)
+
+        # Carla API hero car position
+        # Get parameters from the launch file
+        host = rospy.get_param('~host', 'carla-simulator')
+        port = rospy.get_param('~port', 2000)
+        timeout = rospy.get_param('~timeout', 100.0)
+        role_name = rospy.get_param('~role_name', 'hero')
+
+        # Connect to the CARLA server
+        client = carla.Client(host, port)
+        client.set_timeout(timeout)
+
+        # Get the world
+        self.world = client.get_world()
+
+        # Get the ego vehicle
+        self.vehicle = None
+
+        
+        # Publish the location
+        self.carla_pos_publisher = self.new_publisher(
+            PoseStamped,
+            f"/paf/{self.role_name}/carla_current_pos",
+            qos_profile=1)
+        
+        # Error Publisher 
+        # publish error distance between current_pos and ideal_corrent_pos & current_pos and carla_current_pos:
+        # current_pos and ideal_corrent_pos in location_error[0]
+        # current_pos and carla_current_pos in location_error[1]
+        self.locoation_error_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/location_error",
+            qos_profile=1)
+        # Current_pos subscriber:
+        self.current_pos_subscriber = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/current_pos",
+            self.update_location_error,
+            qos_profile=1)
+        
+        """
+        # publish the error between imu and ideal_imu
+        self.imu_error_publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/imu_error",
+            qos_profile=1)
+        
+        # Imu subscriber:
+        self.imu_subscriber = self.new_subscription(
+            Imu,
+            f"/carla/{self.role_name}/IMU",
+            self.update_imu_error,
+            qos_profile=1)
+            """
+    """
+    def update_imu_error(self, data: Imu):
+        ""'"
+        This method is called when new IMU data is received.
+        It handles all necessary updates and publishes the heading.
+        :param data: new IMU measurement
+        :return:
+        ""'"
+        imu_data = Imu()
+
+        imu_data.header.stamp = data.header.stamp
+        imu_data.header.frame_id = "hero"
+
+        imu_data.orientation.x = data.orientation.x
+        imu_data.orientation.y = data.orientation.y
+        imu_data.orientation.z = data.orientation.z
+        imu_data.orientation.w = data.orientation.w
+        imu_data.orientation_covariance = [0, 0, 0,
+                                           0, 0, 0,
+                                           0, 0, 0]
+
+        imu_data.angular_velocity.x = data.angular_velocity.x
+        imu_data.angular_velocity.y = data.angular_velocity.y
+        imu_data.angular_velocity.z = data.angular_velocity.z
+        imu_data.angular_velocity_covariance = [0, 0, 0,
+                                                0, 0, 0,
+                                                0, 0, 0]
+
+        imu_data.linear_acceleration.x = data.linear_acceleration.x
+        imu_data.linear_acceleration.y = data.linear_acceleration.y
+        imu_data.linear_acceleration.z = data.linear_acceleration.z
+        imu_data.linear_acceleration_covariance = [0, 0, 0,
+                                                   0, 0, 0,
+                                                   0, 0, 0]
+
+        self.ekf_imu_publisher.publish(imu_data)
+
+        # Calculate the heading based on the orientation given by the IMU
+        data_orientation_q = [data.orientation.x,
+                              data.orientation.y,
+                              data.orientation.z,
+                              data.orientation.w]
+
+        roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
+        raw_heading = math.atan2(roll, pitch)
+
+        # transform raw_heading so that:
+        # ---------------------------------------------------------------
+        # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
+        # ---------------------------------------------------------------
+        heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+        self.__heading = heading
+        self.__heading_publisher.publish(self.__heading)
+        
+        # calculate the error between ideal_imu and imu
+        error = Float32()
+        error.data = math.sqrt((self.ideal_imu_data
+        """
+
+    def update_location_error(self, data: PoseStamped):
+        """
+        This method is called when new current_pos data is received.
+        It handles all necessary updates and publishes the error.
+        :param data: new current_pos measurement
+        :return:
+        """
+
+        error = Float32MultiArray()
+        #error.layout.dim = [0, 0]
+        error.data = [0, 0]
+        # calculate the error between ideal_current_pos and current_pos
+        error.data[0] = math.sqrt((self.ideal_current_pos.pose.position.x - data.pose.position.x)**2 + (self.ideal_current_pos.pose.position.y - data.pose.position.y)**2)
+        # calculate the error between carla_current_pos and current_pos
+        error.data[1] = math.sqrt((self.carla_current_pos.pose.position.x - data.pose.position.x)**2 + (self.carla_current_pos.pose.position.y - data.pose.position.y)**2)
+        self.error_publisher.publish(error)
 
     def update_imu_data(self, data: Imu):
         """
@@ -168,6 +308,32 @@ class PositionPublisherNode(CompatibleNode):
         cur_pos.pose.orientation.w = 0
 
         self.cur_pos_publisher.publish(cur_pos)
+        self.ideal_current_pos = cur_pos
+
+        # also update carla_car_position:
+        if self.vehicle is None:
+            for actor in self.world.get_actors():
+                if actor.attributes.get('role_name') == self.role_name:
+                    self.vehicle = actor
+                    break
+
+
+        carla_pos = PoseStamped()
+        carla_pos.header.stamp = data.header.stamp
+        carla_pos.header.frame_id = "global"
+
+        pos = self.vehicle.get_location()
+        carla_pos.pose.position.x = pos.x
+        carla_pos.pose.position.y = -pos.y
+        carla_pos.pose.position.z = pos.z
+
+        carla_pos.pose.orientation.x = 0
+        carla_pos.pose.orientation.y = 0
+        carla_pos.pose.orientation.z = 1
+        carla_pos.pose.orientation.w = 0
+
+        self.carla_pos_publisher.publish(carla_pos)
+        self.carla_current_pos = carla_pos
 
     def run(self):
         """
