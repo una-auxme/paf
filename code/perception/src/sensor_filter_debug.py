@@ -35,7 +35,7 @@ class PositionPublisherNode(CompatibleNode):
 
         super(PositionPublisherNode, self).__init__('ekf_translation')
         # self.current_pos = PoseStamped()
-        self.ideal_corrent_pos = PoseStamped()
+        self.ideal_current_pos = PoseStamped()
         self.carla_current_pos = PoseStamped()
         self.ideal_heading = Float32()
 
@@ -189,19 +189,19 @@ class PositionPublisherNode(CompatibleNode):
         x *= 0.998
         y *= 1.003
 
-        self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
-        self.avg_xyz[-1] = np.matrix([x, y, z])
+        # self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
+        # self.avg_xyz[-1] = np.matrix([x, y, z])
 
-        avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
+        # avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
 
         cur_pos = PoseStamped()
 
         cur_pos.header.stamp = data.header.stamp
         cur_pos.header.frame_id = "global"
 
-        cur_pos.pose.position.x = avg_x
-        cur_pos.pose.position.y = avg_y
-        cur_pos.pose.position.z = avg_z
+        cur_pos.pose.position.x = x
+        cur_pos.pose.position.y = y
+        cur_pos.pose.position.z = z
 
         cur_pos.pose.orientation.x = 0
         cur_pos.pose.orientation.y = 0
