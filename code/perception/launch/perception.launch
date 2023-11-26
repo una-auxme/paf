@@ -62,4 +62,7 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
+
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
+
 </launch>

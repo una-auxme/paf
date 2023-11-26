@@ -55,5 +55,6 @@
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
-    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/carla/hero/Speed /paf/hero/stanley_debug/cross_err" />
+    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/carla/hero/Speed /paf/hero/stanley_debug/cross_err" -->
+    
 </launch>
