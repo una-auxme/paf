@@ -12,17 +12,16 @@ The following code shows how the Vision-Node is specified in perception.launch
 <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
-     <!-- 
-      Object-Detection: 
-      - fasterrcnn_resnet50_fpn_v2 
+     <!--
+      Object-Detection:
+      - fasterrcnn_resnet50_fpn_v2
       - fasterrcnn_mobilenet_v3_large_320_fpn
       Image-Segmentation:
-      - deeplabv3_resnet101 
+      - deeplabv3_resnet101
       -->
     <param name="model" value="deeplabv3_resnet101" />
   </node>
 `
-
 
 Depending on preferences and targets a different model can be used by replacing the value of the model parameter
 by one of the lines from the comment above.
@@ -31,7 +30,6 @@ The Vision-Node will automatically switch between object-detection, imagesegment
 
 For now the Vision-Node only supports pyTorch models. Within the next sprint it should be able to
 accept other frameworks aswell. It should also be possible to run object-detection and image-segmentation at the same time.
-
 
 ## How it works
 
@@ -61,7 +59,6 @@ This function is automatically triggered by the Camera-Subscriber of the Vision-
 5. Convert CV2-Image to ImageMsg
 6. Publish ImageMsg over ImagePublisher
 
-
 ## Visualization
 
 The Vision-Node implements an ImagePublisher under the topic: "/paf//Center/segmented_image"
@@ -72,7 +69,7 @@ The Configuartion File of RViz has been changed accordingly to display the publi
 
 ### Time
 
-First experiments showed that the handle_camera_image function is way to slow to be used reliably. It takes around 1.5 seconds to handle one image. 
+First experiments showed that the handle_camera_image function is way to slow to be used reliably. It takes around 1.5 seconds to handle one image.
 
 Right now the Vision-Node is not using cuda due to cuda-memory-issues that couldn't be fixed right away.
 
