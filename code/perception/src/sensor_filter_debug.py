@@ -17,6 +17,7 @@ from std_msgs.msg import Float32MultiArray
 
 import carla
 import rospy
+import pymap3d as pm
 # from carla_msgs.msg import CarlaLo
 
 GPS_RUNNING_AVG_ARGS: int = 10
@@ -184,7 +185,10 @@ class PositionPublisherNode(CompatibleNode):
         lat = data.latitude
         lon = data.longitude
         alt = data.altitude
-        x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
+        # x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
+        lonref, latref, altref = GeoRef.TOWN12.value
+        x, y, z = pm.geodetic2enu(lat, lon, alt,
+                                  lonref, latref, altref)
         # find reason for discrepancy
         x *= 0.998
         y *= 1.003
