@@ -142,9 +142,8 @@ class VehicleController(CompatibleNode):
                 elif (self.controller_selected_debug == 1):
                     p_stanley = 0
             else:
-                print("hier??!")
                 p_stanley = self.__choose_controller()
-            print(p_stanley)
+
             if p_stanley < 0.5:
                 self.logdebug('Using PURE_PURSUIT_CONTROLLER')
                 self.controller_pub.publish(float(PURE_PURSUIT_CONTROLLER))

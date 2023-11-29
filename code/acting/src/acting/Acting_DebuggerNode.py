@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
 """
-This node will (soon TODO) provide full testability
-for all Acting components with different testcases
+This node provides full testability for all Acting
+components by offering different testcases
 to hopefully fully implement and tune Acting without
 the need of working Perception and Planning components.
+This also generates Lists of all the important values
+to be saved in a file and plotted again.
+TODO: emergency brake behavior
 """
 
 import ros_compatibility as roscomp
@@ -15,38 +18,44 @@ from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
+from carla_msgs.msg import CarlaSpeedometer
 
 from trajectory_interpolation import interpolate_route
 
 # since this dummy is supposed to test everything ACTING,
 # Testers can choose which test to run from changing this Constant
-# 0: c. Velocity Only (publishes const. velocity,const.
-# steering = 0, no trajectory)
+
+# TEST_TYPE to choose which kind of Test to run:
+# 0: Test Velocity Controller with constant one velocity
+# const. velocity = MAX_VELOCITY_LOW
+# const. steering = 0
+# no trajectory
 # TURN OFF stanley and PP Controllers in acting.launch!
-# 1: changing velocity (TODO: implement good changing velocity-curve,
-# CURRENTLY alternates between two constant velocities)
+
+# 1: Test Velocity Controller with changing velocity
+# velocity = alternate all 20 secs: MAX_VELOCITY_LOW/_HIGH
+# const. steering = 0
+# no trajectory
 # TURN OFF stanley and PP Controllers in acting.launch!
-# 2: c. Velocity + trajectory (publishes const. velocity
-# and chosen trajectory (see TRAJECTORY_TYPE))
-# 3: TODO: implement more test cases as needed, trajectory + changing vel,
-# trajectory and actual calculated vel from acc or other etc
-# TODO: implement acc test, implement more tests as needed in general
-TEST_TYPE = 2                       # aka. TT
+
+# 2: Test Steering Controller on chooseable trajectory
+# velocity = MAX_VELOCITY_LOW TODO: maybe use velocity publisher?
+# steering = STEERING_CONTROLLER_USED (see below)
+# trajectory = TRAJECTORY_TYPE (see below)
+TEST_TYPE = 0                       # aka. TT
 
 STEERING: float = 0.0               # for TT0: steering -> always straight
-MAX_VELOCITY_LOW: float = 4.0       # for TT0/TT1: low velocity
-MAX_VELOCITY_HIGH: float = 12.0     # for TT1: high velocity
+MAX_VELOCITY_LOW: float = 10.0      # for TT0/TT1: low velocity
+MAX_VELOCITY_HIGH: float = 20.0     # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 2  # for TT1/TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 0      # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+TRAJECTORY_TYPE = 0          # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
 class Acting_Debugger(CompatibleNode):
     """
-    Creates a node with (soon TODO) full testability for all acting components
-    without the need of working perception or planning.
-    This hopefully allows us to fully finish Acting for later merging with the
-    other two big modules.
+    Creates a node with testability for all acting components
+    without the need of working/running perception or planning.
     """
 
     def __init__(self):
@@ -90,11 +99,30 @@ class Acting_Debugger(CompatibleNode):
             f"/paf/{self.role_name}/controller_selector_debug",
             qos_profile=1)
 
-        # Subscriber of current_pos, used for TODO ??
+        # Subscriber of current_pos, used for
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
+            qos_profile=1)
+
+        # SUBSCRIBER FOR EVALUATION LISTS FOR TUNING
+        self.max_velocity_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/max_velocity",
+            self.__get_max_velocity,
+            qos_profile=1)
+
+        self.current_velocity_sub: Subscriber = self.new_subscription(
+            CarlaSpeedometer,
+            f"/carla/{self.role_name}/Speed",
+            self.__get_current_velocity,
+            qos_profile=1)
+
+        self.current_throttle_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/throttle",
+            self.__get_throttle,
             qos_profile=1)
 
         # Initialize all needed "global" variables here
@@ -102,6 +130,12 @@ class Acting_Debugger(CompatibleNode):
         self.checkpoint_time = rospy.get_time()
         self.switchVelocity = False
         self.driveVel = MAX_VELOCITY_LOW
+
+        self.__current_velocities = []
+        self.__max_velocities = []
+        self.__throttles = []
+        self.time_set = False
+
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
         self.path_msg.header.frame_id = "global"
@@ -202,13 +236,23 @@ class Acting_Debugger(CompatibleNode):
         self.x = agent.x
         self.y = agent.y
         self.z = agent.z
-        # TODO what is happening here?
+        # TODO use this to get spawnpoint? necessary?
+
+    def __get_max_velocity(self, data: Float32):
+        self.__max_velocities.append(float(data.data))
+
+    def __get_current_velocity(self, data: CarlaSpeedometer):
+        self.__current_velocities.append(float(data.speed))
+
+    def __get_throttle(self, data: Float32):
+        self.__throttles.append(float(data.data))
 
     def run(self):
         """
         Control loop
         :return:
         """
+        self.checkpoint_time = rospy.get_time()
 
         def loop(timer_event=None):
             """
@@ -223,7 +267,7 @@ class Acting_Debugger(CompatibleNode):
 
             elif (TEST_TYPE == 1):
                 self.drive_Vel = MAX_VELOCITY_LOW
-                if (self.vel_switch_timer < rospy.get_time() - 40.0):
+                if (self.checkpoint_time < rospy.get_time() - 20.0):
                     self.checkpoint_time = rospy.get_time()
                     if (self.switchVelocity):
                         self.driveVel = MAX_VELOCITY_HIGH
@@ -245,6 +289,34 @@ class Acting_Debugger(CompatibleNode):
                 self.controller_selector_pub.publish(1)
             elif (STEERING_CONTROLLER_USED == 2):
                 self.controller_selector_pub.publish(2)
+
+            # set starttime to when the simulation is actually starting to run
+            # to really get 10 secs plots every time
+            if not self.time_set:
+                self.checkpoint_time = rospy.get_time()
+                print(self.checkpoint_time)
+                self.time_set = True
+
+            if (self.checkpoint_time < rospy.get_time() - 10.0):
+                self.checkpoint_time = rospy.get_time()
+                print(">>>>>>>>>>>> HIER <<<<<<<<<<<<<<")
+                print(self.checkpoint_time)
+                print(self.__max_velocities)
+                print(self.__current_velocities)
+                print(self.__throttles)
+                print(len(self.__max_velocities))
+                print(len(self.__current_velocities))
+                print(len(self.__throttles))
+                """
+                TODO: THIS DOES NOT WORK WITHOUT SUDO PERMISSION
+                doc_folder = os.path.join(os.path.expanduser('~'), 'Documents')
+                data_folder = os.path.join(doc_folder, 'data')
+                os.makedirs(data_folder, exist_ok=True)
+                output_file = os.path.join(data_folder, 'cur_vel.txt')
+                with open (output_file, "w") as f:
+                    for wert in self.__current_velocities:
+                        f.write(str(wert) + "; ")
+                """
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

@@ -62,6 +62,11 @@ class VelocityController(CompatibleNode):
             f"/paf/{self.role_name}/velocity_as_float",
             qos_profile=1)
 
+        self.veldiff_pub: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/vel_diff",
+            qos_profile=1)
+
         # needed to prevent the car from driving before a path to follow is
         # available. Might be needed later to slow down in curves
         self.trajectory_sub: Subscriber = self.new_subscription(
@@ -97,7 +102,7 @@ class VelocityController(CompatibleNode):
         :return:
         """
         self.loginfo('VehicleController node running')
-        pid = PID(0.25, 0, 0.1)  # values from paf21-2 todo: tune
+        pid = PID(0.47, 0, 0)  # PID(0.25, 0, 0.1) values from paf21-2 TUNE!
 
         def loop(timer_event=None):
             """
@@ -152,6 +157,8 @@ class VelocityController(CompatibleNode):
             throttle = max(throttle, 0)  # ensures that throttle >= 0
             throttle = min(throttle, 1.0)  # ensures that throttle <= 1
             self.throttle_pub.publish(throttle)
+            vel_diff = self.__current_velocity - v
+            self.veldiff_pub.publish(vel_diff)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
