@@ -13,7 +13,7 @@ TODO: emergency brake behavior
 import ros_compatibility as roscomp
 import numpy as np
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 import rospy
@@ -44,11 +44,15 @@ from trajectory_interpolation import interpolate_route
 # trajectory = TRAJECTORY_TYPE (see below)
 
 # 3: Test Emergency Breaks on TestType 1
-# TODO IMPLEMENT THIS TODO
+# const velocity = MAX_VELOCITY_LOW
+# const steering = 0
+# no trajectory
+# Triggers emergency break after 15 Seconds
+# TODO implement evaluation etc.
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 2                       # aka. TT
+TEST_TYPE = 3                       # aka. TT
 
 STEERING: float = 0.0               # for TT0: steering -> always straight
 MAX_VELOCITY_LOW: float = 5.0      # for TT0/TT1: low velocity
@@ -146,6 +150,12 @@ class Acting_Debugger(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
             self.__get_stanley_steer,
+            qos_profile=1)
+
+        # Publisher for emergency message TODO: should VC really trigger this?
+        self.emergency_pub: Publisher = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
             qos_profile=1)
 
         # Initialize all needed "global" variables here
@@ -315,6 +325,19 @@ class Acting_Debugger(CompatibleNode):
                 self.drive_Vel = MAX_VELOCITY_LOW
                 self.updated_trajectory(self.current_trajectory)
                 self.trajectory_pub.publish(self.path_msg)
+                self.velocity_pub.publish(self.driveVel)
+
+            elif (TEST_TYPE == 3):
+                # Continuously update path and publish it
+                self.drive_Vel = MAX_VELOCITY_LOW
+                if not self.time_set:
+                    self.checkpoint_time = rospy.get_time()
+                    self.time_set = True
+                if (self.checkpoint_time < rospy.get_time() - 15.0):
+                    self.checkpoint_time = rospy.get_time()
+                    self.emergency_pub.publish(True)
+                self.stanley_steer_pub.publish(STEERING)
+                self.pure_pursuit_steer_pub.publish(STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             elif (TEST_TYPE == 4):
