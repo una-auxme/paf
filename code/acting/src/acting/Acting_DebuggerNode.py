@@ -42,14 +42,20 @@ from trajectory_interpolation import interpolate_route
 # velocity = MAX_VELOCITY_LOW TODO: maybe use velocity publisher?
 # steering = STEERING_CONTROLLER_USED (see below)
 # trajectory = TRAJECTORY_TYPE (see below)
-TEST_TYPE = 0                       # aka. TT
+
+# 3: Test Emergency Breaks on TestType 1
+# TODO IMPLEMENT THIS TODO
+
+# 4: Test Steering-PID in vehicleController
+# TODO TODO
+TEST_TYPE = 2                       # aka. TT
 
 STEERING: float = 0.0               # for TT0: steering -> always straight
-MAX_VELOCITY_LOW: float = 10.0      # for TT0/TT1: low velocity
+MAX_VELOCITY_LOW: float = 5.0      # for TT0/TT1: low velocity
 MAX_VELOCITY_HIGH: float = 20.0     # for TT1: high velocity
 
-STEERING_CONTROLLER_USED = 2  # for TT1/TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 0          # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+STEERING_CONTROLLER_USED = 0  # for TT1/TT2: 0 = both ; 1 = PP ; 2 = Stanley
+TRAJECTORY_TYPE = 1          # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
 class Acting_Debugger(CompatibleNode):
@@ -68,25 +74,25 @@ class Acting_Debugger(CompatibleNode):
         self.role_name = self.get_param('role_name', 'ego_vehicle')
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
 
-        # Publisher for Dummy-Trajectory
+        # Publisher for Dummy Trajectory
         self.trajectory_pub: Publisher = self.new_publisher(
             Path,
             "/paf/" + self.role_name + "/trajectory",
             qos_profile=1)
 
-        # Publisher for TT0 and TT1 on max_velocity
+        # Publisher for Dummy Velocity
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/max_velocity",
             qos_profile=1)
 
-        # Steer-SC: Publisher for TT0, constant Steer to stanley_steer
+        # Stanley: Publisher for Dummy Stanley-Steer
         self.stanley_steer_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
             qos_profile=1)
 
-        # Steer-PPC: Publisher for TT0, constant Steer to pure_pursuit_steer
+        # PurePursuit: Publisher for Dummy PP-Steer
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
@@ -99,30 +105,47 @@ class Acting_Debugger(CompatibleNode):
             f"/paf/{self.role_name}/controller_selector_debug",
             qos_profile=1)
 
-        # Subscriber of current_pos, used for
+        # Subscriber of current_pos, used for TODO nothing yet
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
 
-        # SUBSCRIBER FOR EVALUATION LISTS FOR TUNING
+        # ---> EVALUATION/TUNING: Subscribers for plotting
+        # Subscriber for max_velocity for plotting
         self.max_velocity_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/max_velocity",
             self.__get_max_velocity,
             qos_profile=1)
 
+        # Subscriber for current_velocity for plotting
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
             qos_profile=1)
 
+        # Subscriber for current_throttle for plotting
         self.current_throttle_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/throttle",
             self.__get_throttle,
+            qos_profile=1)
+
+        # Subscriber for PurePursuit_steer
+        self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/pure_pursuit_steer",
+            self.__get_purepursuit_steer,
+            qos_profile=1)
+
+        # Subscriber for Stanley_Steer
+        self.stanley_steer_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/stanley_steer",
+            self.__get_stanley_steer,
             qos_profile=1)
 
         # Initialize all needed "global" variables here
@@ -136,12 +159,15 @@ class Acting_Debugger(CompatibleNode):
         self.__throttles = []
         self.time_set = False
 
+        self.__purepursuit_steers = []
+        self.__stanley_steers = []
+
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
         self.path_msg.header.frame_id = "global"
 
         # Generate Trajectory as selected in TRAJECTORY_TYPE
-        # Spawncoords of the car at the simulationstart TODO: get from position
+        # Spawncoords at the simulationstart TODO: get from position
         startx = 984.5
         starty = -5442.0
 
@@ -247,6 +273,12 @@ class Acting_Debugger(CompatibleNode):
     def __get_throttle(self, data: Float32):
         self.__throttles.append(float(data.data))
 
+    def __get_stanley_steer(self, data: Float32):
+        self.__stanley_steers.append(float(data.data))
+
+    def __get_purepursuit_steer(self, data: Float32):
+        self.__purepursuit_steers.append(float(data.data))
+
     def run(self):
         """
         Control loop
@@ -285,38 +317,32 @@ class Acting_Debugger(CompatibleNode):
                 self.trajectory_pub.publish(self.path_msg)
                 self.velocity_pub.publish(self.driveVel)
 
+            elif (TEST_TYPE == 4):
+                self.drive_Vel = MAX_VELOCITY_LOW
+                self.stanley_steer_pub.publish(STEERING)
+                self.pure_pursuit_steer_pub.publish(STEERING)
+
             if (STEERING_CONTROLLER_USED == 1):
                 self.controller_selector_pub.publish(1)
             elif (STEERING_CONTROLLER_USED == 2):
                 self.controller_selector_pub.publish(2)
 
-            # set starttime to when the simulation is actually starting to run
+            """# set starttime to when simulation is actually starting to run
             # to really get 10 secs plots every time
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
-                print(self.checkpoint_time)
                 self.time_set = True
 
             if (self.checkpoint_time < rospy.get_time() - 10.0):
                 self.checkpoint_time = rospy.get_time()
-                print(">>>>>>>>>>>> HIER <<<<<<<<<<<<<<")
-                print(self.checkpoint_time)
+                print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
                 print(self.__max_velocities)
                 print(self.__current_velocities)
                 print(self.__throttles)
                 print(len(self.__max_velocities))
                 print(len(self.__current_velocities))
                 print(len(self.__throttles))
-                """
-                TODO: THIS DOES NOT WORK WITHOUT SUDO PERMISSION
-                doc_folder = os.path.join(os.path.expanduser('~'), 'Documents')
-                data_folder = os.path.join(doc_folder, 'data')
-                os.makedirs(data_folder, exist_ok=True)
-                output_file = os.path.join(data_folder, 'cur_vel.txt')
-                with open (output_file, "w") as f:
-                    for wert in self.__current_velocities:
-                        f.write(str(wert) + "; ")
-                """
+                print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")"""
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

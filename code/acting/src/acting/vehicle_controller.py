@@ -30,15 +30,17 @@ class VehicleController(CompatibleNode):
     def __init__(self):
         super(VehicleController, self).__init__('vehicle_controller')
         self.loginfo('VehicleController node started')
-
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
         self.role_name = self.get_param('role_name', 'ego_vehicle')
 
+        # Publisher for Carla Vehicle Control Commands
         self.control_publisher: Publisher = self.new_publisher(
             CarlaEgoVehicleControl,
             f'/carla/{self.role_name}/vehicle_control_cmd',
             qos_profile=10
         )
+
+        # Publisher for Status TODO: Where needed? Why carla?
         self.status_pub: Publisher = self.new_publisher(
             Bool,
             f"/carla/{self.role_name}/status",
@@ -47,6 +49,8 @@ class VehicleController(CompatibleNode):
                 durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
 
+        # Publisher for which steering-controller is mainly used
+        # 1 = PurePursuit and 2 = Stanley TODO: needed?
         self.controller_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/controller",
@@ -54,13 +58,14 @@ class VehicleController(CompatibleNode):
                                    durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
 
+        # Publisher for emergency message TODO: should VC really trigger this?
         self.emergency_pub: Publisher = self.new_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
             qos_profile=QoSProfile(depth=10,
                                    durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
-
+        # Subscriber for emergency TODO: who can trigger this, what happens?
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
@@ -99,6 +104,11 @@ class VehicleController(CompatibleNode):
             f'/paf/{self.role_name}/target_steering_debug',
             qos_profile=1)
 
+        self.pidpoint_publisher: Publisher = self.new_publisher(
+            Float32,
+            f'/paf/{self.role_name}/pid_point_debug',
+            qos_profile=1)
+
         self.controller_selector_sub: Subscriber = self.new_subscription(
             Float32,
             f'/paf/{self.role_name}/controller_selector_debug',
@@ -124,7 +134,7 @@ class VehicleController(CompatibleNode):
         """
         self.status_pub.publish(True)
         self.loginfo('VehicleController node running')
-        pid = PID(0.5, 0.1, 0.1, setpoint=0)    # TODO: tune parameters
+        pid = PID(0.5, 0.1, 0.1, setpoint=0)  # TODO: TUNE AND FIX?
         pid.output_limits = (-MAX_STEER_ANGLE, MAX_STEER_ANGLE)
 
         def loop(timer_event=None) -> None:
@@ -155,6 +165,8 @@ class VehicleController(CompatibleNode):
             f_pure_p = (1 - p_stanley) * self.__pure_pursuit_steer
             steer = f_stanley + f_pure_p
 
+            self.target_steering_publisher.publish(steer)  # debugging
+
             message = CarlaEgoVehicleControl()
             message.reverse = False
             if self.__throttle > 0:  # todo: driving backwards?
@@ -166,13 +178,13 @@ class VehicleController(CompatibleNode):
 
             message.hand_brake = False
             message.manual_gear_shift = False
+            # sets target_steer to steer
             pid.setpoint = self.__map_steering(steer)
             message.steer = pid(self.__current_steer)
             message.gear = 1
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
             self.control_publisher.publish(message)
-            self.target_steering_publisher.publish(steer)  # debugging
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -182,11 +194,13 @@ class VehicleController(CompatibleNode):
         Takes the steering angle calculated by the controller and maps it to
         the available steering angle
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
+        TODO IS IT CALCULATED THAT WAY??
         :return: float for steering in [-1, 1]
         """
-        tune_k = -5  # factor for tuning TODO: tune
+        tune_k = -5  # factor for tuning TODO: tune WHAT IS THIS FOR?
         r = 1 / (math.pi / 2)
         steering_float = steering_angle * r * tune_k
+        self.pidpoint_publisher.publish(steering_float)
         return steering_float
 
     def __emergency_break(self, data) -> None:

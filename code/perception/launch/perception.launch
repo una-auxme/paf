@@ -7,10 +7,19 @@
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
-<!--
-  <node pkg="perception" type="segmentation_node.py" name="SegmentationNode" output="screen">
+
+  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
+     <!-- 
+      Object-Detection: 
+      - fasterrcnn_resnet50_fpn_v2 
+      - fasterrcnn_mobilenet_v3_large_320_fpn
+
+      Image-Segmentation:
+      - deeplabv3_resnet101 
+      -->
+    <param name="model" value="fasterrcnn_resnet50_fpn_v2" />
   </node>
 
   <node pkg="perception" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
@@ -47,5 +56,4 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
-  -->
 </launch>

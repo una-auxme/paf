@@ -24,7 +24,7 @@ class StanleyController(CompatibleNode):
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
         self.role_name = self.get_param('role_name', 'ego_vehicle')
 
-        # Subscriber
+        # Subscribers
         self.position_sub: Subscriber = self.new_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory",
@@ -49,7 +49,7 @@ class StanleyController(CompatibleNode):
             self.__set_heading,
             qos_profile=1)
 
-        # Publisher
+        # Publishers
         self.stanley_steer_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
@@ -60,6 +60,9 @@ class StanleyController(CompatibleNode):
             f"/paf/{self.role_name}/stanley_debug",
             qos_profile=1)
 
+        # Publishers for debugging StanleyController soon
+        # TODO: only works with perfect current_pos
+        # publish the target and the current position
         self.targetwp_publisher: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/current_target_wp",
@@ -70,8 +73,8 @@ class StanleyController(CompatibleNode):
             f"/paf/{self.role_name}/current_x",
             qos_profile=1)
 
-        self.__position: (float, float) = None  # x, y
-        self.__last_pos: (float, float) = None
+        self.__position: (float, float) = None  # x , y
+        self.__last_pos: (float, float) = None  # x , y
         self.__path: Path = None
         self.__heading: float = None
         self.__velocity: float = None
@@ -163,10 +166,10 @@ class StanleyController(CompatibleNode):
     def __calculate_steer(self) -> float:
         """
         Calculates the steering angle based on the current information
-        using the Stanly algorithm
+        using the Stanley algorithm
         :return: steering angle
         """
-        k_ce = 0.10  # todo: tune
+        k_ce = 0.10  # TODO: tune
         k_v = 1.0
 
         current_velocity: float
@@ -187,7 +190,7 @@ class StanleyController(CompatibleNode):
                                             current_velocity * k_v)
         steering_angle *= - 1
 
-        # for debugging ->
+        # for debugging TODO: currently not that useful->
         debug_msg = StanleyDebug()
         debug_msg.heading = self.__heading
         debug_msg.path_heading = traj_heading
@@ -196,7 +199,6 @@ class StanleyController(CompatibleNode):
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
         # <-
-
         # 2 more debugging messages: TODO: maybe put into DEBUGGER NODE?
         self.targetwp_publisher.publish((closest_point.pose.position.x-984.5))
         self.currentx_publisher.publish(self.__position[0]-984.5)

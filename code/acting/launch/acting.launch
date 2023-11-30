@@ -1,8 +1,8 @@
-<!-- TODO: Insert components of acting component-->
+<!---->
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.1" />
-<!--
+
     <node pkg="acting" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -12,7 +12,7 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
--->
+
     <node pkg="acting" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -44,15 +44,15 @@
         <param name="enabled" value="False" /> <!-- set to True to publish dummy velocities for testing-->
     </node>
 
-<!--
     <node pkg="acting" type="acc.py" name="Acc" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
--->
 
-    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_speed" args="/paf/hero/velocity_as_float /carla/hero/Speed /paf/hero/max_velocity /paf/hero/throttle /paf/hero/vel_diff"/>
+    <!-- Some plot nodes for debugging speed/steering etc. -->
+    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_speed" args="/paf/hero/velocity_as_float /carla/hero/Speed /paf/hero/max_velocity /paf/hero/throttle /paf/hero/vel_diff"/-->
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_trajectoryfollowing" args="/paf/hero/current_x /paf/hero/current_target_wp"/-->
-    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/carla/hero/vehicle_control_cmd/steer /paf/hero/target_steering_debug"/-->
+    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/carla/hero/vehicle_control_cmd/steer /paf/hero/target_steering_debug /paf/hero/pid_point_debug"/-->
+    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_CONTROLLER" args="/paf/hero/controller"/-->
 
 </launch>
