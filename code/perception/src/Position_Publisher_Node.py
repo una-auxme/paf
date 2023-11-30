@@ -91,12 +91,9 @@ class PositionPublisherNode(CompatibleNode):
         Args:
             opendrive (String): OpenDrive Map from carla
         """
-        self.logerr("GEOREGASDFJKAOFAOGAD: MapUpdate called")
         root = eTree.fromstring(opendrive.data)
         header = root.find("header")
-        self.logerr(f"header tags: {header.tag}")
         geoRefText = header.find("geoReference").text
-        self.logerr(f"total header: {geoRefText}")
 
         latString = "+lat_0="
         lonString = "+lon_0="

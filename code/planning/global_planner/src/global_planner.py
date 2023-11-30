@@ -10,7 +10,6 @@ from carla_msgs.msg import CarlaRoute   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray
-import carla
 
 from preplanning_trajectory import OpenDriveConverter
 
@@ -36,21 +35,6 @@ class PrePlanner(CompatibleNode):
 
     def __init__(self):
         super(PrePlanner, self).__init__('DevGlobalRoute')
-
-        # get real data
-        self.host = rospy.get_param('~host', 'carla-simulator')
-        self.port = rospy.get_param('~port', 2000)
-        timeout = rospy.get_param('~timeout', 100.0)
-
-        # Connect to the CARLA server
-        self.client = carla.Client(self.host, self.port)
-        self.client.set_timeout(timeout)
-
-        # Get the world
-        self.world = self.client.get_world()
-        self.vehicle = None
-        self.ideal_x = None
-        self.ideal_y = None
 
         self.path_backup = Path()
 
@@ -95,10 +79,6 @@ class PrePlanner(CompatibleNode):
             qos_profile=1)
         self.loginfo('PrePlanner-Node started')
 
-    def get_ideal_position(self, data: PoseStamped):
-        self.ideal_x = data.poses.position.x
-        self.ideal_y = data.poses.position.y
-
     def global_route_callback(self, data: CarlaRoute) -> None:
         """
         when the global route gets updated a new trajectory is calculated with
@@ -127,8 +107,6 @@ class PrePlanner(CompatibleNode):
         y_start = self.agent_pos.y      # -5433.2
         x_target = data.poses[0].position.x
         y_target = data.poses[0].position.y
-        self.logerr(f"first waypoint: {x_target}, {y_target}")
-        self.logerr(f"current pos: {x_start}, {y_start}")
         if abs(x_start - x_target) > self.distance_spawn_to_first_wp or \
            abs(y_start - y_target) > self.distance_spawn_to_first_wp:
             self.logwarn("PrePlanner: current agent-pose doesnt match the "
@@ -209,19 +187,6 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
-        self.logerr(f"Trajectory {self.path_backup}")
-        self.logerr(f"Position: {x_start}. {y_start}. {self.agent_pos.z}")
-
-        # Get the ego vehicle
-        if self.vehicle is None:
-            for actor in self.world.get_actors():
-                self.logdebug(f"role: {actor.attributes.get('role_name')}")
-                if actor.attributes.get('role_name') == "hero":
-                    self.vehicle = actor
-                    break
-        pos = self.vehicle.get_location()
-        self.logerr(f"""Real position: {pos.x},{pos.y}""")
-
         self.loginfo("PrePlanner: published trajectory")
 
 #    def world_info_callback(self, data: CarlaWorldInfo) -> None:
