@@ -43,3 +43,11 @@ After that the local PC needs to be authenticated with the evalai user token. Fo
 To push the image the command `evalai push <image>:<tag> --phase <phase_name>` is used. `<phase_name>` specifies the Leaderboard track.
 
 We will mostly use the command `evalai push <image>:<tag> --phase carla-leaderboard-20-map-2098 --private`
+
+### Known issues
+
+#### Wrong docker context
+
+The docker installation can be split into multiple context environments. The mode we opearte most of the time is `rootless`. The `evalai` module by default uses the `DEFAULT` context.
+
+To switch context you can use your docker plugin in Visual Studio Code. At the bottom you can select the context menu and switch context. After switching context your docker will probably be empty so you need to build the submission image again.
