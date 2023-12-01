@@ -8,27 +8,10 @@ A good source to read up on the different reference frames is:
 http://dirsig.cis.rit.edu/docs/new/coordinates.html
 """
 import math
-from enum import Enum
 from tf.transformations import euler_from_quaternion
 
 
-# Class to choose a map with a predefined reference point
-class GeoRef(Enum):
-    TOWN01 = 0, 0, 0
-    TOWN02 = 0, 0, 0
-    TOWN03 = 0, 0, 0
-    TOWN04 = 0, 0, 0
-    TOWN05 = 0, 0, 0
-    TOWN06 = 0, 0, 0  # lat =, lon =, alt = #Town06/HD not found
-    TOWN07 = 0, 0, 0  # lat =, lon =, alt = #Town07/HD not found
-    TOWN08 = 0, 0, 0  # lat =, lon =, alt = #Town08/HD not found
-    TOWN09 = 0, 0, 0  # lat =, lon =, alt = #Town09/HD not found
-    TOWN10 = 0, 0, 0  # Town10HD
-    TOWN11 = 0, 0, 0  # lat =, lon =, alt = #Town11/HD not found
-    TOWN12 = 0, 0, 0  # 35.25000, -101.87500, 331.00000
-
-
-a = 6378137
+a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
 b = 6356752.3142
 f = (a - b) / a
 e_sq = f * (2 - f)
@@ -43,19 +26,39 @@ class CoordinateTransformer:
     h_ref: float
     ref_set = False
 
-    def __init__(self, gps_ref: GeoRef):
-        self.la_ref = gps_ref.value[0]
-        self.ln_ref = gps_ref.value[1]
-        self.h_ref = gps_ref.value[2]
+    def __init__(self):
+        pass
 
     def gnss_to_xyz(self, lat, lon, h):
-        return geodetic_to_enu(lat, lon, h,
-                               self.la_ref, self.ln_ref, self.h_ref)
+        return geodetic_to_enu(lat, lon, h)
 
 
-def geodetic_to_enu(lat, lon, h, lat_ref, lon_ref, h_ref):
-    x, y, z = geodetic_to_ecef(lat, lon, h)
-    return ecef_to_enu(x, y, z, lat_ref, lon_ref, h_ref)
+def geodetic_to_enu(lat, lon, alt):
+    """
+    Method from pylot project to calculate coordinates
+    https://github.com/erdos-project/pylot/blob/master/pylot/utils.py#L470
+
+    Args:
+        lat (float): latitude
+        lon (float): longitude
+        alt (float: altitude
+
+    Returns:
+        x, y, z: coordinates
+    """
+
+    scale = math.cos(CoordinateTransformer.la_ref * math.pi / 180.0)
+    basex = scale * math.pi * a / 180.0 * CoordinateTransformer.ln_ref
+    basey = scale * a * math.log(
+        math.tan((90.0 + CoordinateTransformer.la_ref) * math.pi / 360.0))
+
+    x = scale * math.pi * a / 180.0 * lon - basex
+    y = scale * a * math.log(
+        math.tan((90.0 + lat) * math.pi / 360.0)) - basey
+
+    # Is not necessary in new version
+    # y *= -1
+    return x, y, alt + 331.00000
 
 
 def geodetic_to_ecef(lat, lon, h):
