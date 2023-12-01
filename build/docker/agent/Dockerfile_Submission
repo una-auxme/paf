@@ -102,7 +102,7 @@ RUN source /opt/ros/noetic/setup.bash && \
     catkin_make install
 
 ENV CARLA_ROS_BRIDGE_ROOT=/catkin_ws/src/ros-bridge
-
+ENV ROS_DISTRO="noetic"
 # avoid python warnings about missing bin directory in PATH
 # (as we're not running as root, pip installs into ~/.local/bin)
 ENV PATH=$PATH:/home/$USERNAME/.local/bin
@@ -134,6 +134,7 @@ ENV REPETITIONS=1
 ENV DEBUG_CHALLENGE=1
 #ENV TEAM_AGENT=$LEADERBOARD_ROOT/leaderboard/autoagents/human_agent.py
 ENV TEAM_AGENT=/workspace/code/agent/src/agent/agent.py
+ENV TEAM_CODE_ROOT=/workspace/code
 ENV CHECKPOINT_ENDPOINT=/workspace/code/simulation_results.json
 ENV CHALLENGE_TRACK=MAP
 
@@ -163,8 +164,9 @@ RUN source ~/.bashrc && pip install torch==1.13.1 && pip install -r /workspace/r
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
-RUN rm -rf /workspace/code/perception/src/dataset_generator.py \
-    && rm -rf /workspace/code/planning/global_planner/src/dev_global_route.py
+
+# removes all files which use the carla API in agent code -> Not allowed for Submission
+RUN find /workspace/code -type f -exec grep -l 'import carla' {} \; | xargs rm -f
 
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
