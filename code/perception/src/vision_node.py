@@ -67,7 +67,8 @@ class VisionNode(CompatibleNode):
             'yolo_nas_s': (NAS, "yolo_nas_s.pt", "detection", "ultralytics"),
             'rtdetr-l': (RTDETR, "rtdetr-l.pt", "detection", "ultralytics"),
             'rtdetr-x': (RTDETR, "rtdetr-x.pt", "detection", "ultralytics"),
-            'yolov8x-seg': (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
+            'yolov8x-seg': (YOLO, "yolov8x-seg.pt", "segmentation",
+                            "ultralytics"),
             'sam_l': (SAM, "sam_l.pt", "detection", "ultralytics"),
             'FastSAM-x': (FastSAM, "FastSAM-x.pt", "detection", "ultralytics"),
 
@@ -79,7 +80,7 @@ class VisionNode(CompatibleNode):
         self.bridge = CvBridge()
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
-        self.device = torch.device("cuda" 
+        self.device = torch.device("cuda"
                                    if torch.cuda.is_available() else "cpu")
 
         # publish / subscribe setup
@@ -130,8 +131,8 @@ class VisionNode(CompatibleNode):
     def handle_camera_image(self, image):
         startTime = perf_counter()
 
-        #free up cuda memory
-        if(self.device == "cuda"):
+        # free up cuda memory
+        if self.device == "cuda":
             torch.cuda.empty_cache()
 
         print("Before Model: ", perf_counter() - startTime)
@@ -141,10 +142,10 @@ class VisionNode(CompatibleNode):
 
         if self.framework == "ultralytics":
             vision_result = self.predict_ultralytics(image)
-            
+
         print("After Model: ", perf_counter() - startTime)
 
-        #publish image to rviz
+        # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="passthrough")
         img_msg.header = image.header
@@ -166,16 +167,15 @@ class VisionNode(CompatibleNode):
 
         input_image = preprocess(cv_image).unsqueeze(dim=0)
         input_image = input_image.to(self.device)
-        
         prediction = self.model(input_image)
-        
+
         if (self.type == "detection"):
             vision_result = self.apply_bounding_boxes(cv_image, prediction[0])
         if (self.type == "segmentation"):
             vision_result = self.create_mask(cv_image, prediction['out'])
-        
+
         return vision_result
-    
+
     def predict_ultralytics(self, image):
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
@@ -183,14 +183,13 @@ class VisionNode(CompatibleNode):
         print(cv_image.shape)
 
         output = self.model(cv_image)
-        
+
         return output[0].plot()
-    
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
         for i in range(21):
-           output_predictions[i] = output_predictions[i] == i
+            output_predictions[i] = output_predictions[i] == i
 
         output_predictions = output_predictions.to(dtype=torch.bool)
 
@@ -204,7 +203,6 @@ class VisionNode(CompatibleNode):
         cv_segmented = segmented_image.detach().cpu().numpy()
         cv_segmented = np.transpose(cv_segmented, (1, 2, 0))
         return cv_segmented
-
 
     def apply_bounding_boxes(self, input_image, model_output):
         transposed_image = np.transpose(input_image, (2, 0, 1))
