@@ -13,13 +13,26 @@ The following code shows how the Vision-Node is specified in perception.launch
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
      <!--
-      Object-Detection:
-      - fasterrcnn_resnet50_fpn_v2
+      Object-Detection: 
+      - fasterrcnn_resnet50_fpn_v2 
       - fasterrcnn_mobilenet_v3_large_320_fpn
+      - yolov8n
+      - yolov8s
+      - yolov8m
+      - yolov8l
+      - yolov8x
+      - yolo_nas_l
+      - yolo_nas_m
+      - yolo_nas_s
+      - rtdetr-l
+      - rtdetr-x
+      - sam_l
+      - FastSAM-x
       Image-Segmentation:
       - deeplabv3_resnet101
+      - yolov8x-seg 
       -->
-    <param name="model" value="deeplabv3_resnet101" />
+    <param name="model" value="yolov8x-seg" />
   </node>
 `
 
@@ -30,6 +43,27 @@ The Vision-Node will automatically switch between object-detection, imagesegment
 
 For now the Vision-Node only supports pyTorch models. Within the next sprint it should be able to
 accept other frameworks aswell. It should also be possible to run object-detection and image-segmentation at the same time.
+
+## Model overview
+
+| Model                                 | Type         | Stable | Comments                              |
+|---------------------------------------|--------------|--------|---------------------------------------|
+| fasterrcnn_resnet50_fpn_v2            | detection    | no     | CUDA-Problems                         |
+| fasterrcnn_mobilenet_v3_large_320_fpn | detection    | no     | CUDA-Problems                         |
+| yolov8n                               | detection    | yes    |                                       |
+| yolov8s                               | detection    | yes    |                                       |
+| yolov8m                               | detection    | yes    |                                       |
+| yolov8l                               | detection    | yes    |                                       |
+| yolov8x                               | detection    | yes    |                                       |
+| yolo_nas_l                            | detection    | no     | Missing super_gradients package error |
+| yolo_nas_m                            | detection    | no     | Missing super_gradients package error |
+| yolo_nas_s                            | detection    | no     | Missing super_gradients package error |
+| rtdetr-l                              | detection    | yes    |                                       |
+| rtdetr-x                              | detection    | yes    |                                       |
+| sam_l                                 | detection    | no     | Ultralytics Error                     |
+| FastSAM-x                             | detection    | no     | CUDA Problems                         |
+| deeplabv3_resnet101                   | segmentation | no     | CUDA Problems, Segmentation Problems  |
+| yolov8x-seg                           | segmentation | yes    |                                       |
 
 ## How it works
 
@@ -61,18 +95,21 @@ This function is automatically triggered by the Camera-Subscriber of the Vision-
 
 ## Visualization
 
-The Vision-Node implements an ImagePublisher under the topic: "/paf//Center/segmented_image"
+The Vision-Node implements an ImagePublisher under the topic: "/paf/hero/Center/segmented_image"
 
-The Configuartion File of RViz has been changed accordingly to display the published images alongside with the Camera.
+The Configuration File of RViz has been changed accordingly to display the published images alongside with the Camera.
+
+The build in Visualization of the YOLO-Models works very well.
 
 ## Known Issues
 
 ### Time
 
-First experiments showed that the handle_camera_image function is way to slow to be used reliably. It takes around 1.5 seconds to handle one image.
+When running on YOLO-Models the Time issue is fixed because ultralytics has some way of managing the CUDA-Resources very well.
 
-Right now the Vision-Node is not using cuda due to cuda-memory-issues that couldn't be fixed right away.
+When running on different models, the CUDA-Error persists.
 
-The performance is expected to rise quite a bit when using cuda.
+## Segmentation
 
-Also their is lots more room for testing different models inside the Vision-Node to evualte their accuracy and time-performance.
+For some reason the create_segmentation mask function works in a standalone project, but not in the Vision-Node.
+I stopped debugging, because the YOLO-Models work way better and build a very good and stable baseline.
