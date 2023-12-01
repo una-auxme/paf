@@ -11,7 +11,7 @@ import math
 from tf.transformations import euler_from_quaternion
 
 
-a = 6378137  # EARTH_RADIUS_EQUA in Pylot
+a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
 b = 6356752.3142
 f = (a - b) / a
 e_sq = f * (2 - f)
