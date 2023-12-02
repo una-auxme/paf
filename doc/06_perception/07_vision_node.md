@@ -1,15 +1,16 @@
 # Vision Node
 
-The Visison Node serves as a replacement for the previous segmentation-node.
-It provides an adaptive interface that is able to perform object-detection or image-segmentation
+The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation
 on several different models. The model can be specified as a parameter in the perception.launch file.
+
+The VisionNode is currently using the yolov8x-seg model.
 
 ## Usage
 
 The following code shows how the Vision-Node is specified in perception.launch
 
 `
-<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen"><br>
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
      <!--
@@ -103,10 +104,7 @@ self.model_dict = {
             'rtdetr-x': (RTDETR, "rtdetr-x.pt", "detection", "ultralytics"),
             'yolov8x-seg': (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
             'sam_l': (SAM, "sam_l.pt", "detection", "ultralytics"),
-            'FastSAM-x': (FastSAM, "FastSAM-x.pt", "detection", "ultralytics"),
-
-        }
-`
+            'FastSAM-x': (FastSAM, "FastSAM-x.pt", "detection", "ultralytics")}`
 
 ### Core
 
