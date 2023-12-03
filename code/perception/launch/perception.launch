@@ -4,7 +4,7 @@
   <arg name="control_loop_rate" default="0.1" />
   
   <!--just for testing purposes -> delete when pushing to main-->
-  <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debugger" output="screen">
+  <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
@@ -63,6 +63,10 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
 
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
+  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
+  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" /-->
+
 
 </launch>

@@ -40,10 +40,10 @@
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
-    <node pkg="acting" type="DummyTrajectorySub.py" name="DummyTrajectorySub" output="screen">
+    <!--node pkg="acting" type="DummyTrajectorySub.py" name="DummyTrajectorySub" output="screen">
         <param name="control_loop_rate" value="1" />
         <param name="role_name" value="$(arg role_name)" />
-    </node>
+    </node-->
 
    <!--node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
         <param name="role_name" value="$(arg role_name)" />

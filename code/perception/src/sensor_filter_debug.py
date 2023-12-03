@@ -10,20 +10,20 @@ from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32
-from coordinate_transformation import CoordinateTransformer, GeoRef
+from std_msgs.msg import Float32, String
+from coordinate_transformation import CoordinateTransformer
 from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
+from xml.etree import ElementTree as eTree
 
 import carla
 import rospy
-import pymap3d as pm
 # from carla_msgs.msg import CarlaLo
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
-class PositionPublisherNode(CompatibleNode):
+class SensorFilterDebugNode(CompatibleNode):
     """
     Node publishes a filtered gps signal.
     This is achieved using a rolling average.
@@ -34,7 +34,7 @@ class PositionPublisherNode(CompatibleNode):
         :return:
         """
 
-        super(PositionPublisherNode, self).__init__('ekf_translation')
+        super(SensorFilterDebugNode, self).__init__('ekf_translation')
         # self.current_pos = PoseStamped()
         self.ideal_current_pos = PoseStamped()
         self.carla_current_pos = PoseStamped()
@@ -47,9 +47,15 @@ class PositionPublisherNode(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
         # todo: automatically detect town
-        self.transformer = CoordinateTransformer(GeoRef.TOWN12)
+        self.transformer = None
 
         # Subscriber
+        self.map_sub = self.new_subscription(
+            String,
+            "/carla/" + self.role_name + "/OpenDRIVE",
+            self.get_geoRef,
+            qos_profile=1)
+        
         self.imu_subscriber = self.new_subscription(
             Imu,
             "/carla/" + self.role_name + "/Ideal_IMU",
@@ -141,6 +147,16 @@ class PositionPublisherNode(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             self.update_heading_error,
             qos_profile=1)
+        
+        # Publish x and y coordinates of ideal_GPS and carla_pos
+        self.ideal_x_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/ideal_x",
+            qos_profile=1)
+        self.ideal_y_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/ideal_y",
+            qos_profile=1)
 
     def update_heading_error(self, data: Float32):
         """
@@ -161,8 +177,8 @@ class PositionPublisherNode(CompatibleNode):
         """
 
         error = Float32MultiArray()
-        # error.layout.dim = [0, 0]
-        error.data = [0, 0]
+        
+        error.data = [0, 0, 0]
         # calculate the error between ideal_current_pos and current_pos
         error.data[0] = math.sqrt((
          self.ideal_current_pos.pose.position.x - data.pose.position.x)**2
@@ -173,6 +189,33 @@ class PositionPublisherNode(CompatibleNode):
          + (self.carla_current_pos.pose.position.y - data.pose.position.y)**2)
 
         self.location_error_publisher.publish(error)
+
+    def get_geoRef(self, opendrive: String):
+        """_summary_
+        Reads the reference values for lat and lon from the carla OpenDriveMap
+        Args:
+            opendrive (String): OpenDrive Map from carla
+        """
+        root = eTree.fromstring(opendrive.data)
+        header = root.find("header")
+        geoRefText = header.find("geoReference").text
+
+        latString = "+lat_0="
+        lonString = "+lon_0="
+
+        indexLat = geoRefText.find(latString)
+        indexLon = geoRefText.find(lonString)
+
+        indexLatEnd = geoRefText.find(" ", indexLat)
+        indexLonEnd = geoRefText.find(" ", indexLon)
+
+        latValue = float(geoRefText[indexLat + len(latString):indexLatEnd])
+        lonValue = float(geoRefText[indexLon + len(lonString):indexLonEnd])
+
+        CoordinateTransformer.la_ref = latValue
+        CoordinateTransformer.ln_ref = lonValue
+        CoordinateTransformer.ref_set = True
+        self.transformer = CoordinateTransformer()
 
     def update_gps_data(self, data: NavSatFix):
         """
@@ -185,13 +228,13 @@ class PositionPublisherNode(CompatibleNode):
         lat = data.latitude
         lon = data.longitude
         alt = data.altitude
-        # x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
-        lonref, latref, altref = GeoRef.TOWN12.value
-        x, y, z = pm.geodetic2enu(lat, lon, alt,
-                                  lonref, latref, altref)
+
+        if self.transformer is None:
+            self.transformer = CoordinateTransformer()
+        x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
         # find reason for discrepancy
-        x *= 0.998
-        y *= 1.003
+        # x *= 0.998
+        # y *= 1.003
 
         # self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
         # self.avg_xyz[-1] = np.matrix([x, y, z])
@@ -238,6 +281,29 @@ class PositionPublisherNode(CompatibleNode):
 
         self.carla_pos_publisher.publish(carla_pos)
         self.carla_current_pos = carla_pos
+
+        # get x and y coordinates of ideal_GPS and carla_pos
+        # publish errors between ideal_x and carla_pos.x
+        # and ideal_y and carla_pos.y
+        ideal_x = Float32MultiArray()
+        ideal_y = Float32MultiArray()
+        x_error = (
+            self.ideal_current_pos.pose.position.x
+            - self.carla_current_pos.pose.position.x
+        )
+        y_error = (
+            self.ideal_current_pos.pose.position.y
+            - self.carla_current_pos.pose.position.y
+        )
+        ideal_x.data = [self.ideal_current_pos.pose.position.x,
+                        self.carla_current_pos.pose.position.x,
+                        x_error]
+        ideal_y.data = [self.ideal_current_pos.pose.position.y,
+                        self.carla_current_pos.pose.position.y,
+                        y_error]
+
+        self.ideal_x_publisher.publish(ideal_x)
+        self.ideal_y_publisher.publish(ideal_y)
 
     def update_imu_data(self, data: Imu):
         """
@@ -311,7 +377,7 @@ def main(args=None):
 
     roscomp.init("position_publisher_node_2", args=args)
     try:
-        node = PositionPublisherNode()
+        node = SensorFilterDebugNode()
         node.run()
     except KeyboardInterrupt:
         pass
