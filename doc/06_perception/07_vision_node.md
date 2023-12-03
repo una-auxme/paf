@@ -72,8 +72,7 @@ accept other frameworks aswell. It should also be possible to run object-detecti
 
 The Vision-Node contains a Dictionary with all it's models. Depending on the model parameter it will initialize the correct model and weights.
 
-`
-self.model_dict = {
+`self.model_dict = {
             "fasterrcnn_resnet50_fpn_v2":
             (fasterrcnn_resnet50_fpn_v2(
                 weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT),
