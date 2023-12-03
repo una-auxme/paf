@@ -53,4 +53,3 @@ They then publish the minimum and maximum distance.
 2. How do we translate cartesian coordinates to pixel in the Image and vice-versa?
 
    We should be able to set the bounding box of the LIDAR-PointCloud2 to the camera-calibration.
-   
