@@ -15,9 +15,8 @@ from coordinate_transformation import CoordinateTransformer
 from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 from xml.etree import ElementTree as eTree
-
-import carla
-import rospy
+# import carl____a remove ___ to use
+# import rospy
 # from carla_msgs.msg import CarlaLo
 
 GPS_RUNNING_AVG_ARGS: int = 10
@@ -49,18 +48,19 @@ class SensorFilterDebugNode(CompatibleNode):
         # todo: automatically detect town
         self.transformer = None
 
+        # remove comments to use carla
         # Carla API hero car position
         # Get parameters from the launch file
-        host = rospy.get_param('~host', 'carla-simulator')
-        port = rospy.get_param('~port', 2000)
-        timeout = rospy.get_param('~timeout', 100.0)
+        # host = rospy.get_param('~host', 'carla-simulator')
+        # port = rospy.get_param('~port', 2000)
+        # timeout = rospy.get_param('~timeout', 100.0)
 
         # Connect to the CARLA server
-        client = carla.Client(host, port)
-        client.set_timeout(timeout)
+        # client = carl___a.Client(host, port)
+        # client.set_timeout(timeout)
 
         # Get the world
-        self.world = client.get_world()
+        # self.world = client.get_world()
 
         # Get the ego vehicle
         self.vehicle = None
