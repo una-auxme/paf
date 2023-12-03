@@ -14,25 +14,27 @@ Samuel Kühnel
 
 ## General Information
 
-A complete guide can be found [here](https://leaderboard.carla.org/submit/). For the submission a special Dockerfile was created: ```Dockerfile_Submission```. This file contains the complete Dockerfile with all necessary settings.
+A complete guide can be found [here](https://leaderboard.carla.org/submit/). For the submission we used the `make_docker.sh`. This file creates a docker image suitable for the submission. The prerequisites are shown below.
 
 Submissions can be seen [here](https://eval.ai/web/challenges/challenge-page/2098/my-submission).
 
 ### Environment variables
 
-For the submission you need to set the following environment variables:
+To use the script you need to download the leaderboard, scenario runner, carla ros bridge and carla python API.
+Then you need to set the following environment variables:
 
 * ```${CARLA_ROOT}```: Leads to the carla root directory
-
 * ```${SCENARIO_RUNNER_ROOT}```: Szenario runner root directory
-
+* `${CARLA_ROS_BRIDGE_ROOT`: Root folder from carla ros bridge
 * ```${LEADERBOARD_ROOT}```: Leaderboard root directory
 * ```${TEAM_CODE_ROOT}```: Our agent code root directory (```/workspace/code```)
 * ```${ROS_DISTRO}```: Used ROS distribution (```noetic```)
 
+The script copies all directories in a temporary folder and creates the image with a template Dockerfile. As we use ros our template file is `Dockerfile.ros`. Both the template file and the script are located in the leaderboard folder under `${LEADERBOARD_ROOT}/scripts`.
+
 ### Security controls
 
-As a safeguard we added a command to the Dockerfile that deletes all files in `/workspace/code` that contain the string `import carla`. The usage of the carla API is forbidden in the Leaderboard 2.0 and could lead to disqualification.
+As a safeguard we added a command to the Dockerfile that deletes all files in `${TEAM_CODE_ROOT}` that contain the string `import carla`. The usage of the carla API is forbidden in the Leaderboard 2.0 and could lead to disqualification.
 
 ### Submitting the image
 
