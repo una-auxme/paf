@@ -9,6 +9,8 @@ LIDAR-Data comes in Pointclouds from a specific LIDAR-Topic.
 `rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
                          PointCloud2, self.callback)`
 
+Read more about the LIDAR-Sensor [here](https://github.com/una-auxme/paf23/blob/main/doc/06_perception/03_lidar_distance_utility.md)
+
 ## Processing
 
 The goal is to identify Objects and their distance. Therefor we need to calculate distances from the pointcloud data.
