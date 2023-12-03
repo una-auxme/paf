@@ -3,16 +3,32 @@
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.1" />
   
-  <!--just for testing purposes -> delete when pushing to main-->
+  <!--just for testing purposes -> Uncomment to use and see plots
   <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
+    <param name="control_loop_rate" value="0.001" />
+    <param name="role_name" value="$(arg role_name)" />
+  </node>
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
+  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" />
+  -->
+
+  <!-- does not publish data yet. Uncomment to use and see plots
+  <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/current_pos/data[0] /paf/hero/kalman_pos/data[0]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/current_pos/data[1] /paf/hero/kalman_pos/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="heading_plot" args="/paf/hero/current_heading/data /paf/hero/kalman_heading/data" />
+  -->
 
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
+  
 
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
@@ -62,11 +78,5 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
-
-  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
-  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" /-->
-
 
 </launch>

@@ -49,13 +49,29 @@ class SensorFilterDebugNode(CompatibleNode):
         # todo: automatically detect town
         self.transformer = None
 
-        # Subscriber
+        # Carla API hero car position
+        # Get parameters from the launch file
+        host = rospy.get_param('~host', 'carla-simulator')
+        port = rospy.get_param('~port', 2000)
+        timeout = rospy.get_param('~timeout', 100.0)
+
+        # Connect to the CARLA server
+        client = carla.Client(host, port)
+        client.set_timeout(timeout)
+
+        # Get the world
+        self.world = client.get_world()
+
+        # Get the ego vehicle
+        self.vehicle = None
+
+    # Subscriber START
         self.map_sub = self.new_subscription(
             String,
             "/carla/" + self.role_name + "/OpenDRIVE",
             self.get_geoRef,
             qos_profile=1)
-        
+
         self.imu_subscriber = self.new_subscription(
             Imu,
             "/carla/" + self.role_name + "/Ideal_IMU",
@@ -68,7 +84,22 @@ class SensorFilterDebugNode(CompatibleNode):
             self.update_gps_data,
             qos_profile=1)
 
-        # Publisher
+        # Current_pos subscriber:
+        self.current_pos_subscriber = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/current_pos",
+            self.update_location_error,
+            qos_profile=1)
+
+        # Current_heading subscriber:
+        self.current_heading_subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.update_heading_error,
+            qos_profile=1)
+    # Subscriber END
+
+    # Publisher START
         # 2D Odometry (Maybe Speedometer?)
         self.ekf_odom_publisher = self.new_publisher(
             Odometry,
@@ -95,23 +126,7 @@ class SensorFilterDebugNode(CompatibleNode):
             f"/paf/{self.role_name}/ideal_current_heading",
             qos_profile=1)
 
-        # Carla API hero car position
-        # Get parameters from the launch file
-        host = rospy.get_param('~host', 'carla-simulator')
-        port = rospy.get_param('~port', 2000)
-        timeout = rospy.get_param('~timeout', 100.0)
-
-        # Connect to the CARLA server
-        client = carla.Client(host, port)
-        client.set_timeout(timeout)
-
-        # Get the world
-        self.world = client.get_world()
-
-        # Get the ego vehicle
-        self.vehicle = None
-
-        # Publish the location
+        # Publish the carla location
         self.carla_pos_publisher = self.new_publisher(
             PoseStamped,
             f"/paf/{self.role_name}/carla_current_pos",
@@ -128,26 +143,12 @@ class SensorFilterDebugNode(CompatibleNode):
             f"/paf/{self.role_name}/location_error",
             qos_profile=1)
 
-        # Current_pos subscriber:
-        self.current_pos_subscriber = self.new_subscription(
-            PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
-            self.update_location_error,
-            qos_profile=1)
-
         # publish the error between current_heading and ideal_heading
         self.heading_error_publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/heading_error",
             qos_profile=1)
 
-        # Current_heading subscriber:
-        self.current_heading_subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/current_heading",
-            self.update_heading_error,
-            qos_profile=1)
-        
         # Publish x and y coordinates of ideal_GPS and carla_pos
         self.ideal_x_publisher = self.new_publisher(
             Float32MultiArray,
@@ -157,6 +158,7 @@ class SensorFilterDebugNode(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/ideal_y",
             qos_profile=1)
+    # Publisher END
 
     def update_heading_error(self, data: Float32):
         """
@@ -177,7 +179,7 @@ class SensorFilterDebugNode(CompatibleNode):
         """
 
         error = Float32MultiArray()
-        
+
         error.data = [0, 0, 0]
         # calculate the error between ideal_current_pos and current_pos
         error.data[0] = math.sqrt((

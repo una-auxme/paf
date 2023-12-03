@@ -182,7 +182,7 @@ class PositionPublisherNode(CompatibleNode):
             lat = data.latitude
             lon = data.longitude
             alt = data.altitude
-             
+
             x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
 
             self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
