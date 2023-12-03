@@ -4,7 +4,7 @@ This File discusses where the LIDAR-Data comes from, how its processed and how w
 
 ## Origin
 
-LIDAR-Data comes in Pointclouds from a specific LIDAR-Topic. 
+LIDAR-Data comes in Pointclouds from a specific LIDAR-Topic.
 
 `rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
                          PointCloud2, self.callback)`
@@ -18,15 +18,11 @@ To do this the lidar-distance node first converts pointcloud data to an array, w
 
 `paf23-agent-1            |  (76.12445   , -1.6572031e+01, 13.737187  , 0.7287409 )`
 
-
 `paf23-agent-1            |  (71.9434    , -1.8718828e+01, 13.107929  , 0.7393809 )`
-
 
 `paf23-agent-1            |  (-0.3482422 , -1.6367188e-02, -0.20128906, 0.99839103)`
 
-
 `paf23-agent-1            |  (-0.3486328 , -1.4062500e-02, -0.20152344, 0.99838954)`
-
 
 `paf23-agent-1            |  (-0.35070312, -2.3828126e-03, -0.2025    , 0.99838144)`
 
@@ -36,10 +32,9 @@ x - the X Cartesian coordinate of a point (float32)
 
 y - the Y Cartesian coordinate of a point (float32)
 
-z - the Z Cartesian coordinate of a point (float32) 
+z - the Z Cartesian coordinate of a point (float32)
 
 It wasn´t specified anywhere, what the 4th values represents. My best guess is some sort of intensity.
-
 
 ## Distance Calculation
 
@@ -48,8 +43,7 @@ The distance to a point is calculated by the euclidian distance to (0,0,0) for e
 `distances = np.array(
             [np.linalg.norm(c - [0, 0, 0]) for c in coordinates_xyz])`
 
-They then publish the minimum and maximum distance. 
-
+They then publish the minimum and maximum distance.
 
 ## Open questions
 
@@ -59,5 +53,4 @@ They then publish the minimum and maximum distance.
 2. How do we translate cartesian coordinates to pixel in the Image and vice-versa?
 
    We should be able to set the bounding box of the LIDAR-PointCloud2 to the camera-calibration.
-
-
+   
