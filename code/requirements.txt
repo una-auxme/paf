@@ -11,4 +11,3 @@ scipy==1.10.0
 xmltodict==0.13.0
 py-trees==2.1.6
 numpy==1.23.5
-pymap3d==3.0.0

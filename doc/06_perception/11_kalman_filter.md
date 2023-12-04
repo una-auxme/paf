@@ -81,7 +81,6 @@ The measurement matrix H is defined as:
         [0, 0, 0, 0, 0, 1]
 The process covariance matrix Q is defined as:
     Q = np.diag([0.005, 0.005, 0.001, 0.0001])
-
 ```
 
 Then 3 Steps are run in the frequency of the `control_loop_rate`:

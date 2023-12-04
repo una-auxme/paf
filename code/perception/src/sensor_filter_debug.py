@@ -17,7 +17,6 @@ from std_msgs.msg import Float32MultiArray
 from xml.etree import ElementTree as eTree
 # import carl____a remove ___ to use
 # import rospy
-# from carla_msgs.msg import CarlaLo
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
