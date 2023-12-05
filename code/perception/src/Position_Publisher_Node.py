@@ -175,10 +175,14 @@ class PositionPublisherNode(CompatibleNode):
         """
         # Make sure position is only published when reference values have been
         # read from the Map
-        if CoordinateTransformer.ref_set:
+        if CoordinateTransformer.ref_set is False:
+            self.transformer = CoordinateTransformer()
+            CoordinateTransformer.ref_set = True
+        if CoordinateTransformer.ref_set is True:
             lat = data.latitude
             lon = data.longitude
             alt = data.altitude
+
             x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
 
             self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)

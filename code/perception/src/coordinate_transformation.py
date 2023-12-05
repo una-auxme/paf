@@ -15,15 +15,19 @@ a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
 b = 6356752.3142
 f = (a - b) / a
 e_sq = f * (2 - f)
+alt_offset = 331.00000
+STD_LAT = 0.0
+STD_LON = 0.0
+STD_H = 0.0
 
 
 class CoordinateTransformer:
     """Object that is used to transform Coordinates between
     xyz and gnss reference frame"""
 
-    la_ref: float
-    ln_ref: float
-    h_ref: float
+    la_ref = STD_LAT
+    ln_ref = STD_LON
+    h_ref = STD_H
     ref_set = False
 
     def __init__(self):
@@ -58,7 +62,9 @@ def geodetic_to_enu(lat, lon, alt):
 
     # Is not necessary in new version
     # y *= -1
-    return x, y, alt + 331.00000
+    # alt_offset is needed to keep the hight of the map in mind
+    # right now we don't really use the altitude anyways
+    return x, y, alt + alt_offset
 
 
 def geodetic_to_ecef(lat, lon, h):
