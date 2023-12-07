@@ -16,7 +16,7 @@ Julius Miller
 
 Paper: [Behavior Planning for Autonomous Driving: Methodologies, Applications, and Future Orientation](https://www.researchgate.net/publication/369181112_Behavior_Planning_for_Autonomous_Driving_Methodologies_Applications_and_Future_Orientation)
 
-![Overview_interfaces](overview_paper1.png)
+![Overview_interfaces](../../../00_assets/planning/overview_paper1.png)
 
 Rule-based planning
 
@@ -49,7 +49,7 @@ Leader, Track-Speed
 
 Github: [Decision Making with Behaviour Tree](https://github.com/kirilcvetkov92/Path-planning?source=post_page-----8db1575fec2c--------------------------------)
 
-![github_tree](BehaviorTree_medium.png)
+![github_tree](../../../00_assets/planning/BehaviorTree_medium.png)
 
 - No Intersection
 - Collision Detection in behaviour Tree
@@ -58,7 +58,7 @@ Paper: [Behavior Trees for
 decision-making in Autonomous
 Driving](https://www.diva-portal.org/smash/get/diva2:907048/FULLTEXT01.pdf)
 
-![Behaviour Tree](BT_paper.png)
+![Behaviour Tree](../../../00_assets/planning/BT_paper.png)
 
 - simple simulation
 - Car only drives straight
@@ -81,17 +81,17 @@ Low Level Decision:
 - Emergency Brake
 - ACC
 
-![localplan](localplan.png)
+![localplan](../../../00_assets/planning/localplan.png)
 
 Scenarios:
 
-![Intersection](intersection_scenario.png)
+![Intersection](../../../00_assets/planning/intersection_scenario.png)
 
 Left: Behaviour Intersection is triggered for motion planning, acc publishes speed. -> Lower speed is used to approach intersection
 
 Right: Behaviour Intersection is used for motion planning, acc is ignored (no object in front)
 
-![Overtake](overtaking_scenario.png)
+![Overtake](../../../00_assets/planning/overtaking_scenario.png)
 
 Left: Overtake gets triggered to maintain speed, acc is ignored
 
