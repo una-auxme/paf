@@ -3,25 +3,28 @@ version: "3"
 services:
   flake8:
     image: alpine/flake8
+    command: .
     volumes:
       - ../:/apps
 
   comlipy:
     build: docker/comlipy
+    command: .
     volumes:
       - ../:/apps
 
   mdlint:
     image: peterdavehello/markdownlint:0.32.2
+    command: markdownlint .
     volumes:
       - ../:/md
 
       # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
   carla-simulator:
-    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600
+    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound
     # Use this image version to enable instance segmentation cameras: (it does not match the leaderboard version)
     # image: carlasim/carla:0.9.14
-    image: ghcr.io/nylser/carla:leaderboard
+    image: ghcr.io/una-auxme/paf23:leaderboard-2.0
     init: true
     expose:
       - 2000
@@ -55,7 +58,7 @@ services:
     shm_size: 2gb
     #command: bash -c "sleep 10 && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/opt/leaderboard/leaderboard/autoagents/npc_agent.py --host=carla-simulator --track=SENSORS"
     #command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"
-    command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/workspace/code/agent/src/agent/agent.py --host=carla-simulator --track=MAP"
+    command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/workspace/code/agent/src/agent/agent.py --host=carla-simulator --track=MAP"
     logging:
       driver: "local"
     environment:

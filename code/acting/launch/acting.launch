@@ -54,6 +54,5 @@
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/paf/hero/pure_pursuit_steer /carla/hero/vehicle_control_cmd/steer /paf/hero/pure_p_debug/l_distance"/-->
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_trajectoryfollowing" args="/paf/hero/current_x /paf/hero/current_target_wp"/-->
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_CONTROLLER" args="/paf/hero/controller"/-->
-    
 
 </launch>

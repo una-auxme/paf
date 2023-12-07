@@ -187,7 +187,6 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
-
         self.loginfo("PrePlanner: published trajectory")
 
 #    def world_info_callback(self, data: CarlaWorldInfo) -> None:

@@ -26,8 +26,6 @@ RUN apt-get update \
 # install dependencies for libgit2 and Carla PythonAPI
 RUN apt-get install wget unzip
 
-# Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
-# If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
 RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
@@ -161,10 +159,12 @@ COPY --chown=$USERNAME:$USERNAME ./code/requirements.txt /workspace/
 ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
 ENV IABN_FORCE_CUDA=1
 
-RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
+RUN source ~/.bashrc && pip install torch==1.13.1 && pip install -r /workspace/requirements.txt
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
+RUN rm -rf /workspace/code/perception/src/dataset_generator.py \
+    && rm -rf /workspace/code/planning/global_planner/src/dev_global_route.py
 
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
