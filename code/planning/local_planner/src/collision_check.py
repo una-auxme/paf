@@ -4,9 +4,9 @@ import numpy as np
 # import tf.transformations
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
-from rospy import Publisher, Subscriber, Duration
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from carla_msgs.msg import CarlaRoute, CarlaSpeedometer   # , CarlaWorldInfo
+from rospy import Subscriber
+from geometry_msgs.msg import PoseStamped
+from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray
