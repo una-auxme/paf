@@ -4,7 +4,7 @@
 
 ## Architecture
 
-![overview](overview.jpg)
+![overview](../../../00_assets/planning/overview.jpg)
 
 ### Preplanning
 
