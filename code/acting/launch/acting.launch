@@ -29,10 +29,10 @@
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
-    <node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
+    <!--node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
         <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
-    </node>
+    </node-->
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
         <param name="control_loop_rate" value="0.05" />
