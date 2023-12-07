@@ -10,10 +10,10 @@ from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32
-from coordinate_transformation import CoordinateTransformer, GeoRef
+from std_msgs.msg import Float32, String
+from coordinate_transformation import CoordinateTransformer
 from tf.transformations import euler_from_quaternion
-
+from xml.etree import ElementTree as eTree
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
@@ -37,9 +37,15 @@ class PositionPublisherNode(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
         # todo: automatically detect town
-        self.transformer = CoordinateTransformer(GeoRef.TOWN12)
+        self.transformer = None
 
         # Subscriber
+        self.map_sub = self.new_subscription(
+            String,
+            "/carla/" + self.role_name + "/OpenDRIVE",
+            self.get_geoRef,
+            qos_profile=1)
+
         self.imu_subscriber = self.new_subscription(
             Imu,
             "/carla/" + self.role_name + "/IMU",
@@ -78,6 +84,33 @@ class PositionPublisherNode(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/current_heading",
             qos_profile=1)
+
+    def get_geoRef(self, opendrive: String):
+        """_summary_
+        Reads the reference values for lat and lon from the carla OpenDriveMap
+        Args:
+            opendrive (String): OpenDrive Map from carla
+        """
+        root = eTree.fromstring(opendrive.data)
+        header = root.find("header")
+        geoRefText = header.find("geoReference").text
+
+        latString = "+lat_0="
+        lonString = "+lon_0="
+
+        indexLat = geoRefText.find(latString)
+        indexLon = geoRefText.find(lonString)
+
+        indexLatEnd = geoRefText.find(" ", indexLat)
+        indexLonEnd = geoRefText.find(" ", indexLon)
+
+        latValue = float(geoRefText[indexLat + len(latString):indexLatEnd])
+        lonValue = float(geoRefText[indexLon + len(lonString):indexLonEnd])
+
+        CoordinateTransformer.la_ref = latValue
+        CoordinateTransformer.ln_ref = lonValue
+        CoordinateTransformer.ref_set = True
+        self.transformer = CoordinateTransformer()
 
     def update_imu_data(self, data: Imu):
         """
@@ -140,34 +173,38 @@ class PositionPublisherNode(CompatibleNode):
         :param data: GNSS measurement
         :return:
         """
-        lat = data.latitude
-        lon = data.longitude
-        alt = data.altitude
-        x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
-        # find reason for discrepancy
-        x *= 0.998
-        y *= 1.003
+        # Make sure position is only published when reference values have been
+        # read from the Map
+        if CoordinateTransformer.ref_set is False:
+            self.transformer = CoordinateTransformer()
+            CoordinateTransformer.ref_set = True
+        if CoordinateTransformer.ref_set is True:
+            lat = data.latitude
+            lon = data.longitude
+            alt = data.altitude
 
-        self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
-        self.avg_xyz[-1] = np.matrix([x, y, z])
+            x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
 
-        avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
+            self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
+            self.avg_xyz[-1] = np.matrix([x, y, z])
 
-        cur_pos = PoseStamped()
+            avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
 
-        cur_pos.header.stamp = data.header.stamp
-        cur_pos.header.frame_id = "global"
+            cur_pos = PoseStamped()
 
-        cur_pos.pose.position.x = avg_x
-        cur_pos.pose.position.y = avg_y
-        cur_pos.pose.position.z = avg_z
+            cur_pos.header.stamp = data.header.stamp
+            cur_pos.header.frame_id = "global"
 
-        cur_pos.pose.orientation.x = 0
-        cur_pos.pose.orientation.y = 0
-        cur_pos.pose.orientation.z = 1
-        cur_pos.pose.orientation.w = 0
+            cur_pos.pose.position.x = avg_x
+            cur_pos.pose.position.y = avg_y
+            cur_pos.pose.position.z = avg_z
 
-        self.cur_pos_publisher.publish(cur_pos)
+            cur_pos.pose.orientation.x = 0
+            cur_pos.pose.orientation.y = 0
+            cur_pos.pose.orientation.z = 1
+            cur_pos.pose.orientation.w = 0
+
+            self.cur_pos_publisher.publish(cur_pos)
 
     def run(self):
         """

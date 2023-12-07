@@ -28,12 +28,12 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    <!--
+    
     <node pkg="acting" type="DummyTrajectoryPublisher.py" name="DummyTrajectoryPublisher" output="screen">
         <param name="control_loop_rate" value="1" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    -->
+    
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
         <param name="control_loop_rate" value="0.05" />
@@ -45,13 +45,16 @@
         <param name="role_name" value="$(arg role_name)" />
     </node-->
 
-   <node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
+   <!--node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
         <param name="role_name" value="$(arg role_name)" />
-        <param name="enabled" value="False" /> <!-- set to True to publish dummy velocities for testing-->
-   </node>
+        <param name="enabled" value="True" /> <!set to True to publish dummy velocities for testing>
+   </node-->
 
-  <node pkg="acting" type="acc.py" name="Acc" output="screen">
+    <node pkg="acting" type="acc.py" name="Acc" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
-  </node>
+    </node>
+
+    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/carla/hero/Speed /paf/hero/stanley_debug/cross_err" -->
+    
 </launch>
