@@ -9,7 +9,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 from nav_msgs.msg import Path
 
 # TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 10  # 36.0
+SPEED_LIMIT_DEFAULT: float = 36  # 36.0
 
 
 class VelocityController(CompatibleNode):
@@ -53,6 +53,11 @@ class VelocityController(CompatibleNode):
         self.throttle_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/throttle",
+            qos_profile=1)
+
+        self.brake_pub: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/brake",
             qos_profile=1)
 
         # rqt_plot can't read the speed data provided by the rosbridge
@@ -100,9 +105,12 @@ class VelocityController(CompatibleNode):
         :return:
         """
         self.loginfo('VelocityController node running')
-        # PID(0.25, 0, 0.1) values from paf22
-        # now newly tuned, not yet perfect, but highly stable
-        pid = PID(0.154, 0.001, 0.01)
+        # PID for throttle
+        pid_t = PID(0.60, 0.00076, 0.63)
+        pid_t.output_limits = (0.0, 1.0)
+        # new PID for braking, much weaker than throttle controller!
+        pid_b = PID(-0.3, -0.00002, -0)  # TODO TUNE ALOT MORE NO GOOD YET
+        pid_b.output_limits = (0.0, 1.0)
 
         def loop(timer_event=None):
             """
@@ -140,7 +148,6 @@ class VelocityController(CompatibleNode):
                               " max_tree_v yet. speed_limit has been set to"
                               f"default value {SPEED_LIMIT_DEFAULT}")
                 self.__max_tree_v = SPEED_LIMIT_DEFAULT
-
             if self.__max_velocity < 0:
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
@@ -150,10 +157,13 @@ class VelocityController(CompatibleNode):
             v = min(v, self.__speed_limit)
             v = self.__max_velocity
 
-            pid.setpoint = v
-            throttle = pid(self.__current_velocity)
-            throttle = max(throttle, 0)  # ensures that throttle >= 0
-            throttle = min(throttle, 1.0)  # ensures that throttle <= 1
+            pid_t.setpoint = v
+            throttle = pid_t(self.__current_velocity)
+
+            pid_b.setpoint = v
+            brake = pid_b(self.__current_velocity)
+
+            self.brake_pub.publish(brake)
             self.throttle_pub.publish(throttle)
 
         self.new_timer(self.control_loop_rate, loop)

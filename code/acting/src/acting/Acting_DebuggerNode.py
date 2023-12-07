@@ -52,13 +52,13 @@ from trajectory_interpolation import interpolate_route
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 3                       # aka. TT
+TEST_TYPE = 2                  # aka. TT
 
-STEERING: float = 0.0               # for TT0: steering -> always straight
-MAX_VELOCITY_LOW: float = 5.0      # for TT0/TT1: low velocity
-MAX_VELOCITY_HIGH: float = 20.0     # for TT1: high velocity
+STEERING: float = 0.0          # for TT0: steering -> always straight
+MAX_VELOCITY_LOW: float = 7    # for TT0/TT1: low velocity
+MAX_VELOCITY_HIGH: float = 14  # for TT1: high velocity
 
-STEERING_CONTROLLER_USED = 0  # for TT1/TT2: 0 = both ; 1 = PP ; 2 = Stanley
+STEERING_CONTROLLER_USED = 1   # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
 TRAJECTORY_TYPE = 1          # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
@@ -160,14 +160,18 @@ class Acting_Debugger(CompatibleNode):
 
         # Initialize all needed "global" variables here
         self.current_trajectory = []
-        self.checkpoint_time = rospy.get_time()
         self.switchVelocity = False
         self.driveVel = MAX_VELOCITY_LOW
+
+        self.switch_checkpoint_time = rospy.get_time()
+        self.switch_time_set = False
+
+        self.checkpoint_time = rospy.get_time()
+        self.time_set = False
 
         self.__current_velocities = []
         self.__max_velocities = []
         self.__throttles = []
-        self.time_set = False
 
         self.__purepursuit_steers = []
         self.__stanley_steers = []
@@ -308,14 +312,17 @@ class Acting_Debugger(CompatibleNode):
                 self.velocity_pub.publish(self.driveVel)
 
             elif (TEST_TYPE == 1):
-                self.drive_Vel = MAX_VELOCITY_LOW
-                if (self.checkpoint_time < rospy.get_time() - 20.0):
-                    self.checkpoint_time = rospy.get_time()
+                if not self.time_set:
+                    self.drive_Vel = MAX_VELOCITY_LOW
+                    self.switch_checkpoint_time = rospy.get_time()
+                    self.switch_time_set = True
+                if (self.switch_checkpoint_time < rospy.get_time() - 10.0):
+                    self.switch_checkpoint_time = rospy.get_time()
+                    self.switchVelocity = not self.switchVelocity
                     if (self.switchVelocity):
                         self.driveVel = MAX_VELOCITY_HIGH
                     else:
                         self.driveVel = MAX_VELOCITY_LOW
-                    self.switchVelocity = not self.switchVelocity
                 self.stanley_steer_pub.publish(STEERING)
                 self.pure_pursuit_steer_pub.publish(STEERING)
                 self.velocity_pub.publish(self.driveVel)
@@ -350,23 +357,22 @@ class Acting_Debugger(CompatibleNode):
             elif (STEERING_CONTROLLER_USED == 2):
                 self.controller_selector_pub.publish(2)
 
-            """# set starttime to when simulation is actually starting to run
+            # set starttime to when simulation is actually starting to run
             # to really get 10 secs plots every time
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
-
-            if (self.checkpoint_time < rospy.get_time() - 10.0):
+            """
+            if (self.checkpoint_time < rospy.get_time() - 20.0):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-                print(self.__max_velocities)
-                print(self.__current_velocities)
-                print(self.__throttles)
-                print(len(self.__max_velocities))
-                print(len(self.__current_velocities))
-                print(len(self.__throttles))
-                print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")"""
-
+                # print(self.__max_velocities)
+                # print(self.__current_velocities)
+                # print(self.__throttles)
+                # print(self.__purepursuit_steers)
+                # print(self.__stanley_steers)
+                print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
+            """
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 

@@ -99,6 +99,12 @@ class VehicleController(CompatibleNode):
             qos_profile=1)
 
         # Testing / Debugging -->
+        self.brake_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/brake",
+            self.__set_brake,
+            qos_profile=1)
+
         self.target_steering_publisher: Publisher = self.new_publisher(
             Float32,
             f'/paf/{self.role_name}/target_steering_debug',
@@ -122,6 +128,8 @@ class VehicleController(CompatibleNode):
         self.__pure_pursuit_steer: float = 0.0
         self.__stanley_steer: float = 0.0
         self.__current_steer: float = 0.0
+
+        self.__brake: float = 0.0
 
         self.controller_testing: bool = False
         self.controller_selected_debug: int = 1
@@ -169,13 +177,8 @@ class VehicleController(CompatibleNode):
 
             message = CarlaEgoVehicleControl()
             message.reverse = False
-            if self.__throttle > 0:  # todo: driving backwards?
-                message.brake = 0
-                message.throttle = self.__throttle
-            else:
-                message.throttle = 0
-                message.brake = abs(self.__throttle)
-
+            message.throttle = self.__throttle
+            message.brake = self.__brake
             message.hand_brake = False
             message.manual_gear_shift = False
             # sets target_steer to steer
@@ -193,11 +196,12 @@ class VehicleController(CompatibleNode):
         """
         Takes the steering angle calculated by the controller and maps it to
         the available steering angle
+        This is from (left, right): [pi/2 , -pi/2] to [-1, 1]
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
-        TODO IS IT CALCULATED THAT WAY??
         :return: float for steering in [-1, 1]
         """
-        tune_k = -5  # factor for tuning TODO: tune WHAT IS THIS FOR?
+        tune_k = -5  # factor for tuning TODO: tune but why?
+        # negative because carla steer and our steering controllers are flipped
         r = 1 / (math.pi / 2)
         steering_float = steering_angle * r * tune_k
         self.pidpoint_publisher.publish(steering_float)
@@ -257,6 +261,9 @@ class VehicleController(CompatibleNode):
 
     def __set_throttle(self, data):
         self.__throttle = data.data
+
+    def __set_brake(self, data):
+        self.__brake = data.data
 
     def __set_pure_pursuit_steer(self, data: Float32):
         self.__pure_pursuit_steer = data.data
