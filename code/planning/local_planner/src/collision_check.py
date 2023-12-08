@@ -34,31 +34,15 @@ class CollisionCheck(CompatibleNode):
             self.__get_current_velocity,
             qos_profile=1)
 
-        self.speed_limit_OD_sub: Subscriber = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/speed_limits_OpenDrive",
-            self.__set_speed_limits_opendrive,
-            qos_profile=1)
-
-        # needed to prevent the car from driving before a path to follow is
-        # available. Might be needed later to slow down in curves
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
-            qos_profile=1)
-
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
 
-        self.__speed_limits_OD: [float] = []
-        self.__trajectory: Path = None
-        self.__current_wp_index: int = 0
         self.__current_velocity: float = None
         self.__object_last_position: tuple = None
+        self._current_position: tuple= None
 
     def calculate_obstacle_speed(self, new_position):
         # Calculate time since last position update
@@ -76,33 +60,8 @@ class CollisionCheck(CompatibleNode):
         self.__current_velocity = float(data.speed)
         self.velocity_pub.publish(self.__current_velocity)
 
-    def __set_trajectory(self, data: Path):
-        self.__trajectory = data
-
-    def __set_speed_limits_opendrive(self, data: Float32MultiArray):
-        self.__speed_limits_OD = data.data
-
     def __current_position_callback(self, data: PoseStamped):
-        if len(self.__speed_limits_OD) < 1 or self.__trajectory is None:
-            return
-
-        agent = data.pose.position
-        current_wp = self.__trajectory.poses[self.__current_wp_index].\
-            pose.position
-        next_wp = self.__trajectory.poses[self.__current_wp_index + 1].\
-            pose.position
-
-        # distances from agent to current and next waypoint
-        d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
-        d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
-        if d_new < d_old:
-            # update current waypoint and corresponding speed limit
-            self.__current_wp_index += 1
-            self.__speed_limit = \
-                self.__speed_limits_OD[self.__current_wp_index]
-
-    def update(self, speed):
-        self.current_speed = speed
+        self._current_position = (data.pose.position.x, data.pose.position.y)
 
     def time_to_collision(self, obstacle_speed, distance):
         return distance / (self.current_speed - obstacle_speed)
@@ -145,22 +104,7 @@ class CollisionCheck(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            if self.__velocity is None:
-                self.logdebug("ACC hasn't received the velocity of the ego "
-                              "vehicle yet and can therefore not publish a "
-                              "velocity")
-                return
-
-            if self.__dist < 0.5:
-                self.velocity_pub.publish(0)
-                self.logwarn("ACC off")
-                self.__on = False
-                self.__dist = None  # to check if new dist was published
-                return
-
-            # Use for testing
-            # self.d_dist_pub.publish(self.calculate_optimal_dist()-self.__dist)
-            # self.velocity_pub.publish(v)
+            pass
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
