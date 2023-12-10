@@ -19,6 +19,7 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from time import perf_counter
+from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 """
 VisionNode:
 
@@ -55,17 +56,32 @@ class VisionNode(CompatibleNode):
                 weights=DeepLabV3_ResNet101_Weights.DEFAULT),
                 DeepLabV3_ResNet101_Weights.DEFAULT,
                 "segmentation",
-                "pyTorch")
+                "pyTorch"),
+            'yolov8n': (YOLO, "yolov8n.pt", "detection", "ultralytics"),
+            'yolov8s': (YOLO, "yolov8s.pt", "detection", "ultralytics"),
+            'yolov8m': (YOLO, "yolov8m.pt", "detection", "ultralytics"),
+            'yolov8l': (YOLO, "yolov8l.pt", "detection", "ultralytics"),
+            'yolov8x': (YOLO, "yolov8x.pt", "detection", "ultralytics"),
+            'yolo_nas_l': (NAS, "yolo_nas_l.pt", "detection", "ultralytics"),
+            'yolo_nas_m': (NAS, "yolo_nas_m.pt", "detection", "ultralytics"),
+            'yolo_nas_s': (NAS, "yolo_nas_s.pt", "detection", "ultralytics"),
+            'rtdetr-l': (RTDETR, "rtdetr-l.pt", "detection", "ultralytics"),
+            'rtdetr-x': (RTDETR, "rtdetr-x.pt", "detection", "ultralytics"),
+            'yolov8x-seg': (YOLO, "yolov8x-seg.pt", "segmentation",
+                            "ultralytics"),
+            'sam_l': (SAM, "sam_l.pt", "detection", "ultralytics"),
+            'FastSAM-x': (FastSAM, "FastSAM-x.pt", "detection", "ultralytics"),
+
         }
+
+        print(torch.__version__)
 
         # general setup
         self.bridge = CvBridge()
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
-        # self.device = torch.device("cuda"
-        # if torch.cuda.is_available() else "cpu") Cuda Memory Issues
-        self.device = torch.device("cpu")
-        print("VisionNode working on: ", self.device)
+        self.device = torch.device("cuda"
+                                   if torch.cuda.is_available() else "cpu")
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -80,9 +96,22 @@ class VisionNode(CompatibleNode):
         self.type = model_info[2]
         self.framework = model_info[3]
         print("Vision Node Configuration:")
+        print("Device -> ", self.device)
         print(f"Model -> {self.get_param('model')},")
         print(f"Type -> {self.type}, Framework -> {self.framework}")
-        self.model.to(self.device)
+        torch.cuda.memory.set_per_process_memory_fraction(0.1)
+
+        # pyTorch and CUDA setup
+        if self.framework == "pyTorch":
+            for param in self.model.parameters():
+                param.requires_grad = False
+                self.model.to(self.device)
+
+        # ultralytics setup
+        if self.framework == "ultralytics":
+            self.model = self.model(self.weights)
+
+        # tensorflow setup
 
     def setup_camera_subscriptions(self):
         self.new_subscription(
@@ -101,6 +130,30 @@ class VisionNode(CompatibleNode):
 
     def handle_camera_image(self, image):
         startTime = perf_counter()
+
+        # free up cuda memory
+        if self.device == "cuda":
+            torch.cuda.empty_cache()
+
+        print("Before Model: ", perf_counter() - startTime)
+
+        if self.framework == "pyTorch":
+            vision_result = self.predict_torch(image)
+
+        if self.framework == "ultralytics":
+            vision_result = self.predict_ultralytics(image)
+
+        print("After Model: ", perf_counter() - startTime)
+
+        # publish image to rviz
+        img_msg = self.bridge.cv2_to_imgmsg(vision_result,
+                                            encoding="passthrough")
+        img_msg.header = image.header
+        self.publisher.publish(img_msg)
+
+        pass
+
+    def predict_torch(self, image):
         self.model.eval()
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
@@ -114,39 +167,41 @@ class VisionNode(CompatibleNode):
 
         input_image = preprocess(cv_image).unsqueeze(dim=0)
         input_image = input_image.to(self.device)
-        print("Before Model: ", perf_counter() - startTime)
         prediction = self.model(input_image)
-        print("After Model: ", perf_counter() - startTime)
+
         if (self.type == "detection"):
             vision_result = self.apply_bounding_boxes(cv_image, prediction[0])
         if (self.type == "segmentation"):
             vision_result = self.create_mask(cv_image, prediction['out'])
 
-        img_msg = self.bridge.cv2_to_imgmsg(vision_result,
-                                            encoding="passthrough")
-        img_msg.header = image.header
+        return vision_result
 
-        self.publisher.publish(img_msg)
-        print("After Publish: ", perf_counter() - startTime)
+    def predict_ultralytics(self, image):
+        cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
+                                             desired_encoding='passthrough')
+        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+        print(cv_image.shape)
 
-        pass
+        output = self.model(cv_image)
+
+        return output[0].plot()
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
-
         for i in range(21):
             output_predictions[i] = output_predictions[i] == i
 
         output_predictions = output_predictions.to(dtype=torch.bool)
 
-        input_image = t.ToTensor()(input_image)
-        input_image = input_image.to(dtype=torch.uint8)
         print(output_predictions.shape)
-        print(input_image.shape)
-        segmented_image = draw_segmentation_masks(input_image,
-                                                  output_predictions)
-        cv_segmented = cv2.cvtColor(segmented_image.detach().numpy(),
-                                    cv2.COLOR_BGR2RGB)
+        transposed_image = np.transpose(input_image, (2, 0, 1))
+        tensor_image = torch.tensor(transposed_image)
+        tensor_image = tensor_image.to(dtype=torch.uint8)
+        segmented_image = draw_segmentation_masks(tensor_image,
+                                                  output_predictions,
+                                                  alpha=0.6)
+        cv_segmented = segmented_image.detach().cpu().numpy()
+        cv_segmented = np.transpose(cv_segmented, (1, 2, 0))
         return cv_segmented
 
     def apply_bounding_boxes(self, input_image, model_output):
