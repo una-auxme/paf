@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-import rospy
 import numpy as np
+import roscomp
 # import tf.transformations
-import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber, Publisher
 from geometry_msgs.msg import PoseStamped
@@ -14,7 +13,7 @@ from std_msgs.msg import Float32MultiArray, Float32
 
 class ACC(CompatibleNode):
     """
-    This node recieves a possible collision and 
+    This node recieves a possible collision and
     """
 
     def __init__(self):
@@ -22,11 +21,14 @@ class ACC(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
         self.current_speed = 50 / 3.6  # m/ss
-        
+
         self.logdebug("ACC started")
         # TODO: Add Subscriber for Obsdacle from Collision Check
-        # self.obstacle_sub: Subscriber = self.new_subscription(
-        # )
+        self.collision_sub = self.new_subscription(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/collision",
+            self.__get_collision,
+            qos_profile=1)
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
@@ -72,35 +74,55 @@ class ACC(CompatibleNode):
         self.__current_velocity: float = None
         # Is an obstacle ahead where we would collide with?
         self.collision_ahead: bool = False
-        # Distnace and speed from possible collsion object
-        self.__obstacle: tuple = None
+        # Distance and speed from possible collsion object
+        self.obstacle: tuple = None
         # Current speed limit
         self.speed_limit: float = np.Inf
-        
 
-    def calculate_safe_speed(self, distance, object_speed, own_speed):
-        """calculates the speed to meet the desired distance to the object
+    def __get_collision(self, data: Float32MultiArray):
+        """Check if collision is ahead
 
         Args:
-            distance (float): Distance to the object in front
-            object_speed (float): Speed from object in front
-            own_speed (float): Current speed of the ego vehicle
+            data (Float32MultiArray): Distance and speed from possible
+                                        collsion object
+        """
+        if data.data[1] == np.Inf:
+            # No collision ahead
+            self.collision_ahead = False
+        else:
+            # Collision ahead
+            self.collision_ahead = True
+            self.obstacle = (data.data[0], data.data[1])
+            self.calculate_safe_speed()
+
+    def calculate_safe_speed(self):
+        """calculates the speed to meet the desired distance to the object
 
         Returns:
             float: safe speed tp meet the desired distance
         """
-        safety_distance = own_speed/2  
-        if distance < safety_distance:
-            # If safety distance is reached, we want to reduce the speed to meet the desired distance
-            # The speed is reduced by the factor of the distance to the safety distance
-            # Another solution could be object_speed - (safety_distance-distance)
+        # 1s * m/s = reaction distance
+        reaction_distance = self.__current_velocity
+        safety_distance = reaction_distance + \
+            (self.__current_velocity * 0.36)**2
+        if self.obstacle[0] < safety_distance:
+            # If safety distance is reached, we want to reduce the speed to
+            # meet the desired distance
+            # Speed is reduced by the factor of the distance to the safety
+            # distance
+            # Another solution could be
+            # object_speed - (safety_distance-distance)
 
-            safe_speed = object_speed * (distance / safety_distance)
+            safe_speed = self.obstacle[1] * (self.obstacle[0] /
+                                             safety_distance)
             return safe_speed
         else:
-            # If safety distance is reached, drive with same speed as Object in front
-            # TODO: Incooperate overtaking -> Communicate with decision tree about overtaking
-            return object_speed
+            # If safety distance is reached, drive with same speed as
+            # Object in front
+            # TODO:
+            # Incooperate overtaking ->
+            # Communicate with decision tree about overtaking
+            return self.obstacle[1]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -148,8 +170,8 @@ class ACC(CompatibleNode):
                               "vehicle yet and can therefore not publish a "
                               "velocity")
                 return
-            
-            # check if collision is ahead 
+
+            # check if collision is ahead
             if self.collision_ahead:
                 # collision is ahead
                 # check if object moves
@@ -159,7 +181,8 @@ class ACC(CompatibleNode):
                     speed = self.calculate_safe_speed()
                     self.velocity_pub.publish(speed)
                 else:
-                    # If object doesnt move, behaviour tree will handle overtaking or emergency stop was done by collision check
+                    # If object doesnt move, behaviour tree will handle
+                    # overtaking or emergency stop was done by collision check
                     pass
             else:
                 # no collisoion ahead -> publish speed limit
@@ -173,14 +196,12 @@ if __name__ == "__main__":
     main function starts the ACC node
     :param args:
     """
-    # roscomp.init('ACC')
+    roscomp.init('ACC')
 
-    # try:
-    #     node = ACC()
-    #     node.run()
-    # except KeyboardInterrupt:
-    #     pass
-    # finally:
-    #     roscomp.shutdown()
-
-    print("ACC")
+    try:
+        node = ACC()
+        node.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        roscomp.shutdown()
