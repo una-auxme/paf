@@ -189,11 +189,6 @@ class CollisionCheck(CompatibleNode):
         Control loop
         :return:
         """
-
-        def loop(timer_event=None):
-            pass
-
-        self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 

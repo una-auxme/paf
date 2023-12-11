@@ -93,7 +93,9 @@ class ACC(CompatibleNode):
             # Collision ahead
             self.collision_ahead = True
             self.obstacle = (data.data[0], data.data[1])
-            self.calculate_safe_speed()
+            target_speed = self.calculate_safe_speed()
+            if target_speed is not None:
+                self.velocity_pub.publish(target_speed)
 
     def calculate_safe_speed(self):
         """calculates the speed to meet the desired distance to the object
@@ -101,6 +103,11 @@ class ACC(CompatibleNode):
         Returns:
             float: safe speed tp meet the desired distance
         """
+        # No speed or obstacle recieved yet
+        if self.__current_velocity is None:
+            return None
+        if self.obstacle is None:
+            return None
         # 1s * m/s = reaction distance
         reaction_distance = self.__current_velocity
         safety_distance = reaction_distance + \
@@ -134,12 +141,28 @@ class ACC(CompatibleNode):
         self.velocity_pub.publish(self.__current_velocity)
 
     def __set_trajectory(self, data: Path):
+        """Recieve trajectory from global planner
+
+        Args:
+            data (Path): Trajectory path
+        """
         self.__trajectory = data
 
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
+        """Recieve speed limits from OpenDrive via global planner
+
+        Args:
+            data (Float32MultiArray): speed limits per waypoint
+        """
         self.__speed_limits_OD = data.data
 
     def __current_position_callback(self, data: PoseStamped):
+        """Get current position and check if next waypoint is reached
+            If yes -> update current waypoint and speed limit
+
+        Args:
+            data (PoseStamped): Current position from perception
+        """
         if len(self.__speed_limits_OD) < 1 or self.__trajectory is None:
             return
 
