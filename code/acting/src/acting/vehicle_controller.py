@@ -142,7 +142,9 @@ class VehicleController(CompatibleNode):
         """
         self.status_pub.publish(True)
         self.loginfo('VehicleController node running')
-        pid = PID(0.5, 0.1, 0.1, setpoint=0)  # TODO: TUNE AND FIX?
+        # currently pid for steering is not used, needs fixing
+        pid = PID(0.5, 0.01, 0)  # PID(0.5, 0.1, 0.1, setpoint=0)
+        # TODO: TUNE AND FIX?
         pid.output_limits = (-MAX_STEER_ANGLE, MAX_STEER_ANGLE)
 
         def loop(timer_event=None) -> None:
@@ -183,7 +185,8 @@ class VehicleController(CompatibleNode):
             message.manual_gear_shift = False
             # sets target_steer to steer
             pid.setpoint = self.__map_steering(steer)
-            message.steer = pid(self.__current_steer)
+            message.steer = self.__map_steering(steer)
+            # message.steer = pid(self.__current_steer)
             message.gear = 1
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
@@ -200,7 +203,7 @@ class VehicleController(CompatibleNode):
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
         :return: float for steering in [-1, 1]
         """
-        tune_k = -5  # factor for tuning TODO: tune but why?
+        tune_k = 1  # -5 factor for tuning TODO: tune but why?
         # negative because carla steer and our steering controllers are flipped
         r = 1 / (math.pi / 2)
         steering_float = steering_angle * r * tune_k

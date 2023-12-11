@@ -9,7 +9,7 @@ from std_msgs.msg import Float32, Float32MultiArray
 from nav_msgs.msg import Path
 
 # TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 36  # 36.0
+SPEED_LIMIT_DEFAULT: float = 10  # 36.0
 
 
 class VelocityController(CompatibleNode):
@@ -109,7 +109,9 @@ class VelocityController(CompatibleNode):
         pid_t = PID(0.60, 0.00076, 0.63)
         pid_t.output_limits = (0.0, 1.0)
         # new PID for braking, much weaker than throttle controller!
-        pid_b = PID(-0.3, -0.00002, -0)  # TODO TUNE ALOT MORE NO GOOD YET
+        pid_b = PID(-0, -0, -0)  # TODO tune? BUT current P can be good
+        # Kp just says "brake fully(1) until you are only Kp*speedError faster"
+        # so with Kp = -1.35 -> the actual braking range is hardly used
         pid_b.output_limits = (0.0, 1.0)
 
         def loop(timer_event=None):
@@ -131,6 +133,7 @@ class VelocityController(CompatibleNode):
                               "current_velocity yet and can therefore not"
                               "publish a throttle value")
                 return
+
             if self.__trajectory is None:
                 self.logdebug("VelocityController  hasn't received "
                               "trajectory yet and can therefore not"
@@ -152,6 +155,7 @@ class VelocityController(CompatibleNode):
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
                 return
+
             # TODO: soon Planning wants to calculate and publish max_velocity
             v = min(self.__max_velocity, self.__max_tree_v)
             v = min(v, self.__speed_limit)

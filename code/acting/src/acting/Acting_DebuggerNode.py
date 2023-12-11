@@ -10,6 +10,7 @@ to be saved in a file and plotted again.
 TODO: emergency brake behavior
 """
 
+import math
 import ros_compatibility as roscomp
 import numpy as np
 from nav_msgs.msg import Path
@@ -18,7 +19,7 @@ from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from carla_msgs.msg import CarlaSpeedometer
+from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 
 from trajectory_interpolation import interpolate_route
 
@@ -52,14 +53,14 @@ from trajectory_interpolation import interpolate_route
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 2                  # aka. TT
+TEST_TYPE = 1                  # aka. TT
 
 STEERING: float = 0.0          # for TT0: steering -> always straight
-MAX_VELOCITY_LOW: float = 7    # for TT0/TT1: low velocity
+MAX_VELOCITY_LOW: float = 3    # for TT0/TT1: low velocity
 MAX_VELOCITY_HIGH: float = 14  # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 1   # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 1          # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+TRAJECTORY_TYPE = 1        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
 class Acting_Debugger(CompatibleNode):
@@ -152,6 +153,13 @@ class Acting_Debugger(CompatibleNode):
             self.__get_stanley_steer,
             qos_profile=1)
 
+        # Subscriber for Stanley_Steer
+        self.vehicle_steer_sub: Subscriber = self.new_subscription(
+            CarlaEgoVehicleControl,
+            f'/carla/{self.role_name}/vehicle_control_cmd',
+            self.__get_vehicle_steer,
+            qos_profile=10)
+
         # Publisher for emergency message TODO: should VC really trigger this?
         self.emergency_pub: Publisher = self.new_publisher(
             Bool,
@@ -175,6 +183,7 @@ class Acting_Debugger(CompatibleNode):
 
         self.__purepursuit_steers = []
         self.__stanley_steers = []
+        self.__vehicle_steers = []
 
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
@@ -291,7 +300,12 @@ class Acting_Debugger(CompatibleNode):
         self.__stanley_steers.append(float(data.data))
 
     def __get_purepursuit_steer(self, data: Float32):
-        self.__purepursuit_steers.append(float(data.data))
+        r = 1 / (math.pi / 2)
+        steering_float = float(data.data) * r
+        self.__purepursuit_steers.append(steering_float)
+
+    def __get_vehicle_steer(self, data: CarlaEgoVehicleControl):
+        self.__vehicle_steers.append(float(data.steer))
 
     def run(self):
         """
@@ -316,7 +330,7 @@ class Acting_Debugger(CompatibleNode):
                     self.drive_Vel = MAX_VELOCITY_LOW
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switch_time_set = True
-                if (self.switch_checkpoint_time < rospy.get_time() - 10.0):
+                if (self.switch_checkpoint_time < rospy.get_time() - 7.5):
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switchVelocity = not self.switchVelocity
                     if (self.switchVelocity):
@@ -362,17 +376,19 @@ class Acting_Debugger(CompatibleNode):
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
-            """
-            if (self.checkpoint_time < rospy.get_time() - 20.0):
+
+            # Uncomment the prints of the data you want to plot
+            if (self.checkpoint_time < rospy.get_time() - 22.5):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-                # print(self.__max_velocities)
-                # print(self.__current_velocities)
+                print(self.__max_velocities)
+                print(self.__current_velocities)
                 # print(self.__throttles)
                 # print(self.__purepursuit_steers)
                 # print(self.__stanley_steers)
+                # print(self.__vehicle_steers)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-            """
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
