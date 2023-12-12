@@ -42,11 +42,18 @@ RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
     && dpkg --configure -a
 
 # CUDA installation
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
-    && dpkg -i cuda-keyring_1.0-1_all.deb \
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin \
+    && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
+    && wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
+    && dpkg -i cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
+    && cp /var/cuda-repo-ubuntu2004-12-1-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
-    && rm cuda-keyring_1.0-1_all.deb \
+    && rm cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
+    && apt-get -y remove cuda-repo-ubuntu2004-12-1-local \
+    && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
+    && rm -rf /var/cuda-repo-ubuntu1804-12-1-local/ \
+    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-12-1-local.list \
     && apt-get clean
 
 ENV CUDA_HOME=/usr/local/cuda-12.1
