@@ -86,6 +86,7 @@ class VisionNode(CompatibleNode):
         # publish / subscribe setup
         self.setup_camera_subscriptions()
         self.setup_camera_publishers()
+        self.setup_traffic_light_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -125,6 +126,13 @@ class VisionNode(CompatibleNode):
         self.publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/{self.side}/segmented_image",
+            qos_profile=1
+        )
+
+    def setup_traffic_light_publishers(self):
+        self.traffic_light_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
             qos_profile=1
         )
 
@@ -183,6 +191,8 @@ class VisionNode(CompatibleNode):
         print(cv_image.shape)
 
         output = self.model(cv_image)
+
+        print(f"Output: {output}")
 
         return output[0].plot()
 
