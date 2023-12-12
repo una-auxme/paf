@@ -34,30 +34,12 @@ RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_L
   && mkdir -p /opt/carla \
   && mv PythonAPI /opt/carla/PythonAPI
 
-# build libgit2
-RUN wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -O libgit2-1.5.0.tar.gz \
-    && tar xzf libgit2-1.5.0.tar.gz \
-    && cd libgit2-1.5.0/ \
-    && cmake . \
-    && make -j$(nproc --ignore=2) \
-    && make install \
-    && cd ../ \
-    && rm libgit2-1.5.0.tar.gz \
-    && rm -r libgit2-1.5.0/
-
 # CUDA installation
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin \
-    && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && dpkg -i cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && cp /var/cuda-repo-ubuntu2004-12-1-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
+    && dpkg -i cuda-keyring_1.0-1_all.deb \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
-    && rm cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && apt-get -y remove cuda-repo-ubuntu2004-12-1-local \
-    && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && rm -rf /var/cuda-repo-ubuntu1804-12-1-local/ \
-    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-12-1-local.list \
+    && rm cuda-keyring_1.0-1_all.deb \
     && apt-get clean
 
 ENV CUDA_HOME=/usr/local/cuda-12.1
