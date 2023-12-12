@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import roscomp
+import ros_compatibility as roscomp
 # import tf.transformations
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber, Publisher
@@ -122,6 +122,7 @@ class ACC(CompatibleNode):
 
             safe_speed = self.obstacle[1] * (self.obstacle[0] /
                                              safety_distance)
+            self.logdebug("Safe Speed: " + str(safe_speed))
             return safe_speed
         else:
             # If safety distance is reached, drive with same speed as
@@ -129,6 +130,8 @@ class ACC(CompatibleNode):
             # TODO:
             # Incooperate overtaking ->
             # Communicate with decision tree about overtaking
+            self.logdebug("saftey distance gooood; Speed from obstacle: " +
+                          str(self.obstacle[1]))
             return self.obstacle[1]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
@@ -138,7 +141,6 @@ class ACC(CompatibleNode):
             data (CarlaSpeedometer): _description_
         """
         self.__current_velocity = float(data.speed)
-        self.velocity_pub.publish(self.__current_velocity)
 
     def __set_trajectory(self, data: Path):
         """Recieve trajectory from global planner
@@ -186,29 +188,8 @@ class ACC(CompatibleNode):
         Control loop
         :return:
         """
-
         def loop(timer_event=None):
-            if self.__velocity is None:
-                self.logdebug("ACC hasn't received the velocity of the ego "
-                              "vehicle yet and can therefore not publish a "
-                              "velocity")
-                return
-
-            # check if collision is ahead
-            if self.collision_ahead:
-                # collision is ahead
-                # check if object moves
-                if self.obstacle_speed > 0:
-                    # Object is moving
-                    # caluculate safe speed
-                    speed = self.calculate_safe_speed()
-                    self.velocity_pub.publish(speed)
-                else:
-                    # If object doesnt move, behaviour tree will handle
-                    # overtaking or emergency stop was done by collision check
-                    pass
-            else:
-                # no collisoion ahead -> publish speed limit
+            if self.collision_ahead is False:
                 self.velocity_pub.publish(self.speed_limit)
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

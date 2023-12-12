@@ -69,13 +69,14 @@ class CollisionCheck(CompatibleNode):
             new_position (Float32): new position received from the lidar
         """
         # Check if this is the first time the callback is called
-        if self.__object_last_position is None:
+        if self.__object_last_position is None and \
+                new_position.data is not np.inf:
             self.__object_last_position = (rospy.get_rostime(),
                                            new_position.data)
             return
 
         # If speed is np.inf no car is in front
-        if new_position.data == np.inf:
+        if new_position.data is np.inf:
             self.__object_last_position = None
             return
         # Check if too much time has passed since last position update
@@ -91,8 +92,15 @@ class CollisionCheck(CompatibleNode):
         distance = new_position.data - self.__object_last_position[1]
 
         # Speed is distance/time (m/s)
-        speed = distance/time_difference
+        relative_speed = distance/time_difference
+        speed = self.__current_velocity + relative_speed
+        self.logdebug("Relative Speed: " + str(relative_speed))
+        self.logdebug("Speed: " + str(speed))
+
+        # Check for crash
         self.check_crash((distance, speed))
+        self.__object_last_position = (current_time,
+                                       self._current_position[1])
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """Saves current velocity of the ego vehicle
@@ -101,7 +109,6 @@ class CollisionCheck(CompatibleNode):
             data (CarlaSpeedometer): Message from carla with current speed
         """
         self.__current_velocity = float(data.speed)
-        self.velocity_pub.publish(self.__current_velocity)
 
     def __current_position_callback(self, data: PoseStamped):
         """Saves current position of the ego vehicle
@@ -173,16 +180,19 @@ class CollisionCheck(CompatibleNode):
             if distance < emergency_distance2:
                 # Initiate emergency brake
                 self.emergency_pub.publish(True)
+                self.logdebug("Emergency Brake")
                 return
             # When no emergency brake is needed publish collision distance for
             # ACC and Behaviour tree
             data = Float32MultiArray(data=[collision_meter, obstacle_speed])
             self.collision_pub.publish(data)
+            self.logdebug("Collision Distance: " + str(collision_meter))
             # print(f"Safe Distance Thumb: {safe_distance2:.2f}")
         else:
             # If no collision is ahead publish np.Inf
             data = Float32MultiArray(data=[np.Inf, -1])
             self.collision_pub(data)
+            self.logdebug("No Collision ahead")
 
     def run(self):
         """
