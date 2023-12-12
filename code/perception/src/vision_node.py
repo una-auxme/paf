@@ -137,13 +137,13 @@ class VisionNode(CompatibleNode):
         )
 
     def handle_camera_image(self, image):
-        startTime = perf_counter()
+        # startTime = perf_counter()
 
         # free up cuda memory
         if self.device == "cuda":
             torch.cuda.empty_cache()
 
-        print("Before Model: ", perf_counter() - startTime)
+        # print("Before Model: ", perf_counter() - startTime)
 
         if self.framework == "pyTorch":
             vision_result = self.predict_torch(image)
@@ -151,15 +151,13 @@ class VisionNode(CompatibleNode):
         if self.framework == "ultralytics":
             vision_result = self.predict_ultralytics(image)
 
-        print("After Model: ", perf_counter() - startTime)
+        # print("After Model: ", perf_counter() - startTime)
 
         # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="passthrough")
         img_msg.header = image.header
         self.publisher.publish(img_msg)
-
-        pass
 
     def predict_torch(self, image):
         self.model.eval()
@@ -188,13 +186,30 @@ class VisionNode(CompatibleNode):
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        print(cv_image.shape)
+        # print(cv_image.shape)
 
-        output = self.model(cv_image)
+        output = self.model(cv_image, half=True, verbose=False, retina_masks=True)
 
-        print(f"Output: {output}")
+        if output[0].masks is not None and 12 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
 
         return output[0].plot()
+
+    def process_traffic_lights(self, prediction, cv_image, image_header):
+        indices = (prediction.boxes.cls == 12).nonzero().squeeze().cpu().numpy()
+        indices = np.asarray([indices]) if indices.size == 1 else indices
+
+        for index in indices:
+            mask = prediction.masks.cpu().data.numpy()[index]
+            mask = np.array(mask, dtype=np.uint8)
+            segmented = cv2.bitwise_and(cv_image, cv_image, mask=mask)
+
+            box = prediction.boxes[index].xyxy.squeeze().cpu().numpy().astype(int)
+            segmented = segmented[box[1]:box[3], box[0]:box[2]]
+
+            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="passthrough")
+            traffic_light_image.header = image_header
+            self.traffic_light_publisher.publish(traffic_light_image)
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
