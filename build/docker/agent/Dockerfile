@@ -34,6 +34,13 @@ RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_L
   && mkdir -p /opt/carla \
   && mv PythonAPI /opt/carla/PythonAPI
 
+# Workaround/fix for using dpkg for cuda installation
+# Only required for the lab PCs
+RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
+    && rm -f /var/lib/dpkg/info/libfprint-2-2*.postinst \
+    && rm -f /var/lib/dpkg/info/libpam-fprintd*.postinst \
+    && dpkg --configure -a
+
 # CUDA installation
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb \
     && dpkg -i cuda-keyring_1.0-1_all.deb \
