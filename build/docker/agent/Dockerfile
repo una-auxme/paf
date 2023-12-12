@@ -44,19 +44,19 @@ RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
 # CUDA installation
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin \
     && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && dpkg -i cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && cp /var/cuda-repo-ubuntu2004-12-1-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
+    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
-    && rm cuda-repo-ubuntu2004-12-1-local_12.1.1-530.30.02-1_amd64.deb \
-    && apt-get -y remove cuda-repo-ubuntu2004-12-1-local \
+    && rm cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && apt-get -y remove cuda-repo-ubuntu2004-11-8-local \
     && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && rm -rf /var/cuda-repo-ubuntu1804-12-1-local/ \
-    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-12-1-local.list \
+    && rm -rf /var/cuda-repo-ubuntu1804-11-8-local/ \
+    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-11-8-local.list \
     && apt-get clean
 
-ENV CUDA_HOME=/usr/local/cuda-12.1
+ENV CUDA_HOME=/usr/local/cuda-11.8
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
@@ -149,7 +149,7 @@ RUN echo /catkin_ws/install/lib/python3/dist-packages >> /home/$USERNAME/.local/
 
 RUN sudo mkdir /workspace && sudo chown $USERNAME:$USERNAME /workspace
 
-RUN echo "export CUDA_HOME=/usr/local/cuda-12" >> ~/.bashrc \
+RUN echo "export CUDA_HOME=/usr/local/cuda-11" >> ~/.bashrc \
     && echo "export PATH=$PATH:$CUDA_HOME/bin" >> ~/.bashrc
 
 COPY --chown=$USERNAME:$USERNAME ./code/requirements.txt /workspace/
