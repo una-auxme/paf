@@ -3,8 +3,17 @@ import rospy
 import ros_numpy
 import numpy as np
 import lidar_filter_utility
-from sensor_msgs.msg import PointCloud2, Range
+from sensor_msgs.msg import PointCloud2
+from perception.msg import MinDistance
 
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
+# from itertools import combinations
+import cv2
+from sensor_msgs.msg import Image as ImageMsg
+from cv_bridge import CvBridge
 
 class LidarDistance():
     """ See doc/06_perception/03_lidar_distance_utility.md on
@@ -53,6 +62,13 @@ class LidarDistance():
             lidar_filter_utility.remove_field_name(coordinates, 'intensity')
             .tolist()
         )
+        plot = self.plot_blob(coordinates_xyz)
+        img_msg = self.bridge.cv2_to_imgmsg(plot,
+                                            encoding="passthrough")
+        img_msg.header = data.header
+        self.publisher.publish(img_msg)
+
+        """
         distances = np.array(
             [np.linalg.norm(c - [0, 0, 0]) for c in coordinates_xyz])
 
@@ -62,7 +78,7 @@ class LidarDistance():
             range_msg.min_range = min(distances)
             range_msg.range = min(distances)
 
-            self.pub_range.publish(range_msg)
+            self.pub_range.publish(range_msg)"""
 
     def listener(self):
         """ Initializes the node and it's publishers
@@ -77,19 +93,87 @@ class LidarDistance():
             ),
             PointCloud2
         )
+
         self.pub_range = rospy.Publisher(
             rospy.get_param(
                 '~range_topic',
-                '/carla/hero/' + rospy.get_namespace() + '_range'
+                '/carla/hero/' + rospy.get_namespace() + '_min_distance'
             ),
-            Range
+            MinDistance
         )
+
+        self.publisher = rospy.Publisher(
+            rospy.get_param(
+                '~image_distance_topic',
+                '/paf/hero/Center/segmented_image'
+            ),
+            ImageMsg
+        )
+
+        self.bridge = CvBridge()
 
         rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
                          PointCloud2, self.callback)
 
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
+
+    def plot_blob(self, xyz_coords):
+        # Standardize the data
+        xyz_coords_standardized = StandardScaler().fit_transform(xyz_coords)
+
+        # Compute pairwise distances in the x-axis
+        pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
+                                                        xyz_coords[:, 0]))
+
+        # Find the absolute minimum x distance
+        min_x_distance = np.min(pairwise_distances_x[pairwise_distances_x > 0])
+
+        # print(f"Absolute minimum x 
+        # distance: {min_x_distance:.4f} meters")
+        self.pub_range.publish(min_x_distance)
+
+        # Apply DBSCAN algorithm
+        # Maximum distance between two samples for one to be 
+        # considered as in the neighborhood of the other
+        eps = 0.2
+        
+        # The number of samples in a neighborhood for a point 
+        # to be considered as a core point
+        min_samples = 2
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        labels = dbscan.fit_predict(xyz_coords_standardized)
+
+        # Plot the clustered points
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        for label in set(labels):
+            if label == -1:  # Noise points
+                ax.scatter(xyz_coords[labels == label][:, 0], 
+                           xyz_coords[labels == label][:, 1], 
+                           xyz_coords[labels == label][:, 2], 
+                           c='gray', marker='o', label='Noise')
+            else:
+                ax.scatter(xyz_coords[labels == label][:, 0], 
+                           xyz_coords[labels == label][:, 1], 
+                           xyz_coords[labels == label][:, 2], 
+                           label=f'Cluster {label + 1}', s=50)
+
+        # Set axis labels
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        fig.canvas.draw()
+
+        # convert canvas to image
+        img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+        img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+        # img is rgb, convert to opencv's default bgr
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        return img
 
 
 if __name__ == '__main__':
