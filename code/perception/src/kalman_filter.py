@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -8,8 +9,12 @@ from std_msgs.msg import Float32, UInt32
 from sensor_msgs.msg import NavSatFix, Imu
 from tf.transformations import euler_from_quaternion
 from carla_msgs.msg import CarlaSpeedometer
+import rospy
 import math
+import threading
 
+# TODO remove rolling average from current position
+# TODO Or use raw gps data for current position
 '''
 This class implements a Kalman filter for a 3D object tracked in 3D space.
 It implements the data of the IMU and the GPS Sensors.
@@ -29,18 +34,26 @@ The Noise for the IMU Sensor is defined as:
 The state vector X is defined as:
             [initial_x],
             [initial_y],
+            [v_x],
+            [v_y],
+            ([a_hy] in direction of v_hy (heading hy), TODO not used)
             [yaw],
-            [v_hy] in direction of heading hy,
-            [a_hy] in direction of v_hy (heading hy),
             [omega_z],
 The state transition matrix F is defined as:
-    A = I
+    A = np.array([[1, 0, self.dt, 0, 0, 0],
+                    [0, 1, 0, self.dt, 0, 0],
+                    [0, 0, 1, 0, 0, self.dt],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 1]])
     I: Identity Matrix
 The measurement matrix H is defined as:
-    H = [1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1]
+    self.H = np.array([[1, 0, 0, 0, 0, 0],    # x
+                        [0, 1, 0, 0, 0, 0],   # y
+                        [0, 0, 1, 0, 0, 0],   # v_x
+                        [0, 0, 0, 1, 0, 0],   # v_y
+                        [0, 0, 0, 0, 1, 0],   # yaw
+                        [0, 0, 0, 0, 0, 1]])  # omega_z
 The process covariance matrix Q is defined as:
     Q = np.diag([0.005, 0.005, 0.001, 0.0001]
 '''
@@ -55,7 +68,6 @@ class KalmanFilter(CompatibleNode):
         Constructor / Setup
         :return:
         """
-
         super(KalmanFilter, self).__init__('kalman_filter_node')
 
         self.loginfo('KalmanFilter node started')
@@ -66,6 +78,8 @@ class KalmanFilter(CompatibleNode):
         self.frame_id = "map"
 
         self.dt = self.control_loop_rate
+
+        self.initialized = False
 
         # state vector X
         '''
@@ -103,9 +117,9 @@ class KalmanFilter(CompatibleNode):
         '''
         self.A = np.array([[1, 0, self.dt, 0, 0, 0],
                            [0, 1, 0, self.dt, 0, 0],
-                           [0, 0, 1, 0, 0, self.dt],
+                           [0, 0, 1, 0, 0, 0],
                            [0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 1, 0],
+                           [0, 0, 0, 0, 1, self.dt],
                            [0, 0, 0, 0, 0, 1]])
 
         # Define measurement matrix
@@ -133,12 +147,12 @@ class KalmanFilter(CompatibleNode):
         self.R = np.diag([0.005, 0.005, 0, 0, 0, 0])
 
         # Define process noise covariance matrix
-        self.Q = np.diag([0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001])
+        self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
 
         # self.x_old_est = np.copy(self.x0)  # old state vector
         # self.P_old_est = np.copy(self.P0)  # old state covariance matrix
 
-        self.K = np.zeros((6, 4))  # Kalman gain
+        self.K = np.zeros((6, 6))  # Kalman gain
 
         self.latitude = 0  # latitude of the current position
 
@@ -155,7 +169,7 @@ class KalmanFilter(CompatibleNode):
                     [dt, 0, 0]])
         '''
 
-        # Subscriber
+    # Subscriber
         # Initialize the subscriber for the IMU Data
         self.imu_subscriber = self.new_subscription(
             Imu,
@@ -181,12 +195,13 @@ class KalmanFilter(CompatibleNode):
             self.update_velocity,
             qos_profile=1)
 
-        # Publisher
+    # Publisher
         # Initialize the publisher for the kalman-position
         self.kalman_position_publisher = self.new_publisher(
             PoseStamped,
             "/paf/" + self.role_name + "/kalman_pos",
             qos_profile=1)
+        # Initialize the publisher for the kalman-heading
         self.kalman_heading_publisher = self.new_publisher(
             Float32,
             "/paf/" + self.role_name + "/kalman_heading",
@@ -196,16 +211,22 @@ class KalmanFilter(CompatibleNode):
         """
         Run the Kalman Filter
         """
+        while not self.initialized:
+            time.sleep(1)
+        time.sleep(2)
+
+        self.loginfo('KalmanFilter started its loop!')
+
         # initialize the state vector x_est and the covariance matrix P_est
         # initial state vector x_0
-        self.x_0 = np.array([[self.z_gps[0]],
-                             [self.z_gps[1]],
-                             [self.z_v[0]],
-                             [self.z_v[1]],
-                             [self.yaw],
-                             [self.omega_z]])
+        self.x_0 = np.array([[self.z_gps[0, 0]],
+                             [self.z_gps[1, 0]],
+                             [self.z_v[0, 0]],
+                             [self.z_v[1, 0]],
+                             [self.z_imu[0, 0]],
+                             [self.z_imu[1, 0]]])
         self.x_est = np.copy(self.x_0)  # estimated initial state vector
-        self.P_est = np.eyes(6)  # estiamted initial state covariance matrix
+        self.P_est = np.eye(6) * 1000  # estiamted initialstatecovariancematrix
 
         def loop():
             """
@@ -214,17 +235,20 @@ class KalmanFilter(CompatibleNode):
             # Update the old state and covariance matrix
             # self.x_old_est[:, :] = np.copy(self.x_est[:, :])
             # self.P_old_est[:, :] = np.copy(self.P_est[:, :])
+            while True:
+                self.predict()
+                self.update()
 
-            self.predict()
-            self.update()
+                # Publish the kalman-data:
+                self.publish_kalman_heading()
+                self.publish_kalman_location()
+                time.sleep(self.control_loop_rate)
 
-            # Publish the kalman-data:
-            self.publish_kalman_heading()
-            self.publish_kalman_location()
-
-        roscomp.spin(loop, 1.0/self.control_loop_rate)
+        # roscomp.spin(loop, 1.0/self.control_loop_rate)
         # self.new_timer(self.control_loop_rate, loop)
-        # self.spin()
+        # threading.Timer(1.0/self.control_loop_rate, loop).start()
+        threading.Thread(target=loop).start()
+        self.spin()
 
     def predict(self):
         """
@@ -232,25 +256,26 @@ class KalmanFilter(CompatibleNode):
         """
         # Predict the next state and covariance matrix, pretending the last
         # velocity state estimate stayed constant
-        self.x_pred = self.A @ self.x_est[:]  # + B @ v[:] + u
-        self.P_pred = self.A @ self.P_est[:, :] @ self.A.T + self.Q
+        self.x_pred = self.A @ self.x_est  # + B @ v[:] + u
+        self.P_pred = self.A @ self.P_est @ self.A.T + self.Q
 
     def update(self):
         """
         Update the state
         """
         # Measurementvector z
-        z = np.concatenate((self.z_gps[:], self.z_v[:], self.z_imu[:]))
+        z = np.concatenate((self.z_gps, self.z_v, self.z_imu))
         # Measurement residual y
         y = z - self.H @ self.x_pred
         # Residual covariance S
         S = self.H @ self.P_pred @ self.H.T + self.R
         # Kalman gain K
-        self.K[:, :] = self.P_pred @ self.H.T @ np.linalg.inv(S)
+        self.K = self.P_pred @ self.H.T @ np.linalg.inv(S)
         # State estimate x_est
-        self.x_est[:] = self.x_pred + self.K[:, :] @ y
+        self.x_est = self.x_pred + self.K @ y
         # State covariance estimate P_est
-        self.P_est[:, :] = (np.eye(6) - self.K[:, :] @ self.H) @ self.P_pred
+        # (Joseph form of the covariance update equation)
+        self.P_est = (np.eye(6) - self.K @ self.H) @ self.P_pred
 
     def publish_kalman_heading(self):
         """
@@ -260,7 +285,7 @@ class KalmanFilter(CompatibleNode):
         kalman_heading = Float32()
 
         # Fill the kalman-heading
-        kalman_heading.data = self.x_est[2]
+        kalman_heading.data = self.x_est[2, 0]
 
         # Publish the kalman-heading
         self.kalman_heading_publisher.publish(kalman_heading)
@@ -274,18 +299,19 @@ class KalmanFilter(CompatibleNode):
 
         # Fill the kalman-position
         kalman_position.header.frame_id = self.frame_id
-        kalman_position.header.stamp = roscomp.Time.now()
+        kalman_position.header.stamp = rospy.Time.now()
         kalman_position.header.seq = self.publish_seq
+
         self.publish_seq.data += 1
 
-        kalman_position.pose.position.x = self.x_est[0]
-        kalman_position.pose.position.y = self.x_est[1]
+        kalman_position.pose.position.x = self.x_est[0, 0]
+        kalman_position.pose.position.y = self.x_est[1, 0]
+        # TODO add some kind of filter for z
         kalman_position.pose.position.z = self.latitude
         kalman_position.pose.orientation.x = 0
         kalman_position.pose.orientation.y = 0
         kalman_position.pose.orientation.z = 1
         kalman_position.pose.orientation.w = 0
-
         # Publish the kalman-position
         self.kalman_position_publisher.publish(kalman_position)
 
@@ -317,8 +343,8 @@ class KalmanFilter(CompatibleNode):
         heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
 
         # update IMU Measurements:
-        self.z_imu[0] = heading
-        self.z_imu[1] = imu_data.angular_velocity.z
+        self.z_imu[0, 0] = heading
+        self.z_imu[1, 0] = imu_data.angular_velocity.z
         if imu_data.orientation_covariance[8] != 0:
             # [8] because we want the diag z element of the covariance matrix
             self.R[2, 2] = imu_data.orientation_covariance[8]
@@ -346,18 +372,22 @@ class KalmanFilter(CompatibleNode):
         Update the current position
         """
         # update GPS Measurements:
-        self.z_gps[0] = current_pos.pose.position.x
-        self.z_gps[1] = current_pos.pose.position.y
+        self.z_gps[0, 0] = current_pos.pose.position.x
+        self.z_gps[1, 0] = current_pos.pose.position.y
 
         self.latitude = current_pos.pose.position.z
+
+        # set self.initialized to True so that the kalman filter can start
+        if not self.initialized:
+            self.initialized = True
 
     def update_velocity(self, velocity):
         """
         Update the velocity
         using the yaw angle in the estimated state x_est x_est[2] = yaw
         """
-        self.z_v[0] = velocity.speed * math.cos(self.x_est[2])
-        self.z_v[1] = velocity.speed * math.sin(self.x_est[2])
+        self.z_v[0, 0] = velocity.speed * math.cos(self.x_est[2, 0])
+        self.z_v[1, 0] = velocity.speed * math.sin(self.x_est[2, 0])
 
 
 def main(args=None):
