@@ -67,27 +67,42 @@ class KalmanFilter(CompatibleNode):
 
         self.dt = self.control_loop_rate
 
-        # Initialize the state vector X
+        # state vector X
         '''
         [
             [initial_x],
             [initial_y],
+            [v_x],
+            [v_y],
+            ([a_hy] in direction of v_hy (heading hy), TODO not used)
             [yaw],
-            [v_hy] in direction of heading hy,
-            [a_hy] in direction of v_hy (heading hy),
             [omega_z],
         ]
         '''
-        self.x0 = np.zeros((6, 1))
+        self.x_est = np.zeros((6, 1))  # estimated state vector
 
-        # Define initial state covariance matrix
-        self.P0 = np.eye(6)
+        self.P_est = np.zeros((6, 6))  # estiamted state covariance matrix
+
+        self.x_pred = np.zeros((6, 1))  # Predicted state vector
+        self.P_pred = np.zeros((6, 6))  # Predicted state covariance matrix
 
         # Define state transition matrix
-        # [x, y, yaw, v_hy, a_hy, omega_z]
-        # [             ...              ]
-        self.A = np.array([[1, 0, 0, self.dt, 0, 0],
-                           [0, 1, 0, 0, self.dt, 0],
+        '''
+        # [x                ...             ]
+        # [y                ...             ]
+        # [v_x              ...             ]
+        # [x_y              ...             ]
+        # [yaw              ...             ]
+        # [omega_z          ...             ]
+        x = x + v_x * dt
+        y = y + v_y * dt
+        v_x = v_x
+        v_y = v_y
+        yaw = yaw + omega_z * dt
+        omega_z = omega_z
+        '''
+        self.A = np.array([[1, 0, self.dt, 0, 0, 0],
+                           [0, 1, 0, self.dt, 0, 0],
                            [0, 0, 1, 0, 0, self.dt],
                            [0, 0, 0, 1, 0, 0],
                            [0, 0, 0, 0, 1, 0],
@@ -96,33 +111,32 @@ class KalmanFilter(CompatibleNode):
         # Define measurement matrix
         '''
         1. GPS: x, y
-        2. IMU: yaw, omega_z
-        -> 4 measurements for a state vector of 6
-        (v is not in the measurement here because its provided by Carla)
+        2. Velocity: v_x, v_y
+        3. IMU: yaw, omega_z
+        -> 6 measurements for a state vector of 6
         '''
-        self.H = np.array([[1, 0, 0, 0, 0, 0],
-                           [0, 1, 0, 0, 0, 0],
-                           [0, 0, 1, 0, 0, 0],
-                           [0, 0, 0, 0, 0, 1]])
+        self.H = np.array([[1, 0, 0, 0, 0, 0],   # x
+                           [0, 1, 0, 0, 0, 0],   # y
+                           [0, 0, 1, 0, 0, 0],   # v_x
+                           [0, 0, 0, 1, 0, 0],   # v_y
+                           [0, 0, 0, 0, 1, 0],   # yaw
+                           [0, 0, 0, 0, 0, 1]])  # omega_z
+
+        # Define Measurement Variables
+        self.z_gps = np.zeros((2, 1))  # GPS measurements (x, y)
+        self.z_v = np.zeros((2, 1))  # Velocity measurement (v_x, v_y)
+        self.z_imu = np.zeros((2, 1))  # IMU measurements (yaw, omega_z)
+
+        # Define measurement noise covariance matrix
+        # TODO delete comment if not useful anymore:
+        # self.R = np.diag([0.005, 0.005, 0.001, 0.0001])
+        self.R = np.diag([0.005, 0.005, 0, 0, 0, 0])
 
         # Define process noise covariance matrix
         self.Q = np.diag([0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001])
 
-        # Define measurement noise covariance matrix
-        self.R = np.diag([0.005, 0.005, 0.001, 0.0001])
-
-        # Define Measurement Variables
-        self.z_gps = np.zeros((2, 1))  # GPS measurements (x, y)
-        self.z_imu = np.zeros((2, 1))  # IMU measurements (yaw, omega_z)
-
-        self.v = np.zeros((2, 1))  # Velocity measurements (v_x, v_y)
-
-        self.x_old_est = np.copy(self.x0)  # old state vector
-        self.P_old_est = np.copy(self.P0)  # old state covariance matrix
-        self.x_est = np.zeros((6, 1))  # estimated state vector
-        self.P_est = np.zeros((6, 6))  # estiamted state covariance matrix
-        self.x_pred = np.zeros((6, 1))  # Predicted state vector
-        self.P_pred = np.zeros((6, 6))  # Predicted state covariance matrix
+        # self.x_old_est = np.copy(self.x0)  # old state vector
+        # self.P_old_est = np.copy(self.P0)  # old state covariance matrix
 
         self.K = np.zeros((6, 4))  # Kalman gain
 
@@ -182,10 +196,25 @@ class KalmanFilter(CompatibleNode):
         """
         Run the Kalman Filter
         """
+        # initialize the state vector x_est and the covariance matrix P_est
+        # initial state vector x_0
+        self.x_0 = np.array([[self.z_gps[0]],
+                             [self.z_gps[1]],
+                             [self.z_v[0]],
+                             [self.z_v[1]],
+                             [self.yaw],
+                             [self.omega_z]])
+        self.x_est = np.copy(self.x_0)  # estimated initial state vector
+        self.P_est = np.eyes(6)  # estiamted initial state covariance matrix
+
         def loop():
             """
             Loop for the Kalman Filter
             """
+            # Update the old state and covariance matrix
+            # self.x_old_est[:, :] = np.copy(self.x_est[:, :])
+            # self.P_old_est[:, :] = np.copy(self.P_est[:, :])
+
             self.predict()
             self.update()
 
@@ -193,32 +222,34 @@ class KalmanFilter(CompatibleNode):
             self.publish_kalman_heading()
             self.publish_kalman_location()
 
-        # roscomp.spin(loop, self.control_loop_rate)
-        self.new_timer(self.control_loop_rate, loop)
-        self.spin()
+        roscomp.spin(loop, 1.0/self.control_loop_rate)
+        # self.new_timer(self.control_loop_rate, loop)
+        # self.spin()
 
     def predict(self):
         """
         Predict the next state
         """
-        # Update the old state and covariance matrix
-        self.x_old_est[:, :] = np.copy(self.x_est[:, :])
-        self.P_old_est[:, :] = np.copy(self.P_est[:, :])
-
-        # Predict the next state and covariance matrix
-        self.x_pred = self.A @ self.x_est[:]  # + B @ v[:, k-1] + u
+        # Predict the next state and covariance matrix, pretending the last
+        # velocity state estimate stayed constant
+        self.x_pred = self.A @ self.x_est[:]  # + B @ v[:] + u
         self.P_pred = self.A @ self.P_est[:, :] @ self.A.T + self.Q
 
     def update(self):
         """
         Update the state
         """
-        z = np.concatenate((self.z_gps[:], self.z_imu[:]))  # Measurementvector
-        y = z - self.H @ self.x_pred  # Measurement residual
-        S = self.H @ self.P_pred @ self.H.T + self.R  # Residual covariance
-        self.K[:, :] = self.P_pred @ self.H.T @ np.linalg.inv(S)  # Kalman gain
-        self.x_est[:] = self.x_pred + self.K[:, :] @ y  # State estimate
-        # State covariance estimate
+        # Measurementvector z
+        z = np.concatenate((self.z_gps[:], self.z_v[:], self.z_imu[:]))
+        # Measurement residual y
+        y = z - self.H @ self.x_pred
+        # Residual covariance S
+        S = self.H @ self.P_pred @ self.H.T + self.R
+        # Kalman gain K
+        self.K[:, :] = self.P_pred @ self.H.T @ np.linalg.inv(S)
+        # State estimate x_est
+        self.x_est[:] = self.x_pred + self.K[:, :] @ y
+        # State covariance estimate P_est
         self.P_est[:, :] = (np.eye(6) - self.K[:, :] @ self.H) @ self.P_pred
 
     def publish_kalman_heading(self):
@@ -322,11 +353,11 @@ class KalmanFilter(CompatibleNode):
 
     def update_velocity(self, velocity):
         """
-        Update the velocity using the yaw angle in the predicted state x1
-        x1[2] = yaw
+        Update the velocity
+        using the yaw angle in the estimated state x_est x_est[2] = yaw
         """
-        self.v[0] = velocity.speed * math.cos(self.x_est[2])
-        self.v[1] = velocity.speed * math.sin(self.x_est[2])
+        self.z_v[0] = velocity.speed * math.cos(self.x_est[2])
+        self.z_v[1] = velocity.speed * math.sin(self.x_est[2])
 
 
 def main(args=None):
