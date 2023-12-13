@@ -15,6 +15,7 @@ import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
 
+
 class LidarDistance():
     """ See doc/06_perception/03_lidar_distance_utility.md on
         how to configute this node
@@ -129,16 +130,16 @@ class LidarDistance():
         # Find the absolute minimum x distance
         min_x_distance = np.min(pairwise_distances_x[pairwise_distances_x > 0])
 
-        # print(f"Absolute minimum x 
+        # print(f"Absolute minimum x
         # distance: {min_x_distance:.4f} meters")
         self.pub_range.publish(min_x_distance)
 
         # Apply DBSCAN algorithm
-        # Maximum distance between two samples for one to be 
+        # Maximum distance between two samples for one to be
         # considered as in the neighborhood of the other
         eps = 0.2
-        
-        # The number of samples in a neighborhood for a point 
+
+        # The number of samples in a neighborhood for a point
         # to be considered as a core point
         min_samples = 2
         dbscan = DBSCAN(eps=eps, min_samples=min_samples)
@@ -150,14 +151,14 @@ class LidarDistance():
 
         for label in set(labels):
             if label == -1:  # Noise points
-                ax.scatter(xyz_coords[labels == label][:, 0], 
-                           xyz_coords[labels == label][:, 1], 
-                           xyz_coords[labels == label][:, 2], 
+                ax.scatter(xyz_coords[labels == label][:, 0],
+                           xyz_coords[labels == label][:, 1],
+                           xyz_coords[labels == label][:, 2],
                            c='gray', marker='o', label='Noise')
             else:
-                ax.scatter(xyz_coords[labels == label][:, 0], 
-                           xyz_coords[labels == label][:, 1], 
-                           xyz_coords[labels == label][:, 2], 
+                ax.scatter(xyz_coords[labels == label][:, 0],
+                           xyz_coords[labels == label][:, 1],
+                           xyz_coords[labels == label][:, 2],
                            label=f'Cluster {label + 1}', s=50)
 
         # Set axis labels
