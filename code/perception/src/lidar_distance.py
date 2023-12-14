@@ -4,8 +4,8 @@ import ros_numpy
 import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2, Range
-from pylot_point_cloud import PointCloud
 from numpy.linalg import inv
+
 
 class LidarDistance():
     """ See doc/06_perception/03_lidar_distance_utility.md on
@@ -61,14 +61,14 @@ class LidarDistance():
         im[1, 2] = (200 - 1) / 2.0
         im[0, 0] = im[1, 1] = (300 - 1) / (2.0 * np.tan(100 * np.pi / 360.0))
         ex = np.identity(3)
-        #distance = coordinates_xyz[0][0]
+        # distance = coordinates_xyz[0][0]
         point = np.array([20, 20, 1])
-    
+
         c = np.matmul(point, inv(im))
         c = np.matmul(c, inv(ex))
 
         print(c)
-        
+
         distances = np.array(
             [np.linalg.norm(c - [0, 0, 0]) for c in coordinates_xyz])
 
@@ -103,9 +103,10 @@ class LidarDistance():
 
         rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
                          PointCloud2, self.callback)
-        
+
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
+
 
 if __name__ == '__main__':
     lidar_distance = LidarDistance()
