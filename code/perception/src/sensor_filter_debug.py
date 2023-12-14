@@ -33,7 +33,8 @@ class SensorFilterDebugNode(CompatibleNode):
         """
 
         super(SensorFilterDebugNode, self).__init__('ekf_translation')
-        # self.current_pos = PoseStamped()
+        self.kalman_pos = PoseStamped()
+        self.current_pos = PoseStamped()
         self.ideal_current_pos = PoseStamped()
         self.carla_current_pos = PoseStamped()
         self.ideal_heading = Float32()
@@ -46,21 +47,17 @@ class SensorFilterDebugNode(CompatibleNode):
 
         # todo: automatically detect town
         self.transformer = None
-
         # remove comments to use carla
         # Carla API hero car position
         # Get parameters from the launch file
         host = rospy.get_param('~host', 'carla-simulator')
         port = rospy.get_param('~port', 2000)
         timeout = rospy.get_param('~timeout', 100.0)
-
         # Connect to the CARLA server
         client = carla.Client(host, port)
         client.set_timeout(timeout)
-
         # Get the world
         self.world = client.get_world()
-
         # Get the ego vehicle
         self.vehicle = None
 
@@ -96,6 +93,14 @@ class SensorFilterDebugNode(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             self.update_heading_error,
             qos_profile=1)
+
+        # Kalman_pos subscriber:
+        self.kalman_pos_subscriber = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/kalman_pos",
+            self.kalman_debug,
+            qos_profile=1)
+
     # Subscriber END
 
     # Publisher START
@@ -132,7 +137,8 @@ class SensorFilterDebugNode(CompatibleNode):
             qos_profile=1)
 
         # Error Publisher
-        """publish error distance between current_pos and ideal_corrent_pos &
+        """publish error distance between
+            current_pos and ideal_corrent_pos,
             current_pos and carla_current_pos:
             # current_pos and ideal_corrent_pos in location_error[0]
             # current_pos and carla_current_pos in location_error[1]
@@ -141,7 +147,6 @@ class SensorFilterDebugNode(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/location_error",
             qos_profile=1)
-
         # publish the error between current_heading and ideal_heading
         self.heading_error_publisher = self.new_publisher(
             Float32,
@@ -157,7 +162,76 @@ class SensorFilterDebugNode(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/ideal_y",
             qos_profile=1)
+
+        # Kalman Debug Publisher
+        self.kalman_debug_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/kalman_debug",
+            qos_profile=1)
+        # Current_pos Debug Publisher
+        self.current_pos_debug_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/current_pos_debug",
+            qos_profile=1)
     # Publisher END
+
+    def current_pos_debug(self):
+        """
+        This method is called when new current_pos data is received.
+        It also publishes error distances between
+        current_pos.x and ideal_pos.x,
+        current_pos.y and ideal_pos.y
+        current_pos and ideal_pos:
+        # current_pos and ideal_pos.x in debug.data[0]
+        # current_pos and ideal_pos.y in debug.data[1]
+        # current_pos and ideal_pos in debug.data[2]
+        """
+        debug = Float32MultiArray()
+
+        debug.data = [0, 0, 0]
+        debug.data[0] = (self.ideal_current_pos.pose.position.x -
+                         self.current_pos.pose.position.x)
+        debug.data[1] = (self.ideal_current_pos.pose.position.y -
+                         self.current_pos.pose.position.y)
+        debug.data[2] = math.sqrt((
+            self.current_pos.pose.position.x -
+            self.ideal_current_pos.pose.position.x)**2
+            + (self.current_pos.pose.position.y -
+                self.ideal_current_pos.pose.position.y)**2)
+
+        self.current_pos_debug_publisher.publish(debug)
+        self.current_pos = debug
+
+    def kalman_debug(self, data: PoseStamped):
+        """
+        This method is called when new kalman_pos data is received.
+        It also publishes error distances between
+        kalman_pos.x and ideal_pos.x,
+        kalman_pos.y and ideal_pos.y,
+        kalman_pos and ideal_pos:
+        # kalman_pos.x and ideal_pos.x in debug.data[0]
+        # kalman_pos.y and ideal_pos.y in debug.data[1]
+        # kalman_pos and ideal_pos in debug.data[2]
+        """
+        self.kalman_pos = data
+        debug = Float32MultiArray()
+
+        debug.data = [0, 0, 0]
+        debug.data[0] = (self.ideal_current_pos.pose.position.x
+                         - self.kalman_pos.pose.position.x)
+        debug.data[1] = (self.ideal_current_pos.pose.position.y
+                         - self.kalman_pos.pose.position.y)
+        debug.data[2] = math.sqrt((
+         self.kalman_pos.pose.position.x -
+         self.ideal_current_pos.pose.position.x)**2
+         + (self.kalman_pos.pose.position.y -
+            self.ideal_current_pos.pose.position.y)**2)
+
+        self.kalman_debug_publisher.publish(debug)
+        self.kalman_pos = data
+
+        # TODO: make it more clean!
+        self.current_pos_debug()
 
     def update_heading_error(self, data: Float32):
         """
@@ -179,7 +253,7 @@ class SensorFilterDebugNode(CompatibleNode):
 
         error = Float32MultiArray()
 
-        error.data = [0, 0, 0]
+        error.data = [0, 0, 0, 0]
         # calculate the error between ideal_current_pos and current_pos
         error.data[0] = math.sqrt((
          self.ideal_current_pos.pose.position.x - data.pose.position.x)**2
@@ -188,7 +262,6 @@ class SensorFilterDebugNode(CompatibleNode):
         error.data[1] = math.sqrt((
          self.carla_current_pos.pose.position.x - data.pose.position.x)**2
          + (self.carla_current_pos.pose.position.y - data.pose.position.y)**2)
-
         self.location_error_publisher.publish(error)
 
     def get_geoRef(self, opendrive: String):

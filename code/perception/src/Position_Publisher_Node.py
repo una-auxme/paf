@@ -55,7 +55,7 @@ class PositionPublisherNode(CompatibleNode):
         self.gps_subscriber = self.new_subscription(
             NavSatFix,
             "/carla/" + self.role_name + "/GPS",
-            self.update_gps_data,
+            self.publish_unfiltered_and_filtered_gps,
             qos_profile=1)
 
         # Publisher
@@ -70,10 +70,14 @@ class PositionPublisherNode(CompatibleNode):
             Imu,
             "/imu_data",
             qos_profile=1)
-
+        # 3D Odometry (GPS) for EKF
+        self.unfiltered_gps_publisher = self.new_publisher(
+            PoseStamped,
+            f"/paf/{self.role_name}/unfiltered_pos",
+            qos_profile=1)
+        # 3D Odometry (GPS)
         self.avg_xyz = np.zeros((GPS_RUNNING_AVG_ARGS, 3))
         self.avg_gps_counter: int = 0
-        # 3D Odometry (GPS)
         self.cur_pos_publisher = self.new_publisher(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
@@ -205,6 +209,51 @@ class PositionPublisherNode(CompatibleNode):
             cur_pos.pose.orientation.w = 0
 
             self.cur_pos_publisher.publish(cur_pos)
+
+    def publish_unfiltered_gps(self, data: NavSatFix):
+        """
+        This method is called when new GNSS data is received.
+        It publishes the raw data.
+        :param data: GNSS measurement
+        :return:
+        """
+        # Make sure position is only published when reference values have been
+        # read from the Map
+        if CoordinateTransformer.ref_set is False:
+            self.transformer = CoordinateTransformer()
+            CoordinateTransformer.ref_set = True
+        if CoordinateTransformer.ref_set is True:
+            lat = data.latitude
+            lon = data.longitude
+            alt = data.altitude
+
+            x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
+
+            unfiltered_pos = PoseStamped()
+
+            unfiltered_pos.header.stamp = data.header.stamp
+            unfiltered_pos.header.frame_id = "global"
+
+            unfiltered_pos.pose.position.x = x
+            unfiltered_pos.pose.position.y = y
+            unfiltered_pos.pose.position.z = z
+
+            unfiltered_pos.pose.orientation.x = 0
+            unfiltered_pos.pose.orientation.y = 0
+            unfiltered_pos.pose.orientation.z = 1
+            unfiltered_pos.pose.orientation.w = 0
+
+            self.unfiltered_gps_publisher.publish(unfiltered_pos)
+
+    def publish_unfiltered_and_filtered_gps(self, data: NavSatFix):
+        """
+        This method is called when new GNSS data is received.
+        It publishes the raw data and the filtered data.
+        :param data: GNSS measurement
+        :return:
+        """
+        self.publish_unfiltered_gps(data)
+        self.update_gps_data(data)
 
     def run(self):
         """

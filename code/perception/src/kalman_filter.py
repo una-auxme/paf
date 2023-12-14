@@ -5,13 +5,15 @@ import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float32, UInt32
+from std_msgs.msg import Float32, UInt32, String
 from sensor_msgs.msg import NavSatFix, Imu
 from tf.transformations import euler_from_quaternion
 from carla_msgs.msg import CarlaSpeedometer
 import rospy
 import math
 import threading
+from coordinate_transformation import CoordinateTransformer
+from xml.etree import ElementTree as eTree
 
 # TODO remove rolling average from current position
 # TODO Or use raw gps data for current position
@@ -72,6 +74,7 @@ class KalmanFilter(CompatibleNode):
 
         self.loginfo('KalmanFilter node started')
         # basic info
+        self.transformer = None  # for coordinate transformation
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", "0.001")
         self.publish_seq = UInt32(0)
@@ -170,6 +173,12 @@ class KalmanFilter(CompatibleNode):
         '''
 
     # Subscriber
+        # Initialize the subscriber for the OpenDrive Map
+        self.map_sub = self.new_subscription(
+            String,
+            "/carla/" + self.role_name + "/OpenDRIVE",
+            self.get_geoRef,
+            qos_profile=1)
         # Initialize the subscriber for the IMU Data
         self.imu_subscriber = self.new_subscription(
             Imu,
@@ -183,9 +192,9 @@ class KalmanFilter(CompatibleNode):
             self.update_gps_data,
             qos_profile=1)
         # Initialize the subscriber for the current_pos in XYZ
-        self.current_pos_subscriber = self.new_subscription(
+        self.unfiltered_pos_subscriber = self.new_subscription(
             PoseStamped,
-            "/paf/" + self.role_name + "/current_pos",
+            "/paf/" + self.role_name + "/unfiltered_pos",
             self.update_current_pos,
             qos_profile=1)
         # Initialize the subscriber for the velocity
@@ -232,9 +241,6 @@ class KalmanFilter(CompatibleNode):
             """
             Loop for the Kalman Filter
             """
-            # Update the old state and covariance matrix
-            # self.x_old_est[:, :] = np.copy(self.x_est[:, :])
-            # self.P_old_est[:, :] = np.copy(self.P_est[:, :])
             while True:
                 self.predict()
                 self.update()
@@ -355,8 +361,25 @@ class KalmanFilter(CompatibleNode):
     def update_gps_data(self, gps_data):
         """
         Update the GPS Data
-        Currently only used for covariance matrix
+        used for covariance matrix
         """
+        # #Make sure position is only published when reference values have been
+        # # read from the Map
+        # if CoordinateTransformer.ref_set is False:
+        #     self.transformer = CoordinateTransformer()
+        #     CoordinateTransformer.ref_set = True
+        # if CoordinateTransformer.ref_set is True:
+        #     lat = gps_data.latitude
+        #     lon = gps_data.longitude
+        #     alt = gps_data.altitude
+
+        #     x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
+
+        #     self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
+        #     self.avg_xyz[-1] = np.matrix([x, y, z])
+
+        #     avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
+
         # look up if covariance type is not 0 (0 = COVARANCE_TYPE_UNKNOWN)
         # (1 = approximated, 2 = diagonal known or 3 = known)
         # if it is not 0 -> update the covariance matrix
@@ -388,6 +411,33 @@ class KalmanFilter(CompatibleNode):
         """
         self.z_v[0, 0] = velocity.speed * math.cos(self.x_est[2, 0])
         self.z_v[1, 0] = velocity.speed * math.sin(self.x_est[2, 0])
+
+    def get_geoRef(self, opendrive: String):
+        """_summary_
+        Reads the reference values for lat and lon from the carla OpenDriveMap
+        Args:
+            opendrive (String): OpenDrive Map from carla
+        """
+        root = eTree.fromstring(opendrive.data)
+        header = root.find("header")
+        geoRefText = header.find("geoReference").text
+
+        latString = "+lat_0="
+        lonString = "+lon_0="
+
+        indexLat = geoRefText.find(latString)
+        indexLon = geoRefText.find(lonString)
+
+        indexLatEnd = geoRefText.find(" ", indexLat)
+        indexLonEnd = geoRefText.find(" ", indexLon)
+
+        latValue = float(geoRefText[indexLat + len(latString):indexLatEnd])
+        lonValue = float(geoRefText[indexLon + len(lonString):indexLonEnd])
+
+        CoordinateTransformer.la_ref = latValue
+        CoordinateTransformer.ln_ref = lonValue
+        CoordinateTransformer.ref_set = True
+        self.transformer = CoordinateTransformer()
 
 
 def main(args=None):
