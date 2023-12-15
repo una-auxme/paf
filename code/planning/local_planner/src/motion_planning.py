@@ -73,19 +73,17 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
-    def update_target_speed(self):
-        be_speed = self.get_speed_by_behavior(self.__curr_behavior)
+    def update_target_speed(self, acc_speed, behavior):
+        be_speed = self.get_speed_by_behavior(behavior)
 
-        self.target_speed = min(be_speed, self.__acc_speed)
+        self.target_speed = min(be_speed, acc_speed)
         self.velocity_pub.publish(self.target_speed)
-        self.logerr(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
         self.__acc_speed = data.data
 
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
-        # self.logerr(self.__curr_behavior)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -187,7 +185,7 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            self.update_target_speed()
+            self.update_target_speed(self.__acc_speed, self.__curr_behavior)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

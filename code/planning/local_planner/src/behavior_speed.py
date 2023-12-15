@@ -8,9 +8,7 @@ def convert_to_ms(speed):
 
 Behavior = namedtuple("Behavior", ("name", "speed"))
 
-# Change target_speed_pub to curr_behavior_pub
-
-# TODO: Cruise is in manuveurs -> ADD Publishers
+# Changed target_speed_pub to curr_behavior_pub
 
 # Intersection - Behaviors
 
@@ -19,7 +17,7 @@ Behavior = namedtuple("Behavior", ("name", "speed"))
 int_app_init = Behavior("int_app_init", convert_to_ms(30.0))
 
 # No Traffic Light or Sign -> stop dynamically at Stopline
-int_app_no_sign = Behavior("int_app_no_sign", -1)
+int_app_no_sign = Behavior("int_app_no_sign", -2)
 
 int_app_green = Behavior("int_app_green", convert_to_ms(30.0))
 
@@ -46,8 +44,9 @@ int_exit = Behavior("int_exit", -1)  # Get SpeedLimit dynamically
 
 lc_app_init = Behavior("lc_app_blocked", convert_to_ms(30.0))
 
-# No Traffic Light or Sign -> stop dynamically at Stopline
-lc_app_blocked = Behavior("lc_app_blocked", -1)
+
+# TODO: Find out purpose of v_stop in lane_change (lines: 105 - 128)
+lc_app_blocked = Behavior("lc_app_blocked", 0.5)
 
 # Wait
 

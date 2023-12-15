@@ -8,9 +8,7 @@ def convert_to_ms(speed):
 
 Behavior = namedtuple("Behavior", ("name", "speed"))
 
-# Change target_speed_pub to curr_behavior_pub
-
-# TODO: Cruise is in manuveurs -> ADD Publishers
+# Changed target_speed_pub to curr_behavior_pub
 
 # Intersection - Behaviors
 
