@@ -5,6 +5,9 @@ import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2, Range
 from numpy.linalg import inv
+import cv2
+from sensor_msgs.msg import Image as ImageMsg
+from cv_bridge import CvBridge
 
 
 class LidarDistance():
@@ -62,12 +65,27 @@ class LidarDistance():
         im[0, 0] = im[1, 1] = (300 - 1) / (2.0 * np.tan(100 * np.pi / 360.0))
         ex = np.identity(3)
         # distance = coordinates_xyz[0][0]
-        point = np.array([20, 20, 1])
+        # iterate over pixel
 
-        c = np.matmul(point, inv(im))
-        c = np.matmul(c, inv(ex))
+        #grayscale = np.zeros(shape=(1, 720, 1280))
+        image_points = []
+        for i in range(720):
+            for j in range(1280):
+                point = np.array([i, j, 1])
+                c = np.matmul(point, inv(im))
+                c = np.matmul(c, inv(ex))
 
-        print(c)
+                image_points.append(c)
+
+                # c[x] = y, c[y] = z, c[z] = x
+                #grayscale[0][i][j] = c[2] 
+
+        #print(grayscale)
+        #grayscale = cv2.imread(grayscale)
+        #img_msg = self.bridge.cv2_to_imgmsg(grayscale,
+                                            #encoding="passthrough")
+        #img_msg.header = data.header
+        #self.publisher.publish(img_msg)
 
         distances = np.array(
             [np.linalg.norm(c - [0, 0, 0]) for c in coordinates_xyz])
@@ -99,6 +117,16 @@ class LidarDistance():
                 '/carla/hero/' + rospy.get_namespace() + '_range'
             ),
             Range
+        )
+
+        self.bridge = CvBridge()
+
+        self.publisher = rospy.Publisher(
+            rospy.get_param(
+                '~image_distance_topic',
+                '/paf/hero/Center/segmented_image'
+            ),
+            ImageMsg
         )
 
         rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),

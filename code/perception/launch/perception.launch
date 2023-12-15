@@ -30,11 +30,11 @@
   </node>
   
 
-   <!-- <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+   <!--  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     
-  
+ 
       Object-Detection: 
       - fasterrcnn_resnet50_fpn_v2 
       - fasterrcnn_mobilenet_v3_large_320_fpn
@@ -64,7 +64,7 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
-  <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
+ <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
     <param name="max_y" value="1.5"/>
     <param name="min_y" value="-1.5"/>
     <param name="min_x" value="3"/>
