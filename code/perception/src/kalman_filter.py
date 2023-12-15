@@ -248,7 +248,7 @@ class KalmanFilter(CompatibleNode):
                 # Publish the kalman-data:
                 self.publish_kalman_heading()
                 self.publish_kalman_location()
-                time.sleep(self.control_loop_rate)
+                rospy.sleep(self.control_loop_rate)
 
         # roscomp.spin(loop, 1.0/self.control_loop_rate)
         # self.new_timer(self.control_loop_rate, loop)

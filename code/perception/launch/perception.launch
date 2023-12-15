@@ -16,15 +16,15 @@
 
   <!-- does not publish data yet. Uncomment to use and see plots-->
   <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
-    <param name="control_loop_rate" value="0.01" />
+    <param name="control_loop_rate" value="0.05" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
   <!-- <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/current_pos/pose/position/x /paf/hero/kalman_pos/pose/position/x /paf/hero/ideal_x/data[0]" />
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/current_pos/pose/position/y /paf/hero/kalman_pos/pose/position/y /paf/hero/ideal_y/data[0]" /> -->
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="heading_plot" args="/paf/hero/current_heading/data /paf/hero/kalman_heading/data" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/current_pos_debug/data[0] /paf/hero/kalman_debug/data[0]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/current_pos_debug/data[1] /paf/hero/kalman_debug/data[1]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="distance_plot" args="/paf/hero/current_pos_debug/data[2] /paf/hero/kalman_debug/data[2]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/current_pos_debug/data[0] /paf/hero/kalman_debug/data[0] /paf/hero/unfiltered_pos_debug/data[0]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/current_pos_debug/data[1] /paf/hero/kalman_debug/data[1] /paf/hero/unfiltered_pos_debug/data[1]" />
+  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="distance_plot" args="/paf/hero/current_pos_debug/data[2] /paf/hero/kalman_debug/data[2] /paf/hero/unfiltered_pos_debug/data[2]" />
   <!---->
 
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">

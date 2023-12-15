@@ -38,6 +38,7 @@ class SensorFilterDebugNode(CompatibleNode):
         self.ideal_current_pos = PoseStamped()
         self.carla_current_pos = PoseStamped()
         self.ideal_heading = Float32()
+        self.unfiltered_pos = PoseStamped()
 
         self.loginfo("Position publisher node started")
 
@@ -99,6 +100,13 @@ class SensorFilterDebugNode(CompatibleNode):
             PoseStamped,
             f"/paf/{self.role_name}/kalman_pos",
             self.kalman_debug,
+            qos_profile=1)
+
+        # Unfiltered_pos subscriber:
+        self.unfiltered_pos_subscriber = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/unfiltered_pos",
+            self.unfiltered_pos_debug,
             qos_profile=1)
 
     # Subscriber END
@@ -173,7 +181,40 @@ class SensorFilterDebugNode(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/current_pos_debug",
             qos_profile=1)
+        # Unfiltered_pos Debug Publisher
+        self.unfiltered_pos_debug_publisher = self.new_publisher(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/unfiltered_pos_debug",
+            qos_profile=1)
+
     # Publisher END
+
+    def unfiltered_pos_debug(self, data: PoseStamped):
+        """
+        This method is called when new unfiltered_pos data is received.
+        It also publishes error distances between
+        unfiltered_pos.x and ideal_pos.x,
+        unfiltered_pos.y and ideal_pos.y
+        unfiltered_pos and ideal_pos:
+        # unfiltered_pos and ideal_pos.x in debug.data[0]
+        # unfiltered_pos and ideal_pos.y in debug.data[1]
+        # unfiltered_pos and ideal_pos in debug.data[2]
+        """
+        self.unfiltered_pos = data
+        debug = Float32MultiArray()
+
+        debug.data = [0, 0, 0]
+        debug.data[0] = (self.ideal_current_pos.pose.position.x -
+                         self.unfiltered_pos.pose.position.x)
+        debug.data[1] = (self.ideal_current_pos.pose.position.y -
+                         self.unfiltered_pos.pose.position.y)
+        debug.data[2] = math.sqrt((
+            self.unfiltered_pos.pose.position.x -
+            self.ideal_current_pos.pose.position.x)**2
+            + (self.unfiltered_pos.pose.position.y -
+                self.ideal_current_pos.pose.position.y)**2)
+
+        self.unfiltered_pos_debug_publisher.publish(debug)
 
     def current_pos_debug(self):
         """
@@ -200,7 +241,6 @@ class SensorFilterDebugNode(CompatibleNode):
                 self.ideal_current_pos.pose.position.y)**2)
 
         self.current_pos_debug_publisher.publish(debug)
-        self.current_pos = debug
 
     def kalman_debug(self, data: PoseStamped):
         """
@@ -227,11 +267,9 @@ class SensorFilterDebugNode(CompatibleNode):
          + (self.kalman_pos.pose.position.y -
             self.ideal_current_pos.pose.position.y)**2)
 
-        self.kalman_debug_publisher.publish(debug)
-        self.kalman_pos = data
-
         # TODO: make it more clean!
         self.current_pos_debug()
+        self.kalman_debug_publisher.publish(debug)
 
     def update_heading_error(self, data: Float32):
         """
@@ -250,10 +288,10 @@ class SensorFilterDebugNode(CompatibleNode):
         :param data: new current_pos measurement
         :return:
         """
-
+        self.current_pos = data
         error = Float32MultiArray()
 
-        error.data = [0, 0, 0, 0]
+        error.data = [0, 0]
         # calculate the error between ideal_current_pos and current_pos
         error.data[0] = math.sqrt((
          self.ideal_current_pos.pose.position.x - data.pose.position.x)**2
@@ -262,6 +300,7 @@ class SensorFilterDebugNode(CompatibleNode):
         error.data[1] = math.sqrt((
          self.carla_current_pos.pose.position.x - data.pose.position.x)**2
          + (self.carla_current_pos.pose.position.y - data.pose.position.y)**2)
+
         self.location_error_publisher.publish(error)
 
     def get_geoRef(self, opendrive: String):
