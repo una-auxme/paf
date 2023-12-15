@@ -22,7 +22,7 @@ class ACC(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
         self.current_speed = 50 / 3.6  # m/ss
 
-        self.logdebug("ACC started")
+        self.logerr("ACC started")
         # TODO: Add Subscriber for Obsdacle from Collision Check
         self.collision_sub = self.new_subscription(
             Float32MultiArray,
@@ -122,7 +122,7 @@ class ACC(CompatibleNode):
 
             safe_speed = self.obstacle[1] * (self.obstacle[0] /
                                              safety_distance)
-            self.logdebug("Safe Speed: " + str(safe_speed))
+            self.logerr("Safe Speed: " + str(safe_speed))
             return safe_speed
         else:
             # If safety distance is reached, drive with same speed as
@@ -130,8 +130,8 @@ class ACC(CompatibleNode):
             # TODO:
             # Incooperate overtaking ->
             # Communicate with decision tree about overtaking
-            self.logdebug("saftey distance gooood; Speed from obstacle: " +
-                          str(self.obstacle[1]))
+            self.logerr("saftey distance gooood; Speed from obstacle: " +
+                        str(self.obstacle[1]))
             return self.obstacle[1]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):

@@ -9,7 +9,6 @@ from ros_compatibility.node import CompatibleNode
 # from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32
-from carla_msgs.msg import CarlaSpeedometer
 import time
 
 
@@ -23,43 +22,56 @@ class DevCollisionCheck(CompatibleNode):
         super(DevCollisionCheck, self).__init__('DevCollisionCheck')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
+
         self.pub_lidar = self.new_publisher(
             msg_type=Float32,
-            topic='/paf/' + self.role_name + '/lidar_dist',
+            topic='/carla/' + self.role_name + '/lidar_dist_dev',
             qos_profile=1)
 
-        self.pub_throttle = self.new_publisher(
+        self.pub_test_speed = self.new_publisher(
             msg_type=Float32,
-            topic='/paf/' + self.role_name + '/throttle',
+            topic='/paf/' + self.role_name + '/test_speed',
             qos_profile=1)
-
         self.sub_ACC = self.new_subscription(
             msg_type=Float32,
             topic='/paf/' + self.role_name + '/ACC',
             callback=self.callback_ACC,
             qos_profile=1)
 
-        self.logdebug("DevCollisionCheck started")
+        self.sub_manual = self.new_subscription(
+            msg_type=Float32,
+            topic='/paf/' + self.role_name + '/manual',
+            callback=self.callback_manual,
+            qos_profile=1)
+        self.logerr("DevCollisionCheck started")
         self.last_position_update = None
         self.simulated_speed = 12  # m/s
         self.distance_to_collision = 0
         self.current_speed = 0
-        self.velocity_sub = self.new_subscription(
-            CarlaSpeedometer,
-            f"/carla/{self.role_name}/Speed",
-            self.__get_current_velocity,
-            qos_profile=1)
+        self.manual_start = True
+        self.acc_activated = False
+
+    def callback_manual(self, msg: Float32):
+        if self.manual_start:
+            self.logerr("Manual start")
+            self.manual_start = False
+            self.pub_lidar.publish(Float32(data=25))
+            time.sleep(0.2)
+            self.pub_lidar.publish(Float32(data=25))
+            time.sleep(0.2)
+            self.pub_lidar.publish(Float32(data=22))
+            time.sleep(0.2)
+            self.pub_lidar.publish(Float32(data=20))
+            time.sleep(0.2)
+            self.pub_lidar.publish(Float32(data=20))
+            time.sleep(0.2)
+            self.pub_lidar.publish(Float32(data=20))
 
     def callback_ACC(self, msg: Float32):
-        self.logdebug("ACC: " + str(msg.data))
-
-    def __get_current_velocity(self, msg: CarlaSpeedometer):
-        """
-        Callback for current velocity
-        :param msg:
-        :return:
-        """
-        self.current_speed = msg.speed
+        self.acc_activated = True
+        self.logerr("Timestamp: " + time.time().__str__())
+        self.logerr("ACC: " + str(msg.data))
+        self.current_speed = msg.data
 
     def run(self):
         """
@@ -67,22 +79,10 @@ class DevCollisionCheck(CompatibleNode):
         :return:
         """
         def loop(timer_event=None):
-            while self.current_speed < 15:
-                self.pub_throttle.publish(0.7)
-            self.pub_throttle.publish(0.4)
-
-            self.pub_collision.publish(30)
-            time.sleep(0.3)
-            self.pub_collision.publish(28)
-            time.sleep(0.3)
-            self.pub_collision.publish(26)
-            time.sleep(0.3)
-            self.pub_collision.publish(24)
-            time.sleep(0.3)
-            self.pub_collision.publish(22)
-            time.sleep(0.3)
-            self.pub_collision.publish(20)
-
+            if self.acc_activated is False:
+                self.pub_test_speed.publish(Float32(data=13.8889))
+            else:
+                self.pub_test_speed.publish(Float32(data=self.current_speed))
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
