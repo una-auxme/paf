@@ -9,6 +9,7 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32
+from collision_check import CollisionCheck
 
 
 class ACC(CompatibleNode):
@@ -32,8 +33,8 @@ class ACC(CompatibleNode):
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
-            CarlaSpeedometer,
-            f"/carla/{self.role_name}/Speed",
+            Float32,
+            f"/paf/{self.role_name}/test_speed",
             self.__get_current_velocity,
             qos_profile=1)
 
@@ -77,7 +78,7 @@ class ACC(CompatibleNode):
         # Distance and speed from possible collsion object
         self.obstacle: tuple = None
         # Current speed limit
-        self.speed_limit: float = np.Inf
+        self.speed_limit: float = None  # m/s
 
     def __get_collision(self, data: Float32MultiArray):
         """Check if collision is ahead
@@ -86,9 +87,10 @@ class ACC(CompatibleNode):
             data (Float32MultiArray): Distance and speed from possible
                                         collsion object
         """
-        if data.data[1] == np.Inf:
+        if np.isinf(data.data[0]):
             # No collision ahead
             self.collision_ahead = False
+            self.logerr("No Collision ahead -> ACC")
         else:
             # Collision ahead
             self.collision_ahead = True
@@ -108,10 +110,10 @@ class ACC(CompatibleNode):
             return None
         if self.obstacle is None:
             return None
-        # 1s * m/s = reaction distance
-        reaction_distance = self.__current_velocity
-        safety_distance = reaction_distance + \
-            (self.__current_velocity * 0.36)**2
+        # Calculate safety distance
+        safety_distance = CollisionCheck.calculate_rule_of_thumb(
+            False, self.__current_velocity)
+        self.logerr("Safety Distance: " + str(safety_distance))
         if self.obstacle[0] < safety_distance:
             # If safety distance is reached, we want to reduce the speed to
             # meet the desired distance
@@ -130,7 +132,7 @@ class ACC(CompatibleNode):
             # TODO:
             # Incooperate overtaking ->
             # Communicate with decision tree about overtaking
-            self.logerr("saftey distance gooood; Speed from obstacle: " +
+            self.logerr("saftey distance good; Speed from obstacle: " +
                         str(self.obstacle[1]))
             return self.obstacle[1]
 
@@ -140,7 +142,7 @@ class ACC(CompatibleNode):
         Args:
             data (CarlaSpeedometer): _description_
         """
-        self.__current_velocity = float(data.speed)
+        self.__current_velocity = float(data.data)
 
     def __set_trajectory(self, data: Path):
         """Recieve trajectory from global planner

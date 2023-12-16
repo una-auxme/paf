@@ -10,6 +10,7 @@ from ros_compatibility.node import CompatibleNode
 # from std_msgs.msg import String
 from std_msgs.msg import Float32
 import time
+# import numpy as np
 
 
 class DevCollisionCheck(CompatibleNode):
@@ -34,7 +35,7 @@ class DevCollisionCheck(CompatibleNode):
             qos_profile=1)
         self.sub_ACC = self.new_subscription(
             msg_type=Float32,
-            topic='/paf/' + self.role_name + '/ACC',
+            topic='/paf/' + self.role_name + '/acc_velocity',
             callback=self.callback_ACC,
             qos_profile=1)
 
@@ -59,18 +60,18 @@ class DevCollisionCheck(CompatibleNode):
             time.sleep(0.2)
             self.pub_lidar.publish(Float32(data=25))
             time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=22))
-            time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=20))
-            time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=20))
-            time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=20))
+            self.pub_lidar.publish(Float32(data=24))
+            # time.sleep(0.2)
+            # self.pub_lidar.publish(Float32(data=20))
+            # time.sleep(0.2)
+            # self.pub_lidar.publish(Float32(data=20))
+            # time.sleep(0.2)
+            # self.pub_lidar.publish(Float32(data=20))
 
     def callback_ACC(self, msg: Float32):
         self.acc_activated = True
-        self.logerr("Timestamp: " + time.time().__str__())
-        self.logerr("ACC: " + str(msg.data))
+        # self.logerr("Timestamp: " + time.time().__str__())
+        # self.logerr("ACC: " + str(msg.data))
         self.current_speed = msg.data
 
     def run(self):
@@ -79,10 +80,8 @@ class DevCollisionCheck(CompatibleNode):
         :return:
         """
         def loop(timer_event=None):
-            if self.acc_activated is False:
-                self.pub_test_speed.publish(Float32(data=13.8889))
-            else:
-                self.pub_test_speed.publish(Float32(data=self.current_speed))
+            self.pub_test_speed.publish(Float32(data=13.8889))
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 

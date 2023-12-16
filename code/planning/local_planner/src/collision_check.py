@@ -23,7 +23,7 @@ class CollisionCheck(CompatibleNode):
         super(CollisionCheck, self).__init__('CollisionCheck')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-        self.current_speed = 50 / 3.6  # m/ss
+        # self.current_speed = 50 / 3.6  # m/ss
         # TODO: Add Subscriber for Speed and Obstacles
         self.logerr("CollisionCheck started")
 
@@ -76,15 +76,18 @@ class CollisionCheck(CompatibleNode):
         # Check if this is the first time the callback is called
         self.logerr("distance recieved: " + str(new_dist.data))
         if self.__object_last_position is None and \
-                new_dist.data is not np.inf:
+                np.isinf(new_dist.data) is not True:
             self.__object_last_position = (time.time(),
                                            new_dist.data)
             self.logerr("First Position")
             return
 
         # If distance is np.inf no car is in front
-        if new_dist.data is np.inf:
+        if np.isinf(new_dist.data):
             self.__object_last_position = None
+            data = Float32MultiArray(data=[np.Inf, -1])
+            self.collision_pub.publish(data)
+            self.logerr("No car in front: dist recieved is inf")
             return
         # Check if too much time has passed since last position update
         if self.__object_last_position[0] + \
@@ -102,7 +105,7 @@ class CollisionCheck(CompatibleNode):
 
         # Speed is distance/time (m/s)
         self.logerr("Time Difference: " + str(time_difference))
-        self.logerr("Distance: " + str(distance))
+        self.logerr("Distance difference: " + str(distance))
         relative_speed = distance/time_difference
         self.logerr("Relative Speed: " + str(relative_speed))
         self.logerr("Current Speed: " + str(self.__current_velocity))
@@ -110,7 +113,7 @@ class CollisionCheck(CompatibleNode):
         self.logerr("Speed: " + str(speed))
 
         # Check for crash
-        self.check_crash((distance, speed))
+        self.check_crash((new_dist.data, speed))
         self.__object_last_position = (current_time, new_dist.data)
 
     def __get_current_velocity(self, data: Float32):
@@ -139,7 +142,9 @@ class CollisionCheck(CompatibleNode):
         Returns:
             float: Time until collision with obstacle in front
         """
-        return distance / (self.current_speed - obstacle_speed)
+        if (self.__current_velocity - obstacle_speed) == 0:
+            return -1
+        return distance / (self.__current_velocity - obstacle_speed)
 
     def meters_to_collision(self, obstacle_speed, distance):
         """Calculates the meters until collision with the obstacle in front
@@ -154,7 +159,8 @@ class CollisionCheck(CompatibleNode):
         return self.time_to_collision(obstacle_speed, distance) * \
             self.__current_velocity
 
-    def calculate_rule_of_thumb(self, emergency):
+    @staticmethod
+    def calculate_rule_of_thumb(emergency, speed):
         """Calculates the rule of thumb as approximation
         for the braking distance
 
@@ -164,8 +170,8 @@ class CollisionCheck(CompatibleNode):
         Returns:
             float: distance calculated with rule of thumb
         """
-        reaction_distance = self.current_speed
-        braking_distance = (self.current_speed * 0.36)**2
+        reaction_distance = speed
+        braking_distance = (speed * 0.36)**2
         if emergency:
             return reaction_distance + braking_distance / 2
         else:
@@ -182,11 +188,12 @@ class CollisionCheck(CompatibleNode):
         distance, obstacle_speed = obstacle
 
         collision_time = self.time_to_collision(obstacle_speed, distance)
-        collision_meter = self.meters_to_collision(obstacle_speed, distance)
-
+        # collision_meter = self.meters_to_collision(obstacle_speed, distance)
+        self.logerr("Collision Time: " + str(collision_time))
         # safe_distance2 = self.calculate_rule_of_thumb(False)
-        emergency_distance2 = self.calculate_rule_of_thumb(False)
-
+        emergency_distance2 = self.calculate_rule_of_thumb(
+            True, self.__current_velocity)
+        self.logerr("Emergency Distance: " + str(emergency_distance2))
         if collision_time > 0:
             if distance < emergency_distance2:
                 # Initiate emergency brake
@@ -195,13 +202,13 @@ class CollisionCheck(CompatibleNode):
                 return
             # When no emergency brake is needed publish collision distance for
             # ACC and Behaviour tree
-            data = Float32MultiArray(data=[collision_meter, obstacle_speed])
+            data = Float32MultiArray(data=[distance, obstacle_speed])
             self.collision_pub.publish(data)
-            self.logerr("Collision Distance: " + str(collision_meter))
+            self.logerr("Collision published")
             # print(f"Safe Distance Thumb: {safe_distance2:.2f}")
         else:
             # If no collision is ahead publish np.Inf
-            data = Float32MultiArray(data=[np.Inf, -1])
+            data = Float32MultiArray(data=[np.Inf, obstacle_speed])
             self.collision_pub.publish(data)
             self.logerr("No Collision ahead")
 
