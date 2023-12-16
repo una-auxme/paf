@@ -201,7 +201,7 @@ class VisionNode(CompatibleNode):
 
         min_x = 400
         max_x = 1000
-        min_prob = 0.4
+        min_prob = 0.25
 
         for index in indices:
             box = prediction.boxes.cpu().data.numpy()[index]

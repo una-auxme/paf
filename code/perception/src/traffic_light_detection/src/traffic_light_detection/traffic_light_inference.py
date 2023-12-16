@@ -49,7 +49,8 @@ class TrafficLightInference:
         self.class_dict = {0: 'Backside',
                            1: 'Green',
                            2: 'Red',
-                           3: 'Yellow'}
+                           3: 'Side',
+                           4: 'Yellow'}
 
     def __call__(self, img):
         """

@@ -45,8 +45,10 @@ class TrafficLightNode(CompatibleNode):
 
         msg = TrafficLightState()
         msg.isGreen = result == 1
-        msg.isYellow = result == 3
+        msg.isYellow = result == 4
         msg.isRed = result == 2
+
+        print(f"Traffic light state: {result}")
 
         self.traffic_light_publisher.publish(msg)
 
