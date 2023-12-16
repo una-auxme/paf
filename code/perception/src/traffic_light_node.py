@@ -4,7 +4,8 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from std_msgs.msg import Header, Bool
+from perception.msg import TrafficLightState
+from std_msgs.msg import Header
 from cv_bridge import CvBridge
 from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import TrafficLightInference
 
@@ -34,7 +35,7 @@ class TrafficLightNode(CompatibleNode):
 
     def setup_traffic_light_publishers(self):
         self.traffic_light_publisher = self.new_publisher(
-            msg_type=Bool,
+            msg_type=TrafficLightState,
             topic=f"/paf/{self.role_name}/{self.side}/traffic_light_state",
             qos_profile=1
         )
@@ -42,10 +43,12 @@ class TrafficLightNode(CompatibleNode):
     def handle_camera_image(self, image):
         result = self.classifier(self.bridge.imgmsg_to_cv2(image))
 
-        if result == 1: # Green
-            self.traffic_light_publisher.publish(Bool(True))
-        else: # Red, Yellow, Backside
-            self.traffic_light_publisher.publish(Bool(False))
+        msg = TrafficLightState()
+        msg.isGreen = result == 1
+        msg.isYellow = result == 3
+        msg.isRed = result == 2
+
+        self.traffic_light_publisher.publish(msg)
 
     def run(self):
         self.spin()
