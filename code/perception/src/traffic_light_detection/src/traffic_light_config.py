@@ -17,7 +17,7 @@ class TrafficLightConfig:
         # Amount of epochs to train
         # One epoch: Training with all images from training dataset once
         self.NUM_WORKERS = 4
-        self.NUM_CLASSES = 4  # Traffic light states: green, yellow, red, back
+        self.NUM_CLASSES = 5  # Traffic light states: green, yellow, red, back, side
         self.NUM_CHANNELS = 3  # RGB encoded images
 
         # Inference
