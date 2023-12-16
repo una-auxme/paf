@@ -190,13 +190,13 @@ class VisionNode(CompatibleNode):
 
         output = self.model(cv_image, half=True, verbose=False, retina_masks=True)
 
-        if output[0].masks is not None and 12 in output[0].boxes.cls:
+        if output[0].masks is not None and 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
         return output[0].plot()
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
-        indices = (prediction.boxes.cls == 12).nonzero().squeeze().cpu().numpy()
+        indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
         for index in indices:
@@ -207,7 +207,7 @@ class VisionNode(CompatibleNode):
             box = prediction.boxes[index].xyxy.squeeze().cpu().numpy().astype(int)
             segmented = segmented[box[1]:box[3], box[0]:box[2]]
 
-            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="passthrough")
+            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented)
             traffic_light_image.header = image_header
             self.traffic_light_publisher.publish(traffic_light_image)
 
