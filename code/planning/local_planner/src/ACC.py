@@ -8,7 +8,7 @@ from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
-from std_msgs.msg import Float32MultiArray, Float32
+from std_msgs.msg import Float32MultiArray, Float32, Bool
 from collision_check import CollisionCheck
 
 
@@ -55,6 +55,12 @@ class ACC(CompatibleNode):
         # Get current position to determine current speed limit
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
+            topic="/paf/" + self.role_name + "/emergency",
+            callback=self.emergency_callback,
+            qos_profile=1)
+        
+        self.emergency_sub: Subscriber = self.new_subscription(
+            msg_type=Bool,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
@@ -79,6 +85,16 @@ class ACC(CompatibleNode):
         self.obstacle: tuple = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
+
+    def emergency_callback(self, data: Bool):
+        """Callback for emergency stop
+        Turn of ACC when emergency stop is triggered
+
+        Args:
+            data (Bool): Emergency stop
+        """
+        if data.data is True:
+            self.collision_ahead = True
 
     def __get_collision(self, data: Float32MultiArray):
         """Check if collision is ahead
