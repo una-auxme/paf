@@ -44,7 +44,7 @@ class DevCollisionCheck(CompatibleNode):
             topic='/paf/' + self.role_name + '/manual',
             callback=self.callback_manual,
             qos_profile=1)
-        self.logerr("DevCollisionCheck started")
+        self.loginfo("DevCollisionCheck started")
         self.last_position_update = None
         self.simulated_speed = 12  # m/s
         self.distance_to_collision = 0
@@ -54,7 +54,6 @@ class DevCollisionCheck(CompatibleNode):
 
     def callback_manual(self, msg: Float32):
         if self.manual_start:
-            self.logerr("Manual start")
             self.manual_start = False
             self.pub_lidar.publish(Float32(data=25))
             time.sleep(0.2)

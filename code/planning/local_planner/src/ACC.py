@@ -23,7 +23,7 @@ class ACC(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
         self.current_speed = 50 / 3.6  # m/ss
 
-        self.logerr("ACC started")
+        self.loginfo("ACC started")
         # TODO: Add Subscriber for Obsdacle from Collision Check
         self.collision_sub = self.new_subscription(
             Float32MultiArray,
@@ -33,8 +33,8 @@ class ACC(CompatibleNode):
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/test_speed",
+            CarlaSpeedometer,
+            f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
             qos_profile=1)
 
@@ -90,7 +90,6 @@ class ACC(CompatibleNode):
         if np.isinf(data.data[0]):
             # No collision ahead
             self.collision_ahead = False
-            self.logerr("No Collision ahead -> ACC")
         else:
             # Collision ahead
             self.collision_ahead = True
@@ -113,7 +112,6 @@ class ACC(CompatibleNode):
         # Calculate safety distance
         safety_distance = CollisionCheck.calculate_rule_of_thumb(
             False, self.__current_velocity)
-        self.logerr("Safety Distance: " + str(safety_distance))
         if self.obstacle[0] < safety_distance:
             # If safety distance is reached, we want to reduce the speed to
             # meet the desired distance
@@ -124,7 +122,6 @@ class ACC(CompatibleNode):
 
             safe_speed = self.obstacle[1] * (self.obstacle[0] /
                                              safety_distance)
-            self.logerr("Safe Speed: " + str(safe_speed))
             return safe_speed
         else:
             # If safety distance is reached, drive with same speed as
@@ -132,8 +129,6 @@ class ACC(CompatibleNode):
             # TODO:
             # Incooperate overtaking ->
             # Communicate with decision tree about overtaking
-            self.logerr("saftey distance good; Speed from obstacle: " +
-                        str(self.obstacle[1]))
             return self.obstacle[1]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
@@ -142,7 +137,7 @@ class ACC(CompatibleNode):
         Args:
             data (CarlaSpeedometer): _description_
         """
-        self.__current_velocity = float(data.data)
+        self.__current_velocity = float(data.speed)
 
     def __set_trajectory(self, data: Path):
         """Recieve trajectory from global planner
