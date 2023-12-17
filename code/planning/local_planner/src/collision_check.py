@@ -5,7 +5,6 @@ import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
-from geometry_msgs.msg import PoseStamped
 # from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
@@ -35,12 +34,6 @@ class CollisionCheck(CompatibleNode):
             f"/paf/{self.role_name}/test_speed",
             self.__get_current_velocity,
             qos_profile=1)
-        # Subscriber for current position
-        self.current_pos_sub: Subscriber = self.new_subscription(
-            msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/current_pos",
-            callback=self.__current_position_callback,
-            qos_profile=1)
         # Subscriber for lidar distance
         self.lidar_dist = self.new_subscription(
             Float32,
@@ -60,7 +53,6 @@ class CollisionCheck(CompatibleNode):
         # Variables to save vehicle data
         self.__current_velocity: float = None
         self.__object_last_position: tuple = None
-        self._current_position: tuple = None
 
     def calculate_obstacle_speed(self, new_dist: Float32):
         """Caluclate the speed of the obstacle in front of the ego vehicle
@@ -123,14 +115,6 @@ class CollisionCheck(CompatibleNode):
             data (CarlaSpeedometer): Message from carla with current speed
         """
         self.__current_velocity = float(data.data)
-
-    def __current_position_callback(self, data: PoseStamped):
-        """Saves current position of the ego vehicle
-
-        Args:
-            data (PoseStamped): Message from Perception with current position
-        """
-        self._current_position = (data.pose.position.x, data.pose.position.y)
 
     def time_to_collision(self, obstacle_speed, distance):
         """calculates the time to collision with the obstacle in front
