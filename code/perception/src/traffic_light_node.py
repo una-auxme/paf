@@ -22,8 +22,6 @@ class TrafficLightNode(CompatibleNode):
         # publish / subscribe setup
         self.setup_camera_subscriptions()
         self.setup_traffic_light_publishers()
-        self.image_msg_header = Header()
-        self.image_msg_header.frame_id = "segmented_image_frame"
 
     def setup_camera_subscriptions(self):
         self.new_subscription(
@@ -43,12 +41,9 @@ class TrafficLightNode(CompatibleNode):
     def handle_camera_image(self, image):
         result = self.classifier(self.bridge.imgmsg_to_cv2(image))
 
+        # 1: Green, 2: Red, 4: Yellow, 0: Unknown
         msg = TrafficLightState()
-        msg.isGreen = result == 1
-        msg.isYellow = result == 4
-        msg.isRed = result == 2
-
-        print(f"Traffic light state: {result}")
+        msg.state = result if result in [1, 2, 4] else 0
 
         self.traffic_light_publisher.publish(msg)
 

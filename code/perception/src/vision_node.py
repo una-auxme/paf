@@ -190,7 +190,7 @@ class VisionNode(CompatibleNode):
 
         output = self.model(cv_image, half=True, verbose=False, retina_masks=True)
 
-        if output[0].masks is not None and 9 in output[0].boxes.cls:
+        if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
         return output[0].plot()
@@ -199,28 +199,18 @@ class VisionNode(CompatibleNode):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
-        min_x = 400
-        max_x = 1000
-        min_prob = 0.25
+        min_x = 550
+        max_x = 700
+        min_prob = 0.35
 
         for index in indices:
             box = prediction.boxes.cpu().data.numpy()[index]
 
-            print(f"Traffic Light: X1:{box[0]}, Y1:{box[1]}, X2:{box[2]}, Y2:{box[3]}, P:{box[4]}")
-            print(f" X1<min_x: {box[0] < min_x}, X2>max_x: {box[2] > max_x}, P<min_prob: {box[4] < min_prob}")
-
             if box[0] < min_x or box[2] > max_x or box[4] < min_prob:
                 continue
 
-            print("DETECTED")
-
-            mask = prediction.masks.cpu().data.numpy()[index]
-            mask = np.array(mask, dtype=np.uint8)
-            segmented = cv2.bitwise_and(cv_image, cv_image, mask=mask)
-
-            # box = prediction.boxes[index].xyxy.squeeze().cpu().numpy().astype(int)
             box = box[0:4].astype(int)
-            segmented = segmented[box[1]:box[3], box[0]:box[2]]
+            segmented = cv_image[box[1]:box[3], box[0]:box[2]]
 
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
