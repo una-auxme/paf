@@ -18,7 +18,6 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
-from time import perf_counter
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 """
 VisionNode:
@@ -188,7 +187,7 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
         # print(cv_image.shape)
 
-        output = self.model(cv_image, half=True, verbose=False, retina_masks=True)
+        output = self.model(cv_image, half=True, verbose=False)
 
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
@@ -212,7 +211,8 @@ class VisionNode(CompatibleNode):
             box = box[0:4].astype(int)
             segmented = cv_image[box[1]:box[3], box[0]:box[2]]
 
-            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
+            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented,
+                                                            encoding="rgb8")
             traffic_light_image.header = image_header
             self.traffic_light_publisher.publish(traffic_light_image)
 

@@ -11,8 +11,8 @@ from ruamel.yaml import YAML
 import sys
 import os
 sys.path.append(os.path.abspath(sys.path[0] + '/..'))
-from traffic_light_detection.transforms import Normalize, ResizeAndPadToSquare, \
-    load_image  # noqa: E402
+from traffic_light_detection.transforms import Normalize, \
+    ResizeAndPadToSquare, load_image  # noqa: E402
 from data_generation.weights_organizer import WeightsOrganizer  # noqa: E402
 from traffic_light_detection.classification_model import ClassificationModel \
     # noqa: E402

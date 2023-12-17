@@ -2,9 +2,10 @@ import argparse
 
 import torch.cuda
 import torchvision.transforms as t
-from traffic_light_detection.src.traffic_light_detection.transforms import Normalize, ResizeAndPadToSquare, \
-    load_image
-from traffic_light_detection.src.traffic_light_detection.classification_model import ClassificationModel
+from traffic_light_detection.src.traffic_light_detection.transforms \
+    import Normalize, ResizeAndPadToSquare, load_image
+from traffic_light_detection.src.traffic_light_detection.classification_model \
+    import ClassificationModel
 from torchvision.transforms import ToTensor
 from traffic_light_detection.src.traffic_light_config import TrafficLightConfig
 

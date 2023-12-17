@@ -5,9 +5,9 @@ import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from perception.msg import TrafficLightState
-from std_msgs.msg import Header
 from cv_bridge import CvBridge
-from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import TrafficLightInference
+from traffic_light_detection.src.traffic_light_detection.traffic_light_inference \
+    import TrafficLightInference  # noqa: E501
 
 
 class TrafficLightNode(CompatibleNode):
