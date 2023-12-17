@@ -7,8 +7,8 @@
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="1" />
     </node>
-    <node pkg="local_planner" type="dev_collision_publisher.py" name="DevCollisionCheck" output="screen">
+    <!-- <node pkg="local_planner" type="dev_collision_publisher.py" name="DevCollisionCheck" output="screen">
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="0.5" />
-    </node>
+    </node> -->
 </launch>
