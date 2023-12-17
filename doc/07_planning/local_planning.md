@@ -63,6 +63,7 @@ For calculating the distance the "rule of thumb" is used.
 $$
     distance_{safety} = speed + (speed \cdot 0.36)^2
 $$
+
 $$
     distance_{emergency} = speed + \frac{(speed \cdot 0.36)^2}{2}
 $$
