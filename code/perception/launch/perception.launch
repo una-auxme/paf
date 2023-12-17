@@ -64,9 +64,9 @@
   </node>
 
  <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
-    <param name="max_y" value="15."/>
-    <param name="min_y" value="-15."/>
-    <param name="min_x" value="1."/>
+    <param name="max_y" value="2.5"/>
+    <param name="min_y" value="-2.5"/>
+    <param name="min_x" value="2."/>
     <param name="min_z" value="-1.3"/>
     <param name="max_z" value="1."/>
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
