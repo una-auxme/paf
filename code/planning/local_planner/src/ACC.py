@@ -58,7 +58,7 @@ class ACC(CompatibleNode):
             topic="/paf/" + self.role_name + "/emergency",
             callback=self.emergency_callback,
             qos_profile=1)
-        
+
         self.emergency_sub: Subscriber = self.new_subscription(
             msg_type=Bool,
             topic="/paf/" + self.role_name + "/current_pos",
