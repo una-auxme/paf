@@ -42,9 +42,10 @@ class CollisionCheck(CompatibleNode):
             callback=self.__current_position_callback,
             qos_profile=1)
         # Subscriber for lidar distance
+        # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
             Float32,
-            f"/carla/{self.role_name}/lidar_dist_dev", # TODO: Change to lidar topic
+            f"/carla/{self.role_name}/lidar_dist_dev",
             self.calculate_obstacle_speed,
             qos_profile=1)
         # Publisher for emergency stop
