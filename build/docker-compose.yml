@@ -26,6 +26,10 @@ services:
     # image: carlasim/carla:0.9.14
     image: ghcr.io/una-auxme/paf23:leaderboard-2.0
     init: true
+    deploy:
+      resources:
+        limits:
+          memory: 16G
     expose:
       - 2000
       - 2001
