@@ -11,7 +11,7 @@ from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32
 from acting.msg import Debug
 import rospy
-import numpy as np
+# import numpy as np
 
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
@@ -140,17 +140,18 @@ class PurePursuitController(CompatibleNode):
         k_ld = 0.1  # TODO: tune
         look_ahead_dist = LOOK_AHEAD_DIS  # offset so that ld is never zero
 
-        """if self.__velocity < 0:
+        if self.__velocity < 0:
             # backwards driving is not supported, TODO why check this here?
             return 0.0
         elif round(self.__velocity, 1) < MIN_LD_V:
             # Offset for low velocity state
             look_ahead_dist += 0.0  # no offset
         else:
-            look_ahead_dist += k_ld * (self.__velocity - MIN_LD_V)"""
+            look_ahead_dist += k_ld * (self.__velocity - MIN_LD_V)
 
-        look_ahead_dist = np.clip(k_ld * self.__velocity,
-                                  MIN_L_A_DIS, MAX_L_A_DIS)
+        # look_ahead_dist = np.clip(k_ld * self.__velocity,
+        # MIN_L_A_DIS, MAX_L_A_DIS)
+
         # Get the target position on the trajectory in look_ahead distance
         self.__tp_idx = self.__get_target_point_index(look_ahead_dist)
         target_wp: PoseStamped = self.__path.poses[self.__tp_idx]

@@ -28,24 +28,24 @@ from trajectory_interpolation import interpolate_route
 
 # TEST_TYPE to choose which kind of Test to run:
 # 0: Test Velocity Controller with constant one velocity
-# const. velocity = MAX_VELOCITY_LOW
+# const. velocity = TARGET_VELOCITY_1
 # const. steering = 0
 # no trajectory
 # TURN OFF stanley and PP Controllers in acting.launch!
 
 # 1: Test Velocity Controller with changing velocity
-# velocity = alternate all 20 secs: MAX_VELOCITY_LOW/_HIGH
+# velocity = alternate all 20 secs: TARGET_VELOCITY_1/_HIGH
 # const. steering = 0
 # no trajectory
 # TURN OFF stanley and PP Controllers in acting.launch!
 
 # 2: Test Steering Controller on chooseable trajectory
-# velocity = MAX_VELOCITY_LOW TODO: maybe use velocity publisher?
+# velocity = TARGET_VELOCITY_1 TODO: maybe use velocity publisher?
 # steering = STEERING_CONTROLLER_USED (see below)
 # trajectory = TRAJECTORY_TYPE (see below)
 
 # 3: Test Emergency Breaks on TestType 1
-# const velocity = MAX_VELOCITY_LOW
+# const velocity = TARGET_VELOCITY_1
 # const steering = 0
 # no trajectory
 # Triggers emergency break after 15 Seconds
@@ -53,14 +53,14 @@ from trajectory_interpolation import interpolate_route
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 1                  # aka. TT
+TEST_TYPE = 2                 # aka. TT
 
 STEERING: float = 0.0          # for TT0: steering -> always straight
-MAX_VELOCITY_LOW: float = 3    # for TT0/TT1: low velocity
-MAX_VELOCITY_HIGH: float = 14  # for TT1: high velocity
+TARGET_VELOCITY_1: float = 7    # for TT0/TT1: low velocity
+TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
 
-STEERING_CONTROLLER_USED = 1   # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 1        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
+TRAJECTORY_TYPE = 0        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
 class Acting_Debugger(CompatibleNode):
@@ -88,7 +88,7 @@ class Acting_Debugger(CompatibleNode):
         # Publisher for Dummy Velocity
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
-            f"/paf/{self.role_name}/max_velocity",
+            f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
         # Stanley: Publisher for Dummy Stanley-Steer
@@ -118,11 +118,11 @@ class Acting_Debugger(CompatibleNode):
             qos_profile=1)
 
         # ---> EVALUATION/TUNING: Subscribers for plotting
-        # Subscriber for max_velocity for plotting
-        self.max_velocity_sub: Subscriber = self.new_subscription(
+        # Subscriber for target_velocity for plotting
+        self.target_velocity_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/max_velocity",
-            self.__get_max_velocity,
+            f"/paf/{self.role_name}/target_velocity",
+            self.__get_target_velocity,
             qos_profile=1)
 
         # Subscriber for current_velocity for plotting
@@ -169,7 +169,7 @@ class Acting_Debugger(CompatibleNode):
         # Initialize all needed "global" variables here
         self.current_trajectory = []
         self.switchVelocity = False
-        self.driveVel = MAX_VELOCITY_LOW
+        self.driveVel = TARGET_VELOCITY_1
 
         self.switch_checkpoint_time = rospy.get_time()
         self.switch_time_set = False
@@ -287,7 +287,7 @@ class Acting_Debugger(CompatibleNode):
         self.z = agent.z
         # TODO use this to get spawnpoint? necessary?
 
-    def __get_max_velocity(self, data: Float32):
+    def __get_target_velocity(self, data: Float32):
         self.__max_velocities.append(float(data.data))
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
@@ -319,38 +319,43 @@ class Acting_Debugger(CompatibleNode):
             Publishes different speeds, trajectories ...
             depending on the selected TEST_TYPE
             """
+            # Drive const. velocity on fixed straight steering
             if (TEST_TYPE == 0):
-                self.drive_Vel = MAX_VELOCITY_LOW
+                self.drive_Vel = TARGET_VELOCITY_1
                 self.stanley_steer_pub.publish(STEERING)
                 self.pure_pursuit_steer_pub.publish(STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
+            # Drive alternating velocities on fixed straight steering
             elif (TEST_TYPE == 1):
                 if not self.time_set:
-                    self.drive_Vel = MAX_VELOCITY_LOW
+                    self.drive_Vel = TARGET_VELOCITY_1
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switch_time_set = True
-                if (self.switch_checkpoint_time < rospy.get_time() - 7.5):
+                if (self.switch_checkpoint_time < rospy.get_time() - 10):
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switchVelocity = not self.switchVelocity
                     if (self.switchVelocity):
-                        self.driveVel = MAX_VELOCITY_HIGH
+                        self.driveVel = TARGET_VELOCITY_2
                     else:
-                        self.driveVel = MAX_VELOCITY_LOW
+                        self.driveVel = TARGET_VELOCITY_1
                 self.stanley_steer_pub.publish(STEERING)
                 self.pure_pursuit_steer_pub.publish(STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
+            # drive const. velocity on trajectoy with steering controller
             elif (TEST_TYPE == 2):
                 # Continuously update path and publish it
-                self.drive_Vel = MAX_VELOCITY_LOW
+                self.drive_Vel = TARGET_VELOCITY_1
                 self.updated_trajectory(self.current_trajectory)
                 self.trajectory_pub.publish(self.path_msg)
                 self.velocity_pub.publish(self.driveVel)
 
+            # drive const. velocity on fixed straight steering and
+            # trigger an emergency brake after 15 secs
             elif (TEST_TYPE == 3):
                 # Continuously update path and publish it
-                self.drive_Vel = MAX_VELOCITY_LOW
+                self.drive_Vel = TARGET_VELOCITY_1
                 if not self.time_set:
                     self.checkpoint_time = rospy.get_time()
                     self.time_set = True
@@ -361,10 +366,13 @@ class Acting_Debugger(CompatibleNode):
                 self.pure_pursuit_steer_pub.publish(STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
+            # drive const. velocity and follow trajectory by
+            # publishing self-calculated steering
             elif (TEST_TYPE == 4):
-                self.drive_Vel = MAX_VELOCITY_LOW
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.drive_Vel = TARGET_VELOCITY_1
+                steer = self.calculate_steer()
+                self.stanley_steer_pub.publish(steer)
+                self.pure_pursuit_steer_pub.publish(steer)
 
             if (STEERING_CONTROLLER_USED == 1):
                 self.controller_selector_pub.publish(1)
@@ -378,15 +386,15 @@ class Acting_Debugger(CompatibleNode):
                 self.time_set = True
 
             # Uncomment the prints of the data you want to plot
-            if (self.checkpoint_time < rospy.get_time() - 22.5):
+            if (self.checkpoint_time < rospy.get_time() - 10.0):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-                print(self.__max_velocities)
-                print(self.__current_velocities)
+                # print(self.__max_velocities)
+                # print(self.__current_velocities)
                 # print(self.__throttles)
-                # print(self.__purepursuit_steers)
-                # print(self.__stanley_steers)
-                # print(self.__vehicle_steers)
+                print(self.__purepursuit_steers)
+                print(self.__stanley_steers)
+                print(self.__vehicle_steers)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)

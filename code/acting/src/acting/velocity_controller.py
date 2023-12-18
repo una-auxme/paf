@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 import ros_compatibility as roscomp
 from carla_msgs.msg import CarlaSpeedometer
-from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from simple_pid import PID
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32
 from nav_msgs.msg import Path
 
 # TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 10  # 36.0
+SPEED_LIMIT_DEFAULT: float = 7  # 36.0
 
 
 class VelocityController(CompatibleNode):
@@ -27,27 +26,16 @@ class VelocityController(CompatibleNode):
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
         self.role_name = self.get_param('role_name', 'ego_vehicle')
 
-        self.max_velocity_sub: Subscriber = self.new_subscription(
+        self.target_velocity_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/max_velocity",
-            self.__get_max_velocity,
+            f"/paf/{self.role_name}/target_velocity",
+            self.__get_target_velocity,
             qos_profile=1)
 
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
-            qos_profile=1)
-
-        self.speed_limit_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/speed_limit",
-            qos_profile=1)
-
-        self.max_tree_v_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/max_tree_velocity",
-            self.__set_max_tree_v,
             qos_profile=1)
 
         self.throttle_pub: Publisher = self.new_publisher(
@@ -60,14 +48,6 @@ class VelocityController(CompatibleNode):
             f"/paf/{self.role_name}/brake",
             qos_profile=1)
 
-        # rqt_plot can't read the speed data provided by the rosbridge
-        # Therefore, the speed is published again as a float value
-        # TODO not true anymore? -> obsolete?
-        self.velocity_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/velocity_as_float",
-            qos_profile=1)
-
         # needed to prevent the car from driving before a path to follow is
         # available. Might be needed later to slow down in curves
         self.trajectory_sub: Subscriber = self.new_subscription(
@@ -76,28 +56,9 @@ class VelocityController(CompatibleNode):
             self.__set_trajectory,
             qos_profile=1)
 
-        # TODO: does this replace paf/hero/speed_limit?
-        self.speed_limit_OD_sub: Subscriber = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/speed_limits_OpenDrive",
-            self.__set_speed_limits_opendrive,
-            qos_profile=1)
-
-        # TODO: currently used to determine position on OpenDrive Map
-        # to set speed_limits correctly. Planning soon? -> Obsolete
-        self.current_pos_sub: Subscriber = self.new_subscription(
-            msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/current_pos",
-            callback=self.__current_position_callback,
-            qos_profile=1)
-
         self.__current_velocity: float = None
-        self.__max_velocity: float = None
-        self.__max_tree_v: float = None
-        self.__speed_limit: float = None
+        self.__target_velocity: float = None
         self.__trajectory: Path = None
-        self.__speed_limits_OD: [float] = []
-        self.__current_wp_index: int = 0
 
     def run(self):
         """
@@ -107,12 +68,12 @@ class VelocityController(CompatibleNode):
         self.loginfo('VelocityController node running')
         # PID for throttle
         pid_t = PID(0.60, 0.00076, 0.63)
-        pid_t.output_limits = (0.0, 1.0)
+        pid_t.output_limits = (-1.0, 1.0)
         # new PID for braking, much weaker than throttle controller!
-        pid_b = PID(-0, -0, -0)  # TODO tune? BUT current P can be good
+        # pid_b = PID(-0.1, -0, -0)  # TODO tune? BUT current P can be good
         # Kp just says "brake fully(1) until you are only Kp*speedError faster"
         # so with Kp = -1.35 -> the actual braking range is hardly used
-        pid_b.output_limits = (0.0, 1.0)
+        # pid_b.output_limits = (.0, 1.0)
 
         def loop(timer_event=None):
             """
@@ -122,11 +83,11 @@ class VelocityController(CompatibleNode):
             :param timer_event: Timer event from ROS
             :return:
             """
-            if self.__max_velocity is None:
-                self.logdebug("VelocityController hasn't received max_velocity"
-                              " yet. max_velocity has been set to"
+            if self.__target_velocity is None:
+                self.logdebug("VelocityController hasn't received target"
+                              "_velocity yet. target_velocity has been set to"
                               f"default value {SPEED_LIMIT_DEFAULT}")
-                self.__max_velocity = SPEED_LIMIT_DEFAULT
+                self.__target_velocity = SPEED_LIMIT_DEFAULT
 
             if self.__current_velocity is None:
                 self.logdebug("VelocityController  hasn't received "
@@ -140,32 +101,25 @@ class VelocityController(CompatibleNode):
                               "publish a throttle value (to prevent stupid)")
                 return
 
-            if self.__speed_limit is None or self.__speed_limit < 0:
-                self.logdebug("VelocityController hasn't received a acceptable"
-                              " speed_limit yet. speed_limit has been set to"
-                              f"default value {SPEED_LIMIT_DEFAULT}")
-                self.__speed_limit = SPEED_LIMIT_DEFAULT
-
-            if self.__max_tree_v is None or self.__max_tree_v < 0:
-                self.logdebug("VelocityController hasn't received a acceptable"
-                              " max_tree_v yet. speed_limit has been set to"
-                              f"default value {SPEED_LIMIT_DEFAULT}")
-                self.__max_tree_v = SPEED_LIMIT_DEFAULT
-            if self.__max_velocity < 0:
+            if self.__target_velocity < 0:
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
                 return
 
-            # TODO: soon Planning wants to calculate and publish max_velocity
-            v = min(self.__max_velocity, self.__max_tree_v)
-            v = min(v, self.__speed_limit)
-            v = self.__max_velocity
+            v = self.__target_velocity
 
             pid_t.setpoint = v
             throttle = pid_t(self.__current_velocity)
 
-            pid_b.setpoint = v
-            brake = pid_b(self.__current_velocity)
+            # pid_b.setpoint = v
+            # brake = pid_b(self.__current_velocity)
+
+            # use negative throttles as brake inputs, works OK
+            if throttle < 0:
+                brake = abs(throttle)
+                throttle = 0
+            else:
+                brake = 0
 
             self.brake_pub.publish(brake)
             self.throttle_pub.publish(throttle)
@@ -175,49 +129,12 @@ class VelocityController(CompatibleNode):
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         self.__current_velocity = float(data.speed)
-        self.velocity_pub.publish(self.__current_velocity)
 
-    def __set_max_tree_v(self, data: Float32):
-        self.__max_tree_v = float(data.data)
-
-    def __get_max_velocity(self, data: Float32):
-        self.__max_velocity = float(data.data)
-
-    def __get_speed_limit(self, data: Float32):
-        self.__speed_limit = float(data.data)
+    def __get_target_velocity(self, data: Float32):
+        self.__target_velocity = float(data.data)
 
     def __set_trajectory(self, data: Path):
         self.__trajectory = data
-
-    def __set_speed_limits_opendrive(self, data: Float32MultiArray):
-        self.__speed_limits_OD = data.data
-
-    def __current_position_callback(self, data: PoseStamped):
-        """ Use the current position to determine where
-        on the map the agent currently is.
-        This is needed to determine the Speed limits from
-        the OpenDrive Map.
-        :param data (PoseStamped): the Position-Message recieved
-        :return:
-        """
-        if len(self.__speed_limits_OD) < 1 or self.__trajectory is None:
-            return
-
-        agent = data.pose.position
-        current_wp = self.__trajectory.poses[self.__current_wp_index].\
-            pose.position
-        next_wp = self.__trajectory.poses[self.__current_wp_index + 1].\
-            pose.position
-
-        # distances from agent to current and next waypoint
-        d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
-        d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
-        if d_new < d_old:
-            # update current waypoint and corresponding speed limit
-            self.__current_wp_index += 1
-            self.__speed_limit = \
-                self.__speed_limits_OD[self.__current_wp_index]
-            self.speed_limit_pub.publish(self.__speed_limit)
 
 
 def main(args=None):
