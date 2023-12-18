@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import time
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -14,9 +13,8 @@ import math
 import threading
 from coordinate_transformation import CoordinateTransformer
 from xml.etree import ElementTree as eTree
+GPS_RUNNING_AVG_ARGS: int = 10
 
-# TODO remove rolling average from current position
-# TODO Or use raw gps data for current position
 '''
 This class implements a Kalman filter for a 3D object tracked in 3D space.
 It implements the data of the IMU and the GPS Sensors.
@@ -38,7 +36,6 @@ The state vector X is defined as:
             [initial_y],
             [v_x],
             [v_y],
-            ([a_hy] in direction of v_hy (heading hy), TODO not used)
             [yaw],
             [omega_z],
 The state transition matrix F is defined as:
@@ -91,7 +88,6 @@ class KalmanFilter(CompatibleNode):
             [initial_y],
             [v_x],
             [v_y],
-            ([a_hy] in direction of v_hy (heading hy), TODO not used)
             [yaw],
             [omega_z],
         ]
@@ -144,10 +140,7 @@ class KalmanFilter(CompatibleNode):
         self.z_v = np.zeros((2, 1))  # Velocity measurement (v_x, v_y)
         self.z_imu = np.zeros((2, 1))  # IMU measurements (yaw, omega_z)
 
-        # Define measurement noise covariance matrix
-        # TODO delete comment if not useful anymore:
-        # self.R = np.diag([0.005, 0.005, 0.001, 0.0001])
-        self.R = np.diag([0.005, 0.005, 0, 0, 0, 0])
+        self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
 
         # Define process noise covariance matrix
         self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
@@ -192,6 +185,8 @@ class KalmanFilter(CompatibleNode):
             self.update_gps_data,
             qos_profile=1)
         # Initialize the subscriber for the current_pos in XYZ
+        self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
+        self.avg_gps_counter: int = 0
         self.unfiltered_pos_subscriber = self.new_subscription(
             PoseStamped,
             "/paf/" + self.role_name + "/unfiltered_pos",
@@ -221,8 +216,8 @@ class KalmanFilter(CompatibleNode):
         Run the Kalman Filter
         """
         while not self.initialized:
-            time.sleep(1)
-        time.sleep(2)
+            rospy.sleep(1)
+        rospy.sleep(1)
 
         self.loginfo('KalmanFilter started its loop!')
 
@@ -235,7 +230,7 @@ class KalmanFilter(CompatibleNode):
                              [self.z_imu[0, 0]],
                              [self.z_imu[1, 0]]])
         self.x_est = np.copy(self.x_0)  # estimated initial state vector
-        self.P_est = np.eye(6) * 1000  # estiamted initialstatecovariancematrix
+        self.P_est = np.eye(6) * 1  # estiamted initialstatecovariancematrix
 
         def loop():
             """
@@ -291,7 +286,7 @@ class KalmanFilter(CompatibleNode):
         kalman_heading = Float32()
 
         # Fill the kalman-heading
-        kalman_heading.data = self.x_est[2, 0]
+        kalman_heading.data = self.x_est[4, 0]
 
         # Publish the kalman-heading
         self.kalman_heading_publisher.publish(kalman_heading)
@@ -312,7 +307,7 @@ class KalmanFilter(CompatibleNode):
 
         kalman_position.pose.position.x = self.x_est[0, 0]
         kalman_position.pose.position.y = self.x_est[1, 0]
-        # TODO add some kind of filter for z
+
         kalman_position.pose.position.z = self.latitude
         kalman_position.pose.orientation.x = 0
         kalman_position.pose.orientation.y = 0
@@ -339,8 +334,9 @@ class KalmanFilter(CompatibleNode):
         # Implementation by paf22 in Position_Publisher_Node.py
         # TODO: Why were they using roll and pitch instead of yaw?
         # Even though they are basically deriving the yaw that way?
+        # -> yaw is the only needed value for now
         roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-        raw_heading = math.atan2(roll, pitch)
+        raw_heading = yaw
 
         # transform raw_heading so that:
         # ---------------------------------------------------------------
@@ -351,12 +347,15 @@ class KalmanFilter(CompatibleNode):
         # update IMU Measurements:
         self.z_imu[0, 0] = heading
         self.z_imu[1, 0] = imu_data.angular_velocity.z
+
+        """
         if imu_data.orientation_covariance[8] != 0:
             # [8] because we want the diag z element of the covariance matrix
             self.R[2, 2] = imu_data.orientation_covariance[8]
         if imu_data.angular_velocity_covariance[8] != 0:
             # [8] because we want the diag z element of the covariance matrix
             self.R[3, 3] = imu_data.angular_velocity_covariance[8]
+        """
 
     def update_gps_data(self, gps_data):
         """
@@ -383,11 +382,13 @@ class KalmanFilter(CompatibleNode):
         # look up if covariance type is not 0 (0 = COVARANCE_TYPE_UNKNOWN)
         # (1 = approximated, 2 = diagonal known or 3 = known)
         # if it is not 0 -> update the covariance matrix
+        """
         if gps_data.position_covariance_type != 0:
             # [0] because we want the diag lat element of the covariance matrix
             self.R[0, 0] = gps_data.pose.covariance[0]
             # [5] because we want the diag lon element of the covariance matrix
             self.R[1, 1] = gps_data.pose.covariance[5]
+        """
         pass
 
     def update_current_pos(self, current_pos):
@@ -398,7 +399,13 @@ class KalmanFilter(CompatibleNode):
         self.z_gps[0, 0] = current_pos.pose.position.x
         self.z_gps[1, 0] = current_pos.pose.position.y
 
-        self.latitude = current_pos.pose.position.z
+        z = current_pos.pose.position.z
+
+        self.avg_z = np.roll(self.avg_z, -1, axis=0)
+        self.avg_z[-1] = np.matrix([z])
+        avg_z = np.mean(self.avg_z, axis=0)
+
+        self.latitude = avg_z
 
         # set self.initialized to True so that the kalman filter can start
         if not self.initialized:
