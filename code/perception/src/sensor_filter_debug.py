@@ -221,7 +221,7 @@ class SensorFilterDebugNode(CompatibleNode):
             self.ideal_current_pos.pose.position.x)**2
             + (self.unfiltered_pos.pose.position.y -
                 self.ideal_current_pos.pose.position.y)**2)
-        
+
         self.unfiltered_pos_debug_data = debug
         self.unfiltered_pos_debug_publisher.publish(debug)
 
