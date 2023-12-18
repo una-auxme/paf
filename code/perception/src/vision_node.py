@@ -154,7 +154,7 @@ class VisionNode(CompatibleNode):
 
         # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
-                                            encoding="passthrough")
+                                            encoding="rgb8")
         img_msg.header = image.header
         self.publisher.publish(img_msg)
 
