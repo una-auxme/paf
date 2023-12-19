@@ -1,8 +1,10 @@
 import py_trees
 import numpy as np
-from std_msgs.msg import Float32
+from std_msgs.msg import String
 
 import rospy
+
+from .import behavior_speed as bs
 
 """
 Source: https://github.com/ll7/psaf2
@@ -41,9 +43,9 @@ class Approach(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity",
-                                                Float32, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior",
+                                                 String, queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -66,7 +68,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.traffic_light_distance = np.inf
         self.traffic_light_status = ''
         self.virtual_stopline_distance = np.inf
-        self.target_speed_pub.publish(convert_to_ms(30.0))
+        self.curr_behavior_pub.publish(bs.int_app_init.name)
         self.last_virtual_distance = np.inf
 
     def update(self):
@@ -117,16 +119,7 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_stopline_distance = 0.0
 
         rospy.loginfo(f"Stopline distance: {self.virtual_stopline_distance}")
-
         target_distance = 3.0
-        # calculate speed needed for stopping
-        v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((self.virtual_stopline_distance / 30)
-                                   * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(50.0)
-        if self.virtual_stopline_distance < target_distance:
-            v_stop = 0.0
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
         if self.traffic_light_status == '' \
@@ -135,13 +128,13 @@ class Approach(py_trees.behaviour.Behaviour):
                 or (self.stop_sign_detected and
                     not self.traffic_light_detected):
 
-            rospy.loginfo(f"slowing down: {v_stop}")
-            self.target_speed_pub.publish(v_stop)
+            rospy.loginfo("slowing down!")
+            self.curr_behavior_pub.publish(bs.int_app_no_sign.name)
 
         # approach slowly when traffic light is green as traffic lights are
         # higher priority than traffic signs this behavior is desired
         if self.traffic_light_status == 'green':
-            self.target_speed_pub.publish(convert_to_ms(30))
+            self.curr_behavior_pub.publish(bs.int_app_green.name)
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -224,9 +217,9 @@ class Wait(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -279,7 +272,7 @@ class Wait(py_trees.behaviour.Behaviour):
             if traffic_light_status == "red" or \
                     traffic_light_status == "yellow":
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
-                self.target_speed_pub.publish(0)
+                self.curr_behavior_pub.publish(bs.int_wait.name)
                 return py_trees.common.Status.RUNNING
             else:
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
@@ -333,9 +326,9 @@ class Enter(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -352,16 +345,16 @@ class Enter(py_trees.behaviour.Behaviour):
         rospy.loginfo("Enter Intersection")
         light_status_msg = self.blackboard.get("/paf/hero/traffic_light")
         if light_status_msg is None:
-            self.target_speed_pub.publish(convert_to_ms(50.0))
+            self.curr_behavior_pub.publish(bs.int_enter_no_light.name)
             return True
         else:
             traffic_light_status = light_status_msg.color
 
         if traffic_light_status == "":
-            self.target_speed_pub.publish(convert_to_ms(18.0))
+            self.curr_behavior_pub.publish(bs.int_enter_empty_str.name)
         else:
             rospy.loginfo(f"Light Status: {traffic_light_status}")
-            self.target_speed_pub.publish(convert_to_ms(50.0))
+            self.curr_behavior_pub.publish(bs.int_enter_light.name)
 
     def update(self):
         """
@@ -433,9 +426,9 @@ class Leave(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -453,16 +446,15 @@ class Leave(py_trees.behaviour.Behaviour):
         rospy.loginfo("Leave Intersection")
         street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
         if street_speed_msg is not None:
-            self.target_speed_pub.publish(street_speed_msg.data)
+            # self.curr_behavior_pub.publish(street_speed_msg.data)
+            self.curr_behavior_pub.publish(bs.int_exit.name)
         return True
 
     def update(self):
         """
         When is this called?
             Every time your behaviour is ticked.
-        What to do here?
-           - Triggering, checking, monitoring. Anything...but do not block!
-           - Set a feedback message
+        What to do here?exit_int
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         Abort this subtree
         :return: py_trees.common.Status.FAILURE, to exit this subtree

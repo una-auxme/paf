@@ -11,4 +11,8 @@
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="0.3" />
     </node> -->
+    <node pkg="local_planner" type="motion_planning.py" name="MotionPlanning" output="screen">
+           <param name="role_name" value="hero" />
+           <param name="control_loop_rate" value="1" />
+    </node>
 </launch>

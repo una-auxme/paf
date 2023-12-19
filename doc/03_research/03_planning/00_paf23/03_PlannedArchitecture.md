@@ -4,7 +4,7 @@ Provide  an overview for a possible planning architecture consisting of Global P
 
 ## Overview
 
-![overview](overview.png)
+![overview](../../../00_assets/planning/overview.png)
 
 The **Global Plan** gathers all data relevant to build a copy of the town the car is driving in. It also computes an optimal global path, which includes all waypoints. The Decision Making can order a recalculation of the global path.
 
@@ -19,7 +19,7 @@ Motions like lane changing must be approved by the decision making and they get 
 
 ### Global Plan
 
-![overview](Globalplan.png)
+![overview](../../../00_assets/planning/Globalplan.png)
 
 *Map Generator:* Gathers map data from Carla and prepares it for the PrePlanner
 
@@ -69,7 +69,7 @@ See Behaviour Tree.
 
 ### Local Plan
 
-![Local Plan](localplan.png)
+![Local Plan](../../../00_assets/planning/localplan.png)
 
 *Local Preplan:* Segements the global path and calculates the middle of the lane. Is not called in every cycle.
 
@@ -128,4 +128,4 @@ See Behaviour Tree.
 
 Red must have for next Milestone, Orange needed for future milestones, Green can already be used or is not that important
 
-![prios](prios.png)
+![prios](../../../00_assets/planning/prios.png)

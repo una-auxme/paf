@@ -28,7 +28,7 @@ class ResizeAndPadToSquare(object):
             image = torchvision.transforms.Pad((0, pad))(image)
         else:
             image = torchvision.transforms.Pad((pad, 0))(image)
-        image = torchvision.transforms.Resize(self.size)(image)
+        image = torchvision.transforms.Resize(self.size, antialias=True)(image)
         return image
 
 
