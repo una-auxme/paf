@@ -61,47 +61,7 @@ def grow_a_tree(role_name):
                                                  ("Leave Change")
                                              ])
                                 ]),
-                        Inverter(Selector("Overtaking", children=[
-                            behaviours.traffic_objects.NotSlowedByCarInFront
-                            ("Not Slowed By Car in Front?"),
-                            Selector("Number of Lanes", children=[
-                                Sequence("Multi Lane", children=[
-                                    behaviours.road_features.MultiLane("Multi Lane?"),
-                                    behaviours.road_features.LeftLaneAvailable
-                                    ("Left Lane Available?"),
-                                    behaviours.traffic_objects.WaitLeftLaneFree
-                                    ("Wait for Left Lane Free"),
-                                    behaviours.maneuvers.SwitchLaneLeft("Switch Lane Left")
-                                ]),
-                                Sequence("Single Lane", children=[
-                                    behaviours.road_features.SingleLineDotted
-                                    ("Single Lane with dotted Line?"),
-                                    behaviours.traffic_objects.WaitLeftLaneFree
-                                    ("Wait for Left Lane Free"),
-                                    behaviours.maneuvers.SwitchLaneLeft
-                                    ("Switch Lane Left"),
-                                    Selector("Driving on Left Side", children=[
-                                        Sequence("Overtake", children=[
-                                            behaviours.traffic_objects.OvertakingPossible
-                                            ("Overtaking Possible?"),
-                                            behaviours.maneuvers.Overtake("Overtake"),
-                                            behaviours.maneuvers.SwitchLaneRight
-                                            ("Switch Lane Right")
-                                        ]),
-                                        behaviours.maneuvers.SwitchLaneRight("Switch Lane Right")
-                                    ])
-                                ])
-                            ]),
-                            Running("Can't Overtake")
-                        ])),
-                        Sequence("Back to Right Lane", children=[
-                            behaviours.road_features.RightLaneAvailable("Right Lane Available"),
-                            behaviours.traffic_objects.NotSlowedByCarInFrontRight
-                            ("Not Slowed By Car in Front Right?"),
-                            behaviours.traffic_objects.
-                            WaitRightLaneFree("Wait for Right Lane Free"),
-                            behaviours.maneuvers.SwitchLaneRight("Switch Lane Right")
-                        ])
+                        
                     ]),
                     behaviours.maneuvers.Cruise("Cruise")
                 ])
