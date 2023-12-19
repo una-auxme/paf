@@ -7,7 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
-from std_msgs.msg import Float32MultiArray, Float32, Bool
+from std_msgs.msg import Float32MultiArray, Float32
 from collision_check import CollisionCheck
 import time
 from perception.msg import MinDistance
@@ -53,7 +53,7 @@ class ACC(CompatibleNode):
             qos_profile=1)
 
         self.emergency_sub: Subscriber = self.new_subscription(
-            msg_type=Bool,
+            msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
@@ -140,7 +140,6 @@ class ACC(CompatibleNode):
             pose.position
         next_wp = self.__trajectory.poses[self.__current_wp_index + 1].\
             pose.position
-
         # distances from agent to current and next waypoint
         d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
         d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
@@ -182,10 +181,12 @@ class ACC(CompatibleNode):
                     # If safety distance is reached, drive with same speed as
                     # Object in front
                     self.velocity_pub.publish(self.obstacle_speed[1])
+
             elif self.speed_limit is not None:
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
                 self.velocity_pub.publish(self.speed_limit)
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 

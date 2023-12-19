@@ -9,7 +9,9 @@ from ros_compatibility.node import CompatibleNode
 # from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32
+from carla_msgs.msg import CarlaSpeedometer
 import time
+from perception.msg import MinDistance
 # import numpy as np
 
 
@@ -25,13 +27,13 @@ class DevCollisionCheck(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
 
         self.pub_lidar = self.new_publisher(
-            msg_type=Float32,
-            topic='/carla/' + self.role_name + '/lidar_dist_dev',
+            msg_type=MinDistance,
+            topic=f'/paf/{self.role_name}/Center/min_distance',
             qos_profile=1)
 
         self.pub_test_speed = self.new_publisher(
-            msg_type=Float32,
-            topic='/paf/' + self.role_name + '/test_speed',
+            msg_type=CarlaSpeedometer,
+            topic='/carla/' + self.role_name + '/test_speed',
             qos_profile=1)
         self.sub_ACC = self.new_subscription(
             msg_type=Float32,
@@ -55,11 +57,11 @@ class DevCollisionCheck(CompatibleNode):
     def callback_manual(self, msg: Float32):
         if self.manual_start:
             self.manual_start = False
-            self.pub_lidar.publish(Float32(data=25))
+            self.pub_lidar.publish(MinDistance(distance=25))
             time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=25))
+            self.pub_lidar.publish(MinDistance(distance=25))
             time.sleep(0.2)
-            self.pub_lidar.publish(Float32(data=24))
+            self.pub_lidar.publish(MinDistance(distance=24))
             # time.sleep(0.2)
             # self.pub_lidar.publish(Float32(data=20))
             # time.sleep(0.2)
@@ -69,8 +71,8 @@ class DevCollisionCheck(CompatibleNode):
 
     def callback_ACC(self, msg: Float32):
         self.acc_activated = True
-        # self.logerr("Timestamp: " + time.time().__str__())
-        # self.logerr("ACC: " + str(msg.data))
+        self.logerr("Timestamp: " + time.time().__str__())
+        self.logerr("ACC: " + str(msg.data))
         self.current_speed = msg.data
 
     def run(self):
@@ -79,7 +81,7 @@ class DevCollisionCheck(CompatibleNode):
         :return:
         """
         def loop(timer_event=None):
-            self.pub_test_speed.publish(Float32(data=13.8889))
+            self.pub_test_speed.publish(CarlaSpeedometer(speed=13.8889))
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
