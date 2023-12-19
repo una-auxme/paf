@@ -10,6 +10,8 @@ from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32, Bool
 from collision_check import CollisionCheck
+import time
+from perception.msg import MinDistance
 
 
 class ACC(CompatibleNode):
@@ -23,14 +25,6 @@ class ACC(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
         self.current_speed = 50 / 3.6  # m/ss
 
-        self.loginfo("ACC started")
-        # TODO: Add Subscriber for Obsdacle from Collision Check
-        self.collision_sub = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/collision",
-            self.__get_collision,
-            qos_profile=1)
-
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
@@ -38,6 +32,13 @@ class ACC(CompatibleNode):
             self.__get_current_velocity,
             qos_profile=1)
 
+        # Subscriber for lidar distance
+        # TODO: Change to real lidar distance
+        self.lidar_dist = self.new_subscription(
+            MinDistance,
+            f"/carla/{self.role_name}/LIDAR_range",
+            self._set_distance,
+            qos_profile=1)
         # Get initial set of speed limits
         self.speed_limit_OD_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
@@ -52,20 +53,17 @@ class ACC(CompatibleNode):
             self.__set_trajectory,
             qos_profile=1)
 
-        # Get current position to determine current speed limit
-        self.current_pos_sub: Subscriber = self.new_subscription(
-            msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/emergency",
-            callback=self.emergency_callback,
-            qos_profile=1)
-
         self.emergency_sub: Subscriber = self.new_subscription(
             msg_type=Bool,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
-
-        # Publish desiored speed to acting
+        self.approx_speed_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/cc_speed",
+            self.__approx_speed_callback,
+            qos_profile=1)
+        # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
@@ -82,37 +80,29 @@ class ACC(CompatibleNode):
         # Is an obstacle ahead where we would collide with?
         self.collision_ahead: bool = False
         # Distance and speed from possible collsion object
-        self.obstacle: tuple = None
+        self.obstacle_speed: tuple = None
+        # Obstalce distance
+        self.obstacle_distance = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
 
-    def emergency_callback(self, data: Bool):
-        """Callback for emergency stop
-        Turn of ACC when emergency stop is triggered
+    def _set_distance(self, data: MinDistance):
+        """Get min distance to object in front from perception
 
         Args:
-            data (Bool): Emergency stop
+            data (MinDistance): Minimum Distance from LIDAR
         """
-        if data.data is True:
-            self.collision_ahead = True
+        self.obstacle_distance = data.distance
 
-    def __get_collision(self, data: Float32MultiArray):
-        """Check if collision is ahead
+    def __approx_speed_callback(self, data: Float32):
+        """Safe approximated speed form obstacle in front together with timestamp 
+        when recieved. 
+        Timestamp is needed to check wether we still have a vehicle in front
 
         Args:
-            data (Float32MultiArray): Distance and speed from possible
-                                        collsion object
+            data (Float32): Speed from obstacle in front
         """
-        if np.isinf(data.data[0]):
-            # No collision ahead
-            self.collision_ahead = False
-        else:
-            # Collision ahead
-            self.collision_ahead = True
-            self.obstacle = (data.data[0], data.data[1])
-            target_speed = self.calculate_safe_speed()
-            if target_speed is not None:
-                self.velocity_pub.publish(target_speed)
+        self.obstacle_speed = (time.time(), data.data)
 
     def calculate_safe_speed(self):
         """calculates the speed to meet the desired distance to the object

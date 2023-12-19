@@ -51,6 +51,11 @@ class CollisionCheck(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             qos_profile=1)
+        # Approx speed publisher for ACC
+        self.speed_publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.rolename}/cc_speed",
+            qos_profile=1)
         # Variables to save vehicle data
         self.__current_velocity: float = None
         self.__object_last_position: tuple = None
@@ -94,7 +99,8 @@ class CollisionCheck(CompatibleNode):
         # Speed is distance/time (m/s)
         relative_speed = distance/time_difference
         speed = self.__current_velocity + relative_speed
-
+        # Publish distance and speed to ACC for permanent distance check
+        self.speed_publisher(Float32(data=speed))
         # Check for crash
         self.check_crash((new_dist.data, speed))
         self.__object_last_position = (current_time, new_dist.data)
