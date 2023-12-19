@@ -9,6 +9,7 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
+from perception.msg import MinDistance
 import time
 
 
@@ -37,8 +38,8 @@ class CollisionCheck(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            Float32,
-            f"/carla/{self.role_name}/lidar_dist_dev",
+            MinDistance,
+            f"/paf/{self.role_name}/Center/min_distance",
             self.calculate_obstacle_speed,
             qos_profile=1)
         # Publisher for emergency stop
@@ -60,50 +61,48 @@ class CollisionCheck(CompatibleNode):
         self.__current_velocity: float = None
         self.__object_last_position: tuple = None
 
-    def calculate_obstacle_speed(self, new_dist: Float32):
+    def calculate_obstacle_speed(self, new_dist: MinDistance):
         """Caluclate the speed of the obstacle in front of the ego vehicle
             based on the distance between to timestamps
 
         Args:
-            new_position (Float32): new position received from the lidar
+            new_position (MinDistance): new position received from the lidar
         """
         # Check if current speed from vehicle is not None
         if self.__current_velocity is None:
             return
         # Check if this is the first time the callback is called
         if self.__object_last_position is None and \
-                np.isinf(new_dist.data) is not True:
+                np.isinf(new_dist.distance) is not True:
             self.__object_last_position = (time.time(),
-                                           new_dist.data)
+                                           new_dist.distance)
             return
 
         # If distance is np.inf no car is in front
-        if np.isinf(new_dist.data):
+        if np.isinf(new_dist.distance):
             self.__object_last_position = None
-            data = Float32MultiArray(data=[np.Inf, -1])
-            self.collision_pub.publish(data)
             return
         # Check if too much time has passed since last position update
         if self.__object_last_position[0] + \
                 0.5 < time.time():
             self.__object_last_position = (time.time(),
-                                           new_dist.data)
+                                           new_dist.distance)
             return
         # Calculate time since last position update
         current_time = time.time()
         time_difference = current_time-self.__object_last_position[0]
 
         # Calculate distance (in m)
-        distance = new_dist.data - self.__object_last_position[1]
+        distance = new_dist.distance - self.__object_last_position[1]
 
         # Speed is distance/time (m/s)
         relative_speed = distance/time_difference
         speed = self.__current_velocity + relative_speed
-        # Publish distance and speed to ACC for permanent distance check
+        # Publish speed to ACC for permanent distance check
         self.speed_publisher(Float32(data=speed))
         # Check for crash
-        self.check_crash((new_dist.data, speed))
-        self.__object_last_position = (current_time, new_dist.data)
+        self.check_crash((new_dist.distance, speed))
+        self.__object_last_position = (current_time, new_dist.distance)
 
     def __get_current_velocity(self, data: CarlaSpeedometer,):
         """Saves current velocity of the ego vehicle
@@ -178,11 +177,9 @@ class CollisionCheck(CompatibleNode):
                 # Initiate emergency brake
                 self.emergency_pub.publish(True)
                 return
-            # When no emergency brake is needed publish collision distance for
-            # ACC and Behaviour tree
+            # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
             self.collision_pub.publish(data)
-            # print(f"Safe Distance Thumb: {safe_distance2:.2f}")
         else:
             # If no collision is ahead publish np.Inf
             data = Float32MultiArray(data=[np.Inf, obstacle_speed])

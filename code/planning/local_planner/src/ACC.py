@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import numpy as np
 import ros_compatibility as roscomp
 # import tf.transformations
 from ros_compatibility.node import CompatibleNode
@@ -36,7 +35,7 @@ class ACC(CompatibleNode):
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
             MinDistance,
-            f"/carla/{self.role_name}/LIDAR_range",
+            f"/paf/{self.role_name}/Center/min_distance",
             self._set_distance,
             qos_profile=1)
         # Get initial set of speed limits
@@ -77,8 +76,6 @@ class ACC(CompatibleNode):
         self.__current_wp_index: int = 0
         # Current speed
         self.__current_velocity: float = None
-        # Is an obstacle ahead where we would collide with?
-        self.collision_ahead: bool = False
         # Distance and speed from possible collsion object
         self.obstacle_speed: tuple = None
         # Obstalce distance
@@ -95,47 +92,14 @@ class ACC(CompatibleNode):
         self.obstacle_distance = data.distance
 
     def __approx_speed_callback(self, data: Float32):
-        """Safe approximated speed form obstacle in front together with timestamp 
-        when recieved. 
+        """Safe approximated speed form obstacle in front together with
+        timestamp when recieved.
         Timestamp is needed to check wether we still have a vehicle in front
 
         Args:
             data (Float32): Speed from obstacle in front
         """
         self.obstacle_speed = (time.time(), data.data)
-
-    def calculate_safe_speed(self):
-        """calculates the speed to meet the desired distance to the object
-
-        Returns:
-            float: safe speed tp meet the desired distance
-        """
-        # No speed or obstacle recieved yet
-        if self.__current_velocity is None:
-            return None
-        if self.obstacle is None:
-            return None
-        # Calculate safety distance
-        safety_distance = CollisionCheck.calculate_rule_of_thumb(
-            False, self.__current_velocity)
-        if self.obstacle[0] < safety_distance:
-            # If safety distance is reached, we want to reduce the speed to
-            # meet the desired distance
-            # Speed is reduced by the factor of the distance to the safety
-            # distance
-            # Another solution could be
-            # object_speed - (safety_distance-distance)
-
-            safe_speed = self.obstacle[1] * (self.obstacle[0] /
-                                             safety_distance)
-            return safe_speed
-        else:
-            # If safety distance is reached, drive with same speed as
-            # Object in front
-            # TODO:
-            # Incooperate overtaking ->
-            # Communicate with decision tree about overtaking
-            return self.obstacle[1]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -192,7 +156,35 @@ class ACC(CompatibleNode):
         :return:
         """
         def loop(timer_event=None):
-            if self.collision_ahead is False:
+            """
+            Checks if distance to a possible object is too small and
+            publishes the desired speed to motion planning
+            """
+            if self.obstacle_speed is not None:
+                # Check if too much time has passed since last speed update
+                if self.obstacle_speed[0] + 0.5 < time.time():
+                    self.obstacle_speed = None
+
+            if self.obstacle_distance is not None and \
+                    self.obstacle_speed is not None and \
+                    self.__current_velocity is not None:
+                # If we have obstalce speed and distance, we can
+                # calculate the safe speed
+                safety_distance = CollisionCheck.calculate_rule_of_thumb(
+                    False, self.__current_velocity)
+                if self.obstacle_distance < safety_distance:
+                    # If safety distance is reached, we want to reduce the
+                    # speed to meet the desired distance
+                    safe_speed = self.obstacle_speed[1] * \
+                        (self.obstacle_distance / safety_distance)
+                    self.velocity_pub.publish(safe_speed)
+                else:
+                    # If safety distance is reached, drive with same speed as
+                    # Object in front
+                    self.velocity_pub.publish(self.obstacle_speed[1])
+            elif self.speed_limit is not None:
+                # If we have no obstacle, we want to drive with the current
+                # speed limit
                 self.velocity_pub.publish(self.speed_limit)
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
