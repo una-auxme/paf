@@ -23,9 +23,7 @@ class CollisionCheck(CompatibleNode):
         super(CollisionCheck, self).__init__('CollisionCheck')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-        # self.current_speed = 50 / 3.6  # m/ss
-        # TODO: Add Subscriber for Speed and Obstacles
-        self.loginfo("CollisionCheck started")
+        self.logerr("CollisionCheck started")
 
         # self.obstacle_sub: Subscriber = self.new_subscription(
         # )

@@ -77,7 +77,7 @@ class PrePlanner(CompatibleNode):
             msg_type=Float32MultiArray,
             topic=f"/paf/{self.role_name}/speed_limits_OpenDrive",
             qos_profile=1)
-        self.loginfo('PrePlanner-Node started')
+        self.logerr('PrePlanner-Node started')
 
     def global_route_callback(self, data: CarlaRoute) -> None:
         """

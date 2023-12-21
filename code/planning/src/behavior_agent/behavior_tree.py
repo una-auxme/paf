@@ -92,7 +92,7 @@ def main():
     rospy.on_shutdown(functools.partial(shutdown, behaviour_tree))
 
     if not behaviour_tree.setup(timeout=15):
-        rospy.loginfo("Tree Setup failed")
+        rospy.logerr("Tree Setup failed")
         sys.exit(1)
     rospy.loginfo("tree setup worked")
     r = rospy.Rate(5)

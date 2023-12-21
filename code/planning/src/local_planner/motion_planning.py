@@ -34,7 +34,7 @@ class MotionPlanning(CompatibleNode):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 0.5)
-        self.logdebug("MotionPlanning started")
+        self.logerr("MotionPlanning started")
 
         self.target_speed = 0.0
         self.__curr_behavior = None

@@ -7,16 +7,21 @@ project(planning)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(catkin REQUIRED COMPONENTS
+  perception
+  rospy
+  roslaunch
+  std_msgs
+)
 
-
+roslaunch_add_file_check(launch)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -44,9 +49,7 @@ find_package(catkin REQUIRED)
 
 ## Generate messages in the 'msg' folder
 # add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
+#   MinDistance.msg
 # )
 
 ## Generate services in the 'srv' folder
@@ -65,8 +68,7 @@ find_package(catkin REQUIRED)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   perception
 # )
 
 ################################################
@@ -103,6 +105,7 @@ catkin_package(
 #  LIBRARIES planning
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+  CATKIN_DEPENDS perception rospy
 )
 
 ###########
@@ -113,7 +116,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-# ${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -200,3 +203,12 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_install_python(
+        PROGRAMS 
+                src/behavior_agent/behavior_tree.py
+                src/behavior_agent/__init__.py
+        DESTINATION 
+                ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
