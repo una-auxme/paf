@@ -1,10 +1,12 @@
 import py_trees
 import numpy as np
-from std_msgs.msg import Float32
+from std_msgs.msg import String
 # from nav_msgs.msg import Odometry
 # from custom_carla_msgs.srv import UpdateLocalPath
 
 import rospy
+
+from . import behavior_speed as bs
 
 """
 Source: https://github.com/ll7/psaf2
@@ -43,9 +45,9 @@ class Approach(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity",
-                                                Float32, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior",
+                                                 String, queue_size=1)
         # rospy.wait_for_service('update_local_path') # TODO is this necessary?
         # self.update_local_path =
         # rospy.ServiceProxy("update_local_path", UpdateLocalPath)
@@ -68,7 +70,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.change_detected = False
         self.change_distance = np.inf
         self.virtual_change_distance = np.inf
-        self.target_speed_pub.publish(convert_to_ms(30.0))
+        self.curr_behavior_pub.publish(bs.lc_init.name)
 
     def update(self):
         """
@@ -98,12 +100,6 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.change_distance != np.inf and self.change_detected:
             self.virtual_change_distance = self.change_distance
 
-        # calculate speed needed for stopping
-        v_stop = max(convert_to_ms(5.),
-                     convert_to_ms((self.virtual_change_distance / 30) ** 1.5
-                                   * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(30.0)
         # slow down before lane change
         if self.virtual_change_distance < 15.0:
             if self.change_option == 5:
@@ -120,9 +116,8 @@ class Approach(py_trees.behaviour.Behaviour):
                 # self.update_local_path(leave_intersection=True)
                 return py_trees.common.Status.SUCCESS
             else:
-                v_stop = 0.5
-                rospy.loginfo(f"Change blocked slowing down: {v_stop}")
-                self.target_speed_pub.publish(v_stop)
+                rospy.loginfo("Change blocked slowing down")
+                self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -194,9 +189,9 @@ class Wait(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -303,9 +298,9 @@ class Enter(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         # rospy.wait_for_service('update_local_path')
         # self.update_local_path = rospy.ServiceProxy("update_local_path",
         # UpdateLocalPath)
@@ -323,7 +318,7 @@ class Enter(py_trees.behaviour.Behaviour):
         the intersection.
         """
         rospy.loginfo("Enter next Lane")
-        self.target_speed_pub.publish(convert_to_ms(20.0))
+        self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
     def update(self):
         """
@@ -396,9 +391,9 @@ class Leave(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_tree_velocity", Float32,
-                                                queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior", String,
+                                                 queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -415,7 +410,8 @@ class Leave(py_trees.behaviour.Behaviour):
         rospy.loginfo("Leave Change")
         street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
         if street_speed_msg is not None:
-            self.target_speed_pub.publish(street_speed_msg.data)
+            # self.curr_behavior_pub.publish(street_speed_msg.data)
+            self.curr_behavior_pub.publish(bs.lc_exit.name)
         return True
 
     def update(self):

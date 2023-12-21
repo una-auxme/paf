@@ -11,7 +11,9 @@ find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(catkin REQUIRED COMPONENTS
+  perception
+)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -44,9 +46,7 @@ find_package(catkin REQUIRED)
 
 ## Generate messages in the 'msg' folder
 # add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
+#   MinDistance.msg
 # )
 
 ## Generate services in the 'srv' folder
@@ -65,8 +65,7 @@ find_package(catkin REQUIRED)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#   perception
 # )
 
 ################################################
@@ -103,6 +102,7 @@ catkin_package(
 #  LIBRARIES planning
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+  CATKIN_DEPENDS perception
 )
 
 ###########
