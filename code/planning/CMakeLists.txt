@@ -204,11 +204,11 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-catkin_install_python(
-        PROGRAMS 
-                src/behavior_agent/behavior_tree.py
-                src/behavior_agent/__init__.py
-        DESTINATION 
-                ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# catkin_install_python(
+#         PROGRAMS 
+#                 src/behavior_agent/behavior_tree.py
+#                 src/behavior_agent/__init__.py
+#         DESTINATION 
+#                 ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import functools
-import behavior_agent
+# import behavior_agent
 import py_trees
 from py_trees.behaviours import Running
 import py_trees_ros
 import py_trees.console as console
 import rospy
 import sys
-from behavior_agent import behaviours
+import behaviours
 from py_trees.composites import Parallel, Selector, Sequence
 from py_trees.decorators import Inverter
 
