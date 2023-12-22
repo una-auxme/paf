@@ -34,7 +34,6 @@ class MotionPlanning(CompatibleNode):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 0.5)
-        self.logerr("MotionPlanning started")
 
         self.target_speed = 0.0
         self.__curr_behavior = None
@@ -72,6 +71,8 @@ class MotionPlanning(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
+
+        self.logdebug("MotionPlanning started")
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)

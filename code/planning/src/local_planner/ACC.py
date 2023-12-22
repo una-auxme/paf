@@ -83,7 +83,7 @@ class ACC(CompatibleNode):
         # Current speed limit
         self.speed_limit: float = None  # m/s
 
-        self.logerr("ACC initialized")
+        self.logdebug("ACC initialized")
 
     def _set_distance(self, data: MinDistance):
         """Get min distance to object in front from perception
