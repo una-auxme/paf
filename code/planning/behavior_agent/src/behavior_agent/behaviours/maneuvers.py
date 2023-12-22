@@ -1,4 +1,9 @@
 import py_trees
+import rospy
+from std_msgs.msg import String
+
+from . import behavior_speed as bs
+# from behavior_agent.msg import BehaviorSpeed
 
 """
 Source: https://github.com/ll7/psaf2
@@ -264,6 +269,7 @@ class Cruise(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Cruise, self).__init__(name)
+        rospy.loginfo("Cruise started")
 
     def setup(self, timeout):
         """
@@ -277,6 +283,11 @@ class Cruise(py_trees.behaviour.Behaviour):
         successful
         :return: True, as there is nothing to set up.
         """
+
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior",
+                                                 String, queue_size=1)
+
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -290,6 +301,7 @@ class Cruise(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         :return: True
         """
+        rospy.loginfo("Starting Cruise")
         return True
 
     def update(self):
@@ -308,6 +320,7 @@ class Cruise(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, keeps the decision tree from
         finishing
         """
+        self.curr_behavior_pub.publish(bs.cruise.name)
         return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):

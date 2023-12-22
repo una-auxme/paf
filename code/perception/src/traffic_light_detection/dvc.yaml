@@ -1,0 +1,21 @@
+stages:
+  train:
+    cmd: python src/traffic_light_detection/traffic_light_training.py
+    deps:
+    - dataset
+    - src
+    params:
+    - params.yaml:
+    outs:
+    - models
+    metrics:
+    - dvclive/metrics.json:
+        cache: false
+    plots:
+    - dvclive/plots:
+        cache: false
+metrics:
+- dvclive/metrics.json
+plots:
+- dvclive/plots/metrics:
+    x: step
