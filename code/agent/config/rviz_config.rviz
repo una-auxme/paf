@@ -63,11 +63,11 @@ Visualization Manager:
       Unreliable: false
       Value: true
       Visibility:
-        Grid: true
-        Imu: true
-        Path: true
-        PointCloud2: true
-        Value: true
+        Grid: false
+        Imu: false
+        Path: false
+        PointCloud2: false
+        Value: false
       Zoom Factor: 1
     - Class: rviz/Image
       Enabled: true

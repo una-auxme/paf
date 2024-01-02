@@ -59,10 +59,10 @@ class ClassificationModel(nn.Module):
         if path is not None:
             try:
                 state_dict = torch.load(path)
-                model.load_state_dict(state_dict).eval()
+                model.load_state_dict(state_dict)
                 print(f"Pretrained model loaded from {path}")
                 return model
-            except (Exception, ):
-                print(f"No pretrained model found at {path}. "
+            except Exception as e:
+                print(f"No pretrained model found at {path}: {e}\n"
                       f"Created new model with random weights.")
         return model.eval()

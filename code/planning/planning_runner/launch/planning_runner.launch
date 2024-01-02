@@ -2,4 +2,6 @@
     <include file="$(find planning)/launch/global_planner.launch"/>
 
     <include file="$(find behavior_agent)/launch/behavior_agent.launch"/>
+
+    <include file="$(find local_planner)/launch/local_planner.launch"/>
 </launch>
