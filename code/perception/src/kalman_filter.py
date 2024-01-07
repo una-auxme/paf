@@ -6,13 +6,14 @@ from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, UInt32, String
 from sensor_msgs.msg import NavSatFix, Imu
-from tf.transformations import euler_from_quaternion
 from carla_msgs.msg import CarlaSpeedometer
 import rospy
 import math
 import threading
 from coordinate_transformation import CoordinateTransformer
 from xml.etree import ElementTree as eTree
+from scipy.spatial.transform import Rotation
+
 GPS_RUNNING_AVG_ARGS: int = 10
 
 '''
@@ -331,17 +332,24 @@ class KalmanFilter(CompatibleNode):
                               orientation_z,
                               orientation_w]
 
-        # Implementation by paf22 in Position_Publisher_Node.py
-        # TODO: Why were they using roll and pitch instead of yaw?
-        # Even though they are basically deriving the yaw that way?
-        # -> yaw is the only needed value for now
-        roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-        raw_heading = yaw
+        # Create a Rotation object from the quaternion
+        rotation = Rotation.from_quat(data_orientation_q)
+        # Convert the Rotation object to a matrix
+        rotation_matrix = rotation.as_matrix()
+        # calculate the angle around the z-axis (theta) from the matrix
+        theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+
+        raw_heading = theta
 
         # transform raw_heading so that:
         # ---------------------------------------------------------------
         # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
         # ---------------------------------------------------------------
+        # The above transformation limits the heading to the range of -pi to pi
+        # It also rotates the heading by 90 degrees so that the heading is in
+        # the direction of the x-axis which the car starts in (heading = 0)
+
+        # heading is positive in counter clockwise rotations
         heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
 
         # update IMU Measurements:
@@ -362,23 +370,6 @@ class KalmanFilter(CompatibleNode):
         Update the GPS Data
         used for covariance matrix
         """
-        # #Make sure position is only published when reference values have been
-        # # read from the Map
-        # if CoordinateTransformer.ref_set is False:
-        #     self.transformer = CoordinateTransformer()
-        #     CoordinateTransformer.ref_set = True
-        # if CoordinateTransformer.ref_set is True:
-        #     lat = gps_data.latitude
-        #     lon = gps_data.longitude
-        #     alt = gps_data.altitude
-
-        #     x, y, z = self.transformer.gnss_to_xyz(lat, lon, alt)
-
-        #     self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
-        #     self.avg_xyz[-1] = np.matrix([x, y, z])
-
-        #     avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
-
         # look up if covariance type is not 0 (0 = COVARANCE_TYPE_UNKNOWN)
         # (1 = approximated, 2 = diagonal known or 3 = known)
         # if it is not 0 -> update the covariance matrix

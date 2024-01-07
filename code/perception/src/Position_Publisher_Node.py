@@ -12,8 +12,10 @@ from sensor_msgs.msg import NavSatFix, Imu
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32, String
 from coordinate_transformation import CoordinateTransformer
-from tf.transformations import euler_from_quaternion
 from xml.etree import ElementTree as eTree
+
+from scipy.spatial.transform import Rotation
+
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
@@ -158,14 +160,25 @@ class PositionPublisherNode(CompatibleNode):
                               data.orientation.z,
                               data.orientation.w]
 
-        roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-        raw_heading = math.atan2(roll, pitch)
+        # Create a Rotation object from the quaternion
+        rotation = Rotation.from_quat(data_orientation_q)
+        # Convert the Rotation object to a matrix
+        rotation_matrix = rotation.as_matrix()
+        # calculate the angle around the z-axis (theta) from the matrix
+        theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+
+        raw_heading = theta
 
         # transform raw_heading so that:
         # ---------------------------------------------------------------
         # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
         # ---------------------------------------------------------------
         heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+
+        # TODO delete
+        # self.loginfo('yaw: ' + str(yaw) + '; GPTYaw: ' + str(GPTYaw) +
+        # '; Heading ' + str(heading) + '; diff: ' + str(yaw - GPTYaw))
+
         self.__heading = heading
         self.__heading_publisher.publish(self.__heading)
 
