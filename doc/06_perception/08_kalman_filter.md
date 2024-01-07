@@ -1,6 +1,6 @@
 # Kalman Filter
 
-**Summary:** [kalman_filter.py](.../code/perception/src/kalman_filter.py):
+**Summary:** [kalman_filter.py](../../code/perception/src/kalman_filter.py):
 
 The Kalman Filter node is responsible for filtering the location and heading data, by using an IMU and GNSS sensor together with the carla speedometer.
 
@@ -38,7 +38,7 @@ Robert Fischer
 Right now the Node does not work correctly. It creates topics to publish to, but doesn't yet.
 This will be fixed in [#106](https://github.com/una-auxme/paf23/issues/106)
 
-Uncomment the kalman_filter.py node in the [perception.launch](.../code/perception/launch/perception.launch) to start the node.
+Uncomment the kalman_filter.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
 You can also uncomment the rqt_plots that seem useful to you.
 No extra installation needed.
 
@@ -60,7 +60,7 @@ Stackoverflow and other useful sites:
 [4](https://github.com/Janudis/Extended-Kalman-Filter-GPS_IMU)
 
 This script implements a Kalman Filter. It is a recursive algorithm used to estimate the state of a system that can be modeled with linear equations.
-This Kalman Filter uses the location provided by a GNSS sensor (by using the current_pos provided by the [Position Publisher Node](.../code/perception/src/Position_Publisher_Node.py))
+This Kalman Filter uses the location provided by a GNSS sensor (by using the current_pos provided by the [Position Publisher Node](../../code/perception/src/Position_Publisher_Node.py))
 the orientation and angular velocity provided by the IMU sensor and the current speed in the headed direction by the Carla Speedometer.
 
 ```Python
