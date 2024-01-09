@@ -55,8 +55,8 @@ from trajectory_interpolation import interpolate_route
 # TODO TODO
 TEST_TYPE = 2                 # aka. TT
 
-STEERING: float = 0.0          # for TT0: steering -> always straight
-TARGET_VELOCITY_1: float = 7    # for TT0/TT1: low velocity
+STEERING: float = 0.0         # for TT0: steering -> always straight
+TARGET_VELOCITY_1: float = 7  # for TT0/TT1: low velocity
 TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
@@ -272,7 +272,7 @@ class Acting_Debugger(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 37.6  # why??
+            pos.pose.position.z = 666  # why??
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
