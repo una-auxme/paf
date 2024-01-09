@@ -85,6 +85,12 @@ class PositionPublisherNode(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             qos_profile=1)
 
+        self.__yaw: float = 0
+        self.__yaw_publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/yaw",
+            qos_profile=1)
+
     def get_geoRef(self, opendrive: String):
         """_summary_
         Reads the reference values for lat and lon from the carla OpenDriveMap
@@ -163,7 +169,9 @@ class PositionPublisherNode(CompatibleNode):
         # ---------------------------------------------------------------
         heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
         self.__heading = heading
-        self.__heading_publisher.publish(self.__heading)
+        # self.__heading_publisher.publish(self.__heading)
+        self.__heading_publisher.publish(yaw)
+        self.__yaw_publisher.publish(yaw)
 
     def update_gps_data(self, data: NavSatFix):
         """

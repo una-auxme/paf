@@ -53,14 +53,14 @@ from trajectory_interpolation import interpolate_route
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 2                 # aka. TT
+TEST_TYPE = 2                # aka. TT
 
-STEERING: float = 0.0         # for TT0: steering -> always straight
+FIXED_STEERING: float = -math.pi/2  # for TT0: steering 0.0 = always straight
 TARGET_VELOCITY_1: float = 7  # for TT0/TT1: low velocity
 TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 0        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+TRAJECTORY_TYPE = 1        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
 
 
 class Acting_Debugger(CompatibleNode):
@@ -125,6 +125,22 @@ class Acting_Debugger(CompatibleNode):
             self.__get_target_velocity,
             qos_profile=1)
 
+        # Subscriber for current_headng for plotting
+        self.heading_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__get_heading,
+            qos_profile=1
+        )
+
+        # Subscriber for yaw for plotting
+        self.yaw_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/yaw",
+            self.__get_yaw,
+            qos_profile=1
+        )
+
         # Subscriber for current_velocity for plotting
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
@@ -181,9 +197,14 @@ class Acting_Debugger(CompatibleNode):
         self.__max_velocities = []
         self.__throttles = []
 
+        self.__current_headings = []
+        self.__yaws = []
+
         self.__purepursuit_steers = []
         self.__stanley_steers = []
         self.__vehicle_steers = []
+
+        self.positions = []
 
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
@@ -272,7 +293,7 @@ class Acting_Debugger(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 666  # why??
+            pos.pose.position.z = 35  # why??
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
@@ -285,7 +306,16 @@ class Acting_Debugger(CompatibleNode):
         self.x = agent.x
         self.y = agent.y
         self.z = agent.z
+
         # TODO use this to get spawnpoint? necessary?
+        # use to plot current_position to trajectory for steering test
+        self.positions.append((self.x, self.y))
+
+    def __get_heading(self, data: Float32):
+        self.__current_headings.append(float(data.data))
+
+    def __get_yaw(self, data: Float32):
+        self.__yaws.append(float(data.data))
 
     def __get_target_velocity(self, data: Float32):
         self.__max_velocities.append(float(data.data))
@@ -321,9 +351,9 @@ class Acting_Debugger(CompatibleNode):
             """
             # Drive const. velocity on fixed straight steering
             if (TEST_TYPE == 0):
-                self.drive_Vel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.driveVel = TARGET_VELOCITY_1
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # Drive alternating velocities on fixed straight steering
@@ -339,8 +369,8 @@ class Acting_Debugger(CompatibleNode):
                         self.driveVel = TARGET_VELOCITY_2
                     else:
                         self.driveVel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # drive const. velocity on trajectoy with steering controller
@@ -362,8 +392,8 @@ class Acting_Debugger(CompatibleNode):
                 if (self.checkpoint_time < rospy.get_time() - 15.0):
                     self.checkpoint_time = rospy.get_time()
                     self.emergency_pub.publish(True)
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # drive const. velocity and follow trajectory by
@@ -384,6 +414,9 @@ class Acting_Debugger(CompatibleNode):
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
+                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                print(self.current_trajectory)
+                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
             if (self.checkpoint_time < rospy.get_time() - 10.0):
@@ -392,9 +425,12 @@ class Acting_Debugger(CompatibleNode):
                 # print(self.__max_velocities)
                 # print(self.__current_velocities)
                 # print(self.__throttles)
-                print(self.__purepursuit_steers)
-                print(self.__stanley_steers)
-                print(self.__vehicle_steers)
+                # print(self.__purepursuit_steers)
+                # print(self.__stanley_steers)
+                # print(self.__vehicle_steers)
+                # print(self.__current_headings)
+                # print(self.__yaws)
+                print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)

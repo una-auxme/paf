@@ -109,6 +109,7 @@ class PurePursuitController(CompatibleNode):
                 self.logdebug("PurePursuitController hasn't received a path "
                               "yet and can therefore not publish steering")
                 return
+
             if self.__position is None:
                 self.logdebug("PurePursuitController hasn't received the "
                               "position of the vehicle yet "
@@ -126,6 +127,7 @@ class PurePursuitController(CompatibleNode):
                               "velocity of the vehicle yet "
                               "and can therefore not publish steering")
                 return
+
             self.pure_pursuit_steer_pub.publish(self.__calculate_steer())
 
         self.new_timer(self.control_loop_rate, loop)
@@ -137,7 +139,7 @@ class PurePursuitController(CompatibleNode):
         :return:
         """
         l_vehicle = 2.85  # wheelbase
-        k_ld = 0.1  # TODO: tune
+        k_ld = 0.5  # TODO: tune
         look_ahead_dist = LOOK_AHEAD_DIS  # offset so that ld is never zero
 
         if self.__velocity < 0:

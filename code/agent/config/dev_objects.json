@@ -164,12 +164,12 @@
             "pitch": 0.0,
             "yaw": 0.0
           },
-          "noise_accel_stddev_x": 0.001,
-          "noise_accel_stddev_y": 0.001,
-          "noise_accel_stddev_z": 0.015,
-          "noise_gyro_stddev_x": 0.001,
-          "noise_gyro_stddev_y": 0.001,
-          "noise_gyro_stddev_z": 0.001
+          "noise_accel_stddev_x": 0.000,
+          "noise_accel_stddev_y": 0.000,
+          "noise_accel_stddev_z": 0.000,
+          "noise_gyro_stddev_x": 0.000,
+          "noise_gyro_stddev_y": 0.000,
+          "noise_gyro_stddev_z": 0.000
         },
         {
           "type": "sensor.pseudo.speedometer",
