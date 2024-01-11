@@ -27,6 +27,7 @@ def grow_a_tree(role_name):
                 children=[
                     Selector("Road Features",
                              children=[
+                                 behaviours.maneuvers.LeaveParkingSpace("LeaveParkingSpace"),
                                  Sequence("Intersection",
                                           children=[
                                               behaviours.road_features.IntersectionAhead

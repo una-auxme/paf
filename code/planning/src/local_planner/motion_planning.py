@@ -4,7 +4,7 @@
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Bool
 import numpy as np
 
 # from behavior_agent.msg import BehaviorSpeed
@@ -47,7 +47,11 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
             qos_profile=1)
-
+        self.emergency_sub: Subscriber = self.new_subscription(
+            Bool,
+            f"/paf/{self.role_name}/unchecked_emergency",
+            self.__check_emergency,
+            qos_profile=1)
         self.acc_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
@@ -72,7 +76,23 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
+        # Publisher for emergency stop
+        self.emergency_pub = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
+            qos_profile=1)
+        
         self.logdebug("MotionPlanning started")
+
+    def __check_emergency(self, data: Bool):
+        """If an emergency stop is needed first check if we are 
+        in parking behavior. If we are ignore the emergency stop.
+
+        Args:
+            data (Bool): True if emergency stop detected by collision check
+        """
+        if self.__curr_behavior is not bs.parking.name:
+            self.emergency_pub.publish(data)
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
@@ -103,6 +123,8 @@ class MotionPlanning(CompatibleNode):
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
             speed = self.__get_speed_lanechange(behavior)
+        elif short_behavior == "parking":
+            speed = bs.parking.speed
         else:
             speed = self.__get_speed_cruise()
 
