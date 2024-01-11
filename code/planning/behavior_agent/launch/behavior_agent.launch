@@ -1,8 +1,0 @@
-<!-- -->
-<launch>
-
-  <node pkg="behavior_agent" type="behavior_tree.py" name="behavior_agent" output="screen"/>
-  <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
-
-</launch>
-

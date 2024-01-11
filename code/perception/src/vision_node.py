@@ -136,21 +136,15 @@ class VisionNode(CompatibleNode):
         )
 
     def handle_camera_image(self, image):
-        # startTime = perf_counter()
-
         # free up cuda memory
         if self.device == "cuda":
             torch.cuda.empty_cache()
-
-        # print("Before Model: ", perf_counter() - startTime)
 
         if self.framework == "pyTorch":
             vision_result = self.predict_torch(image)
 
         if self.framework == "ultralytics":
             vision_result = self.predict_ultralytics(image)
-
-        # print("After Model: ", perf_counter() - startTime)
 
         # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
@@ -185,7 +179,6 @@ class VisionNode(CompatibleNode):
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        # print(cv_image.shape)
 
         output = self.model(cv_image, half=True, verbose=False)
 
@@ -223,7 +216,6 @@ class VisionNode(CompatibleNode):
 
         output_predictions = output_predictions.to(dtype=torch.bool)
 
-        print(output_predictions.shape)
         transposed_image = np.transpose(input_image, (2, 0, 1))
         tensor_image = torch.tensor(transposed_image)
         tensor_image = tensor_image.to(dtype=torch.uint8)
