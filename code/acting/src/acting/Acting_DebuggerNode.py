@@ -55,12 +55,14 @@ from trajectory_interpolation import interpolate_route
 # TODO TODO
 TEST_TYPE = 2                # aka. TT
 
-FIXED_STEERING: float = -math.pi/2  # for TT0: steering 0.0 = always straight
-TARGET_VELOCITY_1: float = 7  # for TT0/TT1: low velocity
+FIXED_STEERING: float = 0  # for TT0: steering 0.0 = always straight
+TARGET_VELOCITY_1: float = 5  # for TT0/TT1: low velocity
 TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 1        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+TRAJECTORY_TYPE = 2  # for TT2: 0 = Straight ; 1 = Curve ; 2 = SineWave
+
+PRINT_AFTER_TIME = 20.0  # How long after Simulationstart to print data
 
 
 class Acting_Debugger(CompatibleNode):
@@ -222,16 +224,33 @@ class Acting_Debugger(CompatibleNode):
             ]
             self.updated_trajectory(self.current_trajectory)
 
-        elif (TRAJECTORY_TYPE == 1):  # Sinewave Serpentines trajectory
+        elif (TRAJECTORY_TYPE == 1):  # straight into 90° Curve
+            self.current_trajectory = [
+                (984.5, -5442.0),
+
+                (984.5, -5563.5),
+                (985.0, -5573.2),
+                (986.3, -5576.5),
+                (987.3, -5578.5),
+                (988.7, -5579.0),
+                (990.5, -5579.8),
+                (1000.0, -5580.2),
+
+                (1040.0, -5580.0),
+                (1070.0, -5580.0)
+            ]
+            self.updated_trajectory(self.current_trajectory)
+
+        elif (TRAJECTORY_TYPE == 2):  # Sinewave Serpentines trajectory
             # Generate a sine-wave with the global Constants to
             # automatically generate a trajectory with serpentine waves
             cycles = 4  # how many sine cycles
-            resolution = 50  # how many datapoints to generate
+            resolution = 70  # how many datapoints to generate
 
             length = np.pi * 2 * cycles
             step = length / resolution  # spacing between values
             my_wave = np.sin(np.arange(0, length, step))
-            x_wave = 2 * my_wave  # to have a serpentine line with +/- 2 meters
+            x_wave = 0.15 * my_wave  # to have a serpentine line with +/-1.5 m
             # to have the serpentine line drive around the middle
             # of the road/start point of the car
             x_wave += startx
@@ -247,33 +266,6 @@ class Acting_Debugger(CompatibleNode):
             # add a long straight path after the serpentines
             trajectory_wave.append((startx, starty-200))
             self.current_trajectory = trajectory_wave
-            self.updated_trajectory(self.current_trajectory)
-
-        elif (TRAJECTORY_TYPE == 2):  # straight into 90° Curve
-            self.current_trajectory = [
-                (986.0, -5442.0),
-                (986.0, -5463.2),
-                (984.5, -5493.2),
-
-                (984.5, -5563.5),
-                (985.0, -5573.2),
-                (986.3, -5576.5),
-                (987.3, -5578.5),
-                (988.7, -5579.0),
-                (990.5, -5579.8),
-                (1000.0, -5580.2),
-
-                (1040.0, -5580.0),
-                (1070.0, -5580.0),
-                (1080.0, -5582.0),
-                (1090.0, -5582.0),
-                (1100.0, -5580.0),
-                (1110.0, -5578.0),
-                (1120.0, -5578.0),
-                (1130.0, -5580.0),
-                (1464.6, -5580.0),
-                (1664.6, -5580.0)
-            ]
             self.updated_trajectory(self.current_trajectory)
 
     def updated_trajectory(self, target_trajectory):
@@ -415,11 +407,11 @@ class Acting_Debugger(CompatibleNode):
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
                 print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
-                print(self.current_trajectory)
+                # print(self.current_trajectory)
                 print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
-            if (self.checkpoint_time < rospy.get_time() - 10.0):
+            if (self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
                 # print(self.__max_velocities)
@@ -430,7 +422,7 @@ class Acting_Debugger(CompatibleNode):
                 # print(self.__vehicle_steers)
                 # print(self.__current_headings)
                 # print(self.__yaws)
-                print(self.positions)
+                # print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)

@@ -85,7 +85,6 @@ class PositionPublisherNode(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             qos_profile=1)
 
-        self.__yaw: float = 0
         self.__yaw_publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/yaw",
