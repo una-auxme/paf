@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>planning_runner</name>
+  <name>planning</name>
   <version>0.0.0</version>
-  <description>The planning_runner package</description>
+  <description>The planning package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="imech039@todo.todo">imech039</maintainer>
+  <maintainer email="carla@todo.todo">carla</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/planning_runner</url> -->
+  <!-- <url type="website">http://wiki.ros.org/planning</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -32,7 +32,6 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
   <!-- Use depend as a shortcut for packages that are both build and exec dependencies -->
-  <!--   <depend>roscpp</depend> -->
   <!--   Note that this is equivalent to the following: -->
   <!--   <build_depend>roscpp</build_depend> -->
   <!--   <exec_depend>roscpp</exec_depend> -->
@@ -48,18 +47,25 @@
   <!--   <test_depend>gtest</test_depend> -->
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
-  <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>std_msgs</build_depend>
+  <build_depend>roslaunch</build_depend>
+
   <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>perception</build_export_depend>
+
   <exec_depend>rospy</exec_depend>
+  <exec_depend>carla_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>perception</exec_depend>
+
+  <build_depend>perception</build_depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
-
   </export>
 </package>
