@@ -12,6 +12,15 @@ import carla
 from agents.navigation.global_route_planner import GlobalRoutePlanner
 import xmltodict
 
+"""
+This node is currently used for importing a CarlaRoute to dev.launch.
+For this you need to follow 3 steps:
+1. In plannning.launch: Uncomment this node and change the .txt file if needed
+2. In global_planner.py: Change the subscriber of carla/hero/global_plan to paf
+3. In gobal_planner.py: At the end of the init uncomment the
+    self.dev_load_world_info()
+"""
+
 
 class DevGlobalRoute(CompatibleNode):
 
@@ -23,7 +32,7 @@ class DevGlobalRoute(CompatibleNode):
         if self.from_txt:
             self.global_route_txt = self.get_param(
                 'global_route_txt',
-                "/code/planning/global_planner/src/global_route.txt")
+                "/code/planning/src/global_planner/global_route.txt")
         else:
             self.sampling_resolution = self.get_param('sampling_resolution',
                                                       100.0)
@@ -46,7 +55,7 @@ class DevGlobalRoute(CompatibleNode):
                 durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
 
-        self.loginfo('DevGlobalRoute-Node started')
+        self.logerr('DevGlobalRoute-Node started')
 
     def world_info_callback(self, data: CarlaWorldInfo) -> None:
         """
@@ -64,6 +73,7 @@ class DevGlobalRoute(CompatibleNode):
                             f"current working directory is'{os.getcwd()}'")
                 raise
 
+            self.logerr("DevRoute: TXT READ")
             global_routes = input_routes.split("---")
             header_list = []
             road_options_list = []
