@@ -1,6 +1,6 @@
 # sensor_filter_debug.py
 
-**Summary:** [sensor_filter_debug.py](.../code/perception/src/sensor_filter_debug.py):
+**Summary:** [sensor_filter_debug.py](../../code/perception/src/sensor_filter_debug.py):
 
 The sensor_filter_debug node is responsible for collecting sensor data from the IMU and GNSS and process the data in such a way, that it shows the errors between the real is-state and the measured state.
 The data is the shown in multiple rqt_plots.
@@ -33,9 +33,9 @@ Robert Fischer
 
 ## Getting started
 
-Uncomment the sensor_filter_debug.py node in the [perception.launch](.../code/perception/launch/perception.launch) to start the node.
+Uncomment the sensor_filter_debug.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
 You can also uncomment the rqt_plots that seem useful to you, or create your own ones from the data published.
-You have to add the following sensors to the sensors inside the [dev_objects.json](.../code/agent/config/dev_objects.json):
+You have to add the following sensors to the sensors inside the [dev_objects.json](../../code/agent/config/dev_objects.json):
 
 ```json
 {
@@ -101,7 +101,7 @@ Right now only the IMU and the GNSS sensor are available for debug.
 Debug for the RADAR and LIDAR hasn't been implemented yet.
 
 An Example of Location Error Output can be seen here:
-![Distance from current_pos to ideal_gps_pos (blue) and to carla_pos (red)](.../doc/00_assets/gnss_ohne_rolling_average.png)
+![Distance from current_pos to ideal_gps_pos (blue) and to carla_pos (red)](../00_assets/gnss_ohne_rolling_average.png)
 
 ### Inputs
 
