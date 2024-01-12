@@ -13,6 +13,7 @@ file_path_y = folder_path_y + file_name
 file_path_heading = "./heading_error/" + file_name
 
 
+# region PLOTS
 def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
     """
     Berechnet den Error Typ für x oder y Daten.
@@ -685,8 +686,10 @@ def plot_csv_heading2(file_path):
 
     # Set the x-axis label to 'Time'
     plt.xlabel('Time in seconds')
+# endregion PLOTS
 
 
+# region CALCUATIONS
 def calculate_mae(ideal, estimated):
     """
     Calculates the Mean Absolute Error (MAE) for position data.
@@ -840,6 +843,7 @@ def calculate_RMSPE(ideal, estimated):
     rmspe = np.sqrt(np.mean(errors**2))
 
     return rmspe, errors
+# endregion CALCUATIONS
 
 
 # plot_csv(file_path_x, 'x')
