@@ -23,10 +23,10 @@ class PAF22Agent(ROS1Agent):
     def sensors(self):
         sensors = [
             {'type': 'sensor.camera.rgb', 'id': 'Center',
-             'x': 0.7, 'y': 0.0, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
-             'yaw': 0.0, 'width': 300, 'height': 200, 'fov': 100},
+             'x': 0.0, 'y': 0.0, 'z': 1.70, 'roll': 0.0, 'pitch': 0.0,
+             'yaw': 0.0, 'width': 1280, 'height': 720, 'fov': 100},
             {'type': 'sensor.lidar.ray_cast', 'id': 'LIDAR',
-             'x': 0.7, 'y': 0.0, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
+             'x': 0.0, 'y': 0.0, 'z': 1.70, 'roll': 0.0, 'pitch': 0.0,
              'yaw': 0.0},
             {'type': 'sensor.other.radar', 'id': 'RADAR',
              'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,

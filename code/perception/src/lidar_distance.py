@@ -4,17 +4,16 @@ import ros_numpy
 import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2
-
+# from perception.msg import MinDistance
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from perception.msg import MinDistance
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
-from matplotlib.colors import LinearSegmentedColormap
+# from matplotlib.colors import LinearSegmentedColormap
 
 
 class LidarDistance():
@@ -41,10 +40,9 @@ class LidarDistance():
             coordinates,
             max_x=rospy.get_param('~max_x', np.inf),
             min_x=rospy.get_param('~min_x', -np.inf),
-            max_y=rospy.get_param('~max_y', np.inf),
-            min_y=rospy.get_param('~min_y', -np.inf),
-            max_z=rospy.get_param('~max_z', np.inf),
             min_z=rospy.get_param('~min_z', -np.inf),
+            min_y=rospy.get_param('~min_y', -np.inf),
+            max_y=rospy.get_param('~max_y', np.inf),
         )
 
         reconstruct_bit_mask = lidar_filter_utility.bounding_box(
@@ -81,15 +79,19 @@ class LidarDistance():
         )
 
         # handle minimum distance
-        plot = self.plot_blob(min_dist_coordinates_xyz)
-        img_msg = self.bridge.cv2_to_imgmsg(plot,
-                                            encoding="passthrough")
-        img_msg.header = data.header
-        self.min_dist_img_publisher.publish(img_msg)
+        if min_dist_coordinates_xyz.shape[0] > 0:
+            plot = self.plot_blob(min_dist_coordinates_xyz)
+            img_msg = self.bridge.cv2_to_imgmsg(plot,
+                                                encoding="passthrough")
+            img_msg.header = data.header
+            self.min_dist_img_publisher.publish(img_msg)
+        # else:
+            # self.pub_min_dist.publish(np.inf)
 
         # handle reconstruction of lidar points
         rainbow_cloud = self.reconstruct_img_from_lidar(
             reconstruct_coordinates_xyz)
+
         img_msg = self.bridge.cv2_to_imgmsg(rainbow_cloud,
                                             encoding="passthrough")
         img_msg.header = data.header
@@ -107,25 +109,28 @@ class LidarDistance():
                 '~point_cloud_topic',
                 '/carla/hero/' + rospy.get_namespace() + '_filtered'
             ),
-            PointCloud2
+            PointCloud2,
+            queue_size=10
         )
 
         # publisher for the closest blob in the lidar point cloud
-        self.pub_min_dist = rospy.Publisher(
+        """self.pub_min_dist = rospy.Publisher(
             rospy.get_param(
                 '~range_topic',
                 '/paf/hero/Center/min_distance'
             ),
-            MinDistance
+            MinDistance,
+            queue_size=10
         )
-
+        """
         # publisher for reconstructed lidar image
         self.rainbow_publisher = rospy.Publisher(
             rospy.get_param(
                 '~image_distance_topic',
                 '/paf/hero/Center/rainbow_image'
             ),
-            ImageMsg
+            ImageMsg,
+            queue_size=10
         )
 
         # publisher for 3d blob graph
@@ -134,7 +139,8 @@ class LidarDistance():
                 '~image_distance_topic',
                 '/paf/hero/Center/min_dist_image'
             ),
-            ImageMsg
+            ImageMsg,
+            queue_size=10
         )
 
         rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
@@ -145,19 +151,43 @@ class LidarDistance():
     def plot_blob(self, xyz_coords):
         # creates a 3d graph thazt highlights blobs of points
         xyz_coords_standardized = StandardScaler().fit_transform(xyz_coords)
-        pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
-                                                        xyz_coords[:, 0]))
-        min_x_distance = np.min(pairwise_distances_x[pairwise_distances_x > 0])
-        self.pub_min_dist.publish(min_x_distance)
+        # pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
+        # xyz_coords[:, 0]))
+
+        # publish minimum distance
+        # min_x_distance = np.min(p
+        # airwise_distances_x[pairwise_distances_x > 0])
+
         eps = 0.2
         min_samples = 5
         dbscan = DBSCAN(eps=eps, min_samples=min_samples)
         labels = dbscan.fit_predict(xyz_coords_standardized)
 
+        min_distances_within_clusters = []
+
+        # Iterate through each cluster
+        for label in set(labels):
+            if label != -1:  # Ignore noise points
+                cluster_points = xyz_coords[labels == label]
+                pairwise_distances = np.linalg.norm(
+                    cluster_points -
+                    np.mean(cluster_points, axis=0), axis=1)
+                min_distance_within_cluster = np.min(
+                    pairwise_distances)
+                min_distances_within_clusters.append(
+                    min_distance_within_cluster)
+
+        # Find the overall minimum distance within clusters
+        # min_distance_within_clusters = np.min(min_distances_within_clusters)
+
+        # Publish the minimum distance within clusters
+        # self.pub_min_dist.publish(min_distance_within_clusters)
+
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
         for label in set(labels):
+            # print(label)
             if label == -1:
                 ax.scatter(xyz_coords[labels == label][:, 0],
                            xyz_coords[labels == label][:, 1],
@@ -186,9 +216,9 @@ class LidarDistance():
         # intrinsic matrix for camera:
         # width -> 300, height -> 200, fov -> 100 (agent.py)
         im = np.identity(3)
-        im[0, 2] = 300 / 2.0
-        im[1, 2] = 200 / 2.0
-        im[0, 0] = im[1, 1] = 300 / (2.0 * np.tan(100 * np.pi / 360.0))
+        im[0, 2] = 1280 / 2.0
+        im[1, 2] = 720 / 2.0
+        im[0, 0] = im[1, 1] = 1280 / (2.0 * np.tan(100 * np.pi / 360.0))
 
         # extrinsic matrix for camera
         ex = np.zeros(shape=(3, 4))
@@ -198,16 +228,16 @@ class LidarDistance():
         m = np.matmul(im, ex)
 
         # reconstruct camera image with LIDAR-Data
-        img = np.zeros(shape=(200, 300), dtype=np.uint8)
+        img = np.zeros(shape=(720, 1280), dtype=np.float32)
         for c in coordinates_xyz:
             point = np.array([c[1], c[2], c[0], 1])
             pixel = np.matmul(m, point)
             x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
-            if x >= 0 and x <= 300 and y >= 0 and y <= 200:
-                img[199-y][299-x] = 255 - c[0]
+            if x >= 0 and x <= 1280 and y >= 0 and y <= 720:
+                img[719-y][1279-x] = c[0]
 
         # Rainbox color mapping to highlight distances
-        colors = [(0, 0, 0)] + [(1, 0, 0), (1, 1, 0),
+        """colors = [(0, 0, 0)] + [(1, 0, 0), (1, 1, 0),
                                 (0, 1, 0), (0, 1, 1),
                                 (0, 0, 1)]
         cmap_name = 'rainbow'
@@ -216,9 +246,9 @@ class LidarDistance():
                                                          N=256)
 
         img_colored = (rainbow_cmap(img / np.max(img)) * 255).astype(np.uint8)
-        img_bgr = cv2.cvtColor(img_colored, cv2.COLOR_RGBA2BGR)
+        img_bgr = cv2.cvtColor(img_colored, cv2.COLOR_RGBA2BGR)"""
 
-        return img_bgr
+        return img
 
 
 if __name__ == '__main__':
