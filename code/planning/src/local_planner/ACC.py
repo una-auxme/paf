@@ -22,7 +22,7 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__('ACC')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-        self.current_speed = 50 / 3.6  # m/ss
+        self.current_speed = None  # m/ss
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
@@ -35,7 +35,7 @@ class ACC(CompatibleNode):
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
             MinDistance,
-            f"/paf/{self.role_name}/Center/min_distance",
+            f"/paf/{self.role_name}/LIDAR_range",
             self._set_distance,
             qos_profile=1)
         # Get initial set of speed limits
@@ -52,7 +52,7 @@ class ACC(CompatibleNode):
             self.__set_trajectory,
             qos_profile=1)
 
-        self.emergency_sub: Subscriber = self.new_subscription(
+        self.pose_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,

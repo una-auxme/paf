@@ -2,7 +2,7 @@ import py_trees
 import rospy
 from std_msgs.msg import String
 import numpy as np
-
+import time
 from . import behavior_speed as bs
 # from behavior_agent.msg import BehaviorSpeed
 
@@ -24,7 +24,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
          :param name: name of the behaviour
         """
-        super(SwitchLaneLeft, self).__init__(name)
+        super(LeaveParkingSpace, self).__init__(name)
+        rospy.loginfo("LeaveParkingSpace started")
 
     def setup(self, timeout):
         """
@@ -38,11 +39,12 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         successful
         :return: True, as there is nothing to set up.
         """
-        self.blackboard = py_trees.blackboard.Blackboard()
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior",
                                                  String, queue_size=1)
-        self.initRosTime = rospy.get_rostime()
+        self.initRosTime = time.time()
+        # rospy.loginfo("LEAVEPARKINGSPACE setup" + str(self.initRosTime))
+        self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
     def initialise(self):
@@ -76,16 +78,24 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                  lane
         """
         position = self.blackboard.get("/paf/hero/current_pos")
-        # calculate distance between start and current position
-        startPos = np.array([position.pose.position.x, position.pose.position.y])
-        endPos = np.array([self.initPosition.pose.position.x, self.initPosition.pose.position.y])
-        distance = np.linalg.norm(startPos - endPos)
-        # Additionally the behavior is only executed for 10 seconds
-        if distance < 3 and rospy.get_rostime() - self.initRosTime < rospy.Time(10):	
-            self.curr_behavior_pub.publish(bs.parking)
-            return py_trees.common.Status.RUNNING
+        rospy.logerr(position)
+        rospy.logerr(self.initPosition)
+        # calculate distance between start and current position 
+        if position is not None and self.initPosition is not None:
+            rospy.logerr(position.pose.x + " " + position.pose.y)
+            startPos = np.array([position.pose.position.x, position.pose.position.y])
+            endPos = np.array([self.initPosition.pose.position.x, self.initPosition.pose.position.y])
+            distance = np.linalg.norm(startPos - endPos)
+            # Additionally the behavior is only executed for 10 seconds
+            if distance < 4:
+                self.curr_behavior_pub.publish(bs.parking)
+                self.initPosition = position
+                return py_trees.common.Status.RUNNING
+            else:
+                return py_trees.common.Status.SUCCESS
         else:
-            return py_trees.common.Status.FAILURE
+            self.initPosition = position
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """

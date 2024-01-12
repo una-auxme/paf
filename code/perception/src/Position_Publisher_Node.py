@@ -163,7 +163,7 @@ class PositionPublisherNode(CompatibleNode):
         # ---------------------------------------------------------------
         heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
         self.__heading = heading
-        self.__heading_publisher.publish(self.__heading)
+        self.__heading_publisher.publish(Float32(data=yaw))
 
     def update_gps_data(self, data: NavSatFix):
         """

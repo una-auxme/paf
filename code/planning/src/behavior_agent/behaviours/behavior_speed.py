@@ -9,6 +9,9 @@ def convert_to_ms(speed):
 Behavior = namedtuple("Behavior", ("name", "speed"))
 
 # Changed target_speed_pub to curr_behavior_pub
+# Leave Parking space
+
+parking = Behavior("parking", convert_to_ms(30.0))
 
 # Intersection - Behaviors
 

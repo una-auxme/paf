@@ -57,7 +57,7 @@ services:
     tty: true
     shm_size: 2gb
     #command: bash -c "sleep 10 && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/opt/leaderboard/leaderboard/autoagents/npc_agent.py --host=carla-simulator --track=SENSORS"
-    #command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"
+    # command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"
     command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/workspace/code/agent/src/agent/agent.py --host=carla-simulator --track=MAP"
 
     logging:

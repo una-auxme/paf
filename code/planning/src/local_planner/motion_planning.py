@@ -81,11 +81,11 @@ class MotionPlanning(CompatibleNode):
             Bool,
             f"/paf/{self.role_name}/emergency",
             qos_profile=1)
-        
+
         self.logdebug("MotionPlanning started")
 
     def __check_emergency(self, data: Bool):
-        """If an emergency stop is needed first check if we are 
+        """If an emergency stop is needed first check if we are
         in parking behavior. If we are ignore the emergency stop.
 
         Args:
@@ -96,8 +96,11 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
-
-        self.target_speed = min(be_speed, acc_speed)
+        if self.__curr_behavior is not bs.parking.name:
+            self.target_speed = min(be_speed, acc_speed)
+        else:
+            self.target_speed = be_speed
+            self.logerr("parking")
         self.velocity_pub.publish(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):

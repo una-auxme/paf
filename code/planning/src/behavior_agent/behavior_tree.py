@@ -27,7 +27,7 @@ def grow_a_tree(role_name):
                 children=[
                     Selector("Road Features",
                              children=[
-                                 behaviours.maneuvers.LeaveParkingSpace("LeaveParkingSpace"),
+                                 behaviours.maneuvers.LeaveParkingSpace("Leave Parking Space"),
                                  Sequence("Intersection",
                                           children=[
                                               behaviours.road_features.IntersectionAhead
@@ -103,7 +103,6 @@ def main():
             r.sleep()
         except rospy.ROSInterruptException:
             pass
-
 
 if __name__ == "__main__":
     main()

@@ -36,8 +36,8 @@ class CollisionCheck(CompatibleNode):
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
             MinDistance,
-            f"/paf/{self.role_name}/Center/min_distance",
-            self.calculate_obstacle_speed,
+            f"/paf/{self.role_name}/LIDAR_range",
+            self.__set_distance,
             qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
@@ -56,42 +56,46 @@ class CollisionCheck(CompatibleNode):
             qos_profile=1)
         # Variables to save vehicle data
         self.__current_velocity: float = None
+        self.__object_first_position: tuple = None
         self.__object_last_position: tuple = None
         self.logdebug("CollisionCheck started")
 
-    def calculate_obstacle_speed(self, new_dist: MinDistance):
-        """Caluclate the speed of the obstacle in front of the ego vehicle
-            based on the distance between to timestamps
+    def __set_distance(self, data: MinDistance):
+        """Saves the distance from the lidar
 
         Args:
-            new_position (MinDistance): new position received from the lidar
+            data (MinDistance): Message from lidar with distance
+        """
+        if np.isinf(data.distance):
+            self.__object_last_position = None
+            self.__object_first_position = None
+            return
+        if self.__object_first_position is None:
+            self.__object_first_position = (time.time(), data.distance)
+            return
+        if self.__object_last_position is None:
+            self.__object_last_position = (time.time(), data.distance)
+            return
+        self.__object_first_position = self.__object_last_position
+        self.__object_last_position = (time.time(), data.distance)
+
+    def calculate_obstacle_speed(self):
+        """Caluclate the speed of the obstacle in front of the ego vehicle
+            based on the distance between to timestamps
         """
         # Check if current speed from vehicle is not None
-        if self.__current_velocity is None:
+        if self.__current_velocity is None or \
+                self.__object_first_position is None or \
+                self.__object_last_position is None:
             return
-        # Check if this is the first time the callback is called
-        if self.__object_last_position is None and \
-                np.isinf(new_dist.distance) is not True:
-            self.__object_last_position = (time.time(),
-                                           new_dist.distance)
-            return
-
         # If distance is np.inf no car is in front
-        if np.isinf(new_dist.distance):
-            self.__object_last_position = None
-            return
-        # Check if too much time has passed since last position update
-        if self.__object_last_position[0] + \
-                0.5 < time.time():
-            self.__object_last_position = (time.time(),
-                                           new_dist.distance)
-            return
+
         # Calculate time since last position update
         current_time = time.time()
         time_difference = current_time-self.__object_last_position[0]
 
         # Calculate distance (in m)
-        distance = new_dist.distance - self.__object_last_position[1]
+        distance = self.__object_last_position[1] - self.__object_first_position[1]
 
         # Speed is distance/time (m/s)
         relative_speed = distance/time_difference
@@ -99,8 +103,7 @@ class CollisionCheck(CompatibleNode):
         # Publish speed to ACC for permanent distance check
         self.speed_publisher.publish(Float32(data=speed))
         # Check for crash
-        self.check_crash((new_dist.distance, speed))
-        self.__object_last_position = (current_time, new_dist.distance)
+        self.check_crash((self.__object_last_position[1], speed))
 
     def __get_current_velocity(self, data: CarlaSpeedometer,):
         """Saves current velocity of the ego vehicle
@@ -174,6 +177,7 @@ class CollisionCheck(CompatibleNode):
             if distance < emergency_distance2:
                 # Initiate emergency brake
                 self.emergency_pub.publish(True)
+                self.logerr("Emergency Brake")
                 return
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
@@ -188,6 +192,13 @@ class CollisionCheck(CompatibleNode):
         Control loop
         :return:
         """
+        def loop(timer_event=None):
+            """
+            Checks if distance to a possible object is too small and
+            publishes the desired speed to motion planning
+            """
+            self.calculate_obstacle_speed()
+        self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 
