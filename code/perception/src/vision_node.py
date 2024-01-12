@@ -214,6 +214,8 @@ class VisionNode(CompatibleNode):
 
         output = self.model(cv_image)
         distance_output = []
+        c_boxes = []
+        c_labels = []
         for r in output:
             boxes = r.boxes
             for box in boxes:
@@ -231,13 +233,34 @@ class VisionNode(CompatibleNode):
                     else:
                         obj_dist = np.inf
 
+                    c_boxes.append(torch.tensor(pixels))
+                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
                     distance_output.append([cls, obj_dist])
 
         # print(distance_output)
         # self.logerr(distance_output)
         self.distance_publisher.publish(
             Float32MultiArray(data=distance_output))
-        return output[0].plot()
+
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        image_np_with_detections = torch.tensor(transposed_image,
+                                                dtype=torch.uint8)
+
+        c_boxes = torch.stack(c_boxes)
+        print(image_np_with_detections.shape, c_boxes.shape, c_labels)
+        box = draw_bounding_boxes(image_np_with_detections,
+                                  c_boxes,
+                                  c_labels,
+                                  colors='blue',
+                                  width=3,
+                                  font_size=12)
+        # print(box.shape)
+        np_box_img = np.transpose(box.detach().numpy(),
+                                  (1, 2, 0))
+        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+        return box_img
+
+        # return output[0].plot()
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
@@ -268,8 +291,10 @@ class VisionNode(CompatibleNode):
         box = draw_bounding_boxes(image_np_with_detections,
                                   boxes,
                                   labels,
-                                  colors='red',
-                                  width=2)
+                                  colors='blue',
+                                  width=3,
+                                  font_size=24)
+
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)

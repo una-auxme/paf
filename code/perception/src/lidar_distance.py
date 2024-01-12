@@ -4,7 +4,7 @@ import ros_numpy
 import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2
-# from perception.msg import MinDistance
+from std_msgs.msg import Float32
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -38,11 +38,11 @@ class LidarDistance():
         # ndarray-made-up-of-numpy-void-numbers
         min_dist_bit_mask = lidar_filter_utility.bounding_box(
             coordinates,
-            max_x=rospy.get_param('~max_x', np.inf),
-            min_x=rospy.get_param('~min_x', -np.inf),
+            max_x=50.,
+            min_x=2.,
             min_z=rospy.get_param('~min_z', -np.inf),
-            min_y=rospy.get_param('~min_y', -np.inf),
-            max_y=rospy.get_param('~max_y', np.inf),
+            min_y=-2.5,
+            max_y=2.5,
         )
 
         reconstruct_bit_mask = lidar_filter_utility.bounding_box(
@@ -85,8 +85,8 @@ class LidarDistance():
                                                 encoding="passthrough")
             img_msg.header = data.header
             self.min_dist_img_publisher.publish(img_msg)
-        # else:
-            # self.pub_min_dist.publish(np.inf)
+        else:
+            self.pub_min_dist.publish(np.inf)
 
         # handle reconstruction of lidar points
         rainbow_cloud = self.reconstruct_img_from_lidar(
@@ -114,15 +114,15 @@ class LidarDistance():
         )
 
         # publisher for the closest blob in the lidar point cloud
-        """self.pub_min_dist = rospy.Publisher(
+        self.pub_min_dist = rospy.Publisher(
             rospy.get_param(
                 '~range_topic',
                 '/paf/hero/Center/min_distance'
             ),
-            MinDistance,
+            Float32,
             queue_size=10
         )
-        """
+
         # publisher for reconstructed lidar image
         self.rainbow_publisher = rospy.Publisher(
             rospy.get_param(
@@ -151,37 +151,28 @@ class LidarDistance():
     def plot_blob(self, xyz_coords):
         # creates a 3d graph thazt highlights blobs of points
         xyz_coords_standardized = StandardScaler().fit_transform(xyz_coords)
-        # pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
-        # xyz_coords[:, 0]))
+        """pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
+                                                        xyz_coords[:, 0]))"""
 
         # publish minimum distance
-        # min_x_distance = np.min(p
-        # airwise_distances_x[pairwise_distances_x > 0])
-
         eps = 0.2
         min_samples = 5
         dbscan = DBSCAN(eps=eps, min_samples=min_samples)
         labels = dbscan.fit_predict(xyz_coords_standardized)
 
-        min_distances_within_clusters = []
+        min_distance_cluster = []
 
         # Iterate through each cluster
         for label in set(labels):
             if label != -1:  # Ignore noise points
                 cluster_points = xyz_coords[labels == label]
-                pairwise_distances = np.linalg.norm(
-                    cluster_points -
-                    np.mean(cluster_points, axis=0), axis=1)
-                min_distance_within_cluster = np.min(
-                    pairwise_distances)
-                min_distances_within_clusters.append(
-                    min_distance_within_cluster)
-
-        # Find the overall minimum distance within clusters
-        # min_distance_within_clusters = np.min(min_distances_within_clusters)
+                min_distance_cluster.append(np.min(cluster_points[:, 0]))
 
         # Publish the minimum distance within clusters
-        # self.pub_min_dist.publish(min_distance_within_clusters)
+        if len(min_distance_cluster) > 0:
+            self.pub_min_dist.publish(min(min_distance_cluster))
+        else:
+            self.pub_min_dist.publish(np.inf)
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
