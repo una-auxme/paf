@@ -1,3 +1,5 @@
 [flake8]
 exclude= code/planning/behavior_agent/src/behavior_agent/behavior_tree.py,
-         code/planning/behavior_agent/src/behavior_agent/behaviours/__init__.py
+         code/planning/behavior_agent/src/behavior_agent/behaviours/__init__.py,
+         code/planning/src/behavior_agent/behavior_tree.py,
+         code/planning/src/behavior_agent/behaviours/__init__.py
