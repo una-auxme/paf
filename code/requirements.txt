@@ -13,3 +13,4 @@ py-trees==2.1.6
 numpy==1.23.5
 ultralytics==8.0.220
 scikit-learn>=0.18
+pandas==2.0.0

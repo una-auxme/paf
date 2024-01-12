@@ -11,3 +11,6 @@ code/output
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+
+# data from experiments is not needed in the repo
+code/perception/src/00_Experiments/

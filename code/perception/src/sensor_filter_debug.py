@@ -14,10 +14,12 @@ from sensor_msgs.msg import NavSatFix, Imu
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32, String
 from coordinate_transformation import CoordinateTransformer
-from tf.transformations import euler_from_quaternion
+from coordinate_transformation import quat_to_heading
+# from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 from xml.etree import ElementTree as eTree
 import rospy
+
 
 GPS_RUNNING_AVG_ARGS: int = 10
 DATA_SAVING_MAX_TIME: int = 45
@@ -35,6 +37,9 @@ class SensorFilterDebugNode(CompatibleNode):
         """
 
         super(SensorFilterDebugNode, self).__init__('ekf_translation')
+
+        self.loginfo("Sensor Filter Debug node started")
+
         self.kalman_pos = PoseStamped()
         self.kalman_pos_debug_data = Float32MultiArray()
         self.kalman_heading = Float32()
@@ -296,14 +301,15 @@ class SensorFilterDebugNode(CompatibleNode):
         self.current_pos_debug()
         self.kalman_debug_publisher.publish(debug)
 
-        # save data in paf23/doc/05_acting/00_Experiments/kalman_datasets
+        # save data in paf23/doc/06_perception/00_Experiments/kalman_datasets
         # for debugging with matplotlib:
         self.save_location_errors()
 
     def save_location_errors(self):
         """
         This method saves the current location errors in a csv file.
-        in the folders of paf23/doc/05_acting/00_Experiments/kalman_datasets
+        in the folders of
+        paf23/doc/06_perception/00_Experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # if rospy.get_time() > 45 stop saving data:
@@ -352,7 +358,8 @@ class SensorFilterDebugNode(CompatibleNode):
     def save_heading_errors(self):
         """
         This method saves the current heading errors in a csv file.
-        in the folders of paf23/doc/05_acting/00_Experiments/kalman_datasets
+        in the folders of
+        paf23/doc/06_perception/00_Experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # if rospy.get_time() > 45 stop saving data:
@@ -397,14 +404,14 @@ class SensorFilterDebugNode(CompatibleNode):
 
         # for savnig data in csv file:
         self.current_heading_debug_data = heading_error
-    """
+
     def update_location_error(self, data: PoseStamped):
-        ""
+        """
         This method is called when new current_pos data is received.
         It handles all necessary updates and publishes the error.
         :param data: new current_pos measurement
         :return:
-        ""
+        """
         self.current_pos = data
         error = Float32MultiArray()
 
@@ -419,7 +426,6 @@ class SensorFilterDebugNode(CompatibleNode):
          + (self.carla_current_pos.pose.position.y - data.pose.position.y)**2)
 
         self.location_error_publisher.publish(error)
-    """
 
     def get_geoRef(self, opendrive: String):
         """_summary_
@@ -579,14 +585,8 @@ class SensorFilterDebugNode(CompatibleNode):
                               data.orientation.z,
                               data.orientation.w]
 
-        roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-        raw_heading = yaw
+        heading = quat_to_heading(data_orientation_q)
 
-        # transform raw_heading so that:
-        # ---------------------------------------------------------------
-        # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
-        # ---------------------------------------------------------------
-        heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
         self.__heading = heading
         self.__heading_publisher.publish(self.__heading)
 

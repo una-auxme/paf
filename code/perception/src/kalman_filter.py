@@ -11,8 +11,8 @@ import rospy
 import math
 import threading
 from coordinate_transformation import CoordinateTransformer
+from coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
-from scipy.spatial.transform import Rotation
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
@@ -23,7 +23,7 @@ The IMU Sensor provides the acceleration
 and the GPS Sensor provides the position.
 The Carla Speedometer provides the current Speed in the headed direction.
 
-The Noise for the GPS Sensor is defined as:
+The testing Noise for the GPS Sensor is defined as:
     "noise_alt_stddev": 0.000005,
     "noise_lat_stddev": 0.000005,
     "noise_lon_stddev": 0.000005
@@ -55,13 +55,18 @@ The measurement matrix H is defined as:
                         [0, 0, 0, 0, 1, 0],   # yaw
                         [0, 0, 0, 0, 0, 1]])  # omega_z
 The process covariance matrix Q is defined as:
-    Q = np.diag([0.005, 0.005, 0.001, 0.0001]
+    self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
+The measurement covariance matrix R is defined as:
+    self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
 '''
 
 
 class KalmanFilter(CompatibleNode):
     """
-    This class implements a Kalman filter for a 3D object tracked in 3D space.
+    This class implements a Kalman filter for the
+    Heading and Position of the car.
+    For more information see the documentation in:
+    ../../doc/06_perception/08_kalman_filter.md
     """
     def __init__(self):
         """
@@ -141,10 +146,10 @@ class KalmanFilter(CompatibleNode):
         self.z_v = np.zeros((2, 1))  # Velocity measurement (v_x, v_y)
         self.z_imu = np.zeros((2, 1))  # IMU measurements (yaw, omega_z)
 
-        self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
-
-        # Define process noise covariance matrix
+        # The process covariance matrix Q is defined as:
         self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
+        # The measurement covariance matrix R is defined as:
+        self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
 
         # self.x_old_est = np.copy(self.x0)  # old state vector
         # self.P_old_est = np.copy(self.P0)  # old state covariance matrix
@@ -152,19 +157,6 @@ class KalmanFilter(CompatibleNode):
         self.K = np.zeros((6, 6))  # Kalman gain
 
         self.latitude = 0  # latitude of the current position
-
-        '''
-        # Define control input vector
-        u = np.array([0, 0, -g, 0, 0, 0])
-
-        # Define control input matrix
-        B = np.array([[0, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, dt],
-                    [0, dt, 0],
-                    [dt, 0, 0]])
-        '''
 
     # Subscriber
         # Initialize the subscriber for the OpenDrive Map
@@ -216,6 +208,8 @@ class KalmanFilter(CompatibleNode):
         """
         Run the Kalman Filter
         """
+        # wait until the car receives the first GPS Data
+        # from the update_current_pos method
         while not self.initialized:
             rospy.sleep(1)
         rospy.sleep(1)
@@ -246,9 +240,6 @@ class KalmanFilter(CompatibleNode):
                 self.publish_kalman_location()
                 rospy.sleep(self.control_loop_rate)
 
-        # roscomp.spin(loop, 1.0/self.control_loop_rate)
-        # self.new_timer(self.control_loop_rate, loop)
-        # threading.Timer(1.0/self.control_loop_rate, loop).start()
         threading.Thread(target=loop).start()
         self.spin()
 
@@ -319,7 +310,9 @@ class KalmanFilter(CompatibleNode):
 
     def update_imu_data(self, imu_data):
         """
-        Update the IMU Data
+        Update the IMU Data by:
+        - calculating the heading using quaternions
+        - calculating the angular velocity
         """
         orientation_x = imu_data.orientation.x
         orientation_y = imu_data.orientation.y
@@ -332,25 +325,7 @@ class KalmanFilter(CompatibleNode):
                               orientation_z,
                               orientation_w]
 
-        # Create a Rotation object from the quaternion
-        rotation = Rotation.from_quat(data_orientation_q)
-        # Convert the Rotation object to a matrix
-        rotation_matrix = rotation.as_matrix()
-        # calculate the angle around the z-axis (theta) from the matrix
-        theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
-
-        raw_heading = theta
-
-        # transform raw_heading so that:
-        # ---------------------------------------------------------------
-        # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
-        # ---------------------------------------------------------------
-        # The above transformation limits the heading to the range of -pi to pi
-        # It also rotates the heading by 90 degrees so that the heading is in
-        # the direction of the x-axis which the car starts in (heading = 0)
-
-        # heading is positive in counter clockwise rotations
-        heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+        heading = quat_to_heading(data_orientation_q)
 
         # update IMU Measurements:
         self.z_imu[0, 0] = heading
@@ -385,6 +360,8 @@ class KalmanFilter(CompatibleNode):
     def update_current_pos(self, current_pos):
         """
         Update the current position
+        ALSO: allows the kalman filter to start running
+              by setting self.initialized to True
         """
         # update GPS Measurements:
         self.z_gps[0, 0] = current_pos.pose.position.x
