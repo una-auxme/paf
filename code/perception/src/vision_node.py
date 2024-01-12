@@ -85,6 +85,7 @@ class VisionNode(CompatibleNode):
         # publish / subscribe setup
         self.setup_camera_subscriptions()
         self.setup_camera_publishers()
+        self.setup_traffic_light_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -127,6 +128,13 @@ class VisionNode(CompatibleNode):
             qos_profile=1
         )
 
+    def setup_traffic_light_publishers(self):
+        self.traffic_light_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
+            qos_profile=1
+        )
+
     def handle_camera_image(self, image):
         # free up cuda memory
         if self.device == "cuda":
@@ -140,11 +148,9 @@ class VisionNode(CompatibleNode):
 
         # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
-                                            encoding="passthrough")
+                                            encoding="rgb8")
         img_msg.header = image.header
         self.publisher.publish(img_msg)
-
-        pass
 
     def predict_torch(self, image):
         self.model.eval()
@@ -174,9 +180,34 @@ class VisionNode(CompatibleNode):
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
-        output = self.model(cv_image)
+        output = self.model(cv_image, half=True, verbose=False)
+
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
 
         return output[0].plot()
+
+    def process_traffic_lights(self, prediction, cv_image, image_header):
+        indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
+        indices = np.asarray([indices]) if indices.size == 1 else indices
+
+        min_x = 550
+        max_x = 700
+        min_prob = 0.35
+
+        for index in indices:
+            box = prediction.boxes.cpu().data.numpy()[index]
+
+            if box[0] < min_x or box[2] > max_x or box[4] < min_prob:
+                continue
+
+            box = box[0:4].astype(int)
+            segmented = cv_image[box[1]:box[3], box[0]:box[2]]
+
+            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented,
+                                                            encoding="rgb8")
+            traffic_light_image.header = image_header
+            self.traffic_light_publisher.publish(traffic_light_image)
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)

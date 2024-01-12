@@ -2,11 +2,12 @@ import argparse
 
 import torch.cuda
 import torchvision.transforms as t
-from data_generation.transforms import Normalize, ResizeAndPadToSquare, \
-    load_image
-from traffic_light_detection.classification_model import ClassificationModel
+from traffic_light_detection.src.traffic_light_detection.transforms \
+    import Normalize, ResizeAndPadToSquare, load_image
+from traffic_light_detection.src.traffic_light_detection.classification_model \
+    import ClassificationModel
 from torchvision.transforms import ToTensor
-from traffic_light_config import TrafficLightConfig
+from traffic_light_detection.src.traffic_light_config import TrafficLightConfig
 
 
 def parse_args():
@@ -49,7 +50,8 @@ class TrafficLightInference:
         self.class_dict = {0: 'Backside',
                            1: 'Green',
                            2: 'Red',
-                           3: 'Yellow'}
+                           3: 'Side',
+                           4: 'Yellow'}
 
     def __call__(self, img):
         """
