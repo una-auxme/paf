@@ -6,6 +6,7 @@ from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import String, Float32
 import numpy as np
+from nav_msgs.msg import Path
 
 # from behavior_agent.msg import BehaviorSpeed
 from perception.msg import Waypoint, LaneChange
@@ -33,13 +34,16 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.5)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.2)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
+        self.counter = 0
+        self.speed_list = []
+        self.__trajectory = None
 
         # Subscriber
         self.curr_behavior_sub: Subscriber = self.new_subscription(
@@ -65,6 +69,12 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/lane_change_distance",
             self.__set_change_point,
             qos_profile=1)
+        
+        self.trajectory_sub: Subscriber = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory",
+            self.__set_trajectory,
+            qos_profile=1)
 
         # Publisher
         self.velocity_pub: Publisher = self.new_publisher(
@@ -79,12 +89,18 @@ class MotionPlanning(CompatibleNode):
 
         self.target_speed = min(be_speed, acc_speed)
         self.velocity_pub.publish(self.target_speed)
+        # self.logerr(f"Speed: {self.target_speed}")
+        # self.speed_list.append(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
         self.__acc_speed = data.data
 
+    def __set_trajectory(self, data: Path):
+        self.__trajectory = data
+
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
+        self.update_target_speed(self.__acc_speed, self.__curr_behavior)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -146,16 +162,17 @@ class MotionPlanning(CompatibleNode):
         return self.__acc_speed
 
     def __calc_speed_to_stop_intersection(self) -> float:
-        target_distance = 3.0
+        target_distance = 5.0
         virtual_stopline_distance = self.__calc_virtual_stopline()
         # calculate speed needed for stopping
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms((virtual_stopline_distance / 30)
                                    * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(50.0)
+        if v_stop > bs.int_app_init.speed:
+            v_stop = bs.int_app_init.speed
         if virtual_stopline_distance < target_distance:
             v_stop = 0.0
+        return v_stop
 
     # TODO: Find out purpose
     def __calc_speed_to_stop_lanechange(self) -> float:
@@ -174,8 +191,6 @@ class MotionPlanning(CompatibleNode):
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
             return self.__stopline[0]
-        elif self.traffic_light_detected:
-            return self.traffic_light_distance
         else:
             return 0.0
 
@@ -185,10 +200,10 @@ class MotionPlanning(CompatibleNode):
         :return:
         """
 
-        def loop(timer_event=None):
-            self.update_target_speed(self.__acc_speed, self.__curr_behavior)
+        # def loop(timer_event=None):
+        #     self.logerr(self.speed_list)
 
-        self.new_timer(self.control_loop_rate, loop)
+        # self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 
