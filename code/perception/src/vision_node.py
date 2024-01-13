@@ -198,6 +198,9 @@ class VisionNode(CompatibleNode):
         for index in indices:
             box = prediction.boxes.cpu().data.numpy()[index]
 
+            if (box[2] - box[0]) * 2 > box[3] - box[1]:
+                continue  # ignore horizontal boxes
+
             if box[0] < min_x or box[2] > max_x or box[4] < min_prob:
                 continue
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
+import threading
+from time import sleep
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
@@ -18,6 +21,8 @@ class TrafficLightNode(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
         self.classifier = TrafficLightInference(self.get_param("model", ""))
+        self.last_info: datetime = None
+        threading.Thread(target=self.auto_invalidate_state).start()
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -38,14 +43,29 @@ class TrafficLightNode(CompatibleNode):
             qos_profile=1
         )
 
+    def auto_invalidate_state(self):
+        while True:
+            sleep(1)
+
+            if self.last_info is None:
+                continue
+
+            if (datetime.now() - self.last_info).total_seconds() >= 3:
+                msg = TrafficLightState()
+                msg.state = 0
+                self.traffic_light_publisher.publish(msg)
+                self.last_info = None
+
     def handle_camera_image(self, image):
         result = self.classifier(self.bridge.imgmsg_to_cv2(image))
 
         # 1: Green, 2: Red, 4: Yellow, 0: Unknown
         msg = TrafficLightState()
         msg.state = result if result in [1, 2, 4] else 0
-
         self.traffic_light_publisher.publish(msg)
+
+        # invalidates state (state=0) after 3s in auto_invalidate_state()
+        self.last_info = datetime.now()
 
     def run(self):
         self.spin()
