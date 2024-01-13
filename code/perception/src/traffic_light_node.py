@@ -73,7 +73,7 @@ class TrafficLightNode(CompatibleNode):
         else:
             self.last_state = state
 
-        # invalidates state (state=0) after 3s in auto_invalidate_state()
+        # Automatically invalidates state (state=0) in auto_invalidate_state()
         if state != 0:
             self.last_info_time = datetime.now()
 
