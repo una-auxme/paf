@@ -2,7 +2,7 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.1" />
-  
+
   <!--just for testing purposes -> Uncomment to use and see plots
   <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
     <param name="control_loop_rate" value="0.001" />
@@ -28,8 +28,7 @@
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
-  
-    
+
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
@@ -52,9 +51,16 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg -->
-    
-    <param name="model" value="yolov8x-seg" />
+      - yolov8x-seg
+    -->
+
+    <param name="model" value="rtdetr-x" />
+  </node>
+
+  <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="side" value="Center" />
+    <param name="model" value="/workspace/code/perception/src/traffic_light_detection/models/model_acc_92.48_val_91.88.pt" />
   </node>
       
 
