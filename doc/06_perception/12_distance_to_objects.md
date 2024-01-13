@@ -76,7 +76,7 @@ To reconstruct the depth image, we simply implement the above formulas using num
 
 The resulting Image takes the distance in meters as values for its pixels. It therefore is a grayscale image.
 
-![Grayscale Depth Image](../00_assets/3d_2d_formula.png)
+![Grayscale Depth Image](../00_assets/2_15_layover.png)
 
 In the next step we want to get the distance for every bounding box the object-detection found.
 
@@ -101,9 +101,9 @@ If there is no distance found in the depth image, we will return infinity for th
 
 This topic came to our attention, as we realised that the LIDAR was flickering, as you can see in the following image series.
 
-![Grayscale Depth Image](../00_assets/3d_2d_formula.png)
-![Grayscale Depth Image](../00_assets/3d_2d_formula.png)
-![Grayscale Depth Image](../00_assets/3d_2d_formula.png)
+![Grayscale Depth Image](../00_assets/2_layover.png)
+![Grayscale Depth Image](../00_assets/3_layover.png)
+![Grayscale Depth Image](../00_assets/4_layover.png)
 
 These are the Grayscale-Depth Images reconstructed within 600 milliseconds.
 
