@@ -7,7 +7,7 @@
     </include>
 
     <!-- planning -->
-    <include file="$(find planning_runner)/launch/planning_runner.launch">
+    <include file="$(find planning)/launch/planning.launch">
     </include>
 
     <include file="$(find mock)/launch/mock.launch">
