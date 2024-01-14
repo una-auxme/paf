@@ -43,7 +43,7 @@ The result is a `TrafficLightState` message where the state is set to the detect
 Objects, which are detected as traffic light by the RTDETR-X model (or others), must fulfill the following criterias to be published:
 
 - At least a 30% (0.30) certainty/probablity of the classification model
-- More than twice as tall (height) as it is wide (width)
+- More than 1.5x as tall (height) as it is wide (width)
 - Above 360px (upper half of the 1280x720 image)
 
 ### Traffic Light Node

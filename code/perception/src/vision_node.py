@@ -200,7 +200,7 @@ class VisionNode(CompatibleNode):
             if box[4] < min_prob:
                 continue
 
-            if (box[2] - box[0]) * 2 > box[3] - box[1]:
+            if (box[2] - box[0]) * 1.5 > box[3] - box[1]:
                 continue  # ignore horizontal boxes
 
             if box[1] > max_y:
