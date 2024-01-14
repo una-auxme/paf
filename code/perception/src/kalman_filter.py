@@ -248,7 +248,7 @@ class KalmanFilter(CompatibleNode):
         """
         # Predict the next state and covariance matrix, pretending the last
         # velocity state estimate stayed constant
-        self.x_pred = self.A @ self.x_est 
+        self.x_pred = self.A @ self.x_est
         self.P_pred = self.A @ self.P_est @ self.A.T + self.Q
 
     def update(self):
