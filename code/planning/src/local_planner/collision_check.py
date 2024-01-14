@@ -70,7 +70,6 @@ class CollisionCheck(CompatibleNode):
             self.__object_first_position = self.__object_last_position
             self.__object_last_position = None
             return
-        self.__object_first_position = self.__object_last_position
 
     def __set_distance(self, data: Float32):
         """Saves last distance from  LIDAR
@@ -106,6 +105,7 @@ class CollisionCheck(CompatibleNode):
         self.speed_publisher.publish(Float32(data=speed))
         # Check for crash
         self.check_crash((self.__object_last_position[1], speed))
+        self.__object_first_position = self.__object_last_position
 
     def __get_current_velocity(self, data: CarlaSpeedometer,):
         """Saves current velocity of the ego vehicle
