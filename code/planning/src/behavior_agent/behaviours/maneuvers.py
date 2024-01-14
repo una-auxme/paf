@@ -2,7 +2,6 @@ import py_trees
 import rospy
 from std_msgs.msg import String
 import numpy as np
-import time
 from . import behavior_speed as bs
 # from behavior_agent.msg import BehaviorSpeed
 
@@ -26,6 +25,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
         super(LeaveParkingSpace, self).__init__(name)
         rospy.loginfo("LeaveParkingSpace started")
+        self.called = False
 
     def setup(self, timeout):
         """
@@ -34,7 +34,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and gathers the time to check how much time has passed.
+        by the ROS topics and gathers the time to check how much time has
+        passed.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as there is nothing to set up.
@@ -42,9 +43,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior",
                                                  String, queue_size=1)
-        self.initRosTime = time.time()
-        # rospy.loginfo("LEAVEPARKINGSPACE setup" + str(self.initRosTime))
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.initPosition = None
         return True
 
     def initialise(self):
@@ -55,47 +55,62 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        Get initial position to check how far vehicle has moved during execution
+        Get initial position to check how far vehicle has moved during
+        execution
         """
         self.initPosition = self.blackboard.get("/paf/hero/current_pos")
+        rospy.loginfo("LEAVEPARKINGSPACE init")
 
     def update(self):
         """
         When is this called?
         Every time your behaviour is ticked.
 
+        pose: 
+            position: 
+                x: 294.43757083094295
+                y: -1614.961812061094
+                z: 211.1994649671884
         What to do here?
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
 
         This behaviour runs until the agent has left the parking space.
-        This is checked by calculating the euclidian distance thath the agent has moved since the start
+        This is checked by calculating the euclidian distance thath the agent
+        has moved since the start
 
-        :return: py_trees.common.Status.RUNNING, while the agent is leaving the parking space
-                 py_trees.common.Status.SUCCESS, never to continue with intersection
+        :return: py_trees.common.Status.RUNNING, while the agent is leaving
+                                            the parking space
+                 py_trees.common.Status.SUCCESS, never to continue with
+                                            intersection
                  py_trees.common.Status.FAILURE, if not in parking
                  lane
         """
         position = self.blackboard.get("/paf/hero/current_pos")
-        rospy.logerr(position)
-        rospy.logerr(self.initPosition)
-        # calculate distance between start and current position 
-        if position is not None and self.initPosition is not None:
-            rospy.logerr(position.pose.x + " " + position.pose.y)
-            startPos = np.array([position.pose.position.x, position.pose.position.y])
-            endPos = np.array([self.initPosition.pose.position.x, self.initPosition.pose.position.y])
-            distance = np.linalg.norm(startPos - endPos)
-            # Additionally the behavior is only executed for 10 seconds
-            if distance < 4:
-                self.curr_behavior_pub.publish(bs.parking)
+        speed = self.blackboard.get("/carla/hero/Speed")
+        if self.called is False:
+            # calculate distance between start and current position
+            if position is not None and \
+                    self.initPosition is not None and \
+                    speed is not None:
+                startPos = np.array([position.pose.position.x,
+                                     position.pose.position.y])
+                endPos = np.array([self.initPosition.pose.position.x,
+                                   self.initPosition.pose.position.y])
+                distance = np.linalg.norm(startPos - endPos)
+                if distance < 2 or speed.speed < 2:
+                    self.curr_behavior_pub.publish(bs.parking.name)
+                    self.initPosition = position
+                    return py_trees.common.Status.RUNNING
+                else:
+                    self.called = True
+                    return py_trees.common.Status.FAILURE
+            else:
                 self.initPosition = position
                 return py_trees.common.Status.RUNNING
-            else:
-                return py_trees.common.Status.SUCCESS
         else:
-            self.initPosition = position
-            return py_trees.common.Status.RUNNING
+            return py_trees.common.Status.FAILURE
 
     def terminate(self, new_status):
         """

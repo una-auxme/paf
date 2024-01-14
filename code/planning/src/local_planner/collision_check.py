@@ -95,7 +95,8 @@ class CollisionCheck(CompatibleNode):
         time_difference = current_time-self.__object_last_position[0]
 
         # Calculate distance (in m)
-        distance = self.__object_last_position[1] - self.__object_first_position[1]
+        distance = self.__object_last_position[1] -\
+            self.__object_first_position[1]
 
         # Speed is distance/time (m/s)
         relative_speed = distance/time_difference

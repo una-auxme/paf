@@ -12,7 +12,7 @@ Behavior = namedtuple("Behavior", ("name", "speed"))
 
 # Leave Parking space
 
-parking = Behavior("parking", convert_to_ms(7.0))
+parking = Behavior("parking", convert_to_ms(30.0))
 # Intersection - Behaviors
 
 # Approach

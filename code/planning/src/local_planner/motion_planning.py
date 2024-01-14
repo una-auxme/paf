@@ -96,11 +96,10 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
-        if self.__curr_behavior is not bs.parking.name:
+        if not behavior == bs.parking.name:
             self.target_speed = min(be_speed, acc_speed)
         else:
             self.target_speed = be_speed
-            self.logerr("parking")
         self.velocity_pub.publish(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
@@ -121,7 +120,9 @@ class MotionPlanning(CompatibleNode):
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
         split = "_"
+        self.loginfo("get speed")
         short_behavior = behavior.partition(split)[0]
+        self.loginfo("short behavior: " + str(short_behavior))
         if short_behavior == "int":
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
@@ -211,6 +212,7 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
+            self.loginfo("MotionPlanning loop")
             self.update_target_speed(self.__acc_speed, self.__curr_behavior)
 
         self.new_timer(self.control_loop_rate, loop)
