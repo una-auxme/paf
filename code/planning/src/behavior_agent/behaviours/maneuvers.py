@@ -59,7 +59,6 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         execution
         """
         self.initPosition = self.blackboard.get("/paf/hero/current_pos")
-        rospy.loginfo("LEAVEPARKINGSPACE init")
 
     def update(self):
         """
@@ -99,7 +98,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 endPos = np.array([self.initPosition.pose.position.x,
                                    self.initPosition.pose.position.y])
                 distance = np.linalg.norm(startPos - endPos)
-                if distance < 2 or speed.speed < 2:
+                if distance < 1 or speed.speed < 2:
                     self.curr_behavior_pub.publish(bs.parking.name)
                     self.initPosition = position
                     return py_trees.common.Status.RUNNING

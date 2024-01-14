@@ -91,7 +91,9 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (Bool): True if emergency stop detected by collision check
         """
-        if self.__curr_behavior is not bs.parking.name:
+        self.logerr("Emergency stop detected")
+        if not self.__curr_behavior == bs.parking.name:
+            self.logerr("Emergency stop detected and executed")
             self.emergency_pub.publish(data)
 
     def update_target_speed(self, acc_speed, behavior):
@@ -100,6 +102,7 @@ class MotionPlanning(CompatibleNode):
             self.target_speed = min(be_speed, acc_speed)
         else:
             self.target_speed = be_speed
+        # self.logerr("target speed: " + str(self.target_speed))
         self.velocity_pub.publish(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
@@ -131,7 +134,6 @@ class MotionPlanning(CompatibleNode):
             speed = bs.parking.speed
         else:
             speed = self.__get_speed_cruise()
-
         return speed
 
     def __get_speed_intersection(self, behavior: str) -> float:
@@ -212,7 +214,6 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            self.loginfo("MotionPlanning loop")
             self.update_target_speed(self.__acc_speed, self.__curr_behavior)
 
         self.new_timer(self.control_loop_rate, loop)

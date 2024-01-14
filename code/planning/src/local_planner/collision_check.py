@@ -9,7 +9,6 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
-from perception.msg import MinDistance
 import time
 
 
@@ -23,7 +22,7 @@ class CollisionCheck(CompatibleNode):
         super(CollisionCheck, self).__init__('CollisionCheck')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-
+        self.lidar_position_offset = 2
         # self.obstacle_sub: Subscriber = self.new_subscription(
         # )
         # Subscriber for current speed
@@ -35,14 +34,14 @@ class CollisionCheck(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            MinDistance,
-            f"/paf/{self.role_name}/LIDAR_range",
+            Float32,
+            f"/carla/{self.role_name}/LIDAR_range",
             self.__set_distance,
             qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
-            f"/paf/{self.role_name}/unchecked_emergency",
+            f"/paf/{self.role_name}/emergency",
             qos_profile=1)
         # Publisher for distance to collision
         self.collision_pub = self.new_publisher(
@@ -60,24 +59,26 @@ class CollisionCheck(CompatibleNode):
         self.__object_last_position: tuple = None
         self.logdebug("CollisionCheck started")
 
-    def __set_distance(self, data: MinDistance):
-        """Saves the distance from the lidar
-
-        Args:
-            data (MinDistance): Message from lidar with distance
+    def update_distance(self):
+        """Updates the distance to the obstacle in front
         """
-        if np.isinf(data.distance):
+        if np.isinf(self.__object_last_position[1]):
             self.__object_last_position = None
             self.__object_first_position = None
             return
         if self.__object_first_position is None:
-            self.__object_first_position = (time.time(), data.distance)
-            return
-        if self.__object_last_position is None:
-            self.__object_last_position = (time.time(), data.distance)
+            self.__object_first_position = self.__object_last_position
+            self.__object_last_position = None
             return
         self.__object_first_position = self.__object_last_position
-        self.__object_last_position = (time.time(), data.distance)
+
+    def __set_distance(self, data: Float32):
+        """Saves last distance from  LIDAR
+
+        Args:
+            data (Float32): Message from lidar with distance
+        """
+        self.__object_last_position = (time.time(), data.data)
 
     def calculate_obstacle_speed(self):
         """Caluclate the speed of the obstacle in front of the ego vehicle
@@ -91,8 +92,8 @@ class CollisionCheck(CompatibleNode):
         # If distance is np.inf no car is in front
 
         # Calculate time since last position update
-        current_time = time.time()
-        time_difference = current_time-self.__object_last_position[0]
+        time_difference = self.__object_last_position[0] - \
+            self.__object_first_position[0]
 
         # Calculate distance (in m)
         distance = self.__object_last_position[1] -\
@@ -177,8 +178,8 @@ class CollisionCheck(CompatibleNode):
         if collision_time > 0:
             if distance < emergency_distance2:
                 # Initiate emergency brake
-                self.emergency_pub.publish(True)
                 self.logerr("Emergency Brake")
+                self.emergency_pub.publish(True)
                 return
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
@@ -198,6 +199,7 @@ class CollisionCheck(CompatibleNode):
             Checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
+            self.update_distance()
             self.calculate_obstacle_speed()
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

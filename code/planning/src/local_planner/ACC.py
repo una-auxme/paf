@@ -10,7 +10,6 @@ from nav_msgs.msg import Path
 from std_msgs.msg import Float32MultiArray, Float32
 from collision_check import CollisionCheck
 import time
-from perception.msg import MinDistance
 
 
 class ACC(CompatibleNode):
@@ -34,8 +33,8 @@ class ACC(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            MinDistance,
-            f"/paf/{self.role_name}/LIDAR_range",
+            Float32,
+            f"/carla/{self.role_name}/LIDAR_range",
             self._set_distance,
             qos_profile=1)
         # Get initial set of speed limits
@@ -85,13 +84,13 @@ class ACC(CompatibleNode):
 
         self.logdebug("ACC initialized")
 
-    def _set_distance(self, data: MinDistance):
+    def _set_distance(self, data: Float32):
         """Get min distance to object in front from perception
 
         Args:
             data (MinDistance): Minimum Distance from LIDAR
         """
-        self.obstacle_distance = data.distance
+        self.obstacle_distance = data.data
 
     def __approx_speed_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
@@ -101,6 +100,7 @@ class ACC(CompatibleNode):
         Args:
             data (Float32): Speed from obstacle in front
         """
+        self.logerr("ACC: Approx speed recieved: " + str(data.data))
         self.obstacle_speed = (time.time(), data.data)
 
     def __get_current_velocity(self, data: CarlaSpeedometer):

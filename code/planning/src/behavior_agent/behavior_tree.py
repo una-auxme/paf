@@ -96,7 +96,7 @@ def main():
         rospy.logerr("Tree Setup failed")
         sys.exit(1)
     rospy.loginfo("tree setup worked")
-    r = rospy.Rate(5)
+    r = rospy.Rate(5.3)
     while not rospy.is_shutdown():
         behaviour_tree.tick()
         try:
