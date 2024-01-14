@@ -141,7 +141,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.int_enter_light.name:
             speed == bs.int_enter_light.speed
         elif behavior == bs.int_exit:
-            speed = bs.int_exit.speed
+            speed = self.__get_speed_cruise()
 
         return speed
 
