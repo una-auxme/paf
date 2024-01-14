@@ -46,7 +46,6 @@ The state transition matrix F is defined as:
                     [0, 0, 0, 1, 0, 0],
                     [0, 0, 0, 0, 1, 0],
                     [0, 0, 0, 0, 0, 1]])
-    I: Identity Matrix
 The measurement matrix H is defined as:
     self.H = np.array([[1, 0, 0, 0, 0, 0],    # x
                         [0, 1, 0, 0, 0, 0],   # y
@@ -168,7 +167,7 @@ class KalmanFilter(CompatibleNode):
         # Initialize the subscriber for the IMU Data
         self.imu_subscriber = self.new_subscription(
             Imu,
-            "/carla/" + self.role_name + "/Ideal_IMU",
+            "/carla/" + self.role_name + "/IMU",
             self.update_imu_data,
             qos_profile=1)
         # Initialize the subscriber for the GPS Data
@@ -177,13 +176,13 @@ class KalmanFilter(CompatibleNode):
             "/carla/" + self.role_name + "/GPS",
             self.update_gps_data,
             qos_profile=1)
-        # Initialize the subscriber for the current_pos in XYZ
+        # Initialize the subscriber for the unfiltered_pos in XYZ
         self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
         self.avg_gps_counter: int = 0
         self.unfiltered_pos_subscriber = self.new_subscription(
             PoseStamped,
             "/paf/" + self.role_name + "/unfiltered_pos",
-            self.update_current_pos,
+            self.update_unfiltered_pos,
             qos_profile=1)
         # Initialize the subscriber for the velocity
         self.velocity_subscriber = self.new_subscription(
@@ -209,7 +208,7 @@ class KalmanFilter(CompatibleNode):
         Run the Kalman Filter
         """
         # wait until the car receives the first GPS Data
-        # from the update_current_pos method
+        # from the update_unfiltered_pos method
         while not self.initialized:
             rospy.sleep(1)
         rospy.sleep(1)
@@ -249,7 +248,7 @@ class KalmanFilter(CompatibleNode):
         """
         # Predict the next state and covariance matrix, pretending the last
         # velocity state estimate stayed constant
-        self.x_pred = self.A @ self.x_est  # + B @ v[:] + u
+        self.x_pred = self.A @ self.x_est 
         self.P_pred = self.A @ self.P_est @ self.A.T + self.Q
 
     def update(self):
@@ -357,17 +356,17 @@ class KalmanFilter(CompatibleNode):
         """
         pass
 
-    def update_current_pos(self, current_pos):
+    def update_unfiltered_pos(self, unfiltered_pos):
         """
         Update the current position
         ALSO: allows the kalman filter to start running
               by setting self.initialized to True
         """
         # update GPS Measurements:
-        self.z_gps[0, 0] = current_pos.pose.position.x
-        self.z_gps[1, 0] = current_pos.pose.position.y
+        self.z_gps[0, 0] = unfiltered_pos.pose.position.x
+        self.z_gps[1, 0] = unfiltered_pos.pose.position.y
 
-        z = current_pos.pose.position.z
+        z = unfiltered_pos.pose.position.z
 
         self.avg_z = np.roll(self.avg_z, -1, axis=0)
         self.avg_z[-1] = np.matrix([z])

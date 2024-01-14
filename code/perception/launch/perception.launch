@@ -31,6 +31,7 @@
         Heading Filter values:
         - "Kalman" (Default)
         - "None"
+        - "Old" (Buggy for demonstration purposes only)
       -->
   </node>
   

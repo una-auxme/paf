@@ -3,7 +3,8 @@
 """
 This node publishes all relevant topics for the ekf node.
 """
-# import math
+import math
+from tf.transformations import euler_from_quaternion
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -104,7 +105,9 @@ class PositionPublisherNode(CompatibleNode):
             # No additional subscriber needed since the unfiltered heading
             # data is subscribed by self.imu_subscriber
             pass
+
     # endregion Subscriber END
+
     # region Publisher START
         # IMU
         # self.ekf_imu_publisher = self.new_publisher(
@@ -184,6 +187,19 @@ class PositionPublisherNode(CompatibleNode):
         # In the case of using "None" filter, the heading is
         # published as current heading, since it is not filtered
         if self.heading_filter == "None":
+            self.__heading = heading
+            self.__heading_publisher.publish(self.__heading)
+        elif self.heading_filter == "Old":
+            # In the case of using "Old" filter, the heading is
+            # calculated the WRONG way, just for demonstration purposes
+            roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
+            raw_heading = math.atan2(roll, pitch)
+
+            # transform raw_heading so that:
+            # ---------------------------------------------------------------
+            # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
+            # ---------------------------------------------------------------
+            heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
             self.__heading = heading
             self.__heading_publisher.publish(self.__heading)
         else:

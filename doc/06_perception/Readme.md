@@ -19,3 +19,5 @@ This folder contains further documentation of the perception components.
 ## 7. [sensor_filter_debug.py](./07_sensor_filter_debug.md)
 
 ## 8. [Kalman Filter](./08_kalman_filter.md)
+
+## 9. [Position Publisher Node](./09_position_publisher_node.md)
