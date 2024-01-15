@@ -89,6 +89,7 @@ class VisionNode(CompatibleNode):
         self.setup_rainbow_subscription()
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
+        self.setup_traffic_light_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -144,6 +145,10 @@ class VisionNode(CompatibleNode):
         self.distance_publisher = self.new_publisher(
             msg_type=numpy_msg(Float32MultiArray),
             topic=f"/paf/{self.role_name}/{self.side}/object_distance",
+    def setup_traffic_light_publishers(self):
+        self.traffic_light_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
             qos_profile=1
         )
 
@@ -160,10 +165,9 @@ class VisionNode(CompatibleNode):
 
         # publish image to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
-                                            encoding="passthrough")
+                                            encoding="rgb8")
         img_msg.header = image.header
         self.publisher.publish(img_msg)
-
         pass
 
     def handle_rainbow_image(self, image):
@@ -211,8 +215,8 @@ class VisionNode(CompatibleNode):
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-
-        output = self.model(cv_image)
+          
+        output = self.model(cv_image, half=True, verbose=False)
         distance_output = []
         c_boxes = []
         c_labels = []
@@ -246,6 +250,10 @@ class VisionNode(CompatibleNode):
         image_np_with_detections = torch.tensor(transposed_image,
                                                 dtype=torch.uint8)
 
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
+
+
         c_boxes = torch.stack(c_boxes)
         print(image_np_with_detections.shape, c_boxes.shape, c_labels)
         box = draw_bounding_boxes(image_np_with_detections,
@@ -261,6 +269,28 @@ class VisionNode(CompatibleNode):
         return box_img
 
         # return output[0].plot()
+
+    def process_traffic_lights(self, prediction, cv_image, image_header):
+        indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
+        indices = np.asarray([indices]) if indices.size == 1 else indices
+
+        min_x = 550
+        max_x = 700
+        min_prob = 0.35
+
+        for index in indices:
+            box = prediction.boxes.cpu().data.numpy()[index]
+
+            if box[0] < min_x or box[2] > max_x or box[4] < min_prob:
+                continue
+
+            box = box[0:4].astype(int)
+            segmented = cv_image[box[1]:box[3], box[0]:box[2]]
+
+            traffic_light_image = self.bridge.cv2_to_imgmsg(segmented,
+                                                            encoding="rgb8")
+            traffic_light_image.header = image_header
+            self.traffic_light_publisher.publish(traffic_light_image)
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
