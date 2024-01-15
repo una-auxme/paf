@@ -132,16 +132,17 @@ def quat_to_heading(quaternion):
 
     raw_heading = theta
 
-    # transform raw_heading so that:
-    # ---------------------------------------------------------------
-    # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
-    # ---------------------------------------------------------------
-    # The above transformation limits the heading to the range of -pi to pi
-    # It also rotates the heading by 90 degrees so that the heading is in
-    # the direction of the x-axis which the car starts in (heading = 0)
+    # # transform raw_heading so that:
+    # # ---------------------------------------------------------------
+    # # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
+    # # ---------------------------------------------------------------
+    # # The above transformation limits the heading to the range of -pi to pi
+    # # It also rotates the heading by 90 degrees so that the heading is in
+    # # the direction of the x-axis which the car starts in (heading = 0)
 
-    # heading is positive in counter clockwise rotations
-    heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+    # # heading is positive in counter clockwise rotations
+    # heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+    heading = raw_heading
 
     return heading
 
