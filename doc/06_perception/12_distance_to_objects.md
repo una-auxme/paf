@@ -90,7 +90,7 @@ We want to return a list of tuple containing a class and a distance, like this:
     [2.0, 7.890],
 ]
 
-Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image, 
+Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image,
 we will check for the minimum value within the bounding box in the depth image.
 
 This makes sense, since the LIDAR doesn´t recognize points behind any object.
