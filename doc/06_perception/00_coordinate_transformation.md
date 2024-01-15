@@ -70,17 +70,15 @@ $$
 To calculate our rotated vector `V'` we do the following:
 
 $$
-
 V' = R \cdot V
-
+$$
 \\
-
+$$
 \begin{bmatrix}
     a\\
     d\\
     g\\
 \end{bmatrix}
-
 =
 \begin{bmatrix}
     a & b & c\\
