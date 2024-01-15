@@ -2,7 +2,7 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.1" />
-  
+
   <!--just for testing purposes -> Uncomment to use and see plots
   <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
     <param name="control_loop_rate" value="0.001" />
@@ -28,14 +28,12 @@
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
-  
 
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     
-    <!--
-      Object-Detection: 
+     <!-- Object-Detection: 
       - fasterrcnn_resnet50_fpn_v2 
       - fasterrcnn_mobilenet_v3_large_320_fpn
       - yolov8n
@@ -53,28 +51,35 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg 
+      - yolov8x-seg
     -->
-      
-    <param name="model" value="yolov8x-seg" />
+
+    <param name="model" value="rtdetr-x" />
   </node>
+
+  <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="side" value="Center" />
+    <param name="model" value="/workspace/code/perception/src/traffic_light_detection/models/model_acc_92.48_val_91.88.pt" />
+  </node>
+      
 
   <node pkg="perception" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
-  <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
-    <param name="max_y" value="1.5"/>
-    <param name="min_y" value="-1.5"/>
-    <param name="min_x" value="3"/>
-    <param name="min_z" value="-1.5"/>
-    <param name="max_z" value="0"/>
+ <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
+    <param name="max_y" value="2.5"/>
+    <param name="min_y" value="-2.5"/>
+    <param name="min_x" value="2."/>
+    <param name="min_z" value="-1.3"/>
+    <param name="max_z" value="1."/>
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 
-  <node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
+ <!-- <node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
     <param name="min_y" value="-5"/>
     <param name="max_y" value="-2.5"/>
     <param name="max_x" value="0"/>
@@ -92,6 +97,6 @@
     <param name="max_z" value="0"/>
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
-  </node>
+  </node>-->
 
 </launch>

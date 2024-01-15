@@ -1,0 +1,35 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python src/traffic_light_detection/traffic_light_training.py
+    deps:
+    - path: dataset
+      hash: md5
+      md5: 86f14bb96e1ac5735051b8e873f07a9f.dir
+      size: 13745063
+      nfiles: 2723
+    - path: src
+      hash: md5
+      md5: 34c981a61e886a858d135daee17a82ba.dir
+      size: 35849
+      nfiles: 17
+    params:
+      params.yaml:
+        train:
+          epochs: 20
+          batch_size: 32
+    outs:
+    - path: dvclive/metrics.json
+      hash: md5
+      md5: 8566265bcdc76cb55d17230f82fc1517
+      size: 219
+    - path: dvclive/plots
+      hash: md5
+      md5: f8f99f42fc42e0ed3c80c8e8f05c1528.dir
+      size: 8870
+      nfiles: 4
+    - path: models
+      hash: md5
+      md5: 16f96ecc475d20123051719908af9d4d.dir
+      size: 11071
+      nfiles: 1

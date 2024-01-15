@@ -1,6 +1,0 @@
-<launch>
-    <node pkg="local_planner" type="collision_check.py" name="CollisionCheck" output="screen">
-           <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="1" />
-    </node>
-</launch>

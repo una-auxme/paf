@@ -1,13 +1,13 @@
 import argparse
-from pathlib import Path
 
 import torch.cuda
 import torchvision.transforms as t
-from data_generation.transforms import Normalize, ResizeAndPadToSquare, \
-    load_image
-from traffic_light_detection.classification_model import ClassificationModel
+from traffic_light_detection.src.traffic_light_detection.transforms \
+    import Normalize, ResizeAndPadToSquare, load_image
+from traffic_light_detection.src.traffic_light_detection.classification_model \
+    import ClassificationModel
 from torchvision.transforms import ToTensor
-from traffic_light_config import TrafficLightConfig
+from traffic_light_detection.src.traffic_light_config import TrafficLightConfig
 
 
 def parse_args():
@@ -23,6 +23,9 @@ def parse_args():
                                 '05.12.2022_17.47/'
                                 'model_acc_99.53_val_100.0.pt',
                         help='path to pretrained model',
+                        type=str)
+    parser.add_argument('--image', default=None,
+                        help='/dataset/val/green/green_83.png',
                         type=str)
     return parser.parse_args()
 
@@ -47,7 +50,8 @@ class TrafficLightInference:
         self.class_dict = {0: 'Backside',
                            1: 'Green',
                            2: 'Red',
-                           3: 'Yellow'}
+                           3: 'Side',
+                           4: 'Yellow'}
 
     def __call__(self, img):
         """
@@ -66,8 +70,7 @@ class TrafficLightInference:
 # main function for testing purposes
 if __name__ == '__main__':
     args = parse_args()
-    image_path = str(Path(__file__).resolve().parents[2].resolve())
-    image_path += "/dataset/val/green/green_83.png"
+    image_path = args.image
     image = load_image(image_path)
     classifier = TrafficLightInference(args.model)
     pred = classifier(image)

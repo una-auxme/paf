@@ -52,6 +52,8 @@ add_message_files(
   FILES
   Waypoint.msg
   LaneChange.msg
+  TrafficLightState.msg
+  MinDistance.msg
 )
 
 ## Generate services in the 'srv' folder

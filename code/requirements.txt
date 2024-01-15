@@ -13,3 +13,4 @@ xmltodict==0.13.0
 py-trees==2.2.3
 numpy==1.23.5
 ultralytics==8.0.220
+scikit-learn>=0.18
