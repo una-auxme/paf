@@ -21,7 +21,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
   && apt-get install -y -qq --no-install-recommends \
     libxext6 libx11-6 libglvnd0 libgl1 \
-    libglx0 libegl1 freeglut3-dev
+    libglx0 libegl1 freeglut3-dev apt-utils \
+    fprintd libfprint-2-2 libpam-fprintd
 
 # install dependencies for libgit2 and Carla PythonAPI
 RUN apt-get install wget unzip
@@ -37,7 +38,7 @@ RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_L
 # Workaround/fix for using dpkg for cuda installation
 # Only required for the lab PCs
 RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
-    && rm -f /var/lib/dpkg/info/libfprint-2-2*.postinst \
+    && rm -f /var/lib/dpkg/info/libfprint*.postinst \
     && rm -f /var/lib/dpkg/info/libpam-fprintd*.postinst \
     && dpkg --configure -a
 
