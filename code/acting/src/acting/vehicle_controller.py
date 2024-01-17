@@ -210,7 +210,7 @@ class VehicleController(CompatibleNode):
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
         :return: float for steering in [-1, 1]
         """
-        tune_k = 1  # factor for tuning TODO: tune but why?
+        tune_k = -1  # factor for tuning TODO: tune but why?
         # negative because carla steer and our steering controllers are flipped
         r = 1 / (math.pi / 2)
         steering_float = steering_angle * r * tune_k
