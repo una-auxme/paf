@@ -79,7 +79,7 @@ $$
     d\\
     g\\
 \end{bmatrix}
-\=
+\quad = \quad
 \begin{bmatrix}
     a & b & c\\
     d & e & f\\
