@@ -7,33 +7,40 @@
   <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
     <param name="control_loop_rate" value="0.001" />
     <param name="role_name" value="$(arg role_name)" />
-  </node>
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
+  </node> -->
+  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/location_error/data[0] /paf/hero/location_error/data[1]" />
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
-  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" />
-  -->
-
-  <!-- does not publish data yet. Uncomment to use and see plots
+  <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" /-->
+ 
   <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
-    <param name="control_loop_rate" value="0.1" />
+    <param name="control_loop_rate" value="0.05" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/current_pos/data[0] /paf/hero/kalman_pos/data[0]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/current_pos/data[1] /paf/hero/kalman_pos/data[1]" />
-  <node pkg="rqt_plot" type="rqt_plot" output="screen" name="heading_plot" args="/paf/hero/current_heading/data /paf/hero/kalman_heading/data" />
-  -->
-
+ 
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
+    <param name="pos_filter" value="Kalman" />
+    <param name="heading_filter" value="Kalman" />
+      <!--
+        Position Filter values:
+        - "Kalman" (Default)
+        - "RunningAvg"
+        - "None"
+        Heading Filter values:
+        - "Kalman" (Default)
+        - "None"
+        - "Old" (Buggy for demonstration purposes only)
+      -->
   </node>
 
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
-    
-     <!-- Object-Detection: 
+ 
+    <!--
+      Object-Detection: 
       - fasterrcnn_resnet50_fpn_v2 
       - fasterrcnn_mobilenet_v3_large_320_fpn
       - yolov8n
@@ -51,9 +58,8 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg
+      - yolov8x-seg 
     -->
-
     <param name="model" value="rtdetr-x" />
   </node>
 
@@ -62,7 +68,7 @@
     <param name="side" value="Center" />
     <param name="model" value="/workspace/code/perception/src/traffic_light_detection/models/model_acc_92.48_val_91.88.pt" />
   </node>
-      
+ 
 
   <node pkg="perception" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
     <param name="control_loop_rate" value="0.1" />
@@ -79,7 +85,7 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 
- <!-- <node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
+ <node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
     <param name="min_y" value="-5"/>
     <param name="max_y" value="-2.5"/>
     <param name="max_x" value="0"/>
@@ -97,6 +103,6 @@
     <param name="max_z" value="0"/>
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
-  </node>-->
+  </node>
 
 </launch>
