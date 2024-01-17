@@ -770,7 +770,7 @@ def calculate_mse_x_or_y(ideal, estimated):
     return mse, error
 
 
-def calculate_cep(ideal, kalman, running_avg, unfiltered, percentile=50):
+def calculate_cep(ideal, kalman, running_avg, unfiltered, percentile=90):
     """
     Calculates the Circular Error Probable (CEP) for position data.
 
@@ -870,7 +870,8 @@ def calculate_RMSPE(ideal, estimated):
 # # plot_RMSPE_notched_box("data_26.csv")
 # plot_CEP("data_25.csv")
 # plot_CEP("data_26.csv")
-data = "data_34.csv"
+data = "data_26.csv"
+plot_CEP(data)
 plot_x_or_y_notched_box(data, type='x', error_type='MSE')
 plot_x_or_y_notched_box(data, type='x', error_type='MAE')
 plot_x_or_y_notched_box(data, type='y', error_type='MSE')

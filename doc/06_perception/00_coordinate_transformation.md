@@ -103,16 +103,16 @@ $$
 \theta = atan2(\frac{d}{a})
 $$
 
-To finish up we rotate the heading angle around 90 degrees, so the x-axis is our 0 rad point:
+To conclude:
 
-`heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi`
-
-Now the Heading is 0 rad in the x-axis start position and `positive when rotating counter clockwise`.
+$$heading = \theta$$
 
 ```Python
 
+def quat_to_heading(quaternion):
     """
     Converts a quaternion to a heading of the car in radians
+    (see ../../doc/06_perception/00_coordinate_transformation.md)
     :param quaternion: quaternion of the car as a list [q.x, q.y, q.z, q.w]
                        where q is the quaternion
     :return: heading of the car in radians (float)
@@ -122,21 +122,15 @@ Now the Heading is 0 rad in the x-axis start position and `positive when rotatin
     # Convert the Rotation object to a matrix
     rotation_matrix = rotation.as_matrix()
     # calculate the angle around the z-axis (theta) from the matrix
-    # (see ../../doc/06_perception/00_coordinate_transformation.md)
     theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
 
-    raw_heading = theta
-
-    # transform raw_heading so that:
+    # arctan2 returns a theta so that:
     # ---------------------------------------------------------------
     # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
     # ---------------------------------------------------------------
-    # The above transformation limits the heading to the range of -pi to pi
-    # It also rotates the heading by 90 degrees so that the heading is in
-    # the direction of the x-axis which the car starts in (heading = 0)
-
     # heading is positive in counter clockwise rotations
-    heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
+
+    heading = theta
 
     return heading
 
