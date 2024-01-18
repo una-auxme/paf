@@ -162,13 +162,21 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 
+RUN cd /workspace/code/planning/src/local_planner
+RUN git clone https://github.com/erdos-project/frenet_optimal_trajectory_planner.git
+RUN cd frenet_optimal_trajectory_planner && source ./build.sh
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
+#
 
+
+# RUN sudo ./build.sh
 # re-make the catkin workspace
 RUN source /opt/ros/noetic/setup.bash && catkin_make
 
 ADD ./build/docker/agent/entrypoint.sh /entrypoint.sh
+
+
 
 # set the default working directory to the code
 WORKDIR /workspace/code
