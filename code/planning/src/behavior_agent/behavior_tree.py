@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 
 import functools
-# import behavior_agent
-import py_trees
 from py_trees.behaviours import Running
 import py_trees_ros
-import py_trees.console as console
 import rospy
 import sys
 import behaviours
 from py_trees.composites import Parallel, Selector, Sequence
-from py_trees.decorators import Inverter
 
 """
 Source: https://github.com/ll7/psaf2
 """
+
+# flake8: noqa: E501
 
 
 def grow_a_tree(role_name):
@@ -62,7 +60,7 @@ def grow_a_tree(role_name):
                                                  ("Leave Change")
                                              ])
                                 ]),
-                        
+
                     ]),
                     behaviours.maneuvers.Cruise("Cruise")
                 ])

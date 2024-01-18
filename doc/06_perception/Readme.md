@@ -2,6 +2,8 @@
 
 This folder contains further documentation of the perception components.
 
+## 0. [Coordinate Transformation (helper functions)](./00_coordinate_transformation.md)
+
 ## 1. [Dataset generator](./01_dataset_generator.md)
 
 ## 2. [Dataset Structure](./02_dataset_structure.md)
@@ -17,3 +19,5 @@ This folder contains further documentation of the perception components.
 ## 7. [sensor_filter_debug.py](./07_sensor_filter_debug.md)
 
 ## 8. [Kalman Filter](./08_kalman_filter.md)
+
+## 9. [Position Publisher Node](./09_position_publisher_node.md)
