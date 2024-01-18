@@ -91,9 +91,9 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (Bool): True if emergency stop detected by collision check
         """
-        self.logerr("Emergency stop detected")
+        # self.logerr("Emergency stop detected")
         if not self.__curr_behavior == bs.parking.name:
-            self.logerr("Emergency stop detected and executed")
+            # self.logerr("Emergency stop detected and executed")
             self.emergency_pub.publish(data)
 
     def update_target_speed(self, acc_speed, behavior):

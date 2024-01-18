@@ -100,7 +100,7 @@ class ACC(CompatibleNode):
         Args:
             data (Float32): Speed from obstacle in front
         """
-        self.logerr("ACC: Approx speed recieved: " + str(data.data))
+        # self.logerr("ACC: Approx speed recieved: " + str(data.data))
         self.obstacle_speed = (time.time(), data.data)
 
     def __get_current_velocity(self, data: CarlaSpeedometer):

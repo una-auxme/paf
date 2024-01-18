@@ -2,7 +2,8 @@ from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper impor
 import numpy as np
 import matplotlib.pyplot as plt
 
-wp = wp = np.r_[[np.full((50), 983.5889666959667)], [np.linspace(5370.016106881272, 5399.016106881272, 50)]].T
+wp = wp = np.r_[[np.full((50), 983.5889666959667)],
+                [np.linspace(5370.016106881272, 5399.016106881272, 50)]].T
 initial_conditions = {
     'ps': 0,
     'target_speed': 6,
@@ -10,7 +11,7 @@ initial_conditions = {
     'vel': np.array([5, 1]),
     'wp': wp,
     'obs': np.array([[983.568124548765, 5386.0219828457075,
-             983.628124548765, 5386.0219828457075]])
+                      983.628124548765, 5386.0219828457075]])
 }
 
 hyperparameters = {
@@ -47,11 +48,13 @@ if success:
     print("result_y: ", result_y)
     fig, ax = plt.subplots(1, 2)
 
-    ax[0].scatter(wp[:,0], wp[:,1], label="original")
-    ax[0].scatter([983.568124548765, 983.628124548765], [5386.0219828457075, 5386.0219828457075], label="object")
+    ax[0].scatter(wp[:, 0], wp[:, 1], label="original")
+    ax[0].scatter([983.568124548765, 983.628124548765],
+                  [5386.0219828457075, 5386.0219828457075], label="object")
     ax[0].set_xticks([983.518124548765, 983.598124548765])
     ax[1].scatter(result_x, result_y, label="frenet")
-    ax[1].scatter([983.568124548765, 983.628124548765], [5386.0219828457075, 5386.0219828457075], label="object")
+    ax[1].scatter([983.568124548765, 983.628124548765],
+                  [5386.0219828457075, 5386.0219828457075], label="object")
     ax[1].set_xticks([983.518124548765, 983.598124548765])
     plt.legend()
     plt.show()
