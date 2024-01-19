@@ -162,15 +162,24 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 
-RUN cd /workspace/code/planning/src/local_planner
-RUN git clone https://github.com/erdos-project/frenet_optimal_trajectory_planner.git
-RUN cd frenet_optimal_trajectory_planner && source ./build.sh
+# Install Frenet Optimal Trajectory Planner 
+RUN sudo mkdir /erdos
+RUN sudo mkdir /erdos/dependencies
+RUN sudo mkdir /erdos/dependencies/frenet_optimal_trajectory_planner
+# Needed to resolve dependencies correctly inside freent_optimal_trajectory_planner 
+ENV PYLOT_HOME=/erdos
+
+ENV FREENET_HOME=/erdos/dependencies/frenet_optimal_trajectory_planner
+RUN sudo chown $USERNAME:$USERNAME $PYLOT_HOME
+RUN sudo chown $USERNAME:$USERNAME $FREENET_HOME
+
+RUN git clone https://github.com/erdos-project/frenet_optimal_trajectory_planner.git $FREENET_HOME
+RUN cd $FREENET_HOME && source ./build.sh
+
+ENV PYTHONPATH=$PYTHONPATH:/erdos/dependencies
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
-#
 
-
-# RUN sudo ./build.sh
 # re-make the catkin workspace
 RUN source /opt/ros/noetic/setup.bash && catkin_make
 

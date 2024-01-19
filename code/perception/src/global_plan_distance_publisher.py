@@ -47,7 +47,7 @@ class GlobalPlanDistance(CompatibleNode):
         # Change comment for dev_launch
         self.global_plan_subscriber = self.new_subscription(
             CarlaRoute,
-            "/carla/" + self.role_name + "/global_plan",
+            "/paf/" + self.role_name + "/global_plan",
             self.update_global_route,
             qos_profile=1)
         # self.global_plan_subscriber = self.new_subscription(
