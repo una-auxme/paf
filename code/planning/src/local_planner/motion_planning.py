@@ -2,12 +2,21 @@
 # import rospy
 # import tf.transformations
 import ros_compatibility as roscomp
+import rospy
+import tf.transformations
+
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import String, Float32, Bool
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+
+
 import numpy as np
 
 # from behavior_agent.msg import BehaviorSpeed
+from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
+    import run_fot
 from perception.msg import Waypoint, LaneChange
 import behavior_speed as bs
 
@@ -40,8 +49,17 @@ class MotionPlanning(CompatibleNode):
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
-
         # Subscriber
+        self.trajectory_sub = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory",
+            self.__set_trajectory,
+            qos_profile=1)
+        self.current_pos_sub = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/current_pos",
+            self.__set_current_pos,
+            qos_profile=1)
         self.curr_behavior_sub: Subscriber = self.new_subscription(
             String,
             f"/paf/{self.role_name}/curr_behavior",
@@ -71,6 +89,10 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         # Publisher
+        self.traj_pub: Publisher = self.new_publisher(
+            Path,
+            f"/paf/{self.role_name}/trajectory",
+            qos_profile=1)
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/target_velocity",
@@ -83,6 +105,101 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
+        self.published = False
+        self.current_pos = None
+
+    def __set_current_pos(self, data: PoseStamped):
+        """set current position
+
+        Args:
+            data (PoseStamped): current position
+        """
+        self.current_pos = np.array([data.pose.position.x,
+                                    data.pose.position.y])
+
+    def __set_trajectory(self, data: Path):
+        """get current trajectory global planning
+
+        Args:
+            data (Path): Trajectory waypoints
+        """
+        if len(data.poses) and not self.published > 0:
+            self.published = True
+            np_array = np.array(data.poses)
+            selection = np_array[5:17]
+            waypoints = self.convert_pose_to_array(selection)
+            self.logerr(waypoints)
+            obs = np.array([[waypoints[5][0]-0.5, waypoints[5][1], waypoints[5][0]+0.5, waypoints[5][1]-2]])
+            initial_conditions = {
+                'ps': 0,
+                'target_speed': self.__acc_speed,
+                'pos': np.array([983.5807552562393, 5370.014637890163]),
+                'vel': np.array([5, 1]),
+                'wp': waypoints,
+                'obs': obs
+            }
+            hyperparameters = {
+                "max_speed": 25.0,
+                "max_accel": 15.0,
+                "max_curvature": 15.0,
+                "max_road_width_l": 3.0,
+                "max_road_width_r": 0.5,
+                "d_road_w": 0.5,
+                "dt": 0.2,
+                "maxt": 20.0,
+                "mint": 6.0,
+                "d_t_s": 0.5,
+                "n_s_sample": 2.0,
+                "obstacle_clearance": 0.1,
+                "kd": 1.0,
+                "kv": 0.1,
+                "ka": 0.1,
+                "kj": 0.1,
+                "kt": 0.1,
+                "ko": 0.1,
+                "klat": 1.0,
+                "klon": 1.0,
+                "num_threads": 0,  # set 0 to avoid using threaded algorithm
+            }
+            result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
+                speeds_y, misc, costs, success = run_fot(initial_conditions,
+                                                         hyperparameters)
+            if success:
+                print("Success!")
+                print("result_x: ", result_x)
+                print("result_y: ", result_y)
+                result = []
+                for i in range(len(result_x)):
+                    position = Point(result_x[i], result_y[i], 703)
+                    quaternion = tf.transformations.quaternion_from_euler(0,
+                                                                            0,
+                                                                            iyaw[i])
+                    orientation = Quaternion(x=quaternion[0], y=quaternion[1],
+                                            z=quaternion[2], w=quaternion[3])
+                    pose = Pose(position, orientation)
+                    pos = PoseStamped()
+                    pos.header.stamp = rospy.Time.now()
+                    pos.header.frame_id = "global"
+                    pos.pose = pose
+                    result.append(PoseStamped)
+                path = Path()
+                path.header.stamp = rospy.Time.now()
+                path.path_backup.header.frame_id = "global"
+                path.poses = list(np_array[:5]) + result + list(np_array[17:])
+                self.traj_pub.publish(path)
+
+    def convert_pose_to_array(self, poses: np.array):
+        """convert pose array to numpy array
+
+        Args:
+            poses (np.array): pose array
+
+        Returns:
+            np.array: numpy array
+        """
+        def get_x_y(pose):
+            return np.array([pose.pose.position.x, pose.pose.position.y])
+        return np.vectorize(get_x_y)(poses)
 
     def __check_emergency(self, data: Bool):
         """If an emergency stop is needed first check if we are
