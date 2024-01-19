@@ -360,15 +360,12 @@ class Enter(py_trees.behaviour.Behaviour):
         if light_status_msg is None:
             self.curr_behavior_pub.publish(bs.int_enter_no_light.name)
             return True
-        else:
-            traffic_light_status = get_color(light_status_msg.state)
-            rospy.logerr(f"Light Status ENTER: {traffic_light_status}")
 
-        if traffic_light_status == "":
-            self.curr_behavior_pub.publish(bs.int_enter_empty_str.name)
-        else:
-            rospy.loginfo(f"Light Status: {traffic_light_status}")
-            self.curr_behavior_pub.publish(bs.int_enter_light.name)
+        traffic_light_status = get_color(light_status_msg.state)
+        rospy.logerr(f"Light Status ENTER: {traffic_light_status}")
+
+        rospy.loginfo(f"Light Status: {traffic_light_status}")
+        self.curr_behavior_pub.publish(bs.int_enter_light.name)
 
     def update(self):
         """
@@ -458,10 +455,7 @@ class Leave(py_trees.behaviour.Behaviour):
         :return: True
         """
         rospy.loginfo("Leave Intersection")
-        street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
-        if street_speed_msg is not None:
-            # self.curr_behavior_pub.publish(street_speed_msg.data)
-            self.curr_behavior_pub.publish(bs.int_exit.name)
+        self.curr_behavior_pub.publish(bs.int_exit.name)
         return True
 
     def update(self):
