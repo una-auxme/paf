@@ -88,7 +88,7 @@ class ACC(CompatibleNode):
         """Get min distance to object in front from perception
 
         Args:
-            data (MinDistance): Minimum Distance from LIDAR
+            data (Float32): Minimum Distance from LIDAR
         """
         self.obstacle_distance = data.data
 
