@@ -18,7 +18,8 @@ import numpy as np
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
     import run_fot
 from perception.msg import Waypoint, LaneChange
-import behavior_speed as bs
+import planning
+from behavior_agent.behaviours import behavior_speed as bs
 
 # from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 # from carla_msgs.msg import CarlaRoute   # , CarlaWorldInfo
