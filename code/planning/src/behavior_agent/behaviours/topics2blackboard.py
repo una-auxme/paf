@@ -7,6 +7,7 @@ import py_trees_ros
 from std_msgs.msg import Float32, Bool
 from carla_msgs.msg import CarlaSpeedometer
 from sensor_msgs.msg import Range
+from geometry_msgs.msg import PoseStamped
 
 from mock.msg import Stop_sign
 from perception.msg import Waypoint, LaneChange, TrafficLightState
@@ -49,7 +50,9 @@ def create_node(role_name):
         {'name': f"/paf/{role_name}/speed_limit", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/lane_change_distance", 'msg': LaneChange,
-         'clearing-policy': py_trees.common.ClearingPolicy.ON_INITIALISE}
+         'clearing-policy': py_trees.common.ClearingPolicy.ON_INITIALISE},
+        {'name': f"/paf/{role_name}/current_pos", 'msg': PoseStamped,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER}
     ]
 
     topics2blackboard = py_trees.composites.Parallel("Topics to Blackboard")

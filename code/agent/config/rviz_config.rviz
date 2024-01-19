@@ -65,9 +65,9 @@ Visualization Manager:
       Visibility:
         Grid: false
         Imu: false
-        Path: false
+        Path: true
         PointCloud2: false
-        Value: false
+        Value: true
       Zoom Factor: 1
     - Class: rviz/Image
       Enabled: true
@@ -166,7 +166,7 @@ Visualization Manager:
       Offset:
         X: 0
         Y: 0
-        Z: 39
+        Z: 703
       Pose Color: 255; 85; 255
       Pose Style: None
       Queue Size: 10
