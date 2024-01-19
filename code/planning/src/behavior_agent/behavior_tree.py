@@ -25,6 +25,7 @@ def grow_a_tree(role_name):
                 children=[
                     Selector("Road Features",
                              children=[
+                                 behaviours.maneuvers.LeaveParkingSpace("Leave Parking Space"),
                                  Sequence("Intersection",
                                           children=[
                                               behaviours.road_features.IntersectionAhead
@@ -93,14 +94,13 @@ def main():
         rospy.logerr("Tree Setup failed")
         sys.exit(1)
     rospy.loginfo("tree setup worked")
-    r = rospy.Rate(5)
+    r = rospy.Rate(5.3)
     while not rospy.is_shutdown():
         behaviour_tree.tick()
         try:
             r.sleep()
         except rospy.ROSInterruptException:
             pass
-
 
 if __name__ == "__main__":
     main()
