@@ -11,8 +11,9 @@ from std_msgs.msg import String, Float32, Bool
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 
-
+import carla
 import numpy as np
+import math
 
 # from behavior_agent.msg import BehaviorSpeed
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
@@ -27,6 +28,29 @@ from behavior_agent.behaviours import behavior_speed as bs
 # from std_msgs.msg import String
 # from std_msgs.msg import Float32MultiArray
 
+# import numpy as np
+# from scipy.spatial.transform import Rotation
+
+# # Annahme: Ihre eigene Position im globalen Koordinatensystem
+# your_position_global = np.array([x, y, z])
+
+# # Annahme: Ihre Rotation als Quaternion
+# your_rotation_quaternion = np.array([w, x, y, z])
+
+# # Annahme: Distanz zum vorausfahrenden Fahrzeug
+# distance_to_vehicle = 10.0  # Beispielwert
+
+# # Annahme: Relative Position des vorausfahrenden Fahrzeugs in Ihrem lokalen Koordinatensystem
+# relative_position_local = np.array([0, 0, distance_to_vehicle])
+
+# # Schritt 1: Rotation auf die relative Position anwenden
+# rotation_matrix = Rotation.from_quat(your_rotation_quaternion).as_matrix()
+# absolute_position_local = rotation_matrix.dot(relative_position_local)
+
+# # Schritt 2: Absolute Position in das globale Koordinatensystem transformieren
+# vehicle_position_global = your_position_global + absolute_position_local
+
+# print("Globale Position des vorausfahrenden Fahrzeugs:", vehicle_position_global)
 
 def convert_to_ms(speed):
     return speed / 3.6
@@ -97,7 +121,7 @@ class MotionPlanning(CompatibleNode):
         # Publisher
         self.traj_pub: Publisher = self.new_publisher(
             msg_type=Path,
-            topic=f"/paf/{self.role_name}/trajectory_enhanced",
+            topic=f"/paf/{self.role_name}/trajectory",
             qos_profile=1)
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
@@ -115,9 +139,30 @@ class MotionPlanning(CompatibleNode):
         self.current_pos = None
         self.trajectory = None
 
+    def _location_to_gps(self, lat_ref, lon_ref, x, y):
+        """
+        Convert from world coordinates to GPS coordinates
+        :param lat_ref: latitude reference for the current map
+        :param lon_ref: longitude reference for the current map
+        :param location: location to translate
+        :return: dictionary with lat, lon and height
+        """
+
+        EARTH_RADIUS_EQUA = 6378137.0   # pylint: disable=invalid-name
+        scale = math.cos(lat_ref * math.pi / 180.0)
+        mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
+        my = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + lat_ref) * math.pi / 360.0))
+        mx += x
+        my -= y
+
+        lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
+        lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
+        z = 703
+
+        return {'lat': lat, 'lon': lon, 'z': z}
+
     def __set_current_pos(self, data: PoseStamped):
         """set current position
-
         Args:
             data (PoseStamped): current position
         """
@@ -125,17 +170,21 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y])
 
     def change_trajectory(self, data: Bool):
+        index_car = 20
+        limit_waypoints = 100
         data = self.trajectory
         self.logerr("Trajectory chagen started")
         np_array = np.array(data.poses)
-        selection = np_array[10:26]
+        selection = np_array[:limit_waypoints]
         waypoints = self.convert_pose_to_array(selection)
         self.logerr("waypoints " + str(waypoints))
-        obs = np.array([[waypoints[7][0]-0.5, waypoints[7][1], waypoints[7][0]+0.5, waypoints[7][1]-2]])
+        obs = np.array([[waypoints[index_car][0]-0.5, waypoints[index_car][1], waypoints[index_car][0]+0.5, waypoints[index_car][1]-2]])
         self.logerr("obs " + str(obs))
+        pos_lat_lon = self._location_to_gps(0,0, waypoints[0][0], waypoints[0][1])
+
         initial_conditions = {
-            'ps': 0,
-            'target_speed': self.__acc_speed,
+            'ps': pos_lat_lon["lon"],
+            'target_speed': 11,
             'pos': waypoints[0],
             'vel': np.array([5, 1]),
             'wp': waypoints,
@@ -145,15 +194,15 @@ class MotionPlanning(CompatibleNode):
             "max_speed": 25.0,
             "max_accel": 15.0,
             "max_curvature": 15.0,
-            "max_road_width_l": 3.0,
-            "max_road_width_r": 0.5,
+            "max_road_width_l": 1,
+            "max_road_width_r": 0,
             "d_road_w": 0.5,
             "dt": 0.2,
             "maxt": 20.0,
             "mint": 6.0,
             "d_t_s": 0.5,
             "n_s_sample": 2.0,
-            "obstacle_clearance": 0.4,
+            "obstacle_clearance": 0.1,
             "kd": 1.0,
             "kv": 0.1,
             "ka": 0.1,
@@ -168,11 +217,24 @@ class MotionPlanning(CompatibleNode):
             speeds_y, misc, costs, success = run_fot(initial_conditions,
                                                         hyperparameters)
         if success:
+            client = carla.Client("paf23-carla-simulator-1", 2000)
+            client.set_timeout(2.0)
+            world = client.get_world()
+            blueprint_library = world.get_blueprint_library()
+            bp = blueprint_library.filter("model3")[0]
+            world = client.get_world()
+            spawnPoint=carla.Transform(carla.Location(x=waypoints[index_car][0],y=waypoints[index_car][1], z=703),carla.Rotation(pitch=0.0, yaw=0.0, roll=0.000000))
+            vehicle = world.spawn_actor(bp, spawnPoint)
+            spectator = world.get_spectator()
+            self.logerr("vehicle location: " + str(vehicle.get_location()))
+            spectator.set_transform(carla.Transform(vehicle.get_location() + carla.Location(z=703),
+                                    carla.Rotation(pitch=-90)))
             print("Success!")
             print("result_x: ", result_x)
             print("result_y: ", result_y)
+            self.logerr("result yaw: " + str(iyaw))
             result = []
-            for i in range(len(result_x)):
+            for i in range(len(result_x)-1):
                 position = Point(result_x[i], result_y[i], 0)
                 quaternion = tf.transformations.quaternion_from_euler(0,
                                                                         0,
@@ -184,12 +246,11 @@ class MotionPlanning(CompatibleNode):
                 pos.header.stamp = rospy.Time.now()
                 pos.header.frame_id = "global"
                 pos.pose = pose
-                self.logerr(pos)
                 result.append(pos)
             path = Path()
             path.header.stamp = rospy.Time.now()
             path.header.frame_id = "global"
-            path.poses = list(np_array[:10]) + result + list(np_array[26:])
+            path.poses = result + list(np_array[limit_waypoints:])
             self.logerr(path)
             self.traj_pub.publish(path)
 

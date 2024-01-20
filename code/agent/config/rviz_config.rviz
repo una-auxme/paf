@@ -63,7 +63,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
       Visibility:
-        Grid: false
+        Grid: true
         Imu: false
         Path: true
         PointCloud2: false
@@ -173,7 +173,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /paf/hero/trajectory_enhanced
+      Topic: /paf/hero/trajectory
       Unreliable: false
       Value: true
     - Alpha: 1
