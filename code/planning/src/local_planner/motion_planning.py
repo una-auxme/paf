@@ -21,40 +21,27 @@ from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
 from perception.msg import Waypoint, LaneChange
 import planning
 from behavior_agent.behaviours import behavior_speed as bs
+from scipy.spatial.transform import Rotation
 
-# from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-# from carla_msgs.msg import CarlaRoute   # , CarlaWorldInfo
-# from nav_msgs.msg import Path
-# from std_msgs.msg import String
-# from std_msgs.msg import Float32MultiArray
-
-# import numpy as np
-# from scipy.spatial.transform import Rotation
-
-# # Annahme: Ihre eigene Position im globalen Koordinatensystem
-# your_position_global = np.array([x, y, z])
-
-# # Annahme: Ihre Rotation als Quaternion
-# your_rotation_quaternion = np.array([w, x, y, z])
-
-# # Annahme: Distanz zum vorausfahrenden Fahrzeug
-# distance_to_vehicle = 10.0  # Beispielwert
-
-# # Annahme: Relative Position des vorausfahrenden Fahrzeugs in Ihrem lokalen Koordinatensystem
-# relative_position_local = np.array([0, 0, distance_to_vehicle])
-
-# # Schritt 1: Rotation auf die relative Position anwenden
-# rotation_matrix = Rotation.from_quat(your_rotation_quaternion).as_matrix()
-# absolute_position_local = rotation_matrix.dot(relative_position_local)
-
-# # Schritt 2: Absolute Position in das globale Koordinatensystem transformieren
-# vehicle_position_global = your_position_global + absolute_position_local
-
-# print("Globale Position des vorausfahrenden Fahrzeugs:", vehicle_position_global)
 
 def convert_to_ms(speed):
     return speed / 3.6
 
+def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array):
+    """calculate the position of the obstacle in the global coordinate system
+        based on ego position, heading and distance
+    """
+    rotation_matrix = Rotation.from_euler('z', heading).as_matrix()
+
+    # Annahme: Relative Position des vorausfahrenden Fahrzeugs in Ihrem lokalen Koordinatensystem
+    relative_position_local = np.array([0, distance, 0])
+
+    # Schritt 1: Rotation auf die relative Position anwenden
+    absolute_position_local = rotation_matrix.dot(relative_position_local)
+
+    # Schritt 2: Absolute Position in das globale Koordinatensystem transformieren
+    vehicle_position_global = ego_pos + absolute_position_local
+    return vehicle_position_global
 
 class MotionPlanning(CompatibleNode):
     """
@@ -75,6 +62,11 @@ class MotionPlanning(CompatibleNode):
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
         # Subscriber
+        self.head_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__set_heading,
+            qos_profile=1)
         self.test_sub = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/test",
@@ -137,7 +129,16 @@ class MotionPlanning(CompatibleNode):
         self.logdebug("MotionPlanning started")
         self.published = False
         self.current_pos = None
+        self.current_heading = None
         self.trajectory = None
+
+    def __set_heading(self, data: Float32):
+        """Set current Heading
+
+        Args:
+            data (Float32): Current Heading vom Subscriber
+        """
+        self.current_heading = data.data
 
     def _location_to_gps(self, lat_ref, lon_ref, x, y):
         """
@@ -167,7 +168,8 @@ class MotionPlanning(CompatibleNode):
             data (PoseStamped): current position
         """
         self.current_pos = np.array([data.pose.position.x,
-                                    data.pose.position.y])
+                                    data.pose.position.y,
+                                    data.pose.position.z])
 
     def change_trajectory(self, data: Bool):
         index_car = 20
@@ -181,7 +183,7 @@ class MotionPlanning(CompatibleNode):
         obs = np.array([[waypoints[index_car][0]-0.5, waypoints[index_car][1], waypoints[index_car][0]+0.5, waypoints[index_car][1]-2]])
         self.logerr("obs " + str(obs))
         pos_lat_lon = self._location_to_gps(0,0, waypoints[0][0], waypoints[0][1])
-
+        self.logerr("approx position: " + str(self.approx_obstacle_pos()))
         initial_conditions = {
             'ps': pos_lat_lon["lon"],
             'target_speed': 11,
@@ -193,9 +195,9 @@ class MotionPlanning(CompatibleNode):
         hyperparameters = {
             "max_speed": 25.0,
             "max_accel": 15.0,
-            "max_curvature": 15.0,
-            "max_road_width_l": 1,
-            "max_road_width_r": 0,
+            "max_curvature": 20.0,
+            "max_road_width_l": 1.5,
+            "max_road_width_r": 0.5,
             "d_road_w": 0.5,
             "dt": 0.2,
             "maxt": 20.0,
@@ -217,18 +219,6 @@ class MotionPlanning(CompatibleNode):
             speeds_y, misc, costs, success = run_fot(initial_conditions,
                                                         hyperparameters)
         if success:
-            client = carla.Client("paf23-carla-simulator-1", 2000)
-            client.set_timeout(2.0)
-            world = client.get_world()
-            blueprint_library = world.get_blueprint_library()
-            bp = blueprint_library.filter("model3")[0]
-            world = client.get_world()
-            spawnPoint=carla.Transform(carla.Location(x=waypoints[index_car][0],y=waypoints[index_car][1], z=703),carla.Rotation(pitch=0.0, yaw=0.0, roll=0.000000))
-            vehicle = world.spawn_actor(bp, spawnPoint)
-            spectator = world.get_spectator()
-            self.logerr("vehicle location: " + str(vehicle.get_location()))
-            spectator.set_transform(carla.Transform(vehicle.get_location() + carla.Location(z=703),
-                                    carla.Rotation(pitch=-90)))
             print("Success!")
             print("result_x: ", result_x)
             print("result_y: ", result_y)
