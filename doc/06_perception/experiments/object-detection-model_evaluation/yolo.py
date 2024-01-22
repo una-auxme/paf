@@ -1,5 +1,8 @@
 '''
-Docs: https://docs.ultralytics.com/modes/predict/, https://docs.ultralytics.com/tasks/detect/#models, https://docs.ultralytics.com/models/yolo-nas
+Docs:
+https://docs.ultralytics.com/modes/predict/
+https://docs.ultralytics.com/tasks/detect/#models
+https://docs.ultralytics.com/models/yolo-nas
 '''
 
 import os
@@ -35,6 +38,7 @@ with torch.inference_mode():
             image_path = os.path.join(IMAGE_BASE_FOLDER, IMAGES_FOR_TEST[p])
             img = Image.open(image_path)
 
-            _ = model.predict(source=img, save=True, save_conf=True, line_width=1, half=True)
+            _ = model.predict(source=img, save=True, save_conf=True,
+                              line_width=1, half=True)
 
         del model

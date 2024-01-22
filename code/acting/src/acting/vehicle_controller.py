@@ -209,7 +209,6 @@ class VehicleController(CompatibleNode):
         :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
         :return: float for steering in [-1, 1]
         """
-        # No tuning needed tune_k = 1 factor for tuning TODO: tune but why?
         r = - 1 / (math.pi / 2)  # -1 to invert for carla steering
         steering_float = steering_angle * r  # No Tuning needed * tune_k
         self.pidpoint_publisher.publish(steering_float)  # TODO needed?
