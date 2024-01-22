@@ -179,7 +179,7 @@ class VehicleController(CompatibleNode):
             # only use pure_pursuit controller for now, since
             # stanley seems broken with the new heading-bug
             # TODO: swap back if stanley is fixed
-            steer = self.__pure_pursuit_steer
+            # steer = self.__pure_pursuit_steer
 
             self.target_steering_publisher.publish(steer)  # debugging
 

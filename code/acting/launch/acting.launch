@@ -3,6 +3,11 @@
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.1" />
 
+    <!--node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
+        <param name="control_loop_rate" value="0.05" />
+        <param name="role_name" value="$(arg role_name)" />
+    </node-->
+
     <node pkg="acting" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
@@ -26,11 +31,6 @@
 
      <node pkg="acting" type="vehicle_controller.py" name="vehicle_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <param name="role_name" value="$(arg role_name)" />
-    </node>
-
-    <node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
-        <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
 

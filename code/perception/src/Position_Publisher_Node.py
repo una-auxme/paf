@@ -3,7 +3,7 @@
 """
 This node publishes all relevant topics for the ekf node.
 """
-import math
+# import math
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -85,11 +85,6 @@ class PositionPublisherNode(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             qos_profile=1)
 
-        self.__yaw_publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/yaw",
-            qos_profile=1)
-
     def get_geoRef(self, opendrive: String):
         """_summary_
         Reads the reference values for lat and lon from the carla OpenDriveMap
@@ -160,17 +155,14 @@ class PositionPublisherNode(CompatibleNode):
                               data.orientation.w]
 
         roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-        raw_heading = math.atan2(roll, pitch)
 
+        # raw_heading = math.atan2(roll, pitch)
         # transform raw_heading so that:
         # ---------------------------------------------------------------
         # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
         # ---------------------------------------------------------------
-        heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
-        self.__heading = heading
-        # self.__heading_publisher.publish(self.__heading)
-        self.__heading_publisher.publish(yaw)
-        self.__yaw_publisher.publish(yaw)
+        self.__heading = yaw
+        self.__heading_publisher.publish(self.__heading)
 
     def update_gps_data(self, data: NavSatFix):
         """

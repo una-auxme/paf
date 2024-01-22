@@ -135,14 +135,6 @@ class Acting_Debugger(CompatibleNode):
             qos_profile=1
         )
 
-        # Subscriber for yaw for plotting
-        self.yaw_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/yaw",
-            self.__get_yaw,
-            qos_profile=1
-        )
-
         # Subscriber for current_velocity for plotting
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,

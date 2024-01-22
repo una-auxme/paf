@@ -7,9 +7,9 @@
            <param name="global_route_txt" value="/code/planning/global_planner/src/global_route.txt" />
            <param name="role_name" value="hero" />
     </node> -->
-    <!---node pkg="planning" type="global_planner.py" name="PrePlanner" output="screen">
+    <node pkg="planning" type="global_planner.py" name="PrePlanner" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="1" />
            <param name="distance_spawn_to_first_wp" value="100" />
-    </node-->
+    </node>
 </launch>

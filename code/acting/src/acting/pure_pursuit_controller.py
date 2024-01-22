@@ -140,8 +140,6 @@ class PurePursuitController(CompatibleNode):
         target_vector_heading = vector_angle(target_v_x, target_v_y)
         # Get the error between current heading and target heading
         alpha = target_vector_heading - self.__heading
-        # Steering_angle is arctan (l_vehicle / R)
-        # R is look_ahead_dist / 2 * sin(alpha)
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
 
         steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
