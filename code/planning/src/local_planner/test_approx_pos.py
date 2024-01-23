@@ -11,13 +11,13 @@ def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array):
     """
     rotation_matrix = Rotation.from_euler('z', heading)
 
-    # Annahme: Relative Position des vorausfahrenden Fahrzeugs in Ihrem lokalen Koordinatensystem
-    relative_position_local = np.array([0, distance, 0])
+    # Create distance vector with 0 rotation
+    relative_position_local = np.array([distance, 0, 0])
 
-    # Schritt 1: Rotation auf die relative Position anwenden
+    # Rotate distance vector to match heading
     absolute_position_local = rotation_matrix.apply(relative_position_local)
 
-    # Schritt 2: Absolute Position in das globale Koordinatensystem transformieren
+    # Add egomposition vector with distance vetor to get absolute position
     vehicle_position_global = ego_pos + absolute_position_local
     return vehicle_position_global
 

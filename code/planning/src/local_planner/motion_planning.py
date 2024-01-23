@@ -27,21 +27,31 @@ from scipy.spatial.transform import Rotation
 def convert_to_ms(speed):
     return speed / 3.6
 
+
 def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array):
     """calculate the position of the obstacle in the global coordinate system
         based on ego position, heading and distance
+
+    Args:
+        distance (float): Distance to the obstacle
+        heading (float): Ego vehivle heading
+        ego_pos (np.array): Position in [x, y, z]
+
+    Returns:
+        np.array: approximated position of the obstacle
     """
-    rotation_matrix = Rotation.from_euler('z', heading).as_matrix()
+    rotation_matrix = Rotation.from_euler('z', heading)
 
-    # Annahme: Relative Position des vorausfahrenden Fahrzeugs in Ihrem lokalen Koordinatensystem
-    relative_position_local = np.array([0, distance, 0])
+    # Create distance vector with 0 rotation
+    relative_position_local = np.array([distance, 0, 0])
 
-    # Schritt 1: Rotation auf die relative Position anwenden
-    absolute_position_local = rotation_matrix.dot(relative_position_local)
+    # Rotate distance vector to match heading
+    absolute_position_local = rotation_matrix.apply(relative_position_local)
 
-    # Schritt 2: Absolute Position in das globale Koordinatensystem transformieren
+    # Add egomposition vector with distance vetor to get absolute position
     vehicle_position_global = ego_pos + absolute_position_local
     return vehicle_position_global
+
 
 class MotionPlanning(CompatibleNode):
     """
@@ -131,6 +141,8 @@ class MotionPlanning(CompatibleNode):
         self.current_pos = None
         self.current_heading = None
         self.trajectory = None
+        self.overtaking = False
+        self.overtake_start = None
 
     def __set_heading(self, data: Float32):
         """Set current Heading
@@ -172,18 +184,21 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.z])
 
     def change_trajectory(self, data: Bool):
+        self.overtaking = True
+        self.overtake_start = rospy.get_rostime()
         index_car = 20
         limit_waypoints = 100
         data = self.trajectory
         self.logerr("Trajectory chagen started")
         np_array = np.array(data.poses)
+        obstacle_position = approx_obstacle_pos(20, self.current_heading, self.current_pos)
         selection = np_array[:limit_waypoints]
         waypoints = self.convert_pose_to_array(selection)
         self.logerr("waypoints " + str(waypoints))
         obs = np.array([[waypoints[index_car][0]-0.5, waypoints[index_car][1], waypoints[index_car][0]+0.5, waypoints[index_car][1]-2]])
         self.logerr("obs " + str(obs))
         pos_lat_lon = self._location_to_gps(0,0, waypoints[0][0], waypoints[0][1])
-        self.logerr("approx position: " + str(self.approx_obstacle_pos()))
+        self.logerr("Distance: 40, Heading: " + str(self.current_heading) + ", Position: " + str(self.current_pos) + "\napprox position: " + str(approx_obstacle_pos(40, self.current_heading, self.current_pos)))
         initial_conditions = {
             'ps': pos_lat_lon["lon"],
             'target_speed': 11,
@@ -251,6 +266,8 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.trajectory = data
+        if not self.overtaking:
+            self.traj_pub.publish(data)
 
     def convert_pose_to_array(self, poses: np.array):
         """convert pose array to numpy array
@@ -397,6 +414,11 @@ class MotionPlanning(CompatibleNode):
 
         def loop(timer_event=None):
             self.update_target_speed(self.__acc_speed, self.__curr_behavior)
+            if self.overtake_start is None:
+                return
+            if rospy.get_rostime() - self.overtake_start < rospy.Duration(10):
+                self.logerr("overtake finished")
+                self.overtaking = False
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
