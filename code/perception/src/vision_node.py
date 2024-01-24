@@ -145,6 +145,8 @@ class VisionNode(CompatibleNode):
         self.distance_publisher = self.new_publisher(
             msg_type=numpy_msg(Float32MultiArray),
             topic=f"/paf/{self.role_name}/{self.side}/object_distance",
+            qos_profile=1)
+
     def setup_traffic_light_publishers(self):
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
@@ -215,7 +217,7 @@ class VisionNode(CompatibleNode):
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-          
+
         output = self.model(cv_image, half=True, verbose=False)
         distance_output = []
         c_boxes = []
@@ -252,7 +254,6 @@ class VisionNode(CompatibleNode):
 
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
-
 
         c_boxes = torch.stack(c_boxes)
         print(image_np_with_detections.shape, c_boxes.shape, c_labels)
