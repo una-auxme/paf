@@ -83,10 +83,12 @@ class VisionNode(CompatibleNode):
         self.device = torch.device("cuda"
                                    if torch.cuda.is_available() else "cpu")
         self.depth_images = []
+        self.dist_arrays = []
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
-        self.setup_rainbow_subscription()
+        # self.setup_rainbow_subscription()
+        self.setup_dist_array_subscription()
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
@@ -131,6 +133,14 @@ class VisionNode(CompatibleNode):
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_rainbow_image,
             topic='/paf/hero/Center/rainbow_image',
+            qos_profile=1
+        )
+
+    def setup_dist_array_subscription(self):
+        self.new_subscription(
+            msg_type=numpy_msg(ImageMsg),
+            callback=self.handle_dist_array,
+            topic='/paf/hero/Center/dist_array',
             qos_profile=1
         )
 
@@ -190,6 +200,25 @@ class VisionNode(CompatibleNode):
         else:
             self.logerr("Depth-Fiel build up! No distances available yet!")
 
+    def handle_dist_array(self, dist_array):
+        dist_array = \
+            self.bridge.imgmsg_to_cv2(img_msg=dist_array,
+                                      desired_encoding='passthrough')
+        print(dist_array.shape)
+        self.dist_arrays.append(dist_array)
+        # TODO: include buffer parameter into launch file
+        if len(self.depth_images) > 1:
+            self.dist_arrays.pop(0)
+            """if self.save:
+                for i in range(len(self.depth_images)):
+                    cv2.imshow(f"{i}", self.depth_images[i])
+
+                self.save = False
+                cv2.waitKey(0)  # Wait for any key press
+                cv2.destroyAllWindows()"""
+        else:
+            self.logerr("Depth-Fiel build up! No distances available yet!")
+
     def predict_torch(self, image):
         self.model.eval()
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
@@ -219,6 +248,8 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         output = self.model(cv_image, half=True, verbose=False)
+
+        # handle distance of objects
         distance_output = []
         c_boxes = []
         c_labels = []
@@ -227,26 +258,41 @@ class VisionNode(CompatibleNode):
             for box in boxes:
                 cls = box.cls.item()
                 pixels = box.xyxy[0]
-                if len(self.depth_images) > 0:
+                if len(self.dist_arrays) > 0:
                     distances = np.asarray(
-                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
-                                              int(pixels[0]):int(pixels[2]):1]
-                            for i in range(len(self.depth_images))])
-                    non_zero_filter = distances[distances != 0]
-
+                        [self.dist_arrays[i]
+                         [int(pixels[1]):int(pixels[3]):1,
+                          int(pixels[0]):int(pixels[2]):1, ::]
+                            for i in range(len(self.dist_arrays))])
+                    condition = distances[:, :, :, 0] != 0
+                    non_zero_filter = distances[condition]
                     if len(non_zero_filter) > 0:
-                        obj_dist = np.min(non_zero_filter)
+                        obj_dist_index = np.argmin(non_zero_filter[:, 0])
+                        obj_dist = non_zero_filter[obj_dist_index]
+                        abs_distance = np.sqrt(
+                            obj_dist[0]**2 +
+                            obj_dist[1]**2 +
+                            obj_dist[2]**2)
                     else:
-                        obj_dist = np.inf
+                        obj_dist = (np.inf, np.inf, np.inf)
+                        abs_distance = np.inf
 
                     c_boxes.append(torch.tensor(pixels))
-                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
-                    distance_output.append([cls, obj_dist])
+                    c_labels.append(f"Class: {cls},"
+                                    f"Meters: {round(abs_distance, 2)},"
+                                    f"({round(obj_dist[0], 2)},"
+                                    f"{round(obj_dist[1], 2)},"
+                                    f"{round(obj_dist[2], 2)})")
+                    distance_output.append([cls,
+                                            abs_distance,
+                                            obj_dist[0],
+                                            obj_dist[1],
+                                            obj_dist[2]])
 
         # print(distance_output)
         # self.logerr(distance_output)
         self.distance_publisher.publish(
-            Float32MultiArray(data=distance_output))
+           Float32MultiArray(data=distance_output))
 
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
@@ -256,7 +302,7 @@ class VisionNode(CompatibleNode):
             self.process_traffic_lights(output[0], cv_image, image.header)
 
         c_boxes = torch.stack(c_boxes)
-        print(image_np_with_detections.shape, c_boxes.shape, c_labels)
+        # print(image_np_with_detections.shape, c_boxes.shape, c_labels)
         box = draw_bounding_boxes(image_np_with_detections,
                                   c_boxes,
                                   c_labels,

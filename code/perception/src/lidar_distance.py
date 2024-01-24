@@ -36,14 +36,14 @@ class LidarDistance():
 
         # https://stackoverflow.com/questions/44295375/how-to-slice-a-numpy-
         # ndarray-made-up-of-numpy-void-numbers
-        min_dist_bit_mask = lidar_filter_utility.bounding_box(
+        """min_dist_bit_mask = lidar_filter_utility.bounding_box(
             coordinates,
             max_x=50.,
             min_x=2.,
             min_z=rospy.get_param('~min_z', -np.inf),
             min_y=-2.5,
             max_y=2.5,
-        )
+        )"""
 
         reconstruct_bit_mask = lidar_filter_utility.bounding_box(
             coordinates,
@@ -53,24 +53,24 @@ class LidarDistance():
         )
 
         # Filter coordinates based in generated bit_mask
-        min_dist_coordinates = coordinates[min_dist_bit_mask]
+        # min_dist_coordinates = coordinates[min_dist_bit_mask]
         reconstruct_coordinates = coordinates[reconstruct_bit_mask]
 
         # Create pointcloud from manipulated data
-        coordinates_manipulated = ros_numpy \
+        """coordinates_manipulated = ros_numpy \
             .point_cloud2.array_to_pointcloud2(min_dist_coordinates)
-        coordinates_manipulated.header = data.header
+        coordinates_manipulated.header = data.header"""
 
         # Publish manipulated pointCloud2
-        self.pub_pointcloud.publish(coordinates_manipulated)
+        # self.pub_pointcloud.publish(coordinates_manipulated)
 
         # https://stackoverflow.com/questions/1401712/how-can-the-euclidean-
         # distance-be-calculated-with-numpy
-        min_dist_coordinates_xyz = np.array(
+        """min_dist_coordinates_xyz = np.array(
             lidar_filter_utility.remove_field_name(min_dist_coordinates,
                                                    'intensity')
             .tolist()
-        )
+        )"""
 
         reconstruct_coordinates_xyz = np.array(
             lidar_filter_utility.remove_field_name(reconstruct_coordinates,
@@ -79,23 +79,29 @@ class LidarDistance():
         )
 
         # handle minimum distance
-        if min_dist_coordinates_xyz.shape[0] > 0:
+        """if min_dist_coordinates_xyz.shape[0] > 0:
             plot = self.plot_blob(min_dist_coordinates_xyz)
             img_msg = self.bridge.cv2_to_imgmsg(plot,
                                                 encoding="passthrough")
             img_msg.header = data.header
             self.min_dist_img_publisher.publish(img_msg)
         else:
-            self.pub_min_dist.publish(np.inf)
+            self.pub_min_dist.publish(np.inf)"""
 
         # handle reconstruction of lidar points
-        rainbow_cloud = self.reconstruct_img_from_lidar(
+        dist_array = self.reconstruct_img_from_lidar(
             reconstruct_coordinates_xyz)
 
-        img_msg = self.bridge.cv2_to_imgmsg(rainbow_cloud,
-                                            encoding="passthrough")
-        img_msg.header = data.header
-        self.rainbow_publisher.publish(img_msg)
+        # img_msg = self.bridge.cv2_to_imgmsg(rainbow_cloud,
+        #                                    encoding="passthrough")
+        # img_msg.header = data.header
+        # self.rainbow_publisher.publish(img_msg)
+
+        dist_array_msg = \
+            self.bridge.cv2_to_imgmsg(dist_array,
+                                      encoding="passthrough")
+        dist_array_msg.header = data.header
+        self.dist_array_publisher.publish(dist_array_msg)
 
     def listener(self):
         """ Initializes the node and it's publishers
@@ -133,11 +139,21 @@ class LidarDistance():
             queue_size=10
         )
 
-        # publisher for 3d blob graph
-        self.min_dist_img_publisher = rospy.Publisher(
+        # publisher for 3d blob graph (Deprecated)
+        """self.min_dist_img_publisher = rospy.Publisher(
             rospy.get_param(
                 '~image_distance_topic',
                 '/paf/hero/Center/min_dist_image'
+            ),
+            ImageMsg,
+            queue_size=10
+        )"""
+
+        # publisher for dist_array
+        self.dist_array_publisher = rospy.Publisher(
+            rospy.get_param(
+                '~image_distance_topic',
+                '/paf/hero/Center/dist_array'
             ),
             ImageMsg,
             queue_size=10
@@ -220,12 +236,15 @@ class LidarDistance():
 
         # reconstruct camera image with LIDAR-Data
         img = np.zeros(shape=(720, 1280), dtype=np.float32)
+        dist_array = np.zeros(shape=(720, 1280, 3), dtype=np.float32)
         for c in coordinates_xyz:
             point = np.array([c[1], c[2], c[0], 1])
             pixel = np.matmul(m, point)
             x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
             if x >= 0 and x <= 1280 and y >= 0 and y <= 720:
                 img[719-y][1279-x] = c[0]
+                dist_array[719-y][1279-x] = \
+                    np.array([c[0], c[1], c[2]], dtype=np.float32)
 
         # Rainbox color mapping to highlight distances
         """colors = [(0, 0, 0)] + [(1, 0, 0), (1, 1, 0),
@@ -238,8 +257,7 @@ class LidarDistance():
 
         img_colored = (rainbow_cmap(img / np.max(img)) * 255).astype(np.uint8)
         img_bgr = cv2.cvtColor(img_colored, cv2.COLOR_RGBA2BGR)"""
-
-        return img
+        return dist_array
 
 
 if __name__ == '__main__':
