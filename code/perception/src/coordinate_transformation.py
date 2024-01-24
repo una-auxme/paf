@@ -8,7 +8,9 @@ A good source to read up on the different reference frames is:
 http://dirsig.cis.rit.edu/docs/new/coordinates.html
 """
 import math
-from tf.transformations import euler_from_quaternion
+import numpy as np
+from scipy.spatial.transform import Rotation
+# from tf.transformations import euler_from_quaternion
 
 
 a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
@@ -113,13 +115,39 @@ def ecef_to_enu(x, y, z, lat0, lon0, h0):
     return xE, yN, zUp
 
 
-def quat_to_heading(msg):
-    orientation_q = msg
-    orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z,
-                        orientation_q.w]
-    (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-    heading = float(math.atan2(pitch, roll))
-    return -heading + math.pi
+def quat_to_heading(quaternion):
+    """
+    Converts a quaternion to a heading of the car in radians
+    (see ../../doc/06_perception/00_coordinate_transformation.md)
+    :param quaternion: quaternion of the car as a list [q.x, q.y, q.z, q.w]
+                       where q is the quaternion
+    :return: heading of the car in radians (float)
+    """
+    # Create a Rotation object from the quaternion
+    rotation = Rotation.from_quat(quaternion)
+    # Convert the Rotation object to a matrix
+    rotation_matrix = rotation.as_matrix()
+    # calculate the angle around the z-axis (theta) from the matrix
+    theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+
+    # arctan2 returns a theta so that:
+    # ---------------------------------------------------------------
+    # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
+    # ---------------------------------------------------------------
+    # heading is positive in counter clockwise rotations
+
+    heading = theta
+
+    return heading
+
+# old functions
+# def quat_to_heading(msg):
+#     orientation_q = msg
+#     orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z,
+#                         orientation_q.w]
+#     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+#     heading = float(math.atan2(pitch, roll))
+#     return -heading + math.pi
 
 # if __name__ == '__main__':
 #    def are_close(a, b):

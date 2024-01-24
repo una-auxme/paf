@@ -21,7 +21,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
   && apt-get install -y -qq --no-install-recommends \
     libxext6 libx11-6 libglvnd0 libgl1 \
-    libglx0 libegl1 freeglut3-dev
+    libglx0 libegl1 freeglut3-dev apt-utils \
+    fprintd libfprint-2-2 libpam-fprintd
 
 # install dependencies for libgit2 and Carla PythonAPI
 RUN apt-get install wget unzip
@@ -34,34 +35,29 @@ RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_L
   && mkdir -p /opt/carla \
   && mv PythonAPI /opt/carla/PythonAPI
 
-# build libgit2
-RUN wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -O libgit2-1.5.0.tar.gz \
-    && tar xzf libgit2-1.5.0.tar.gz \
-    && cd libgit2-1.5.0/ \
-    && cmake . \
-    && make -j$(nproc --ignore=2) \
-    && make install \
-    && cd ../ \
-    && rm libgit2-1.5.0.tar.gz \
-    && rm -r libgit2-1.5.0/
+# Workaround/fix for using dpkg for cuda installation
+# Only required for the lab PCs
+RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
+    && rm -f /var/lib/dpkg/info/libfprint*.postinst \
+    && rm -f /var/lib/dpkg/info/libpam-fprintd*.postinst \
+    && dpkg --configure -a
 
 # CUDA installation
 RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin \
     && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb \
-    && dpkg -i cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb \
-    && cp /var/cuda-repo-ubuntu2004-11-7-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
+    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda-nvcc-11-7 \
-    && rm cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb \
-    && apt-get -y remove cuda-repo-ubuntu2004-11-7-local \
-    && cat /etc/apt/sources.list \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
+    && rm cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+    && apt-get -y remove cuda-repo-ubuntu2004-11-8-local \
     && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && rm -rf /var/cuda-repo-ubuntu1804-11-7-local/ \
-    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-11-7-local.list \
+    && rm -rf /var/cuda-repo-ubuntu1804-11-8-local/ \
+    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-11-8-local.list \
     && apt-get clean
 
-ENV CUDA_HOME=/usr/local/cuda-11.7
+ENV CUDA_HOME=/usr/local/cuda-11.8
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
@@ -158,7 +154,7 @@ RUN echo "export CUDA_HOME=/usr/local/cuda-11" >> ~/.bashrc \
     && echo "export PATH=$PATH:$CUDA_HOME/bin" >> ~/.bashrc
 
 COPY --chown=$USERNAME:$USERNAME ./code/requirements.txt /workspace/
-ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
+ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6 8.7 8.9+PTX"
 ENV IABN_FORCE_CUDA=1
 
 RUN source ~/.bashrc && pip install -r /workspace/requirements.txt

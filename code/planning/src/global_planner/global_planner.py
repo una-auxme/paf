@@ -49,18 +49,22 @@ class PrePlanner(CompatibleNode):
             "distance_spawn_to_first_wp", 100)
 
         self.map_sub = self.new_subscription(
-            # msg_type=CarlaWorldInfo,
-            # topic="/carla/world_info",
             msg_type=String,
             topic=f"/carla/{self.role_name}/OpenDRIVE",
             callback=self.world_info_callback,
             qos_profile=10)
 
+        # uncomment /paf/hero/global_plan and comment /carla/... for dev_launch
         self.global_plan_sub = self.new_subscription(
             msg_type=CarlaRoute,
             topic='/carla/' + self.role_name + '/global_plan',
             callback=self.global_route_callback,
             qos_profile=10)
+        # self.global_plan_sub = self.new_subscription(
+        #     msg_type=CarlaRoute,
+        #     topic='/paf/' + self.role_name + '/global_plan',
+        #     callback=self.global_route_callback,
+        #     qos_profile=10)
 
         self.current_pos_sub = self.new_subscription(
             msg_type=PoseStamped,
@@ -78,6 +82,9 @@ class PrePlanner(CompatibleNode):
             topic=f"/paf/{self.role_name}/speed_limits_OpenDrive",
             qos_profile=1)
         self.logdebug('PrePlanner-Node started')
+
+        # uncomment for self.dev_load_world_info() for dev_launch
+        # self.dev_load_world_info()
 
     def global_route_callback(self, data: CarlaRoute) -> None:
         """
@@ -189,7 +196,6 @@ class PrePlanner(CompatibleNode):
         self.path_pub.publish(self.path_backup)
         self.loginfo("PrePlanner: published trajectory")
 
-#    def world_info_callback(self, data: CarlaWorldInfo) -> None:
     def world_info_callback(self, opendrive: String) -> None:
         """
         when the map gets updated a mew OpenDriveConverter instance is created
@@ -198,8 +204,10 @@ class PrePlanner(CompatibleNode):
         """
         self.loginfo("PrePlanner: MapUpdate called")
 
-#        root = eTree.fromstring(data.opendrive)
-        root = eTree.fromstring(opendrive.data)
+        if type(opendrive) is str:
+            root = eTree.fromstring(opendrive)
+        else:
+            root = eTree.fromstring(opendrive.data)
 
         roads = root.findall("road")
         road_ids = [int(road.get("id")) for road in roads]
@@ -234,6 +242,14 @@ class PrePlanner(CompatibleNode):
             self.loginfo("PrePlanner: Received a pose update retrying "
                          "route preplanning")
             self.global_route_callback(self.global_route_backup)
+
+    def dev_load_world_info(self):
+        file_path = \
+            "/workspace/code/planning/src/global_planner/string_world_info.txt"
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+        self.logerr("DATA READ")
+        self.world_info_callback(file_content)
 
     def run(self):
         """

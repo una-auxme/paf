@@ -4,6 +4,8 @@
 
 The Kalman Filter node is responsible for filtering the location and heading data, by using an IMU and GNSS sensor together with the carla speedometer.
 
+As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a rolling average.
+
 ---
 
 ## Author
@@ -27,20 +29,26 @@ Robert Fischer
     - [1. Predict](#1-predict)
     - [2. Update](#2-update)
     - [3. Publish Data](#3-publish-data)
+    - [Also Important](#also-important)
     - [Inputs](#inputs)
     - [Outputs](#outputs)
+  - [Performance](#performance)
 <!-- TOC -->
 
 ---
 
 ## Getting started
 
-Right now the Node does not work correctly. It creates topics to publish to, but doesn't yet.
-This will be fixed in [#106](https://github.com/una-auxme/paf23/issues/106)
-
 Uncomment the kalman_filter.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
-You can also uncomment the rqt_plots that seem useful to you.
-No extra installation needed.
+
+Also change the pos_filter and heading_filter parameter values of the Position_Publisher_Node in the [perception.launch](../../code/perception/launch/perception.launch) file,
+to **"Kalman"**, depending on if you want to use the Filter for both the Position and the Heading.
+
+In the case of using the Filter for both, it should look like this:
+
+![Kalman Filter for both parameters](../../doc/00_assets/perception/kalman_installation_guide.png)
+
+No further installation needed.
 
 ---
 
@@ -59,28 +67,67 @@ Stackoverflow and other useful sites:
 [3](https://stackoverflow.com/questions/66167733/getting-3d-position-coordinates-from-an-imu-sensor-on-python),
 [4](https://github.com/Janudis/Extended-Kalman-Filter-GPS_IMU)
 
-This script implements a Kalman Filter. It is a recursive algorithm used to estimate the state of a system that can be modeled with linear equations.
-This Kalman Filter uses the location provided by a GNSS sensor (by using the current_pos provided by the [Position Publisher Node](../../code/perception/src/Position_Publisher_Node.py))
+This script implements a Kalman Filter.
+
+It is a recursive algorithm used to estimate the state of a system that can be modeled with linear equations.
+
+This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [Position Publisher Node](../../code/perception/src/Position_Publisher_Node.py))
 the orientation and angular velocity provided by the IMU sensor and the current speed in the headed direction by the Carla Speedometer.
 
+As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a [rolling average](#also-important).
+
 ```Python
+
 The state vector X is defined as:
             [initial_x],
             [initial_y],
+            [v_x],
+            [v_y],
             [yaw],
-            [v_hy] in direction of heading hy,
-            [a_hy] in direction of v_hy (heading hy),
-            [omega_z],
-The state transition matrix F is defined as:
-    A = I
-    I: Identity Matrix
+            [omega_z]
+
+The state transition matrix A is defined as:
+    '''
+        # [x                ...             ]
+        # [y                ...             ]
+        # [v_x              ...             ]
+        # [x_y              ...             ]
+        # [yaw              ...             ]
+        # [omega_z          ...             ]
+        x = x + v_x * dt
+        y = y + v_y * dt
+        v_x = v_x
+        v_y = v_y
+        yaw = yaw + omega_z * dt
+        omega_z = omega_z
+    '''
+    A = np.array([[1, 0, self.dt, 0, 0, 0],
+                    [0, 1, 0, self.dt, 0, 0],
+                    [0, 0, 1, 0, 0, self.dt],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 1]])
+
 The measurement matrix H is defined as:
-    H = [1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1]
+    '''
+        1. GPS: x, y
+        2. Velocity: v_x, v_y
+        3. IMU: yaw, omega_z
+        -> 6 measurements for a state vector of 6
+    '''
+    self.H = np.array([[1, 0, 0, 0, 0, 0],    # x
+                        [0, 1, 0, 0, 0, 0],   # y
+                        [0, 0, 1, 0, 0, 0],   # v_x
+                        [0, 0, 0, 1, 0, 0],   # v_y
+                        [0, 0, 0, 0, 1, 0],   # yaw
+                        [0, 0, 0, 0, 0, 1]])  # omega_z
+
 The process covariance matrix Q is defined as:
-    Q = np.diag([0.005, 0.005, 0.001, 0.0001])
+    self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
+
+The measurement covariance matrix R is defined as:
+    self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
+
 ```
 
 Then 3 Steps are run in the frequency of the `control_loop_rate`:
@@ -88,48 +135,82 @@ Then 3 Steps are run in the frequency of the `control_loop_rate`:
 ### 1. Predict
 
 ```Python
-    # Update the old state and covariance matrix
-    self.x_old_est[:, :] = np.copy(self.x_est[:, :])
-    self.P_old_est[:, :] = np.copy(self.P_est[:, :])
 
-    # Predict the next state and covariance matrix
-    self.x_pred = self.A @ self.x_est[:]  # + B @ v[:, k-1] + u
-    self.P_pred = self.A @ self.P_est[:, :] @ self.A.T + self.Q
+    # Predict the next state and covariance matrix, pretending the last
+    # velocity state estimate stayed constant
+    self.x_pred = self.A @ self.x_est 
+    self.P_pred = self.A @ self.P_est @ self.A.T + self.Q
+
 ```
 
 ### 2. Update
 
 ```Python
-    z = np.concatenate((self.z_gps[:], self.z_imu[:]))  # Measurementvector
-    y = z - self.H @ self.x_pred  # Measurement residual
-    S = self.H @ self.P_pred @ self.H.T + self.R  # Residual covariance
-    self.K[:, :] = self.P_pred @ self.H.T @ np.linalg.inv(S)  # Kalman gain
-    self.x_est[:] = self.x_pred + self.K[:, :] @ y  # State estimate
-    # State covariance estimate
-    self.P_est[:, :] = (np.eye(6) - self.K[:, :] @ self.H) @ self.P_pred
+
+    # Measurementvector z
+    z = np.concatenate((self.z_gps, self.z_v, self.z_imu))
+    # Measurement residual y
+    y = z - self.H @ self.x_pred
+    # Residual covariance S
+    S = self.H @ self.P_pred @ self.H.T + self.R
+    # Kalman gain K
+    self.K = self.P_pred @ self.H.T @ np.linalg.inv(S)
+    # State estimate x_est
+    self.x_est = self.x_pred + self.K @ y
+    # State covariance estimate P_est
+    # (Joseph form of the covariance update equation)
+    self.P_est = (np.eye(6) - self.K @ self.H) @ self.P_pred
+
 ```
 
 ### 3. Publish Data
 
 ```Python
+
     # Publish the kalman-data:
     self.publish_kalman_heading()
     self.publish_kalman_location()
+
 ```
 
-As stated before, the script does not publish viable data yet, which has to be fixed.
-This means the predict and update steps might not be correct, because it wasn't possible to test it yet.
+### Also Important
+
+The way that the xyz Position is made, only x and y are measured for the kalman filter, while the z component is filtered by a rolling average.
+
+```Python
+
+  GPS_RUNNING_AVG_ARGS: int = 10
+
+  self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
+  .
+  .
+  .
+    # update GPS Measurements:
+    self.z_gps[0, 0] = current_pos.pose.position.x
+    self.z_gps[1, 0] = current_pos.pose.position.y
+
+    z = current_pos.pose.position.z
+
+    self.avg_z = np.roll(self.avg_z, -1, axis=0)
+    self.avg_z[-1] = np.matrix([z])
+    avg_z = np.mean(self.avg_z, axis=0)
+
+    self.latitude = avg_z
+
+```
+
+The Kalman Location as well as the Kalman Heading are then subscribed to by the PositionPublisher and republished as **current_heading** and **current_pos**
 
 ### Inputs
 
 This node subscribes to the following needed topics:
 
 - IMU:
-  - `/carla/{role_name}/Ideal_IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
+  - `/carla/{role_name}/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
 - GPS:
-  - `/carla/{role_name}/Ideal_GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
-- current agent position:
-  - `/paf/{role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/carla/{role_name}/GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
+- unfiltered agent position:
+  - `/paf/" + self.role_name + "/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - Carla Speed:
   - `/carla/" + self.role_name + "/Speed` CarlaSpeedometer
 
@@ -138,6 +219,28 @@ This node subscribes to the following needed topics:
 This node publishes the following topics:
 
 - Kalman Heading:
-  - `/paf/{role_name}/kalman_heading` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/{role_name}/kalman_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - Kalman Position:
   - `/paf/{self.role_name}/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+
+## Performance
+
+In the following graphs you will see the MSE/ MAE Boxed Graph of Location Error with respect to ideal Location.
+
+Lower values in the data mean smaller error values.
+
+Smaller boxes mean the data is closer together and less spread.
+
+The Kalman Filter was tuned to create the smallest MSE possible, which gives more weight to larger errors which we want to minimise.
+
+The MAE on the other hand shows a 1:1 representation in terms of distance from the ideal to the predicted location.
+![MSE Boxed Graph of Location Error with respect to ideal Location](../../doc/00_assets/perception/data_26_MSE_Boxed.png)
+
+![MAE Boxed Graph of Location Error with respect to ideal Location](../../doc/00_assets/perception/data_26_MAE_Boxed.png)
+
+As you see this data you might think the unfiltered data seems to be just as good if not even better than the previous rolling average filter (RAF).
+
+This is not the case, since the RAF has a way smaller spread of datapoints, making the location data way smoother (Though with a large error) than without a filter.
+
+The Kalman Filter on the other hand makes it possible for the data to be way below the 1 m error mark (with 0.48 m as its error median)
+and contain the data within a reasonable range.
