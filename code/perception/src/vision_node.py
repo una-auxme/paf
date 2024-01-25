@@ -19,6 +19,7 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
+import rospy
 
 """
 VisionNode:
@@ -80,13 +81,26 @@ class VisionNode(CompatibleNode):
         self.bridge = CvBridge()
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
+        self.center = self.get_param("center")
+        self.back = self.get_param("back")
+        self.left = self.get_param("left")
+        self.right = self.get_param("right")
+
         self.device = torch.device("cuda"
                                    if torch.cuda.is_available() else "cpu")
         self.depth_images = []
         self.dist_arrays = None
 
         # publish / subscribe setup
-        self.setup_camera_subscriptions()
+        if self.center:
+            self.setup_camera_subscriptions("Center")
+        if self.back:
+            self.setup_camera_subscriptions("Back")
+        if self.left:
+            self.setup_camera_subscriptions("Left")
+        if self.right:
+            self.setup_camera_subscriptions("Right")
+
         # self.setup_rainbow_subscription()
         self.setup_dist_array_subscription()
         self.setup_camera_publishers()
@@ -120,13 +134,14 @@ class VisionNode(CompatibleNode):
 
         # tensorflow setup
 
-    def setup_camera_subscriptions(self):
+    def setup_camera_subscriptions(self, side):
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_camera_image,
-            topic=f"/carla/{self.role_name}/{self.side}/image",
+            topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1
         )
+        print(f"Subscribed to Side: {side}")
 
     def setup_rainbow_subscription(self):
         self.new_subscription(
@@ -145,11 +160,34 @@ class VisionNode(CompatibleNode):
         )
 
     def setup_camera_publishers(self):
-        self.publisher = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
-            topic=f"/paf/{self.role_name}/{self.side}/segmented_image",
-            qos_profile=1
-        )
+        if self.center:
+            self.publisher_center = self.new_publisher(
+                msg_type=numpy_msg(ImageMsg),
+                topic=f"/paf/{self.role_name}/Center/segmented_image",
+                qos_profile=1
+            )
+            print("Publisher to Center!")
+        if self.back:
+            self.publisher_back = self.new_publisher(
+                msg_type=numpy_msg(ImageMsg),
+                topic=f"/paf/{self.role_name}/Back/segmented_image",
+                qos_profile=1
+            )
+            print("Publisher to Back!")
+        if self.left:
+            self.publisher_left = self.new_publisher(
+                msg_type=numpy_msg(ImageMsg),
+                topic=f"/paf/{self.role_name}/Left/segmented_image",
+                qos_profile=1
+            )
+            print("Publisher to Left!")
+        if self.right:
+            self.publisher_right = self.new_publisher(
+                msg_type=numpy_msg(ImageMsg),
+                topic=f"/paf/{self.role_name}/Right/segmented_image",
+                qos_profile=1
+            )
+            print("Publisher to Right!")
 
     def setup_object_distance_publishers(self):
         self.distance_publisher = self.new_publisher(
@@ -179,7 +217,17 @@ class VisionNode(CompatibleNode):
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="rgb8")
         img_msg.header = image.header
-        self.publisher.publish(img_msg)
+        side = rospy.resolve_name(img_msg.header.frame_id).split('/')[2]
+        if side == "Center":
+            self.publisher_center.publish(img_msg)
+        if side == "Back":
+            self.publisher_back.publish(img_msg)
+        if side == "Left":
+            self.publisher_left.publish(img_msg)
+        if side == "Right":
+            self.publisher_right.publish(img_msg)
+
+        print(f"Published Image on Side: {side}")
         pass
 
     def handle_rainbow_image(self, image):
@@ -204,6 +252,7 @@ class VisionNode(CompatibleNode):
         dist_array = \
             self.bridge.imgmsg_to_cv2(img_msg=dist_array,
                                       desired_encoding='passthrough')
+        print("RECEIVED DIST")
         self.dist_arrays = dist_array
 
     def predict_torch(self, image):
@@ -275,7 +324,6 @@ class VisionNode(CompatibleNode):
                                             obj_dist[1],
                                             obj_dist[2]])
 
-        print(distance_output)
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 
