@@ -104,7 +104,6 @@ class Approach(py_trees.behaviour.Behaviour):
             "/paf/hero/Center/traffic_light_state")
         if light_status_msg is not None:
             self.traffic_light_status = get_color(light_status_msg.state)
-            rospy.logerr(f"Light Status approach: {self.traffic_light_status}")
             self.traffic_light_detected = True
 
         # Update stopline Info
@@ -138,7 +137,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     not self.traffic_light_detected):
 
             rospy.loginfo("slowing down!")
-            self.curr_behavior_pub.publish(bs.int_app_no_sign.name)
+            self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
 
         # approach slowly when traffic light is green as traffic lights are
         # higher priority than traffic signs this behavior is desired
@@ -230,6 +229,7 @@ class Wait(py_trees.behaviour.Behaviour):
                                                  "curr_behavior", String,
                                                  queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.red_light_flag = False
         return True
 
     def initialise(self):
@@ -243,6 +243,7 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: True
         """
         rospy.loginfo("Wait Intersection")
+        self.red_light_flag = False
         return True
 
     def update(self):
@@ -279,9 +280,13 @@ class Wait(py_trees.behaviour.Behaviour):
 
         if light_status_msg is not None:
             traffic_light_status = get_color(light_status_msg.state)
-            rospy.logerr(f"Light Status wait: {traffic_light_status}")
             if traffic_light_status == "red" or \
                     traffic_light_status == "yellow":
+                self.red_light_flag = True
+                rospy.loginfo(f"Light Status: {traffic_light_status}")
+                self.curr_behavior_pub.publish(bs.int_wait.name)
+                return py_trees.common.Status.RUNNING
+            elif self.red_light_flag and traffic_light_status != "green":
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return py_trees.common.Status.RUNNING
@@ -358,14 +363,13 @@ class Enter(py_trees.behaviour.Behaviour):
         light_status_msg = self.blackboard.get(
             "/paf/hero/Center/traffic_light_state")
         if light_status_msg is None:
-            self.curr_behavior_pub.publish(bs.int_enter_no_light.name)
+            self.curr_behavior_pub.publish(bs.int_enter.name)
             return True
 
         traffic_light_status = get_color(light_status_msg.state)
-        rospy.logerr(f"Light Status ENTER: {traffic_light_status}")
 
         rospy.loginfo(f"Light Status: {traffic_light_status}")
-        self.curr_behavior_pub.publish(bs.int_enter_light.name)
+        self.curr_behavior_pub.publish(bs.int_enter.name)
 
     def update(self):
         """
@@ -391,7 +395,7 @@ class Enter(py_trees.behaviour.Behaviour):
             # not next_waypoint_msg.isStopLine:
         if next_waypoint_msg.distance < 5:
             rospy.loginfo("Drive through intersection!")
-            # self.update_local_path(leave_intersection=True)
+            self.curr_behavior_pub.publish(bs.int_enter.name)
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS

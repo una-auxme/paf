@@ -13,9 +13,7 @@ from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 
 
 import numpy as np
-from nav_msgs.msg import Path
 
-# from behavior_agent.msg import BehaviorSpeed
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
     import run_fot
 from perception.msg import Waypoint, LaneChange
@@ -44,7 +42,7 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.2)
+        self.control_loop_rate = self.get_param("control_loop_rate", 1)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
@@ -53,13 +51,15 @@ class MotionPlanning(CompatibleNode):
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
         self.counter = 0
         self.speed_list = []
-        self.__trajectory = None
+        self.__first_trajectory = None
+        self.__corners = None
+        self.__in_corner = False
 
         # Subscriber
         self.trajectory_sub = self.new_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
+            self.__save_trajectory,
             qos_profile=1)
         self.current_pos_sub = self.new_subscription(
             PoseStamped,
@@ -93,12 +93,6 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/lane_change_distance",
             self.__set_change_point,
             qos_profile=1)
-        
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
-            qos_profile=1)
 
         # Publisher
         self.traj_pub: Publisher = self.new_publisher(
@@ -119,6 +113,12 @@ class MotionPlanning(CompatibleNode):
         self.logdebug("MotionPlanning started")
         self.published = False
         self.current_pos = None
+
+    def __save_trajectory(self, data):
+        if self.__first_trajectory is None:
+            self.__first_trajectory = data.poses
+
+            self.__corners = self.__calc_corner_points()
 
     def __set_current_pos(self, data: PoseStamped):
         """set current position
@@ -141,7 +141,9 @@ class MotionPlanning(CompatibleNode):
             selection = np_array[5:17]
             waypoints = self.convert_pose_to_array(selection)
             self.logerr(waypoints)
-            obs = np.array([[waypoints[5][0]-0.5, waypoints[5][1], waypoints[5][0]+0.5, waypoints[5][1]-2]])
+            obs = np.array(
+                [[waypoints[5][0]-0.5, waypoints[5][1], waypoints[5][0]+0.5,
+                 waypoints[5][1]-2]])
             initial_conditions = {
                 'ps': 0,
                 'target_speed': self.__acc_speed,
@@ -183,11 +185,10 @@ class MotionPlanning(CompatibleNode):
                 result = []
                 for i in range(len(result_x)):
                     position = Point(result_x[i], result_y[i], 703)
-                    quaternion = tf.transformations.quaternion_from_euler(0,
-                                                                            0,
-                                                                            iyaw[i])
-                    orientation = Quaternion(x=quaternion[0], y=quaternion[1],
-                                            z=quaternion[2], w=quaternion[3])
+                    quat = tf.transformations.quaternion_from_euler(0, 0, 
+                                                                    iyaw[i])
+                    orientation = Quaternion(x=quat[0], y=quat[1],
+                                             z=quat[2], w=quat[3])
                     pose = Pose(position, orientation)
                     pos = PoseStamped()
                     pos.header.stamp = rospy.Time.now()
@@ -200,6 +201,92 @@ class MotionPlanning(CompatibleNode):
                 path.poses = list(np_array[:5]) + result + list(np_array[17:])
                 self.traj_pub.publish(path)
 
+    def __calc_corner_points(self):
+        coords = self.convert_pose_to_array(np.array(self.__first_trajectory))
+        x_values = np.array([point[0] for point in coords])
+        y_values = np.array([point[1] for point in coords])
+  
+        angles = np.arctan2(np.diff(y_values), np.diff(x_values))
+        angles = np.rad2deg(angles)
+        angles[angles > 0] -= 360  # Convert for angles between 0 - 360 degree
+
+        threshold = 1  # in degree
+        curve_change_indices = np.where(np.abs(np.diff(angles)) > threshold)[0]
+
+        sublist = self.create_sublists(curve_change_indices, proximity=5)
+
+        coords_of_curve = [coords[i] for i in sublist]
+
+        return coords_of_curve
+    
+    def create_sublists(self, points, proximity=5):
+        sublists = []
+        current_sublist = []
+
+        for point in points:
+            if not current_sublist:
+                current_sublist.append(point)
+            else:
+                last_point = current_sublist[-1]
+                distance = abs(point - last_point)
+
+                if distance <= proximity:
+                    current_sublist.append(point)
+                else:
+                    sublists.append(current_sublist)
+                    current_sublist = [point]
+        if current_sublist:
+            sublists.append(current_sublist)
+
+        filtered_list = [in_list for in_list in sublists if len(in_list) > 1]
+
+        return filtered_list
+
+    def get_cornering_speed(self):
+        corner = self.__corners[0]
+        pos = self.current_pos
+
+        def euclid_dist(vector1, vector2):
+            point1 = np.array(vector1)
+            point2 = np.array(vector2)
+
+            diff = point2 - point1
+            sum_sqrt = np.dot(diff.T, diff)
+            return np.sqrt(sum_sqrt)
+
+        def map_corner(dist):
+            if dist < 10:
+                return 5
+            elif dist < 25:
+                return 6
+            elif dist < 50:
+                return 7
+            else:
+                8
+
+        distance_corner = 0
+        for i in range(len(corner) - 1):
+            distance_corner += euclid_dist(corner[i], corner[i + 1])
+        # self.logerr(distance_corner)
+
+        if self.__in_corner:
+            self.loginfo("In Corner")
+
+            distance_end = euclid_dist(pos, corner[0])
+            if distance_end > distance_corner + 2:
+                self.__in_corner = False
+                self.__corners.pop(0)
+                return self.__get_speed_cruise()
+            else:
+                return map_corner(distance_corner)
+
+        distance_start = euclid_dist(pos, corner[0])
+        if distance_start < 3:
+            self.__in_corner = True
+            return map_corner(distance_corner)
+        else:
+            return self.__get_speed_cruise()
+
     def convert_pose_to_array(self, poses: np.array):
         """convert pose array to numpy array
 
@@ -209,9 +296,11 @@ class MotionPlanning(CompatibleNode):
         Returns:
             np.array: numpy array
         """
-        def get_x_y(pose):
-            return np.array([pose.pose.position.x, pose.pose.position.y])
-        return np.vectorize(get_x_y)(poses)
+        result_array = np.empty((len(poses), 2))
+        for pose in range(len(poses)):
+            result_array[pose] = np.array([poses[pose].pose.position.x, 
+                                           poses[pose].pose.position.y])
+        return result_array
 
     def __check_emergency(self, data: Bool):
         """If an emergency stop is needed first check if we are
@@ -232,15 +321,15 @@ class MotionPlanning(CompatibleNode):
         else:
             self.target_speed = be_speed
         # self.logerr("target speed: " + str(self.target_speed))
+        corner_speed = self.get_cornering_speed()
+        self.target_speed = min(self.target_speed, corner_speed)
+        # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
         self.__acc_speed = data.data
-
-    def __set_trajectory(self, data: Path):
-        self.__trajectory = data
 
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
@@ -258,9 +347,7 @@ class MotionPlanning(CompatibleNode):
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
         split = "_"
-        self.loginfo("get speed")
         short_behavior = behavior.partition(split)[0]
-        self.loginfo("short behavior: " + str(short_behavior))
         if short_behavior == "int":
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
@@ -277,16 +364,12 @@ class MotionPlanning(CompatibleNode):
             speed = bs.int_app_init.speed
         elif behavior == bs.int_app_green.name:
             speed = bs.int_app_green.speed
-        elif behavior == bs.int_app_no_sign.name:
+        elif behavior == bs.int_app_to_stop.name:
             speed = self.__calc_speed_to_stop_intersection()
         elif behavior == bs.int_wait.name:
             speed == bs.int_wait.speed
-        elif behavior == bs.int_enter_no_light:
-            speed = bs.int_enter_no_light.speed
-        elif behavior == bs.int_enter_empty_str.name:
-            speed = bs.int_enter_empty_str.speed
-        elif behavior == bs.int_enter_light.name:
-            speed == bs.int_enter_light.speed
+        elif behavior == bs.int_enter.name:
+            speed = bs.int_enter.speed
         elif behavior == bs.int_exit:
             speed = self.__get_speed_cruise()
 
@@ -297,7 +380,7 @@ class MotionPlanning(CompatibleNode):
         if behavior == bs.lc_app_init.name:
             speed = bs.lc_app_init.speed
         elif behavior == bs.lc_app_blocked.name:
-            speed = bs.lc_app_blocked.speed  # calc_speed_to_stop_lanechange()
+            speed = self.__calc_speed_to_stop_lanechange()
         elif behavior == bs.lc_enter_init.name:
             speed = bs.lc_enter_init.speed
         elif behavior == bs.lc_exit.name:
@@ -323,17 +406,20 @@ class MotionPlanning(CompatibleNode):
 
     # TODO: Find out purpose
     def __calc_speed_to_stop_lanechange(self) -> float:
-        if self.__change_point[0] != np.inf and self.__change_point[1]:
-            stopline = self.__change_point[0]
-        else:
-            return 100
+        stopline = self.__calc_virtual_change_point()
 
         v_stop = max(convert_to_ms(5.),
                      convert_to_ms((stopline / 30) ** 1.5
                                    * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(30.0)
+        if v_stop > bs.lc_app_init.speed:
+            v_stop = bs.lc_app_init.speed
         return v_stop
+    
+    def __calc_virtual_change_point(self) -> float:
+        if self.__change_point[0] != np.inf and self.__change_point[1]:
+            return self.__change_point[0]
+        else:
+            return 0.0
 
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
@@ -348,7 +434,7 @@ class MotionPlanning(CompatibleNode):
         """
 
         # def loop(timer_event=None):
-        #     self.logerr(self.speed_list)
+        #     self.__calc_corner_points()
 
         # self.new_timer(self.control_loop_rate, loop)
         self.spin()

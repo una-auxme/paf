@@ -70,7 +70,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.change_detected = False
         self.change_distance = np.inf
         self.virtual_change_distance = np.inf
-        self.curr_behavior_pub.publish(bs.lc_init.name)
+        self.curr_behavior_pub.publish(bs.lc_app_init.name)
 
     def update(self):
         """
@@ -111,13 +111,13 @@ class Approach(py_trees.behaviour.Behaviour):
             else:
                 distance_lidar = None
 
-            if distance_lidar is not None and distance_lidar.min_range > 15.0:
+            distance_lidar = 20  # Remove and adjust to check for cars behind
+
+            if distance_lidar is not None and distance_lidar > 15.0:
                 rospy.loginfo("Change is free not slowing down!")
-                # self.update_local_path(leave_intersection=True)
                 return py_trees.common.Status.SUCCESS
             else:
                 rospy.loginfo("Change blocked slowing down")
-                self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -242,10 +242,12 @@ class Wait(py_trees.behaviour.Behaviour):
         else:
             distance_lidar = None
 
+        distance_lidar = 20  # Remove to wait
+
         change_clear = False
         if distance_lidar is not None:
             # if distance smaller than 15m, change is blocked
-            if distance_lidar.min_range < 15.0:
+            if distance_lidar < 15.0:
                 change_clear = False
             else:
                 change_clear = True

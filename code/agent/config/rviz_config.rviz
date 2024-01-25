@@ -65,7 +65,7 @@ Visualization Manager:
       Visibility:
         Grid: false
         Imu: false
-        Path: true
+        Path: false
         PointCloud2: false
         Value: true
       Zoom Factor: 1
