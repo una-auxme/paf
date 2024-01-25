@@ -86,7 +86,7 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 
- <node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
+ <!--<node pkg="perception" type="lidar_distance.py" name="lidar_distance_rear_right" output="screen">
     <param name="min_y" value="-5"/>
     <param name="max_y" value="-2.5"/>
     <param name="max_x" value="0"/>
@@ -105,5 +105,5 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered_rear_left"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range_rear_left"/>
   </node>
-
+-->
 </launch>

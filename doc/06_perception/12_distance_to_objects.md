@@ -80,14 +80,14 @@ The resulting Image takes the distance in meters as values for its pixels. It th
 
 In the next step we want to get the distance for every bounding box the object-detection found.
 
-We want to return a list of tuple containing a class and a distance, like this:
+We want to return a list of tuple containing a class, an absolut distance and X, Y, Z coordinates of the objcet, like this:
 
 [
-    [class_id, distance_meters],
-    [12.0, 3.456],
+    [class_id, abs_distance, X, Y, Z],
+    [12.0, 7.970812491638262, 5.6549606, -5.5982423, -0.4636328],
+    [12.0, 8.684970384807999, 5.6547265, 6.57918, -0.40886718],
     ...,
-    [2.0, np.inf],
-    [2.0, 7.890],
+    [2.0, 1.3798048392074562, 1.065586, -0.60292965, -0.63628906]
 ]
 
 Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image,
