@@ -176,10 +176,14 @@ class VehicleController(CompatibleNode):
             f_pure_p = (1 - p_stanley) * self.__pure_pursuit_steer
             steer = f_stanley + f_pure_p
 
-            # only use pure_pursuit controller for now, since
-            # stanley seems broken with the new heading-bug
-            # TODO: swap back if stanley is fixed
-            # steer = self.__pure_pursuit_steer
+            # -- Hardcode steering to only use Stanley --
+            # ----------------
+            steer = self.__pure_pursuit_steer
+            # steer = self.__stanley_steer
+            # steer = 0.5 * self.__stanley_steer
+            # + 0.5 * self.__pure_pursuit_steer
+            # ----------------
+            # -- Hardcode steering to only use Stanley --
 
             self.target_steering_publisher.publish(steer)  # debugging
 

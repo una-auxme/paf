@@ -20,6 +20,7 @@ from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
+from acting.msg import StanleyDebug
 
 from trajectory_interpolation import interpolate_route
 
@@ -40,7 +41,7 @@ from trajectory_interpolation import interpolate_route
 # TURN OFF stanley and PP Controllers in acting.launch!
 
 # 2: Test Steering Controller on chooseable trajectory
-# velocity = TARGET_VELOCITY_1 TODO: maybe use velocity publisher?
+# velocity = TARGET_VELOCITY_1
 # steering = STEERING_CONTROLLER_USED (see below)
 # trajectory = TRAJECTORY_TYPE (see below)
 
@@ -55,14 +56,15 @@ from trajectory_interpolation import interpolate_route
 # TODO TODO
 TEST_TYPE = 2                # aka. TT
 
-FIXED_STEERING: float = 0  # for TT0: steering 0.0 = always straight
-TARGET_VELOCITY_1: float = 5  # for TT0/TT1: low velocity
-TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
+FIXED_STEERING: float = 0  # for TestType0 fixed Steering
+TARGET_VELOCITY_1: float = 20  # velocity 1
+TARGET_VELOCITY_2: float = 0  # velocity 2
 
-STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 2  # for TT2: 0 = Straight ; 1 = Curve ; 2 = SineWave
+STEERING_CONTROLLER_USED = 0  # 0 = both ; 1 = PP ; 2 = Stanley
+# 0 = Straight ; 1 = Curve ; 2 = SineWave ; 3 = Overtake
+TRAJECTORY_TYPE = 3
 
-PRINT_AFTER_TIME = 20.0  # How long after Simulationstart to print data
+PRINT_AFTER_TIME = 7.0  # How long after Simulationstart to print data
 
 
 class Acting_Debugger(CompatibleNode):
@@ -112,7 +114,7 @@ class Acting_Debugger(CompatibleNode):
             f"/paf/{self.role_name}/controller_selector_debug",
             qos_profile=1)
 
-        # Subscriber of current_pos, used for TODO nothing yet
+        # Subscriber of current_pos, used for Steering Debugging
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
@@ -132,8 +134,7 @@ class Acting_Debugger(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__get_heading,
-            qos_profile=1
-        )
+            qos_profile=1)
 
         # Subscriber for current_velocity for plotting
         self.current_velocity_sub: Subscriber = self.new_subscription(
@@ -163,7 +164,14 @@ class Acting_Debugger(CompatibleNode):
             self.__get_stanley_steer,
             qos_profile=1)
 
-        # Subscriber for Stanley_Steer
+        # Subscriber for StanleyDebug
+        self.stanley_debug_sub: Subscriber = self.new_subscription(
+            StanleyDebug,
+            f"/paf/{self.role_name}/stanley_debug",
+            self.__get_stanley_debug,
+            qos_profile=1)
+
+        # Subscriber for vehicle_steer
         self.vehicle_steer_sub: Subscriber = self.new_subscription(
             CarlaEgoVehicleControl,
             f'/carla/{self.role_name}/vehicle_control_cmd',
@@ -192,11 +200,12 @@ class Acting_Debugger(CompatibleNode):
         self.__throttles = []
 
         self.__current_headings = []
-        self.__yaws = []
 
         self.__purepursuit_steers = []
         self.__stanley_steers = []
         self.__vehicle_steers = []
+
+        self.stanley_cross_errors = []
 
         self.positions = []
 
@@ -205,7 +214,7 @@ class Acting_Debugger(CompatibleNode):
         self.path_msg.header.frame_id = "global"
 
         # Generate Trajectory as selected in TRAJECTORY_TYPE
-        # Spawncoords at the simulationstart TODO: get from position
+        # Spawncoords at the simulationstart
         startx = 984.5
         starty = -5442.0
 
@@ -242,7 +251,7 @@ class Acting_Debugger(CompatibleNode):
             length = np.pi * 2 * cycles
             step = length / resolution  # spacing between values
             my_wave = np.sin(np.arange(0, length, step))
-            x_wave = 0.15 * my_wave  # to have a serpentine line with +/-1.5 m
+            x_wave = 1.5 * my_wave  # to have a serpentine line with +/-1.5 m
             # to have the serpentine line drive around the middle
             # of the road/start point of the car
             x_wave += startx
@@ -258,6 +267,50 @@ class Acting_Debugger(CompatibleNode):
             # add a long straight path after the serpentines
             trajectory_wave.append((startx, starty-200))
             self.current_trajectory = trajectory_wave
+            self.updated_trajectory(self.current_trajectory)
+
+        elif (TRAJECTORY_TYPE == 3):  # 2 Lane Switches
+            self.current_trajectory = [
+                (startx, starty),
+                (startx-0.5, starty-10),
+                (startx-0.5, starty-20),
+
+                (startx-0.4, starty-21),
+                (startx-0.3, starty-22),
+                (startx-0.2, starty-23),
+                (startx-0.1, starty-24),
+                (startx, starty-25),
+                (startx+0.1, starty-26),
+                (startx+0.2, starty-27),
+                (startx+0.3, starty-28),
+                (startx+0.4, starty-29),
+                (startx+0.5, starty-30),
+                (startx+0.6, starty-31),
+                (startx+0.7, starty-32),
+                (startx+0.8, starty-33),
+                (startx+0.9, starty-34),
+                (startx+1.0, starty-35),
+                (startx+1.0, starty-50),
+
+                (startx+1.0, starty-51),
+                (startx+0.9, starty-52),
+                (startx+0.8, starty-53),
+                (startx+0.7, starty-54),
+                (startx+0.6, starty-55),
+                (startx+0.5, starty-56),
+                (startx+0.4, starty-57),
+                (startx+0.3, starty-58),
+                (startx+0.2, starty-59),
+                (startx+0.1, starty-60),
+                (startx, starty-61),
+                (startx-0.1, starty-62),
+                (startx-0.2, starty-63),
+                (startx-0.3, starty-64),
+                (startx-0.4, starty-65),
+                (startx-0.5, starty-66),
+
+                (startx-0.5, starty-100),
+                ]
             self.updated_trajectory(self.current_trajectory)
 
     def updated_trajectory(self, target_trajectory):
@@ -277,7 +330,7 @@ class Acting_Debugger(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 35  # why??
+            pos.pose.position.z = 704  # why??
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
@@ -298,9 +351,6 @@ class Acting_Debugger(CompatibleNode):
     def __get_heading(self, data: Float32):
         self.__current_headings.append(float(data.data))
 
-    def __get_yaw(self, data: Float32):
-        self.__yaws.append(float(data.data))
-
     def __get_target_velocity(self, data: Float32):
         self.__max_velocities.append(float(data.data))
 
@@ -312,6 +362,9 @@ class Acting_Debugger(CompatibleNode):
 
     def __get_stanley_steer(self, data: Float32):
         self.__stanley_steers.append(float(data.data))
+
+    def __get_stanley_debug(self, data: StanleyDebug):
+        self.stanley_cross_errors.append(data.cross_err)
 
     def __get_purepursuit_steer(self, data: Float32):
         r = 1 / (math.pi / 2)
@@ -399,7 +452,7 @@ class Acting_Debugger(CompatibleNode):
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
                 print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
-                # print(self.current_trajectory)
+                print(self.current_trajectory)
                 print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
@@ -413,8 +466,8 @@ class Acting_Debugger(CompatibleNode):
                 # print(self.__stanley_steers)
                 # print(self.__vehicle_steers)
                 # print(self.__current_headings)
-                # print(self.__yaws)
-                # print(self.positions)
+                print(self.positions)
+                # print(self.stanley_cross_errors)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)
