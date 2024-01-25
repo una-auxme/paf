@@ -4,22 +4,23 @@ from math import atan, sin
 
 import ros_compatibility as roscomp
 from carla_msgs.msg import CarlaSpeedometer
-from geometry_msgs.msg import Point, PoseStamped, Pose
+from geometry_msgs.msg import Point, PoseStamped
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32
 from acting.msg import Debug
-import rospy
-# import numpy as np
+import numpy as np
 
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
 
-MIN_LD_V: float = 3.0
-LOOK_AHEAD_DIS = 3
-MIN_L_A_DIS = 1
-MAX_L_A_DIS = 15
+# Tuneable Values
+K_LAD = 0.85
+MIN_LA_DISTANCE = 2
+MAX_LA_DISTANCE = 25
+# Constants
+L_VEHICLE = 2.85  # wheelbase
 
 
 class PurePursuitController(CompatibleNode):
@@ -60,24 +61,9 @@ class PurePursuitController(CompatibleNode):
             f"/paf/{self.role_name}/pure_pursuit_steer",
             qos_profile=1)
 
-        self.pure_pursuit_steer_target_pub: Publisher = self.new_publisher(
-            Pose,
-            f"/paf/{self.role_name}/pure_pursuit_steer_target_wp",
-            qos_profile=1)
-
         self.debug_publisher: Publisher = self.new_publisher(
             Debug,
             f"/paf/{self.role_name}/pure_p_debug",
-            qos_profile=1)
-
-        self.targetwp_publisher: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/current_target_wp",
-            qos_profile=1)
-
-        self.currentx_publisher: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/current_x",
             qos_profile=1)
 
         self.__position: (float, float) = None  # x, y
@@ -109,6 +95,7 @@ class PurePursuitController(CompatibleNode):
                 self.logdebug("PurePursuitController hasn't received a path "
                               "yet and can therefore not publish steering")
                 return
+
             if self.__position is None:
                 self.logdebug("PurePursuitController hasn't received the "
                               "position of the vehicle yet "
@@ -126,6 +113,7 @@ class PurePursuitController(CompatibleNode):
                               "velocity of the vehicle yet "
                               "and can therefore not publish steering")
                 return
+
             self.pure_pursuit_steer_pub.publish(self.__calculate_steer())
 
         self.new_timer(self.control_loop_rate, loop)
@@ -136,22 +124,10 @@ class PurePursuitController(CompatibleNode):
         Calculates the steering angle based on the current information
         :return:
         """
-        l_vehicle = 2.85  # wheelbase
-        k_ld = 0.1  # TODO: tune
-        look_ahead_dist = LOOK_AHEAD_DIS  # offset so that ld is never zero
-
-        if self.__velocity < 0:
-            # backwards driving is not supported, TODO why check this here?
-            return 0.0
-        elif round(self.__velocity, 1) < MIN_LD_V:
-            # Offset for low velocity state
-            look_ahead_dist += 0.0  # no offset
-        else:
-            look_ahead_dist += k_ld * (self.__velocity - MIN_LD_V)
-
-        # look_ahead_dist = np.clip(k_ld * self.__velocity,
-        # MIN_L_A_DIS, MAX_L_A_DIS)
-
+        # Simplified alot to increase understanding
+        # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
+        look_ahead_dist = np.clip(K_LAD * self.__velocity,
+                                  MIN_LA_DISTANCE, MAX_LA_DISTANCE)
         # Get the target position on the trajectory in look_ahead distance
         self.__tp_idx = self.__get_target_point_index(look_ahead_dist)
         target_wp: PoseStamped = self.__path.poses[self.__tp_idx]
@@ -164,11 +140,9 @@ class PurePursuitController(CompatibleNode):
         target_vector_heading = vector_angle(target_v_x, target_v_y)
         # Get the error between current heading and target heading
         alpha = target_vector_heading - self.__heading
-        # Steering_angle is arctan (l_vehicle / R)
-        # R is look_ahead_dist / 2 * sin(alpha)
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
 
-        steering_angle = atan((2 * l_vehicle * sin(alpha)) / look_ahead_dist)
+        steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
 
         # for debugging ->
         debug_msg = Debug()
@@ -178,21 +152,6 @@ class PurePursuitController(CompatibleNode):
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
         # <-
-        self.pure_pursuit_steer_target_pub.publish(target_wp.pose)
-
-        # not beautiful but works, eliminates the first
-        # second because for some reason
-        # the positional data from the GNSS is completely broken at the start
-        if not self.time_set:
-            self.checkpoint_time = rospy.get_time()
-            self.time_set = True
-        if not self.checker and (self.checkpoint_time < rospy.get_time() - 1):
-            self.checker = True
-
-        if self.checker:
-            self.targetwp_publisher.publish((target_wp.pose.position.x-984.5))
-            self.currentx_publisher.publish(self.__position[0]-984.5)
-
         return steering_angle
 
     def __set_position(self, data: PoseStamped, min_diff=0.001):
