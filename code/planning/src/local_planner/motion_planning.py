@@ -42,7 +42,7 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 1)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.1)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
@@ -95,10 +95,10 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         # Publisher
-        self.traj_pub: Publisher = self.new_publisher(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            qos_profile=1)
+        # self.traj_pub: Publisher = self.new_publisher(
+        #     Path,
+        #     f"/paf/{self.role_name}/trajectory",
+        #     qos_profile=1)
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/target_velocity",
@@ -333,7 +333,6 @@ class MotionPlanning(CompatibleNode):
 
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
-        self.update_target_speed(self.__acc_speed, self.__curr_behavior)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -433,10 +432,14 @@ class MotionPlanning(CompatibleNode):
         :return:
         """
 
-        # def loop(timer_event=None):
-        #     self.__calc_corner_points()
+        def loop(timer_event=None):
+            if (self.__curr_behavior is not None and
+                    self.__acc_speed is not None and
+                    self.__corners is not None):
+                self.update_target_speed(self.__acc_speed,
+                                         self.__curr_behavior)
 
-        # self.new_timer(self.control_loop_rate, loop)
+        self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 
