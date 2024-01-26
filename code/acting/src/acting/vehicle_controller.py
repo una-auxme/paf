@@ -69,7 +69,7 @@ class VehicleController(CompatibleNode):
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
-            self.__emergency_break,
+            self.__set_emergency,
             qos_profile=QoSProfile(depth=10,
                                    durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
@@ -151,11 +151,14 @@ class VehicleController(CompatibleNode):
         def loop(timer_event=None) -> None:
             """
             Collects all data received and sends a CarlaEgoVehicleControl msg.
+            The Leaderboard expects a msg every 0.05 seconds
+            OTHERWISE IT WILL LAG REALLY BADLY
             :param timer_event: Timer event from ROS
             :return:
             """
-            if self.__emergency:  # emergency is already handled in
-                # __emergency_break()
+            if self.__emergency:
+                # emergency is already handled in  __emergency_brake()
+                self.__emergency_brake(True)
                 return
             if (self.controller_testing):
                 if (self.controller_selected_debug == 2):
@@ -214,9 +217,11 @@ class VehicleController(CompatibleNode):
         self.pidpoint_publisher.publish(steering_float)  # TODO needed?
         return steering_float
 
-    def __emergency_break(self, data) -> None:
+    def __set_emergency(self, data) -> None:
         """
-        Executes emergency stop
+        In case of an emergency set the emergency flag to True ONCE
+        The emergency flag can be ONLY be set to False if velocity is > 0.1
+        by __get_velocity
         :param data:
         :return:
         """
@@ -224,17 +229,38 @@ class VehicleController(CompatibleNode):
             return
         if self.__emergency:  # emergency was already triggered
             return
-        self.logerr("Emergency breaking engaged")
+
+        self.logerr("Emergency braking engaged")
         self.__emergency = True
+
+    def __emergency_brake(self, active) -> None:
+        """
+        Executes emergency stop
+        :param data:
+        :return:
+        """
+        if not self.__emergency:
+            return
         message = CarlaEgoVehicleControl()
-        message.throttle = 1
-        message.steer = 1  # todo: maybe use 30 degree angle
-        message.brake = 1
-        message.reverse = True
-        message.hand_brake = True
-        message.manual_gear_shift = False
-        message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                     from_sec=True)
+        if active:
+            message.throttle = 1
+            message.steer = 1
+            message.brake = 1
+            message.reverse = True
+            message.hand_brake = True
+            message.manual_gear_shift = False
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
+                                                         from_sec=True)
+        else:
+            self.__emergency = False
+            message.throttle = 0
+            message.steer = 0
+            message.brake = 1
+            message.reverse = False
+            message.hand_brake = False
+            message.manual_gear_shift = False
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
+                                                         from_sec=True)
         self.control_publisher.publish(message)
 
     def __get_velocity(self, data: CarlaSpeedometer) -> None:
@@ -248,18 +274,7 @@ class VehicleController(CompatibleNode):
         if not self.__emergency:  # nothing to do in this case
             return
         if data.speed < 0.1:  # vehicle has come to a stop
-            self.__emergency = False
-            message = CarlaEgoVehicleControl()
-            message.throttle = 0
-            message.steer = 0
-            message.brake = 1
-            message.reverse = False
-            message.hand_brake = False
-            message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
-            self.control_publisher.publish(message)
-
+            self.__emergency_brake(False)
             self.loginfo("Emergency breaking disengaged "
                          "(Emergency breaking has been executed successfully)")
             for _ in range(7):  # publish 7 times just to be safe
