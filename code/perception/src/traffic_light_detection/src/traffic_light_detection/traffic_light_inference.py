@@ -64,7 +64,7 @@ class TrafficLightInference:
         else:
             out = self.model(img)
         _, prediction = torch.max(out.data, 1)
-        return prediction.item()
+        return (prediction.item(), out.data.cpu().numpy())
 
 
 # main function for testing purposes
