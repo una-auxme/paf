@@ -257,16 +257,16 @@ class PrePlanner(CompatibleNode):
         :return:
         """
 
-        def loop(timer_event=None):
-            if len(self.path_backup.poses) < 1:
-                return
+        # def loop(timer_event=None):
+        #     if len(self.path_backup.poses) < 1:
+        #         return
 
-            # Continuously update paths time to update car position in rviz
-            # TODO: remove next lines when local planner exists
-            self.path_backup.header.stamp = rospy.Time.now()
-            self.path_pub.publish(self.path_backup)
+        #     # # Continuously update paths time to update car position in rviz
+        #     # # TODO: remove next lines when local planner exists
+        #     self.path_backup.header.stamp = rospy.Time.now()
+        #     self.path_pub.publish(self.path_backup)
 
-        self.new_timer(self.control_loop_rate, loop)
+        # self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 

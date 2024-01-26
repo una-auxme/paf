@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# import rospy
 # import tf.transformations
 import ros_compatibility as roscomp
 import rospy
@@ -10,8 +9,7 @@ from rospy import Publisher, Subscriber
 from std_msgs.msg import String, Float32, Bool
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-
-import carla
+from carla_msgs.msg import CarlaSpeedometer
 import numpy as np
 import math
 
@@ -24,15 +22,17 @@ from behavior_agent.behaviours import behavior_speed as bs
 from scipy.spatial.transform import Rotation
 
 
+
 def convert_to_ms(speed):
     return speed / 3.6
 
 
-def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array):
+def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array, speed: float):
     """calculate the position of the obstacle in the global coordinate system
         based on ego position, heading and distance
 
     Args:
+        speed (float): Speed of the ego vehicle
         distance (float): Distance to the obstacle
         heading (float): Ego vehivle heading
         ego_pos (np.array): Position in [x, y, z]
@@ -44,13 +44,20 @@ def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array):
 
     # Create distance vector with 0 rotation
     relative_position_local = np.array([distance, 0, 0])
-
+    
+    # speed vector
+    speed_vector = rotation_matrix.apply(np.array([speed, 0, 0]))
     # Rotate distance vector to match heading
     absolute_position_local = rotation_matrix.apply(relative_position_local)
 
     # Add egomposition vector with distance vetor to get absolute position
-    vehicle_position_global = ego_pos + absolute_position_local
-    return vehicle_position_global
+    vehicle_position_global_start = ego_pos + absolute_position_local
+
+    length = np.array([3, 0, 0])
+    length_vector = rotation_matrix.apply(length)
+    vehicle_position_global_end = vehicle_position_global_start + length_vector
+
+    return vehicle_position_global_start, vehicle_position_global_end, speed_vector
 
 
 class MotionPlanning(CompatibleNode):
@@ -64,14 +71,34 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.5)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.3)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
+        self.published = False
+        self.current_pos = None
+        self.current_heading = None
+        self.trajectory = None
+        self.overtaking = False
+        self.overtake_start = rospy.get_rostime()
+        self.current_wp = None
+        self.enhanced_path = None
+        self.current_speed = None
+        self.speed_limit = None
         # Subscriber
+        self.speed_limit_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/speed_limit",
+            self.__set_speed_limit,
+            qos_profile=1)
+        self.velocity_sub: Subscriber = self.new_subscription(
+            CarlaSpeedometer,
+            f"/carla/{self.role_name}/Speed",
+            self.__get_current_velocity,
+            qos_profile=1)
         self.head_sub = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
@@ -130,6 +157,11 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
+        self.wp_subs = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_wp",
+            self.__set_wp,
+            qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
@@ -137,12 +169,30 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
-        self.published = False
-        self.current_pos = None
-        self.current_heading = None
-        self.trajectory = None
-        self.overtaking = False
-        self.overtake_start = None
+
+    def __set_speed_limit(self, data: Float32):
+        """Set current speed limit
+
+        Args:
+            data (Float32): Current speed limit
+        """
+        self.speed_limit = data.data
+
+    def __get_current_velocity(self, data: CarlaSpeedometer):
+        """Get current velocity from CarlaSpeedometer
+
+        Args:
+            data (CarlaSpeedometer): Current velocity
+        """
+        self.current_speed = float(data.speed)
+
+    def __set_wp(self, data: Float32):
+        """Recieve current waypoint index from ACC
+
+        Args:
+            data (Float32): Waypoint index
+        """
+        self.current_wp = data.data
 
     def __set_heading(self, data: Float32):
         """Set current Heading
@@ -184,42 +234,79 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.z])
 
     def change_trajectory(self, data: Bool):
+        import carla
+        import os
+        CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
+        CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+
+
+        client = carla.Client(CARLA_HOST, CARLA_PORT)
+
+        world = client.get_world()
+        world.wait_for_tick()
+
+
+        blueprint_library = world.get_blueprint_library()
+        # bp = blueprint_library.filter('vehicle.*')[0]
+        # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
+        bp = blueprint_library.filter("model3")[0]
+        for actor in world.get_actors():
+            if actor.attributes.get('role_name') == "hero":
+                ego_vehicle = actor
+                break
+
+        spawnPoint = carla.Transform(ego_vehicle.get_location() + carla.Location(y=25), ego_vehicle.get_transform().rotation)
+        vehicle = world.spawn_actor(bp, spawnPoint)
+
+        vehicle.set_autopilot(False)
+        # vehicle.set_location(loc)
+        self.logerr("spawned vehicle: " + str(vehicle.get_location()))
+        # coords = vehicle.get_location()
+        # get spectator
+        spectator = world.get_spectator()
+        # set spectator to follow ego vehicle with offset
+        spectator.set_transform(
+            carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
+                            carla.Rotation(pitch=-90)))
+        print(spectator.get_location())
+
         self.overtaking = True
         self.overtake_start = rospy.get_rostime()
-        index_car = 20
-        limit_waypoints = 100
+        # index_car = 20
+        limit_waypoints = 60
         data = self.trajectory
         self.logerr("Trajectory chagen started")
         np_array = np.array(data.poses)
-        obstacle_position = approx_obstacle_pos(20, self.current_heading, self.current_pos)
-        selection = np_array[:limit_waypoints]
+    
+        obstacle_position = approx_obstacle_pos(20, self.current_heading, self.current_pos, self.current_speed-5)
+        self.logerr("obstacle position " + str(obstacle_position))
+        selection = np_array[int(self.current_wp):int(self.current_wp + limit_waypoints)]
         waypoints = self.convert_pose_to_array(selection)
         self.logerr("waypoints " + str(waypoints))
-        obs = np.array([[waypoints[index_car][0]-0.5, waypoints[index_car][1], waypoints[index_car][0]+0.5, waypoints[index_car][1]-2]])
-        self.logerr("obs " + str(obs))
-        pos_lat_lon = self._location_to_gps(0,0, waypoints[0][0], waypoints[0][1])
-        self.logerr("Distance: 40, Heading: " + str(self.current_heading) + ", Position: " + str(self.current_pos) + "\napprox position: " + str(approx_obstacle_pos(40, self.current_heading, self.current_pos)))
+        # obs = np.array([[coords.x, coords.y, coords.x, coords.y-3]])
+        # self.logerr("obs " + str(obs))
+        pos_lat_lon = self._location_to_gps(0,0, self.current_pos[0], self.current_pos[1])
         initial_conditions = {
-            'ps': pos_lat_lon["lon"],
-            'target_speed': 11,
-            'pos': waypoints[0],
-            'vel': np.array([5, 1]),
+            'ps': pos_lat_lon['lon'],
+            'target_speed': self.target_speed,
+            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
+            'vel': obstacle_position[2][:2],
             'wp': waypoints,
-            'obs': obs
+            'obs': np.array([[obstacle_position[0][0], obstacle_position[0][1], obstacle_position[1][0], obstacle_position[1][1]]])
         }
         hyperparameters = {
-            "max_speed": 25.0,
-            "max_accel": 15.0,
-            "max_curvature": 20.0,
-            "max_road_width_l": 1.5,
-            "max_road_width_r": 0.5,
-            "d_road_w": 0.5,
+            "max_speed": self.speed_limit,
+            "max_accel": 4.0,
+            "max_curvature": 30.0,
+            "max_road_width_l": 0.1,
+            "max_road_width_r": 3.5,
+            "d_road_w": 0.2,
             "dt": 0.2,
-            "maxt": 20.0,
+            "maxt": 17.0,
             "mint": 6.0,
             "d_t_s": 0.5,
             "n_s_sample": 2.0,
-            "obstacle_clearance": 0.1,
+            "obstacle_clearance": 1.5,
             "kd": 1.0,
             "kv": 0.1,
             "ka": 0.1,
@@ -228,16 +315,14 @@ class MotionPlanning(CompatibleNode):
             "ko": 0.1,
             "klat": 1.0,
             "klon": 1.0,
-            "num_threads": 0,  # set 0 to avoid using threaded algorithm
+            "num_threads": 1,  # set 0 to avoid using threaded algorithm
         }
         result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
             speeds_y, misc, costs, success = run_fot(initial_conditions,
-                                                        hyperparameters)
+                                                     hyperparameters)
+        self.logerr("Success: " + str(success))
         if success:
-            print("Success!")
-            print("result_x: ", result_x)
-            print("result_y: ", result_y)
-            self.logerr("result yaw: " + str(iyaw))
+            self.logerr("Success")
             result = []
             for i in range(len(result_x)-1):
                 position = Point(result_x[i], result_y[i], 0)
@@ -248,16 +333,15 @@ class MotionPlanning(CompatibleNode):
                                         z=quaternion[2], w=quaternion[3])
                 pose = Pose(position, orientation)
                 pos = PoseStamped()
-                pos.header.stamp = rospy.Time.now()
                 pos.header.frame_id = "global"
                 pos.pose = pose
                 result.append(pos)
             path = Path()
             path.header.stamp = rospy.Time.now()
             path.header.frame_id = "global"
-            path.poses = result + list(np_array[limit_waypoints:])
-            self.logerr(path)
-            self.traj_pub.publish(path)
+            path.poses = list(np_array[:int(self.current_wp)]) + result + list(np_array[int(self.current_wp + limit_waypoints):])
+            self.enhanced_path = path
+            self.logerr("Trajectory change finished")
 
     def __set_trajectory(self, data: Path):
         """get current trajectory global planning
@@ -266,8 +350,7 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.trajectory = data
-        if not self.overtaking:
-            self.traj_pub.publish(data)
+        self.logerr("Trajectory recieved: " + str(self.trajectory))
 
     def convert_pose_to_array(self, poses: np.array):
         """convert pose array to numpy array
@@ -413,12 +496,26 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            self.update_target_speed(self.__acc_speed, self.__curr_behavior)
-            if self.overtake_start is None:
+            if self.trajectory is None or self.__acc_speed is None or \
+                    self.__curr_behavior is None:
                 return
-            if rospy.get_rostime() - self.overtake_start < rospy.Duration(10):
-                self.logerr("overtake finished")
-                self.overtaking = False
+            
+            # self.update_target_speed(self.__acc_speed, self.__curr_behavior)
+            # self.velocity_pub.publish(10)
+
+            # if self.overtaking and rospy.get_rostime() - self.overtake_start < rospy.Duration(30):
+            #     self.logerr("overtake finished")
+            #     self.overtaking = False
+            
+            # if len(self.trajectory.poses) < 1:
+            #     self.loginfo("No trajectory recieved")
+            #     return
+            if self.overtaking and self.enhanced_path is not None:
+                self.enhanced_path.header.stamp = rospy.Time.now()
+                self.traj_pub.publish(self.enhanced_path)
+            else:
+                self.trajectory.header.stamp = rospy.Time.now()
+                self.traj_pub.publish(self.trajectory)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -430,7 +527,6 @@ if __name__ == "__main__":
     :param args:
     """
     roscomp.init('MotionPlanning')
-
     try:
         node = MotionPlanning()
         node.run()
