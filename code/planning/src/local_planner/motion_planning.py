@@ -17,7 +17,7 @@ import numpy as np
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
     import run_fot
 from perception.msg import Waypoint, LaneChange
-import planning
+import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
 # from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
@@ -185,7 +185,7 @@ class MotionPlanning(CompatibleNode):
                 result = []
                 for i in range(len(result_x)):
                     position = Point(result_x[i], result_y[i], 703)
-                    quat = tf.transformations.quaternion_from_euler(0, 0, 
+                    quat = tf.transformations.quaternion_from_euler(0, 0,
                                                                     iyaw[i])
                     orientation = Quaternion(x=quat[0], y=quat[1],
                                              z=quat[2], w=quat[3])
@@ -205,7 +205,7 @@ class MotionPlanning(CompatibleNode):
         coords = self.convert_pose_to_array(np.array(self.__first_trajectory))
         x_values = np.array([point[0] for point in coords])
         y_values = np.array([point[1] for point in coords])
-  
+
         angles = np.arctan2(np.diff(y_values), np.diff(x_values))
         angles = np.rad2deg(angles)
         angles[angles > 0] -= 360  # Convert for angles between 0 - 360 degree
@@ -218,7 +218,7 @@ class MotionPlanning(CompatibleNode):
         coords_of_curve = [coords[i] for i in sublist]
 
         return coords_of_curve
-    
+
     def create_sublists(self, points, proximity=5):
         sublists = []
         current_sublist = []
@@ -298,7 +298,7 @@ class MotionPlanning(CompatibleNode):
         """
         result_array = np.empty((len(poses), 2))
         for pose in range(len(poses)):
-            result_array[pose] = np.array([poses[pose].pose.position.x, 
+            result_array[pose] = np.array([poses[pose].pose.position.x,
                                            poses[pose].pose.position.y])
         return result_array
 
@@ -414,7 +414,7 @@ class MotionPlanning(CompatibleNode):
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
         return v_stop
-    
+
     def __calc_virtual_change_point(self) -> float:
         if self.__change_point[0] != np.inf and self.__change_point[1]:
             return self.__change_point[0]
