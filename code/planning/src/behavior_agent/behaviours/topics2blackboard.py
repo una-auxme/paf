@@ -6,7 +6,6 @@ import py_trees_ros
 
 from std_msgs.msg import Float32, Bool
 from carla_msgs.msg import CarlaSpeedometer
-from sensor_msgs.msg import Range
 from geometry_msgs.msg import PoseStamped
 
 from mock.msg import Stop_sign
