@@ -270,12 +270,11 @@ class MotionPlanning(CompatibleNode):
         # self.logerr(distance_corner)
 
         if self.__in_corner:
-            self.loginfo("In Corner")
-
             distance_end = euclid_dist(pos, corner[0])
             if distance_end > distance_corner + 2:
                 self.__in_corner = False
                 self.__corners.pop(0)
+                self.loginfo("End Corner")
                 return self.__get_speed_cruise()
             else:
                 return map_corner(distance_corner)
@@ -283,6 +282,7 @@ class MotionPlanning(CompatibleNode):
         distance_start = euclid_dist(pos, corner[0])
         if distance_start < 3:
             self.__in_corner = True
+            self.loginfo("Start Corner")
             return map_corner(distance_corner)
         else:
             return self.__get_speed_cruise()
@@ -323,7 +323,7 @@ class MotionPlanning(CompatibleNode):
         # self.logerr("target speed: " + str(self.target_speed))
         corner_speed = self.get_cornering_speed()
         self.target_speed = min(self.target_speed, corner_speed)
-        # self.target_speed = min(self.target_speed, 8)
+        self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
@@ -380,6 +380,10 @@ class MotionPlanning(CompatibleNode):
             speed = bs.lc_app_init.speed
         elif behavior == bs.lc_app_blocked.name:
             speed = self.__calc_speed_to_stop_lanechange()
+        elif behavior == bs.lc_app_free.name:
+            speed = bs.lc_app_free.speed
+        elif behavior == bs.lc_wait.name:
+            speed = bs.lc_wait.speed
         elif behavior == bs.lc_enter_init.name:
             speed = bs.lc_enter_init.speed
         elif behavior == bs.lc_exit.name:
@@ -407,11 +411,13 @@ class MotionPlanning(CompatibleNode):
     def __calc_speed_to_stop_lanechange(self) -> float:
         stopline = self.__calc_virtual_change_point()
 
-        v_stop = max(convert_to_ms(5.),
-                     convert_to_ms((stopline / 30) ** 1.5
+        v_stop = max(convert_to_ms(10.),
+                     convert_to_ms((stopline / 30)
                                    * 50))
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
+        if stopline < 5.0:
+            v_stop = 0.0
         return v_stop
 
     def __calc_virtual_change_point(self) -> float:

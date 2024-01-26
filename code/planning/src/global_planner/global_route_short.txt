@@ -4,7 +4,7 @@ header:
     secs: 1674304465
     nsecs: 171659708
   frame_id: "/map"
-road_options: [4, 2, 4, 3, 4]
+road_options: [4, 2, 4, 5, 3, 4]
 poses:
   -
     position:
@@ -29,6 +29,16 @@ poses:
   -
     position:
       x: 974.2578735351562
+      y: -5575.4443359375
+      z: 370.6752014160156
+    orientation:
+      x: 0
+      y: 0
+      z: 0
+      w: 0
+  -
+      position:
+      x: 950.2578735351562
       y: -5575.4443359375
       z: 370.6752014160156
     orientation:

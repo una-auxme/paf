@@ -30,7 +30,7 @@ int_wait = Behavior("int_wait", 0)
 
 # Enter
 
-int_enter = Behavior("int_enter_no_light", convert_to_ms(50.0))
+int_enter = Behavior("int_enter", convert_to_ms(50.0))
 
 # Exit
 
@@ -47,7 +47,10 @@ lc_app_init = Behavior("lc_app_init", convert_to_ms(30.0))
 # TODO: Find out purpose of v_stop in lane_change (lines: 105 - 128)
 lc_app_blocked = Behavior("lc_app_blocked", -2)
 
+lc_app_free = Behavior("lc_app_free", convert_to_ms(20))
+
 # Wait
+lc_wait = Behavior("lc_wait", 0)
 
 # Has a publisher but doesnt publish anything ??
 
