@@ -19,45 +19,11 @@ from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
 from perception.msg import Waypoint, LaneChange
 import planning
 from behavior_agent.behaviours import behavior_speed as bs
-from scipy.spatial.transform import Rotation
 
+from utils import convert_to_ms, approx_obstacle_pos, \
+    hyperparameters, location_to_gps
 
-
-def convert_to_ms(speed):
-    return speed / 3.6
-
-
-def approx_obstacle_pos(distance: float, heading: float, ego_pos: np.array, speed: float):
-    """calculate the position of the obstacle in the global coordinate system
-        based on ego position, heading and distance
-
-    Args:
-        speed (float): Speed of the ego vehicle
-        distance (float): Distance to the obstacle
-        heading (float): Ego vehivle heading
-        ego_pos (np.array): Position in [x, y, z]
-
-    Returns:
-        np.array: approximated position of the obstacle
-    """
-    rotation_matrix = Rotation.from_euler('z', heading)
-
-    # Create distance vector with 0 rotation
-    relative_position_local = np.array([distance, 0, 0])
-    
-    # speed vector
-    speed_vector = rotation_matrix.apply(np.array([speed, 0, 0]))
-    # Rotate distance vector to match heading
-    absolute_position_local = rotation_matrix.apply(relative_position_local)
-
-    # Add egomposition vector with distance vetor to get absolute position
-    vehicle_position_global_start = ego_pos + absolute_position_local
-
-    length = np.array([3, 0, 0])
-    length_vector = rotation_matrix.apply(length)
-    vehicle_position_global_end = vehicle_position_global_start + length_vector
-
-    return vehicle_position_global_start, vehicle_position_global_end, speed_vector
+import matplotlib.pyplot as plt
 
 
 class MotionPlanning(CompatibleNode):
@@ -202,28 +168,6 @@ class MotionPlanning(CompatibleNode):
         """
         self.current_heading = data.data
 
-    def _location_to_gps(self, lat_ref, lon_ref, x, y):
-        """
-        Convert from world coordinates to GPS coordinates
-        :param lat_ref: latitude reference for the current map
-        :param lon_ref: longitude reference for the current map
-        :param location: location to translate
-        :return: dictionary with lat, lon and height
-        """
-
-        EARTH_RADIUS_EQUA = 6378137.0   # pylint: disable=invalid-name
-        scale = math.cos(lat_ref * math.pi / 180.0)
-        mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
-        my = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + lat_ref) * math.pi / 360.0))
-        mx += x
-        my -= y
-
-        lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
-        lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
-        z = 703
-
-        return {'lat': lat, 'lon': lon, 'z': z}
-
     def __set_current_pos(self, data: PoseStamped):
         """set current position
         Args:
@@ -234,97 +178,92 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.z])
 
     def change_trajectory(self, data: Bool):
-        import carla
-        import os
-        CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
-        CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+        # import carla
+        # import os
+        # CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
+        # CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
 
 
-        client = carla.Client(CARLA_HOST, CARLA_PORT)
+        # client = carla.Client(CARLA_HOST, CARLA_PORT)
 
-        world = client.get_world()
-        world.wait_for_tick()
+        # world = client.get_world()
+        # world.wait_for_tick()
 
 
-        blueprint_library = world.get_blueprint_library()
-        # bp = blueprint_library.filter('vehicle.*')[0]
-        # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
-        bp = blueprint_library.filter("model3")[0]
-        for actor in world.get_actors():
-            if actor.attributes.get('role_name') == "hero":
-                ego_vehicle = actor
-                break
+        # blueprint_library = world.get_blueprint_library()
+        # # bp = blueprint_library.filter('vehicle.*')[0]
+        # # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
+        # bp = blueprint_library.filter("model3")[0]
+        # for actor in world.get_actors():
+        #     if actor.attributes.get('role_name') == "hero":
+        #         ego_vehicle = actor
+        #         break
 
-        spawnPoint = carla.Transform(ego_vehicle.get_location() + carla.Location(y=25), ego_vehicle.get_transform().rotation)
-        vehicle = world.spawn_actor(bp, spawnPoint)
+        # spawnPoint = carla.Transform(ego_vehicle.get_location() + carla.Location(y=25), ego_vehicle.get_transform().rotation)
+        # vehicle = world.spawn_actor(bp, spawnPoint)
 
-        vehicle.set_autopilot(False)
-        # vehicle.set_location(loc)
-        self.logerr("spawned vehicle: " + str(vehicle.get_location()))
-        # coords = vehicle.get_location()
-        # get spectator
-        spectator = world.get_spectator()
-        # set spectator to follow ego vehicle with offset
-        spectator.set_transform(
-            carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
-                            carla.Rotation(pitch=-90)))
-        print(spectator.get_location())
+        # vehicle.set_autopilot(False)
+        # # vehicle.set_location(loc)
+        # self.logerr("spawned vehicle: " + str(vehicle.get_location()))
+        # # coords = vehicle.get_location()
+        # # get spectator
+        # spectator = world.get_spectator()
+        # # set spectator to follow ego vehicle with offset
+        # spectator.set_transform(
+        #     carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
+        #                     carla.Rotation(pitch=-90)))
+        # print(spectator.get_location())
 
         self.overtaking = True
         self.overtake_start = rospy.get_rostime()
         # index_car = 20
-        limit_waypoints = 60
+        limit_waypoints = 100
         data = self.trajectory
         self.logerr("Trajectory chagen started")
         np_array = np.array(data.poses)
-    
-        obstacle_position = approx_obstacle_pos(20, self.current_heading, self.current_pos, self.current_speed-5)
+
+        obstacle_position = approx_obstacle_pos(20, self.current_heading, self.current_pos, self.current_speed)
         self.logerr("obstacle position " + str(obstacle_position))
+        self.logerr("current position " + str(self.current_pos))
+        self.logerr("current heading " + str(self.current_heading))
+        self.logerr("current waypoint " + str(self.current_wp))
         selection = np_array[int(self.current_wp):int(self.current_wp + limit_waypoints)]
         waypoints = self.convert_pose_to_array(selection)
+        trajectory_np = self.convert_pose_to_array(np_array)
+        np.save("trajectory.npy", trajectory_np)
         self.logerr("waypoints " + str(waypoints))
         # obs = np.array([[coords.x, coords.y, coords.x, coords.y-3]])
         # self.logerr("obs " + str(obs))
-        pos_lat_lon = self._location_to_gps(0,0, self.current_pos[0], self.current_pos[1])
+        pos_lat_lon = location_to_gps(0,0, self.current_pos[0], self.current_pos[1])
         initial_conditions = {
             'ps': pos_lat_lon['lon'],
-            'target_speed': self.target_speed,
+            'target_speed': self.current_speed,
             'pos': np.array([self.current_pos[0], self.current_pos[1]]),
             'vel': obstacle_position[2][:2],
             'wp': waypoints,
             'obs': np.array([[obstacle_position[0][0], obstacle_position[0][1], obstacle_position[1][0], obstacle_position[1][1]]])
         }
-        hyperparameters = {
-            "max_speed": self.speed_limit,
-            "max_accel": 4.0,
-            "max_curvature": 30.0,
-            "max_road_width_l": 0.1,
-            "max_road_width_r": 3.5,
-            "d_road_w": 0.2,
-            "dt": 0.2,
-            "maxt": 17.0,
-            "mint": 6.0,
-            "d_t_s": 0.5,
-            "n_s_sample": 2.0,
-            "obstacle_clearance": 1.5,
-            "kd": 1.0,
-            "kv": 0.1,
-            "ka": 0.1,
-            "kj": 0.1,
-            "kt": 0.1,
-            "ko": 0.1,
-            "klat": 1.0,
-            "klon": 1.0,
-            "num_threads": 1,  # set 0 to avoid using threaded algorithm
-        }
+        
         result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
             speeds_y, misc, costs, success = run_fot(initial_conditions,
                                                      hyperparameters)
-        self.logerr("Success: " + str(success))
+        self.logerr("success: " + str(success))
+        self.logerr("result_x: " + str(result_x))
+        self.logerr("result_y: " + str(result_y))
+        fig, ax = plt.subplots(1, 2)
+
+        ax[0].scatter(waypoints[:, 0], waypoints[:, 1], label="original", color = "blue")
+        ax[0].scatter([obstacle_position[0][ 0], obstacle_position[0][1]],
+                    [obstacle_position[1][0], obstacle_position[1][1]], label="object", color="red")
+        ax[1].scatter(result_x, result_y, label="frenet", color="green")
+        ax[1].scatter([obstacle_position[0][0], obstacle_position[0][1]],
+                    [obstacle_position[1][0], obstacle_position[1][1]], label="object", color="red")
+        plt.legend()
+        plt.show()
         if success:
             self.logerr("Success")
             result = []
-            for i in range(len(result_x)-1):
+            for i in range(len(result_x)):
                 position = Point(result_x[i], result_y[i], 0)
                 quaternion = tf.transformations.quaternion_from_euler(0,
                                                                         0,
@@ -339,7 +278,9 @@ class MotionPlanning(CompatibleNode):
             path = Path()
             path.header.stamp = rospy.Time.now()
             path.header.frame_id = "global"
+            self.logerr("result: " + str(result))
             path.poses = list(np_array[:int(self.current_wp)]) + result + list(np_array[int(self.current_wp + limit_waypoints):])
+            self.logerr("Changed traj: " + str(path.poses))
             self.enhanced_path = path
             self.logerr("Trajectory change finished")
 
@@ -499,7 +440,7 @@ class MotionPlanning(CompatibleNode):
             if self.trajectory is None or self.__acc_speed is None or \
                     self.__curr_behavior is None:
                 return
-            
+            self.velocity_pub.publish(8)
             # self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             # self.velocity_pub.publish(10)
 
