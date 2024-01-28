@@ -255,8 +255,8 @@ class MotionPlanning(CompatibleNode):
             return np.sqrt(sum_sqrt)
 
         def map_corner(dist):
-            if dist < 10:
-                return 5
+            if dist < 8:  # lane_change
+                return 8
             elif dist < 25:
                 return 6
             elif dist < 50:
@@ -323,7 +323,7 @@ class MotionPlanning(CompatibleNode):
         # self.logerr("target speed: " + str(self.target_speed))
         corner_speed = self.get_cornering_speed()
         self.target_speed = min(self.target_speed, corner_speed)
-        self.target_speed = min(self.target_speed, 8)
+        # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)

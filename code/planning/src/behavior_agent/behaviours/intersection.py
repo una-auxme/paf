@@ -290,19 +290,21 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.loginfo(f"Light Counter: {self.green_light_counter}")
                 return py_trees.common.Status.RUNNING
             elif self.red_light_flag and traffic_light_status != "green":
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
-                self.curr_behavior_pub.publish(bs.int_wait.name)
+                rospy.loginfo(f"Light Status: {traffic_light_status}"
+                              "-> prev was red")
                 return py_trees.common.Status.RUNNING
             elif self.green_light_counter >= 6 and \
                     traffic_light_status == "green":
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 return py_trees.common.Status.SUCCESS
             else:
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
-                return py_trees.common.Status.SUCCESS
+                rospy.loginfo(f"Light Status: {traffic_light_status}"
+                              "-> No Traffic Light detected")
 
-        elif not intersection_clear:
+        # Check clear if no traffic light is detected
+        if not intersection_clear:
             rospy.loginfo("Intersection blocked")
+            self.curr_behavior_pub.publish(bs.int_wait.name)
             return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Intersection clear")
