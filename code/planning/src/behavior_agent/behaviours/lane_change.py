@@ -106,7 +106,7 @@ class Approach(py_trees.behaviour.Behaviour):
         #     else:
         #         distance_lidar = None
 
-            distance_lidar = 20  # Remove and adjust to check for cars behind
+            distance_lidar = 10  # Remove and adjust to check for cars behind
 
             if distance_lidar is not None and distance_lidar > 15.0:
                 rospy.loginfo("Change is free not slowing down!")
@@ -134,7 +134,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
         elif speed > convert_to_ms(5.0) and \
-                self.virtual_change_distance < 3.5:
+                self.virtual_change_distance < 3.5 and not self.blocked:
             # running over line
             return py_trees.common.Status.SUCCESS
         else:
@@ -236,7 +236,7 @@ class Wait(py_trees.behaviour.Behaviour):
         # else:
         #     distance_lidar = None
 
-        distance_lidar = 20  # Remove to wait
+        distance_lidar = 10  # Remove to wait
 
         change_clear = False
         if distance_lidar is not None:
