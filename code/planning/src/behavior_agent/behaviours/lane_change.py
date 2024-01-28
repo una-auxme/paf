@@ -1,8 +1,6 @@
 import py_trees
 import numpy as np
 from std_msgs.msg import String
-# from nav_msgs.msg import Odometry
-# from custom_carla_msgs.srv import UpdateLocalPath
 
 import rospy
 
@@ -138,10 +136,6 @@ class Approach(py_trees.behaviour.Behaviour):
         elif speed > convert_to_ms(5.0) and \
                 self.virtual_change_distance < 3.5:
             # running over line
-            return py_trees.common.Status.SUCCESS
-
-        if self.virtual_change_distance < 5 and not self.change_detected:
-            rospy.loginfo("Leave Change!")
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.RUNNING
@@ -304,9 +298,6 @@ class Enter(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior", String,
                                                  queue_size=1)
-        # rospy.wait_for_service('update_local_path')
-        # self.update_local_path = rospy.ServiceProxy("update_local_path",
-        # UpdateLocalPath)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -348,7 +339,6 @@ class Enter(py_trees.behaviour.Behaviour):
             # not next_waypoint_msg.isStopLine:
         if next_waypoint_msg.distance < 5:
             rospy.loginfo("Drive on the next lane!")
-            # self.update_local_path(leave_intersection=True)
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
@@ -411,10 +401,8 @@ class Leave(py_trees.behaviour.Behaviour):
         the street speed limit.
         """
         rospy.loginfo("Leave Change")
-        street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
-        if street_speed_msg is not None:
-            # self.curr_behavior_pub.publish(street_speed_msg.data)
-            self.curr_behavior_pub.publish(bs.lc_exit.name)
+
+        self.curr_behavior_pub.publish(bs.lc_exit.name)
         return True
 
     def update(self):
