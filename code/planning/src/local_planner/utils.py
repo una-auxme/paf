@@ -6,15 +6,15 @@ hyperparameters = {
     "max_speed": 15,
     "max_accel": 4.0,
     "max_curvature": 30.0,
-    "max_road_width_l": 0.0,
-    "max_road_width_r": 3.5,
+    "max_road_width_l": 0.1,
+    "max_road_width_r": 4,
     "d_road_w": 0.2,
     "dt": 0.2,
-    "maxt": 17.0,
+    "maxt": 30,
     "mint": 6.0,
     "d_t_s": 0.5,
     "n_s_sample": 2.0,
-    "obstacle_clearance": 1,
+    "obstacle_clearance": 2,
     "kd": 1.0,
     "kv": 0.1,
     "ka": 0.1,
@@ -81,7 +81,7 @@ def approx_obstacle_pos(distance: float, heading: float,
     length = np.array([3, 0, 0])
     length_vector = rotation_matrix.apply(length)
 
-    offset = np.array([0.75, 0, 0])
+    offset = np.array([1, 0, 0])
     rotation_adjusted = Rotation.from_euler('z', heading + math.radians(90))
     offset_front = rotation_adjusted.apply(offset)
 
