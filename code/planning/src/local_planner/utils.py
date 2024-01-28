@@ -27,13 +27,19 @@ hyperparameters = {
 }
 
 
-def location_to_gps(lat_ref, lon_ref, x, y):
-    """
-    Convert from world coordinates to GPS coordinates
-    :param lat_ref: latitude reference for the current map
-    :param lon_ref: longitude reference for the current map
-    :param location: location to translate
-    :return: dictionary with lat, lon and height
+def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
+    """Convert world coordinates to (lat,lon,z) coordinates
+       Copied from:
+       https://github.com/carla-simulator/scenario_runner/blob/master/srunner/tools/route_manipulation.py
+
+    Args:
+        lat_ref (float): reference lat value
+        lon_ref (float): reference lat value
+        x (float): x-Coordinate value
+        y (float): y-Coordinate value
+
+    Returns:
+        dict: Dictionary with (lat,lon,z) coordinates
     """
 
     EARTH_RADIUS_EQUA = 6378137.0   # pylint: disable=invalid-name
@@ -45,7 +51,8 @@ def location_to_gps(lat_ref, lon_ref, x, y):
     my -= y
 
     lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
-    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
+    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) /\
+        math.pi - 90.0
     z = 703
 
     return {'lat': lat, 'lon': lon, 'z': z}
@@ -69,7 +76,7 @@ def approx_obstacle_pos(distance: float, heading: float,
 
     # Create distance vector with 0 rotation
     relative_position_local = np.array([distance, 0, 0])
-    
+
     # speed vector
     speed_vector = rotation_matrix.apply(np.array([speed, 0, 0]))
     # Rotate distance vector to match heading
@@ -95,5 +102,13 @@ def approx_obstacle_pos(distance: float, heading: float,
         vehicle_position_global_end, speed_vector
 
 
-def convert_to_ms(speed):
+def convert_to_ms(speed: float):
+    """Convert km/h to m/s
+
+    Args:
+        speed (float): speed in km/h
+
+    Returns:
+        float: speed in m/s
+    """
     return speed / 3.6
