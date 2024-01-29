@@ -79,7 +79,7 @@ class MotionPlanning(CompatibleNode):
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
-            f"/paf/{self.role_name}/emergency",
+            f"/paf/{self.role_name}/emergency_disabled",
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
