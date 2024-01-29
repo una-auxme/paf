@@ -70,7 +70,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.change_detected = False
         self.change_distance = np.inf
         self.virtual_change_distance = np.inf
-        self.curr_behavior_pub.publish(bs.lc_init.name)
+        self.curr_behavior_pub.publish(bs.lc_app_init.name)
 
     def update(self):
         """
