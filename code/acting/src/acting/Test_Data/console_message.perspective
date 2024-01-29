@@ -1,0 +1,265 @@
+{
+  "keys": {},
+  "groups": {
+    "mainwindow": {
+      "keys": {
+        "geometry": {
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'01d9d0cb000300000000004800000030000006840000037d0000004800000055000006840000037d00000000000000000a000000004800000055000006840000037d')",
+          "type": "repr(QByteArray.hex)",
+          "pretty-print": "     H 0   } H U   }      H U   }"
+        },
+        "state": {
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd00000001000000030000063d000002fffc0100000002fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000003bc0000019300fffffffb00000058007200710074005f007000750062006c00690073006800650072005f005f005000750062006c00690073006800650072005f005f0031005f005f005000750062006c0069007300680065007200570069006400670065007401000003c20000027b0000023000ffffff0000063d0000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
+          "type": "repr(QByteArray.hex)",
+          "pretty-print": "                 Lrqt_console__Console__1__ConsoleWidget          Xrqt_publisher__Publisher__1__PublisherWidget                            6MinimizedDockWidgetsToolbar        "
+        }
+      },
+      "groups": {
+        "toolbar_areas": {
+          "keys": {
+            "MinimizedDockWidgetsToolbar": {
+              "repr": "8",
+              "type": "repr"
+            }
+          },
+          "groups": {}
+        }
+      }
+    },
+    "pluginmanager": {
+      "keys": {
+        "running-plugins": {
+          "repr": "{'rqt_console/Console': [1], 'rqt_publisher/Publisher': [1]}",
+          "type": "repr"
+        }
+      },
+      "groups": {
+        "plugin__rqt_console__Console__1": {
+          "keys": {},
+          "groups": {
+            "dock_widget__ConsoleWidget": {
+              "keys": {
+                "dock_widget_title": {
+                  "repr": "'Console'",
+                  "type": "repr"
+                },
+                "dockable": {
+                  "repr": "False",
+                  "type": "repr"
+                },
+                "parent": {
+                  "repr": "None",
+                  "type": "repr"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "exclude_filters": {
+                  "repr": "['severity', 'message', 'message', 'message', 'message', 'message', 'message']",
+                  "type": "repr"
+                },
+                "filter_splitter": {
+                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff000000010000000200000070000000700100000009010000000200')",
+                  "type": "repr(QByteArray.hex)",
+                  "pretty-print": "       p p     "
+                },
+                "highlight_filters": {
+                  "repr": "'message'",
+                  "type": "repr"
+                },
+                "message_limit": {
+                  "repr": "20000",
+                  "type": "repr"
+                },
+                "paused": {
+                  "repr": "False",
+                  "type": "repr"
+                },
+                "settings_exist": {
+                  "repr": "True",
+                  "type": "repr"
+                },
+                "show_highlighted_only": {
+                  "repr": "False",
+                  "type": "repr"
+                },
+                "table_splitter": {
+                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff0000000100000002000001d3000000e90100000009010000000200')",
+                  "type": "repr(QByteArray.hex)",
+                  "pretty-print": "               "
+                }
+              },
+              "groups": {
+                "exclude_filter_0": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "itemlist": {
+                      "repr": "''",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_1": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'lidar'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_2": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'Vision'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_3": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'TF'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_4": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'Stanley'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_5": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'Created'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "exclude_filter_6": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "'Removed'",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                },
+                "highlight_filter_0": {
+                  "keys": {
+                    "enabled": {
+                      "repr": "True",
+                      "type": "repr"
+                    },
+                    "regex": {
+                      "repr": "False",
+                      "type": "repr"
+                    },
+                    "text": {
+                      "repr": "''",
+                      "type": "repr"
+                    }
+                  },
+                  "groups": {}
+                }
+              }
+            }
+          }
+        },
+        "plugin__rqt_publisher__Publisher__1": {
+          "keys": {},
+          "groups": {
+            "dock_widget__PublisherWidget": {
+              "keys": {
+                "dock_widget_title": {
+                  "repr": "'Message Publisher'",
+                  "type": "repr"
+                },
+                "dockable": {
+                  "repr": "False",
+                  "type": "repr"
+                },
+                "parent": {
+                  "repr": "None",
+                  "type": "repr"
+                }
+              },
+              "groups": {}
+            },
+            "plugin": {
+              "keys": {
+                "publishers": {
+                  "repr": "\"[{'topic_name': '/paf/hero/emergency', 'type_name': 'std_msgs/Bool', 'rate': 1.0, 'enabled': False, 'publisher_id': 0, 'counter': 19, 'expressions': {'/paf/hero/emergency/data': 'True'}}]\"",
+                  "type": "repr"
+                }
+              },
+              "groups": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

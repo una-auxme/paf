@@ -1,8 +1,5 @@
 import py_trees
-import numpy as np
 from std_msgs.msg import String
-# from nav_msgs.msg import Odometry
-# from custom_carla_msgs.srv import UpdateLocalPath
 
 import rospy
 
@@ -20,9 +17,9 @@ def convert_to_ms(speed):
 class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
-    an intersection and behaviours.road_features.intersection_ahead is
-    triggered. It than handles the approaching the intersection, slowing the
-    vehicle down appropriately.
+    an object which needs to be overtaken and
+    behaviours.road_features.overtake_ahead is triggered.
+    It than handles the procedure for overtaking.
     """
     def __init__(self, name):
         """
@@ -31,7 +28,7 @@ class Approach(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Approach, self).__init__(name)
-        rospy.loginfo("Approach started")
+        rospy.loginfo("Init -> Overtake Behavior: Approach")
 
     def setup(self, timeout):
         """
@@ -40,7 +37,7 @@ class Approach(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -48,9 +45,6 @@ class Approach(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior",
                                                  String, queue_size=1)
-        # rospy.wait_for_service('update_local_path') # TODO is this necessary?
-        # self.update_local_path =
-        # rospy.ServiceProxy("update_local_path", UpdateLocalPath)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -61,16 +55,19 @@ class Approach(py_trees.behaviour.Behaviour):
         RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This initializes the variables needed to save information about the
-        stop line, stop signs and the traffic light.
+
+        This initializes the overtaking distance to a default value.
         """
-        rospy.loginfo("Approaching Change")
-        # self.update_local_path(approach_intersection=True)
-        self.start_time = rospy.get_time()
-        self.change_detected = False
-        self.change_distance = np.inf
-        self.virtual_change_distance = np.inf
-        self.curr_behavior_pub.publish(bs.lc_app_init.name)
+        rospy.loginfo("Approaching Overtake")
+        self.ot_distance = 30
+
+        self.ot_option = 1  # self.blackboard.get("paf/hero/...")
+        if self.ot_option == 0:
+            self.clear_distance = 15
+            self.side = "LIDAR_range_rear_left"
+        elif self.ot_option == 1:
+            self.clear_distance = 30
+            self.side = "LIDAR_range"
 
     def update(self):
         """
@@ -80,44 +77,36 @@ class Approach(py_trees.behaviour.Behaviour):
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Gets the current traffic light status, stop sign status
-        and the stop line distance
-        :return: py_trees.common.Status.RUNNING, if too far from intersection
-                 py_trees.common.Status.SUCCESS, if stopped in front of inter-
-                 section or entered the intersection
-                 py_trees.common.Status.FAILURE, if no next path point can be
-                 detected.
+
+        Gets the current distance to overtake, the current lane status and the
+        distance to collsion object.
+        :return: py_trees.common.Status.RUNNING, if too far from overtaking
+                 py_trees.common.Status.SUCCESS, if stopped behind the blocking
+                 object or entered the process.
+                 py_trees.common.Status.FAILURE,
         """
-        # Update stopline Info
-        _dis = self.blackboard.get("/paf/hero/lane_change_distance")
+        # Update distance to collision object
+        _dis = self.blackboard.get("/paf/hero/LIDAR_range")
         if _dis is not None:
-            self.change_distance = _dis.distance
-            self.change_detected = _dis.isLaneChange
-            self.change_option = _dis.roadOption
-            rospy.loginfo(f"Change distance: {self.change_distance}")
+            self.ot_distance = _dis.data
+            rospy.loginfo(f"Overtake distance: {self.ot_distance}")
 
-        # calculate virtual stopline
-        if self.change_distance != np.inf and self.change_detected:
-            self.virtual_change_distance = self.change_distance
-
-        # slow down before lane change
-        if self.virtual_change_distance < 15.0:
-            if self.change_option == 5:
-                distance_lidar = self.blackboard. \
-                    get("/carla/hero/LIDAR_range_rear_left")
-            elif self.change_option == 6:
-                distance_lidar = self.blackboard. \
-                    get("/carla/hero/LIDAR_range_rear_right")
+        # slow down before overtake if blocked
+        if self.ot_distance < 15.0:
+            distance_lidar = self.blackboard. \
+                    get(f"/carla/hero/{self.side}")
+            if distance_lidar is not None:
+                distance_lidar = distance_lidar.data
             else:
                 distance_lidar = None
 
-            if distance_lidar is not None and distance_lidar.min_range > 15.0:
-                rospy.loginfo("Change is free not slowing down!")
-                # self.update_local_path(leave_intersection=True)
+            if distance_lidar is not None and \
+                    distance_lidar > self.clear_distance:
+                rospy.loginfo("Overtake is free not slowing down!")
                 return py_trees.common.Status.SUCCESS
             else:
-                rospy.loginfo("Change blocked slowing down")
-                self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
+                rospy.loginfo("Overtake blocked slowing down")
+                self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -126,25 +115,18 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
-        if self.virtual_change_distance > 5.0:
+
+        if self.ot_distance > 15.0:
             # too far
-            print("still approaching")
+            rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.virtual_change_distance < 5.0:
+                self.ot_distance < 5.0:
             # stopped
-            print("stopped")
-            return py_trees.common.Status.SUCCESS
-        elif speed > convert_to_ms(5.0) and \
-                self.virtual_change_distance < 3.5:
-            # running over line
-            return py_trees.common.Status.SUCCESS
-
-        if self.virtual_change_distance < 5 and not self.change_detected:
-            rospy.loginfo("Leave Change!")
-            # self.update_local_path(leave_intersection=True)
+            rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
         else:
+            rospy.logerr("Overtake Approach: Default Case")
             return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
@@ -165,9 +147,9 @@ class Approach(py_trees.behaviour.Behaviour):
 
 class Wait(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the waiting in front of the stop line at the inter-
-    section until there either is no traffic light, the traffic light is
-    green or the intersection is clear.
+    This behavior handles the waiting in front of object,
+    which is blocking the road.
+    The Ego vehicle is waiting to get a clear path for overtaking.
     """
     def __init__(self, name):
         """
@@ -184,7 +166,7 @@ class Wait(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -204,9 +186,7 @@ class Wait(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         This just prints a state status message.
         """
-        self.old_ro = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
-        rospy.loginfo("Wait Change")
+        rospy.loginfo("Waiting for Overtake")
         return True
 
     def update(self):
@@ -217,44 +197,48 @@ class Wait(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Waits in front of the intersection until there is a green light, the
-        intersection is clear or no traffic light at all.
-        :return: py_trees.common.Status.RUNNING, while traffic light is yellow
-                 or red
-                 py_trees.common.Status.SUCCESS, if the traffic light switched
-                 to green or no traffic light is detected
+
+        Waits behind the road object until the lidar distance meets the
+        requirement for the clear distance.
+
+        :return: py_trees.common.Status.RUNNING, while clear distance is bigger
+                    than lidar_distance
+                 py_trees.common.Status.SUCCESS,if no lidar distance is present
+                    or the lidar distance is bigger than the clear distance
         """
 
-        lcd = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
-
-        if self.old_ro.distance < lcd.distance + 1 or \
-           lcd.roadOption != self.old_ro.roadOption:
-            return py_trees.common.Status.SUCCESS
-        self.old_ro = lcd
-        road_option = lcd.roadOption
-        if road_option == 5:
+        # Update distance to collison and distance for clear
+        self.ot_option = 1  # self.blackboard.get("paf/hero/...")
+        if self.ot_option == 0:
             distance_lidar = self.blackboard. \
                 get("/carla/hero/LIDAR_range_rear_left")
-        elif road_option == 6:
+            clear_distance = 15
+        elif self.ot_option == 1:
             distance_lidar = self.blackboard. \
-                get("/carla/hero/LIDAR_range_rear_right")
+                get("/carla/hero/LIDAR_range")
+            distance_lidar = distance_lidar.data
+            clear_distance = 30
         else:
             distance_lidar = None
 
-        change_clear = False
+        obstacle_msg = self.blackboard.get("/paf/hero/collision")
+        if obstacle_msg is None:
+            return py_trees.common.Status.FAILURE
+
         if distance_lidar is not None:
-            # if distance smaller than 15m, change is blocked
-            if distance_lidar.min_range < 15.0:
-                change_clear = False
+            collision_distance = distance_lidar.data
+            if collision_distance > clear_distance:
+                rospy.loginfo("Overtake is free!")
+                return py_trees.common.Status.SUCCESS
             else:
-                change_clear = True
-        if not change_clear:
-            rospy.loginfo("Change blocked")
-            return py_trees.common.Status.RUNNING
+                rospy.loginfo("Overtake still blocked")
+                self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
+                return py_trees.commom.Status.RUNNING
+        elif obstacle_msg[1] > convert_to_ms(2):
+            return py_trees.common.Status.FAILURE
         else:
-            rospy.loginfo("Change clear")
-            return py_trees.common.Status.SUCCESS
+            rospy.loginfo("No Lidar Distance")
+            return py_trees.common.Success
 
     def terminate(self, new_status):
         """
@@ -274,9 +258,8 @@ class Wait(py_trees.behaviour.Behaviour):
 
 class Enter(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the driving through an intersection, it initially
-    sets a speed and finishes if the ego vehicle is close to the end of the
-    intersection.
+    This behavior handles the switching to a new lane in the
+    overtaking procedure.
     """
     def __init__(self, name):
         """
@@ -293,7 +276,7 @@ class Enter(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -301,9 +284,6 @@ class Enter(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior", String,
                                                  queue_size=1)
-        # rospy.wait_for_service('update_local_path')
-        # self.update_local_path = rospy.ServiceProxy("update_local_path",
-        # UpdateLocalPath)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -314,11 +294,12 @@ class Enter(py_trees.behaviour.Behaviour):
             not RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This prints a state status message and changes the driving speed for
-        the intersection.
+
+        This prints a state status message and publishes the behavior to
+        trigger the replanning
         """
-        rospy.loginfo("Enter next Lane")
-        self.curr_behavior_pub.publish(bs.lc_enter_init.name)
+        rospy.loginfo("Enter Overtake")
+        self.curr_behavior_pub.publish(bs.ot_enter_init.name)
 
     def update(self):
         """
@@ -328,27 +309,17 @@ class Enter(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Continues driving through the intersection until the vehicle gets
-        close enough to the next global way point.
-        :return: py_trees.common.Status.RUNNING, if too far from intersection
-                 py_trees.common.Status.SUCCESS, if stopped in front of inter-
-                 section or entered the intersection
-                 py_trees.common.Status.FAILURE, if no next path point can be
-                 detected.
-        """
-        next_waypoint_msg = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
 
-        if next_waypoint_msg is None:
-            return py_trees.common.Status.FAILURE
-        # if next_waypoint_msg.distance < 5 and
-            # not next_waypoint_msg.isStopLine:
-        if next_waypoint_msg.distance < 5:
-            rospy.loginfo("Drive on the next lane!")
-            # self.update_local_path(leave_intersection=True)
-            return py_trees.common.Status.RUNNING
-        else:
-            return py_trees.common.Status.SUCCESS
+
+        :return: py_trees.common.Status.RUNNING,
+                 py_trees.common.Status.SUCCESS,
+                 py_trees.common.Status.FAILURE,
+        """
+
+        return py_trees.common.Status.SUCCESS
+
+        # Currently not in use
+        # Can be used to check if we can go back to the original lane
 
     def terminate(self, new_status):
         """
@@ -369,7 +340,7 @@ class Enter(py_trees.behaviour.Behaviour):
 class Leave(py_trees.behaviour.Behaviour):
     """
     This behaviour defines the leaf of this subtree, if this behavior is
-    reached, the vehicle left the intersection.
+    reached, the vehicle peformed the overtake.
     """
     def __init__(self, name):
         """
@@ -386,7 +357,7 @@ class Leave(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -404,14 +375,10 @@ class Leave(py_trees.behaviour.Behaviour):
             not RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This prints a state status message and changes the driving speed to
-        the street speed limit.
+        This prints a state status message and publishes the behavior
         """
-        rospy.loginfo("Leave Change")
-        street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
-        if street_speed_msg is not None:
-            # self.curr_behavior_pub.publish(street_speed_msg.data)
-            self.curr_behavior_pub.publish(bs.lc_exit.name)
+        rospy.loginfo("Leave Overtake")
+        self.curr_behavior_pub.publish(bs.ot_leave.name)
         return True
 
     def update(self):

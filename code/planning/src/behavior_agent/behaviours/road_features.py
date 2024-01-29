@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import py_trees
+import numpy as np
 
 
 """
@@ -159,6 +160,91 @@ class LaneChangeAhead(py_trees.behaviour.Behaviour):
             dist = bb.distance
             isIntersection = bb.isLaneChange
         if dist < 30 and isIntersection:
+            return py_trees.common.Status.SUCCESS
+        else:
+            return py_trees.common.Status.FAILURE
+
+    def terminate(self, new_status):
+        """
+        When is this called?
+        Whenever your behaviour switches to a non-running state.
+            - SUCCESS || FAILURE : your behaviour's work cycle has finished
+            - INVALID : a higher priority branch has interrupted, or shutting
+            down
+        writes a status message to the console when the behaviour terminates
+        :param new_status: new state after this one is terminated
+        """
+        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
+                          (self.name, self.status, new_status))
+
+
+class OvertakeAhead(py_trees.behaviour.Behaviour):
+    """
+    This behaviour checks whether an object that needs to be overtaken is
+    ahead
+    """
+    def __init__(self, name):
+        """
+        Minimal one-time initialisation. A good rule of thumb is to only
+        include the initialisation relevant for being able to insert this
+        behaviour in a tree for offline rendering to dot graphs.
+
+         :param name: name of the behaviour
+        """
+        super(OvertakeAhead, self).__init__(name)
+
+    def setup(self, timeout):
+        """
+        Delayed one-time initialisation that would otherwise interfere with
+        offline rendering of this behaviour in a tree to dot graph or
+        validation of the behaviour's configuration.
+
+        This initializes the blackboard to be able to access data written to it
+        by the ROS topics.
+        :param timeout: an initial timeout to see if the tree generation is
+        successful
+        :return: True, as the set up is successful.
+        """
+        self.blackboard = py_trees.blackboard.Blackboard()
+        return True
+
+    def initialise(self):
+        """
+        When is this called?
+            The first time your behaviour is ticked and anytime the status is
+            not RUNNING thereafter.
+        What to do here?
+            Any initialisation you need before putting your behaviour to work.
+        """
+        return True
+
+    def update(self):
+        """
+        When is this called?
+        Every time your behaviour is ticked.
+        What to do here?
+            - Triggering, checking, monitoring. Anything...but do not block!
+            - Set a feedback message
+            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
+
+        Gets the current distance and speed to object in front.
+        :return: py_trees.common.Status.SUCCESS, if the vehicle is within range
+                    for the overtaking procedure
+                 py_trees.common.Status.FAILURE, if we are too far away for
+                 the overtaking procedure
+        """
+
+        obstacle_msg = self.blackboard.get("/paf/hero/collision")
+        if obstacle_msg is None:
+            return py_trees.common.Status.FAILURE
+
+        obstacle_distance = obstacle_msg.data[0]
+        obstacle_speed = obstacle_msg.data[1]
+
+        if obstacle_distance == np.Inf:
+            return py_trees.common.Status.FAILURE
+
+        if obstacle_speed < 2 and obstacle_distance < 30:
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.FAILURE
