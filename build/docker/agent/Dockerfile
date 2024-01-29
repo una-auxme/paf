@@ -163,9 +163,7 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 
 # Install Frenet Optimal Trajectory Planner 
-RUN sudo mkdir /erdos
-RUN sudo mkdir /erdos/dependencies
-RUN sudo mkdir /erdos/dependencies/frenet_optimal_trajectory_planner
+RUN sudo mkdir -p /erdos/dependencies/frenet_optimal_trajectory_planner
 # Needed to resolve dependencies correctly inside freent_optimal_trajectory_planner 
 ENV PYLOT_HOME=/erdos
 
