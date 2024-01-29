@@ -221,6 +221,10 @@ class Wait(py_trees.behaviour.Behaviour):
         else:
             distance_lidar = None
 
+        obstacle_msg = self.blackboard.get("/paf/hero/collision")
+        if obstacle_msg is None:
+            return py_trees.common.Status.FAILURE
+
         if distance_lidar is not None:
             collision_distance = distance_lidar.data
             if collision_distance > clear_distance:
@@ -230,6 +234,8 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.loginfo("Overtake still blocked")
                 self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
                 return py_trees.commom.Status.RUNNING
+        elif obstacle_msg[1] > convert_to_ms(2):
+            return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("No Lidar Distance")
             return py_trees.common.Success
