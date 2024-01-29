@@ -14,4 +14,4 @@ Samuel Kühnel
 
 ## Position calculation from Obstacle
 
-The position from a possible obstacle that we need to overtake is calculated via the current heading from the ego vehicle, the current position and the measured distance. The 
+The position from a possible obstacle that we need to overtake is calculated via the current heading from the ego vehicle, the current position and the measured distance. The
