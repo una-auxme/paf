@@ -6,7 +6,7 @@ import tf.transformations
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-from std_msgs.msg import String, Float32, Bool
+from std_msgs.msg import String, Float32, Bool, Float32MultiArray
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from carla_msgs.msg import CarlaSpeedometer
@@ -42,6 +42,7 @@ class MotionPlanning(CompatibleNode):
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
+        self.__collision_point = None
         self.published = False
         self.current_pos = None
         self.current_heading = None
@@ -53,12 +54,14 @@ class MotionPlanning(CompatibleNode):
         self.current_speed = None
         self.speed_limit = None
 
-        self.counter = 0
-        self.speed_list = []
-        self.__first_trajectory = None
         self.__corners = None
         self.__in_corner = False
         # Subscriber
+        self.test_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/test",
+            self.change_trajectory,
+            qos_profile=1)
         self.speed_limit_sub = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/speed_limit",
@@ -113,6 +116,12 @@ class MotionPlanning(CompatibleNode):
             self.__set_change_point,
             qos_profile=1)
 
+        self.change_point_sub: Subscriber = self.new_subscription(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/collision",
+            self.__set_collision_point,
+            qos_profile=1)
+
         # Publisher
         self.traj_pub: Publisher = self.new_publisher(
             msg_type=Path,
@@ -128,10 +137,9 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/current_wp",
             self.__set_wp,
             qos_profile=1)
-        # Publisher for emergency stop
-        self.emergency_pub = self.new_publisher(
-            Bool,
-            f"/paf/{self.role_name}/emergency",
+        self.overtake_success_pub = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/overtake_success",
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
@@ -169,12 +177,6 @@ class MotionPlanning(CompatibleNode):
         """
         self.current_heading = data.data
 
-    def __save_trajectory(self, data):
-        if self.__first_trajectory is None:
-            self.__first_trajectory = data.poses
-
-            self.__corners = self.__calc_corner_points()
-
     def __set_current_pos(self, data: PoseStamped):
         """set current position
         Args:
@@ -184,36 +186,47 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y,
                                     data.pose.position.z])
 
-    def change_trajectory(self, distance: float):
+    def change_trajectory(self, distance_obj: float):
+        distance_obj = distance_obj.data
         self.overtake_start = rospy.get_rostime()
         limit_waypoints = 30
-        np_array = np.array(self.trajectory.poses)
-        obstacle_position = approx_obstacle_pos(distance,
-                                                self.current_heading,
-                                                self.current_pos,
-                                                self.current_speed)
-        # trajectory_np = self.convert_pose_to_array(np_array)
-        # wp = KDTree(trajectory_np[:, :2]).query(obstacle_position[0][:2])[1]
-        selection = np_array[int(self.current_wp):int(self.current_wp) +
-                             int(distance + limit_waypoints)]
-        waypoints = self.convert_pose_to_array(selection)
+        pose_list = self.trajectory.poses
+        count_retrys = 0
 
-        initial_conditions = {
-            'ps': 0,
-            'target_speed': self.current_speed,
-            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
-            'vel': np.array([obstacle_position[2][0],
-                             obstacle_position[2][1]]),
-            'wp': waypoints,
-            'obs': np.array([[obstacle_position[0][0],
-                              obstacle_position[0][1],
-                              obstacle_position[1][0],
-                              obstacle_position[1][1]]])
-        }
-        result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
-            speeds_y, misc, costs, success = run_fot(initial_conditions,
-                                                     hyperparameters)
-        if success:
+        def calculate_overtake(distance):
+            obstacle_position = approx_obstacle_pos(distance,
+                                                    self.current_heading,
+                                                    self.current_pos,
+                                                    self.current_speed)
+            # trajectory_np = self.convert_pose_to_array(pose_list)
+            # wp=KDTree(trajectory_np[:,:2]).query(obstacle_position[0][:2])[1]
+            selection = pose_list[int(self.current_wp):int(self.current_wp) +
+                                  int(distance + limit_waypoints)]
+            waypoints = self.convert_pose_to_array(selection)
+
+            initial_conditions = {
+                'ps': 0,
+                'target_speed': self.current_speed,
+                'pos': np.array([self.current_pos[0], self.current_pos[1]]),
+                'vel': np.array([obstacle_position[2][0],
+                                obstacle_position[2][1]]),
+                'wp': waypoints,
+                'obs': np.array([[obstacle_position[0][0],
+                                obstacle_position[0][1],
+                                obstacle_position[1][0],
+                                obstacle_position[1][1]]])
+            }
+            return run_fot(initial_conditions, hyperparameters)
+
+        success_overtake = False
+        while not success_overtake and count_retrys < 10:
+            result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
+                speeds_y, misc, \
+                costs, success = calculate_overtake(distance_obj)
+            self.overtake_success_pub.publish(float(success))
+            success_overtake = success
+            count_retrys += 1
+        if success_overtake:
             result = []
             for i in range(len(result_x)):
                 position = Point(result_x[i], result_y[i], 0)
@@ -230,9 +243,14 @@ class MotionPlanning(CompatibleNode):
             path = Path()
             path.header.stamp = rospy.Time.now()
             path.header.frame_id = "global"
-            path.poses = list(np_array[:int(self.current_wp)]) + \
-                result + list(np_array[int(self.current_wp + 25 + 30):])
+            path.poses = pose_list[:int(self.current_wp)] + \
+                result + pose_list[int(self.current_wp +
+                                       distance_obj +
+                                       30):]
             self.trajectory = path
+        else:
+            self.logerr("Overtake failed")
+            self.overtake_success_pub.publish(-1)
 
     def __set_trajectory(self, data: Path):
         """get current trajectory global planning
@@ -241,9 +259,11 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.trajectory = data
+        self.logerr("Trajectory received")
+        self.__corners = self.__calc_corner_points()
 
     def __calc_corner_points(self):
-        coords = self.convert_pose_to_array(np.array(self.__first_trajectory))
+        coords = self.convert_pose_to_array(np.array(self.trajectory.poses))
         x_values = np.array([point[0] for point in coords])
         y_values = np.array([point[1] for point in coords])
 
@@ -285,7 +305,7 @@ class MotionPlanning(CompatibleNode):
 
     def get_cornering_speed(self):
         corner = self.__corners[0]
-        pos = self.current_pos
+        pos = self.current_pos[:2]
 
         def euclid_dist(vector1, vector2):
             point1 = np.array(vector1)
@@ -358,12 +378,10 @@ class MotionPlanning(CompatibleNode):
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
         if not behavior == bs.parking.name:
-            self.target_speed = min(be_speed, acc_speed)
+            corner_speed = self.get_cornering_speed()
+            self.target_speed = min(be_speed, acc_speed, corner_speed, 6)
         else:
             self.target_speed = be_speed
-        # self.logerr("target speed: " + str(self.target_speed))
-        corner_speed = self.get_cornering_speed()
-        self.target_speed = min(self.target_speed, corner_speed)
         # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
@@ -384,6 +402,10 @@ class MotionPlanning(CompatibleNode):
             self.__change_point = \
                 (data.distance, data.isLaneChange, data.roadOption)
 
+    def __set_collision_point(self, data: Float32MultiArray):
+        if data is not None:
+            self.__collision_point = data.data[0]
+
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
         split = "_"
@@ -392,6 +414,8 @@ class MotionPlanning(CompatibleNode):
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
             speed = self.__get_speed_lanechange(behavior)
+        elif short_behavior == "ot":
+            speed = self.__get_speed_overtake(behavior)
         elif short_behavior == "parking":
             speed = bs.parking.speed
         else:
@@ -432,6 +456,25 @@ class MotionPlanning(CompatibleNode):
 
         return speed
 
+    def __get_speed_overtake(self, behavior: str) -> float:
+        speed = 0.0
+        if behavior == bs.ot_app_blocked.name:
+            speed = self.__calc_speed_to_stop_overtake()
+        elif behavior == bs.ot_app_free.name:
+            speed = self.__get_speed_cruise()
+        elif behavior == bs.ot_wait_stopped.name:
+            speed = bs.ot_wait_stopped.speed
+        elif behavior == bs.ot_wait_free.name:
+            speed == self.__get_speed_cruise()
+        elif behavior == bs.ot_enter_init.name:
+            speed = self.__get_speed_cruise()
+        elif behavior == bs.ot_enter_slow.name:
+            speed = self.__calc_speed_to_stop_overtake()
+        elif behavior == bs.ot_leave.name:
+            speed = self.__get_speed_cruise()
+
+        return speed
+
     def __get_speed_cruise(self) -> float:
         return self.__acc_speed
 
@@ -461,6 +504,17 @@ class MotionPlanning(CompatibleNode):
             v_stop = 0.0
         return v_stop
 
+    def __calc_speed_to_stop_overtake(self) -> float:
+        stopline = self.__calc_virtual_overtake()
+        self.logerr(stopline)
+
+        v_stop = max(convert_to_ms(10.),
+                     convert_to_ms((stopline / 30)
+                                   * 50))
+        if stopline < 3.0:
+            v_stop = 0.0
+        return v_stop
+
     def __calc_virtual_change_point(self) -> float:
         if self.__change_point[0] != np.inf and self.__change_point[1]:
             return self.__change_point[0]
@@ -470,6 +524,14 @@ class MotionPlanning(CompatibleNode):
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
             return self.__stopline[0]
+        else:
+            return 0.0
+
+    def __calc_virtual_overtake(self) -> float:
+        self.logerr(f"Test: {self.__collision_point}")
+        if (self.__collision_point is not None) and \
+                self.__collision_point != np.inf:
+            return self.__collision_point
         else:
             return 0.0
 
@@ -483,11 +545,12 @@ class MotionPlanning(CompatibleNode):
             if (self.__curr_behavior is not None and
                     self.__acc_speed is not None and
                     self.__corners is not None):
-                self.update_target_speed(self.__acc_speed,
-                                         self.__curr_behavior)
                 self.trajectory.header.stamp = rospy.Time.now()
                 self.traj_pub.publish(self.trajectory)
-
+                self.update_target_speed(self.__acc_speed,
+                                         self.__curr_behavior)
+            else:
+                self.velocity_pub.publish(0.0)
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
