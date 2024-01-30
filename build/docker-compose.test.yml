@@ -3,8 +3,8 @@ name: "paf22-test"
 
 services:
   carla-simulator:
-    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -RenderOffScreen
-    image: ghcr.io/nylser/carla:leaderboard
+    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -RenderOffScreen -nosound
+    image: ghcr.io/una-auxme/paf23:leaderboard-2.0
     init: true
     deploy:
       resources:

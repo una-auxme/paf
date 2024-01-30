@@ -95,12 +95,12 @@ class VelocityController(CompatibleNode):
                               "publish a throttle value")
                 return
 
-            if self.__trajectory is None:
+            """if self.__trajectory is None:
                 self.logdebug("VelocityController  hasn't received "
                               "trajectory yet and can therefore not"
                               "publish a throttle value (to prevent stupid)")
                 return
-
+            """
             if self.__target_velocity < 0:
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
