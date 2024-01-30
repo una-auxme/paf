@@ -6,11 +6,10 @@ import py_trees_ros
 
 from std_msgs.msg import Float32, Bool, Float32MultiArray
 from carla_msgs.msg import CarlaSpeedometer
-from sensor_msgs.msg import Range
 from geometry_msgs.msg import PoseStamped
 
-from mock.msg import Traffic_light, Stop_sign
-from perception.msg import Waypoint, LaneChange
+from mock.msg import Stop_sign
+from perception.msg import Waypoint, LaneChange, TrafficLightState
 
 """
 Source: https://github.com/ll7/psaf2
@@ -31,19 +30,15 @@ def create_node(role_name):
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/waypoint_distance", 'msg': Waypoint,
          'clearing-policy': py_trees.common.ClearingPolicy.ON_INITIALISE},
-        {'name': f"/paf/{role_name}/intersection_clear",
-         'msg': Bool, 'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/stop_sign", 'msg': Stop_sign,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
-        {'name': f"/paf/{role_name}/traffic_light", 'msg': Traffic_light,
+        {'name':
+         f"/paf/{role_name}/Center/traffic_light_state",
+         'msg': TrafficLightState,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/max_velocity", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
-        {'name': f"/carla/{role_name}/LIDAR_range", 'msg': Range,
-         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
-        {'name': f"/carla/{role_name}/LIDAR_range_rear_right", 'msg': Range,
-         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
-        {'name': f"/carla/{role_name}/LIDAR_range_rear_left", 'msg': Range,
+        {'name': f"/carla/{role_name}/LIDAR_range", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/speed_limit", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},

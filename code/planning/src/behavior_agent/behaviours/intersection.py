@@ -15,6 +15,18 @@ def convert_to_ms(speed):
     return speed / 3.6
 
 
+# 1: Green, 2: Red, 4: Yellow, 0: Unknown
+def get_color(state):
+    if state == 1:
+        return "green"
+    elif state == 2:
+        return "red"
+    elif state == 4:
+        return "yellow"
+    else:
+        return ""
+
+
 class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
@@ -88,12 +100,10 @@ class Approach(py_trees.behaviour.Behaviour):
                  detected.
         """
         # Update Light Info
-        light_status_msg = self.blackboard.get("/paf/hero/traffic_light")
+        light_status_msg = self.blackboard.get(
+            "/paf/hero/Center/traffic_light_state")
         if light_status_msg is not None:
-            self.traffic_light_status = light_status_msg.color
-            rospy.loginfo(f"Light Status: {self.traffic_light_status}")
-            self.traffic_light_distance = light_status_msg.distance
-            rospy.loginfo(f"Light distance: {self.traffic_light_distance}")
+            self.traffic_light_status = get_color(light_status_msg.state)
             self.traffic_light_detected = True
 
         # Update stopline Info
@@ -111,15 +121,13 @@ class Approach(py_trees.behaviour.Behaviour):
         # calculate virtual stopline
         if self.stopline_distance != np.inf and self.stopline_detected:
             self.virtual_stopline_distance = self.stopline_distance
-        elif self.traffic_light_detected:
-            self.virtual_stopline_distance = self.traffic_light_distance
         elif self.stop_sign_detected:
             self.virtual_stopline_distance = self.stop_distance
         else:
             self.virtual_stopline_distance = 0.0
 
         rospy.loginfo(f"Stopline distance: {self.virtual_stopline_distance}")
-        target_distance = 3.0
+        target_distance = 5.0
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
         if self.traffic_light_status == '' \
@@ -129,7 +137,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     not self.traffic_light_detected):
 
             rospy.loginfo("slowing down!")
-            self.curr_behavior_pub.publish(bs.int_app_no_sign.name)
+            self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
 
         # approach slowly when traffic light is green as traffic lights are
         # higher priority than traffic signs this behavior is desired
@@ -170,7 +178,6 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.virtual_stopline_distance < target_distance and \
            not self.stopline_detected:
             rospy.loginfo("Leave intersection!")
-            # self.update_local_path(leave_intersection=True)
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.RUNNING
@@ -221,6 +228,8 @@ class Wait(py_trees.behaviour.Behaviour):
                                                  "curr_behavior", String,
                                                  queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.red_light_flag = False
+        self.green_light_counter = 0
         return True
 
     def initialise(self):
@@ -234,6 +243,8 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: True
         """
         rospy.loginfo("Wait Intersection")
+        self.red_light_flag = False
+        self.green_light_counter = 0
         return True
 
     def update(self):
@@ -251,34 +262,49 @@ class Wait(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS, if the traffic light switched
                  to green or no traffic light is detected
         """
-        light_status_msg = self.blackboard.get("/paf/hero/traffic_light")
-        # intersection_clear_msg = self.blackboard.get("/paf/hero/"
-        #                                            "intersection_clear")
-        distance_lidar = self.blackboard.get("/carla/hero/LIDAR_range")
+        light_status_msg = self.blackboard.get(
+            "/paf/hero/Center/traffic_light_state")
+
+        lidar_data = self.blackboard.get("/carla/hero/LIDAR_range")
+
         intersection_clear = True
-        if distance_lidar is not None:
+        if lidar_data is not None:
             # if distance smaller than 10m, intersection is blocked
-            if distance_lidar.min_range < 10.0:
+            if lidar_data.data < 10.0:
                 intersection_clear = False
             else:
                 intersection_clear = True
-        # if intersection_clear_msg is not None:
-        #    intersection_clear = intersection_clear_msg.data
-        # else:
-        #    intersection_clear = False
 
         if light_status_msg is not None:
-            traffic_light_status = light_status_msg.color
+            traffic_light_status = get_color(light_status_msg.state)
             if traffic_light_status == "red" or \
                     traffic_light_status == "yellow":
+                self.red_light_flag = True
+                self.green_light_counter = 0
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return py_trees.common.Status.RUNNING
-            else:
+            elif self.green_light_counter < 6 and \
+                    traffic_light_status == "green":
+                self.green_light_counter += 1
+                rospy.loginfo(f"Light Counter: {self.green_light_counter}")
+                return py_trees.common.Status.RUNNING
+            elif self.red_light_flag and traffic_light_status != "green":
+                rospy.loginfo(f"Light Status: {traffic_light_status}"
+                              "-> prev was red")
+                return py_trees.common.Status.RUNNING
+            elif self.green_light_counter >= 6 and \
+                    traffic_light_status == "green":
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 return py_trees.common.Status.SUCCESS
-        elif not intersection_clear:
+            else:
+                rospy.loginfo(f"Light Status: {traffic_light_status}"
+                              "-> No Traffic Light detected")
+
+        # Check clear if no traffic light is detected
+        if not intersection_clear:
             rospy.loginfo("Intersection blocked")
+            self.curr_behavior_pub.publish(bs.int_wait.name)
             return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Intersection clear")
@@ -343,18 +369,17 @@ class Enter(py_trees.behaviour.Behaviour):
         the intersection.
         """
         rospy.loginfo("Enter Intersection")
-        light_status_msg = self.blackboard.get("/paf/hero/traffic_light")
-        if light_status_msg is None:
-            self.curr_behavior_pub.publish(bs.int_enter_no_light.name)
-            return True
-        else:
-            traffic_light_status = light_status_msg.color
 
-        if traffic_light_status == "":
-            self.curr_behavior_pub.publish(bs.int_enter_empty_str.name)
-        else:
-            rospy.loginfo(f"Light Status: {traffic_light_status}")
-            self.curr_behavior_pub.publish(bs.int_enter_light.name)
+        light_status_msg = self.blackboard.get(
+            "/paf/hero/Center/traffic_light_state")
+        if light_status_msg is None:
+            self.curr_behavior_pub.publish(bs.int_enter.name)
+            return True
+
+        traffic_light_status = get_color(light_status_msg.state)
+
+        rospy.loginfo(f"Light Status: {traffic_light_status}")
+        self.curr_behavior_pub.publish(bs.int_enter.name)
 
     def update(self):
         """
@@ -380,7 +405,7 @@ class Enter(py_trees.behaviour.Behaviour):
             # not next_waypoint_msg.isStopLine:
         if next_waypoint_msg.distance < 5:
             rospy.loginfo("Drive through intersection!")
-            # self.update_local_path(leave_intersection=True)
+            self.curr_behavior_pub.publish(bs.int_enter.name)
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
@@ -444,10 +469,7 @@ class Leave(py_trees.behaviour.Behaviour):
         :return: True
         """
         rospy.loginfo("Leave Intersection")
-        street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
-        if street_speed_msg is not None:
-            # self.curr_behavior_pub.publish(street_speed_msg.data)
-            self.curr_behavior_pub.publish(bs.int_exit.name)
+        self.curr_behavior_pub.publish(bs.int_exit.name)
         return True
 
     def update(self):

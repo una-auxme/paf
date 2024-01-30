@@ -35,3 +35,22 @@ This method sets up a publisher for the traffic light state. It publishes to the
 
 This method is called whenever a new image message is received. It performs traffic light detection by using `traffic_light_inference.py` on the image and publishes the result.
 The result is a `TrafficLightState` message where the state is set to the detected traffic light state (1 for green, 2 for red, 4 for yellow, 0 for unknown).
+
+## Filtering of images
+
+### Vision Node
+
+Objects, which are detected as traffic light by the RTDETR-X model (or others), must fulfill the following criterias to be published:
+
+- At least a 30% (0.30) certainty/probablity of the classification model
+- More than 1.5x as tall (height) as it is wide (width)
+- Above 360px (upper half of the 1280x720 image)
+
+### Traffic Light Node
+
+Objects, which are published by the Vision Node, are further filtered by the following criterias:
+
+- Classification probabilities of "Unknown" and "Side" are either both below 1e-10 or one of both are below 1e-15
+- "Side" is treated as "Unknown"
+- Valid states (Red, Green, Yellow) must be present at least twice in a row to be actually published
+- A state decays (state=0; "Unknown") after 2 seconds if there is no new info in the meantime

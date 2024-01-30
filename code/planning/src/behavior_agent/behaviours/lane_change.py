@@ -1,8 +1,6 @@
 import py_trees
 import numpy as np
 from std_msgs.msg import String
-# from nav_msgs.msg import Odometry
-# from custom_carla_msgs.srv import UpdateLocalPath
 
 import rospy
 
@@ -48,9 +46,6 @@ class Approach(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior",
                                                  String, queue_size=1)
-        # rospy.wait_for_service('update_local_path') # TODO is this necessary?
-        # self.update_local_path =
-        # rospy.ServiceProxy("update_local_path", UpdateLocalPath)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -65,12 +60,12 @@ class Approach(py_trees.behaviour.Behaviour):
         stop line, stop signs and the traffic light.
         """
         rospy.loginfo("Approaching Change")
-        # self.update_local_path(approach_intersection=True)
         self.start_time = rospy.get_time()
         self.change_detected = False
         self.change_distance = np.inf
         self.virtual_change_distance = np.inf
         self.curr_behavior_pub.publish(bs.lc_app_init.name)
+        self.blocked = False
 
     def update(self):
         """
@@ -101,23 +96,25 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_change_distance = self.change_distance
 
         # slow down before lane change
-        if self.virtual_change_distance < 15.0:
-            if self.change_option == 5:
-                distance_lidar = self.blackboard. \
-                    get("/carla/hero/LIDAR_range_rear_left")
-            elif self.change_option == 6:
-                distance_lidar = self.blackboard. \
-                    get("/carla/hero/LIDAR_range_rear_right")
-            else:
-                distance_lidar = None
+        # if self.virtual_change_distance < 15.0:
+        #     if self.change_option == 5:
+        #         distance_lidar = self.blackboard. \
+        #             get("/carla/hero/LIDAR_range_rear_left")
+        #     elif self.change_option == 6:
+        #         distance_lidar = self.blackboard. \
+        #             get("/carla/hero/LIDAR_range_rear_right")
+        #     else:
+        #         distance_lidar = None
 
-            if distance_lidar is not None and distance_lidar.min_range > 15.0:
+            distance_lidar = 20  # Remove and adjust to check for cars behind
+
+            if distance_lidar is not None and distance_lidar > 15.0:
                 rospy.loginfo("Change is free not slowing down!")
-                # self.update_local_path(leave_intersection=True)
-                return py_trees.common.Status.SUCCESS
+                self.curr_behavior_pub.publish(bs.lc_app_free.name)
+                self.blocked = False
             else:
                 rospy.loginfo("Change blocked slowing down")
-                self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
+                self.blocked = True
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -126,23 +123,19 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
-        if self.virtual_change_distance > 5.0:
+        if self.virtual_change_distance > 5 and self.blocked:
             # too far
-            print("still approaching")
+            rospy.loginfo("still approaching")
+            self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.virtual_change_distance < 5.0:
+                self.virtual_change_distance < 5.0 and self.blocked:
             # stopped
-            print("stopped")
+            rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
         elif speed > convert_to_ms(5.0) and \
-                self.virtual_change_distance < 3.5:
+                self.virtual_change_distance < 3.5 and not self.blocked:
             # running over line
-            return py_trees.common.Status.SUCCESS
-
-        if self.virtual_change_distance < 5 and not self.change_detected:
-            rospy.loginfo("Leave Change!")
-            # self.update_local_path(leave_intersection=True)
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.RUNNING
@@ -204,8 +197,6 @@ class Wait(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         This just prints a state status message.
         """
-        self.old_ro = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
         rospy.loginfo("Wait Change")
         return True
 
@@ -225,32 +216,38 @@ class Wait(py_trees.behaviour.Behaviour):
                  to green or no traffic light is detected
         """
 
-        lcd = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
-
-        if self.old_ro.distance < lcd.distance + 1 or \
-           lcd.roadOption != self.old_ro.roadOption:
-            return py_trees.common.Status.SUCCESS
-        self.old_ro = lcd
-        road_option = lcd.roadOption
-        if road_option == 5:
-            distance_lidar = self.blackboard. \
-                get("/carla/hero/LIDAR_range_rear_left")
-        elif road_option == 6:
-            distance_lidar = self.blackboard. \
-                get("/carla/hero/LIDAR_range_rear_right")
+        speedometer = self.blackboard.get("/carla/hero/Speed")
+        if speedometer is not None:
+            speed = speedometer.speed
         else:
-            distance_lidar = None
+            rospy.logwarn("no speedometer connected")
+            return py_trees.common.Status.RUNNING
+
+        if speed > convert_to_ms(10):
+            rospy.loginfo("Forward to enter")
+            return py_trees.common.Status.SUCCESS
+
+        # if road_option == 5:
+        #     distance_lidar = self.blackboard. \
+        #         get("/carla/hero/LIDAR_range_rear_left")
+        # elif road_option == 6:
+        #     distance_lidar = self.blackboard. \
+        #         get("/carla/hero/LIDAR_range_rear_right")
+        # else:
+        #     distance_lidar = None
+
+        distance_lidar = 20  # Remove to wait
 
         change_clear = False
         if distance_lidar is not None:
             # if distance smaller than 15m, change is blocked
-            if distance_lidar.min_range < 15.0:
+            if distance_lidar < 15.0:
                 change_clear = False
             else:
                 change_clear = True
         if not change_clear:
             rospy.loginfo("Change blocked")
+            self.curr_behavior_pub.publish(bs.lc_wait.name)
             return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Change clear")
@@ -301,9 +298,6 @@ class Enter(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
                                                  "curr_behavior", String,
                                                  queue_size=1)
-        # rospy.wait_for_service('update_local_path')
-        # self.update_local_path = rospy.ServiceProxy("update_local_path",
-        # UpdateLocalPath)
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -345,7 +339,6 @@ class Enter(py_trees.behaviour.Behaviour):
             # not next_waypoint_msg.isStopLine:
         if next_waypoint_msg.distance < 5:
             rospy.loginfo("Drive on the next lane!")
-            # self.update_local_path(leave_intersection=True)
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
@@ -408,10 +401,8 @@ class Leave(py_trees.behaviour.Behaviour):
         the street speed limit.
         """
         rospy.loginfo("Leave Change")
-        street_speed_msg = self.blackboard.get("/paf/hero/speed_limit")
-        if street_speed_msg is not None:
-            # self.curr_behavior_pub.publish(street_speed_msg.data)
-            self.curr_behavior_pub.publish(bs.lc_exit.name)
+
+        self.curr_behavior_pub.publish(bs.lc_exit.name)
         return True
 
     def update(self):
