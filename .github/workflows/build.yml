@@ -90,7 +90,7 @@ jobs:
       - name: Set AGENT_VERSION from hash (workaround)
         run: echo "AGENT_VERSION=${{ steps.hash.outputs.hash }}" >> $GITHUB_ENV
       - name: Run docker-compose
-        run: docker compose up --exit-code-from agent
+        run: docker compose up --quiet-pull --exit-code-from agent
       - name: Copy results
         run: docker compose cp agent:/tmp/simulation_results.json .
       - name: Stop docker-compose
