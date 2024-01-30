@@ -32,7 +32,7 @@
     <arg name="objects_definition_file" value='$(find agent)/config/dev_objects.json'/>
   </include>
 
-  <include file="$(find agent)/launch/agent_manual.launch">
+  <include file="$(find agent)/launch/agent.launch">
     <arg name='role_name' value='$(arg role_name)'/>
   </include>
 

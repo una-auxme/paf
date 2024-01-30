@@ -2,6 +2,7 @@ import py_trees
 from std_msgs.msg import String
 
 import rospy
+import numpy as np
 
 from . import behavior_speed as bs
 
@@ -86,9 +87,9 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE,
         """
         # Update distance to collision object
-        _dis = self.blackboard.get("/paf/hero/LIDAR_range")
+        _dis = self.blackboard.get("/paf/hero/collision")
         if _dis is not None:
-            self.ot_distance = _dis.data
+            self.ot_distance = _dis.data[0]
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")
 
         # slow down before overtake if blocked
@@ -103,6 +104,7 @@ class Approach(py_trees.behaviour.Behaviour):
             if distance_lidar is not None and \
                     distance_lidar > self.clear_distance:
                 rospy.loginfo("Overtake is free not slowing down!")
+                self.curr_behavior_pub.publish(bs.ot_app_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
                 rospy.loginfo("Overtake blocked slowing down")
@@ -229,12 +231,13 @@ class Wait(py_trees.behaviour.Behaviour):
             collision_distance = distance_lidar.data
             if collision_distance > clear_distance:
                 rospy.loginfo("Overtake is free!")
+                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
                 rospy.loginfo("Overtake still blocked")
                 self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
                 return py_trees.commom.Status.RUNNING
-        elif obstacle_msg[1] > convert_to_ms(2):
+        elif obstacle_msg.data[0] == np.inf:
             return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("No Lidar Distance")
@@ -315,9 +318,21 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS,
                  py_trees.common.Status.FAILURE,
         """
-
-        return py_trees.common.Status.SUCCESS
-
+        status = self.blackboard.get("/paf/hero/overtake_success")
+        if status is not None:
+            if status.data == 1:
+                rospy.loginfo("Overtake: Trajectory planned")
+                return py_trees.common.Status.SUCCESS
+            elif status.data == 0:
+                self.curr_behavior_pub.publish(bs.ot_enter_slow.name)
+                rospy.loginfo("Overtake: Slowing down")
+                return py_trees.common.Status.RUNNING
+            else:
+                rospy.loginfo("Overtake: Big Failure")
+                return py_trees.common.Status.FAILURE
+        else:
+            rospy.loginfo("Overtake: Bigger Failure")
+            return py_trees.common.Status.FAILURE
         # Currently not in use
         # Can be used to check if we can go back to the original lane
 

@@ -57,7 +57,7 @@ class PrePlanner(CompatibleNode):
         # uncomment /paf/hero/global_plan and comment /carla/... for dev_launch
         self.global_plan_sub = self.new_subscription(
             msg_type=CarlaRoute,
-            topic='/carla/' + self.role_name + '/global_plan',
+            topic='/paf/' + self.role_name + '/global_plan',
             callback=self.global_route_callback,
             qos_profile=10)
         # self.global_plan_sub = self.new_subscription(
@@ -84,7 +84,7 @@ class PrePlanner(CompatibleNode):
         self.logdebug('PrePlanner-Node started')
 
         # uncomment for self.dev_load_world_info() for dev_launch
-        # self.dev_load_world_info()
+        self.dev_load_world_info()
 
     def global_route_callback(self, data: CarlaRoute) -> None:
         """
@@ -194,7 +194,7 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
-        self.loginfo("PrePlanner: published trajectory")
+        self.logerr("PrePlanner: published trajectory")
 
     def world_info_callback(self, opendrive: String) -> None:
         """
