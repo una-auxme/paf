@@ -68,14 +68,10 @@ class MotionPlanning(CompatibleNode):
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
             qos_profile=1)
-        self.test_sub = self.new_subscription(
-            Bool,
-            f"/paf/{self.role_name}/test",
-            self.change_trajectory,
-            qos_profile=1)
+
         self.trajectory_sub = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory_dummy",
+            f"/paf/{self.role_name}/trajectory_global",
             self.__set_trajectory,
             qos_profile=1)
         self.current_pos_sub = self.new_subscription(
@@ -179,8 +175,7 @@ class MotionPlanning(CompatibleNode):
     def change_trajectory(self, distance: float):
         self.overtake_start = rospy.get_rostime()
         limit_waypoints = 30
-        data = self.trajectory
-        np_array = np.array(data.poses)
+        np_array = np.array(self.trajectory.poses)
         obstacle_position = approx_obstacle_pos(distance,
                                                 self.current_heading,
                                                 self.current_pos,
@@ -234,7 +229,6 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.trajectory = data
-        self.logerr("Trajectory recieved: " + str(self.trajectory))
 
     def convert_pose_to_array(self, poses: np.array):
         """convert pose array to numpy array

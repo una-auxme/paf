@@ -47,7 +47,7 @@ class ACC(CompatibleNode):
         # Get trajectory to determine current speed limit
         self.trajectory_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory_dummy",
+            f"/paf/{self.role_name}/trajectory_global",
             self.__set_trajectory,
             qos_profile=1)
 

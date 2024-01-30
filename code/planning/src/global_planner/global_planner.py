@@ -74,7 +74,7 @@ class PrePlanner(CompatibleNode):
 
         self.path_pub = self.new_publisher(
             msg_type=Path,
-            topic='/paf/' + self.role_name + '/trajectory_dummy',
+            topic='/paf/' + self.role_name + '/trajectory_global',
             qos_profile=1)
 
         self.speed_limit_pub = self.new_publisher(
