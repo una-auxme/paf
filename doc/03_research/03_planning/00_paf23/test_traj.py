@@ -1,4 +1,5 @@
-from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper import run_fot
+from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
+    import run_fot
 import numpy as np
 import matplotlib.pyplot as plt
 
