@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# import rospy
 # import tf.transformations
 import ros_compatibility as roscomp
 import rospy
@@ -10,8 +9,7 @@ from rospy import Publisher, Subscriber
 from std_msgs.msg import String, Float32, Bool
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-
-
+from carla_msgs.msg import CarlaSpeedometer
 import numpy as np
 
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
@@ -20,15 +18,10 @@ from perception.msg import Waypoint, LaneChange
 import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
-# from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-# from carla_msgs.msg import CarlaRoute   # , CarlaWorldInfo
-# from nav_msgs.msg import Path
-# from std_msgs.msg import String
-# from std_msgs.msg import Float32MultiArray
+from utils import convert_to_ms, approx_obstacle_pos, \
+    hyperparameters
 
-
-def convert_to_ms(speed):
-    return speed / 3.6
+# from scipy.spatial._kdtree import KDTree
 
 
 class MotionPlanning(CompatibleNode):
@@ -49,17 +42,43 @@ class MotionPlanning(CompatibleNode):
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
+        self.published = False
+        self.current_pos = None
+        self.current_heading = None
+        self.trajectory = None
+        self.overtaking = False
+        self.overtake_start = rospy.get_rostime()
+        self.current_wp = None
+        self.enhanced_path = None
+        self.current_speed = None
+        self.speed_limit = None
+
         self.counter = 0
         self.speed_list = []
         self.__first_trajectory = None
         self.__corners = None
         self.__in_corner = False
-
         # Subscriber
+        self.speed_limit_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/speed_limit",
+            self.__set_speed_limit,
+            qos_profile=1)
+        self.velocity_sub: Subscriber = self.new_subscription(
+            CarlaSpeedometer,
+            f"/carla/{self.role_name}/Speed",
+            self.__get_current_velocity,
+            qos_profile=1)
+        self.head_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__set_heading,
+            qos_profile=1)
+
         self.trajectory_sub = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__save_trajectory,
+            f"/paf/{self.role_name}/trajectory_global",
+            self.__set_trajectory,
             qos_profile=1)
         self.current_pos_sub = self.new_subscription(
             PoseStamped,
@@ -95,15 +114,20 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         # Publisher
-        # self.traj_pub: Publisher = self.new_publisher(
-        #     Path,
-        #     f"/paf/{self.role_name}/trajectory",
-        #     qos_profile=1)
+        self.traj_pub: Publisher = self.new_publisher(
+            msg_type=Path,
+            topic=f"/paf/{self.role_name}/trajectory",
+            qos_profile=1)
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
+        self.wp_subs = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_wp",
+            self.__set_wp,
+            qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
@@ -111,8 +135,39 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
-        self.published = False
-        self.current_pos = None
+        self.counter = 0
+
+    def __set_speed_limit(self, data: Float32):
+        """Set current speed limit
+
+        Args:
+            data (Float32): Current speed limit
+        """
+        self.speed_limit = data.data
+
+    def __get_current_velocity(self, data: CarlaSpeedometer):
+        """Get current velocity from CarlaSpeedometer
+
+        Args:
+            data (CarlaSpeedometer): Current velocity
+        """
+        self.current_speed = float(data.speed)
+
+    def __set_wp(self, data: Float32):
+        """Recieve current waypoint index from ACC
+
+        Args:
+            data (Float32): Waypoint index
+        """
+        self.current_wp = data.data
+
+    def __set_heading(self, data: Float32):
+        """Set current Heading
+
+        Args:
+            data (Float32): Current Heading vom Subscriber
+        """
+        self.current_heading = data.data
 
     def __save_trajectory(self, data):
         if self.__first_trajectory is None:
@@ -122,12 +177,62 @@ class MotionPlanning(CompatibleNode):
 
     def __set_current_pos(self, data: PoseStamped):
         """set current position
-
         Args:
             data (PoseStamped): current position
         """
         self.current_pos = np.array([data.pose.position.x,
-                                    data.pose.position.y])
+                                    data.pose.position.y,
+                                    data.pose.position.z])
+
+    def change_trajectory(self, distance: float):
+        self.overtake_start = rospy.get_rostime()
+        limit_waypoints = 30
+        np_array = np.array(self.trajectory.poses)
+        obstacle_position = approx_obstacle_pos(distance,
+                                                self.current_heading,
+                                                self.current_pos,
+                                                self.current_speed)
+        # trajectory_np = self.convert_pose_to_array(np_array)
+        # wp = KDTree(trajectory_np[:, :2]).query(obstacle_position[0][:2])[1]
+        selection = np_array[int(self.current_wp):int(self.current_wp) +
+                             int(distance + limit_waypoints)]
+        waypoints = self.convert_pose_to_array(selection)
+
+        initial_conditions = {
+            'ps': 0,
+            'target_speed': self.current_speed,
+            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
+            'vel': np.array([obstacle_position[2][0],
+                             obstacle_position[2][1]]),
+            'wp': waypoints,
+            'obs': np.array([[obstacle_position[0][0],
+                              obstacle_position[0][1],
+                              obstacle_position[1][0],
+                              obstacle_position[1][1]]])
+        }
+        result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
+            speeds_y, misc, costs, success = run_fot(initial_conditions,
+                                                     hyperparameters)
+        if success:
+            result = []
+            for i in range(len(result_x)):
+                position = Point(result_x[i], result_y[i], 0)
+                quaternion = tf.transformations.quaternion_from_euler(0,
+                                                                      0,
+                                                                      iyaw[i])
+                orientation = Quaternion(x=quaternion[0], y=quaternion[1],
+                                         z=quaternion[2], w=quaternion[3])
+                pose = Pose(position, orientation)
+                pos = PoseStamped()
+                pos.header.frame_id = "global"
+                pos.pose = pose
+                result.append(pos)
+            path = Path()
+            path.header.stamp = rospy.Time.now()
+            path.header.frame_id = "global"
+            path.poses = list(np_array[:int(self.current_wp)]) + \
+                result + list(np_array[int(self.current_wp + 25 + 30):])
+            self.trajectory = path
 
     def __set_trajectory(self, data: Path):
         """get current trajectory global planning
@@ -135,71 +240,7 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (Path): Trajectory waypoints
         """
-        if len(data.poses) and not self.published > 0:
-            self.published = True
-            np_array = np.array(data.poses)
-            selection = np_array[5:17]
-            waypoints = self.convert_pose_to_array(selection)
-            self.logerr(waypoints)
-            obs = np.array(
-                [[waypoints[5][0]-0.5, waypoints[5][1], waypoints[5][0]+0.5,
-                 waypoints[5][1]-2]])
-            initial_conditions = {
-                'ps': 0,
-                'target_speed': self.__acc_speed,
-                'pos': np.array([983.5807552562393, 5370.014637890163]),
-                'vel': np.array([5, 1]),
-                'wp': waypoints,
-                'obs': obs
-            }
-            hyperparameters = {
-                "max_speed": 25.0,
-                "max_accel": 15.0,
-                "max_curvature": 15.0,
-                "max_road_width_l": 3.0,
-                "max_road_width_r": 0.5,
-                "d_road_w": 0.5,
-                "dt": 0.2,
-                "maxt": 20.0,
-                "mint": 6.0,
-                "d_t_s": 0.5,
-                "n_s_sample": 2.0,
-                "obstacle_clearance": 0.1,
-                "kd": 1.0,
-                "kv": 0.1,
-                "ka": 0.1,
-                "kj": 0.1,
-                "kt": 0.1,
-                "ko": 0.1,
-                "klat": 1.0,
-                "klon": 1.0,
-                "num_threads": 0,  # set 0 to avoid using threaded algorithm
-            }
-            result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
-                speeds_y, misc, costs, success = run_fot(initial_conditions,
-                                                         hyperparameters)
-            if success:
-                print("Success!")
-                print("result_x: ", result_x)
-                print("result_y: ", result_y)
-                result = []
-                for i in range(len(result_x)):
-                    position = Point(result_x[i], result_y[i], 703)
-                    quat = tf.transformations.quaternion_from_euler(0, 0,
-                                                                    iyaw[i])
-                    orientation = Quaternion(x=quat[0], y=quat[1],
-                                             z=quat[2], w=quat[3])
-                    pose = Pose(position, orientation)
-                    pos = PoseStamped()
-                    pos.header.stamp = rospy.Time.now()
-                    pos.header.frame_id = "global"
-                    pos.pose = pose
-                    result.append(PoseStamped)
-                path = Path()
-                path.header.stamp = rospy.Time.now()
-                path.path_backup.header.frame_id = "global"
-                path.poses = list(np_array[:5]) + result + list(np_array[17:])
-                self.traj_pub.publish(path)
+        self.trajectory = data
 
     def __calc_corner_points(self):
         coords = self.convert_pose_to_array(np.array(self.__first_trajectory))
@@ -444,6 +485,8 @@ class MotionPlanning(CompatibleNode):
                     self.__corners is not None):
                 self.update_target_speed(self.__acc_speed,
                                          self.__curr_behavior)
+                self.trajectory.header.stamp = rospy.Time.now()
+                self.traj_pub.publish(self.trajectory)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -455,7 +498,6 @@ if __name__ == "__main__":
     :param args:
     """
     roscomp.init('MotionPlanning')
-
     try:
         node = MotionPlanning()
         node.run()
