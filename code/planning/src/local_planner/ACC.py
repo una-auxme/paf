@@ -198,6 +198,9 @@ class ACC(CompatibleNode):
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
                 self.velocity_pub.publish(self.speed_limit)
+            else:
+                self.logerr("ACC: No speed limit recieved")
+                self.velocity_pub.publish(5.0)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

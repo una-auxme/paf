@@ -47,7 +47,9 @@ def create_node(role_name):
         {'name': f"/paf/{role_name}/collision", 'msg': Float32MultiArray,
          'clearing-policy': py_trees.common.ClearingPolicy.ON_INITIALISE},
         {'name': f"/paf/{role_name}/current_pos", 'msg': PoseStamped,
-         'clearing-policy': py_trees.common.ClearingPolicy.NEVER}
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
+        {'name': f"/paf/{role_name}/overtake_success", 'msg': Float32,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
     ]
 
     topics2blackboard = py_trees.composites.Parallel("Topics to Blackboard")
