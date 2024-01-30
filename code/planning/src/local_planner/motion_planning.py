@@ -206,7 +206,7 @@ class MotionPlanning(CompatibleNode):
 
             initial_conditions = {
                 'ps': 0,
-                'target_speed': self.current_speed,
+                'target_speed': self.target_speed,
                 'pos': np.array([self.current_pos[0], self.current_pos[1]]),
                 'vel': np.array([obstacle_position[2][0],
                                 obstacle_position[2][1]]),
