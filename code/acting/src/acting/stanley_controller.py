@@ -169,7 +169,8 @@ class StanleyController(CompatibleNode):
         using the Stanley algorithm
         :return: steering angle
         """
-        k_ce = 0.10  # TODO: tune
+        # TODO: tune both next sprint
+        k_ce = 0.10
         k_v = 1.0
 
         current_velocity: float

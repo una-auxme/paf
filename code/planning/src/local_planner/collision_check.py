@@ -41,7 +41,7 @@ class CollisionCheck(CompatibleNode):
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
-            f"/paf/{self.role_name}/emergency_deactivated",
+            f"/paf/{self.role_name}/emergency",
             qos_profile=1)
         # Publisher for distance to collision
         self.collision_pub = self.new_publisher(

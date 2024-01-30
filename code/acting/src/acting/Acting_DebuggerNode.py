@@ -53,14 +53,16 @@ from trajectory_interpolation import interpolate_route
 
 # 4: Test Steering-PID in vehicleController
 # TODO TODO
-TEST_TYPE = 2                 # aka. TT
+TEST_TYPE = 2                # aka. TT
 
-STEERING: float = 0.0          # for TT0: steering -> always straight
-TARGET_VELOCITY_1: float = 7    # for TT0/TT1: low velocity
+FIXED_STEERING: float = 0  # for TT0: steering 0.0 = always straight
+TARGET_VELOCITY_1: float = 5  # for TT0/TT1: low velocity
 TARGET_VELOCITY_2: float = 0  # for TT1: high velocity
 
 STEERING_CONTROLLER_USED = 1  # for TT2: 0 = both ; 1 = PP ; 2 = Stanley
-TRAJECTORY_TYPE = 0        # for TT2: 0 = Straight ; 1 = SineWave ; 2 = Curve
+TRAJECTORY_TYPE = 2  # for TT2: 0 = Straight ; 1 = Curve ; 2 = SineWave
+
+PRINT_AFTER_TIME = 20.0  # How long after Simulationstart to print data
 
 
 class Acting_Debugger(CompatibleNode):
@@ -125,6 +127,14 @@ class Acting_Debugger(CompatibleNode):
             self.__get_target_velocity,
             qos_profile=1)
 
+        # Subscriber for current_headng for plotting
+        self.heading_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__get_heading,
+            qos_profile=1
+        )
+
         # Subscriber for current_velocity for plotting
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
@@ -181,9 +191,14 @@ class Acting_Debugger(CompatibleNode):
         self.__max_velocities = []
         self.__throttles = []
 
+        self.__current_headings = []
+        self.__yaws = []
+
         self.__purepursuit_steers = []
         self.__stanley_steers = []
         self.__vehicle_steers = []
+
+        self.positions = []
 
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
@@ -201,16 +216,33 @@ class Acting_Debugger(CompatibleNode):
             ]
             self.updated_trajectory(self.current_trajectory)
 
-        elif (TRAJECTORY_TYPE == 1):  # Sinewave Serpentines trajectory
+        elif (TRAJECTORY_TYPE == 1):  # straight into 90° Curve
+            self.current_trajectory = [
+                (984.5, -5442.0),
+
+                (984.5, -5563.5),
+                (985.0, -5573.2),
+                (986.3, -5576.5),
+                (987.3, -5578.5),
+                (988.7, -5579.0),
+                (990.5, -5579.8),
+                (1000.0, -5580.2),
+
+                (1040.0, -5580.0),
+                (1070.0, -5580.0)
+            ]
+            self.updated_trajectory(self.current_trajectory)
+
+        elif (TRAJECTORY_TYPE == 2):  # Sinewave Serpentines trajectory
             # Generate a sine-wave with the global Constants to
             # automatically generate a trajectory with serpentine waves
             cycles = 4  # how many sine cycles
-            resolution = 50  # how many datapoints to generate
+            resolution = 70  # how many datapoints to generate
 
             length = np.pi * 2 * cycles
             step = length / resolution  # spacing between values
             my_wave = np.sin(np.arange(0, length, step))
-            x_wave = 2 * my_wave  # to have a serpentine line with +/- 2 meters
+            x_wave = 0.15 * my_wave  # to have a serpentine line with +/-1.5 m
             # to have the serpentine line drive around the middle
             # of the road/start point of the car
             x_wave += startx
@@ -226,33 +258,6 @@ class Acting_Debugger(CompatibleNode):
             # add a long straight path after the serpentines
             trajectory_wave.append((startx, starty-200))
             self.current_trajectory = trajectory_wave
-            self.updated_trajectory(self.current_trajectory)
-
-        elif (TRAJECTORY_TYPE == 2):  # straight into 90° Curve
-            self.current_trajectory = [
-                (986.0, -5442.0),
-                (986.0, -5463.2),
-                (984.5, -5493.2),
-
-                (984.5, -5563.5),
-                (985.0, -5573.2),
-                (986.3, -5576.5),
-                (987.3, -5578.5),
-                (988.7, -5579.0),
-                (990.5, -5579.8),
-                (1000.0, -5580.2),
-
-                (1040.0, -5580.0),
-                (1070.0, -5580.0),
-                (1080.0, -5582.0),
-                (1090.0, -5582.0),
-                (1100.0, -5580.0),
-                (1110.0, -5578.0),
-                (1120.0, -5578.0),
-                (1130.0, -5580.0),
-                (1464.6, -5580.0),
-                (1664.6, -5580.0)
-            ]
             self.updated_trajectory(self.current_trajectory)
 
     def updated_trajectory(self, target_trajectory):
@@ -272,7 +277,7 @@ class Acting_Debugger(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 37.6  # why??
+            pos.pose.position.z = 35  # why??
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
@@ -285,7 +290,16 @@ class Acting_Debugger(CompatibleNode):
         self.x = agent.x
         self.y = agent.y
         self.z = agent.z
+
         # TODO use this to get spawnpoint? necessary?
+        # use to plot current_position to trajectory for steering test
+        self.positions.append((self.x, self.y))
+
+    def __get_heading(self, data: Float32):
+        self.__current_headings.append(float(data.data))
+
+    def __get_yaw(self, data: Float32):
+        self.__yaws.append(float(data.data))
 
     def __get_target_velocity(self, data: Float32):
         self.__max_velocities.append(float(data.data))
@@ -321,9 +335,9 @@ class Acting_Debugger(CompatibleNode):
             """
             # Drive const. velocity on fixed straight steering
             if (TEST_TYPE == 0):
-                self.drive_Vel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.driveVel = TARGET_VELOCITY_1
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # Drive alternating velocities on fixed straight steering
@@ -339,8 +353,8 @@ class Acting_Debugger(CompatibleNode):
                         self.driveVel = TARGET_VELOCITY_2
                     else:
                         self.driveVel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # drive const. velocity on trajectoy with steering controller
@@ -362,8 +376,8 @@ class Acting_Debugger(CompatibleNode):
                 if (self.checkpoint_time < rospy.get_time() - 15.0):
                     self.checkpoint_time = rospy.get_time()
                     self.emergency_pub.publish(True)
-                self.stanley_steer_pub.publish(STEERING)
-                self.pure_pursuit_steer_pub.publish(STEERING)
+                self.stanley_steer_pub.publish(FIXED_STEERING)
+                self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # drive const. velocity and follow trajectory by
@@ -384,17 +398,23 @@ class Acting_Debugger(CompatibleNode):
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
+                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                # print(self.current_trajectory)
+                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
-            if (self.checkpoint_time < rospy.get_time() - 10.0):
+            if (self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
                 # print(self.__max_velocities)
                 # print(self.__current_velocities)
                 # print(self.__throttles)
-                print(self.__purepursuit_steers)
-                print(self.__stanley_steers)
-                print(self.__vehicle_steers)
+                # print(self.__purepursuit_steers)
+                # print(self.__stanley_steers)
+                # print(self.__vehicle_steers)
+                # print(self.__current_headings)
+                # print(self.__yaws)
+                # print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)
