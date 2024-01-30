@@ -1,0 +1,14 @@
+<launch>
+  <arg name="role_name" default="hero" />
+  <arg name="control_loop_rate" default="0.02" />
+
+  <node pkg="test-route" type="test_route.py" name="test_route" output="screen">
+    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="follow_hero" value="True" />
+    <param name="vehicle_number" value="50" />
+    <param name="only_cars" value="False" />
+    <param name="disable_vehicle_lane_change" value="False" />
+  </node>
+
+</launch>
