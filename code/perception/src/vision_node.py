@@ -14,11 +14,12 @@ import torchvision.transforms as t
 import cv2
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Float32MultiArray
 from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
+
 """
 VisionNode:
 
@@ -81,10 +82,13 @@ class VisionNode(CompatibleNode):
         self.side = self.get_param("side", "Center")
         self.device = torch.device("cuda"
                                    if torch.cuda.is_available() else "cpu")
+        self.depth_images = []
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
+        self.setup_rainbow_subscription()
         self.setup_camera_publishers()
+        self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
@@ -95,6 +99,7 @@ class VisionNode(CompatibleNode):
         self.weights = model_info[1]
         self.type = model_info[2]
         self.framework = model_info[3]
+        self.save = True
         print("Vision Node Configuration:")
         print("Device -> ", self.device)
         print(f"Model -> {self.get_param('model')},")
@@ -121,12 +126,26 @@ class VisionNode(CompatibleNode):
             qos_profile=1
         )
 
+    def setup_rainbow_subscription(self):
+        self.new_subscription(
+            msg_type=numpy_msg(ImageMsg),
+            callback=self.handle_rainbow_image,
+            topic='/paf/hero/Center/rainbow_image',
+            qos_profile=1
+        )
+
     def setup_camera_publishers(self):
         self.publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/{self.side}/segmented_image",
             qos_profile=1
         )
+
+    def setup_object_distance_publishers(self):
+        self.distance_publisher = self.new_publisher(
+            msg_type=numpy_msg(Float32MultiArray),
+            topic=f"/paf/{self.role_name}/{self.side}/object_distance",
+            qos_profile=1)
 
     def setup_traffic_light_publishers(self):
         self.traffic_light_publisher = self.new_publisher(
@@ -151,6 +170,25 @@ class VisionNode(CompatibleNode):
                                             encoding="rgb8")
         img_msg.header = image.header
         self.publisher.publish(img_msg)
+        pass
+
+    def handle_rainbow_image(self, image):
+        cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
+                                             desired_encoding='passthrough')
+        # cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+        self.depth_images.append(cv_image)
+        if len(self.depth_images) > 1:
+            self.depth_images.pop(0)
+            """if self.save:
+                for i in range(len(self.depth_images)):
+                    cv2.imshow(f"{i}", self.depth_images[i])
+
+                self.save = False
+                cv2.waitKey(0)  # Wait for any key press
+                cv2.destroyAllWindows()"""
+
+        else:
+            self.logerr("Depth-Fiel build up! No distances available yet!")
 
     def predict_torch(self, image):
         self.model.eval()
@@ -181,11 +219,57 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         output = self.model(cv_image, half=True, verbose=False)
+        distance_output = []
+        c_boxes = []
+        c_labels = []
+        for r in output:
+            boxes = r.boxes
+            for box in boxes:
+                cls = box.cls.item()
+                pixels = box.xyxy[0]
+                if len(self.depth_images) > 0:
+                    distances = np.asarray(
+                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
+                                              int(pixels[0]):int(pixels[2]):1]
+                            for i in range(len(self.depth_images))])
+                    non_zero_filter = distances[distances != 0]
+
+                    if len(non_zero_filter) > 0:
+                        obj_dist = np.min(non_zero_filter)
+                    else:
+                        obj_dist = np.inf
+
+                    c_boxes.append(torch.tensor(pixels))
+                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
+                    distance_output.append([cls, obj_dist])
+
+        # print(distance_output)
+        # self.logerr(distance_output)
+        self.distance_publisher.publish(
+            Float32MultiArray(data=distance_output))
+
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        image_np_with_detections = torch.tensor(transposed_image,
+                                                dtype=torch.uint8)
 
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
-        return output[0].plot()
+        c_boxes = torch.stack(c_boxes)
+        print(image_np_with_detections.shape, c_boxes.shape, c_labels)
+        box = draw_bounding_boxes(image_np_with_detections,
+                                  c_boxes,
+                                  c_labels,
+                                  colors='blue',
+                                  width=3,
+                                  font_size=12)
+        # print(box.shape)
+        np_box_img = np.transpose(box.detach().numpy(),
+                                  (1, 2, 0))
+        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+        return box_img
+
+        # return output[0].plot()
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
@@ -243,8 +327,10 @@ class VisionNode(CompatibleNode):
         box = draw_bounding_boxes(image_np_with_detections,
                                   boxes,
                                   labels,
-                                  colors='red',
-                                  width=2)
+                                  colors='blue',
+                                  width=3,
+                                  font_size=24)
+
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)

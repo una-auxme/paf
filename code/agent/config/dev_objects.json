@@ -104,23 +104,23 @@
           "type": "sensor.lidar.ray_cast",
           "id": "LIDAR",
           "spawn_point": {
-            "x": 0.7,
-            "y": 0.4,
-            "z": 1.60,
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.70,
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0
           },
-          "range": 85,
-          "rotation_frequency": 10,
+          "range": 50,
+          "rotation_frequency": 15,
           "channels": 64,
           "upper_fov": 10,
           "lower_fov": -30,
-          "points_per_second": 600000,
+          "points_per_second": 1000000,
           "atmosphere_attenuation_rate": 0.004,
           "dropoff_general_rate": 0.45,
           "dropoff_intensity_limit": 0.8,
-          "dropoff_zero_intensity": 0.4
+          "dropoff_zero_intensity": 0.2
         },
         {
           "type": "sensor.other.radar",
