@@ -12,12 +12,12 @@
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
   <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" /-->
- 
+
   <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
     <param name="control_loop_rate" value="0.05" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
- 
+
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
@@ -38,10 +38,10 @@
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
- 
+
     <!--
-      Object-Detection: 
-      - fasterrcnn_resnet50_fpn_v2 
+      Object-Detection:
+      - fasterrcnn_resnet50_fpn_v2
       - fasterrcnn_mobilenet_v3_large_320_fpn
       - yolov8n
       - yolov8s
@@ -58,7 +58,7 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg 
+      - yolov8x-seg
     -->
 
     <param name="model" value="rtdetr-x" />

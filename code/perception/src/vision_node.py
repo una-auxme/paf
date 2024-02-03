@@ -40,20 +40,17 @@ class VisionNode(CompatibleNode):
         super().__init__(name, **kwargs)
         self.model_dict = {
             "fasterrcnn_resnet50_fpn_v2":
-            (fasterrcnn_resnet50_fpn_v2(
-                weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT),
+            (fasterrcnn_resnet50_fpn_v2,
                 FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT,
                 "detection",
                 "pyTorch"),
             "fasterrcnn_mobilenet_v3_large_320_fpn":
-            (fasterrcnn_mobilenet_v3_large_320_fpn(
-                weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT),
+            (fasterrcnn_mobilenet_v3_large_320_fpn,
                 FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT,
                 "detection",
                 "pyTorch"),
             "deeplabv3_resnet101":
-            (deeplabv3_resnet101(
-                weights=DeepLabV3_ResNet101_Weights.DEFAULT),
+            (deeplabv3_resnet101,
                 DeepLabV3_ResNet101_Weights.DEFAULT,
                 "segmentation",
                 "pyTorch"),
@@ -95,7 +92,10 @@ class VisionNode(CompatibleNode):
 
         # model setup
         model_info = self.model_dict[self.get_param("model")]
-        self.model = model_info[0]
+        if model_info[3] == "pyTorch":
+            self.model = model_info[0](weights=model_info[1])
+        else:
+            self.model = model_info[0]
         self.weights = model_info[1]
         self.type = model_info[2]
         self.framework = model_info[3]
@@ -111,12 +111,9 @@ class VisionNode(CompatibleNode):
             for param in self.model.parameters():
                 param.requires_grad = False
                 self.model.to(self.device)
-
         # ultralytics setup
         if self.framework == "ultralytics":
             self.model = self.model(self.weights)
-
-        # tensorflow setup
 
     def setup_camera_subscriptions(self):
         self.new_subscription(
@@ -243,8 +240,6 @@ class VisionNode(CompatibleNode):
                     c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
                     distance_output.append([cls, obj_dist])
 
-        # print(distance_output)
-        # self.logerr(distance_output)
         self.distance_publisher.publish(
             Float32MultiArray(data=distance_output))
 
@@ -263,13 +258,11 @@ class VisionNode(CompatibleNode):
                                   colors='blue',
                                   width=3,
                                   font_size=12)
-        # print(box.shape)
+
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
         return box_img
-
-        # return output[0].plot()
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
