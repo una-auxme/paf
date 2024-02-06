@@ -9,7 +9,7 @@ from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32
 from collision_check import CollisionCheck
-import time
+import rospy
 
 
 class ACC(CompatibleNode):
@@ -109,7 +109,7 @@ class ACC(CompatibleNode):
             data (Float32): Speed from obstacle in front
         """
         # self.logerr("ACC: Approx speed recieved: " + str(data.data))
-        self.obstacle_speed = (time.time(), data.data)
+        self.obstacle_speed = (rospy.get_rostime(), data.data)
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -173,8 +173,10 @@ class ACC(CompatibleNode):
             """
             if self.obstacle_speed is not None:
                 # Check if too much time has passed since last speed update
-                if self.obstacle_speed[0] + 0.5 < time.time():
+                if rospy.get_rostime() - self.obstacle_speed[0] < \
+                        rospy.Duration(1):
                     self.obstacle_speed = None
+                    self.obstacle_distance = None
 
             if self.obstacle_distance is not None and \
                     self.obstacle_speed is not None and \
@@ -188,10 +190,14 @@ class ACC(CompatibleNode):
                     # speed to meet the desired distance
                     safe_speed = self.obstacle_speed[1] * \
                         (self.obstacle_distance / safety_distance)
+                    if safe_speed < 1.0:
+                        safe_speed = 0
                     self.velocity_pub.publish(safe_speed)
                 else:
                     # If safety distance is reached, drive with same speed as
                     # Object in front
+                    if self.obstacle_speed[1] < 1.0:
+                        self.obstacle_speed[1] = 0
                     self.velocity_pub.publish(self.obstacle_speed[1])
 
             elif self.speed_limit is not None:
@@ -199,7 +205,6 @@ class ACC(CompatibleNode):
                 # speed limit
                 self.velocity_pub.publish(self.speed_limit)
             else:
-                self.logerr("ACC: No speed limit recieved")
                 self.velocity_pub.publish(5.0)
 
         self.new_timer(self.control_loop_rate, loop)
