@@ -14,7 +14,7 @@ hyperparameters = {
     "mint": 6.0,
     "d_t_s": 0.5,
     "n_s_sample": 2.0,
-    "obstacle_clearance": 2,
+    "obstacle_clearance": 1.5,
     "kd": 1.0,
     "kv": 0.1,
     "ka": 0.1,
@@ -112,3 +112,44 @@ def convert_to_ms(speed: float):
         float: speed in m/s
     """
     return speed / 3.6
+
+
+def spawn_car(distance):
+    """Only used for testing, spawns a car in the given distance
+
+    Args:
+        distance (float): distance
+    """
+    import carla
+    import os
+    CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
+    CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+
+    client = carla.Client(CARLA_HOST, CARLA_PORT)
+
+    world = client.get_world()
+    world.wait_for_tick()
+
+    blueprint_library = world.get_blueprint_library()
+    # bp = blueprint_library.filter('vehicle.*')[0]
+    # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
+    bp = blueprint_library.filter("model3")[0]
+    for actor in world.get_actors():
+        if actor.attributes.get('role_name') == "hero":
+            ego_vehicle = actor
+            break
+
+    spawnPoint = carla.Transform(ego_vehicle.get_location() +
+                                 carla.Location(y=distance),
+                                 ego_vehicle.get_transform().rotation)
+    vehicle = world.spawn_actor(bp, spawnPoint)
+
+    vehicle.set_autopilot(False)
+    # vehicle.set_location(loc)
+    # coords = vehicle.get_location()
+    # get spectator
+    spectator = world.get_spectator()
+    # set spectator to follow ego vehicle with offset
+    spectator.set_transform(
+        carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
+                        carla.Rotation(pitch=-90)))

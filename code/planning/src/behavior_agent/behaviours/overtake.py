@@ -123,7 +123,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < 5.0:
+                self.ot_distance < 6.0:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
@@ -218,13 +218,13 @@ class Wait(py_trees.behaviour.Behaviour):
         elif self.ot_option == 1:
             distance_lidar = self.blackboard. \
                 get("/carla/hero/LIDAR_range")
-            distance_lidar = distance_lidar.data
             clear_distance = 30
         else:
             distance_lidar = None
 
         obstacle_msg = self.blackboard.get("/paf/hero/collision")
         if obstacle_msg is None:
+            rospy.logerr("No OBSTACLE")
             return py_trees.common.Status.FAILURE
 
         if distance_lidar is not None:
@@ -332,7 +332,7 @@ class Enter(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("Overtake: Bigger Failure")
-            return py_trees.common.Status.FAILURE
+            return py_trees.common.Status.RUNNING
         # Currently not in use
         # Can be used to check if we can go back to the original lane
 
