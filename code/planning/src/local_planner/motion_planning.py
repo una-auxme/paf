@@ -48,12 +48,10 @@ class MotionPlanning(CompatibleNode):
         self.current_heading = None
         self.trajectory = None
         self.overtaking = False
-        self.overtake_start = rospy.get_rostime()
         self.current_wp = None
         self.enhanced_path = None
         self.current_speed = None
         self.speed_limit = None
-
         self.__corners = None
         self.__in_corner = False
         # Subscriber
@@ -186,9 +184,7 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y,
                                     data.pose.position.z])
 
-    def change_trajectory(self, distance_obj: float):
-        distance_obj = distance_obj.data
-        self.overtake_start = rospy.get_rostime()
+    def change_trajectory(self, distance_obj):
         limit_waypoints = 30
         pose_list = self.trajectory.poses
         count_retrys = 0
@@ -379,10 +375,11 @@ class MotionPlanning(CompatibleNode):
         be_speed = self.get_speed_by_behavior(behavior)
         if not behavior == bs.parking.name:
             corner_speed = self.get_cornering_speed()
-            self.target_speed = min(be_speed, acc_speed, corner_speed, 6)
+            self.target_speed = min(be_speed, acc_speed, corner_speed)
         else:
             self.target_speed = be_speed
         # self.target_speed = min(self.target_speed, 8)
+        self.loginfo(f"Speed: {self.target_speed}")
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
@@ -392,6 +389,8 @@ class MotionPlanning(CompatibleNode):
 
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
+        if data.data == bs.ot_enter_init.name:
+            self.change_trajectory(self.__collision_point)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -511,7 +510,7 @@ class MotionPlanning(CompatibleNode):
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms((stopline / 30)
                                    * 50))
-        if stopline < 3.0:
+        if stopline < 6.0:
             v_stop = 0.0
         return v_stop
 
@@ -528,7 +527,7 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_overtake(self) -> float:
-        self.logerr(f"Test: {self.__collision_point}")
+        self.logerr(f"Overtake point: {self.__collision_point}")
         if (self.__collision_point is not None) and \
                 self.__collision_point != np.inf:
             return self.__collision_point
