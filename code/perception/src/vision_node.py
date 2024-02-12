@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from time import perf_counter
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import torch
@@ -80,6 +81,7 @@ class VisionNode(CompatibleNode):
         self.device = torch.device("cuda"
                                    if torch.cuda.is_available() else "cpu")
         self.depth_images = []
+        self.DEBUG = False
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -211,34 +213,55 @@ class VisionNode(CompatibleNode):
         return vision_result
 
     def predict_ultralytics(self, image):
+        start = perf_counter()
+
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image,
                                              desired_encoding='passthrough')
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
-        output = self.model(cv_image, half=True, verbose=False)
+        output = self.model.predict(cv_image, half=True, verbose=False)[0]
+
+        s1 = perf_counter()
+
+        if 9 in output.boxes.cls:
+            self.process_traffic_lights(output, cv_image, image.header)
+
+        s2 = perf_counter()
+
+        box_img = self.calc_draw_distance(output.boxes, cv_image)
+
+        now = perf_counter()
+        if self.DEBUG:
+            self.loginfo("S1: {}, S2: {}, S3: {}, Total: {}".format(
+                round(s1 - start, 4), round(s2 - s1, 4), round(now - s2, 4),
+                round(now - start, 4)))
+
+        return box_img
+
+    def calc_draw_distance(self, boxes, cv_image):
         distance_output = []
         c_boxes = []
         c_labels = []
-        for r in output:
-            boxes = r.boxes
-            for box in boxes:
+
+        for box in boxes:
+            if len(self.depth_images) > 0:
                 cls = box.cls.item()
                 pixels = box.xyxy[0]
-                if len(self.depth_images) > 0:
-                    distances = np.asarray(
-                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
-                                              int(pixels[0]):int(pixels[2]):1]
-                            for i in range(len(self.depth_images))])
-                    non_zero_filter = distances[distances != 0]
 
-                    if len(non_zero_filter) > 0:
-                        obj_dist = np.min(non_zero_filter)
-                    else:
-                        obj_dist = np.inf
+                distances = np.asarray(
+                    [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
+                                          int(pixels[0]):int(pixels[2]):1]
+                        for i in range(len(self.depth_images))])
+                non_zero_filter = distances[distances != 0]
 
-                    c_boxes.append(torch.tensor(pixels))
-                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
-                    distance_output.append([cls, obj_dist])
+                if len(non_zero_filter) > 0:
+                    obj_dist = np.min(non_zero_filter)
+                else:
+                    obj_dist = np.inf
+
+                c_boxes.append(torch.tensor(pixels))
+                c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
+                distance_output.append([cls, obj_dist])
 
         self.distance_publisher.publish(
             Float32MultiArray(data=distance_output))
@@ -246,9 +269,6 @@ class VisionNode(CompatibleNode):
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
                                                 dtype=torch.uint8)
-
-        if 9 in output[0].boxes.cls:
-            self.process_traffic_lights(output[0], cv_image, image.header)
 
         c_boxes = torch.stack(c_boxes)
         print(image_np_with_detections.shape, c_boxes.shape, c_labels)
@@ -259,12 +279,12 @@ class VisionNode(CompatibleNode):
                                   width=3,
                                   font_size=12)
 
-        np_box_img = np.transpose(box.detach().numpy(),
-                                  (1, 2, 0))
+        np_box_img = np.transpose(box.detach().numpy(), (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+
         return box_img
 
-    def process_traffic_lights(self, prediction, cv_image, image_header):
+    async def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 

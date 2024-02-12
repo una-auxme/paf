@@ -13,6 +13,6 @@ scipy==1.10.1
 xmltodict==0.13.0
 py-trees==2.2.3
 numpy==1.23.5
-ultralytics==8.1.9
+ultralytics==8.1.11
 scikit-learn>=0.18
 pandas==2.0.3
