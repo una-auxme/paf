@@ -61,7 +61,7 @@
       - yolov8x-seg
     -->
 
-    <param name="model" value="rtdetr-x" />
+    <param name="model" value="rtdetr-l" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
