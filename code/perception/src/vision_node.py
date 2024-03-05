@@ -284,6 +284,38 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         output = self.model(cv_image, half=True, verbose=False)
+        distance_output = []
+        c_boxes = []
+        c_labels = []
+        for r in output:
+            boxes = r.boxes
+            for box in boxes:
+                cls = box.cls.item()
+                pixels = box.xyxy[0]
+                if len(self.depth_images) > 0:
+                    distances = np.asarray(
+                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
+                                              int(pixels[0]):int(pixels[2]):1]
+                            for i in range(len(self.depth_images))])
+                    non_zero_filter = distances[distances != 0]
+
+                    if len(non_zero_filter) > 0:
+                        obj_dist = np.min(non_zero_filter)
+                    else:
+                        obj_dist = np.inf
+
+                    c_boxes.append(torch.tensor(pixels))
+                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
+                    distance_output.append([cls, obj_dist])
+
+        # print(distance_output)
+        # self.logerr(distance_output)
+        self.distance_publisher.publish(
+            Float32MultiArray(data=distance_output))
+
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        image_np_with_detections = torch.tensor(transposed_image,
+                                                dtype=torch.uint8)
 
         # handle distance of objects
         distance_output = []
@@ -352,14 +384,19 @@ class VisionNode(CompatibleNode):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
-        min_x = 550
-        max_x = 700
-        min_prob = 0.35
+        max_y = 360  # middle of image
+        min_prob = 0.30
 
         for index in indices:
             box = prediction.boxes.cpu().data.numpy()[index]
 
-            if box[0] < min_x or box[2] > max_x or box[4] < min_prob:
+            if box[4] < min_prob:
+                continue
+
+            if (box[2] - box[0]) * 1.5 > box[3] - box[1]:
+                continue  # ignore horizontal boxes
+
+            if box[1] > max_y:
                 continue
 
             box = box[0:4].astype(int)

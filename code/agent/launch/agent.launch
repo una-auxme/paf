@@ -1,6 +1,6 @@
 <launch>
     <arg name="role_name" default="hero" />
-    <arg name="control_loop_rate" default="0.05" />
+    <arg name="control_loop_rate" default="0.025" />
 
     <!-- perception -->
     <include file="$(find perception)/launch/perception.launch">

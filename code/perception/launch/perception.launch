@@ -61,8 +61,8 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg -->
-    
+      - yolov8x-seg 
+      -->
 
     <param name="model" value="rtdetr-x" />
   </node>
@@ -72,7 +72,7 @@
     <param name="side" value="Center" />
     <param name="model" value="/workspace/code/perception/src/traffic_light_detection/models/model_acc_92.48_val_91.88.pt" />
   </node>
- 
+
   <node pkg="perception" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />

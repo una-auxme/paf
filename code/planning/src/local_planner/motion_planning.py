@@ -1,25 +1,27 @@
 #!/usr/bin/env python
-# import rospy
 # import tf.transformations
 import ros_compatibility as roscomp
+import rospy
+import tf.transformations
+
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import String, Float32, Bool
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+from carla_msgs.msg import CarlaSpeedometer
 import numpy as np
 
-# from behavior_agent.msg import BehaviorSpeed
+from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
+    import run_fot
 from perception.msg import Waypoint, LaneChange
-import behavior_speed as bs
+import planning  # noqa: F401
+from behavior_agent.behaviours import behavior_speed as bs
 
-# from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-# from carla_msgs.msg import CarlaRoute   # , CarlaWorldInfo
-# from nav_msgs.msg import Path
-# from std_msgs.msg import String
-# from std_msgs.msg import Float32MultiArray
+from utils import convert_to_ms, approx_obstacle_pos, \
+    hyperparameters
 
-
-def convert_to_ms(speed):
-    return speed / 3.6
+# from scipy.spatial._kdtree import KDTree
 
 
 class MotionPlanning(CompatibleNode):
@@ -33,15 +35,56 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.5)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.1)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
+        self.published = False
+        self.current_pos = None
+        self.current_heading = None
+        self.trajectory = None
+        self.overtaking = False
+        self.overtake_start = rospy.get_rostime()
+        self.current_wp = None
+        self.enhanced_path = None
+        self.current_speed = None
+        self.speed_limit = None
 
+        self.counter = 0
+        self.speed_list = []
+        self.__first_trajectory = None
+        self.__corners = None
+        self.__in_corner = False
         # Subscriber
+        self.speed_limit_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/speed_limit",
+            self.__set_speed_limit,
+            qos_profile=1)
+        self.velocity_sub: Subscriber = self.new_subscription(
+            CarlaSpeedometer,
+            f"/carla/{self.role_name}/Speed",
+            self.__get_current_velocity,
+            qos_profile=1)
+        self.head_sub = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__set_heading,
+            qos_profile=1)
+
+        self.trajectory_sub = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory_global",
+            self.__set_trajectory,
+            qos_profile=1)
+        self.current_pos_sub = self.new_subscription(
+            PoseStamped,
+            f"/paf/{self.role_name}/current_pos",
+            self.__set_current_pos,
+            qos_profile=1)
         self.curr_behavior_sub: Subscriber = self.new_subscription(
             String,
             f"/paf/{self.role_name}/curr_behavior",
@@ -71,11 +114,20 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         # Publisher
+        self.traj_pub: Publisher = self.new_publisher(
+            msg_type=Path,
+            topic=f"/paf/{self.role_name}/trajectory",
+            qos_profile=1)
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
+        self.wp_subs = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_wp",
+            self.__set_wp,
+            qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
@@ -83,6 +135,213 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         self.logdebug("MotionPlanning started")
+        self.counter = 0
+
+    def __set_speed_limit(self, data: Float32):
+        """Set current speed limit
+
+        Args:
+            data (Float32): Current speed limit
+        """
+        self.speed_limit = data.data
+
+    def __get_current_velocity(self, data: CarlaSpeedometer):
+        """Get current velocity from CarlaSpeedometer
+
+        Args:
+            data (CarlaSpeedometer): Current velocity
+        """
+        self.current_speed = float(data.speed)
+
+    def __set_wp(self, data: Float32):
+        """Recieve current waypoint index from ACC
+
+        Args:
+            data (Float32): Waypoint index
+        """
+        self.current_wp = data.data
+
+    def __set_heading(self, data: Float32):
+        """Set current Heading
+
+        Args:
+            data (Float32): Current Heading vom Subscriber
+        """
+        self.current_heading = data.data
+
+    def __save_trajectory(self, data):
+        if self.__first_trajectory is None:
+            self.__first_trajectory = data.poses
+
+            self.__corners = self.__calc_corner_points()
+
+    def __set_current_pos(self, data: PoseStamped):
+        """set current position
+        Args:
+            data (PoseStamped): current position
+        """
+        self.current_pos = np.array([data.pose.position.x,
+                                    data.pose.position.y,
+                                    data.pose.position.z])
+
+    def change_trajectory(self, distance: float):
+        self.overtake_start = rospy.get_rostime()
+        limit_waypoints = 30
+        np_array = np.array(self.trajectory.poses)
+        obstacle_position = approx_obstacle_pos(distance,
+                                                self.current_heading,
+                                                self.current_pos,
+                                                self.current_speed)
+        # trajectory_np = self.convert_pose_to_array(np_array)
+        # wp = KDTree(trajectory_np[:, :2]).query(obstacle_position[0][:2])[1]
+        selection = np_array[int(self.current_wp):int(self.current_wp) +
+                             int(distance + limit_waypoints)]
+        waypoints = self.convert_pose_to_array(selection)
+
+        initial_conditions = {
+            'ps': 0,
+            'target_speed': self.current_speed,
+            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
+            'vel': np.array([obstacle_position[2][0],
+                             obstacle_position[2][1]]),
+            'wp': waypoints,
+            'obs': np.array([[obstacle_position[0][0],
+                              obstacle_position[0][1],
+                              obstacle_position[1][0],
+                              obstacle_position[1][1]]])
+        }
+        result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
+            speeds_y, misc, costs, success = run_fot(initial_conditions,
+                                                     hyperparameters)
+        if success:
+            result = []
+            for i in range(len(result_x)):
+                position = Point(result_x[i], result_y[i], 0)
+                quaternion = tf.transformations.quaternion_from_euler(0,
+                                                                      0,
+                                                                      iyaw[i])
+                orientation = Quaternion(x=quaternion[0], y=quaternion[1],
+                                         z=quaternion[2], w=quaternion[3])
+                pose = Pose(position, orientation)
+                pos = PoseStamped()
+                pos.header.frame_id = "global"
+                pos.pose = pose
+                result.append(pos)
+            path = Path()
+            path.header.stamp = rospy.Time.now()
+            path.header.frame_id = "global"
+            path.poses = list(np_array[:int(self.current_wp)]) + \
+                result + list(np_array[int(self.current_wp + 25 + 30):])
+            self.trajectory = path
+
+    def __set_trajectory(self, data: Path):
+        """get current trajectory global planning
+
+        Args:
+            data (Path): Trajectory waypoints
+        """
+        self.trajectory = data
+
+    def __calc_corner_points(self):
+        coords = self.convert_pose_to_array(np.array(self.__first_trajectory))
+        x_values = np.array([point[0] for point in coords])
+        y_values = np.array([point[1] for point in coords])
+
+        angles = np.arctan2(np.diff(y_values), np.diff(x_values))
+        angles = np.rad2deg(angles)
+        angles[angles > 0] -= 360  # Convert for angles between 0 - 360 degree
+
+        threshold = 1  # in degree
+        curve_change_indices = np.where(np.abs(np.diff(angles)) > threshold)[0]
+
+        sublist = self.create_sublists(curve_change_indices, proximity=5)
+
+        coords_of_curve = [coords[i] for i in sublist]
+
+        return coords_of_curve
+
+    def create_sublists(self, points, proximity=5):
+        sublists = []
+        current_sublist = []
+
+        for point in points:
+            if not current_sublist:
+                current_sublist.append(point)
+            else:
+                last_point = current_sublist[-1]
+                distance = abs(point - last_point)
+
+                if distance <= proximity:
+                    current_sublist.append(point)
+                else:
+                    sublists.append(current_sublist)
+                    current_sublist = [point]
+        if current_sublist:
+            sublists.append(current_sublist)
+
+        filtered_list = [in_list for in_list in sublists if len(in_list) > 1]
+
+        return filtered_list
+
+    def get_cornering_speed(self):
+        corner = self.__corners[0]
+        pos = self.current_pos
+
+        def euclid_dist(vector1, vector2):
+            point1 = np.array(vector1)
+            point2 = np.array(vector2)
+
+            diff = point2 - point1
+            sum_sqrt = np.dot(diff.T, diff)
+            return np.sqrt(sum_sqrt)
+
+        def map_corner(dist):
+            if dist < 8:  # lane_change
+                return 8
+            elif dist < 25:
+                return 6
+            elif dist < 50:
+                return 7
+            else:
+                8
+
+        distance_corner = 0
+        for i in range(len(corner) - 1):
+            distance_corner += euclid_dist(corner[i], corner[i + 1])
+        # self.logerr(distance_corner)
+
+        if self.__in_corner:
+            distance_end = euclid_dist(pos, corner[0])
+            if distance_end > distance_corner + 2:
+                self.__in_corner = False
+                self.__corners.pop(0)
+                self.loginfo("End Corner")
+                return self.__get_speed_cruise()
+            else:
+                return map_corner(distance_corner)
+
+        distance_start = euclid_dist(pos, corner[0])
+        if distance_start < 3:
+            self.__in_corner = True
+            self.loginfo("Start Corner")
+            return map_corner(distance_corner)
+        else:
+            return self.__get_speed_cruise()
+
+    def convert_pose_to_array(self, poses: np.array):
+        """convert pose array to numpy array
+
+        Args:
+            poses (np.array): pose array
+
+        Returns:
+            np.array: numpy array
+        """
+        result_array = np.empty((len(poses), 2))
+        for pose in range(len(poses)):
+            result_array[pose] = np.array([poses[pose].pose.position.x,
+                                           poses[pose].pose.position.y])
+        return result_array
 
     def __check_emergency(self, data: Bool):
         """If an emergency stop is needed first check if we are
@@ -103,7 +362,12 @@ class MotionPlanning(CompatibleNode):
         else:
             self.target_speed = be_speed
         # self.logerr("target speed: " + str(self.target_speed))
+        corner_speed = self.get_cornering_speed()
+        self.target_speed = min(self.target_speed, corner_speed)
+        # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
+        # self.logerr(f"Speed: {self.target_speed}")
+        # self.speed_list.append(self.target_speed)
 
     def __set_acc_speed(self, data: Float32):
         self.__acc_speed = data.data
@@ -123,9 +387,7 @@ class MotionPlanning(CompatibleNode):
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
         split = "_"
-        self.loginfo("get speed")
         short_behavior = behavior.partition(split)[0]
-        self.loginfo("short behavior: " + str(short_behavior))
         if short_behavior == "int":
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
@@ -142,18 +404,14 @@ class MotionPlanning(CompatibleNode):
             speed = bs.int_app_init.speed
         elif behavior == bs.int_app_green.name:
             speed = bs.int_app_green.speed
-        elif behavior == bs.int_app_no_sign.name:
+        elif behavior == bs.int_app_to_stop.name:
             speed = self.__calc_speed_to_stop_intersection()
         elif behavior == bs.int_wait.name:
             speed == bs.int_wait.speed
-        elif behavior == bs.int_enter_no_light:
-            speed = bs.int_enter_no_light.speed
-        elif behavior == bs.int_enter_empty_str.name:
-            speed = bs.int_enter_empty_str.speed
-        elif behavior == bs.int_enter_light.name:
-            speed == bs.int_enter_light.speed
+        elif behavior == bs.int_enter.name:
+            speed = bs.int_enter.speed
         elif behavior == bs.int_exit:
-            speed = bs.int_exit.speed
+            speed = self.__get_speed_cruise()
 
         return speed
 
@@ -162,7 +420,11 @@ class MotionPlanning(CompatibleNode):
         if behavior == bs.lc_app_init.name:
             speed = bs.lc_app_init.speed
         elif behavior == bs.lc_app_blocked.name:
-            speed = bs.lc_app_blocked.speed  # calc_speed_to_stop_lanechange()
+            speed = self.__calc_speed_to_stop_lanechange()
+        elif behavior == bs.lc_app_free.name:
+            speed = bs.lc_app_free.speed
+        elif behavior == bs.lc_wait.name:
+            speed = bs.lc_wait.speed
         elif behavior == bs.lc_enter_init.name:
             speed = bs.lc_enter_init.speed
         elif behavior == bs.lc_exit.name:
@@ -174,36 +436,40 @@ class MotionPlanning(CompatibleNode):
         return self.__acc_speed
 
     def __calc_speed_to_stop_intersection(self) -> float:
-        target_distance = 3.0
+        target_distance = 5.0
         virtual_stopline_distance = self.__calc_virtual_stopline()
         # calculate speed needed for stopping
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms((virtual_stopline_distance / 30)
                                    * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(50.0)
+        if v_stop > bs.int_app_init.speed:
+            v_stop = bs.int_app_init.speed
         if virtual_stopline_distance < target_distance:
             v_stop = 0.0
+        return v_stop
 
     # TODO: Find out purpose
     def __calc_speed_to_stop_lanechange(self) -> float:
-        if self.__change_point[0] != np.inf and self.__change_point[1]:
-            stopline = self.__change_point[0]
-        else:
-            return 100
+        stopline = self.__calc_virtual_change_point()
 
-        v_stop = max(convert_to_ms(5.),
-                     convert_to_ms((stopline / 30) ** 1.5
+        v_stop = max(convert_to_ms(10.),
+                     convert_to_ms((stopline / 30)
                                    * 50))
-        if v_stop > convert_to_ms(50.0):
-            v_stop = convert_to_ms(30.0)
+        if v_stop > bs.lc_app_init.speed:
+            v_stop = bs.lc_app_init.speed
+        if stopline < 5.0:
+            v_stop = 0.0
         return v_stop
+
+    def __calc_virtual_change_point(self) -> float:
+        if self.__change_point[0] != np.inf and self.__change_point[1]:
+            return self.__change_point[0]
+        else:
+            return 0.0
 
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
             return self.__stopline[0]
-        elif self.traffic_light_detected:
-            return self.traffic_light_distance
         else:
             return 0.0
 
@@ -214,7 +480,13 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            self.update_target_speed(self.__acc_speed, self.__curr_behavior)
+            if (self.__curr_behavior is not None and
+                    self.__acc_speed is not None and
+                    self.__corners is not None):
+                self.update_target_speed(self.__acc_speed,
+                                         self.__curr_behavior)
+                self.trajectory.header.stamp = rospy.Time.now()
+                self.traj_pub.publish(self.trajectory)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -226,7 +498,6 @@ if __name__ == "__main__":
     :param args:
     """
     roscomp.init('MotionPlanning')
-
     try:
         node = MotionPlanning()
         node.run()

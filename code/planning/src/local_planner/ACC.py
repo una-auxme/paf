@@ -47,7 +47,7 @@ class ACC(CompatibleNode):
         # Get trajectory to determine current speed limit
         self.trajectory_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory",
+            f"/paf/{self.role_name}/trajectory_global",
             self.__set_trajectory,
             qos_profile=1)
 
@@ -65,6 +65,14 @@ class ACC(CompatibleNode):
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
+            qos_profile=1)
+        self.wp_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/current_wp",
+            qos_profile=1)
+        self.speed_limit_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/speed_limit",
             qos_profile=1)
 
         # List of all speed limits, sorted by waypoint index
@@ -88,7 +96,7 @@ class ACC(CompatibleNode):
         """Get min distance to object in front from perception
 
         Args:
-            data (MinDistance): Minimum Distance from LIDAR
+            data (Float32): Minimum Distance from LIDAR
         """
         self.obstacle_distance = data.data
 
@@ -148,8 +156,10 @@ class ACC(CompatibleNode):
         if d_new < d_old:
             # update current waypoint and corresponding speed limit
             self.__current_wp_index += 1
+            self.wp_publisher.publish(self.__current_wp_index)
             self.speed_limit = \
                 self.__speed_limits_OD[self.__current_wp_index]
+            self.speed_limit_publisher.publish(self.speed_limit)
 
     def run(self):
         """
