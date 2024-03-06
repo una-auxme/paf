@@ -141,7 +141,7 @@ class VisionNode(CompatibleNode):
             topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1
         )
-        print(f"Subscribed to Side: {side}")
+        # print(f"Subscribed to Side: {side}")
 
     def setup_rainbow_subscription(self):
         self.new_subscription(
@@ -166,28 +166,28 @@ class VisionNode(CompatibleNode):
                 topic=f"/paf/{self.role_name}/Center/segmented_image",
                 qos_profile=1
             )
-            print("Publisher to Center!")
+            # print("Publisher to Center!")
         if self.back:
             self.publisher_back = self.new_publisher(
                 msg_type=numpy_msg(ImageMsg),
                 topic=f"/paf/{self.role_name}/Back/segmented_image",
                 qos_profile=1
             )
-            print("Publisher to Back!")
+            # print("Publisher to Back!")
         if self.left:
             self.publisher_left = self.new_publisher(
                 msg_type=numpy_msg(ImageMsg),
                 topic=f"/paf/{self.role_name}/Left/segmented_image",
                 qos_profile=1
             )
-            print("Publisher to Left!")
+            # print("Publisher to Left!")
         if self.right:
             self.publisher_right = self.new_publisher(
                 msg_type=numpy_msg(ImageMsg),
                 topic=f"/paf/{self.role_name}/Right/segmented_image",
                 qos_profile=1
             )
-            print("Publisher to Right!")
+            # print("Publisher to Right!")
 
     def setup_object_distance_publishers(self):
         self.distance_publisher = self.new_publisher(
@@ -227,7 +227,7 @@ class VisionNode(CompatibleNode):
         if side == "Right":
             self.publisher_right.publish(img_msg)
 
-        print(f"Published Image on Side: {side}")
+        # print(f"Published Image on Side: {side}")
         pass
 
     def handle_rainbow_image(self, image):
@@ -252,7 +252,7 @@ class VisionNode(CompatibleNode):
         dist_array = \
             self.bridge.imgmsg_to_cv2(img_msg=dist_array,
                                       desired_encoding='passthrough')
-        print("RECEIVED DIST")
+        # print("RECEIVED DIST")
         self.dist_arrays = dist_array
 
     def predict_torch(self, image):
@@ -284,7 +284,8 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         output = self.model(cv_image, half=True, verbose=False)
-        distance_output = []
+
+        """distance_output = []
         c_boxes = []
         c_labels = []
         for r in output:
@@ -292,6 +293,7 @@ class VisionNode(CompatibleNode):
             for box in boxes:
                 cls = box.cls.item()
                 pixels = box.xyxy[0]
+                print(pixels)
                 if len(self.depth_images) > 0:
                     distances = np.asarray(
                         [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
@@ -315,7 +317,7 @@ class VisionNode(CompatibleNode):
 
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
-                                                dtype=torch.uint8)
+                                                dtype=torch.uint8)"""
 
         # handle distance of objects
         distance_output = []
@@ -333,28 +335,57 @@ class VisionNode(CompatibleNode):
                                          ::])
                     condition = distances[:, :, 0] != 0
                     non_zero_filter = distances[condition]
+                    distances_copy = distances.copy()
+                    distances_copy[distances_copy == 0] = np.inf
+
                     if len(non_zero_filter) > 0:
-                        obj_dist_index = np.argmin(non_zero_filter[:, 0])
-                        obj_dist = non_zero_filter[obj_dist_index]
+                        sorted_indices = np.argsort(distances_copy[:, :, 0],
+                                                    axis=None)
+                        x1, y1 = np.unravel_index(sorted_indices[0],
+                                                  distances_copy.shape[:2])
+                        x2, y2 = np.unravel_index(sorted_indices[1],
+                                                  distances_copy.shape[:2])
+                        obj_dist1 = distances_copy[x1][y1].copy()
+                        obj_dist2 = distances_copy[x2][y2].copy()
+
                         abs_distance = np.sqrt(
-                            obj_dist[0]**2 +
-                            obj_dist[1]**2 +
-                            obj_dist[2]**2)
+                            obj_dist1[0]**2 +
+                            obj_dist1[1]**2 +
+                            obj_dist1[2]**2)
+
+                        # create 2d glass plane at object
+                        # with box dimension
+                        scale_width = abs(obj_dist1[1] - obj_dist2[1])\
+                            / abs(y1-y2)
+                        scale_height = abs(obj_dist1[2] - obj_dist2[2])\
+                            / abs(x1-x2)
+                        width = distances_copy.shape[1] * scale_width
+                        height = distances_copy.shape[0] * scale_height
+
+                        # upper left
+                        ul_x = obj_dist1[0]
+                        ul_y = obj_dist1[1] - (-y1 + scale_width)
+                        ul_z = obj_dist1[2] - (-x1 + scale_height)
+
+                        # lower right
+                        lr_x = obj_dist1[0]
+                        lr_y = ul_y + width
+                        lr_z = ul_z + height
+
                     else:
-                        obj_dist = (np.inf, np.inf, np.inf)
+                        obj_dist1 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
 
                     c_boxes.append(torch.tensor(pixels))
                     c_labels.append(f"Class: {cls},"
                                     f"Meters: {round(abs_distance, 2)},"
-                                    f"({round(float(obj_dist[0]), 2)},"
-                                    f"{round(float(obj_dist[1]), 2)},"
-                                    f"{round(float(obj_dist[2]), 2)})")
+                                    f"({round(float(obj_dist1[0]), 2)},"
+                                    f"{round(float(obj_dist1[1]), 2)},"
+                                    f"{round(float(obj_dist1[2]), 2)})")
                     distance_output.append([cls,
                                             abs_distance,
-                                            obj_dist[0],
-                                            obj_dist[1],
-                                            obj_dist[2]])
+                                            ul_x, ul_y, ul_z,
+                                            lr_x, lr_y, lr_z])
 
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
