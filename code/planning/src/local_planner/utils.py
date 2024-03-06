@@ -23,7 +23,7 @@ hyperparameters = {
     "ko": 0.1,
     "klat": 1.0,
     "klon": 1.0,
-    "num_threads": 1,  # set 0 to avoid using threaded algorithm
+    "num_threads": 3,  # set 0 to avoid using threaded algorithm
 }
 
 
@@ -140,7 +140,7 @@ def spawn_car(distance):
             break
 
     spawnPoint = carla.Transform(ego_vehicle.get_location() +
-                                 carla.Location(y=distance),
+                                 carla.Location(y=distance.data),
                                  ego_vehicle.get_transform().rotation)
     vehicle = world.spawn_actor(bp, spawnPoint)
 

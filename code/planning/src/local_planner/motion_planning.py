@@ -19,7 +19,7 @@ import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
 from utils import convert_to_ms, approx_obstacle_pos, \
-    hyperparameters
+    hyperparameters, spawn_car
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -58,7 +58,7 @@ class MotionPlanning(CompatibleNode):
         self.test_sub = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/test",
-            self.change_trajectory,
+            spawn_car,
             qos_profile=1)
         self.speed_limit_sub = self.new_subscription(
             Float32,
@@ -375,7 +375,7 @@ class MotionPlanning(CompatibleNode):
         be_speed = self.get_speed_by_behavior(behavior)
         if not behavior == bs.parking.name:
             corner_speed = self.get_cornering_speed()
-            self.target_speed = min(be_speed, acc_speed, corner_speed)
+            self.target_speed = min(be_speed, acc_speed, corner_speed, 6)
         else:
             self.target_speed = be_speed
         # self.target_speed = min(self.target_speed, 8)
