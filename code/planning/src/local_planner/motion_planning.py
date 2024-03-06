@@ -375,7 +375,7 @@ class MotionPlanning(CompatibleNode):
         be_speed = self.get_speed_by_behavior(behavior)
         if not behavior == bs.parking.name:
             corner_speed = self.get_cornering_speed()
-            self.target_speed = min(be_speed, acc_speed, corner_speed)
+            self.target_speed = min(be_speed, acc_speed, corner_speed, 6)
         else:
             self.target_speed = be_speed
         # self.target_speed = min(self.target_speed, 8)
