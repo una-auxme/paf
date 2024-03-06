@@ -193,6 +193,7 @@ class CollisionCheck(CompatibleNode):
                 self.emergency_pub.publish(True)
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
+            self.logerr("Collision published")
             self.collision_pub.publish(data)
         else:
             # If no collision is ahead publish np.Inf
