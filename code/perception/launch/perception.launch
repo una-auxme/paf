@@ -12,12 +12,12 @@
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="x_plot" args="/paf/hero/ideal_x/data[0] /paf/hero/ideal_x/data[1]" />
   <node pkg="rqt_plot" type="rqt_plot" output="screen" name="y_plot" args="/paf/hero/ideal_y/data[0] /paf/hero/ideal_y/data[1]" /-->
   <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="error_plot" args="/paf/hero/ideal_x/data[2]" /-->
- 
+
   <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
     <param name="control_loop_rate" value="0.05" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
- 
+
   <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
@@ -64,7 +64,7 @@
       - yolov8x-seg 
       -->
 
-    <param name="model" value="rtdetr-x" />
+    <param name="model" value="rtdetr-l" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
