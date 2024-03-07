@@ -2,6 +2,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import math
 
+
 hyperparameters = {
     "max_speed": 15,
     "max_accel": 4.0,
@@ -153,3 +154,26 @@ def spawn_car(distance):
     spectator.set_transform(
         carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
                         carla.Rotation(pitch=-90)))
+
+
+def filter_vision_objects(float_array):
+    """Filters vision objects to calculate collision check
+    It contains the classId, the absolute Euclidean distance
+    and 6 coordinates for upper left and lower right corner
+    of the bounding box
+
+    Array shape: [classID, EuclidDistance,
+                    UpperLeft(x,y,z), LowerRight(x,y,z)]
+
+    Args:
+        data (FloatMultiArray): numpy array with vision objects
+    """
+    # float_array = data.data
+    # Filter out all objects that are not cars
+    all_cars = float_array[np.where(float_array[:, 0] == 2)]
+    # Filter out parking cars or cars on opposite lane
+    no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
+    no_parking_cars = no_oncoming_traffic[
+        np.where(no_oncoming_traffic[:, 6] > -3)]
+    # Return nearest car
+    return no_parking_cars[np.argmin(no_parking_cars[:, 1])]

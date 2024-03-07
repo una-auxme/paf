@@ -6,6 +6,7 @@ import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
+from rospy.numpy_msg import numpy_msg
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
@@ -34,8 +35,8 @@ class CollisionCheck(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            Float32,
-            f"/carla/{self.role_name}/LIDAR_range",
+            numpy_msg(Float32MultiArray),
+            f"/carla/{self.role_name}/Center/object_distance",
             self.__set_distance,
             qos_profile=1)
         # Publisher for emergency stop
@@ -58,6 +59,28 @@ class CollisionCheck(CompatibleNode):
         self.__object_first_position: tuple = None
         self.__object_last_position: tuple = None
         self.logdebug("CollisionCheck started")
+
+    def filter_vision_objects(self, data):
+        """Filters vision objects to calculate collision check
+        It contains the classId, the absolute Euclidean distance
+        and 6 coordinates for upper left and lower right corner
+        of the bounding box
+
+        Array shape: [classID, EuclidDistance,
+                      UpperLeft(x,y,z), LowerRight(x,y,z)]
+
+        Args:
+            data (FloatMultiArray): numpy array with vision objects
+        """
+        float_array = data.data
+        # Filter out all objects that are not cars
+        all_cars = float_array[np.where(float_array[:, 0] == 2)]
+        # Filter out parking cars or cars on opposite lane
+        no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
+        no_parking_cars = no_oncoming_traffic[
+            np.where(no_oncoming_traffic[:, 6] > -3)]
+        # Return nearest car
+        return no_parking_cars[np.argmin(no_parking_cars[:, 1])]
 
     def update_distance(self):
         """Updates the distance to the obstacle in front
