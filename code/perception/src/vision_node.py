@@ -214,7 +214,7 @@ class VisionNode(CompatibleNode):
             vision_result = self.predict_ultralytics(image)
 
         # publish image to rviz
-        img_msg = self.bridge.cv2_to_imgmsg(vision_result,
+        """img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="rgb8")
         img_msg.header = image.header
         side = rospy.resolve_name(img_msg.header.frame_id).split('/')[2]
@@ -225,8 +225,9 @@ class VisionNode(CompatibleNode):
         if side == "Left":
             self.publisher_left.publish(img_msg)
         if side == "Right":
-            self.publisher_right.publish(img_msg)
+            self.publisher_right.publish(img_msg)"""
 
+        locals().clear()
         # print(f"Published Image on Side: {side}")
         pass
 
@@ -254,6 +255,7 @@ class VisionNode(CompatibleNode):
                                       desired_encoding='passthrough')
         # print("RECEIVED DIST")
         self.dist_arrays = dist_array
+        locals().clear()
 
     def predict_torch(self, image):
         self.model.eval()
@@ -284,40 +286,6 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         output = self.model(cv_image, half=True, verbose=False)
-
-        """distance_output = []
-        c_boxes = []
-        c_labels = []
-        for r in output:
-            boxes = r.boxes
-            for box in boxes:
-                cls = box.cls.item()
-                pixels = box.xyxy[0]
-                print(pixels)
-                if len(self.depth_images) > 0:
-                    distances = np.asarray(
-                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
-                                              int(pixels[0]):int(pixels[2]):1]
-                            for i in range(len(self.depth_images))])
-                    non_zero_filter = distances[distances != 0]
-
-                    if len(non_zero_filter) > 0:
-                        obj_dist = np.min(non_zero_filter)
-                    else:
-                        obj_dist = np.inf
-
-                    c_boxes.append(torch.tensor(pixels))
-                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
-                    distance_output.append([cls, obj_dist])
-
-        # print(distance_output)
-        # self.logerr(distance_output)
-        self.distance_publisher.publish(
-            Float32MultiArray(data=distance_output))
-
-        transposed_image = np.transpose(cv_image, (2, 0, 1))
-        image_np_with_detections = torch.tensor(transposed_image,
-                                                dtype=torch.uint8)"""
 
         # handle distance of objects
         distance_output = []
@@ -405,16 +373,15 @@ class VisionNode(CompatibleNode):
         """print("DISTANCE_ARRAY: ", distance_output)"""
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
-
-        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        
+        """transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
-                                                dtype=torch.uint8)
+                                                dtype=torch.uint8)"""
 
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
-        c_boxes = torch.stack(c_boxes)
-        # print(image_np_with_detections.shape, c_boxes.shape, c_labels)
+        """c_boxes = torch.stack(c_boxes)
         box = draw_bounding_boxes(image_np_with_detections,
                                   c_boxes,
                                   c_labels,
@@ -423,8 +390,10 @@ class VisionNode(CompatibleNode):
                                   font_size=12)
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
-        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
-        return box_img
+        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)"""
+        locals().clear()
+        # return box_img
+
         # return output[0].plot()
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
@@ -453,6 +422,8 @@ class VisionNode(CompatibleNode):
                                                             encoding="rgb8")
             traffic_light_image.header = image_header
             self.traffic_light_publisher.publish(traffic_light_image)
+        
+        locals().clear()
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)
