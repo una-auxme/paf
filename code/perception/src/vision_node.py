@@ -191,7 +191,7 @@ class VisionNode(CompatibleNode):
 
     def setup_object_distance_publishers(self):
         self.distance_publisher = self.new_publisher(
-            msg_type=numpy_msg(Float32MultiArray),
+            msg_type=Float32MultiArray,
             topic=f"/paf/{self.role_name}/{self.side}/object_distance",
             qos_profile=1)
 
@@ -344,24 +344,35 @@ class VisionNode(CompatibleNode):
                             lr_y = ul_y + width
                             lr_z = ul_z + height
 
-                            distance_output.append([cls,
-                                                    abs_distance,
-                                                    ul_x, ul_y, ul_z,
-                                                    lr_x, lr_y, lr_z])
-                        else:
-                            distance_output.append([cls,
-                                                    abs_distance,
-                                                    np.inf, np.inf, np.inf,
-                                                    np.inf, np.inf, np.inf])
+                            distance_output.append(float(cls))
+                            distance_output.append(float(abs_distance))
+                            distance_output.append(float(ul_x))
+                            distance_output.append(float(ul_y))
+                            distance_output.append(float(ul_z))
+                            distance_output.append(float(lr_x))
+                            distance_output.append(float(lr_y))
+                            distance_output.append(float(lr_z))
 
+                        else:
+                            distance_output.append(float(cls))
+                            distance_output.append(float(abs_distance))
+                            distance_output.append(float(np.inf))
+                            distance_output.append(float(np.inf))
+                            distance_output.append(float(np.inf))
+                            distance_output.append(float(np.inf))
+                            distance_output.append(float(np.inf))
+                            distance_output.append(float(np.inf))
                     else:
                         obj_dist1 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
-
-                        distance_output.append([cls,
-                                                abs_distance,
-                                                np.inf, np.inf, np.inf,
-                                                np.inf, np.inf, np.inf])
+                        distance_output.append(float(cls))
+                        distance_output.append(float(abs_distance))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
 
                     c_boxes.append(torch.tensor(pixels))
                     c_labels.append(f"Class: {cls},"

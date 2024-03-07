@@ -6,7 +6,7 @@ import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
-from rospy.numpy_msg import numpy_msg
+# from rospy.numpy_msg import numpy_msg
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
@@ -36,8 +36,8 @@ class CollisionCheck(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            numpy_msg(Float32MultiArray),
-            f"/carla/{self.role_name}/Center/object_distance",
+            Float32MultiArray,
+            f"/paf/{self.role_name}/Center/object_distance",
             self.__set_distance,
             qos_profile=1)
         # Publisher for emergency stop
