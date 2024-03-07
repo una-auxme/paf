@@ -126,3 +126,5 @@ jobs:
               repo: context.repo.repo,
               body: "## Simulation results\n" + resultsTable
             });
+      - name: Prune all images older than 30 days from self-hosted runner
+        run: docker image prune -a --force --filter "until=720h"
