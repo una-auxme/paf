@@ -100,7 +100,8 @@ class CollisionCheck(CompatibleNode):
             based on the distance between to timestamps
         """
         # Check if current speed from vehicle is not None
-        self.logerr("Obstacle detected and Speed calculated: " + self.__object_last_position[1])
+        self.logerr("Obstacle detected and Speed calculated: "
+                    + self.__object_last_position[1])
         if self.__current_velocity is None or \
                 self.__object_first_position is None or \
                 self.__object_last_position is None:
