@@ -1,6 +1,7 @@
 from scipy.spatial.transform import Rotation
 import numpy as np
 import math
+import rospy
 
 
 hyperparameters = {
@@ -168,15 +169,21 @@ def filter_vision_objects(float_array):
     Args:
         data (ndarray): numpy array with vision objects
     """
+    # Reshape array to 8 columns and n rows (one row per object)
+    float_array = np.asarray(float_array)
+    float_array = np.reshape(float_array, (float_array.size//8, 8))
     # Filter all rows that contain np.inf
+    rospy.logerr("Before filtering inf: " + str(float_array))
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
+    rospy.logerr("After filtering inf: " + str(float_array))
     if float_array.size == 0:
         return None
     # Filter out all objects that are not cars
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
+    
     # Filter out parking cars or cars on opposite lane
     no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
-
+    rospy.logerr("After filtering left lane: " + str(no_oncoming_traffic))
     if no_oncoming_traffic.size == 0:
         return None
 

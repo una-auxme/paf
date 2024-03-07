@@ -379,7 +379,6 @@ class MotionPlanning(CompatibleNode):
         else:
             self.target_speed = be_speed
         # self.target_speed = min(self.target_speed, 8)
-        self.loginfo(f"Speed: {self.target_speed}")
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
