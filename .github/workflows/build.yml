@@ -19,11 +19,11 @@ jobs:
       packages: write
 
     steps:
-      - name: Clear up some disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          df -h
+      # - name: Clear up some disk space
+        #run: |
+         # sudo rm -rf /usr/share/dotnet
+          #sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          #df -h
 
       - name: Checkout repository
         uses: actions/checkout@v3
