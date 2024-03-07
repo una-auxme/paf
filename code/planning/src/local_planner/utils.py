@@ -166,14 +166,24 @@ def filter_vision_objects(float_array):
                     UpperLeft(x,y,z), LowerRight(x,y,z)]
 
     Args:
-        data (FloatMultiArray): numpy array with vision objects
+        data (ndarray): numpy array with vision objects
     """
-    # float_array = data.data
+    # Filter all rows that contain np.inf
+    float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
+    if float_array.size == 0:
+        return None
     # Filter out all objects that are not cars
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
     # Filter out parking cars or cars on opposite lane
     no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
+
+    if no_oncoming_traffic.size == 0:
+        return None
+
     no_parking_cars = no_oncoming_traffic[
         np.where(no_oncoming_traffic[:, 6] > -3)]
+
+    if no_parking_cars.size == 0:
+        return None
     # Return nearest car
     return no_parking_cars[np.argmin(no_parking_cars[:, 1])]

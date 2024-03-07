@@ -19,7 +19,7 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
-import rospy
+# import rospy
 
 """
 VisionNode:
@@ -373,7 +373,7 @@ class VisionNode(CompatibleNode):
         """print("DISTANCE_ARRAY: ", distance_output)"""
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
-        
+
         """transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
                                                 dtype=torch.uint8)"""
@@ -422,7 +422,7 @@ class VisionNode(CompatibleNode):
                                                             encoding="rgb8")
             traffic_light_image.header = image_header
             self.traffic_light_publisher.publish(traffic_light_image)
-        
+
         locals().clear()
 
     def create_mask(self, input_image, model_output):

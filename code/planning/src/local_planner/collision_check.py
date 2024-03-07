@@ -11,6 +11,7 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
+from utils import filter_vision_objects
 
 
 class CollisionCheck(CompatibleNode):
@@ -60,32 +61,11 @@ class CollisionCheck(CompatibleNode):
         self.__object_last_position: tuple = None
         self.logdebug("CollisionCheck started")
 
-    def filter_vision_objects(self, data):
-        """Filters vision objects to calculate collision check
-        It contains the classId, the absolute Euclidean distance
-        and 6 coordinates for upper left and lower right corner
-        of the bounding box
-
-        Array shape: [classID, EuclidDistance,
-                      UpperLeft(x,y,z), LowerRight(x,y,z)]
-
-        Args:
-            data (FloatMultiArray): numpy array with vision objects
-        """
-        float_array = data.data
-        # Filter out all objects that are not cars
-        all_cars = float_array[np.where(float_array[:, 0] == 2)]
-        # Filter out parking cars or cars on opposite lane
-        no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
-        no_parking_cars = no_oncoming_traffic[
-            np.where(no_oncoming_traffic[:, 6] > -3)]
-        # Return nearest car
-        return no_parking_cars[np.argmin(no_parking_cars[:, 1])]
-
-    def update_distance(self):
+    def update_distance(self, reset):
         """Updates the distance to the obstacle in front
         """
-        if np.isinf(self.__object_last_position[1]):
+        if reset:
+            # Reset all values if we do not have car in front
             self.__object_last_position = None
             self.__object_first_position = None
             return
@@ -94,20 +74,24 @@ class CollisionCheck(CompatibleNode):
             self.__object_last_position = None
             return
 
-    def __set_distance(self, data: Float32):
+    def __set_distance(self, data: Float32MultiArray):
         """Saves last distance from  LIDAR
 
         Args:
             data (Float32): Message from lidar with distance
         """
-        if np.isinf(data.data) and \
-                self.__object_last_position is not None and \
-                rospy.get_rostime() - self.__object_last_position[0] < \
-                rospy.Duration(1):
+        nearest_object = filter_vision_objects(data.data)
+        if nearest_object is None:
+            self.update_distance(True)
             return
+        # if np.isinf(data.data) and \
+        #         self.__object_last_position is not None and \
+        #         rospy.get_rostime() - self.__object_last_position[0] < \
+        #         rospy.Duration(1):
+        #     return
         # Set distance - 2 to clear distance from car
-        self.__object_last_position = (rospy.get_rostime(), data.data)
-        self.update_distance()
+        self.__object_last_position = (rospy.get_rostime(), nearest_object[1])
+        self.update_distance(False)
         self.calculate_obstacle_speed()
 
     def calculate_obstacle_speed(self):
