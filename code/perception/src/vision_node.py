@@ -355,26 +355,45 @@ class VisionNode(CompatibleNode):
 
                         # create 2d glass plane at object
                         # with box dimension
-                        scale_width = abs(obj_dist1[1] - obj_dist2[1])\
-                            / abs(y1-y2)
-                        scale_height = abs(obj_dist1[2] - obj_dist2[2])\
-                            / abs(x1-x2)
-                        width = distances_copy.shape[1] * scale_width
-                        height = distances_copy.shape[0] * scale_height
+                        width_diff = abs(y1-y2)
+                        height_diff = abs(x1-x2)
 
-                        # upper left
-                        ul_x = obj_dist1[0]
-                        ul_y = obj_dist1[1] - (-y1 + scale_width)
-                        ul_z = obj_dist1[2] - (-x1 + scale_height)
+                        if width_diff > 0 and height_diff > 0:
+                            scale_width = abs(obj_dist1[1] - obj_dist2[1])\
+                                / width_diff
+                            scale_height = abs(obj_dist1[2] - obj_dist2[2])\
+                                / height_diff
+                            width = distances_copy.shape[1] * scale_width
+                            height = distances_copy.shape[0] * scale_height
 
-                        # lower right
-                        lr_x = obj_dist1[0]
-                        lr_y = ul_y + width
-                        lr_z = ul_z + height
+                            # upper left
+                            ul_x = obj_dist1[0]
+                            ul_y = obj_dist1[1] - (-y1 + scale_width)
+                            ul_z = obj_dist1[2] - (-x1 + scale_height)
+
+                            # lower right
+                            lr_x = obj_dist1[0]
+                            lr_y = ul_y + width
+                            lr_z = ul_z + height
+
+                            distance_output.append([cls,
+                                                    abs_distance,
+                                                    ul_x, ul_y, ul_z,
+                                                    lr_x, lr_y, lr_z])
+                        else:
+                            distance_output.append([cls,
+                                                    abs_distance,
+                                                    np.inf, np.inf, np.inf,
+                                                    np.inf, np.inf, np.inf])
 
                     else:
                         obj_dist1 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
+
+                        distance_output.append([cls,
+                                                abs_distance,
+                                                np.inf, np.inf, np.inf,
+                                                np.inf, np.inf, np.inf])
 
                     c_boxes.append(torch.tensor(pixels))
                     c_labels.append(f"Class: {cls},"
@@ -382,11 +401,8 @@ class VisionNode(CompatibleNode):
                                     f"({round(float(obj_dist1[0]), 2)},"
                                     f"{round(float(obj_dist1[1]), 2)},"
                                     f"{round(float(obj_dist1[2]), 2)})")
-                    distance_output.append([cls,
-                                            abs_distance,
-                                            ul_x, ul_y, ul_z,
-                                            lr_x, lr_y, lr_z])
 
+        """print("DISTANCE_ARRAY: ", distance_output)"""
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 
