@@ -1,14 +1,14 @@
 from scipy.spatial.transform import Rotation
 import numpy as np
 import math
-import rospy
+# import rospy
 
 
 hyperparameters = {
     "max_speed": 15,
     "max_accel": 4.0,
     "max_curvature": 30.0,
-    "max_road_width_l": 0.1,
+    "max_road_width_l": 4,
     "max_road_width_r": 4,
     "d_road_w": 0.2,
     "dt": 0.2,
@@ -25,7 +25,7 @@ hyperparameters = {
     "ko": 0.1,
     "klat": 1.0,
     "klon": 1.0,
-    "num_threads": 3,  # set 0 to avoid using threaded algorithm
+    "num_threads": 1,  # set 0 to avoid using threaded algorithm
 }
 
 
@@ -182,28 +182,25 @@ def filter_vision_objects(float_array):
 
     """
 
-    # Reshape array to 8 columns and n rows (one row per object)
+    # Reshape array to 3 columns and n rows (one row per object)
     float_array = np.asarray(float_array)
     float_array = np.reshape(float_array, (float_array.size//3, 3))
     # Filter all rows that contain np.inf
-    rospy.logerr("Before filtering inf: " + str(float_array))
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
-    rospy.logerr("After filtering inf: " + str(float_array))
     if float_array.size == 0:
         return None
     # Filter out all objects that are not cars
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
 
-    # Filter out parking cars or cars on opposite lane
-    no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
-    rospy.logerr("After filtering left lane: " + str(no_oncoming_traffic))
-    if no_oncoming_traffic.size == 0:
+    # Get cars that are on our lane
+    cars_in_front = all_cars[np.where(np.abs(all_cars[:, 2]) < 1.5)]
+    if cars_in_front.size == 0:
+        # no car in front
         return None
-
-    no_parking_cars = no_oncoming_traffic[
-        np.where(no_oncoming_traffic[:, 6] > -3)]
-
-    if no_parking_cars.size == 0:
+    # Filter for potential recognition of ega vehicle front hood
+    filtered_cars_in_front = cars_in_front[np.where(cars_in_front[:, 1] > 0.7)]
+    if filtered_cars_in_front.size == 0:
+        # no car in front
         return None
     # Return nearest car
-    return no_parking_cars[np.argmin(no_parking_cars[:, 1])]
+    return filtered_cars_in_front[np.argmin(filtered_cars_in_front[:, 1])]

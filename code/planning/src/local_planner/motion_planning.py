@@ -19,7 +19,7 @@ import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
 from utils import convert_to_ms, approx_obstacle_pos, \
-    hyperparameters, spawn_car
+    hyperparameters, spawn_car, location_to_gps
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -54,6 +54,7 @@ class MotionPlanning(CompatibleNode):
         self.speed_limit = None
         self.__corners = None
         self.__in_corner = False
+        self.calculated = False
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32,
@@ -184,41 +185,57 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y,
                                     data.pose.position.z])
 
+    def calculate_overtake(self, distance, pose_list, limit_waypoints=100):
+        """Calculate new trajectory for overtaking
+
+        Args:
+            distance (float): Distance to overtake object
+            pose_list (ndarray): List with current trajectory
+            limit_waypoints (int, optional): Number of waypoints.
+                                             Defaults to 30.
+
+        Returns:
+            tuple: Return values from run_fot
+        """
+        obstacle_position = approx_obstacle_pos(distance,
+                                                self.current_heading,
+                                                self.current_pos,
+                                                self.current_speed)
+
+        selection = pose_list[int(self.current_wp):int(self.current_wp) +
+                              int(distance + limit_waypoints)]
+        waypoints = self.convert_pose_to_array(selection)
+        gps_position = location_to_gps(0, 0, *self.current_pos[:2])
+        initial_conditions = {
+            'ps': gps_position["lon"],
+            'target_speed': self.target_speed,
+            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
+            'vel': np.array([obstacle_position[2][0],
+                            obstacle_position[2][1]]),
+            'wp': waypoints,
+            'obs': np.array([[obstacle_position[0][0],
+                            obstacle_position[0][1],
+                            obstacle_position[1][0],
+                            obstacle_position[1][1]]])
+        }
+        return run_fot(initial_conditions, hyperparameters)
+
     def change_trajectory(self, distance_obj):
-        limit_waypoints = 30
+        """update trajectory for overtaking and convert it
+        to a new Path message
+
+        Args:
+            distance_obj (float): distance to overtake object
+        """
         pose_list = self.trajectory.poses
         count_retrys = 0
-
-        def calculate_overtake(distance):
-            obstacle_position = approx_obstacle_pos(distance,
-                                                    self.current_heading,
-                                                    self.current_pos,
-                                                    self.current_speed)
-            # trajectory_np = self.convert_pose_to_array(pose_list)
-            # wp=KDTree(trajectory_np[:,:2]).query(obstacle_position[0][:2])[1]
-            selection = pose_list[int(self.current_wp):int(self.current_wp) +
-                                  int(distance + limit_waypoints)]
-            waypoints = self.convert_pose_to_array(selection)
-
-            initial_conditions = {
-                'ps': 0,
-                'target_speed': self.target_speed,
-                'pos': np.array([self.current_pos[0], self.current_pos[1]]),
-                'vel': np.array([obstacle_position[2][0],
-                                obstacle_position[2][1]]),
-                'wp': waypoints,
-                'obs': np.array([[obstacle_position[0][0],
-                                obstacle_position[0][1],
-                                obstacle_position[1][0],
-                                obstacle_position[1][1]]])
-            }
-            return run_fot(initial_conditions, hyperparameters)
 
         success_overtake = False
         while not success_overtake and count_retrys < 10:
             result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
                 speeds_y, misc, \
-                costs, success = calculate_overtake(distance_obj)
+                costs, success = self.calculate_overtake(distance_obj,
+                                                         pose_list)
             self.overtake_success_pub.publish(float(success))
             success_overtake = success
             count_retrys += 1
@@ -344,7 +361,8 @@ class MotionPlanning(CompatibleNode):
         else:
             return self.__get_speed_cruise()
 
-    def convert_pose_to_array(self, poses: np.array):
+    @staticmethod
+    def convert_pose_to_array(poses: np.array):
         """convert pose array to numpy array
 
         Args:
@@ -401,8 +419,12 @@ class MotionPlanning(CompatibleNode):
                 (data.distance, data.isLaneChange, data.roadOption)
 
     def __set_collision_point(self, data: Float32MultiArray):
-        if data is not None:
+        if data.data is not None:
             self.__collision_point = data.data[0]
+            if self.__collision_point != np.inf and not self.calculated:
+                self.change_trajectory(self.__collision_point)
+                self.traj_pub.publish(self.trajectory)
+                self.calculated = True
 
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0

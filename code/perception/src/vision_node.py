@@ -379,13 +379,13 @@ class VisionNode(CompatibleNode):
                         distance_output.append(float(np.inf))"""
 
                     c_boxes.append(torch.tensor(pixels))
-                    c_labels.append(f"Class: {cls},"
-                                    f"Meters: {round(abs_distance, 2)},"
-                                    f"({round(float(obj_dist1[0]), 2)},"
-                                    f"{round(float(obj_dist1[1]), 2)},"
-                                    f"{round(float(obj_dist1[2]), 2)})")
+                    # c_labels.append(f"Class: {cls},"
+                    #                 f"Meters: {round(abs_distance, 2)},"
+                    #                 f"({round(float(obj_dist1[0]), 2)},"
+                    #                 f"{round(float(obj_dist1[1]), 2)},"
+                    #                 f"{round(float(obj_dist1[2]), 2)})")
 
-        print("DISTANCE_ARRAY: ", distance_output)
+        # print("DISTANCE_ARRAY: ", distance_output)
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 

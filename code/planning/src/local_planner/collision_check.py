@@ -81,10 +81,15 @@ class CollisionCheck(CompatibleNode):
             data (Float32): Message from lidar with distance
         """
         nearest_object = filter_vision_objects(data.data)
-        if nearest_object is None:
+        if nearest_object is None and \
+                self.__object_last_position is not None and \
+                rospy.get_rostime() - self.__object_last_position[0] > \
+                rospy.Duration(2):
             self.update_distance(True)
             return
-        self.logerr("Obstacle detected: " + nearest_object)
+        elif nearest_object is None:
+            return
+        self.logerr("Obstacle detected: " + str(nearest_object))
         # if np.isinf(data.data) and \
         #         self.__object_last_position is not None and \
         #         rospy.get_rostime() - self.__object_last_position[0] < \
@@ -100,8 +105,6 @@ class CollisionCheck(CompatibleNode):
             based on the distance between to timestamps
         """
         # Check if current speed from vehicle is not None
-        self.logerr("Obstacle detected and Speed calculated: "
-                    + self.__object_last_position[1])
         if self.__current_velocity is None or \
                 self.__object_first_position is None or \
                 self.__object_last_position is None:
@@ -207,6 +210,7 @@ class CollisionCheck(CompatibleNode):
             self.collision_pub.publish(data)
         else:
             # If no collision is ahead publish np.Inf
+            self.logerr("No collision")
             data = Float32MultiArray(data=[np.Inf, obstacle_speed])
             self.collision_pub.publish(data)
 
