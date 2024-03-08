@@ -31,7 +31,7 @@ Some resulting commit message would be:
 
 ```text
 feat(#18): Added front left camera to vehicle
-doc(#18): Added documentation about front left camera
+docs(#18): Added documentation about front left camera
 ```
 
 ## 🚨 Common Problems
