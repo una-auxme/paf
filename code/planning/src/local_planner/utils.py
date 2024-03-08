@@ -169,9 +169,22 @@ def filter_vision_objects(float_array):
     Args:
         data (ndarray): numpy array with vision objects
     """
+
+    """
+    LEON:
+
+    Ihr bekommt jetzt nur 3-Werte -> ClassIndex, Min_X, Min_Abs_Y
+
+    Min_Abs_Y ist der nähste Punkt vom Object zu Y=0 also der Mitte.
+
+    Damit habt ihr immer automatisch den
+    nähesten und wichtigsten Punkt des Objekts.
+
+    """
+
     # Reshape array to 8 columns and n rows (one row per object)
     float_array = np.asarray(float_array)
-    float_array = np.reshape(float_array, (float_array.size//8, 8))
+    float_array = np.reshape(float_array, (float_array.size//3, 3))
     # Filter all rows that contain np.inf
     rospy.logerr("Before filtering inf: " + str(float_array))
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]

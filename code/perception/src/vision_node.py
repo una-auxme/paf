@@ -307,26 +307,42 @@ class VisionNode(CompatibleNode):
                     distances_copy[distances_copy == 0] = np.inf
 
                     if len(non_zero_filter) > 0:
-                        sorted_indices = np.argsort(distances_copy[:, :, 0],
-                                                    axis=None)
-                        x1, y1 = np.unravel_index(sorted_indices[0],
+                        min_x_sorted_indices = np.argsort(
+                            distances_copy[:, :, 0],
+                            axis=None)
+                        x1, y1 = np.unravel_index(min_x_sorted_indices[0],
                                                   distances_copy.shape[:2])
-                        x2, y2 = np.unravel_index(sorted_indices[1],
-                                                  distances_copy.shape[:2])
-                        obj_dist1 = distances_copy[x1][y1].copy()
-                        obj_dist2 = distances_copy[x2][y2].copy()
+                        """x2, y2 = np.unravel_index(min_x_sorted_indices[1],
+                                                  distances_copy.shape[:2])"""
 
-                        abs_distance = np.sqrt(
+                        abs_distance_copy = np.abs(distances_copy.copy())
+                        min_y_sorted_indices = np.argsort(
+                            abs_distance_copy[:, :, 1],
+                            axis=None)
+                        x3, y3 = np.unravel_index(min_y_sorted_indices[0],
+                                                  abs_distance_copy.shape[:2])
+                        """
+                        x4, y4 = np.unravel_index(min_y_sorted_indices[1],
+                                                  abs_distance_copy.shape[:2])
+                        """
+
+                        obj_dist1 = distances_copy[x1][y1].copy()
+                        # obj_dist2 = distances_copy[x2][y2].copy()
+                        obj_dist3 = distances_copy[x3][y3].copy()
+                        # obj_dist4 = distances_copy[x4][y4].copy()
+                        # print(obj_dist1, obj_dist3)
+
+                        """abs_distance = np.sqrt(
                             obj_dist1[0]**2 +
                             obj_dist1[1]**2 +
-                            obj_dist1[2]**2)
+                            obj_dist1[2]**2)"""
 
                         # create 2d glass plane at object
                         # with box dimension
-                        width_diff = abs(y1-y2)
-                        height_diff = abs(x1-x2)
+                        # width_diff = abs(y1-y2)
+                        # height_diff = abs(x1-x2)
 
-                        if width_diff > 0 and height_diff > 0:
+                        """if width_diff > 0 and height_diff > 0:
                             scale_width = abs(obj_dist1[1] - obj_dist2[1])\
                                 / width_diff
                             scale_height = abs(obj_dist1[2] - obj_dist2[2])\
@@ -344,35 +360,23 @@ class VisionNode(CompatibleNode):
                             lr_y = ul_y + width
                             lr_z = ul_z + height
 
-                            distance_output.append(float(cls))
-                            distance_output.append(float(abs_distance))
-                            distance_output.append(float(ul_x))
-                            distance_output.append(float(ul_y))
-                            distance_output.append(float(ul_z))
-                            distance_output.append(float(lr_x))
-                            distance_output.append(float(lr_y))
-                            distance_output.append(float(lr_z))
+                            # -5 < y < 8"""
 
-                        else:
-                            distance_output.append(float(cls))
-                            distance_output.append(float(abs_distance))
-                            distance_output.append(float(np.inf))
-                            distance_output.append(float(np.inf))
-                            distance_output.append(float(np.inf))
-                            distance_output.append(float(np.inf))
-                            distance_output.append(float(np.inf))
-                            distance_output.append(float(np.inf))
+                        distance_output.append(float(cls))
+                        distance_output.append(float(obj_dist1[0]))
+                        distance_output.append(float(obj_dist3[1]))
+
                     else:
                         obj_dist1 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
-                        distance_output.append(float(cls))
+                        """distance_output.append(float(cls))
                         distance_output.append(float(abs_distance))
                         distance_output.append(float(np.inf))
                         distance_output.append(float(np.inf))
                         distance_output.append(float(np.inf))
                         distance_output.append(float(np.inf))
                         distance_output.append(float(np.inf))
-                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))"""
 
                     c_boxes.append(torch.tensor(pixels))
                     c_labels.append(f"Class: {cls},"
@@ -381,7 +385,7 @@ class VisionNode(CompatibleNode):
                                     f"{round(float(obj_dist1[1]), 2)},"
                                     f"{round(float(obj_dist1[2]), 2)})")
 
-        """print("DISTANCE_ARRAY: ", distance_output)"""
+        print("DISTANCE_ARRAY: ", distance_output)
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 
