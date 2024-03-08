@@ -180,7 +180,7 @@ def filter_vision_objects(float_array):
         return None
     # Filter out all objects that are not cars
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
-    
+
     # Filter out parking cars or cars on opposite lane
     no_oncoming_traffic = all_cars[np.where(all_cars[:, 6] < 0.5)]
     rospy.logerr("After filtering left lane: " + str(no_oncoming_traffic))
