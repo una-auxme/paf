@@ -8,6 +8,7 @@ import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from perception.msg import TrafficLightState
+from std_msgs.msg import Int16
 from cv_bridge import CvBridge
 from traffic_light_detection.src.traffic_light_detection.traffic_light_inference \
     import TrafficLightInference  # noqa: E501
@@ -43,6 +44,12 @@ class TrafficLightNode(CompatibleNode):
             topic=f"/paf/{self.role_name}/{self.side}/traffic_light_state",
             qos_profile=1
         )
+        self.traffic_light_distance_publisher = self.new_publisher(
+            msg_type=Int16,
+            topic=f"/paf/{self.role_name}/{self.side}" +
+            "/traffic_light_y_distance",
+            qos_profile=1
+        )
 
     def auto_invalidate_state(self):
         while True:
@@ -55,9 +62,11 @@ class TrafficLightNode(CompatibleNode):
                 msg = TrafficLightState()
                 msg.state = 0
                 self.traffic_light_publisher.publish(msg)
+                self.traffic_light_distance_publisher.publish(Int16(0))
                 self.last_info_time = None
 
     def handle_camera_image(self, image):
+        distance = int(image.header.frame_id)
         result, data = self.classifier(self.bridge.imgmsg_to_cv2(image))
 
         if data[0][0] > 1e-15 and data[0][3] > 1e-15 or \
@@ -70,6 +79,9 @@ class TrafficLightNode(CompatibleNode):
             msg = TrafficLightState()
             msg.state = state
             self.traffic_light_publisher.publish(msg)
+
+            if distance is not None:
+                self.traffic_light_distance_publisher.publish(Int16(distance))
         else:
             self.last_state = state
 

@@ -20,6 +20,7 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
+import asyncio
 
 """
 VisionNode:
@@ -224,7 +225,9 @@ class VisionNode(CompatibleNode):
         s1 = perf_counter()
 
         if 9 in output.boxes.cls:
-            self.process_traffic_lights(output, cv_image, image.header)
+            asyncio.run(
+                self.process_traffic_lights(output, cv_image, image.header)
+                )
 
         s2 = perf_counter()
 
@@ -306,9 +309,12 @@ class VisionNode(CompatibleNode):
             box = box[0:4].astype(int)
             segmented = cv_image[box[1]:box[3], box[0]:box[2]]
 
+            traffic_light_y_distance = box[1]
+
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented,
                                                             encoding="rgb8")
             traffic_light_image.header = image_header
+            traffic_light_image.header.frame_id = str(traffic_light_y_distance)
             self.traffic_light_publisher.publish(traffic_light_image)
 
     def create_mask(self, input_image, model_output):
