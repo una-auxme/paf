@@ -20,25 +20,21 @@ from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
-from acting.msg import StanleyDebug
 
 from trajectory_interpolation import interpolate_route
-
-# since this dummy is supposed to test everything ACTING,
-# Testers can choose which test to run from changing this Constant
 
 # TEST_TYPE to choose which kind of Test to run:
 # 0: Test Velocity Controller with constant one velocity
 # const. velocity = TARGET_VELOCITY_1
 # const. steering = 0
 # no trajectory
-# TURN OFF stanley and PP Controllers in acting.launch!
+# TURN OFF PP Controller in acting.launch!
 
 # 1: Test Velocity Controller with changing velocity
-# velocity = alternate all 20 secs: TARGET_VELOCITY_1/_HIGH
+# velocity = alternate all 20 secs: TARGET_VELOCITY_1/_2
 # const. steering = 0
 # no trajectory
-# TURN OFF stanley and PP Controllers in acting.launch!
+# TURN OFF PP Controller in acting.launch!
 
 # 2: Test Steering Controller on chooseable trajectory
 # velocity = TARGET_VELOCITY_1
@@ -50,24 +46,16 @@ from trajectory_interpolation import interpolate_route
 # const steering = 0
 # no trajectory
 # Triggers emergency break after 15 Seconds
-# TODO implement evaluation etc.
-
-# 4: Test Steering-PID in vehicleController
-# TODO TODO
-TEST_TYPE = 2                # aka. TT
-
-FIXED_STEERING: float = 0  # for TestType0 fixed Steering
-TARGET_VELOCITY_1: float = 20  # velocity 1
-TARGET_VELOCITY_2: float = 0  # velocity 2
-
-STEERING_CONTROLLER_USED = 0  # 0 = both ; 1 = PP ; 2 = Stanley
+TEST_TYPE = 2
+FIXED_STEERING: float = 0  # if fixed steering needed
+TARGET_VELOCITY_1: float = 10  # standard velocity
+TARGET_VELOCITY_2: float = 0  # second velocity to switch to
 # 0 = Straight ; 1 = Curve ; 2 = SineWave ; 3 = Overtake
 TRAJECTORY_TYPE = 3
+PRINT_AFTER_TIME = 10.0  # How long after Simulationstart to print data
 
-PRINT_AFTER_TIME = 7.0  # How long after Simulationstart to print data
 
-
-class Acting_Debugger(CompatibleNode):
+class Acting_Debug_Node(CompatibleNode):
     """
     Creates a node with testability for all acting components
     without the need of working/running perception or planning.
@@ -78,8 +66,8 @@ class Acting_Debugger(CompatibleNode):
         Constructor of the class
         :return:
         """
-        super(Acting_Debugger, self).__init__('dummy_trajectory_pub')
-        self.loginfo('Acting_Debugger node started')
+        super(Acting_Debug_Node, self).__init__('dummy_trajectory_pub')
+        self.loginfo('Acting_Debug_Node node started')
         self.role_name = self.get_param('role_name', 'ego_vehicle')
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
 
@@ -95,23 +83,10 @@ class Acting_Debugger(CompatibleNode):
             f"/paf/{self.role_name}/target_velocity",
             qos_profile=1)
 
-        # Stanley: Publisher for Dummy Stanley-Steer
-        self.stanley_steer_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/stanley_steer",
-            qos_profile=1)
-
         # PurePursuit: Publisher for Dummy PP-Steer
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
-            qos_profile=1)
-
-        # Publisher for Steeringcontrollers selector to test separately
-        # Subscribed to in vehicle controller
-        self.controller_selector_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/controller_selector_debug",
             qos_profile=1)
 
         # Subscriber of current_pos, used for Steering Debugging
@@ -157,20 +132,6 @@ class Acting_Debugger(CompatibleNode):
             self.__get_purepursuit_steer,
             qos_profile=1)
 
-        # Subscriber for Stanley_Steer
-        self.stanley_steer_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/stanley_steer",
-            self.__get_stanley_steer,
-            qos_profile=1)
-
-        # Subscriber for StanleyDebug
-        self.stanley_debug_sub: Subscriber = self.new_subscription(
-            StanleyDebug,
-            f"/paf/{self.role_name}/stanley_debug",
-            self.__get_stanley_debug,
-            qos_profile=1)
-
         # Subscriber for vehicle_steer
         self.vehicle_steer_sub: Subscriber = self.new_subscription(
             CarlaEgoVehicleControl,
@@ -178,7 +139,7 @@ class Acting_Debugger(CompatibleNode):
             self.__get_vehicle_steer,
             qos_profile=10)
 
-        # Publisher for emergency message TODO: should VC really trigger this?
+        # Publisher for emergency brake testing
         self.emergency_pub: Publisher = self.new_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
@@ -188,42 +149,31 @@ class Acting_Debugger(CompatibleNode):
         self.current_trajectory = []
         self.switchVelocity = False
         self.driveVel = TARGET_VELOCITY_1
-
         self.switch_checkpoint_time = rospy.get_time()
         self.switch_time_set = False
-
         self.checkpoint_time = rospy.get_time()
         self.time_set = False
-
         self.__current_velocities = []
         self.__max_velocities = []
         self.__throttles = []
-
         self.__current_headings = []
-
         self.__purepursuit_steers = []
-        self.__stanley_steers = []
         self.__vehicle_steers = []
-
         self.stanley_cross_errors = []
-
         self.positions = []
 
+        # Generate Trajectory as selected in TRAJECTORY_TYPE
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
         self.path_msg.header.frame_id = "global"
-
-        # Generate Trajectory as selected in TRAJECTORY_TYPE
         # Spawncoords at the simulationstart
         startx = 984.5
         starty = -5442.0
-
         if (TRAJECTORY_TYPE == 0):  # Straight trajectory
             self.current_trajectory = [
                 (startx, starty),
                 (startx, starty-200)
             ]
-            self.updated_trajectory(self.current_trajectory)
 
         elif (TRAJECTORY_TYPE == 1):  # straight into 90° Curve
             self.current_trajectory = [
@@ -240,7 +190,6 @@ class Acting_Debugger(CompatibleNode):
                 (1040.0, -5580.0),
                 (1070.0, -5580.0)
             ]
-            self.updated_trajectory(self.current_trajectory)
 
         elif (TRAJECTORY_TYPE == 2):  # Sinewave Serpentines trajectory
             # Generate a sine-wave with the global Constants to
@@ -267,7 +216,6 @@ class Acting_Debugger(CompatibleNode):
             # add a long straight path after the serpentines
             trajectory_wave.append((startx, starty-200))
             self.current_trajectory = trajectory_wave
-            self.updated_trajectory(self.current_trajectory)
 
         elif (TRAJECTORY_TYPE == 3):  # 2 Lane Switches
             self.current_trajectory = [
@@ -311,7 +259,7 @@ class Acting_Debugger(CompatibleNode):
 
                 (startx-0.5, starty-100),
                 ]
-            self.updated_trajectory(self.current_trajectory)
+        self.updated_trajectory(self.current_trajectory)
 
     def updated_trajectory(self, target_trajectory):
         """
@@ -330,7 +278,7 @@ class Acting_Debugger(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 704  # why??
+            pos.pose.position.z = 704  # needed for visuals
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
@@ -360,12 +308,6 @@ class Acting_Debugger(CompatibleNode):
     def __get_throttle(self, data: Float32):
         self.__throttles.append(float(data.data))
 
-    def __get_stanley_steer(self, data: Float32):
-        self.__stanley_steers.append(float(data.data))
-
-    def __get_stanley_debug(self, data: StanleyDebug):
-        self.stanley_cross_errors.append(data.cross_err)
-
     def __get_purepursuit_steer(self, data: Float32):
         r = 1 / (math.pi / 2)
         steering_float = float(data.data) * r
@@ -389,7 +331,6 @@ class Acting_Debugger(CompatibleNode):
             # Drive const. velocity on fixed straight steering
             if (TEST_TYPE == 0):
                 self.driveVel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(FIXED_STEERING)
                 self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
@@ -406,7 +347,6 @@ class Acting_Debugger(CompatibleNode):
                         self.driveVel = TARGET_VELOCITY_2
                     else:
                         self.driveVel = TARGET_VELOCITY_1
-                self.stanley_steer_pub.publish(FIXED_STEERING)
                 self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
@@ -429,31 +369,18 @@ class Acting_Debugger(CompatibleNode):
                 if (self.checkpoint_time < rospy.get_time() - 15.0):
                     self.checkpoint_time = rospy.get_time()
                     self.emergency_pub.publish(True)
-                self.stanley_steer_pub.publish(FIXED_STEERING)
                 self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
-            # drive const. velocity and follow trajectory by
-            # publishing self-calculated steering
-            elif (TEST_TYPE == 4):
-                self.drive_Vel = TARGET_VELOCITY_1
-                steer = self.calculate_steer()
-                self.stanley_steer_pub.publish(steer)
-                self.pure_pursuit_steer_pub.publish(steer)
-
-            if (STEERING_CONTROLLER_USED == 1):
-                self.controller_selector_pub.publish(1)
-            elif (STEERING_CONTROLLER_USED == 2):
-                self.controller_selector_pub.publish(2)
-
+            # --- PRINT TO PLOT ---
             # set starttime to when simulation is actually starting to run
-            # to really get 10 secs plots every time
+            # to really get X secs plots every time
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
-                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
-                print(self.current_trajectory)
-                print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                # print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                # print(self.current_trajectory)
+                # print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
             if (self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME):
@@ -463,11 +390,9 @@ class Acting_Debugger(CompatibleNode):
                 # print(self.__current_velocities)
                 # print(self.__throttles)
                 # print(self.__purepursuit_steers)
-                # print(self.__stanley_steers)
                 # print(self.__vehicle_steers)
                 # print(self.__current_headings)
                 print(self.positions)
-                # print(self.stanley_cross_errors)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
         self.new_timer(self.control_loop_rate, loop)
@@ -481,9 +406,9 @@ def main(args=None):
     :return:
     """
 
-    roscomp.init("Acting_Debugger", args=args)
+    roscomp.init("Acting_Debug_NODE", args=args)
     try:
-        node = Acting_Debugger()
+        node = Acting_Debug_Node()
         node.run()
     except KeyboardInterrupt:
         pass

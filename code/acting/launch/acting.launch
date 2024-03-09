@@ -3,17 +3,7 @@
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.1" />
 
-    <!--node pkg="acting" type="Acting_DebuggerNode.py" name="Acting_Debugger" output="screen">
-        <param name="control_loop_rate" value="0.05" />
-        <param name="role_name" value="$(arg role_name)" />
-    </node-->
-
     <node pkg="acting" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <param name="role_name" value="$(arg role_name)" />
-    </node>
-
-    <node pkg="acting" type="stanley_controller.py" name="stanley_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
@@ -21,12 +11,6 @@
     <node pkg="acting" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
-    </node>
-
-    <node pkg="acting" type="acting_velocity_publisher.py" name="acting_velocity_publisher" output="screen">
-        <param name="role_name" value="$(arg role_name)" />
-        <param name="control_loop_rate" value="0.2" />
-        <param name="enabled" value="False" /> <!-- set to True to publish dummy velocities for testing-->
     </node>
 
      <node pkg="acting" type="vehicle_controller.py" name="vehicle_controller" output="screen">
@@ -38,21 +22,40 @@
         <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
+    
+    <!-- UNCOMMENT THIS TO USE THE DEBUG_NODE FOR ACTING-TESTING -->
+    <!--
+    <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
+        <param name="control_loop_rate" value="0.05" />
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+    -->
+
+    <!-- ______OBSOLETES______
+    <node pkg="acting" type="stanley_controller.py" name="stanley_controller" output="screen">
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+
+    <node pkg="acting" type="acting_velocity_publisher.py" name="acting_velocity_publisher" output="screen">
+        <param name="role_name" value="$(arg role_name)" />
+        <param name="control_loop_rate" value="0.2" />
+        <param name="enabled" value="False" />
+    </node>
 
     <node pkg="acting" type="acc_distance_publisher_dummy.py" name="AccDistancePublisherDummy" output="screen">
         <param name="role_name" value="$(arg role_name)" />
-        <param name="enabled" value="False" /> <!-- set to True to publish dummy velocities for testing-->
+        <param name="enabled" value="False" /> 
     </node>
 
-    <!--node pkg="acting" type="acc.py" name="Acc" output="screen">
+    <node pkg="acting" type="acc.py" name="Acc" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
-    </node-->
+    </node>
+    -->
 
     <!-- Some plot nodes for debugging speed/steering etc. -->
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_speed" args="/carla/hero/Speed /paf/hero/target_velocity /paf/hero/throttle /paf/hero/brake"/-->
-    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/paf/hero/pure_pursuit_steer /carla/hero/vehicle_control_cmd/steer /paf/hero/pure_p_debug/l_distance"/-->
-    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_heading_yaw" args="/paf/hero/yaw /paf/hero/current_heading" /-->
-    <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_CONTROLLER" args="/paf/hero/controller"/-->
+    <node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot_steering" args="/paf/hero/pure_pursuit_steer /carla/hero/vehicle_control_cmd/steer /paf/hero/pure_p_debug/l_distance"/>
 
 </launch>

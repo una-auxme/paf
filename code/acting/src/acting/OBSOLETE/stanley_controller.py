@@ -172,8 +172,8 @@ class StanleyController(CompatibleNode):
         closest_point: PoseStamped = self.__path.poses[closest_point_idx]
         cross_err = self.__get_cross_err(closest_point.pose.position)
         # * -1 because it is inverted compared to PurePursuit
-        steering_angle = -1 * (heading_err + atan((K_CROSSERR * cross_err)
-                                                  / current_velocity))
+        steering_angle = 1 * (heading_err + atan((K_CROSSERR * cross_err)
+                                                 / current_velocity))
         # -> for debugging
         debug_msg = StanleyDebug()
         debug_msg.heading = self.__heading
@@ -251,8 +251,10 @@ class StanleyController(CompatibleNode):
         """
         dist = self.__dist_to(pos)
 
-        x = self.__position[0]
-        y = self.__position[1]
+        # +1.4 in Headingdirection = get front axle instead of the cars middle
+        # heading_deg = self.__heading * 180 / math.pi
+        x = self.__position[0]  # + 1.4 * cos(heading_deg)
+        y = self.__position[1]  # + 1.4 * sin(heading_deg)
 
         alpha = 0
         if self.__heading is not None:

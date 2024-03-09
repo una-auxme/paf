@@ -15,12 +15,16 @@ import numpy as np
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
 
-# Tuneable Values
+# Tuneable Values for PurePursuit-Algorithm
 K_LAD = 0.85
 MIN_LA_DISTANCE = 2
 MAX_LA_DISTANCE = 25
-# Constants
-L_VEHICLE = 2.85  # wheelbase
+# Tuneable Factor before Publishing
+# "-" because it is inverted to the steering carla expects
+# "4.75" proved to be important for a good steering (see tuning-documentation)
+K_PUB = (-4.75)
+# Constant: wheelbase of car
+L_VEHICLE = 2.85
 
 
 class PurePursuitController(CompatibleNode):
@@ -61,22 +65,16 @@ class PurePursuitController(CompatibleNode):
             f"/paf/{self.role_name}/pure_pursuit_steer",
             qos_profile=1)
 
-        self.debug_publisher: Publisher = self.new_publisher(
+        self.debug_msg_pub: Publisher = self.new_publisher(
             Debug,
             f"/paf/{self.role_name}/pure_p_debug",
             qos_profile=1)
 
         self.__position: (float, float) = None  # x, y
-        self.__last_pos: (float, float) = None
         self.__path: Path = None
         self.__heading: float = None
         self.__velocity: float = None
         self.__tp_idx: int = 0  # target waypoint index
-        # error when there are no targets
-
-        self.time_set = False
-        self.checker = False
-        self.checkpoint_time = -1
 
     def run(self):
         """
@@ -141,16 +139,15 @@ class PurePursuitController(CompatibleNode):
         # Get the error between current heading and target heading
         alpha = target_vector_heading - self.__heading
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
-
         steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
-
+        steering_angle = K_PUB * steering_angle
         # for debugging ->
         debug_msg = Debug()
         debug_msg.heading = self.__heading
         debug_msg.target_heading = target_vector_heading
         debug_msg.l_distance = look_ahead_dist
         debug_msg.steering_angle = steering_angle
-        self.debug_publisher.publish(debug_msg)
+        self.debug_msg_pub.publish(debug_msg)
         # <-
         return steering_angle
 
@@ -170,7 +167,6 @@ class PurePursuitController(CompatibleNode):
             y0 = data.pose.position.y
             self.__position = (x0, y0)
             return
-
         # check if the new position is valid
         dist = self.__dist_to(data.pose.position)
         if dist < min_diff:
@@ -181,10 +177,6 @@ class PurePursuitController(CompatibleNode):
                           f"as dist ({round(dist, 3)}) to current pos "
                           f"< min_diff ({round(min_diff, 3)})")
             return
-        # TODO: why save the old position if it is never used again?
-        old_x = self.__position[0]
-        old_y = self.__position[1]
-        self.__last_pos = (old_x, old_y)
         new_x = data.pose.position.x
         new_y = data.pose.position.y
         self.__position = (new_x, new_y)
@@ -213,7 +205,6 @@ class PurePursuitController(CompatibleNode):
         :param ld: look ahead distance
         :return:
         """
-        # if path has less than 2 poses, break
         if len(self.__path.poses) < 2:
             return -1
 
