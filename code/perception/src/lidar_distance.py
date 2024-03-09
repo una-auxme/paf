@@ -4,13 +4,8 @@ import ros_numpy
 import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2
-from std_msgs.msg import Float32
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
-import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
 # from matplotlib.colors import LinearSegmentedColormap
@@ -34,68 +29,94 @@ class LidarDistance():
         """
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
-        # https://stackoverflow.com/questions/44295375/how-to-slice-a-numpy-
-        # ndarray-made-up-of-numpy-void-numbers
-        min_dist_bit_mask = lidar_filter_utility.bounding_box(
+        # Center
+        reconstruct_bit_mask_center = lidar_filter_utility.bounding_box(
             coordinates,
-            max_x=50.,
-            min_x=2.,
-            min_z=rospy.get_param('~min_z', -np.inf),
-            min_y=-2.5,
-            max_y=2.5,
+            max_x=np.inf,
+            min_x=0.,
+            min_z=-1.6,
         )
-
-        reconstruct_bit_mask = lidar_filter_utility.bounding_box(
-            coordinates,
-            max_x=rospy.get_param('~max_x', np.inf),
-            min_x=rospy.get_param('~min_x', -np.inf),
-            min_z=rospy.get_param('~min_z', -np.inf),
-        )
-
-        # Filter coordinates based in generated bit_mask
-        min_dist_coordinates = coordinates[min_dist_bit_mask]
-        reconstruct_coordinates = coordinates[reconstruct_bit_mask]
-
-        # Create pointcloud from manipulated data
-        coordinates_manipulated = ros_numpy \
-            .point_cloud2.array_to_pointcloud2(min_dist_coordinates)
-        coordinates_manipulated.header = data.header
-
-        # Publish manipulated pointCloud2
-        self.pub_pointcloud.publish(coordinates_manipulated)
-
-        # https://stackoverflow.com/questions/1401712/how-can-the-euclidean-
-        # distance-be-calculated-with-numpy
-        min_dist_coordinates_xyz = np.array(
-            lidar_filter_utility.remove_field_name(min_dist_coordinates,
-                                                   'intensity')
+        reconstruct_coordinates_center = \
+            coordinates[reconstruct_bit_mask_center]
+        reconstruct_coordinates_xyz_center = np.array(
+            lidar_filter_utility.remove_field_name(
+                reconstruct_coordinates_center,
+                'intensity')
             .tolist()
         )
+        dist_array_center = self.reconstruct_img_from_lidar(
+            reconstruct_coordinates_xyz_center, focus="Center")
+        dist_array_center_msg = \
+            self.bridge.cv2_to_imgmsg(dist_array_center,
+                                      encoding="passthrough")
+        dist_array_center_msg.header = data.header
+        self.dist_array_center_publisher.publish(dist_array_center_msg)
 
-        reconstruct_coordinates_xyz = np.array(
-            lidar_filter_utility.remove_field_name(reconstruct_coordinates,
-                                                   'intensity')
+        # Back
+        reconstruct_bit_mask_back = lidar_filter_utility.bounding_box(
+            coordinates,
+            max_x=0.0,
+            min_x=-np.inf,
+            min_z=-1.6,
+        )
+        reconstruct_coordinates_back = coordinates[reconstruct_bit_mask_back]
+        reconstruct_coordinates_xyz_back = np.array(
+            lidar_filter_utility.remove_field_name(
+                reconstruct_coordinates_back,
+                'intensity')
             .tolist()
         )
+        dist_array_back = self.reconstruct_img_from_lidar(
+            reconstruct_coordinates_xyz_back, focus="Back")
+        dist_array_back_msg = \
+            self.bridge.cv2_to_imgmsg(dist_array_back,
+                                      encoding="passthrough")
+        dist_array_back_msg.header = data.header
+        self.dist_array_back_publisher.publish(dist_array_back_msg)
 
-        # handle minimum distance
-        if min_dist_coordinates_xyz.shape[0] > 0:
-            plot = self.plot_blob(min_dist_coordinates_xyz)
-            img_msg = self.bridge.cv2_to_imgmsg(plot,
-                                                encoding="passthrough")
-            img_msg.header = data.header
-            self.min_dist_img_publisher.publish(img_msg)
-        else:
-            self.pub_min_dist.publish(np.inf)
+        # Left
+        reconstruct_bit_mask_left = lidar_filter_utility.bounding_box(
+            coordinates,
+            max_y=np.inf,
+            min_y=0.0,
+            min_z=-1.6,
+        )
+        reconstruct_coordinates_left = coordinates[reconstruct_bit_mask_left]
+        reconstruct_coordinates_xyz_left = np.array(
+            lidar_filter_utility.remove_field_name(
+                reconstruct_coordinates_left,
+                'intensity')
+            .tolist()
+        )
+        dist_array_left = self.reconstruct_img_from_lidar(
+            reconstruct_coordinates_xyz_left, focus="Left")
+        dist_array_left_msg = \
+            self.bridge.cv2_to_imgmsg(dist_array_left,
+                                      encoding="passthrough")
+        dist_array_left_msg.header = data.header
+        self.dist_array_left_publisher.publish(dist_array_left_msg)
 
-        # handle reconstruction of lidar points
-        rainbow_cloud = self.reconstruct_img_from_lidar(
-            reconstruct_coordinates_xyz)
-
-        img_msg = self.bridge.cv2_to_imgmsg(rainbow_cloud,
-                                            encoding="passthrough")
-        img_msg.header = data.header
-        self.rainbow_publisher.publish(img_msg)
+        # Right
+        reconstruct_bit_mask_right = lidar_filter_utility.bounding_box(
+            coordinates,
+            max_y=-0.0,
+            min_y=-np.inf,
+            min_z=-1.6
+        )
+        reconstruct_coordinates_right = coordinates[reconstruct_bit_mask_right]
+        reconstruct_coordinates_xyz_right = np.array(
+            lidar_filter_utility.remove_field_name(
+                reconstruct_coordinates_right,
+                'intensity')
+            .tolist()
+        )
+        dist_array_right = self.reconstruct_img_from_lidar(
+            reconstruct_coordinates_xyz_right, focus="Right")
+        dist_array_right_msg = \
+            self.bridge.cv2_to_imgmsg(dist_array_right,
+                                      encoding="passthrough")
+        dist_array_right_msg.header = data.header
+        self.dist_array_right_publisher.publish(dist_array_right_msg)
 
     def listener(self):
         """ Initializes the node and it's publishers
@@ -113,31 +134,41 @@ class LidarDistance():
             queue_size=10
         )
 
-        # publisher for the closest blob in the lidar point cloud
-        self.pub_min_dist = rospy.Publisher(
-            rospy.get_param(
-                '~range_topic',
-                '/paf/hero/Center/min_distance'
-            ),
-            Float32,
-            queue_size=10
-        )
-
-        # publisher for reconstructed lidar image
-        self.rainbow_publisher = rospy.Publisher(
+        # publisher for dist_array
+        self.dist_array_center_publisher = rospy.Publisher(
             rospy.get_param(
                 '~image_distance_topic',
-                '/paf/hero/Center/rainbow_image'
+                '/paf/hero/Center/dist_array'
             ),
             ImageMsg,
             queue_size=10
         )
 
-        # publisher for 3d blob graph
-        self.min_dist_img_publisher = rospy.Publisher(
+        # publisher for dist_array
+        self.dist_array_back_publisher = rospy.Publisher(
             rospy.get_param(
                 '~image_distance_topic',
-                '/paf/hero/Center/min_dist_image'
+                '/paf/hero/Back/dist_array'
+            ),
+            ImageMsg,
+            queue_size=10
+        )
+
+        # publisher for dist_array
+        self.dist_array_left_publisher = rospy.Publisher(
+            rospy.get_param(
+                '~image_distance_topic',
+                '/paf/hero/Left/dist_array'
+            ),
+            ImageMsg,
+            queue_size=10
+        )
+
+        # publisher for dist_array
+        self.dist_array_right_publisher = rospy.Publisher(
+            rospy.get_param(
+                '~image_distance_topic',
+                '/paf/hero/Right/dist_array'
             ),
             ImageMsg,
             queue_size=10
@@ -148,59 +179,7 @@ class LidarDistance():
 
         rospy.spin()
 
-    def plot_blob(self, xyz_coords):
-        # creates a 3d graph thazt highlights blobs of points
-        xyz_coords_standardized = StandardScaler().fit_transform(xyz_coords)
-        """pairwise_distances_x = np.abs(np.subtract.outer(xyz_coords[:, 0],
-                                                        xyz_coords[:, 0]))"""
-
-        # publish minimum distance
-        eps = 0.2
-        min_samples = 5
-        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-        labels = dbscan.fit_predict(xyz_coords_standardized)
-
-        min_distance_cluster = []
-
-        # Iterate through each cluster
-        for label in set(labels):
-            if label != -1:  # Ignore noise points
-                cluster_points = xyz_coords[labels == label]
-                min_distance_cluster.append(np.min(cluster_points[:, 0]))
-
-        # Publish the minimum distance within clusters
-        if len(min_distance_cluster) > 0:
-            self.pub_min_dist.publish(min(min_distance_cluster))
-        else:
-            self.pub_min_dist.publish(np.inf)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        for label in set(labels):
-            # print(label)
-            if label == -1:
-                ax.scatter(xyz_coords[labels == label][:, 0],
-                           xyz_coords[labels == label][:, 1],
-                           xyz_coords[labels == label][:, 2],
-                           c='gray', marker='o', label='Noise')
-            else:
-                ax.scatter(xyz_coords[labels == label][:, 0],
-                           xyz_coords[labels == label][:, 1],
-                           xyz_coords[labels == label][:, 2],
-                           label=f'Cluster {label + 1}', s=50)
-
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-
-        fig.canvas.draw()
-        img = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-        img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        return img
-
-    def reconstruct_img_from_lidar(self, coordinates_xyz):
+    def reconstruct_img_from_lidar(self, coordinates_xyz, focus):
         # reconstruct 3d LIDAR-Data and calculate 2D Pixel
         # according to Camera-World
 
@@ -220,26 +199,42 @@ class LidarDistance():
 
         # reconstruct camera image with LIDAR-Data
         img = np.zeros(shape=(720, 1280), dtype=np.float32)
+        dist_array = np.zeros(shape=(720, 1280, 3), dtype=np.float32)
         for c in coordinates_xyz:
-            point = np.array([c[1], c[2], c[0], 1])
-            pixel = np.matmul(m, point)
-            x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
-            if x >= 0 and x <= 1280 and y >= 0 and y <= 720:
-                img[719-y][1279-x] = c[0]
+            if focus == "Center":
+                point = np.array([c[1], c[2], c[0], 1])
+                pixel = np.matmul(m, point)
+                x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
+                if x >= 0 and x <= 1280 and y >= 0 and y <= 720:
+                    img[719-y][1279-x] = c[0]
+                    dist_array[719-y][1279-x] = \
+                        np.array([c[0], c[1], c[2]], dtype=np.float32)
+            if focus == "Back":
+                point = np.array([c[1], c[2], c[0], 1])
+                pixel = np.matmul(m, point)
+                x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
+                if x >= 0 and x <= 1280 and y >= 0 and y < 720:
+                    img[y][1279-x] = -c[0]
+                    dist_array[y][1279-x] = \
+                        np.array([-c[0], c[1], c[2]], dtype=np.float32)
+            if focus == "Left":
+                point = np.array([c[0], c[2], c[1], 1])
+                pixel = np.matmul(m, point)
+                x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
+                if x >= 0 and x <= 1280 and y >= 0 and y <= 720:
+                    img[719-y][1279-x] = c[1]
+                    dist_array[y][1279-x] = \
+                        np.array([c[0], c[1], c[2]], dtype=np.float32)
+            if focus == "Right":
+                point = np.array([c[0], c[2], c[1], 1])
+                pixel = np.matmul(m, point)
+                x, y = int(pixel[0]/pixel[2]), int(pixel[1]/pixel[2])
+                if x >= 0 and x < 1280 and y >= 0 and y < 720:
+                    img[y][1279-x] = -c[1]
+                    dist_array[y][1279-x] = \
+                        np.array([c[0], c[1], c[2]], dtype=np.float32)
 
-        # Rainbox color mapping to highlight distances
-        """colors = [(0, 0, 0)] + [(1, 0, 0), (1, 1, 0),
-                                (0, 1, 0), (0, 1, 1),
-                                (0, 0, 1)]
-        cmap_name = 'rainbow'
-        rainbow_cmap = LinearSegmentedColormap.from_list(cmap_name,
-                                                         colors,
-                                                         N=256)
-
-        img_colored = (rainbow_cmap(img / np.max(img)) * 255).astype(np.uint8)
-        img_bgr = cv2.cvtColor(img_colored, cv2.COLOR_RGBA2BGR)"""
-
-        return img
+        return dist_array
 
 
 if __name__ == '__main__':

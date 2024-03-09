@@ -45,7 +45,7 @@
         },
         {
           "type": "sensor.camera.rgb",
-          "id": "Left",
+          "id": "Right",
           "spawn_point": {
             "x": 0.0,
             "y": 0.0,
@@ -64,7 +64,7 @@
         },
         {
           "type": "sensor.camera.rgb",
-          "id": "Right",
+          "id": "Left",
           "spawn_point": {
             "x": 0.0,
             "y": 0.0,
