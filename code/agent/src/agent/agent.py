@@ -1,5 +1,6 @@
 from leaderboard.autoagents.ros1_agent import ROS1Agent
 from leaderboard.autoagents.autonomous_agent import Track
+import math
 
 
 def get_entry_point():
@@ -22,23 +23,67 @@ class PAF22Agent(ROS1Agent):
 
     def sensors(self):
         sensors = [
-            {'type': 'sensor.camera.rgb', 'id': 'Center',
-             'x': 0.0, 'y': 0.0, 'z': 1.70, 'roll': 0.0, 'pitch': 0.0,
-             'yaw': 0.0, 'width': 1280, 'height': 720, 'fov': 100},
-            {'type': 'sensor.lidar.ray_cast', 'id': 'LIDAR',
-             'x': 0.0, 'y': 0.0, 'z': 1.70, 'roll': 0.0, 'pitch': 0.0,
-             'yaw': 0.0},
-            {'type': 'sensor.other.radar', 'id': 'RADAR',
-             'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
-             'yaw': -45.0, 'horizontal_fov': 30, 'vertical_fov': 30},
-            {'type': 'sensor.other.gnss', 'id': 'GPS',
-             'x': 0.7, 'y': -0.4, 'z': 1.60},
-            {'type': 'sensor.other.imu', 'id': 'IMU',
-             'x': 0.7, 'y': -0.4, 'z': 1.60, 'roll': 0.0, 'pitch': 0.0,
-             'yaw': 0.0},
-            {'type': 'sensor.opendrive_map', 'id': 'OpenDRIVE',
-             'reading_frequency': 1},
-            {'type': 'sensor.speedometer', 'id': 'Speed'},
+            {
+                'type': 'sensor.camera.rgb',
+                'id': 'Center',
+                'x': 0.0, 'y': 0.0, 'z': 1.70,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
+                'width': 1280, 'height': 720, 'fov': 100
+                },
+            {
+                'type': 'sensor.camera.rgb',
+                'id': 'Back',
+                'x': 0.0, 'y': 0.0, 'z': 1.70,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': math.radians(180.0),
+                'width': 1280, 'height': 720, 'fov': 100
+                },
+            {
+                'type': 'sensor.camera.rgb',
+                'id': 'Left',
+                'x': 0.0, 'y': 0.0, 'z': 1.70,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': math.radians(-90.0),
+                'width': 1280, 'height': 720, 'fov': 100
+                },
+            {
+                'type': 'sensor.camera.rgb',
+                'id': 'Right',
+                'x': 0.0, 'y': 0.0, 'z': 1.70,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': math.radians(90.0),
+                'width': 1280, 'height': 720, 'fov': 100
+                },
+            {
+                'type': 'sensor.lidar.ray_cast',
+                'id': 'LIDAR',
+                'x': 0.0, 'y': 0.0, 'z': 1.70,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0
+                },
+            {
+                'type': 'sensor.other.radar',
+                'id': 'RADAR',
+                'x': 0.7, 'y': -0.4, 'z': 1.60,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': -45.0,
+                'horizontal_fov': 30, 'vertical_fov': 30
+                },
+            {
+                'type': 'sensor.other.gnss',
+                'id': 'GPS',
+                'x': 0.7, 'y': -0.4, 'z': 1.60
+                },
+            {
+                'type': 'sensor.other.imu',
+                'id': 'IMU',
+                'x': 0.7, 'y': -0.4, 'z': 1.60,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0
+                },
+            {
+                'type': 'sensor.opendrive_map',
+                'id': 'OpenDRIVE',
+                'reading_frequency': 1
+                },
+            {
+                'type': 'sensor.speedometer',
+                'id': 'Speed'
+                }
         ]
         return sensors
 
