@@ -395,10 +395,10 @@ class VisionNode(CompatibleNode):
         image_np_with_detections = torch.tensor(transposed_image,
                                                 dtype=torch.uint8)
 
-       if 9 in output[0].boxes.cls:
-          asyncio.run(self.process_traffic_lights(output[0],
-                                                  cv_image,
-                                                  image.header))
+        if 9 in output[0].boxes.cls:
+            asyncio.run(self.process_traffic_lights(output[0],
+                                                    cv_image,
+                                                    image.header))
 
         c_boxes = torch.stack(c_boxes)
         # print(image_np_with_detections.shape, c_boxes.shape, c_labels)
