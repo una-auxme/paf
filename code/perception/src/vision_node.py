@@ -19,7 +19,7 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
-# import rospy
+import rospy
 
 """
 VisionNode:
@@ -214,7 +214,7 @@ class VisionNode(CompatibleNode):
             vision_result = self.predict_ultralytics(image)
 
         # publish image to rviz
-        """img_msg = self.bridge.cv2_to_imgmsg(vision_result,
+        img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="rgb8")
         img_msg.header = image.header
         side = rospy.resolve_name(img_msg.header.frame_id).split('/')[2]
@@ -225,9 +225,9 @@ class VisionNode(CompatibleNode):
         if side == "Left":
             self.publisher_left.publish(img_msg)
         if side == "Right":
-            self.publisher_right.publish(img_msg)"""
+            self.publisher_right.publish(img_msg)
 
-        locals().clear()
+        # locals().clear()
         # print(f"Published Image on Side: {side}")
         pass
 
@@ -255,7 +255,7 @@ class VisionNode(CompatibleNode):
                                       desired_encoding='passthrough')
         # print("RECEIVED DIST")
         self.dist_arrays = dist_array
-        locals().clear()
+        # locals().clear()
 
     def predict_torch(self, image):
         self.model.eval()
@@ -332,10 +332,10 @@ class VisionNode(CompatibleNode):
                         # obj_dist4 = distances_copy[x4][y4].copy()
                         # print(obj_dist1, obj_dist3)
 
-                        """abs_distance = np.sqrt(
+                        abs_distance = np.sqrt(
                             obj_dist1[0]**2 +
                             obj_dist1[1]**2 +
-                            obj_dist1[2]**2)"""
+                            obj_dist1[2]**2)
 
                         # create 2d glass plane at object
                         # with box dimension
@@ -379,24 +379,23 @@ class VisionNode(CompatibleNode):
                         distance_output.append(float(np.inf))"""
 
                     c_boxes.append(torch.tensor(pixels))
-                    # c_labels.append(f"Class: {cls},"
-                    #                 f"Meters: {round(abs_distance, 2)},"
-                    #                 f"({round(float(obj_dist1[0]), 2)},"
-                    #                 f"{round(float(obj_dist1[1]), 2)},"
-                    #                 f"{round(float(obj_dist1[2]), 2)})")
+                    c_labels.append(f"Class: {cls},"
+                                    f"Meters: {round(abs_distance, 2)},"
+                                    f"({round(float(obj_dist1[0]), 2)},"
+                                    f"{round(float(obj_dist3[1]), 2)})")
 
         # print("DISTANCE_ARRAY: ", distance_output)
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 
-        """transposed_image = np.transpose(cv_image, (2, 0, 1))
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image,
-                                                dtype=torch.uint8)"""
+                                                dtype=torch.uint8)
 
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
-        """c_boxes = torch.stack(c_boxes)
+        c_boxes = torch.stack(c_boxes)
         box = draw_bounding_boxes(image_np_with_detections,
                                   c_boxes,
                                   c_labels,
@@ -405,9 +404,9 @@ class VisionNode(CompatibleNode):
                                   font_size=12)
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
-        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)"""
-        locals().clear()
-        # return box_img
+        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+        # locals().clear()
+        return box_img
 
         # return output[0].plot()
 
@@ -438,7 +437,7 @@ class VisionNode(CompatibleNode):
             traffic_light_image.header = image_header
             self.traffic_light_publisher.publish(traffic_light_image)
 
-        locals().clear()
+        # locals().clear()
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)

@@ -183,7 +183,7 @@ class CollisionCheck(CompatibleNode):
         Returns:
             float: distance calculated with rule of thumb
         """
-        reaction_distance = 0
+        reaction_distance = speed * 0.36
         braking_distance = (speed * 0.36)**2
         if emergency:
             return reaction_distance + braking_distance / 2

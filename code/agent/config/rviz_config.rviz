@@ -69,6 +69,23 @@ Visualization Manager:
         PointCloud2: false
         Value: true
       Zoom Factor: 1
+    - Class: rviz/Image
+      Enabled: true
+      Image Rendering: background and overlay
+      Image Topic: /paf/hero/Center/segmented_image
+      Name: VisonNode Output
+      Overlay Alpha: 0.5
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+      Visibility:
+        Grid: true
+        Imu: true
+        Path: true
+        PointCloud2: true
+        Value: true
+      Zoom Factor: 1
     - Alpha: 1
       Class: rviz_plugin_tutorials/Imu
       Color: 204; 51; 204
