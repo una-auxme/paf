@@ -68,6 +68,9 @@ class CollisionCheck(CompatibleNode):
             # Reset all values if we do not have car in front
             self.__object_last_position = None
             self.__object_first_position = None
+            # Signal to ACC to reset speed and distance
+            data = Float32MultiArray(data=[np.Inf, np.Inf])
+            self.collision_pub.publish(data)
             return
         if self.__object_first_position is None:
             self.__object_first_position = self.__object_last_position
@@ -89,7 +92,7 @@ class CollisionCheck(CompatibleNode):
             return
         elif nearest_object is None:
             return
-        self.logerr("Obstacle detected: " + str(nearest_object))
+        # self.logerr("Obstacle detected: " + str(nearest_object))
         # if np.isinf(data.data) and \
         #         self.__object_last_position is not None and \
         #         rospy.get_rostime() - self.__object_last_position[0] < \
@@ -173,11 +176,12 @@ class CollisionCheck(CompatibleNode):
 
         Args:
             emergency (bool): if emergency brake is initiated
+            speed (float): speed of the vehicle (km/h)
 
         Returns:
             float: distance calculated with rule of thumb
         """
-        reaction_distance = speed
+        reaction_distance = 0
         braking_distance = (speed * 0.36)**2
         if emergency:
             return reaction_distance + braking_distance / 2
@@ -206,11 +210,9 @@ class CollisionCheck(CompatibleNode):
                 self.emergency_pub.publish(True)
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
-            self.logerr("Collision published")
             self.collision_pub.publish(data)
         else:
             # If no collision is ahead publish np.Inf
-            self.logerr("No collision")
             data = Float32MultiArray(data=[np.Inf, obstacle_speed])
             self.collision_pub.publish(data)
 
