@@ -269,12 +269,12 @@ class MotionPlanning(CompatibleNode):
                                        30):]
             # self.trajectory = path
         else:
-            self.logerr("Overtake failed")
+            self.loginfo("Overtake failed")
             self.overtake_fallback(distance_obj, pose_list)
             self.overtake_success_pub.publish(1)
 
     def overtake_fallback(self, distance, pose_list):
-        self.logerr("Overtake Fallback!")
+        self.loginfo("Overtake Fallback!")
         # obstacle_position = approx_obstacle_pos(distance,
         #                                         self.current_heading,
         #                                         self.current_pos,
@@ -322,7 +322,7 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.trajectory = data
-        self.logerr("Trajectory received")
+        self.loginfo("Trajectory received")
         self.__corners = self.__calc_corner_points()
 
     def __calc_corner_points(self):
@@ -391,7 +391,7 @@ class MotionPlanning(CompatibleNode):
         distance_corner = 0
         for i in range(len(corner) - 1):
             distance_corner += euclid_dist(corner[i], corner[i + 1])
-        # self.logerr(distance_corner)
+        # self.loginfo(distance_corner)
 
         if self.__in_corner:
             distance_end = euclid_dist(pos, corner[0])
@@ -434,9 +434,9 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (Bool): True if emergency stop detected by collision check
         """
-        # self.logerr("Emergency stop detected")
+        # self.loginfo("Emergency stop detected")
         if not self.__curr_behavior == bs.parking.name:
-            # self.logerr("Emergency stop detected and executed")
+            # self.loginfo("Emergency stop detected and executed")
             self.emergency_pub.publish(data)
 
     def update_target_speed(self, acc_speed, behavior):

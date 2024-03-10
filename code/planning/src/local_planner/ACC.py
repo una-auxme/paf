@@ -173,7 +173,7 @@ class ACC(CompatibleNode):
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
                     safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
-                    lerp_factor = 0.01
+                    lerp_factor = 0.1
                     safe_speed = (1 - lerp_factor) * self.__current_velocity +\
                         lerp_factor * safe_speed
                     if safe_speed < 1.0:
@@ -185,18 +185,17 @@ class ACC(CompatibleNode):
                     # If safety distance is reached just hold current speed
                     # if self.obstacle_speed < 1.0:
                     #     self.obstacle_speed = 0
-                    self.logerr("ACC: my speed: " +
-                                str(self.__current_velocity))
-                    self.velocity_pub.publish(self.obstacle_speed)
+                    # self.logerr("ACC: my speed: " +
+                    #             str(self.__current_velocity))
+                    self.velocity_pub.publish(self.__current_velocity)
 
             elif self.speed_limit is not None:
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
-                self.logerr("ACC: Speed limit: " + str(self.speed_limit))
+                # self.logerr("ACC: Speed limit: " + str(self.speed_limit))
                 self.velocity_pub.publish(self.speed_limit)
             else:
-                self.logerr("ACC: default Speed limit")
-                self.velocity_pub.publish(5.0)
+                self.velocity_pub.publish(0)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

@@ -332,7 +332,7 @@ class Enter(py_trees.behaviour.Behaviour):
                 rospy.loginfo("Overtake: Slowing down")
                 return py_trees.common.Status.RUNNING
             else:
-                rospy.loginfo("Overtake: Abort ")
+                rospy.loginfo("OvertakeEnter: Abort ")
                 return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("Overtake: Bigger Failure")

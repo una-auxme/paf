@@ -128,6 +128,8 @@ class CollisionCheck(CompatibleNode):
             return
 
         speed = self.__current_velocity + relative_speed
+        if speed < 0:
+            speed = 0
         # Publish speed to ACC for permanent distance check
         self.speed_publisher.publish(Float32(data=speed))
         # Check for crash

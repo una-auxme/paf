@@ -3,6 +3,8 @@
 
 import py_trees
 import numpy as np
+from scipy.spatial.transform import Rotation
+import rospy
 
 
 """
@@ -216,6 +218,8 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         What to do here?
             Any initialisation you need before putting your behaviour to work.
         """
+        # Counter for detecting overtake situation
+        self.counter_overtake = 0
         return True
 
     def update(self):
@@ -235,17 +239,40 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         """
 
         obstacle_msg = self.blackboard.get("/paf/hero/collision")
-        if obstacle_msg is None:
+        current_position = self.blackboard.get("/paf/hero/current_pos")
+        current_heading = self.blackboard.get("/paf/hero/current_heading").data
+
+        if obstacle_msg is None or \
+                current_position is None or \
+                current_heading is None:
             return py_trees.common.Status.FAILURE
+        current_position = [current_position.pose.position.x,
+                            current_position.pose.position.y,
+                            current_position.pose.position.z]
 
         obstacle_distance = obstacle_msg.data[0]
         obstacle_speed = obstacle_msg.data[1]
 
         if obstacle_distance == np.Inf:
             return py_trees.common.Status.FAILURE
+        # calculate approx collision position in global coords
+        rotation_matrix = Rotation.from_euler('z', current_heading)
+        # Apply current heading to absolute distance vector
+        # and add to current position
+        pos_moved_in_x_direction = current_position + rotation_matrix.apply(
+                np.array([obstacle_distance, 0, 0]))
+
+        if np.linalg.norm(pos_moved_in_x_direction - current_position) < 1:
+            # current collision is not near trajectory lane
+            self.logerr("Obstacle is not near trajectory lane")
+            return py_trees.common.Status.FAILURE
 
         if obstacle_speed < 2 and obstacle_distance < 30:
-            return py_trees.common.Status.SUCCESS
+            self.counter_overtake += 1
+            rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
+            if self.counter_overtake > 3:
+                return py_trees.common.Status.SUCCESS
+            return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.FAILURE
 

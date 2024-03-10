@@ -193,7 +193,7 @@ def filter_vision_objects(float_array):
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
 
     # Get cars that are on our lane
-    cars_in_front = all_cars[np.where(np.abs(all_cars[:, 2]) < 1.5)]
+    cars_in_front = all_cars[np.where(np.abs(all_cars[:, 2]) < 0.3)]
     if cars_in_front.size == 0:
         # no car in front
         return None

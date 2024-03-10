@@ -5,7 +5,7 @@
     </node>
     <node pkg="planning" type="ACC.py" name="ACC" output="screen">
         <param name="role_name" value="hero" />
-        <param name="control_loop_rate" value="0.1" />
+        <param name="control_loop_rate" value="0.3" />
     </node>
     <!-- <node pkg="local_planner" type="local_planner/dev_collision_publisher.py" name="DevCollisionCheck" output="screen">
         <param name="role_name" value="hero" />
