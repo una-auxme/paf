@@ -267,7 +267,7 @@ class MotionPlanning(CompatibleNode):
                 result + pose_list[int(self.current_wp +
                                        distance_obj +
                                        30):]
-            self.trajectory = path
+            # self.trajectory = path
         else:
             self.logerr("Overtake failed")
             self.overtake_fallback(distance_obj, pose_list)
