@@ -92,6 +92,10 @@ class Approach(py_trees.behaviour.Behaviour):
             self.ot_distance = _dis.data[0]
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")
 
+        if np.isinf(self.ot_distance):
+            rospy.loginfo("Abort Overtake")
+            return py_trees.common.Status.FAILURE
+
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             distance_lidar = self.blackboard. \
@@ -123,7 +127,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < 6.0:
+                self.ot_distance < 8.0:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
@@ -241,7 +245,7 @@ class Wait(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("No Lidar Distance")
-            return py_trees.common.Success
+            return py_trees.common.Status.SUCCESS
 
     def terminate(self, new_status):
         """
@@ -328,11 +332,11 @@ class Enter(py_trees.behaviour.Behaviour):
                 rospy.loginfo("Overtake: Slowing down")
                 return py_trees.common.Status.RUNNING
             else:
-                rospy.loginfo("Overtake: Big Failure")
+                rospy.loginfo("Overtake: Abort ")
                 return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("Overtake: Bigger Failure")
-            return py_trees.common.Status.RUNNING
+            return py_trees.common.Status.FAILURE
         # Currently not in use
         # Can be used to check if we can go back to the original lane
 
@@ -394,6 +398,9 @@ class Leave(py_trees.behaviour.Behaviour):
         """
         rospy.loginfo("Leave Overtake")
         self.curr_behavior_pub.publish(bs.ot_leave.name)
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.first_pos = np.array([data.pose.position.x,
+                                   data.pose.position.y])
         return True
 
     def update(self):
@@ -407,7 +414,14 @@ class Leave(py_trees.behaviour.Behaviour):
         Abort this subtree
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
-        return py_trees.common.Status.FAILURE
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.current_pos = np.array([data.pose.position.x,
+                                    data.pose.position.y])
+        distance = np.linalg.norm(self.first_pos - self.current_pos)
+        if distance > 10:
+            return py_trees.common.Status.FAILURE
+        else:
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """
