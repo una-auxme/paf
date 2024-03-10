@@ -5,8 +5,6 @@ import py_trees
 import numpy as np
 from scipy.spatial.transform import Rotation
 import rospy
-
-
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -264,7 +262,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
 
         if np.linalg.norm(pos_moved_in_x_direction - current_position) < 1:
             # current collision is not near trajectory lane
-            self.logerr("Obstacle is not near trajectory lane")
+            rospy.logerr("Obstacle is not near trajectory lane")
             return py_trees.common.Status.FAILURE
 
         if obstacle_speed < 2 and obstacle_distance < 30:

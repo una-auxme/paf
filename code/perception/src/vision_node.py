@@ -368,6 +368,7 @@ class VisionNode(CompatibleNode):
 
                     else:
                         obj_dist1 = (np.inf, np.inf, np.inf)
+                        obj_dist3 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
                         """distance_output.append(float(cls))
                         distance_output.append(float(abs_distance))

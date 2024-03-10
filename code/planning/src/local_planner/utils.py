@@ -144,8 +144,12 @@ def spawn_car(distance):
     spawnPoint = carla.Transform(ego_vehicle.get_location() +
                                  carla.Location(y=distance.data),
                                  ego_vehicle.get_transform().rotation)
+    spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
+                                  carla.Location(x=2.5, y=distance.data + 1),
+                                  ego_vehicle.get_transform().rotation)
     vehicle = world.spawn_actor(bp, spawnPoint)
-
+    vehicle2 = world.spawn_actor(bp, spawnpoint2)
+    vehicle2.set_autopilot(False)
     vehicle.set_autopilot(False)
     # vehicle.set_location(loc)
     # coords = vehicle.get_location()
@@ -157,7 +161,7 @@ def spawn_car(distance):
                         carla.Rotation(pitch=-90)))
 
 
-def filter_vision_objects(float_array):
+def filter_vision_objects(float_array, oncoming):
     """Filters vision objects to calculate collision check
     It contains the classId, the absolute Euclidean distance
     and 6 coordinates for upper left and lower right corner
@@ -193,7 +197,15 @@ def filter_vision_objects(float_array):
     all_cars = float_array[np.where(float_array[:, 0] == 2)]
 
     # Get cars that are on our lane
-    cars_in_front = all_cars[np.where(np.abs(all_cars[:, 2]) < 0.3)]
+    if oncoming:
+        cars_in_front = \
+            all_cars[np.where(all_cars[:, 2] > 0.3)]
+        if cars_in_front.size != 0:
+            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] < 1.3)]
+    else:
+        cars_in_front = all_cars[np.where(all_cars[:, 2] < 0.1)]
+        if cars_in_front.size != 0:
+            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] > -0.2)]
     if cars_in_front.size == 0:
         # no car in front
         return None

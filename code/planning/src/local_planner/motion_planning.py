@@ -2,7 +2,6 @@
 # import tf.transformations
 import ros_compatibility as roscomp
 import rospy
-import tf.transformations
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
@@ -14,14 +13,11 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 import math
 
-from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
-    import run_fot
 from perception.msg import Waypoint, LaneChange
 import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
-from utils import convert_to_ms, approx_obstacle_pos, \
-    hyperparameters, spawn_car, location_to_gps
+from utils import convert_to_ms, spawn_car
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -45,6 +41,7 @@ class MotionPlanning(CompatibleNode):
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
         self.__collision_point = None
+        self.__overtake_status = -1
         self.published = False
         self.current_pos = None
         self.current_heading = None
@@ -187,41 +184,6 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y,
                                     data.pose.position.z])
 
-    def calculate_overtake(self, distance, pose_list, limit_waypoints=100):
-        """Calculate new trajectory for overtaking
-
-        Args:
-            distance (float): Distance to overtake object
-            pose_list (ndarray): List with current trajectory
-            limit_waypoints (int, optional): Number of waypoints.
-                                             Defaults to 30.
-
-        Returns:
-            tuple: Return values from run_fot
-        """
-        obstacle_position = approx_obstacle_pos(distance,
-                                                self.current_heading,
-                                                self.current_pos,
-                                                self.current_speed)
-
-        selection = pose_list[int(self.current_wp):int(self.current_wp) +
-                              int(distance + limit_waypoints)]
-        waypoints = self.convert_pose_to_array(selection)
-        gps_position = location_to_gps(0, 0, *self.current_pos[:2])
-        initial_conditions = {
-            'ps': gps_position["lon"],
-            'target_speed': self.target_speed,
-            'pos': np.array([self.current_pos[0], self.current_pos[1]]),
-            'vel': np.array([obstacle_position[2][0],
-                            obstacle_position[2][1]]),
-            'wp': waypoints,
-            'obs': np.array([[obstacle_position[0][0],
-                            obstacle_position[0][1],
-                            obstacle_position[1][0],
-                            obstacle_position[1][1]]])
-        }
-        return run_fot(initial_conditions, hyperparameters)
-
     def change_trajectory(self, distance_obj):
         """update trajectory for overtaking and convert it
         to a new Path message
@@ -230,57 +192,21 @@ class MotionPlanning(CompatibleNode):
             distance_obj (float): distance to overtake object
         """
         pose_list = self.trajectory.poses
-        count_retrys = 0
 
         # Only use fallback
         self.overtake_fallback(distance_obj, pose_list)
-        self.overtake_success_pub.publish(1)
+        self.__overtake_status = 1
+        self.overtake_success_pub.publish(self.__overtake_status)
         return
 
-        success_overtake = False
-        while not success_overtake and count_retrys < 10:
-            result_x, result_y, speeds, ix, iy, iyaw, d, s, speeds_x, \
-                speeds_y, misc, \
-                costs, success = self.calculate_overtake(distance_obj,
-                                                         pose_list)
-            self.overtake_success_pub.publish(float(success))
-            success_overtake = success
-            count_retrys += 1
-        if success_overtake:
-            result = []
-            for i in range(len(result_x)):
-                position = Point(result_x[i], result_y[i], 0)
-                quaternion = tf.transformations.quaternion_from_euler(0,
-                                                                      0,
-                                                                      iyaw[i])
-                orientation = Quaternion(x=quaternion[0], y=quaternion[1],
-                                         z=quaternion[2], w=quaternion[3])
-                pose = Pose(position, orientation)
-                pos = PoseStamped()
-                pos.header.frame_id = "global"
-                pos.pose = pose
-                result.append(pos)
-            path = Path()
-            path.header.stamp = rospy.Time.now()
-            path.header.frame_id = "global"
-            path.poses = pose_list[:int(self.current_wp)] + \
-                result + pose_list[int(self.current_wp +
-                                       distance_obj +
-                                       30):]
-            # self.trajectory = path
-        else:
-            self.loginfo("Overtake failed")
-            self.overtake_fallback(distance_obj, pose_list)
-            self.overtake_success_pub.publish(1)
-
     def overtake_fallback(self, distance, pose_list):
-        self.loginfo("Overtake Fallback!")
+        # self.loginfo("Overtake Fallback!")
         # obstacle_position = approx_obstacle_pos(distance,
         #                                         self.current_heading,
         #                                         self.current_pos,
         #                                         self.current_speed)
         selection = pose_list[int(self.current_wp):int(self.current_wp) +
-                              int(distance) + 10]
+                              int(distance) + 7]
         waypoints = self.convert_pose_to_array(selection)
 
         offset = np.array([2, 0, 0])
@@ -290,8 +216,8 @@ class MotionPlanning(CompatibleNode):
         offset_front = offset_front[:2]
         waypoints_off = waypoints + offset_front
 
-        result_x = [row[0] for row in waypoints_off]
-        result_y = [row[1] for row in waypoints_off]
+        result_x = waypoints_off[:, 0]
+        result_y = waypoints_off[:, 1]
 
         result = []
         for i in range(len(result_x)):
@@ -312,7 +238,7 @@ class MotionPlanning(CompatibleNode):
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
         path.poses = pose_list[:int(self.current_wp)] + \
-            result + pose_list[int(self.current_wp + distance + 10):]
+            result + pose_list[int(self.current_wp + distance + 7):]
         self.trajectory = path
 
     def __set_trajectory(self, data: Path):
@@ -441,11 +367,11 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
-        if not behavior == bs.parking.name:
+        if behavior == bs.parking.name or self.__overtake_status == 1:
+            self.target_speed = be_speed
+        else:
             corner_speed = self.get_cornering_speed()
             self.target_speed = min(be_speed, acc_speed, corner_speed)
-        else:
-            self.target_speed = be_speed
         # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
         # self.logerr(f"Speed: {self.target_speed}")
@@ -458,7 +384,8 @@ class MotionPlanning(CompatibleNode):
         self.__curr_behavior = data.data
         if data.data == bs.ot_enter_init.name:
             if np.isinf(self.__collision_point):
-                self.overtake_success_pub.publish(-1)
+                self.__overtake_status = -1
+                self.overtake_success_pub.publish(self.__overtake_status)
                 return
             self.change_trajectory(self.__collision_point)
 
@@ -488,6 +415,7 @@ class MotionPlanning(CompatibleNode):
         elif short_behavior == "parking":
             speed = bs.parking.speed
         else:
+            self.__overtake_status = -1
             speed = self.__get_speed_cruise()
         return speed
 
@@ -530,7 +458,7 @@ class MotionPlanning(CompatibleNode):
         if behavior == bs.ot_app_blocked.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_app_free.name:
-            speed = self.__get_speed_cruise()
+            speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_wait_stopped.name:
             speed = bs.ot_wait_stopped.speed
         elif behavior == bs.ot_wait_free.name:
@@ -540,7 +468,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_enter_slow.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_leave.name:
-            speed = self.__get_speed_cruise()
+            speed = convert_to_ms(10.)
 
         return speed
 
@@ -579,8 +507,10 @@ class MotionPlanning(CompatibleNode):
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms((stopline / 30)
                                    * 50))
-        if stopline < 8.0:
+        if stopline < 6.0:
             v_stop = 0.0
+
+        self.logerr(f"Speed ovt: {v_stop}")
         return v_stop
 
     def __calc_virtual_change_point(self) -> float:
