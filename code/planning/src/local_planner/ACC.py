@@ -9,7 +9,7 @@ from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32
 from collision_check import CollisionCheck
-import time
+import numpy as np
 
 
 class ACC(CompatibleNode):
@@ -21,7 +21,6 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__('ACC')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-        self.current_speed = None  # m/ss
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
@@ -30,13 +29,6 @@ class ACC(CompatibleNode):
             self.__get_current_velocity,
             qos_profile=1)
 
-        # Subscriber for lidar distance
-        # TODO: Change to real lidar distance
-        self.lidar_dist = self.new_subscription(
-            Float32,
-            f"/carla/{self.role_name}/LIDAR_range",
-            self._set_distance,
-            qos_profile=1)
         # Get initial set of speed limits
         self.speed_limit_OD_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
@@ -47,7 +39,7 @@ class ACC(CompatibleNode):
         # Get trajectory to determine current speed limit
         self.trajectory_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory",
+            f"/paf/{self.role_name}/trajectory_global",
             self.__set_trajectory,
             qos_profile=1)
 
@@ -57,14 +49,22 @@ class ACC(CompatibleNode):
             callback=self.__current_position_callback,
             qos_profile=1)
         self.approx_speed_sub = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/cc_speed",
-            self.__approx_speed_callback,
+            Float32MultiArray,
+            f"/paf/{self.role_name}/collision",
+            self.__collision_callback,
             qos_profile=1)
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
+            qos_profile=1)
+        self.wp_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/current_wp",
+            qos_profile=1)
+        self.speed_limit_publisher: Publisher = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/speed_limit",
             qos_profile=1)
 
         # List of all speed limits, sorted by waypoint index
@@ -84,15 +84,7 @@ class ACC(CompatibleNode):
 
         self.logdebug("ACC initialized")
 
-    def _set_distance(self, data: Float32):
-        """Get min distance to object in front from perception
-
-        Args:
-            data (MinDistance): Minimum Distance from LIDAR
-        """
-        self.obstacle_distance = data.data
-
-    def __approx_speed_callback(self, data: Float32):
+    def __collision_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
         timestamp when recieved.
         Timestamp is needed to check wether we still have a vehicle in front
@@ -100,8 +92,12 @@ class ACC(CompatibleNode):
         Args:
             data (Float32): Speed from obstacle in front
         """
-        # self.logerr("ACC: Approx speed recieved: " + str(data.data))
-        self.obstacle_speed = (time.time(), data.data)
+        if np.isinf(data.data[0]):
+            self.obstacle_speed = None
+            self.obstacle_distance = None
+            return
+        self.obstacle_speed = data.data[1]
+        self.obstacle_distance = data.data[0]
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -148,8 +144,10 @@ class ACC(CompatibleNode):
         if d_new < d_old:
             # update current waypoint and corresponding speed limit
             self.__current_wp_index += 1
+            self.wp_publisher.publish(self.__current_wp_index)
             self.speed_limit = \
                 self.__speed_limits_OD[self.__current_wp_index]
+            self.speed_limit_publisher.publish(self.speed_limit)
 
     def run(self):
         """
@@ -161,11 +159,6 @@ class ACC(CompatibleNode):
             Checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
-            if self.obstacle_speed is not None:
-                # Check if too much time has passed since last speed update
-                if self.obstacle_speed[0] + 0.5 < time.time():
-                    self.obstacle_speed = None
-
             if self.obstacle_distance is not None and \
                     self.obstacle_speed is not None and \
                     self.__current_velocity is not None:
@@ -176,18 +169,37 @@ class ACC(CompatibleNode):
                 if self.obstacle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
-                    safe_speed = self.obstacle_speed[1] * \
+                    # Lerp factor:
+                    # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
+                    safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
+                    lerp_factor = 0.2
+                    safe_speed = (1 - lerp_factor) * self.__current_velocity +\
+                        lerp_factor * safe_speed
+                    if safe_speed < 1.0:
+                        safe_speed = 0
+                    self.logerr("ACC: Safe speed: " + str(safe_speed) +
+                                " Distance: " + str(self.obstacle_distance))
                     self.velocity_pub.publish(safe_speed)
                 else:
-                    # If safety distance is reached, drive with same speed as
-                    # Object in front
-                    self.velocity_pub.publish(self.obstacle_speed[1])
+                    # If safety distance is reached just hold current speed
+                    # if self.obstacle_speed < 1.0:
+                    #     self.obstacle_speed = 0
+                    # self.logerr("ACC: my speed: " +
+                    #             str(self.__current_velocity))
+                    if self.__current_velocity < 1.0:
+                        safe_speed = 0
+                    else:
+                        safe_speed = self.__current_velocity
+                    self.velocity_pub.publish(safe_speed)
 
             elif self.speed_limit is not None:
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
+                # self.logerr("ACC: Speed limit: " + str(self.speed_limit))
                 self.velocity_pub.publish(self.speed_limit)
+            else:
+                self.velocity_pub.publish(0)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

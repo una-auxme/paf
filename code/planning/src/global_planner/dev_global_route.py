@@ -51,7 +51,7 @@ class DevGlobalRoute(CompatibleNode):
 
         self.global_plan_pub = self.new_publisher(
             msg_type=CarlaRoute,
-            topic='/paf/' + self.role_name + '/global_plan',
+            topic='/carla/' + self.role_name + '/global_plan',
             qos_profile=QoSProfile(
                 depth=1,
                 durability=DurabilityPolicy.TRANSIENT_LOCAL)

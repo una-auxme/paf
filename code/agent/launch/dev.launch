@@ -15,7 +15,7 @@
 
   <!-- Synchronous mode-->
   <arg name='synchronous_mode_wait_for_vehicle_control_command' default='False'/>
-  <arg name='fixed_delta_seconds' default='0.05'/>
+  <arg name='fixed_delta_seconds' default='0.025'/>
 
 
   <include file="$(find carla_ros_bridge)/launch/carla_ros_bridge.launch">
@@ -33,6 +33,10 @@
   </include>
 
   <include file="$(find agent)/launch/agent.launch">
+    <arg name='role_name' value='$(arg role_name)'/>
+  </include>
+
+  <include file="$(find test-route)/launch/test-route.launch">
     <arg name='role_name' value='$(arg role_name)'/>
   </include>
 

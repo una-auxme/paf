@@ -1,24 +1,28 @@
+import numpy as np
+
 from frenet_optimal_trajectory_planner.FrenetOptimalTrajectory.fot_wrapper \
     import run_fot
-import numpy as np
+
 import matplotlib.pyplot as plt
 
-wp = wp = np.r_[[np.full((50), 983.5889666959667)],
-                [np.linspace(5370.016106881272, 5399.016106881272, 50)]].T
+
+wp = np.r_[[np.full((50), 983.5889666959667)],
+           [np.linspace(5370.016106881272, 5399.016106881272, 50)]].T
+obs = np.array([[983.568124548765, 5384.0219828457075,
+                 983.628124548765, 5386.0219828457075]])
 initial_conditions = {
     'ps': 0,
     'target_speed': 6,
     'pos': np.array([983.5807552562393, 5370.014637890163]),
     'vel': np.array([5, 1]),
     'wp': wp,
-    'obs': np.array([[983.568124548765, 5386.0219828457075,
-                      983.628124548765, 5386.0219828457075]])
+    'obs': obs
 }
 
 hyperparameters = {
     "max_speed": 25.0,
     "max_accel": 15.0,
-    "max_curvature": 15.0,
+    "max_curvature": 20.0,
     "max_road_width_l": 3.0,
     "max_road_width_r": 0,
     "d_road_w": 0.5,
@@ -47,16 +51,17 @@ if success:
     print("Success!")
     print("result_x: ", result_x)
     print("result_y: ", result_y)
+    print("yaw!", iyaw)
     fig, ax = plt.subplots(1, 2)
 
     ax[0].scatter(wp[:, 0], wp[:, 1], label="original")
-    ax[0].scatter([983.568124548765, 983.628124548765],
-                  [5386.0219828457075, 5386.0219828457075], label="object")
-    ax[0].set_xticks([983.518124548765, 983.598124548765])
+    ax[0].scatter([obs[0, 0], obs[0, 2]],
+                  [obs[0, 1], obs[0, 3]], label="object")
+    ax[0].set_xticks([obs[0, 0], obs[0, 2]])
     ax[1].scatter(result_x, result_y, label="frenet")
-    ax[1].scatter([983.568124548765, 983.628124548765],
-                  [5386.0219828457075, 5386.0219828457075], label="object")
-    ax[1].set_xticks([983.518124548765, 983.598124548765])
+    ax[1].scatter([obs[0, 0], obs[0, 2]],
+                  [obs[0, 1], obs[0, 3]], label="object")
+    ax[1].set_xticks([obs[0, 0], obs[0, 2]])
     plt.legend()
     plt.show()
 else:

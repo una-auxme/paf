@@ -31,6 +31,10 @@ def bounding_box(points, min_x=-np.inf, max_x=np.inf, min_y=-np.inf,
 
     """
 
+    """print(min_x, max_x, "X")
+    print(min_y, max_y, "Y")
+    print(min_z, max_z, "Z")"""
+
     bound_x = np.logical_and(points['x'] > min_x, points['x'] < max_x)
     bound_y = np.logical_and(points['y'] > min_y, points['y'] < max_y)
     bound_z = np.logical_and(points['z'] > min_z, points['z'] < max_z)

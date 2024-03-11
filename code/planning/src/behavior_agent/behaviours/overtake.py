@@ -1,10 +1,10 @@
 import py_trees
-import numpy as np
 from std_msgs.msg import String
 
 import rospy
+import numpy as np
 
-from .import behavior_speed as bs
+from . import behavior_speed as bs
 
 """
 Source: https://github.com/ll7/psaf2
@@ -15,24 +15,16 @@ def convert_to_ms(speed):
     return speed / 3.6
 
 
-# 1: Green, 2: Red, 4: Yellow, 0: Unknown
-def get_color(state):
-    if state == 1:
-        return "green"
-    elif state == 2:
-        return "red"
-    elif state == 4:
-        return "yellow"
-    else:
-        return ""
+# Varaible to determine if overtake is currently exec
+OVERTAKE_EXECUTING = False
 
 
 class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
-    an intersection and behaviours.road_features.intersection_ahead is
-    triggered. It than handles the approaching the intersection, slowing the
-    vehicle down appropriately.
+    an object which needs to be overtaken and
+    behaviours.road_features.overtake_ahead is triggered.
+    It than handles the procedure for overtaking.
     """
     def __init__(self, name):
         """
@@ -41,7 +33,7 @@ class Approach(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Approach, self).__init__(name)
-        rospy.loginfo("Approach started")
+        rospy.loginfo("Init -> Overtake Behavior: Approach")
 
     def setup(self, timeout):
         """
@@ -50,7 +42,7 @@ class Approach(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -68,20 +60,13 @@ class Approach(py_trees.behaviour.Behaviour):
         RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This initializes the variables needed to save information about the
-        stop line, stop signs and the traffic light.
+
+        This initializes the overtaking distance to a default value.
         """
-        rospy.loginfo("Approaching Intersection")
-        self.start_time = rospy.get_time()
-        self.stop_sign_detected = False
-        self.stop_distance = np.inf
-        self.intersection_distance = np.inf
-        self.traffic_light_detected = False
-        self.traffic_light_distance = np.inf
-        self.traffic_light_status = ''
-        self.virtual_stopline_distance = np.inf
-        self.curr_behavior_pub.publish(bs.int_app_init.name)
-        self.last_virtual_distance = np.inf
+        rospy.loginfo("Approaching Overtake")
+        self.ot_distance = 30
+
+        self.clear_distance = 30
 
     def update(self):
         """
@@ -91,58 +76,42 @@ class Approach(py_trees.behaviour.Behaviour):
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Gets the current traffic light status, stop sign status
-        and the stop line distance
-        :return: py_trees.common.Status.RUNNING, if too far from intersection
-                 py_trees.common.Status.SUCCESS, if stopped in front of inter-
-                 section or entered the intersection
-                 py_trees.common.Status.FAILURE, if no next path point can be
-                 detected.
+
+        Gets the current distance to overtake, the current lane status and the
+        distance to collsion object.
+        :return: py_trees.common.Status.RUNNING, if too far from overtaking
+                 py_trees.common.Status.SUCCESS, if stopped behind the blocking
+                 object or entered the process.
+                 py_trees.common.Status.FAILURE,
         """
-        # Update Light Info
-        light_status_msg = self.blackboard.get(
-            "/paf/hero/Center/traffic_light_state")
-        if light_status_msg is not None:
-            self.traffic_light_status = get_color(light_status_msg.state)
-            self.traffic_light_detected = True
-
-        # Update stopline Info
-        _dis = self.blackboard.get("/paf/hero/waypoint_distance")
+        global OVERTAKE_EXECUTING
+        # Update distance to collision object
+        _dis = self.blackboard.get("/paf/hero/collision")
         if _dis is not None:
-            self.stopline_distance = _dis.distance
-            self.stopline_detected = _dis.isStopLine
+            self.ot_distance = _dis.data[0]
+            rospy.loginfo(f"Overtake distance: {self.ot_distance}")
+            OVERTAKE_EXECUTING = self.ot_distance
 
-        # Update stop sign Info
-        stop_sign_msg = self.blackboard.get("/paf/hero/stop_sign")
-        if stop_sign_msg is not None:
-            self.stop_sign_detected = stop_sign_msg.isStop
-            self.stop_distance = stop_sign_msg.distance
+        if np.isinf(self.ot_distance):
+            rospy.loginfo("OvertakeApproach: Abort")
+            return py_trees.common.Status.FAILURE
 
-        # calculate virtual stopline
-        if self.stopline_distance != np.inf and self.stopline_detected:
-            self.virtual_stopline_distance = self.stopline_distance
-        elif self.stop_sign_detected:
-            self.virtual_stopline_distance = self.stop_distance
-        else:
-            self.virtual_stopline_distance = 0.0
+        # slow down before overtake if blocked
+        if self.ot_distance < 20.0:
+            data = self.blackboard.get("/paf/hero/oncoming")
+            if data is not None:
+                distance_oncoming = data.data
+            else:
+                distance_oncoming = 35
 
-        rospy.loginfo(f"Stopline distance: {self.virtual_stopline_distance}")
-        target_distance = 5.0
-        # stop when there is no or red/yellow traffic light or a stop sign is
-        # detected
-        if self.traffic_light_status == '' \
-                or self.traffic_light_status == 'red' \
-                or self.traffic_light_status == 'yellow'\
-                or (self.stop_sign_detected and
-                    not self.traffic_light_detected):
-
-            rospy.loginfo("slowing down!")
-            self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
-
-        # approach slowly when traffic light is green as traffic lights are
-        # higher priority than traffic signs this behavior is desired
-        if self.traffic_light_status == 'green':
-            self.curr_behavior_pub.publish(bs.int_app_green.name)
+            if distance_oncoming is not None and \
+                    distance_oncoming > self.clear_distance:
+                rospy.loginfo("Overtake is free not slowing down!")
+                self.curr_behavior_pub.publish(bs.ot_app_free.name)
+                return py_trees.common.Status.SUCCESS
+            else:
+                rospy.loginfo("Overtake blocked slowing down")
+                self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -151,35 +120,18 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
-        if self.virtual_stopline_distance > target_distance:
+
+        if self.ot_distance > 20.0:
             # too far
-            print("still approaching")
+            rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.virtual_stopline_distance < target_distance:
+                self.ot_distance < 6.0:
             # stopped
-            print("stopped")
-            return py_trees.common.Status.SUCCESS
-        elif speed > convert_to_ms(5.0) and \
-                self.virtual_stopline_distance < 6.0 and \
-                self.traffic_light_status == "green":
-
-            # drive through intersection even if traffic light turns yellow
-            return py_trees.common.Status.SUCCESS
-        elif speed > convert_to_ms(5.0) and \
-                self.virtual_stopline_distance < 3.5:
-            # running over line
-            return py_trees.common.Status.SUCCESS
-        elif self.last_virtual_distance == self.virtual_stopline_distance \
-                and self.virtual_stopline_distance < 10.0:
-            # ran over line
-            return py_trees.common.Status.SUCCESS
-
-        if self.virtual_stopline_distance < target_distance and \
-           not self.stopline_detected:
-            rospy.loginfo("Leave intersection!")
+            rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
         else:
+            # still approaching
             return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
@@ -200,9 +152,9 @@ class Approach(py_trees.behaviour.Behaviour):
 
 class Wait(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the waiting in front of the stop line at the inter-
-    section until there either is no traffic light, the traffic light is
-    green or the intersection is clear.
+    This behavior handles the waiting in front of object,
+    which is blocking the road.
+    The Ego vehicle is waiting to get a clear path for overtaking.
     """
     def __init__(self, name):
         """
@@ -219,7 +171,7 @@ class Wait(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -228,8 +180,6 @@ class Wait(py_trees.behaviour.Behaviour):
                                                  "curr_behavior", String,
                                                  queue_size=1)
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.red_light_flag = False
-        self.green_light_counter = 0
         return True
 
     def initialise(self):
@@ -240,11 +190,8 @@ class Wait(py_trees.behaviour.Behaviour):
         What to do here?
             Any initialisation you need before putting your behaviour to work.
         This just prints a state status message.
-        :return: True
         """
-        rospy.loginfo("Wait Intersection")
-        self.red_light_flag = False
-        self.green_light_counter = 0
+        rospy.loginfo("Waiting for Overtake")
         return True
 
     def update(self):
@@ -255,59 +202,43 @@ class Wait(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Waits in front of the intersection until there is a green light, the
-        intersection is clear or no traffic light at all.
-        :return: py_trees.common.Status.RUNNING, while traffic light is yellow
-                 or red
-                 py_trees.common.Status.SUCCESS, if the traffic light switched
-                 to green or no traffic light is detected
+
+        Waits behind the road object until the lidar distance meets the
+        requirement for the clear distance.
+
+        :return: py_trees.common.Status.RUNNING, while clear distance is bigger
+                    than lidar_distance
+                 py_trees.common.Status.SUCCESS,if no lidar distance is present
+                    or the lidar distance is bigger than the clear distance
         """
-        light_status_msg = self.blackboard.get(
-            "/paf/hero/Center/traffic_light_state")
 
-        lidar_data = self.blackboard.get("/carla/hero/LIDAR_range")
+        # Update distance to collison and distance for clear
+        clear_distance = 30
+        obstacle_msg = self.blackboard.get("/paf/hero/collision")
+        if obstacle_msg is None:
+            rospy.logerr("No OBSTACLE")
+            return py_trees.common.Status.FAILURE
 
-        intersection_clear = True
-        if lidar_data is not None:
-            # if distance smaller than 10m, intersection is blocked
-            if lidar_data.data < 10.0:
-                intersection_clear = False
-            else:
-                intersection_clear = True
+        data = self.blackboard.get("/paf/hero/oncoming")
+        if data is not None:
+            distance_oncoming = data.data
+        else:
+            distance_oncoming = 35
 
-        if light_status_msg is not None:
-            traffic_light_status = get_color(light_status_msg.state)
-            if traffic_light_status == "red" or \
-                    traffic_light_status == "yellow":
-                self.red_light_flag = True
-                self.green_light_counter = 0
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
-                self.curr_behavior_pub.publish(bs.int_wait.name)
-                return py_trees.common.Status.RUNNING
-            elif self.green_light_counter < 6 and \
-                    traffic_light_status == "green":
-                self.green_light_counter += 1
-                rospy.loginfo(f"Light Counter: {self.green_light_counter}")
-                return py_trees.common.Status.RUNNING
-            elif self.red_light_flag and traffic_light_status != "green":
-                rospy.loginfo(f"Light Status: {traffic_light_status}"
-                              "-> prev was red")
-                return py_trees.common.Status.RUNNING
-            elif self.green_light_counter >= 6 and \
-                    traffic_light_status == "green":
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
+        if distance_oncoming is not None:
+            if distance_oncoming > clear_distance:
+                rospy.loginfo("Overtake is free!")
+                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                rospy.loginfo(f"Light Status: {traffic_light_status}"
-                              "-> No Traffic Light detected")
-
-        # Check clear if no traffic light is detected
-        if not intersection_clear:
-            rospy.loginfo("Intersection blocked")
-            self.curr_behavior_pub.publish(bs.int_wait.name)
-            return py_trees.common.Status.RUNNING
+                rospy.loginfo(f"Overtake still blocked: {distance_oncoming}")
+                self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
+                return py_trees.common.Status.RUNNING
+        elif obstacle_msg.data[0] == np.inf:
+            rospy.loginf("No OBSTACLE")
+            return py_trees.common.Status.FAILURE
         else:
-            rospy.loginfo("Intersection clear")
+            rospy.loginfo("No Lidar Distance")
             return py_trees.common.Status.SUCCESS
 
     def terminate(self, new_status):
@@ -328,9 +259,8 @@ class Wait(py_trees.behaviour.Behaviour):
 
 class Enter(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the driving through an intersection, it initially
-    sets a speed and finishes if the ego vehicle is close to the end of the
-    intersection.
+    This behavior handles the switching to a new lane in the
+    overtaking procedure.
     """
     def __init__(self, name):
         """
@@ -347,7 +277,7 @@ class Enter(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -365,21 +295,12 @@ class Enter(py_trees.behaviour.Behaviour):
             not RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This prints a state status message and changes the driving speed for
-        the intersection.
+
+        This prints a state status message and publishes the behavior to
+        trigger the replanning
         """
-        rospy.loginfo("Enter Intersection")
-
-        light_status_msg = self.blackboard.get(
-            "/paf/hero/Center/traffic_light_state")
-        if light_status_msg is None:
-            self.curr_behavior_pub.publish(bs.int_enter.name)
-            return True
-
-        traffic_light_status = get_color(light_status_msg.state)
-
-        rospy.loginfo(f"Light Status: {traffic_light_status}")
-        self.curr_behavior_pub.publish(bs.int_enter.name)
+        rospy.loginfo("Enter Overtake")
+        self.curr_behavior_pub.publish(bs.ot_enter_init.name)
 
     def update(self):
         """
@@ -389,26 +310,29 @@ class Enter(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Continues driving through the intersection until the vehicle gets
-        close enough to the next global way point.
-        :return: py_trees.common.Status.RUNNING, if too far from intersection
-                 py_trees.common.Status.SUCCESS, if stopped in front of inter-
-                 section or entered the intersection
-                 py_trees.common.Status.FAILURE, if no next path point can be
-                 detected.
-        """
-        next_waypoint_msg = self.blackboard.get("/paf/hero/waypoint_distance")
 
-        if next_waypoint_msg is None:
-            return py_trees.common.Status.FAILURE
-        # if next_waypoint_msg.distance < 5 and
-            # not next_waypoint_msg.isStopLine:
-        if next_waypoint_msg.distance < 5:
-            rospy.loginfo("Drive through intersection!")
-            self.curr_behavior_pub.publish(bs.int_enter.name)
-            return py_trees.common.Status.RUNNING
+
+        :return: py_trees.common.Status.RUNNING,
+                 py_trees.common.Status.SUCCESS,
+                 py_trees.common.Status.FAILURE,
+        """
+        status = self.blackboard.get("/paf/hero/overtake_success")
+        if status is not None:
+            if status.data == 1:
+                rospy.loginfo("Overtake: Trajectory planned")
+                return py_trees.common.Status.SUCCESS
+            elif status.data == 0:
+                self.curr_behavior_pub.publish(bs.ot_enter_slow.name)
+                rospy.loginfo("Overtake: Slowing down")
+                return py_trees.common.Status.RUNNING
+            else:
+                rospy.loginfo("OvertakeEnter: Abort")
+                return py_trees.common.Status.FAILURE
         else:
-            return py_trees.common.Status.SUCCESS
+            rospy.loginfo("Overtake: Waiting for status update")
+            return py_trees.common.Status.RUNNING
+        # Currently not in use
+        # Can be used to check if we can go back to the original lane
 
     def terminate(self, new_status):
         """
@@ -429,7 +353,7 @@ class Enter(py_trees.behaviour.Behaviour):
 class Leave(py_trees.behaviour.Behaviour):
     """
     This behaviour defines the leaf of this subtree, if this behavior is
-    reached, the vehicle left the intersection.
+    reached, the vehicle peformed the overtake.
     """
     def __init__(self, name):
         """
@@ -446,7 +370,7 @@ class Leave(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -464,24 +388,36 @@ class Leave(py_trees.behaviour.Behaviour):
             not RUNNING thereafter.
         What to do here?
             Any initialisation you need before putting your behaviour to work.
-        This prints a state status message and changes the driving speed to
-        the street speed limit.
-        :return: True
+        This prints a state status message and publishes the behavior
         """
-        rospy.loginfo("Leave Intersection")
-        self.curr_behavior_pub.publish(bs.int_exit.name)
+        self.curr_behavior_pub.publish(bs.ot_leave.name)
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.first_pos = np.array([data.pose.position.x,
+                                   data.pose.position.y])
+        rospy.loginfo(f"Leave Overtake: {self.first_pos}")
         return True
 
     def update(self):
         """
         When is this called?
             Every time your behaviour is ticked.
-        What to do here?exit_int
+        What to do here?
+           - Triggering, checking, monitoring. Anything...but do not block!
+           - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         Abort this subtree
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
-        return py_trees.common.Status.FAILURE
+        global OVERTAKE_EXECUTING
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.current_pos = np.array([data.pose.position.x,
+                                    data.pose.position.y])
+        distance = np.linalg.norm(self.first_pos - self.current_pos)
+        if distance > OVERTAKE_EXECUTING:
+            rospy.loginfo(f"Left Overtake: {self.current_pos}")
+            return py_trees.common.Status.FAILURE
+        else:
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """

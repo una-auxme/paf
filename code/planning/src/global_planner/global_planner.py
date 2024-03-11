@@ -74,7 +74,7 @@ class PrePlanner(CompatibleNode):
 
         self.path_pub = self.new_publisher(
             msg_type=Path,
-            topic='/paf/' + self.role_name + '/trajectory',
+            topic='/paf/' + self.role_name + '/trajectory_global',
             qos_profile=1)
 
         self.speed_limit_pub = self.new_publisher(
@@ -120,8 +120,6 @@ class PrePlanner(CompatibleNode):
                          "given global route")
             self.global_route_backup = data
             return
-
-        self.global_route_backup = None
 
         # get the first turn command (1, 2, or 3)
         ind = 0
@@ -194,7 +192,8 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
-        self.loginfo("PrePlanner: published trajectory")
+        self.global_route_backup = None
+        self.logerr("PrePlanner: published trajectory")
 
     def world_info_callback(self, opendrive: String) -> None:
         """
@@ -241,7 +240,10 @@ class PrePlanner(CompatibleNode):
         if self.global_route_backup is not None:
             self.loginfo("PrePlanner: Received a pose update retrying "
                          "route preplanning")
-            self.global_route_callback(self.global_route_backup)
+            try:
+                self.global_route_callback(self.global_route_backup)
+            except Exception:
+                self.logerr("Preplanner failed -> restart")
 
     def dev_load_world_info(self):
         file_path = \
@@ -257,16 +259,16 @@ class PrePlanner(CompatibleNode):
         :return:
         """
 
-        def loop(timer_event=None):
-            if len(self.path_backup.poses) < 1:
-                return
+        # def loop(timer_event=None):
+        #     if len(self.path_backup.poses) < 1:
+        #         return
 
-            # Continuously update paths time to update car position in rviz
-            # TODO: remove next lines when local planner exists
-            self.path_backup.header.stamp = rospy.Time.now()
-            self.path_pub.publish(self.path_backup)
+        #     # # Continuously update paths time to update car position in rviz
+        #     # # TODO: remove next lines when local planner exists
+        #     self.path_backup.header.stamp = rospy.Time.now()
+        #     self.path_pub.publish(self.path_backup)
 
-        self.new_timer(self.control_loop_rate, loop)
+        # self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 

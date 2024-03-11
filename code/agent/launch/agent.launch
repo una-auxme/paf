@@ -1,6 +1,6 @@
 <launch>
     <arg name="role_name" default="hero" />
-    <arg name="control_loop_rate" default="0.05" />
+    <arg name="control_loop_rate" default="0.025" />
 
     <!-- perception -->
     <include file="$(find perception)/launch/perception.launch">
@@ -20,7 +20,6 @@
         <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
         <arg name="role_name" value="$(arg role_name)"/>
     </include>
-
 
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
 </launch>

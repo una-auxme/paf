@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 # import rospy
 import numpy as np
+import rospy
 # import tf.transformations
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
+# from rospy.numpy_msg import numpy_msg
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
-import time
+from utils import filter_vision_objects
 
 
 class CollisionCheck(CompatibleNode):
@@ -34,19 +36,23 @@ class CollisionCheck(CompatibleNode):
         # Subscriber for lidar distance
         # TODO: Change to real lidar distance
         self.lidar_dist = self.new_subscription(
-            Float32,
-            f"/carla/{self.role_name}/LIDAR_range",
-            self.__set_distance,
+            Float32MultiArray,
+            f"/paf/{self.role_name}/Center/object_distance",
+            self.__set_all_distances,
             qos_profile=1)
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
             Bool,
-            f"/paf/{self.role_name}/emergency_deactivated",
+            f"/paf/{self.role_name}/emergency",
             qos_profile=1)
         # Publisher for distance to collision
         self.collision_pub = self.new_publisher(
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
+            qos_profile=1)
+        self.oncoming_pub = self.new_publisher(
+            Float32,
+            f"/paf/{self.role_name}/oncoming",
             qos_profile=1)
         # Approx speed publisher for ACC
         self.speed_publisher = self.new_publisher(
@@ -57,27 +63,83 @@ class CollisionCheck(CompatibleNode):
         self.__current_velocity: float = None
         self.__object_first_position: tuple = None
         self.__object_last_position: tuple = None
+        self.__last_position_oncoming: tuple = None
+        self.__first_position_oncoming: tuple = None
         self.logdebug("CollisionCheck started")
 
-    def update_distance(self):
+    def __set_all_distances(self, data: Float32MultiArray):
+        self.__set_distance(data)
+        self.__set_distance_oncoming(data)
+
+    def update_distance(self, reset):
         """Updates the distance to the obstacle in front
         """
-        if np.isinf(self.__object_last_position[1]):
+        if reset:
+            # Reset all values if we do not have car in front
             self.__object_last_position = None
             self.__object_first_position = None
+            # Signal to ACC to reset speed and distance
+            data = Float32MultiArray(data=[np.Inf, np.Inf])
+            self.collision_pub.publish(data)
             return
         if self.__object_first_position is None:
             self.__object_first_position = self.__object_last_position
             self.__object_last_position = None
             return
 
-    def __set_distance(self, data: Float32):
+    def __set_distance(self, data: Float32MultiArray):
         """Saves last distance from  LIDAR
 
         Args:
             data (Float32): Message from lidar with distance
         """
-        self.__object_last_position = (time.time(), data.data)
+        nearest_object = filter_vision_objects(data.data, False)
+        if nearest_object is None and \
+                self.__object_last_position is not None and \
+                rospy.get_rostime() - self.__object_last_position[0] > \
+                rospy.Duration(3):
+            self.update_distance(True)
+            return
+        elif nearest_object is None:
+            return
+        self.__object_last_position = (rospy.get_rostime(), nearest_object[1])
+        self.update_distance(False)
+        self.calculate_obstacle_speed()
+
+    def __set_distance_oncoming(self, data: Float32MultiArray):
+        """Saves last distance from  LIDAR
+
+        Args:
+            data (Float32): Message from lidar with distance
+        """
+        nearest_object = filter_vision_objects(data.data, True)
+        if (nearest_object is None and
+                self.__last_position_oncoming is not None and
+                rospy.get_rostime() - self.__last_position_oncoming[0] >
+                rospy.Duration(3)):
+            self.update_distance_oncoming(True)
+            return
+        elif nearest_object is None:
+            return
+
+        self.__last_position_oncoming =  \
+            (rospy.get_rostime(), nearest_object[1])
+        self.update_distance_oncoming(False)
+        self.oncoming_pub.publish(Float32(data=nearest_object[1]))
+
+    def update_distance_oncoming(self, reset):
+        """Updates the distance to the obstacle in front
+        """
+        if reset:
+            # Reset all values if we do not have car in front
+            self.__last_position_oncoming = None
+            self.__first_position_oncoming = None
+            self.oncoming_pub.publish(Float32(data=np.inf))
+            return
+        if self.__first_position_oncoming is None:
+            self.__first_position_oncoming = self.__last_position_oncoming
+            self.__last_position_oncoming = None
+            return
 
     def calculate_obstacle_speed(self):
         """Caluclate the speed of the obstacle in front of the ego vehicle
@@ -91,16 +153,21 @@ class CollisionCheck(CompatibleNode):
         # If distance is np.inf no car is in front
 
         # Calculate time since last position update
-        time_difference = self.__object_last_position[0] - \
+        rospy_time_difference = self.__object_last_position[0] - \
             self.__object_first_position[0]
-
+        time_difference = rospy_time_difference.nsecs/1e9
         # Calculate distance (in m)
-        distance = self.__object_last_position[1] -\
+        distance = self.__object_last_position[1] - \
             self.__object_first_position[1]
+        try:
+            # Speed is distance/time (m/s)
+            relative_speed = distance/time_difference
+        except ZeroDivisionError:
+            return
 
-        # Speed is distance/time (m/s)
-        relative_speed = distance/time_difference
         speed = self.__current_velocity + relative_speed
+        if speed < 0:
+            speed = 0
         # Publish speed to ACC for permanent distance check
         self.speed_publisher.publish(Float32(data=speed))
         # Check for crash
@@ -149,14 +216,16 @@ class CollisionCheck(CompatibleNode):
 
         Args:
             emergency (bool): if emergency brake is initiated
+            speed (float): speed of the vehicle (km/h)
 
         Returns:
             float: distance calculated with rule of thumb
         """
-        reaction_distance = speed
+        reaction_distance = speed * 0.5
         braking_distance = (speed * 0.36)**2
         if emergency:
-            return reaction_distance + braking_distance / 2
+            # Emergency brake is really effective in Carla
+            return reaction_distance + braking_distance / 4
         else:
             return reaction_distance + braking_distance
 
@@ -178,9 +247,8 @@ class CollisionCheck(CompatibleNode):
         if collision_time > 0:
             if distance < emergency_distance2:
                 # Initiate emergency brake
-                self.logerr("Emergency Brake")
+                self.logerr(f"Emergency Brake: {distance}")
                 self.emergency_pub.publish(True)
-                return
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
             self.collision_pub.publish(data)
@@ -194,14 +262,14 @@ class CollisionCheck(CompatibleNode):
         Control loop
         :return:
         """
-        def loop(timer_event=None):
-            """
-            Checks if distance to a possible object is too small and
-            publishes the desired speed to motion planning
-            """
-            self.update_distance()
-            self.calculate_obstacle_speed()
-        self.new_timer(self.control_loop_rate, loop)
+        # def loop(timer_event=None):
+        #     """
+        #     Checks if distance to a possible object is too small and
+        #     publishes the desired speed to motion planning
+        #     """
+        #     self.update_distance()
+        #     self.calculate_obstacle_speed()
+        # self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 

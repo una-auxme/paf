@@ -39,14 +39,14 @@ The goal is to calculate the projection of point P and find its Pixl-Coordinates
 To do this you need a couple of thins:
 
 1. Camera-Calibration
-   1. Width
-   2. Height
-   3. Field-of-View
+    1. Width
+    2. Height
+    3. Field-of-View
 2. LIDAR-Sensor-Position
-   1. Origin of 3D-World-Coordinates
+    1. Origin of 3D-World-Coordinates
 3. Camera-Sensor
-   1. Position
-   2. Orientation
+    1. Position
+    2. Orientation
 
 The formula for this projection proposed by the literature looks like this:
 
@@ -55,11 +55,11 @@ The formula for this projection proposed by the literature looks like this:
 To get the camera-intrinsic matrix we need the width, height and fov of the image produced by the camera.
 Luckily we cn easly get these values from the sensor configuration in (agent.py)
 
-In our case we use the following configuration: Width: 300, Height: 200, FOV: 100
+In our case we use the following configuration: Width: 1280, Height: 720, FOV: 100
 
-The Intrinsic Matrix is calculated within the code using these values and a piece of code from pyLot (insert link)
+The Intrinsic Matrix is calculated within the code using these values and a piece of code from pyLot.
 
-Next up we need the extrinsic Camera-Matrix. We can set this Matrix to the Identity-Matrix, if both LIDAR and Camera are in the exact same position (e.g (0,0, 0)) in the world.
+Next up we need the extrinsic Camera-Matrix. We can set this Matrix to the Identity-Matrix, if both LIDAR and Camera are in the exact same position (e.g (0, 0, 0)) in the world.
 
 ### Purpose
 
@@ -72,16 +72,47 @@ U can imageine putting both images on top of each other.
 
 ### Implementation
 
-All that is left now is the calculation of the Pixel-Coordinates for every LIDAR-Point in front of the vehicle and some nice Visualization.
+To reconstruct the depth image, we simply implement the above formulas using numpy. In order to get better results we had to adjust the LIDAR-Sensor Setup. Check the topic below for more details.
 
-LIDAR-Points that are not within the field of view of the camera would be projected to (u, v)-Points that dont match the Camera-Image
-(for example: (-100, 23))
+The resulting Image takes the distance in meters as values for its pixels. It therefore is a grayscale image.
 
-To visualize the reconstruced Image we create a cv2 Image where the RGB-Values a mapped to a rainbox-color scheme according to the distance at each pixel.
+![Grayscale Depth Image](../00_assets/2_15_layover.png)
 
-insert image
+In the next step we want to get the distance for every bounding box the object-detection found.
 
-## Next Steps
+We want to return a list of tuple containing a class, an absolut distance and X, Y, Z coordinates of the objcet, like this:
 
-- Combine Object-Detection with LIDAR-Reconstruction to get a depth image
-- Provide List of Objects with distance in a publisher
+[
+    [class_id, abs_distance, X, Y, Z],
+    [12.0, 7.970812491638262, 5.6549606, -5.5982423, -0.4636328],
+    [12.0, 8.684970384807999, 5.6547265, 6.57918, -0.40886718],
+    ...,
+    [2.0, 1.3798048392074562, 1.065586, -0.60292965, -0.63628906]
+]
+
+Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image,
+we will check for the minimum value within the bounding box in the depth image.
+
+This makes sense, since the LIDAR doesn´t recognize points behind any object.
+
+If there is no distance found in the depth image, we will return infinity for this bounding box.
+
+## LIDAR-Configuration
+
+This topic came to our attention, as we realised that the LIDAR was flickering, as you can see in the following image series.
+
+![Grayscale Depth Image](../00_assets/2_layover.png)
+![Grayscale Depth Image](../00_assets/3_layover.png)
+![Grayscale Depth Image](../00_assets/4_layover.png)
+
+These are the Grayscale-Depth Images reconstructed within 600 milliseconds.
+
+We can see that we usually only see one half of the LIDAR-Points.
+
+The simple reason for this is a lower spin rate in the LIDAR-Configuration.
+
+By adjusting the spin rate we can achieve a fully reconstructed image. However, a higher spin rate results in a lower Resolution of LIDAR-Points.
+
+We now use a slightly higher spin rate, that consistently produces a full depth image, but also receives only sightly less LIDAR-Points.
+
+Doing this, we noticed, that the LIDAR-Sensor wasn´t positioned correctly. For some reason it was offset to the front left.

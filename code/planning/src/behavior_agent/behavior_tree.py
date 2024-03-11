@@ -29,7 +29,7 @@ def grow_a_tree(role_name):
                                  Sequence("Intersection",
                                           children=[
                                               behaviours.road_features.IntersectionAhead
-                                              ("Intersection Ahead"),
+                                              ("Intersection Ahead?"),
                                               Sequence("Intersection Actions",
                                                        children=[
                                                            behaviours.intersection.Approach
@@ -47,7 +47,7 @@ def grow_a_tree(role_name):
                         Sequence("Laneswitch",
                                 children=[
                                     behaviours.road_features.LaneChangeAhead
-                                    ("Lane Change Ahead"),
+                                    ("Lane Change Ahead?"),
                                     Sequence("Lane Change Actions",
                                              children=[
                                                  behaviours.lane_change.Approach
@@ -58,6 +58,22 @@ def grow_a_tree(role_name):
                                                  ("Enter Change"),
                                                  behaviours.lane_change.Leave
                                                  ("Leave Change")
+                                             ])
+                                ]),
+                        Sequence("Overtaking",
+                                children=[
+                                    behaviours.road_features.OvertakeAhead
+                                    ("Overtake Ahead?"),
+                                    Sequence("Overtake Actions",
+                                             children=[
+                                                 behaviours.overtake.Approach
+                                                 ("Approach Overtake"),
+                                                 behaviours.overtake.Wait
+                                                 ("Wait Overtake"),
+                                                 behaviours.overtake.Enter
+                                                 ("Enter Overtake"),
+                                                 behaviours.overtake.Leave
+                                                 ("Leave Overtake")
                                              ])
                                 ]),
 

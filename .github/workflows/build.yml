@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       version: ${{ steps.build.version.outputs.version }}
     permissions:
@@ -19,11 +19,11 @@ jobs:
       packages: write
 
     steps:
-      - name: Clear up some disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          df -h
+      # - name: Clear up some disk space
+        #run: |
+         # sudo rm -rf /usr/share/dotnet
+          #sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          #df -h
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -90,7 +90,7 @@ jobs:
       - name: Set AGENT_VERSION from hash (workaround)
         run: echo "AGENT_VERSION=${{ steps.hash.outputs.hash }}" >> $GITHUB_ENV
       - name: Run docker-compose
-        run: docker compose up --exit-code-from agent
+        run: docker compose up --quiet-pull --exit-code-from agent
       - name: Copy results
         run: docker compose cp agent:/tmp/simulation_results.json .
       - name: Stop docker-compose
@@ -126,3 +126,5 @@ jobs:
               repo: context.repo.repo,
               body: "## Simulation results\n" + resultsTable
             });
+      - name: Prune all images older than 30 days from self-hosted runner
+        run: docker image prune -a --force --filter "until=720h"
