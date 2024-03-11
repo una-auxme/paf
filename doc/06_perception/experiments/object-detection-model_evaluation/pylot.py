@@ -1,5 +1,6 @@
 '''
-Docs: https://www.tensorflow.org/hub/tutorials/tf2_object_detection, https://pylot.readthedocs.io/en/latest/perception.detection.html
+Docs: https://www.tensorflow.org/hub/tutorials/tf2_object_detection,
+https://pylot.readthedocs.io/en/latest/perception.detection.html
 '''
 
 from globals import IMAGE_BASE_FOLDER, IMAGES_FOR_TEST
@@ -61,7 +62,8 @@ def get_category_index(label_file):
     with open(label_file, 'r') as f:
         labels = f.readlines()
         labels = [label.strip() for label in labels]
-        category_index = {i: {'id': i, 'name': name} for i, name in enumerate(labels)}
+        category_index = \
+            {i: {'id': i, 'name': name} for i, name in enumerate(labels)}
     return category_index
 
 
@@ -114,7 +116,8 @@ for m in ALL_MODELS:
         file_name = Path(image_path).stem
 
         plt.figure(figsize=(32, 18))
-        plt.title(f'Pylot (TF) - {m} - {p} - {elapsed_time*1000:.0f}ms', fontsize=30)
+        plt.title(f'Pylot (TF) - {m} - {p} - {elapsed_time*1000:.0f}ms',
+                  fontsize=30)
         plt.imshow(image_np_with_detections[0])
         plt.savefig(f'{IMAGE_BASE_FOLDER}/result/{file_name}_TF_{m}.jpg')
         plt.close()
