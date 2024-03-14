@@ -20,9 +20,10 @@ K_LAD = 0.85
 MIN_LA_DISTANCE = 2
 MAX_LA_DISTANCE = 25
 # Tuneable Factor before Publishing
-# "-" because it is inverted to the steering carla expects
-# "4.75" proved to be important for a good steering (see tuning-documentation)
-K_PUB = (-4.75)
+# "-1" because it is inverted to the steering carla expects
+# "4.75" proved to be important for a good steering
+# ONLY IN DEV.LAUNCH? (see documentation)
+K_PUB = -0.85  # (-4.75)
 # Constant: wheelbase of car
 L_VEHICLE = 2.85
 

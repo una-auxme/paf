@@ -90,11 +90,18 @@ class VehicleController(CompatibleNode):
             self.__set_pure_pursuit_steer,
             qos_profile=1)
 
+        self.stanley_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/stanley_steer",
+            self.__set_stanley_steer,
+            qos_profile=1)
+
         self.__emergency: bool = False
         self.__velocity: float = 0.0
         self.__brake: float = 0.0
         self.__throttle: float = 0.0
-        self.__steer: float = 0.0
+        self._p_steer: float = 0.0
+        self._s_steer: float = 0.0
 
     def run(self):
         """
@@ -116,6 +123,11 @@ class VehicleController(CompatibleNode):
                 # emergency is already handled in  __emergency_brake()
                 self.__emergency_brake(True)
                 return
+
+            if self.__velocity > 5:
+                steer = self._s_steer
+            else:
+                steer = self._p_steer
             message = CarlaEgoVehicleControl()
             message.reverse = False
             message.hand_brake = False
@@ -123,7 +135,7 @@ class VehicleController(CompatibleNode):
             message.gear = 1
             message.throttle = self.__throttle
             message.brake = self.__brake
-            message.steer = self.__steer
+            message.steer = steer
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
             self.control_publisher.publish(message)
@@ -203,7 +215,11 @@ class VehicleController(CompatibleNode):
 
     def __set_pure_pursuit_steer(self, data: Float32):
         r = (math.pi / 2)  # convert from RAD to [-1;1]
-        self.__steer = (data.data / r)
+        self._p_steer = (data.data / r)
+
+    def __set_stanley_steer(self, data: Float32):
+        r = (math.pi / 2)  # convert from RAD to [-1;1]
+        self._s_steer = (data.data / r)
 
 
 def main(args=None):

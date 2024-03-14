@@ -15,7 +15,7 @@ from acting.msg import StanleyDebug
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
 
-K_CROSSERR = 1.24
+K_CROSSERR = 0.4  # 1.24
 
 
 class StanleyController(CompatibleNode):
@@ -250,11 +250,8 @@ class StanleyController(CompatibleNode):
         :return:
         """
         dist = self.__dist_to(pos)
-
-        # +1.4 in Headingdirection = get front axle instead of the cars middle
-        # heading_deg = self.__heading * 180 / math.pi
-        x = self.__position[0]  # + 1.4 * cos(heading_deg)
-        y = self.__position[1]  # + 1.4 * sin(heading_deg)
+        x = self.__position[0]
+        y = self.__position[1]
 
         alpha = 0
         if self.__heading is not None:
