@@ -120,7 +120,7 @@ RUN echo 'pexpect' >> $SCENARIO_RUNNER_ROOT/requirements.txt && \
 # install the leaderboard from GitHub leaderboard-2.0 branch
 ENV LEADERBOARD_ROOT=/opt/leaderboard
 RUN sudo mkdir $LEADERBOARD_ROOT && sudo chown $USERNAME:$USERNAME $LEADERBOARD_ROOT
-RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/leaderboard.git $LEADERBOARD_ROOT
+RUN git clone -b leaderboard-2.0 --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
 RUN python -m pip install -r $LEADERBOARD_ROOT/requirements.txt
 RUN sudo mkdir /opt/leaderboard-py3 && sudo chown $USERNAME:$USERNAME /opt/leaderboard-py3 && \
     ln -s $LEADERBOARD_ROOT/leaderboard /opt/leaderboard-py3/leaderboard && \
