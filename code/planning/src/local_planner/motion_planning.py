@@ -121,6 +121,7 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1)
 
         # Publisher
+
         self.traj_pub: Publisher = self.new_publisher(
             msg_type=Path,
             topic=f"/paf/{self.role_name}/trajectory",
@@ -367,6 +368,8 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
+        if behavior == bs.us_unstuck.name or behavior == bs.us_stop.name:
+            rospy.loginfo(f"Behavior: {behavior}, Speed: {be_speed}")
         if behavior == bs.parking.name or self.__overtake_status == 1:
             self.target_speed = be_speed
         else:
@@ -406,6 +409,7 @@ class MotionPlanning(CompatibleNode):
         speed = 0.0
         split = "_"
         short_behavior = behavior.partition(split)[0]
+
         if short_behavior == "int":
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
@@ -414,9 +418,20 @@ class MotionPlanning(CompatibleNode):
             speed = self.__get_speed_overtake(behavior)
         elif short_behavior == "parking":
             speed = bs.parking.speed
+        elif short_behavior == "us":
+            speed = self.__get_speed_unstuck(behavior)
         else:
             self.__overtake_status = -1
             speed = self.__get_speed_cruise()
+        return speed
+
+    def __get_speed_unstuck(self, behavior: str) -> float:
+        speed = 0.0
+        if behavior == bs.us_unstuck.name:
+            speed = bs.us_unstuck.speed
+        elif behavior == bs.us_stop.name:
+            speed = bs.us_stop.speed
+
         return speed
 
     def __get_speed_intersection(self, behavior: str) -> float:

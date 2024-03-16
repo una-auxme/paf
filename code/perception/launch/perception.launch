@@ -35,13 +35,13 @@
       -->
   </node>
 
-  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+  <!-- <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
     <param name="back" value="False" />
     <param name="left" value="False" />
-    <param name="right" value="False" />
+    <param name="right" value="False" /> -->
 
       <!--Object-Detection: 
       - fasterrcnn_resnet50_fpn_v2 
@@ -64,8 +64,8 @@
       - yolov8x-seg 
       -->
 
-    <param name="model" value="rtdetr-l" />
-  </node>
+    <!-- <param name="model" value="rtdetr-l" />
+  </node> -->
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
