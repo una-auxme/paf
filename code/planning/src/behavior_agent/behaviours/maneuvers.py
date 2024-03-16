@@ -1,6 +1,6 @@
 import py_trees
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 import numpy as np
 from . import behavior_speed as bs
 # from behavior_agent.msg import BehaviorSpeed
@@ -358,6 +358,139 @@ class Cruise(py_trees.behaviour.Behaviour):
         """
         self.curr_behavior_pub.publish(bs.cruise.name)
         return py_trees.common.Status.RUNNING
+
+    def terminate(self, new_status):
+        """
+        When is this called?
+        Whenever your behaviour switches to a non-running state.
+            - SUCCESS || FAILURE : your behaviour's work cycle has finished
+            - INVALID : a higher priority branch has interrupted, or shutting
+            down
+
+        writes a status message to the console when the behaviour terminates
+        """
+        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
+                          (self.name, self.status, new_status))
+
+
+class UnstuckRoutine(py_trees.behaviour.Behaviour):
+
+    # TODO: Implement this behavior ROBERT
+    """
+    This behavior is triggered when the vehicle is stuck and needs to be
+    unstuck. The behavior will then try to reverse and steer to the left or
+    right to get out of the stuck situation.
+    """
+    def __init__(self, name):
+        """
+        Minimal one-time initialisation. A good rule of thumb is to only
+        include the initialisation relevant for being able to insert this
+        behaviour in a tree for offline rendering to dot graphs.
+
+         :param name: name of the behaviour
+        """
+        super(UnstuckRoutine, self).__init__(name)
+
+    def setup(self, timeout):
+        """
+        Delayed one-time initialisation that would otherwise interfere with
+        offline rendering of this behaviour in a tree to dot graph or
+        validation of the behaviour's configuration.
+
+        This initializes the blackboard to be able to access data written to it
+        by the ROS topics.
+        :param timeout: an initial timeout to see if the tree generation is
+        successful
+        :return: True, as there is nothing to set up.
+        """
+        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
+                                                 "curr_behavior",
+                                                 String, queue_size=1)
+        # TODO ROBERT CHECK IF NEEDED
+        self.stuck_count_pub = rospy.Publisher("/paf/hero/stuck_count",
+                                               Int32, queue_size=1)
+        self.blackboard = py_trees.blackboard.Blackboard()
+        return True
+
+    def initialise(self):
+        """
+        When is this called?
+        The first time your behaviour is ticked and anytime the status is not
+        RUNNING thereafter.
+
+        What to do here?
+            Any initialisation you need before putting your behaviour to work.
+        :return: True
+        """
+        self.init_ros_time = rospy.Time.now()
+
+        current_speed = self.blackboard.get("/carla/hero/Speed")
+        target_speed = self.blackboard.get("/paf/hero/target_velocity")
+        self.stuck_count = self.blackboard.get("/paf/hero/stuck_count")
+
+        if current_speed is None or target_speed is None or \
+           self.stuck_count is None:
+            self.stuck_count_pub.publish(0)
+            self.stuck_count = self.blackboard.get("/paf/hero/stuck_count")
+            rospy.loginfo("stuck_count initialized to %s", 0)
+            if current_speed is None:
+                rospy.loginfo("current_speed is None")
+            else:
+                rospy.loginfo("current_speed: %s", current_speed.speed)
+            if target_speed is None:
+                rospy.loginfo("target_speed is None")
+            else:
+                rospy.loginfo("target_speed: %s", target_speed.data)
+            return True
+
+        if current_speed.speed < 1 and target_speed.data >= 1:
+            rospy.loginfo("stuck_count increased by 1, now: %s",
+                          self.stuck_count.data + 1)
+            self.stuck_count_pub.publish(self.stuck_count.data + 1)
+        else:
+            self.stuck_count_pub.publish(0)
+
+        if self.stuck_count.data >= 10:
+            rospy.loginfo("Stuck detected -> starting unstuck routine")
+
+        return True
+
+    def update(self):
+        """
+        When is this called?
+        Every time your behaviour is ticked.
+
+        What to do here?
+            - Triggering, checking, monitoring. Anything...but do not block!
+            - Set a feedback message
+            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
+
+        This behaviour doesn't do anything else than just keep running unless
+        there is a higher priority behaviour
+
+        :return: py_trees.common.Status.RUNNING, keeps the decision tree from
+        finishing
+        """
+        if self.stuck_count is None:
+            rospy.loginfo("stuck_count is None")
+            return py_trees.common.Status.FAILURE
+        # if no stuck detected, return failure
+        if self.stuck_count.data < 10:
+            return py_trees.common.Status.FAILURE
+
+        # stuck detected -> unstuck routine
+        ros_time = rospy.Time.now()
+        if ros_time - self.init_ros_time < rospy.Duration(1):
+            self.curr_behavior_pub.publish(bs.us_unstuck.name)
+            rospy.loginfo("Unstuck routine running.")
+            return py_trees.common.Status.RUNNING
+        else:
+            self.curr_behavior_pub.publish(bs.us_stop.name)
+            if self.blackboard.get("/carla/hero/Speed").speed < 1:
+                rospy.loginfo("Unstuck routine finished.")
+                self.stuck_count_pub.publish(0)
+                return py_trees.common.Status.FAILURE
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """
