@@ -24,12 +24,11 @@
     </node>
     
     <!-- UNCOMMENT THIS TO USE THE DEBUG_NODE FOR ACTING-TESTING -->
-    <!--
-    <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
+    <!-- <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
         <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    -->
+     -->
 
     <node pkg="acting" type="stanley_controller.py" name="stanley_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />

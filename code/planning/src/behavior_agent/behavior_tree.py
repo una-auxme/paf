@@ -78,6 +78,7 @@ def grow_a_tree(role_name):
                                 ]),
 
                     ]),
+                    behaviours.maneuvers.UnstuckRoutine("Unstuck Routine"),
                     behaviours.maneuvers.Cruise("Cruise")
                 ])
         ])
