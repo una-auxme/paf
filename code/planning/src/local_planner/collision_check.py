@@ -97,7 +97,7 @@ class CollisionCheck(CompatibleNode):
         if nearest_object is None and \
                 self.__object_last_position is not None and \
                 rospy.get_rostime() - self.__object_last_position[0] > \
-                rospy.Duration(3):
+                rospy.Duration(2):
             self.update_distance(True)
             return
         elif nearest_object is None:
@@ -116,7 +116,7 @@ class CollisionCheck(CompatibleNode):
         if (nearest_object is None and
                 self.__last_position_oncoming is not None and
                 rospy.get_rostime() - self.__last_position_oncoming[0] >
-                rospy.Duration(3)):
+                rospy.Duration(1)):
             self.update_distance_oncoming(True)
             return
         elif nearest_object is None:
@@ -151,7 +151,6 @@ class CollisionCheck(CompatibleNode):
                 self.__object_last_position is None:
             return
         # If distance is np.inf no car is in front
-
         # Calculate time since last position update
         rospy_time_difference = self.__object_last_position[0] - \
             self.__object_first_position[0]
@@ -221,11 +220,11 @@ class CollisionCheck(CompatibleNode):
         Returns:
             float: distance calculated with rule of thumb
         """
-        reaction_distance = speed * 0.5
+        reaction_distance = speed / 2
         braking_distance = (speed * 0.36)**2
         if emergency:
             # Emergency brake is really effective in Carla
-            return reaction_distance + braking_distance / 4
+            return reaction_distance + braking_distance / 2
         else:
             return reaction_distance + braking_distance
 
@@ -246,8 +245,10 @@ class CollisionCheck(CompatibleNode):
             True, self.__current_velocity)
         if collision_time > 0:
             if distance < emergency_distance2:
+                # self.logerr(f"Emergency distance: {emergency_distance2}")
+                # self.logerr(f"Distance obstacle: {distance}")
+                # self.logerr(f"Obstacle speed: {obstacle_speed}")
                 # Initiate emergency brake
-                self.logerr(f"Emergency Brake: {distance}")
                 self.emergency_pub.publish(True)
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])

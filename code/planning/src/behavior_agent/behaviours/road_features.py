@@ -268,7 +268,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         if obstacle_speed < 2 and obstacle_distance < 30:
             self.counter_overtake += 1
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
-            if self.counter_overtake > 3:
+            if self.counter_overtake > 0:
                 return py_trees.common.Status.SUCCESS
             return py_trees.common.Status.RUNNING
         else:

@@ -1,32 +1,21 @@
 from scipy.spatial.transform import Rotation
 import numpy as np
 import math
+import carla
+import os
 # import rospy
 
 
-hyperparameters = {
-    "max_speed": 15,
-    "max_accel": 4.0,
-    "max_curvature": 30.0,
-    "max_road_width_l": 4,
-    "max_road_width_r": 4,
-    "d_road_w": 0.2,
-    "dt": 0.2,
-    "maxt": 30,
-    "mint": 6.0,
-    "d_t_s": 0.5,
-    "n_s_sample": 2.0,
-    "obstacle_clearance": 1.5,
-    "kd": 1.0,
-    "kv": 0.1,
-    "ka": 0.1,
-    "kj": 0.1,
-    "kt": 0.1,
-    "ko": 0.1,
-    "klat": 1.0,
-    "klon": 1.0,
-    "num_threads": 1,  # set 0 to avoid using threaded algorithm
-}
+"""
+This file represents the utility functions for the local planner and other
+components.
+It containes parameters and utility functions to reduce code in the ros nodes.
+"""
+
+# Number of waypoints to be used for the overtaking maneuver
+NUM_WAYPOINTS = 7
+# Factor for linear interpolation of target speed values for the ACC
+LERP_FACTOR = 0.5
 
 
 def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
@@ -122,8 +111,6 @@ def spawn_car(distance):
     Args:
         distance (float): distance
     """
-    import carla
-    import os
     CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
     CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
 
@@ -144,21 +131,18 @@ def spawn_car(distance):
     spawnPoint = carla.Transform(ego_vehicle.get_location() +
                                  carla.Location(y=distance.data),
                                  ego_vehicle.get_transform().rotation)
-    spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
-                                  carla.Location(x=2.5, y=distance.data + 1),
-                                  ego_vehicle.get_transform().rotation)
+    # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
+    #                               carla.Location(x=2.5, y=distance.data + 1),
+    #                               ego_vehicle.get_transform().rotation)
     vehicle = world.spawn_actor(bp, spawnPoint)
-    vehicle2 = world.spawn_actor(bp, spawnpoint2)
-    vehicle2.set_autopilot(False)
+    # vehicle2 = world.spawn_actor(bp, spawnpoint2)
+    # vehicle2.set_autopilot(False)
     vehicle.set_autopilot(False)
-    # vehicle.set_location(loc)
-    # coords = vehicle.get_location()
-    # get spectator
-    spectator = world.get_spectator()
-    # set spectator to follow ego vehicle with offset
-    spectator.set_transform(
-        carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
-                        carla.Rotation(pitch=-90)))
+    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
+
+
+def interpolate_speed(speed_target, speed_current):
+    return (1 - LERP_FACTOR) * speed_current + LERP_FACTOR * speed_target
 
 
 def filter_vision_objects(float_array, oncoming):
