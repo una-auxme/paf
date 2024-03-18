@@ -192,7 +192,7 @@ class VisionNode(CompatibleNode):
 
     def setup_object_distance_publishers(self):
         self.distance_publisher = self.new_publisher(
-            msg_type=numpy_msg(Float32MultiArray),
+            msg_type=Float32MultiArray,
             topic=f"/paf/{self.role_name}/{self.side}/object_distance",
             qos_profile=1)
 
@@ -228,6 +228,7 @@ class VisionNode(CompatibleNode):
         if side == "Right":
             self.publisher_right.publish(img_msg)
 
+        # locals().clear()
         # print(f"Published Image on Side: {side}")
         pass
 
@@ -255,6 +256,7 @@ class VisionNode(CompatibleNode):
                                       desired_encoding='passthrough')
         # print("RECEIVED DIST")
         self.dist_arrays = dist_array
+        # locals().clear()
 
     def predict_torch(self, image):
         self.model.eval()
@@ -286,40 +288,6 @@ class VisionNode(CompatibleNode):
 
         output = self.model(cv_image, half=True, verbose=False)
 
-        """distance_output = []
-        c_boxes = []
-        c_labels = []
-        for r in output:
-            boxes = r.boxes
-            for box in boxes:
-                cls = box.cls.item()
-                pixels = box.xyxy[0]
-                print(pixels)
-                if len(self.depth_images) > 0:
-                    distances = np.asarray(
-                        [self.depth_images[i][int(pixels[1]):int(pixels[3]):1,
-                                              int(pixels[0]):int(pixels[2]):1]
-                            for i in range(len(self.depth_images))])
-                    non_zero_filter = distances[distances != 0]
-
-                    if len(non_zero_filter) > 0:
-                        obj_dist = np.min(non_zero_filter)
-                    else:
-                        obj_dist = np.inf
-
-                    c_boxes.append(torch.tensor(pixels))
-                    c_labels.append(f"Class: {cls}, Meters: {obj_dist}")
-                    distance_output.append([cls, obj_dist])
-
-        # print(distance_output)
-        # self.logerr(distance_output)
-        self.distance_publisher.publish(
-            Float32MultiArray(data=distance_output))
-
-        transposed_image = np.transpose(cv_image, (2, 0, 1))
-        image_np_with_detections = torch.tensor(transposed_image,
-                                                dtype=torch.uint8)"""
-
         # handle distance of objects
         distance_output = []
         c_boxes = []
@@ -340,14 +308,30 @@ class VisionNode(CompatibleNode):
                     distances_copy[distances_copy == 0] = np.inf
 
                     if len(non_zero_filter) > 0:
-                        sorted_indices = np.argsort(distances_copy[:, :, 0],
-                                                    axis=None)
-                        x1, y1 = np.unravel_index(sorted_indices[0],
+                        min_x_sorted_indices = np.argsort(
+                            distances_copy[:, :, 0],
+                            axis=None)
+                        x1, y1 = np.unravel_index(min_x_sorted_indices[0],
                                                   distances_copy.shape[:2])
-                        x2, y2 = np.unravel_index(sorted_indices[1],
-                                                  distances_copy.shape[:2])
+                        """x2, y2 = np.unravel_index(min_x_sorted_indices[1],
+                                                  distances_copy.shape[:2])"""
+
+                        abs_distance_copy = np.abs(distances_copy.copy())
+                        min_y_sorted_indices = np.argsort(
+                            abs_distance_copy[:, :, 1],
+                            axis=None)
+                        x3, y3 = np.unravel_index(min_y_sorted_indices[0],
+                                                  abs_distance_copy.shape[:2])
+                        """
+                        x4, y4 = np.unravel_index(min_y_sorted_indices[1],
+                                                  abs_distance_copy.shape[:2])
+                        """
+
                         obj_dist1 = distances_copy[x1][y1].copy()
-                        obj_dist2 = distances_copy[x2][y2].copy()
+                        # obj_dist2 = distances_copy[x2][y2].copy()
+                        obj_dist3 = distances_copy[x3][y3].copy()
+                        # obj_dist4 = distances_copy[x4][y4].copy()
+                        # print(obj_dist1, obj_dist3)
 
                         abs_distance = np.sqrt(
                             obj_dist1[0]**2 +
@@ -356,38 +340,53 @@ class VisionNode(CompatibleNode):
 
                         # create 2d glass plane at object
                         # with box dimension
-                        scale_width = abs(obj_dist1[1] - obj_dist2[1])\
-                            / abs(y1-y2)
-                        scale_height = abs(obj_dist1[2] - obj_dist2[2])\
-                            / abs(x1-x2)
-                        width = distances_copy.shape[1] * scale_width
-                        height = distances_copy.shape[0] * scale_height
+                        # width_diff = abs(y1-y2)
+                        # height_diff = abs(x1-x2)
 
-                        # upper left
-                        ul_x = obj_dist1[0]
-                        ul_y = obj_dist1[1] - (-y1 + scale_width)
-                        ul_z = obj_dist1[2] - (-x1 + scale_height)
+                        """if width_diff > 0 and height_diff > 0:
+                            scale_width = abs(obj_dist1[1] - obj_dist2[1])\
+                                / width_diff
+                            scale_height = abs(obj_dist1[2] - obj_dist2[2])\
+                                / height_diff
+                            width = distances_copy.shape[1] * scale_width
+                            height = distances_copy.shape[0] * scale_height
 
-                        # lower right
-                        lr_x = obj_dist1[0]
-                        lr_y = ul_y + width
-                        lr_z = ul_z + height
+                            # upper left
+                            ul_x = obj_dist1[0]
+                            ul_y = obj_dist1[1] - (-y1 + scale_width)
+                            ul_z = obj_dist1[2] - (-x1 + scale_height)
+
+                            # lower right
+                            lr_x = obj_dist1[0]
+                            lr_y = ul_y + width
+                            lr_z = ul_z + height
+
+                            # -5 < y < 8"""
+
+                        distance_output.append(float(cls))
+                        distance_output.append(float(obj_dist1[0]))
+                        distance_output.append(float(obj_dist3[1]))
 
                     else:
                         obj_dist1 = (np.inf, np.inf, np.inf)
+                        obj_dist3 = (np.inf, np.inf, np.inf)
                         abs_distance = np.inf
+                        """distance_output.append(float(cls))
+                        distance_output.append(float(abs_distance))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))
+                        distance_output.append(float(np.inf))"""
 
                     c_boxes.append(torch.tensor(pixels))
                     c_labels.append(f"Class: {cls},"
                                     f"Meters: {round(abs_distance, 2)},"
                                     f"({round(float(obj_dist1[0]), 2)},"
-                                    f"{round(float(obj_dist1[1]), 2)},"
-                                    f"{round(float(obj_dist1[2]), 2)})")
-                    distance_output.append([cls,
-                                            abs_distance,
-                                            ul_x, ul_y, ul_z,
-                                            lr_x, lr_y, lr_z])
+                                    f"{round(float(obj_dist3[1]), 2)})")
 
+        # print("DISTANCE_ARRAY: ", distance_output)
         self.distance_publisher.publish(
            Float32MultiArray(data=distance_output))
 
@@ -401,7 +400,6 @@ class VisionNode(CompatibleNode):
                                                     image.header))
 
         c_boxes = torch.stack(c_boxes)
-        # print(image_np_with_detections.shape, c_boxes.shape, c_labels)
         box = draw_bounding_boxes(image_np_with_detections,
                                   c_boxes,
                                   c_labels,
@@ -411,7 +409,9 @@ class VisionNode(CompatibleNode):
         np_box_img = np.transpose(box.detach().numpy(),
                                   (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+        # locals().clear()
         return box_img
+
         # return output[0].plot()
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
@@ -443,6 +443,8 @@ class VisionNode(CompatibleNode):
             traffic_light_image.header = image_header
             traffic_light_image.header.frame_id = str(traffic_light_y_distance)
             self.traffic_light_publisher.publish(traffic_light_image)
+
+        # locals().clear()
 
     def create_mask(self, input_image, model_output):
         output_predictions = torch.argmax(model_output, dim=0)

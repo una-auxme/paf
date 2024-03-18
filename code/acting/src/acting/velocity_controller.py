@@ -8,7 +8,7 @@ from std_msgs.msg import Float32
 from nav_msgs.msg import Path
 
 # TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 7  # 36.0
+SPEED_LIMIT_DEFAULT: float = 0  # 36.0
 
 
 class VelocityController(CompatibleNode):
@@ -105,22 +105,19 @@ class VelocityController(CompatibleNode):
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
                 return
-
-            v = self.__target_velocity
-
-            pid_t.setpoint = v
-            throttle = pid_t(self.__current_velocity)
-
-            # pid_b.setpoint = v
-            # brake = pid_b(self.__current_velocity)
-
-            # use negative throttles as brake inputs, works OK
-            if throttle < 0:
-                brake = abs(throttle)
+            # very low target_velocities -> stand
+            if self.__target_velocity < 1:
+                brake = 1
                 throttle = 0
             else:
-                brake = 0
-
+                v = self.__target_velocity
+                pid_t.setpoint = v
+                throttle = pid_t(self.__current_velocity)
+                if throttle < 0:
+                    brake = abs(throttle)
+                    throttle = 0
+                else:
+                    brake = 0
             self.brake_pub.publish(brake)
             self.throttle_pub.publish(throttle)
 

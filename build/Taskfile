@@ -11,6 +11,11 @@ task:run() {
     docker:compose up "$@"
 }
 
+task:run_dev() {
+  xhost +local:docker
+  docker:compose -f docker-compose.dev.yaml up
+}
+
 task:restart() {
     container="$1"
     docker:compose restart "${container:-agent}"

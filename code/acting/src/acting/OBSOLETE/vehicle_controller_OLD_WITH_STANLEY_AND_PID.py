@@ -7,6 +7,17 @@ from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
 from rospy import Publisher, Subscriber
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32
+from simple_pid import PID
+
+PURE_PURSUIT_CONTROLLER: int = 1
+STANLEY_CONTROLLER: int = 2
+STANLEY_CONTROLLER_MIN_V: float = 4.0  # ~14kph
+
+# PID for PurePursuit
+K_P = 4.75
+K_I = 0.0
+K_D = 0.0
+MAX_STEER_ANGLE: float = 0.95
 
 
 class VehicleController(CompatibleNode):
@@ -61,7 +72,7 @@ class VehicleController(CompatibleNode):
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
-            self.__set_emergency,
+            self.__emergency_break,
             qos_profile=QoSProfile(depth=10,
                                    durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
@@ -78,30 +89,54 @@ class VehicleController(CompatibleNode):
             self.__set_throttle,
             qos_profile=1)
 
-        self.brake_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/brake",
-            self.__set_brake,
-            qos_profile=1)
-
         self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
             self.__set_pure_pursuit_steer,
             qos_profile=1)
 
-        self.stanley_sub: Subscriber = self.new_subscription(
+        self.stanley_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
             self.__set_stanley_steer,
             qos_profile=1)
 
+        # Testing / Debugging -->
+        self.brake_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/brake",
+            self.__set_brake,
+            qos_profile=1)
+
+        self.target_steering_publisher: Publisher = self.new_publisher(
+            Float32,
+            f'/paf/{self.role_name}/target_steering_debug',
+            qos_profile=1)
+
+        self.pidpoint_publisher: Publisher = self.new_publisher(
+            Float32,
+            f'/paf/{self.role_name}/pid_point_debug',
+            qos_profile=1)
+
+        self.controller_selector_sub: Subscriber = self.new_subscription(
+            Float32,
+            f'/paf/{self.role_name}/controller_selector_debug',
+            self.__set_controller,
+            qos_profile=1)
+        # <-- Testing / Debugging
+
         self.__emergency: bool = False
-        self.__velocity: float = 0.0
-        self.__brake: float = 0.0
         self.__throttle: float = 0.0
-        self._p_steer: float = 0.0
-        self._s_steer: float = 0.0
+        self.__velocity: float = 0.0
+        self.__pure_pursuit_steer: float = 0.0
+        self.__stanley_steer: float = 0.0
+        self.__current_steer: float = 0.0
+
+        self.__brake: float = 0.0
+
+        self.controller_testing: bool = False
+        self.controller_selected_debug: int = 1
+        # TODO: check emergency behaviour
 
     def run(self):
         """
@@ -110,32 +145,51 @@ class VehicleController(CompatibleNode):
         """
         self.status_pub.publish(True)
         self.loginfo('VehicleController node running')
+        # currently pid for steering is not used, needs fixing
+        # or maybe deletion since it is not that useful
+        pid = PID(K_P, K_I, K_D)  # PID(0.5, 0.1, 0.1, setpoint=0)
+        # TODO: TUNE AND FIX?
+        pid.output_limits = (-MAX_STEER_ANGLE, MAX_STEER_ANGLE)
 
         def loop(timer_event=None) -> None:
             """
             Collects all data received and sends a CarlaEgoVehicleControl msg.
-            The Leaderboard expects a msg every 0.05 seconds
-            OTHERWISE IT WILL LAG REALLY BADLY
             :param timer_event: Timer event from ROS
             :return:
             """
-            if self.__emergency:
-                # emergency is already handled in  __emergency_brake()
-                self.__emergency_brake(True)
+            if self.__emergency:  # emergency is already handled in
+                # __emergency_break()
                 return
-
-            if self.__velocity > 5:
-                steer = self._s_steer
+            if (self.controller_testing):
+                if (self.controller_selected_debug == 2):
+                    p_stanley = 1
+                elif (self.controller_selected_debug == 1):
+                    p_stanley = 0
             else:
-                steer = self._p_steer
+                p_stanley = self.__choose_controller()
+
+            if p_stanley < 0.5:
+                self.logdebug('Using PURE_PURSUIT_CONTROLLER')
+                self.controller_pub.publish(float(PURE_PURSUIT_CONTROLLER))
+            elif p_stanley >= 0.5:
+                self.logdebug('Using STANLEY_CONTROLLER')
+                self.controller_pub.publish(float(STANLEY_CONTROLLER))
+
+            f_stanley = p_stanley * self.__stanley_steer
+            f_pure_p = (1 - p_stanley) * self.__pure_pursuit_steer
+            steer = f_stanley + f_pure_p
+
+            self.target_steering_publisher.publish(steer)  # debugging
+
             message = CarlaEgoVehicleControl()
             message.reverse = False
-            message.hand_brake = False
-            message.manual_gear_shift = False
-            message.gear = 1
             message.throttle = self.__throttle
             message.brake = self.__brake
-            message.steer = steer
+            message.hand_brake = False
+            message.manual_gear_shift = False
+            pid.setpoint = self.__map_steering(steer)
+            message.steer = pid(self.__current_steer)
+            message.gear = 1
             message.header.stamp = roscomp.ros_timestamp(self.get_time(),
                                                          from_sec=True)
             self.control_publisher.publish(message)
@@ -143,11 +197,21 @@ class VehicleController(CompatibleNode):
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
-    def __set_emergency(self, data) -> None:
+    def __map_steering(self, steering_angle: float) -> float:
         """
-        In case of an emergency set the emergency flag to True ONCE
-        The emergency flag can be ONLY be set to False if velocity is > 0.1
-        by __get_velocity
+        Takes the steering angle calculated by the controller and maps it to
+        the available steering angle
+        This is from (left, right): [pi/2 , -pi/2] to [-1, 1]
+        :param steering_angle: calculated by a controller in [-pi/2 , pi/2]
+        :return: float for steering in [-1, 1]
+        """
+        steering_float = steering_angle / (math.pi / 2)
+        self.pidpoint_publisher.publish(steering_float)
+        return steering_float
+
+    def __emergency_break(self, data) -> None:
+        """
+        Executes emergency stop
         :param data:
         :return:
         """
@@ -155,38 +219,17 @@ class VehicleController(CompatibleNode):
             return
         if self.__emergency:  # emergency was already triggered
             return
-
-        self.logerr("Emergency braking engaged")
+        self.logerr("Emergency breaking engaged")
         self.__emergency = True
-
-    def __emergency_brake(self, active) -> None:
-        """
-        Executes emergency stop
-        :param data:
-        :return:
-        """
-        if not self.__emergency:
-            return
         message = CarlaEgoVehicleControl()
-        if active:
-            message.throttle = 1
-            message.steer = 1
-            message.brake = 1
-            message.reverse = True
-            message.hand_brake = True
-            message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
-        else:
-            self.__emergency = False
-            message.throttle = 0
-            message.steer = 0
-            message.brake = 1
-            message.reverse = False
-            message.hand_brake = False
-            message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
+        message.throttle = 1
+        message.steer = 1  # todo: maybe use 30 degree angle
+        message.brake = 1
+        message.reverse = True
+        message.hand_brake = True
+        message.manual_gear_shift = False
+        message.header.stamp = roscomp.ros_timestamp(self.get_time(),
+                                                     from_sec=True)
         self.control_publisher.publish(message)
 
     def __get_velocity(self, data: CarlaSpeedometer) -> None:
@@ -200,7 +243,18 @@ class VehicleController(CompatibleNode):
         if not self.__emergency:  # nothing to do in this case
             return
         if data.speed < 0.1:  # vehicle has come to a stop
-            self.__emergency_brake(False)
+            self.__emergency = False
+            message = CarlaEgoVehicleControl()
+            message.throttle = 0
+            message.steer = 0
+            message.brake = 1
+            message.reverse = False
+            message.hand_brake = False
+            message.manual_gear_shift = False
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
+                                                         from_sec=True)
+            self.control_publisher.publish(message)
+
             self.loginfo("Emergency breaking disengaged "
                          "(Emergency breaking has been executed successfully)")
             for _ in range(7):  # publish 7 times just to be safe
@@ -214,12 +268,33 @@ class VehicleController(CompatibleNode):
         self.__brake = data.data
 
     def __set_pure_pursuit_steer(self, data: Float32):
-        r = (math.pi / 2)  # convert from RAD to [-1;1]
-        self._p_steer = (data.data / r)
+        self.__pure_pursuit_steer = data.data
 
     def __set_stanley_steer(self, data: Float32):
-        r = (math.pi / 2)  # convert from RAD to [-1;1]
-        self._s_steer = (data.data / r)
+        self.__stanley_steer = data.data
+
+    def __set_controller(self, data: Float32):
+        self.controller_testing = True
+        self.controller_selected_debug = data.data
+
+    def sigmoid(self, x: float):
+        """
+        Evaluates the sigmoid function s(x) = 1 / (1+e^-25x)
+        :param x: x
+        :return: s(x) = 1 / (1+e^-25x)
+        """
+        temp_x = min(-25 * x, 25)
+        res = 1 / (1 + math.exp(temp_x))
+        return res
+
+    def __choose_controller(self) -> float:
+        """
+        Returns the proportion of stanley to use.
+        Publishes the currently used controller
+        :return:
+        """
+        res = self.sigmoid(self.__velocity - STANLEY_CONTROLLER_MIN_V)
+        return res
 
 
 def main(args=None):

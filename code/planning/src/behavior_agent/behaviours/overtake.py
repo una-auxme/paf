@@ -2,6 +2,7 @@ import py_trees
 from std_msgs.msg import String
 
 import rospy
+import numpy as np
 
 from . import behavior_speed as bs
 
@@ -12,6 +13,10 @@ Source: https://github.com/ll7/psaf2
 
 def convert_to_ms(speed):
     return speed / 3.6
+
+
+# Varaible to determine if overtake is currently exec
+OVERTAKE_EXECUTING = False
 
 
 class Approach(py_trees.behaviour.Behaviour):
@@ -61,13 +66,7 @@ class Approach(py_trees.behaviour.Behaviour):
         rospy.loginfo("Approaching Overtake")
         self.ot_distance = 30
 
-        self.ot_option = 1  # self.blackboard.get("paf/hero/...")
-        if self.ot_option == 0:
-            self.clear_distance = 15
-            self.side = "LIDAR_range_rear_left"
-        elif self.ot_option == 1:
-            self.clear_distance = 30
-            self.side = "LIDAR_range"
+        self.clear_distance = 30
 
     def update(self):
         """
@@ -85,24 +84,30 @@ class Approach(py_trees.behaviour.Behaviour):
                  object or entered the process.
                  py_trees.common.Status.FAILURE,
         """
+        global OVERTAKE_EXECUTING
         # Update distance to collision object
-        _dis = self.blackboard.get("/paf/hero/LIDAR_range")
+        _dis = self.blackboard.get("/paf/hero/collision")
         if _dis is not None:
-            self.ot_distance = _dis.data
+            self.ot_distance = _dis.data[0]
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")
+            OVERTAKE_EXECUTING = self.ot_distance
+
+        if np.isinf(self.ot_distance):
+            rospy.loginfo("OvertakeApproach: Abort")
+            return py_trees.common.Status.FAILURE
 
         # slow down before overtake if blocked
-        if self.ot_distance < 15.0:
-            distance_lidar = self.blackboard. \
-                    get(f"/carla/hero/{self.side}")
-            if distance_lidar is not None:
-                distance_lidar = distance_lidar.data
+        if self.ot_distance < 20.0:
+            data = self.blackboard.get("/paf/hero/oncoming")
+            if data is not None:
+                distance_oncoming = data.data
             else:
-                distance_lidar = None
+                distance_oncoming = 35
 
-            if distance_lidar is not None and \
-                    distance_lidar > self.clear_distance:
+            if distance_oncoming is not None and \
+                    distance_oncoming > self.clear_distance:
                 rospy.loginfo("Overtake is free not slowing down!")
+                self.curr_behavior_pub.publish(bs.ot_app_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
                 rospy.loginfo("Overtake blocked slowing down")
@@ -116,17 +121,17 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
 
-        if self.ot_distance > 15.0:
+        if self.ot_distance > 20.0:
             # too far
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < 5.0:
+                self.ot_distance < 6.0:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
         else:
-            rospy.logerr("Overtake Approach: Default Case")
+            # still approaching
             return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
@@ -208,37 +213,33 @@ class Wait(py_trees.behaviour.Behaviour):
         """
 
         # Update distance to collison and distance for clear
-        self.ot_option = 1  # self.blackboard.get("paf/hero/...")
-        if self.ot_option == 0:
-            distance_lidar = self.blackboard. \
-                get("/carla/hero/LIDAR_range_rear_left")
-            clear_distance = 15
-        elif self.ot_option == 1:
-            distance_lidar = self.blackboard. \
-                get("/carla/hero/LIDAR_range")
-            distance_lidar = distance_lidar.data
-            clear_distance = 30
-        else:
-            distance_lidar = None
-
+        clear_distance = 30
         obstacle_msg = self.blackboard.get("/paf/hero/collision")
         if obstacle_msg is None:
+            rospy.logerr("No OBSTACLE")
             return py_trees.common.Status.FAILURE
 
-        if distance_lidar is not None:
-            collision_distance = distance_lidar.data
-            if collision_distance > clear_distance:
+        data = self.blackboard.get("/paf/hero/oncoming")
+        if data is not None:
+            distance_oncoming = data.data
+        else:
+            distance_oncoming = 35
+
+        if distance_oncoming is not None:
+            if distance_oncoming > clear_distance:
                 rospy.loginfo("Overtake is free!")
+                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                rospy.loginfo("Overtake still blocked")
+                rospy.loginfo(f"Overtake still blocked: {distance_oncoming}")
                 self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
-                return py_trees.commom.Status.RUNNING
-        elif obstacle_msg[1] > convert_to_ms(2):
+                return py_trees.common.Status.RUNNING
+        elif obstacle_msg.data[0] == np.inf:
+            rospy.loginf("No OBSTACLE")
             return py_trees.common.Status.FAILURE
         else:
             rospy.loginfo("No Lidar Distance")
-            return py_trees.common.Success
+            return py_trees.common.Status.SUCCESS
 
     def terminate(self, new_status):
         """
@@ -315,9 +316,21 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS,
                  py_trees.common.Status.FAILURE,
         """
-
-        return py_trees.common.Status.SUCCESS
-
+        status = self.blackboard.get("/paf/hero/overtake_success")
+        if status is not None:
+            if status.data == 1:
+                rospy.loginfo("Overtake: Trajectory planned")
+                return py_trees.common.Status.SUCCESS
+            elif status.data == 0:
+                self.curr_behavior_pub.publish(bs.ot_enter_slow.name)
+                rospy.loginfo("Overtake: Slowing down")
+                return py_trees.common.Status.RUNNING
+            else:
+                rospy.loginfo("OvertakeEnter: Abort")
+                return py_trees.common.Status.FAILURE
+        else:
+            rospy.loginfo("Overtake: Waiting for status update")
+            return py_trees.common.Status.RUNNING
         # Currently not in use
         # Can be used to check if we can go back to the original lane
 
@@ -377,8 +390,11 @@ class Leave(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         This prints a state status message and publishes the behavior
         """
-        rospy.loginfo("Leave Overtake")
         self.curr_behavior_pub.publish(bs.ot_leave.name)
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.first_pos = np.array([data.pose.position.x,
+                                   data.pose.position.y])
+        rospy.loginfo(f"Leave Overtake: {self.first_pos}")
         return True
 
     def update(self):
@@ -392,7 +408,16 @@ class Leave(py_trees.behaviour.Behaviour):
         Abort this subtree
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
-        return py_trees.common.Status.FAILURE
+        global OVERTAKE_EXECUTING
+        data = self.blackboard.get("/paf/hero/current_pos")
+        self.current_pos = np.array([data.pose.position.x,
+                                    data.pose.position.y])
+        distance = np.linalg.norm(self.first_pos - self.current_pos)
+        if distance > OVERTAKE_EXECUTING:
+            rospy.loginfo(f"Left Overtake: {self.current_pos}")
+            return py_trees.common.Status.FAILURE
+        else:
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """

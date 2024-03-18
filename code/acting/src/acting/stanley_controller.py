@@ -15,6 +15,8 @@ from acting.msg import StanleyDebug
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
 
+K_CROSSERR = 0.4  # 1.24
+
 
 class StanleyController(CompatibleNode):
     def __init__(self):
@@ -58,19 +60,6 @@ class StanleyController(CompatibleNode):
         self.debug_publisher: Publisher = self.new_publisher(
             StanleyDebug,
             f"/paf/{self.role_name}/stanley_debug",
-            qos_profile=1)
-
-        # Publishers for debugging StanleyController soon
-        # TODO: only works with perfect current_pos
-        # publish the target and the current position
-        self.targetwp_publisher: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/current_target_wp",
-            qos_profile=1)
-
-        self.currentx_publisher: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/current_x",
             qos_profile=1)
 
         self.__position: (float, float) = None  # x , y
@@ -169,29 +158,23 @@ class StanleyController(CompatibleNode):
         using the Stanley algorithm
         :return: steering angle
         """
-        # TODO: tune both next sprint
-        k_ce = 0.10
-        k_v = 1.0
-
-        current_velocity: float
-        if self.__velocity <= 1:
-            current_velocity = 1
-        else:
-            current_velocity = self.__velocity
+        # do not allow dividing by 0 or < 1
+        if self.__velocity < 1:
+            return 0
+        current_velocity: float = self.__velocity
 
         closest_point_idx = self.__get_closest_point_index()
-        closest_point: PoseStamped = self.__path.poses[closest_point_idx]
+        # calculate heading_err from current_heading and traj_heading
         traj_heading = self.__get_path_heading(closest_point_idx)
-
-        cross_err = self.__get_cross_err(closest_point.pose.position)
         heading_err = self.__heading - traj_heading
         heading_err = ((heading_err + math.pi) % (2 * math.pi)) - math.pi
-
-        steering_angle = heading_err + atan((k_ce * cross_err) /
-                                            current_velocity * k_v)
-        steering_angle *= - 1
-
-        # for debugging TODO: currently not that useful->
+        # calculate cross_err from current_position and closest traj_point
+        closest_point: PoseStamped = self.__path.poses[closest_point_idx]
+        cross_err = self.__get_cross_err(closest_point.pose.position)
+        # * -1 because it is inverted compared to PurePursuit
+        steering_angle = 1 * (heading_err + atan((K_CROSSERR * cross_err)
+                                                 / current_velocity))
+        # -> for debugging
         debug_msg = StanleyDebug()
         debug_msg.heading = self.__heading
         debug_msg.path_heading = traj_heading
@@ -199,10 +182,7 @@ class StanleyController(CompatibleNode):
         debug_msg.heading_err = heading_err
         debug_msg.steering_angle = steering_angle
         self.debug_publisher.publish(debug_msg)
-        # <-
-        # 2 more debugging messages: TODO: maybe put into DEBUGGER NODE?
-        self.targetwp_publisher.publish((closest_point.pose.position.x-984.5))
-        self.currentx_publisher.publish(self.__position[0]-984.5)
+        # for debugging <-
         return steering_angle
 
     def __get_closest_point_index(self) -> int:
@@ -270,7 +250,6 @@ class StanleyController(CompatibleNode):
         :return:
         """
         dist = self.__dist_to(pos)
-
         x = self.__position[0]
         y = self.__position[1]
 

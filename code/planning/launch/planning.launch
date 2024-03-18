@@ -1,11 +1,11 @@
 <launch>
     <node pkg="planning" type="collision_check.py" name="CollisionCheck" output="screen">
            <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="0.3" />
+           <param name="control_loop_rate" value="0.05" />
     </node>
     <node pkg="planning" type="ACC.py" name="ACC" output="screen">
         <param name="role_name" value="hero" />
-        <param name="control_loop_rate" value="0.5" />
+        <param name="control_loop_rate" value="0.3" />
     </node>
     <!-- <node pkg="local_planner" type="local_planner/dev_collision_publisher.py" name="DevCollisionCheck" output="screen">
         <param name="role_name" value="hero" />
@@ -13,7 +13,7 @@
     </node> -->
     <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
            <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="0.3" />
+           <param name="control_loop_rate" value="0.1" />
     </node>
   
     <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">

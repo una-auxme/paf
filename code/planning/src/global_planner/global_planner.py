@@ -121,8 +121,6 @@ class PrePlanner(CompatibleNode):
             self.global_route_backup = data
             return
 
-        self.global_route_backup = None
-
         # get the first turn command (1, 2, or 3)
         ind = 0
         for i, opt in enumerate(data.road_options):
@@ -194,7 +192,8 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
-        self.loginfo("PrePlanner: published trajectory")
+        self.global_route_backup = None
+        self.logerr("PrePlanner: published trajectory")
 
     def world_info_callback(self, opendrive: String) -> None:
         """
@@ -241,7 +240,10 @@ class PrePlanner(CompatibleNode):
         if self.global_route_backup is not None:
             self.loginfo("PrePlanner: Received a pose update retrying "
                          "route preplanning")
-            self.global_route_callback(self.global_route_backup)
+            try:
+                self.global_route_callback(self.global_route_backup)
+            except Exception:
+                self.logerr("Preplanner failed -> restart")
 
     def dev_load_world_info(self):
         file_path = \
