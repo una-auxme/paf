@@ -14,13 +14,11 @@ import xmltodict
 
 """
 This node is currently used for importing a CarlaRoute to dev.launch.
-For this you need to follow 4 steps:
+For this you need to follow 3 steps:
 1. In plannning.launch: Uncomment this node and change the .txt file if needed
-2. In global_planner.py: Change the subscriber of carla/hero/global_plan to paf
-3. In gobal_planner.py: At the end of the init uncomment the
+2. In gobal_planner.py: At the end of the init uncomment the
     self.dev_load_world_info()
-4. In global_plan_distance_publisher.py:
-    Change the subscriber of carla/hero/global_plan to paf
+3. In docker-compose.yml switch to the dev environment
 """
 
 

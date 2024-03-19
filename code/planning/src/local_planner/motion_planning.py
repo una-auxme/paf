@@ -5,7 +5,7 @@ import rospy
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-from std_msgs.msg import String, Float32, Bool, Float32MultiArray
+from std_msgs.msg import String, Float32, Bool, Float32MultiArray, Int16
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from carla_msgs.msg import CarlaSpeedometer
@@ -54,6 +54,7 @@ class MotionPlanning(CompatibleNode):
         self.__corners = None
         self.__in_corner = False
         self.calculated = False
+        self.traffic_light_y_distance = np.inf
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32,
@@ -114,10 +115,16 @@ class MotionPlanning(CompatibleNode):
             self.__set_change_point,
             qos_profile=1)
 
-        self.change_point_sub: Subscriber = self.new_subscription(
+        self.coll_point_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             self.__set_collision_point,
+            qos_profile=1)
+
+        self.traffic_y_sub: Subscriber = self.new_subscription(
+            Int16,
+            f"/paf/{self.role_name}/Center/traffic_light_y_distance",
+            self.__set_traffic_y_distance,
             qos_profile=1)
 
         # Publisher
@@ -183,6 +190,10 @@ class MotionPlanning(CompatibleNode):
         self.current_pos = np.array([data.pose.position.x,
                                     data.pose.position.y,
                                     data.pose.position.z])
+
+    def __set_traffic_y_distance(self, data):
+        if data is not None:
+            self.traffic_light_y_distance = data.data
 
     def change_trajectory(self, distance_obj):
         """update trajectory for overtaking and convert it
@@ -477,14 +488,14 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_intersection(self) -> float:
         target_distance = 5.0
-        virtual_stopline_distance = self.__calc_virtual_stopline()
+        stopline = self.__calc_virtual_stopline()
         # calculate speed needed for stopping
+        self.logerr(f"MP: {stopline}")
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((virtual_stopline_distance / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
-        if virtual_stopline_distance < target_distance:
+        if stopline < target_distance:
             v_stop = 0.0
         return v_stop
 
@@ -493,8 +504,7 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_change_point()
 
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((stopline / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
         if stopline < 5.0:
@@ -503,10 +513,8 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
-
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((stopline / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if stopline < 6.0:
             v_stop = 0.0
 
@@ -521,7 +529,12 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
-            return self.__stopline[0]
+            if self.traffic_light_y_distance < 200:
+                return 10
+            elif self.traffic_light_y_distance < 150:
+                return 0.0
+            else:
+                return self.__stopline[0]
         else:
             return 0.0
 

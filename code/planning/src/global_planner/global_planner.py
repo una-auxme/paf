@@ -54,17 +54,11 @@ class PrePlanner(CompatibleNode):
             callback=self.world_info_callback,
             qos_profile=10)
 
-        # uncomment /paf/hero/global_plan and comment /carla/... for dev_launch
         self.global_plan_sub = self.new_subscription(
             msg_type=CarlaRoute,
             topic='/carla/' + self.role_name + '/global_plan',
             callback=self.global_route_callback,
             qos_profile=10)
-        # self.global_plan_sub = self.new_subscription(
-        #     msg_type=CarlaRoute,
-        #     topic='/paf/' + self.role_name + '/global_plan',
-        #     callback=self.global_route_callback,
-        #     qos_profile=10)
 
         self.current_pos_sub = self.new_subscription(
             msg_type=PoseStamped,
@@ -84,7 +78,7 @@ class PrePlanner(CompatibleNode):
         self.logdebug('PrePlanner-Node started')
 
         # uncomment for self.dev_load_world_info() for dev_launch
-        # self.dev_load_world_info()
+        self.dev_load_world_info()
 
     def global_route_callback(self, data: CarlaRoute) -> None:
         """
