@@ -223,13 +223,27 @@ class MotionPlanning(CompatibleNode):
         self.overtake_success_pub.publish(self.__overtake_status)
         return
 
-    def overtake_fallback(self, distance, pose_list):
+    def overtake_fallback(self, distance, pose_list, unstuck=False):
         # self.loginfo("Overtake Fallback!")
         # obstacle_position = approx_obstacle_pos(distance,
         #                                         self.current_heading,
         #                                         self.current_pos,
         #                                         self.current_speed)
-        selection = pose_list[int(self.current_wp):int(self.current_wp) +
+        currentwp = self.current_wp
+
+        # if overtake is called by the unstuck routine
+        # -> reset the current wp to the distance driven backwards
+        # distance between each waypoint is set to 1
+        # -> distance is the amount of waypoints we drove
+        # backwards during unstuck!
+        if unstuck is True:
+            if distance > currentwp:
+                currentwp = 0
+            else:
+                currentwp = currentwp - int(distance + 1)
+
+        # else: overtake starts from current wp
+        selection = pose_list[int(currentwp):int(currentwp) +
                               int(distance) + 7]
         waypoints = self.convert_pose_to_array(selection)
 
@@ -261,8 +275,8 @@ class MotionPlanning(CompatibleNode):
         path = Path()
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
-        path.poses = pose_list[:int(self.current_wp)] + \
-            result + pose_list[int(self.current_wp + distance + 7):]
+        path.poses = pose_list[:int(currentwp)] + \
+            result + pose_list[int(currentwp + distance + 7):]
         self.trajectory = path
 
     def __set_trajectory(self, data: Path):
@@ -467,15 +481,16 @@ class MotionPlanning(CompatibleNode):
                 # clear distance to last unstuck -> avoid spamming overtake
                 if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
                     self.unstuck_overtake_flag = False
-                    self.logfatal("Unstuck Overtake Flag Cleared")
+                    self.logwarn("Unstuck Overtake Flag Cleared")
 
             # to avoid spamming the overtake_fallback
             if self.unstuck_overtake_flag is False:
                 # create overtake trajectory starting 6 meteres before
                 # the obstacle
                 # 6 worked well in tests, but can be adjusted
-                self.overtake_fallback(self.unstuck_distance + 6, pose_list)
-                self.logfatal("Overtake fallback while unstuck!")
+                self.overtake_fallback(self.unstuck_distance, pose_list,
+                                       unstuck=True)
+                self.logfatal("Overtake Trajectory while unstuck!")
                 self.unstuck_overtake_flag = True
                 self.init_overtake_pos = self.current_pos[:2]
             # else: overtake not possible

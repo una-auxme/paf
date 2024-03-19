@@ -394,9 +394,10 @@ def pos_to_np_array(pos):
         return None
 
 
-TRIGGER_STUCK_COUNT = 30  # default 30 (about 5 s -> behavior tree 5 Hz)
-TRIGGER_WAIT_STUCK_COUNT = 100  # default 100 (about 20 s-> behavior tree 5 Hz)
-UNSTUCK_DRIVE_DURATION = 1.2  # default 1.2 (s)
+TRIGGER_STUCK_DURATION = rospy.Duration(5)  # default 5 (s)
+TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(20)  # default 20 (s)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(1.2)  # default 1.2 (s)
+UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 
 
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
@@ -416,14 +417,22 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(UnstuckRoutine, self).__init__(name)
-        self.stuck_count = 0
-        self.wait_stuck_count = 0
+        self.stuck_timer = rospy.Time.now()
+        self.wait_stuck_timer = rospy.Time.now()
+        self.stuck_duration = rospy.Duration(0)
+        self.wait_stuck_duration = rospy.Duration(0)
+
         self.init_pos = None
         self.current_pos = None
         self.current_speed = None
         self.unstuck_overtake_count = 0
         dummy_pos = np.array([0, 0])
         self.last_unstuck_positions = np.array([dummy_pos, dummy_pos])
+
+        def reset_stuck_values(self):
+            self.unstuck_overtake_count = 0
+            self.stuck_timer = rospy.Time.now()
+            self.wait_stuck_timer = rospy.Time.now()
 
     def setup(self, timeout):
         """
@@ -457,43 +466,46 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         :return: True
         """
-        self.init_ros_time = rospy.Time.now()
+
+        self.init_ros_stuck_time = rospy.Time.now()
 
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
         target_speed = self.blackboard.get("/paf/hero/target_velocity")
 
         # check for None values and initialize if necessary
-        if self.current_speed is None or target_speed is None:
-            if self.current_speed is None:
-                rospy.logdebug("current_speed is None")
-            elif target_speed is None:
-                rospy.logdebug("target_speed is None")
+        if self.current_speed is None:
+            rospy.logdebug("current_speed is None")
+            self.reset_stuck_values()
+            return True
+        elif target_speed is None:
+            rospy.logdebug("target_speed is None")
+            self.reset_stuck_values()
             return True
 
-        # check if vehicle is stuck, v = 0 when told to v > 0
-        if self.current_speed.speed < 1 and target_speed.data >= 1:
-            # rospy.loginfo("stuck_count increased by 1, now: %s",
-            #               self.stuck_count + 1)
-            self.stuck_count += 1
-        else:
-            self.stuck_count = 0
-        # check if vehicle is stuck in wait loop
-        # for example when waiting for a traffic light seems to take too long
-        # -> something might have went wrong
-        if self.current_speed.speed < 1.0:
-            # rospy.loginfo("wait_stuck_count increased by 1, now: %s",
-            #               self.wait_stuck_count + 1)
-            self.wait_stuck_count += 1
-        else:
-            self.wait_stuck_count = 0
+        # check if vehicle is not stuck, v > 1
+        if self.current_speed.speed >= 1.0:
+            # reset wait stuck timer
+            self.wait_stuck_timer = rospy.Time.now()
+            # check if vehicle is not stuck, v > 1 when told to v > 0
+            if target_speed.data >= 1.0:
+                # reset stuck timer
+                self.stuck_timer = rospy.Time.now()
 
-        # inform about which kind of stuck situation is detected
-        if self.stuck_count >= TRIGGER_STUCK_COUNT:
-            rospy.logfatal("Stuck detected -> starting unstuck routine")
+        # update the stuck durations
+        self.stuck_duration = rospy.Time.now() - self.stuck_timer
+        self.wait_stuck_duration = rospy.Time.now() - self.wait_stuck_timer
+
+        if self.stuck_duration >= TRIGGER_STUCK_DURATION:
+            rospy.logfatal(f"""Should be Driving but Stuck in one place
+                           for more than {TRIGGER_STUCK_DURATION.secs}\n
+                           -> starting unstuck routine""")
             self.init_pos = pos_to_np_array(
                 self.blackboard.get("/paf/hero/current_pos"))
-        elif self.wait_stuck_count >= TRIGGER_WAIT_STUCK_COUNT:
-            rospy.logfatal("Wait stuck detected -> starting unstuck routine")
+        elif self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
+            rospy.logfatal(f"""Wait Stuck in one place
+                           for more than {TRIGGER_WAIT_STUCK_DURATION.secs}
+                           \n
+                           -> starting unstuck routine""")
             self.init_pos = pos_to_np_array(
                 self.blackboard.get("/paf/hero/current_pos"))
 
@@ -515,35 +527,36 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, keeps the decision tree from
         finishing
         """
+        # def reset_stuck_values():
+        #     self.unstuck_overtake_count = 0
+        #     self.stuck_timer = rospy.Time.now()
+        #     self.wait_stuck_timer = rospy.Time.now()
 
         self.current_pos = pos_to_np_array(
             self.blackboard.get("/paf/hero/current_pos"))
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
 
-        if self.stuck_count is None:
-            # rospy.logwarn("stuck_count is None")
+        if self.init_pos is None or self.current_pos is None:
             return py_trees.common.Status.FAILURE
         # if no stuck detected, return failure
-        if self.stuck_count < TRIGGER_STUCK_COUNT and \
-           self.wait_stuck_count < TRIGGER_WAIT_STUCK_COUNT:
+        if self.stuck_duration < TRIGGER_STUCK_DURATION and \
+           self.wait_stuck_duration < TRIGGER_WAIT_STUCK_DURATION:
+            # rospy.logfatal("No stuck detected.")
             return py_trees.common.Status.FAILURE
 
         # stuck detected -> unstuck routine
-        ros_time = rospy.Time.now()
-        if ros_time - self.init_ros_time < \
-           rospy.Duration(UNSTUCK_DRIVE_DURATION):
-
+        if rospy.Time.now()-self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
-            rospy.logwarn("Unstuck routine running.")
+            rospy.logfatal("Unstuck routine running.")
             return py_trees.common.Status.RUNNING
         else:
             # while vehicle is stopping publish us_stop
-            if self.current_speed.speed < -0.1:
+            if abs(self.current_speed.speed) > 0.1:
                 self.curr_behavior_pub.publish(bs.us_stop.name)
                 return py_trees.common.Status.RUNNING
             # vehicle has stopped:
-            # check if vehicle needs to overtake:
 
+            # check if vehicle needs to overtake:
             # save current pos to last_unstuck_positions
             self.last_unstuck_positions = np.roll(self.last_unstuck_positions,
                                                   -1, axis=0)
@@ -551,20 +564,23 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
             # if last unstuck was too far away, no overtake
             # we only want to overtake when we tried to unstuck twice
+            # this case is the first time ever we tried to unstuck
             if np.array_equal(self.last_unstuck_positions[0],
                               np.array([0, 0])):
-                self.stuck_count = 0
-                self.wait_stuck_count = 0
-                self.unstuck_overtake_count = 0
+                self.reset_stuck_values()
+                rospy.logwarn("Unstuck routine finished.")
                 return py_trees.common.Status.FAILURE
-            rospy.logfatal("Distance to last unstuck position: %s",
-                           get_distance(self.last_unstuck_positions[0],
-                                        self.last_unstuck_positions[-1]))
+            # rospy.logfatal("Distance to last unstuck position: %s",
+            #                get_distance(self.last_unstuck_positions[0],
+            #                             self.last_unstuck_positions[-1]))
+            # if the distance between the last and the first unstuck position
+            # is too far, we don't want to overtake, since its the first
+            # unstuck routine at this position on the map
             if get_distance(self.last_unstuck_positions[0],
-                            self.last_unstuck_positions[-1]) > 1.5:
-                self.stuck_count = 0
-                self.wait_stuck_count = 0
-                self.unstuck_overtake_count = 0
+                            self.last_unstuck_positions[-1])\
+               > UNSTUCK_CLEAR_DISTANCE:
+                self.reset_stuck_values()
+                rospy.logwarn("Unstuck routine finished.")
                 return py_trees.common.Status.FAILURE
 
             # once we tried the unstuck twice, we try to overtake
@@ -579,9 +595,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 # it is detected
                 self.curr_behavior_pub.publish(bs.us_overtake.name)
                 if self.unstuck_overtake_count > 3:
-                    self.stuck_count = 0
-                    self.wait_stuck_count = 0
-                    self.unstuck_overtake_count = 0
+                    self.reset_stuck_values()
                     rospy.logwarn("Unstuck routine finished.")
                     return py_trees.common.Status.FAILURE
                 else:
