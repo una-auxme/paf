@@ -55,6 +55,8 @@ def create_node(role_name):
         {'name': f"/paf/{role_name}/stuck_count", 'msg': Int32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/target_velocity", 'msg': Float32,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
+        {'name': f"/paf/{role_name}/wait_stuck_count", 'msg': Int32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER}
     ]
 

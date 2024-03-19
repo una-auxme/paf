@@ -23,6 +23,7 @@ def grow_a_tree(role_name):
             Selector
             ("Priorities",
                 children=[
+                    behaviours.maneuvers.UnstuckRoutine("Unstuck Routine"),
                     Selector("Road Features",
                              children=[
                                  behaviours.maneuvers.LeaveParkingSpace("Leave Parking Space"),
@@ -78,7 +79,6 @@ def grow_a_tree(role_name):
                                 ]),
 
                     ]),
-                    behaviours.maneuvers.UnstuckRoutine("Unstuck Routine"),
                     behaviours.maneuvers.Cruise("Cruise")
                 ])
         ])

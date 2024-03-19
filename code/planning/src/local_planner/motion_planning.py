@@ -22,6 +22,9 @@ from utils import convert_to_ms, spawn_car
 # from scipy.spatial._kdtree import KDTree
 
 
+UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
+
+
 class MotionPlanning(CompatibleNode):
     """
     This node selects speeds according to the behavior in the Decision Tree
@@ -54,6 +57,12 @@ class MotionPlanning(CompatibleNode):
         self.__corners = None
         self.__in_corner = False
         self.calculated = False
+
+        # unstuck routine variables
+        self.unstuck_distance = None
+        self.unstuck_overtake_flag = False
+        self.init_overtake_pos = None
+
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32,
@@ -120,6 +129,12 @@ class MotionPlanning(CompatibleNode):
             self.__set_collision_point,
             qos_profile=1)
 
+        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/unstuck_distance",
+            self.__set_unstuck_distance,
+            qos_profile=1)
+
         # Publisher
 
         self.traj_pub: Publisher = self.new_publisher(
@@ -143,6 +158,14 @@ class MotionPlanning(CompatibleNode):
 
         self.logdebug("MotionPlanning started")
         self.counter = 0
+
+    def __set_unstuck_distance(self, data: Float32):
+        """Set unstuck distance
+
+        Args:
+            data (Float32): Unstuck distance
+        """
+        self.unstuck_distance = data.data
 
     def __set_speed_limit(self, data: Float32):
         """Set current speed limit
@@ -368,8 +391,6 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         be_speed = self.get_speed_by_behavior(behavior)
-        if behavior == bs.us_unstuck.name or behavior == bs.us_stop.name:
-            rospy.loginfo(f"Behavior: {behavior}, Speed: {be_speed}")
         if behavior == bs.parking.name or self.__overtake_status == 1:
             self.target_speed = be_speed
         else:
@@ -426,11 +447,37 @@ class MotionPlanning(CompatibleNode):
         return speed
 
     def __get_speed_unstuck(self, behavior: str) -> float:
+        global UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE
         speed = 0.0
         if behavior == bs.us_unstuck.name:
             speed = bs.us_unstuck.speed
         elif behavior == bs.us_stop.name:
             speed = bs.us_stop.speed
+        elif behavior == bs.us_overtake.name:
+            pose_list = self.trajectory.poses
+            if self.unstuck_distance is None:
+                self.logfatal("Unstuck distance not set")
+                return speed
+
+            if self.init_overtake_pos is not None \
+               and self.current_pos is not None:
+                distance = np.linalg.norm(
+                    self.init_overtake_pos[:2] - self.current_pos[:2])
+                self.logfatal(f"Unstuck Distance in mp: {distance}")
+                if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
+                    self.unstuck_overtake_flag = False
+                    self.logfatal("Unstuck Overtake Flag Cleared")
+
+            # to avoid spamming the overtake_fallback
+            if self.unstuck_overtake_flag is False:
+                # create overtake trajectory 6 meteres before the obstacle
+                self.overtake_fallback(self.unstuck_distance + 6, pose_list)
+                self.logfatal("Overtake fallback while unstuck!")
+                self.unstuck_overtake_flag = True
+                self.init_overtake_pos = self.current_pos[:2]
+            # else: overtake not possible
+
+            speed = bs.us_overtake.speed
 
         return speed
 
