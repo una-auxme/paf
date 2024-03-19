@@ -33,7 +33,7 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.1)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
@@ -530,9 +530,9 @@ class MotionPlanning(CompatibleNode):
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
             stopline = self.__stopline[0]
-            if self.traffic_light_y_distance < 220 and stopline > 10:
+            if self.traffic_light_y_distance < 250 and stopline > 10:
                 return 10
-            elif self.traffic_light_y_distance < 170 and stopline > 7:
+            elif self.traffic_light_y_distance < 180 and stopline > 7:
                 return 0.0
             else:
                 return stopline
