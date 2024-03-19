@@ -143,6 +143,7 @@ class VehicleController(CompatibleNode):
             if self.__velocity > 5:
                 steer = self._s_steer
             else:
+                # while doing the unstuck routine we don't want to steer
                 if self.__curr_behavior == "us_unstuck" or \
                    self.__curr_behavior == "us_stop":
                     steer = 0

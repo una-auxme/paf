@@ -463,14 +463,17 @@ class MotionPlanning(CompatibleNode):
                and self.current_pos is not None:
                 distance = np.linalg.norm(
                     self.init_overtake_pos[:2] - self.current_pos[:2])
-                self.logfatal(f"Unstuck Distance in mp: {distance}")
+                # self.logfatal(f"Unstuck Distance in mp: {distance}")
+                # clear distance to last unstuck -> avoid spamming overtake
                 if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
                     self.unstuck_overtake_flag = False
                     self.logfatal("Unstuck Overtake Flag Cleared")
 
             # to avoid spamming the overtake_fallback
             if self.unstuck_overtake_flag is False:
-                # create overtake trajectory 6 meteres before the obstacle
+                # create overtake trajectory starting 6 meteres before
+                # the obstacle
+                # 6 worked well in tests, but can be adjusted
                 self.overtake_fallback(self.unstuck_distance + 6, pose_list)
                 self.logfatal("Overtake fallback while unstuck!")
                 self.unstuck_overtake_flag = True

@@ -110,27 +110,16 @@ class VelocityController(CompatibleNode):
             if self.__target_velocity < 0:
                 # self.logerr("VelocityController doesn't support backward "
                 #             "driving yet.")
-                # TODO ROBERT implement backward driving
                 if self.__target_velocity == -3:
                     #  -3 is the signal for reverse driving
-                    # brake = 0
+
                     reverse = True
-                    # throttle = 1
-                    # TODO code wiederholung -> cleaner!
-                    # v = self.__target_velocity
-                    # pid_t.setpoint = v
-                    # throttle = pid_t(self.__current_velocity)
-                    # if throttle < 0:
-                    #     brake = abs(throttle)
-                    #     throttle = 0
-                    # else:
-                    #     brake = 0
                     throttle = 1
                     brake = 0
                     rospy.loginfo("VelocityController: reverse driving")
 
                 else:
-                    #  other negative values lead to braking
+                    #  other negative values only lead to braking
                     reverse = False
                     brake = 1
                     throttle = 0
