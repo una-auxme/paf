@@ -11,7 +11,7 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 # from std_msgs.msg import String
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
-from utils import filter_vision_objects
+from utils import filter_vision_objects, calculate_rule_of_thumb
 
 
 class CollisionCheck(CompatibleNode):
@@ -116,7 +116,7 @@ class CollisionCheck(CompatibleNode):
         if (nearest_object is None and
                 self.__last_position_oncoming is not None and
                 rospy.get_rostime() - self.__last_position_oncoming[0] >
-                rospy.Duration(1)):
+                rospy.Duration(2)):
             self.update_distance_oncoming(True)
             return
         elif nearest_object is None:
@@ -208,26 +208,6 @@ class CollisionCheck(CompatibleNode):
         return self.time_to_collision(obstacle_speed, distance) * \
             self.__current_velocity
 
-    @staticmethod
-    def calculate_rule_of_thumb(emergency, speed):
-        """Calculates the rule of thumb as approximation
-        for the braking distance
-
-        Args:
-            emergency (bool): if emergency brake is initiated
-            speed (float): speed of the vehicle (km/h)
-
-        Returns:
-            float: distance calculated with rule of thumb
-        """
-        reaction_distance = speed / 2
-        braking_distance = (speed * 0.36)**2
-        if emergency:
-            # Emergency brake is really effective in Carla
-            return reaction_distance + braking_distance / 2
-        else:
-            return reaction_distance + braking_distance
-
     def check_crash(self, obstacle):
         """ Checks if and when the ego vehicle will crash
             with the obstacle in front
@@ -241,14 +221,10 @@ class CollisionCheck(CompatibleNode):
         collision_time = self.time_to_collision(obstacle_speed, distance)
         # collision_meter = self.meters_to_collision(obstacle_speed, distance)
         # safe_distance2 = self.calculate_rule_of_thumb(False)
-        emergency_distance2 = self.calculate_rule_of_thumb(
+        emergency_distance2 = calculate_rule_of_thumb(
             True, self.__current_velocity)
         if collision_time > 0:
             if distance < emergency_distance2:
-                # self.logerr(f"Emergency distance: {emergency_distance2}")
-                # self.logerr(f"Distance obstacle: {distance}")
-                # self.logerr(f"Obstacle speed: {obstacle_speed}")
-                # Initiate emergency brake
                 self.emergency_pub.publish(True)
             # When no emergency brake is needed publish collision object
             data = Float32MultiArray(data=[distance, obstacle_speed])
@@ -263,14 +239,6 @@ class CollisionCheck(CompatibleNode):
         Control loop
         :return:
         """
-        # def loop(timer_event=None):
-        #     """
-        #     Checks if distance to a possible object is too small and
-        #     publishes the desired speed to motion planning
-        #     """
-        #     self.update_distance()
-        #     self.calculate_obstacle_speed()
-        # self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
 

@@ -238,7 +238,8 @@ class MotionPlanning(CompatibleNode):
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
         path.poses = pose_list[:int(self.current_wp)] + \
-            result + pose_list[int(self.current_wp + distance + NUM_WAYPOINTS)]
+            result + pose_list[int(self.current_wp + distance +
+                                   NUM_WAYPOINTS):]
         self.trajectory = path
 
     def __set_trajectory(self, data: Path):
@@ -469,7 +470,6 @@ class MotionPlanning(CompatibleNode):
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_leave.name:
             speed = convert_to_ms(30.)
-
         return speed
 
     def __get_speed_cruise(self) -> float:

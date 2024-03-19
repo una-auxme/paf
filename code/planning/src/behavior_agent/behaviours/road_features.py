@@ -5,6 +5,7 @@ import py_trees
 import numpy as np
 from scipy.spatial.transform import Rotation
 import rospy
+
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -206,6 +207,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
+
         return True
 
     def initialise(self):
@@ -268,7 +270,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         if obstacle_speed < 2 and obstacle_distance < 30:
             self.counter_overtake += 1
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
-            if self.counter_overtake > 0:
+            if self.counter_overtake > 3:
                 return py_trees.common.Status.SUCCESS
             return py_trees.common.Status.RUNNING
         else:

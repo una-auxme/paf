@@ -16,6 +16,8 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 NUM_WAYPOINTS = 7
 # Factor for linear interpolation of target speed values for the ACC
 LERP_FACTOR = 0.5
+# Earth radius in meters for location_to_GPS
+EARTH_RADIUS_EQUA = 6378137.0
 
 
 def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
@@ -33,7 +35,6 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
         dict: Dictionary with (lat,lon,z) coordinates
     """
 
-    EARTH_RADIUS_EQUA = 6378137.0   # pylint: disable=invalid-name
     scale = math.cos(lat_ref * math.pi / 180.0)
     mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
     my = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + lat_ref) *
@@ -47,6 +48,26 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     z = 703
 
     return {'lat': lat, 'lon': lon, 'z': z}
+
+
+def calculate_rule_of_thumb(emergency, speed):
+    """Calculates the rule of thumb as approximation
+    for the braking distance
+
+    Args:
+        emergency (bool): if emergency brake is initiated
+        speed (float): speed of the vehicle (km/h)
+
+    Returns:
+        float: distance calculated with rule of thumb
+    """
+    reaction_distance = speed / 2
+    braking_distance = (speed * 0.36)**2
+    if emergency:
+        # Emergency brake is really effective in Carla
+        return reaction_distance + braking_distance
+    else:
+        return reaction_distance + braking_distance
 
 
 def approx_obstacle_pos(distance: float, heading: float,

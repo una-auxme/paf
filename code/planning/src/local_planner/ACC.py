@@ -8,9 +8,8 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32
-from collision_check import CollisionCheck
 import numpy as np
-from utils import interpolate_speed
+from utils import interpolate_speed, calculate_rule_of_thumb
 
 
 class ACC(CompatibleNode):
@@ -165,12 +164,11 @@ class ACC(CompatibleNode):
                     self.__current_velocity is not None:
                 # If we have obstalce speed and distance, we can
                 # calculate the safe speed
-                safety_distance = CollisionCheck.calculate_rule_of_thumb(
+                safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity)
                 if self.obstacle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
-                    # Lerp factor:
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
                     safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
