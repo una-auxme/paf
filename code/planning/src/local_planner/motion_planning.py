@@ -529,12 +529,13 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
-            if self.traffic_light_y_distance < 200:
+            stopline = self.__stopline[0]
+            if self.traffic_light_y_distance < 220 and stopline > 10:
                 return 10
-            elif self.traffic_light_y_distance < 150:
+            elif self.traffic_light_y_distance < 170 and stopline > 7:
                 return 0.0
             else:
-                return self.__stopline[0]
+                return stopline
         else:
             return 0.0
 
