@@ -407,6 +407,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     unstuck. The behavior will then try to reverse and steer to the left or
     right to get out of the stuck situation.
     """
+    def reset_stuck_values(self):
+        self.unstuck_overtake_count = 0
+        self.stuck_timer = rospy.Time.now()
+        self.wait_stuck_timer = rospy.Time.now()
 
     def __init__(self, name):
         """
@@ -428,11 +432,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.unstuck_overtake_count = 0
         dummy_pos = np.array([0, 0])
         self.last_unstuck_positions = np.array([dummy_pos, dummy_pos])
-
-        def reset_stuck_values(self):
-            self.unstuck_overtake_count = 0
-            self.stuck_timer = rospy.Time.now()
-            self.wait_stuck_timer = rospy.Time.now()
 
     def setup(self, timeout):
         """
