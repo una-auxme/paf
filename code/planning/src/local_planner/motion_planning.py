@@ -232,20 +232,6 @@ class MotionPlanning(CompatibleNode):
         currentwp = self.current_wp
         normal_x_offset = 2
         unstuck_x_offset = 3.5  # could need adjustment with better steering
-
-        # if overtake is called by the unstuck routine
-        # -> reset the current wp to the distance driven backwards
-        # distance between each waypoint is set to 1
-        # -> distance is the amount of waypoints we drove
-        # backwards during unstuck!
-        if unstuck is True:
-            if distance > currentwp:
-                currentwp = 0
-            else:
-                distance = distance + 2
-                # currentwp = currentwp - int(distance)
-
-        # else: overtake starts from current wp
         selection = pose_list[int(currentwp):int(currentwp) +
                               int(distance) + 7]
         waypoints = self.convert_pose_to_array(selection)
