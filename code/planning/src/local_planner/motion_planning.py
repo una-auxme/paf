@@ -230,6 +230,8 @@ class MotionPlanning(CompatibleNode):
         #                                         self.current_pos,
         #                                         self.current_speed)
         currentwp = self.current_wp
+        normal_x_offset = 2
+        unstuck_x_offset = 4  # could need adjustment with better steering
 
         # if overtake is called by the unstuck routine
         # -> reset the current wp to the distance driven backwards
@@ -247,7 +249,10 @@ class MotionPlanning(CompatibleNode):
                               int(distance) + 7]
         waypoints = self.convert_pose_to_array(selection)
 
-        offset = np.array([2, 0, 0])
+        if unstuck is True:
+            offset = np.array([unstuck_x_offset, 0, 0])
+        else:
+            offset = np.array([normal_x_offset, 0, 0])
         rotation_adjusted = Rotation.from_euler('z', self.current_heading +
                                                 math.radians(90))
         offset_front = rotation_adjusted.apply(offset)
