@@ -6,7 +6,7 @@ from ros_compatibility.node import CompatibleNode
 from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
 from rospy import Publisher, Subscriber
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
-from std_msgs.msg import Bool, Float32
+from std_msgs.msg import Bool, Float32, String
 
 
 class VehicleController(CompatibleNode):
@@ -25,6 +25,8 @@ class VehicleController(CompatibleNode):
         self.loginfo('VehicleController node started')
         self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
         self.role_name = self.get_param('role_name', 'ego_vehicle')
+
+        self.__curr_behavior = None  # only unstuck behavior is relevant here
 
         # Publisher for Carla Vehicle Control Commands
         self.control_publisher: Publisher = self.new_publisher(
@@ -58,6 +60,13 @@ class VehicleController(CompatibleNode):
                                    durability=DurabilityPolicy.TRANSIENT_LOCAL)
         )
 
+        # Subscribers
+        self.curr_behavior_sub: Subscriber = self.new_subscription(
+            String,
+            f"/paf/{self.role_name}/curr_behavior",
+            self.__set_curr_behavior,
+            qos_profile=1)
+
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
@@ -84,6 +93,12 @@ class VehicleController(CompatibleNode):
             self.__set_brake,
             qos_profile=1)
 
+        self.reverse_sub: Subscriber = self.new_subscription(
+            Bool,
+            f"/paf/{self.role_name}/reverse",
+            self.__set_reverse,
+            qos_profile=1)
+
         self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
@@ -96,6 +111,7 @@ class VehicleController(CompatibleNode):
             self.__set_stanley_steer,
             qos_profile=1)
 
+        self.__reverse: bool = False
         self.__emergency: bool = False
         self.__velocity: float = 0.0
         self.__brake: float = 0.0
@@ -127,9 +143,15 @@ class VehicleController(CompatibleNode):
             if self.__velocity > 5:
                 steer = self._s_steer
             else:
-                steer = self._p_steer
+                # while doing the unstuck routine we don't want to steer
+                if self.__curr_behavior == "us_unstuck" or \
+                   self.__curr_behavior == "us_stop":
+                    steer = 0
+                else:
+                    steer = self._p_steer
+
             message = CarlaEgoVehicleControl()
-            message.reverse = False
+            message.reverse = self.__reverse
             message.hand_brake = False
             message.manual_gear_shift = False
             message.gear = 1
@@ -142,6 +164,14 @@ class VehicleController(CompatibleNode):
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
+
+    def __set_curr_behavior(self, data: String) -> None:
+        """
+        Sets the current behavior
+        :param data:
+        :return:
+        """
+        self.__curr_behavior = data.data
 
     def __set_emergency(self, data) -> None:
         """
@@ -212,6 +242,9 @@ class VehicleController(CompatibleNode):
 
     def __set_brake(self, data):
         self.__brake = data.data
+
+    def __set_reverse(self, data):
+        self.__reverse = data.data
 
     def __set_pure_pursuit_steer(self, data: Float32):
         r = (math.pi / 2)  # convert from RAD to [-1;1]

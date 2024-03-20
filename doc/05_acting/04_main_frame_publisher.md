@@ -15,12 +15,12 @@ Julian Graf
 ---
 
 <!-- TOC -->
-* [Main frame publisher](#main-frame-publisher)
-  * [Author](#author)
-  * [Date](#date)
-  * [Main frame publisher](#main-frame-publisher-1)
-  * [How to use](#how-to-use)
-  * [Known issues](#known-issues)
+- [Main frame publisher](#main-frame-publisher)
+  - [Author](#author)
+  - [Date](#date)
+  - [Main frame publisher](#main-frame-publisher-1)
+  - [How to use](#how-to-use)
+  - [Known issues](#known-issues)
 <!-- TOC -->
 
 ## Main frame publisher
