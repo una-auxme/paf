@@ -56,6 +56,8 @@ def create_node(role_name):
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/oncoming", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
+        {'name': f"/paf/{role_name}/target_velocity", 'msg': Float32,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER}
     ]
 
     topics2blackboard = py_trees.composites.Parallel("Topics to Blackboard")

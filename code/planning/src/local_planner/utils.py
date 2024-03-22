@@ -29,6 +29,23 @@ hyperparameters = {
 }
 
 
+def get_distance(pos_1, pos_2):
+    """Calculate the distance between two positions
+
+    Args:
+        pos1 (np.array): Position 1
+        pos2 (np.array): Position 2
+        # the np.array should be in the form of
+        # np.array([data.pose.position.x,
+                    data.pose.position.y,
+                    data.pose.position.z])
+
+    Returns:
+        float: Distance
+    """
+    return np.linalg.norm(pos_1 - pos_2)
+
+
 def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     """Convert world coordinates to (lat,lon,z) coordinates
        Copied from:
