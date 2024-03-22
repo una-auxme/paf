@@ -215,8 +215,11 @@ def filter_vision_objects(float_array, oncoming):
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
     if float_array.size == 0:
         return None
-    # Filter out all objects that are not cars
-    all_cars = float_array[np.where(float_array[:, 0] == 2)]
+    # Filter out all objects that are not cars, Persons, Bycicles,
+    # Motorbikes, Busses or Trucks
+    all_cars = float_array[np.where(float_array[:, 0] <= 7)]
+    all_cars = all_cars[np.where(all_cars[:, 0] != 6)]
+    all_cars = all_cars[np.where(all_cars[:, 0] != 4)]
 
     # Get cars that are on our lane
     if oncoming:

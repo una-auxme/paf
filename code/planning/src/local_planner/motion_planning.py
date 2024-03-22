@@ -559,7 +559,6 @@ class MotionPlanning(CompatibleNode):
         target_distance = 5.0
         stopline = self.__calc_virtual_stopline()
         # calculate speed needed for stopping
-        self.logerr(f"MP: {stopline}")
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms(stopline / 0.8))
         if v_stop > bs.int_app_init.speed:
@@ -587,7 +586,7 @@ class MotionPlanning(CompatibleNode):
         if stopline < 6.0:
             v_stop = 0.0
 
-        self.logerr(f"Speed ovt: {v_stop}")
+        # self.logerr(f"Speed ovt: {v_stop}")
         return v_stop
 
     def __calc_virtual_change_point(self) -> float:
