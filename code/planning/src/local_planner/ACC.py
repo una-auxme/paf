@@ -7,7 +7,7 @@ from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
-from std_msgs.msg import Float32MultiArray, Float32
+from std_msgs.msg import Float32MultiArray, Float32, Bool
 import numpy as np
 from utils import interpolate_speed, calculate_rule_of_thumb
 
@@ -21,6 +21,18 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__('ACC')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
+
+        # Get Unstuck flag and distance
+        self.unstuck_flag_sub: Subscriber = self.new_subscription(
+            Bool,
+            f"/paf/{self.role_name}/unstuck_flag",
+            self.__get_unstuck_flag,
+            qos_profile=1)
+        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/unstuck_distance",
+            self.__get_unstuck_distance,
+            qos_profile=1)
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
@@ -67,6 +79,10 @@ class ACC(CompatibleNode):
             f"/paf/{self.role_name}/speed_limit",
             qos_profile=1)
 
+        # unstuck attributes
+        self.__unstuck_flag: bool = False
+        self.__unstuck_distance: float = -1
+
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: [float] = []
         # Current Trajectory
@@ -98,6 +114,22 @@ class ACC(CompatibleNode):
             return
         self.obstacle_speed = data.data[1]
         self.obstacle_distance = data.data[0]
+
+    def __get_unstuck_flag(self, data: Bool):
+        """_summary_
+
+        Args:
+            data (Bool): _description_
+        """
+        self.__unstuck_flag = data.data
+
+    def __get_unstuck_distance(self, data: Float32):
+        """_summary_
+
+        Args:
+            data (Float32): _description_
+        """
+        self.__unstuck_distance = data.data
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -144,6 +176,17 @@ class ACC(CompatibleNode):
         if d_new < d_old:
             # update current waypoint and corresponding speed limit
             self.__current_wp_index += 1
+            self.wp_publisher.publish(self.__current_wp_index)
+            self.speed_limit = \
+                self.__speed_limits_OD[self.__current_wp_index]
+            self.speed_limit_publisher.publish(self.speed_limit)
+        # in case we used the unstuck routine to drive backwards
+        # we have to follow WPs that are already passed
+        elif self.__unstuck_flag:
+            if self.__unstuck_distance is None\
+               or self.__unstuck_distance == -1:
+                return
+            self.__current_wp_index -= int(self.__unstuck_distance)
             self.wp_publisher.publish(self.__current_wp_index)
             self.speed_limit = \
                 self.__speed_limits_OD[self.__current_wp_index]
