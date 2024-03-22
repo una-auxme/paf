@@ -129,9 +129,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_stopline_distance = self.stop_distance
         else:
             self.virtual_stopline_distance = 0.0
-
-        rospy.loginfo(f"Stopline distance: {self.virtual_stopline_distance}")
-        rospy.loginfo(f"y-distance: {self.traffic_light_distance}")
         target_distance = 5.0
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
