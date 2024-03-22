@@ -20,7 +20,7 @@ from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 import asyncio
-import rospy
+# import rospy
 
 """
 VisionNode:
@@ -218,15 +218,16 @@ class VisionNode(CompatibleNode):
         img_msg = self.bridge.cv2_to_imgmsg(vision_result,
                                             encoding="rgb8")
         img_msg.header = image.header
-        side = rospy.resolve_name(img_msg.header.frame_id).split('/')[2]
-        if side == "Center":
-            self.publisher_center.publish(img_msg)
-        if side == "Back":
-            self.publisher_back.publish(img_msg)
-        if side == "Left":
-            self.publisher_left.publish(img_msg)
-        if side == "Right":
-            self.publisher_right.publish(img_msg)
+        self.publisher_center.publish(img_msg)
+        # side = rospy.resolve_name(img_msg.header.frame_id).split('/')[2]
+        # if side == "Center":
+        #     self.publisher_center.publish(img_msg)
+        # if side == "Back":
+        #     self.publisher_back.publish(img_msg)
+        # if side == "Left":
+        #     self.publisher_left.publish(img_msg)
+        # if side == "Right":
+        #     self.publisher_right.publish(img_msg)
 
         # locals().clear()
         # print(f"Published Image on Side: {side}")
@@ -414,7 +415,7 @@ class VisionNode(CompatibleNode):
 
         # return output[0].plot()
 
-    def process_traffic_lights(self, prediction, cv_image, image_header):
+    async def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
