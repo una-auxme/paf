@@ -5,6 +5,7 @@ import py_trees
 import numpy as np
 from scipy.spatial.transform import Rotation
 import rospy
+
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -206,6 +207,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
+
         return True
 
     def initialise(self):

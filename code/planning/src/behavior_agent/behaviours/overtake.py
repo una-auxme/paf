@@ -5,6 +5,8 @@ import rospy
 import numpy as np
 
 from . import behavior_speed as bs
+import planning  # noqa: F401
+from local_planner.utils import NUM_WAYPOINTS
 
 """
 Source: https://github.com/ll7/psaf2
@@ -15,8 +17,8 @@ def convert_to_ms(speed):
     return speed / 3.6
 
 
-# Varaible to determine if overtake is currently exec
-OVERTAKE_EXECUTING = False
+# Varaible to determine the distance to overtak the object
+OVERTAKE_EXECUTING = 0
 
 
 class Approach(py_trees.behaviour.Behaviour):
@@ -413,7 +415,7 @@ class Leave(py_trees.behaviour.Behaviour):
         self.current_pos = np.array([data.pose.position.x,
                                     data.pose.position.y])
         distance = np.linalg.norm(self.first_pos - self.current_pos)
-        if distance > OVERTAKE_EXECUTING:
+        if distance > OVERTAKE_EXECUTING + NUM_WAYPOINTS:
             rospy.loginfo(f"Left Overtake: {self.current_pos}")
             return py_trees.common.Status.FAILURE
         else:

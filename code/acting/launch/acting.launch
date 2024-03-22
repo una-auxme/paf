@@ -14,12 +14,12 @@
     </node>
 
      <node pkg="acting" type="vehicle_controller.py" name="vehicle_controller" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" /> <!-- leaderboard expects commands every 0.05 seconds OTHERWISE IT LAGS REALLY BADLY-->
+        <param name="control_loop_rate" value="0.1" /> <!-- leaderboard expects commands every 0.05 seconds OTHERWISE IT LAGS REALLY BADLY-->
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
-        <param name="control_loop_rate" value="0.05" />
+        <param name="control_loop_rate" value="0.1" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
     

@@ -17,7 +17,7 @@ from perception.msg import Waypoint, LaneChange
 import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
-from utils import convert_to_ms, spawn_car
+from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -233,7 +233,7 @@ class MotionPlanning(CompatibleNode):
         normal_x_offset = 2
         unstuck_x_offset = 3.5  # could need adjustment with better steering
         selection = pose_list[int(currentwp):int(currentwp) +
-                              int(distance) + 7]
+                              int(distance) + NUM_WAYPOINTS]
         waypoints = self.convert_pose_to_array(selection)
 
         if unstuck is True:
@@ -268,7 +268,8 @@ class MotionPlanning(CompatibleNode):
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
         path.poses = pose_list[:int(currentwp)] + \
-            result + pose_list[int(currentwp + distance + 7):]
+            result + pose_list[int(currentwp + distance + NUM_WAYPOINTS):]
+
         self.trajectory = path
 
     def __set_trajectory(self, data: Path):
@@ -540,8 +541,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_enter_slow.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_leave.name:
-            speed = convert_to_ms(10.)
-
+            speed = convert_to_ms(30.)
         return speed
 
     def __get_speed_cruise(self) -> float:

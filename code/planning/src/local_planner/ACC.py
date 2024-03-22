@@ -8,8 +8,8 @@ from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32, Bool
-from collision_check import CollisionCheck
 import numpy as np
+from utils import interpolate_speed, calculate_rule_of_thumb
 
 
 class ACC(CompatibleNode):
@@ -207,22 +207,20 @@ class ACC(CompatibleNode):
                     self.__current_velocity is not None:
                 # If we have obstalce speed and distance, we can
                 # calculate the safe speed
-                safety_distance = CollisionCheck.calculate_rule_of_thumb(
+                safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity)
                 if self.obstacle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
-                    # Lerp factor:
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
                     safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
-                    lerp_factor = 0.2
-                    safe_speed = (1 - lerp_factor) * self.__current_velocity +\
-                        lerp_factor * safe_speed
+
+                    safe_speed = interpolate_speed(safe_speed,
+                                                   self.__current_velocity)
                     if safe_speed < 1.0:
                         safe_speed = 0
-                    self.logerr("ACC: Safe speed: " + str(safe_speed) +
-                                " Distance: " + str(self.obstacle_distance))
+                    self.logerr("ACC: Safe speed: " + str(safe_speed))
                     self.velocity_pub.publish(safe_speed)
                 else:
                     # If safety distance is reached just hold current speed
@@ -240,6 +238,8 @@ class ACC(CompatibleNode):
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
                 # self.logerr("ACC: Speed limit: " + str(self.speed_limit))
+                # interpolated_speed = interpolate_speed(self.speed_limit,
+                #                                        self.__current_velocity)
                 self.velocity_pub.publish(self.speed_limit)
             else:
                 self.velocity_pub.publish(0)
