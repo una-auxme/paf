@@ -78,7 +78,7 @@ class PrePlanner(CompatibleNode):
         self.logdebug('PrePlanner-Node started')
 
         # uncomment for self.dev_load_world_info() for dev_launch
-        self.dev_load_world_info()
+        # self.dev_load_world_info()
 
     def global_route_callback(self, data: CarlaRoute) -> None:
         """

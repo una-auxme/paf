@@ -132,6 +132,7 @@ class MotionPlanning(CompatibleNode):
             Int16,
             f"/paf/{self.role_name}/Center/traffic_light_y_distance",
             self.__set_traffic_y_distance,
+            qos_profile=1)
         self.unstuck_distance_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/unstuck_distance",
