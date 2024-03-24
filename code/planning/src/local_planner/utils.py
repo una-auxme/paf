@@ -78,11 +78,11 @@ def calculate_rule_of_thumb(emergency, speed):
     Returns:
         float: distance calculated with rule of thumb
     """
-    reaction_distance = speed / 2
+    reaction_distance = speed
     braking_distance = (speed * 0.36)**2
     if emergency:
         # Emergency brake is really effective in Carla
-        return reaction_distance + braking_distance
+        return reaction_distance + braking_distance / 2
     else:
         return reaction_distance + braking_distance
 
