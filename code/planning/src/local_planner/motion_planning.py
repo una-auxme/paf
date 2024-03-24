@@ -240,7 +240,8 @@ class MotionPlanning(CompatibleNode):
         currentwp = self.current_wp
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
-        selection = pose_list[int(currentwp):int(currentwp) +
+        selection = pose_list[int(currentwp) + int(distance / 2):
+                              int(currentwp) +
                               int(distance) + NUM_WAYPOINTS]
         waypoints = self.convert_pose_to_array(selection)
 
