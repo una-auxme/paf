@@ -7,16 +7,10 @@ from simple_pid import PID
 from std_msgs.msg import Float32
 from nav_msgs.msg import Path
 
-# TODO put back to 36 when controller can handle it
-SPEED_LIMIT_DEFAULT: float = 0  # 36.0
-
-
 class VelocityController(CompatibleNode):
     """
     This node controls the velocity of the vehicle.
-    For this it uses a PID controller
-    Published speeds will always stay below received speed limit
-    Publish speed_limit = -1 to drive without speeed limit
+    For this it uses a PID controller.
     """
 
     def __init__(self):
@@ -48,17 +42,8 @@ class VelocityController(CompatibleNode):
             f"/paf/{self.role_name}/brake",
             qos_profile=1)
 
-        # needed to prevent the car from driving before a path to follow is
-        # available. Might be needed later to slow down in curves
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
-            qos_profile=1)
-
         self.__current_velocity: float = None
         self.__target_velocity: float = None
-        self.__trajectory: Path = None
 
     def run(self):
         """
@@ -68,12 +53,8 @@ class VelocityController(CompatibleNode):
         self.loginfo('VelocityController node running')
         # PID for throttle
         pid_t = PID(0.60, 0.00076, 0.63)
+        # since we use this for braking aswell, allow -1 to 0.
         pid_t.output_limits = (-1.0, 1.0)
-        # new PID for braking, much weaker than throttle controller!
-        # pid_b = PID(-0.1, -0, -0)  # TODO tune? BUT current P can be good
-        # Kp just says "brake fully(1) until you are only Kp*speedError faster"
-        # so with Kp = -1.35 -> the actual braking range is hardly used
-        # pid_b.output_limits = (.0, 1.0)
 
         def loop(timer_event=None):
             """
@@ -86,8 +67,8 @@ class VelocityController(CompatibleNode):
             if self.__target_velocity is None:
                 self.logdebug("VelocityController hasn't received target"
                               "_velocity yet. target_velocity has been set to"
-                              f"default value {SPEED_LIMIT_DEFAULT}")
-                self.__target_velocity = SPEED_LIMIT_DEFAULT
+                              f"default value 0")
+                self.__target_velocity = 0
 
             if self.__current_velocity is None:
                 self.logdebug("VelocityController  hasn't received "
@@ -95,24 +76,18 @@ class VelocityController(CompatibleNode):
                               "publish a throttle value")
                 return
 
-            """if self.__trajectory is None:
-                self.logdebug("VelocityController  hasn't received "
-                              "trajectory yet and can therefore not"
-                              "publish a throttle value (to prevent stupid)")
-                return
-            """
             if self.__target_velocity < 0:
                 self.logerr("VelocityController doesn't support backward "
                             "driving yet.")
                 return
-            # very low target_velocities -> stand
+            # very low target_velocities -> just stand still
             if self.__target_velocity < 1:
                 brake = 1
                 throttle = 0
             else:
-                v = self.__target_velocity
-                pid_t.setpoint = v
+                pid_t.setpoint = self.__target_velocity
                 throttle = pid_t(self.__current_velocity)
+                # any throttle < 0 is used as brake signal
                 if throttle < 0:
                     brake = abs(throttle)
                     throttle = 0
@@ -129,9 +104,6 @@ class VelocityController(CompatibleNode):
 
     def __get_target_velocity(self, data: Float32):
         self.__target_velocity = float(data.data)
-
-    def __set_trajectory(self, data: Path):
-        self.__trajectory = data
 
 
 def main(args=None):
