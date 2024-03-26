@@ -394,8 +394,9 @@ def pos_to_np_array(pos):
         return None
 
 
-TRIGGER_STUCK_DURATION = rospy.Duration(5)  # default 5 (s)
-TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(20)  # default 20 (s)
+TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
+TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
+TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(50)  # default 25 (s)
 UNSTUCK_DRIVE_DURATION = rospy.Duration(1.2)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 
@@ -411,6 +412,23 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.unstuck_overtake_count = 0
         self.stuck_timer = rospy.Time.now()
         self.wait_stuck_timer = rospy.Time.now()
+
+    def print_warnings(self):
+        # update last log values
+        self.last_stuck_duration_log = self.stuck_duration
+        self.last_wait_stuck_duration_log = self.wait_stuck_duration
+
+        stuck_duration_diff = (self.stuck_duration -
+                               self.last_stuck_duration_log)
+        wait_stuck_duration_diff = (self.wait_stuck_duration -
+                                    self.last_wait_stuck_duration_log)
+
+        if self.stuck_duration.secs > TRIGGER_STUCK_DURATION.secs/2 \
+           and stuck_duration_diff.secs >= 1:
+            rospy.logwarn(f"Stuck for {self.stuck_duration.secs} s")
+        if self.wait_stuck_duration.secs > TRIGGER_WAIT_STUCK_DURATION.secs/2\
+           and wait_stuck_duration_diff.secs >= 1:
+            rospy.logwarn(f"Wait stuck for {self.wait_stuck_duration.secs} s")
 
     def __init__(self, name):
         """
@@ -432,6 +450,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.unstuck_overtake_count = 0
         dummy_pos = np.array([0, 0])
         self.last_unstuck_positions = np.array([dummy_pos, dummy_pos])
+
+        self.last_wait_stuck_duration_log = rospy.Duration(0)
+        self.last_stuck_duration_log = rospy.Duration(0)
 
     def setup(self, timeout):
         """
@@ -484,12 +505,13 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.reset_stuck_values()
             return True
 
-        # check if vehicle is not stuck, v > 1
-        if self.current_speed.speed >= 1.0:
+        # check if vehicle is NOT stuck, v > 0.1
+        if self.current_speed.speed >= TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
             self.wait_stuck_timer = rospy.Time.now()
-            # check if vehicle is not stuck, v > 1 when told to v > 0
-            if target_speed.data >= 1.0:
+
+            # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
+            if target_speed.data >= TRIGGER_STUCK_SPEED:
                 # reset stuck timer
                 self.stuck_timer = rospy.Time.now()
 
@@ -497,6 +519,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.stuck_duration = rospy.Time.now() - self.stuck_timer
         self.wait_stuck_duration = rospy.Time.now() - self.wait_stuck_timer
 
+        # print warnings to indicate potential stuck
+        self.print_warnings()
+
+        # print fatal error if stuck for too long
         if self.stuck_duration >= TRIGGER_STUCK_DURATION:
             rospy.logfatal(f"""Should be Driving but Stuck in one place
                            for more than {TRIGGER_STUCK_DURATION.secs}\n
