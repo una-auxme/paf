@@ -18,7 +18,7 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
-  <node pkg="perception" type="Position_Publisher_Node.py" name="Position_Publisher_Node" output="screen">
+  <node pkg="perception" type="position_heading_publisher_node.py" name="position_heading_publisher_node" output="screen">
     <param name="control_loop_rate" value="0.1" />
     <param name="role_name" value="$(arg role_name)" />
     <param name="pos_filter" value="Kalman" />

@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-"""
-This node publishes all relevant topics for the ekf node.
-"""
-
 import math
 from tf.transformations import euler_from_quaternion
 import numpy as np
@@ -20,10 +16,27 @@ from xml.etree import ElementTree as eTree
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
-class PositionPublisherNode(CompatibleNode):
+class PositionHeadingPublisherNode(CompatibleNode):
     """
-    Node publishes a filtered gps signal.
-    This is achieved using a rolling average.
+    This Node subcribes to the unfiltered GNSS and Heading Signals and
+    publishes a (PoseStamped) gps signal as currentPos
+    as well as a (Float32) heading signal as currentHeading.
+    Both signals can be filtered with the available filters:
+    Position Filter values:
+        - "Kalman" (Default)
+        - "RunningAvg"
+        - "None"
+    Heading Filter values:
+        - "Kalman" (Default)
+        - "None"
+        - "Old" (Buggy for demonstration purposes only)
+    These can be turned on and off in the launch file.
+
+    !When creating a new filter, the corresponding subscriber and publisher
+    must be added in the constructor for clean modular programming!
+
+    For more information:
+    ../../doc/06_perception/09_position_heading_publisher_node.md
     """
 
     def __init__(self):
@@ -32,7 +45,8 @@ class PositionPublisherNode(CompatibleNode):
         :return:
         """
 
-        super(PositionPublisherNode, self).__init__('ekf_translation')
+        super(PositionHeadingPublisherNode, self).__init__(
+            'position_heading_publisher_node')
 
         """
         Possible Filters:
@@ -42,7 +56,7 @@ class PositionPublisherNode(CompatibleNode):
         # Filter used:
         self.pos_filter = self.get_param("pos_filter", "Kalman")
         self.heading_filter = self.get_param("heading_filter", "Kalman")
-        self.loginfo("Position publisher node started with Pos Filter: "
+        self.loginfo("position_heading_publisher_node started with Pos Filter:"
                      + self.pos_filter +
                      " and Heading Filter: " + self.heading_filter)
 
@@ -89,12 +103,15 @@ class PositionPublisherNode(CompatibleNode):
             self.gps_subscriber_for_running_avg = self.new_subscription(
                 NavSatFix,
                 "/carla/" + self.role_name + "/GPS",
-                self.publish_running_avg_pos,
+                self.publish_running_avg_pos_as_current_pos,
                 qos_profile=1)
         elif self.pos_filter == "None":
             # No additional subscriber needed since the unfiltered GPS data is
             # subscribed by self.gps_subscriber
             pass
+
+        # insert additional elifs for other filters here
+
         # Heading Filter:
         if self.heading_filter == "Kalman":
             self.kalman_heading_subscriber = self.new_subscription(
@@ -107,14 +124,11 @@ class PositionPublisherNode(CompatibleNode):
             # data is subscribed by self.imu_subscriber
             pass
 
+        # insert additional elifs for other filters here
+
     # endregion Subscriber END
 
     # region Publisher START
-        # IMU
-        # self.ekf_imu_publisher = self.new_publisher(
-        #     Imu,
-        #     "/imu_data",
-        #     qos_profile=1)
         # Orientation
         self.unfiltered_heading_publisher = self.new_publisher(
             Float32,
@@ -148,36 +162,6 @@ class PositionPublisherNode(CompatibleNode):
         :param data: new IMU measurement
         :return:
         """
-        # imu_data = Imu()
-
-        # imu_data.header.stamp = data.header.stamp
-        # imu_data.header.frame_id = "hero"
-
-        # imu_data.orientation.x = data.orientation.x
-        # imu_data.orientation.y = data.orientation.y
-        # imu_data.orientation.z = data.orientation.z
-        # imu_data.orientation.w = data.orientation.w
-        # imu_data.orientation_covariance = [0, 0, 0,
-        #                                    0, 0, 0,
-        #                                    0, 0, 0]
-
-        # imu_data.angular_velocity.x = data.angular_velocity.x
-        # imu_data.angular_velocity.y = data.angular_velocity.y
-        # imu_data.angular_velocity.z = data.angular_velocity.z
-        # imu_data.angular_velocity_covariance = [0.001, 0, 0,
-        #                                         0, 0.001, 0,
-        #                                         0, 0, 0.001]
-
-        # imu_data.linear_acceleration.x = data.linear_acceleration.x
-        # imu_data.linear_acceleration.y = data.linear_acceleration.y
-        # imu_data.linear_acceleration.z = data.linear_acceleration.z
-        # imu_data.linear_acceleration_covariance = [0.001, 0, 0,
-        #                                            0, 0.001, 0,
-        #                                            0, 0, 0.015]
-
-        # self.ekf_imu_publisher.publish(imu_data)
-
-        # Calculate the heading based on the orientation given by the IMU
         data_orientation_q = [data.orientation.x,
                               data.orientation.y,
                               data.orientation.z,
@@ -203,6 +187,7 @@ class PositionPublisherNode(CompatibleNode):
             heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
             self.__heading = heading
             self.__heading_publisher.publish(self.__heading)
+        # insert additional elifs for other filters here
         else:
             # in each other case the heading is published as unfiltered heading
             # for further filtering in other nodes such as the kalman node
@@ -217,10 +202,14 @@ class PositionPublisherNode(CompatibleNode):
         """
         self.__heading = data.data
         self.__heading_publisher.publish(self.__heading)
+
+    # insert new heading functions here...
+
 # endregion HEADING FUNCTIONS END
 
 # region POSITION FUNCTIONS
-    def publish_running_avg_pos(self, data: NavSatFix):
+
+    def publish_running_avg_pos_as_current_pos(self, data: NavSatFix):
         """
         This method is called when new GNSS data is received.
         The function calculates the average position and then publishes it.
@@ -270,6 +259,17 @@ class PositionPublisherNode(CompatibleNode):
         """
         self.cur_pos_publisher.publish(data)
 
+    def publish_non_linear_kalman_pos_as_current_pos(self, data: PoseStamped):
+        """
+        This method is called when new non-linear kalman filter data is
+        received.
+        The function publishes the non-linear kalman position as current
+        position
+        :param data: PoseStamped
+        :return:
+        """
+        self.cur_pos_publisher.publish(data)
+
     def publish_unfiltered_gps(self, data: NavSatFix):
         """
         This method is called when new GNSS data is received.
@@ -311,11 +311,15 @@ class PositionPublisherNode(CompatibleNode):
                 # in each other case the pos is published as unfiltered pos
                 # for further filtering in other nodes such as the kalman node
                 self.unfiltered_gps_publisher.publish(unfiltered_pos)
+
+    # insert new position functions here...
+
 # endregion POSITION FUNCTIONS END
 
     def get_geoRef(self, opendrive: String):
         """_summary_
         Reads the reference values for lat and lon from the carla OpenDriveMap
+        This is necessary for the coordinate transformation from GNSS to XYZ
         Args:
             opendrive (String): OpenDrive Map from carla
         """
@@ -355,9 +359,9 @@ def main(args=None):
     :return:
     """
 
-    roscomp.init("position_publisher_node", args=args)
+    roscomp.init("position_heading_publisher_node", args=args)
     try:
-        node = PositionPublisherNode()
+        node = PositionHeadingPublisherNode()
         node.run()
     except KeyboardInterrupt:
         pass

@@ -32,13 +32,13 @@ To test acting components independently from Perception and Planning, use the Ac
 For this to work properly you have to manually disable all Planning and most of the Perception Components in your testing-branch:
 
 - Go to the planning.launch file (.../code/planning/launch/planning.launch) and disable every active node by commenting them out.
-- Go to the perception.launch file (.../code/perception/launch/perception.launch) and disable every other node EXCEPT the Position_Publisher_Node.py and the kalman_filter.py by commenting them out.
+- Go to the perception.launch file (.../code/perception/launch/perception.launch) and disable every other node EXCEPT the position_heading_publisher_node.py and the kalman_filter.py by commenting them out.
 
 If you want to test/debug/tune under perfect conditions we also recommend following changes:
 
 - In the docker-compose.yml file (.../build/docker-compose.yml) you can switch to a developer enviroment by uncommenting the dev.launch (Line 65) and commenting the leaderboard (Line 66).
 - In the dev_objects.json file (.../code/agent/config/dev_objects.json) you will find the GPS and IMU sensors. To use ideal sensors, set all noises to 0.
-- In the perception.launch file, set the Position_Publisher_Node.py's pos_filter and heading_filter to None to get the ideal sensors' data (position and heading) unfiltered.
+- In the perception.launch file, set the position_heading_publisher_node.py's pos_filter and heading_filter to None to get the ideal sensors' data (position and heading) unfiltered.
 
 ## velocity_controller
 

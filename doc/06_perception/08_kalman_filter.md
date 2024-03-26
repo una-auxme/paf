@@ -41,7 +41,7 @@ Robert Fischer
 
 Uncomment the kalman_filter.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
 
-Also change the pos_filter and heading_filter parameter values of the Position_Publisher_Node in the [perception.launch](../../code/perception/launch/perception.launch) file,
+Also change the pos_filter and heading_filter parameter values of the position_heading_publisher_node in the [perception.launch](../../code/perception/launch/perception.launch) file,
 to **"Kalman"**, depending on if you want to use the Filter for both the Position and the Heading.
 
 In the case of using the Filter for both, it should look like this:
@@ -71,7 +71,7 @@ This script implements a Kalman Filter.
 
 It is a recursive algorithm used to estimate the state of a system that can be modeled with linear equations.
 
-This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [Position Publisher Node](../../code/perception/src/Position_Publisher_Node.py))
+This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [position_heading_publisher_node](../../code/perception/src/position_heading_publisher_node.py))
 the orientation and angular velocity provided by the IMU sensor and the current speed in the headed direction by the Carla Speedometer.
 
 As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a [rolling average](#also-important).
