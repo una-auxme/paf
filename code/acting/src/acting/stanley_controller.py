@@ -15,8 +15,7 @@ from acting.msg import StanleyDebug
 from helper_functions import vector_angle
 from trajectory_interpolation import points_to_vector
 
-K_CROSSERR = 0.4  # 1.24
-
+K_CROSSERR = 0.4  # 1.24 was optimal in dev-launch!
 
 class StanleyController(CompatibleNode):
     def __init__(self):
@@ -51,7 +50,6 @@ class StanleyController(CompatibleNode):
             self.__set_heading,
             qos_profile=1)
 
-        # Publishers
         self.stanley_steer_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
@@ -62,12 +60,10 @@ class StanleyController(CompatibleNode):
             f"/paf/{self.role_name}/stanley_debug",
             qos_profile=1)
 
-        self.__position: (float, float) = None  # x , y
-        self.__last_pos: (float, float) = None  # x , y
+        self.__position: tuple[float, float] = None  # x , y
         self.__path: Path = None
         self.__heading: float = None
         self.__velocity: float = None
-        self.__tp_idx: int = 0  # target waypoint index
 
     def run(self):
         """
@@ -107,50 +103,6 @@ class StanleyController(CompatibleNode):
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
-
-    def __set_position(self, data: PoseStamped, min_diff=0.001):
-        """
-        Updates the current position of the vehicle
-        To avoid problems when the car is stationary, new positions will only
-        be accepted, if they are a certain distance from the current one
-        :param data: new position as PoseStamped
-        :param min_diff: minium difference between new and current point for
-        the new point to be accepted
-        :return:
-        """
-        if self.__position is None:
-            x0 = data.pose.position.x
-            y0 = data.pose.position.y
-            self.__position = (x0, y0)
-            return
-
-        # check if the new position is valid
-        dist = self.__dist_to(data.pose.position)
-        if dist < min_diff:
-            self.logdebug("New position disregarded, "
-                          f"as dist ({round(dist, 3)}) to current pos "
-                          f"< min_diff ({round(min_diff, 3)})")
-            return
-
-        old_x = self.__position[0]
-        old_y = self.__position[1]
-        self.__last_pos = (old_x, old_y)
-        new_x = data.pose.position.x
-        new_y = data.pose.position.y
-        self.__position = (new_x, new_y)
-
-    def __set_path(self, data: Path):
-        path_len = len(data.poses)
-        if path_len < 1:
-            self.loginfo("Stanley: Empty path received and disregarded")
-            return
-        self.__path = data
-
-    def __set_heading(self, data: Float32):
-        self.__heading = data.data
-
-    def __set_velocity(self, data: CarlaSpeedometer):
-        self.__velocity = data.speed
 
     def __calculate_steer(self) -> float:
         """
@@ -295,6 +247,47 @@ class StanleyController(CompatibleNode):
         y_target = pos.y
         d = (x_target - x_cur) ** 2 + (y_target - y_cur) ** 2
         return sqrt(d)
+
+    def __set_position(self, data: PoseStamped, min_diff=0.001):
+        """
+        Updates the current position of the vehicle
+        To avoid problems when the car is stationary, new positions will only
+        be accepted, if they are a certain distance from the current one
+        :param data: new position as PoseStamped
+        :param min_diff: minium difference between new and current point for
+        the new point to be accepted
+        :return:
+        """
+        if self.__position is None:
+            x0 = data.pose.position.x
+            y0 = data.pose.position.y
+            self.__position = (x0, y0)
+            return
+
+        # check if the new position is valid
+        dist = self.__dist_to(data.pose.position)
+        if dist < min_diff:
+            self.logdebug("New position disregarded, "
+                          f"as dist ({round(dist, 3)}) to current pos "
+                          f"< min_diff ({round(min_diff, 3)})")
+            return
+
+        new_x = data.pose.position.x
+        new_y = data.pose.position.y
+        self.__position = (new_x, new_y)
+
+    def __set_path(self, data: Path):
+        path_len = len(data.poses)
+        if path_len < 1:
+            self.loginfo("Stanley: Empty path received and disregarded")
+            return
+        self.__path = data
+
+    def __set_heading(self, data: Float32):
+        self.__heading = data.data
+
+    def __set_velocity(self, data: CarlaSpeedometer):
+        self.__velocity = data.speed
 
 
 def main(args=None):
