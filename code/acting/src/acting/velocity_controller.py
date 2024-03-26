@@ -5,7 +5,7 @@ from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from simple_pid import PID
 from std_msgs.msg import Float32
-from nav_msgs.msg import Path
+
 
 class VelocityController(CompatibleNode):
     """
@@ -67,7 +67,7 @@ class VelocityController(CompatibleNode):
             if self.__target_velocity is None:
                 self.logdebug("VelocityController hasn't received target"
                               "_velocity yet. target_velocity has been set to"
-                              f"default value 0")
+                              "default value 0")
                 self.__target_velocity = 0
 
             if self.__current_velocity is None:
