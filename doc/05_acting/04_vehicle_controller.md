@@ -6,7 +6,9 @@
 
 ## Author
 
-Alexander Hellmann
+Robert Fischer, Alexander Hellmann
+
+
 
 ## Date
 
@@ -17,13 +19,27 @@ Alexander Hellmann
   - [Author](#author)
   - [Date](#date)
   - [General Introduction to the Vehicle Controller Component](#general-introduction-to-the-vehicle-controller-component)
-  - [Vehicle controller](#vehicle-controller)
+  - [Vehicle controller Output](#vehicle-controller-output)
+  - [Emergency Brake](#emergency-brake)
+  - [Unstuck Routine](#unstuck-routine)
 <!-- TOC -->
 
 ## General Introduction to the Vehicle Controller Component
 
-123
+The [Vehicle Controller](../../code/acting/src/acting/vehicle_controller.py) collects all information from the other controllers in Acting ```throttle```, ```brake```, ```pure_puresuit_steer``` and ```stanley_steer``` to fill them into the CARLA-Vehicle Command Message ```vehicle_control_cmd``` and send this to the CARLA simulator.
 
-## Vehicle controller
+It also reacts to some special case - Messages from Planning, such as emergency-braking or executing the unstuck-routine.
 
-123
+## Vehicle Controller Output
+
+As the ```vehicle_control_cmd```-Message requires all 4 Inputs to be in the range of 0 to 1, the Vehicle Controller has to convert both steering signals ```pure_puresuit_steer``` and ```stanley_steer``` from Radians to [0,1].
+
+The ```throttle``` and ```brake``` are already calculated in the correct range by the PID Controller of the Velocity Controller.
+
+## Emergency Brake
+
+The Vehicle Controller also reacts to ```emergency```-Messages, published by Planning:
+
+## Unstuck Routine
+
+The Vehicle Controller also reads ```current_behavior```-Messages, published by Planning, currently reacting to the **unstuck-behavior**:
