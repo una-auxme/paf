@@ -40,6 +40,7 @@ At every moment it checks a point of the trajectory in front of the vehicle with
 This **look-ahead-distance d_la**  is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
 
 $$ d_{la} = k_{ld} * v $$
+
 $$ \delta = arctan({2 * L_{vehicle} * sin(\alpha) \over d_{la}})$$
 
 To tune the PurePursuit Controller, you can tune the factor of this velocity-dependence **k_ld**.
@@ -63,6 +64,7 @@ At every moment it checks the closest point of the trajectory to itself and dete
 - from getting the vector from the current position to the closest trajectory-point it calculates the **cross-track-error** with which it calculates a steering-angle to drive back onto the trajectory.
 
 $$ \theta_e = \theta - \theta_p$$
+
 $$ \delta = \theta_e - arctan({k_{ce} * e_{fa} \over v})$$
 
 To tune the Stanley Controller, you tune the factor **k_ce**, which amplifies (or diminishes) how strong the **cross-track-error**-calculated steering-angle will "flow" into the output steering-angle.
