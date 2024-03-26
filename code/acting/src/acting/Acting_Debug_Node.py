@@ -22,7 +22,7 @@ from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 
 from trajectory_interpolation import interpolate_route
 
-""" 
+"""
 TEST_TYPE to choose which kind of Test to run:
 - 0: Test Velocity Controller with constant one velocity
 const. velocity = TARGET_VELOCITY_1
@@ -129,7 +129,7 @@ class Acting_Debug_Node(CompatibleNode):
             f"/paf/{self.role_name}/throttle",
             self.__get_throttle,
             qos_profile=1)
-        
+
         # Subscriber for Stanley_steer
         self.stanley_steer_sub: Subscriber = self.new_subscription(
             Float32,
