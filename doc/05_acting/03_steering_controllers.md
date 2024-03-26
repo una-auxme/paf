@@ -35,16 +35,17 @@ For more indepth information about the PurePursuit Controller, click [this link]
 
 At every moment it checks a point of the trajectory in front of the vehicle with a distance of **d_la** and determines a steering-angle so that the vehicle will aim straight to this point of the trajectory.
 
-<img src="../00_assets/acting/pure_pursuit.png" width="400">
+![MISSING: PurePursuit-ShowImage](../00_assets/acting/Steering_PurePursuit.png)
 
 This **look-ahead-distance d_la**  is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
 
-![MISSING: PurePursuit-Formulas]()
+$$ d_{la} = k_{ld} * v $$
+$$ \delta = arctan({2 * L_{vehicle} * sin(\alpha) \over d_{la}})$$
 
 To tune the PurePursuit Controller, you can tune the factor of this velocity-dependence **k_ld**.
 Also, for an unknown reason, we needed to add an amplification to the output-steering signal before publishing aswell **k_pub**, which highly optimized the steering performance in the dev-launch:
 
-![MISSING: PurePursuit-Optimization_Image]()
+![MISSING: PurePursuit-Optimization_Image](../00_assets/acting/Steering_PurePursuit_Tuning.png)
 
 **NOTE:** The **look-ahead-distance d_la** should be highly optimally tuned already for optimal sensor data and on the dev-launch!
 In the Leaderboard-Launch this sadly does not work the same, so it requires different tuning and needs to be optimized/fixed.
@@ -54,20 +55,21 @@ In the Leaderboard-Launch this sadly does not work the same, so it requires diff
 The [Stanley Controller's](../../code/acting/src/acting/stanley.py) main features to determine a steering-output is the so-called **cross-track-error** (e_fa in Image) and the **trajectory-heading** (theta_e in Image).
 For more indepth information about the Stanley Controller, click [this link](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219) and [this link](https://ai.stanford.edu/~gabeh/papers/hoffmann_stanley_control07.pdf).
 
-![MISSING: Stanley-SHOW-IMAGE](../00_assets/acting/stanley_controller.png)
+![MISSING: Stanley-SHOW-IMAGE](../00_assets/acting/Steering_Stanley.png)
 
 At every moment it checks the closest point of the trajectory to itself and determines a two steering-angles:
 
 - from checking the closest trajectory-point and its neighbours it calculates a **trajectory-heading** as the optimal steering for this point on the trajectory.
 - from getting the vector from the current position to the closest trajectory-point it calculates the **cross-track-error** with which it calculates a steering-angle to drive back onto the trajectory.
 
-![MISSING: Stanley-Formulas]()
+$$ \theta_e = \theta - \theta_p$$
+$$ \delta = \theta_e - arctan({k_{ce} * e_{fa} \over v})$$
 
 To tune the Stanley Controller, you tune the factor **k_ce**, which amplifies (or diminishes) how strong the **cross-track-error**-calculated steering-angle will "flow" into the output steering-angle.
 
-![MISSING: Stanley-Tuning]()
+![MISSING: Stanley-Compared to PurePursuit](../00_assets/acting/Steering_Stanley_ComparedToPurePur.png)
 
-As for the PurePursuit Controller, sadly the achieved good Tuning in the Dev-Launch was by far too strong for the Leaderboard-Launch, which is why we needed to Hotfix the Steering in the last week to Tune Stanley alot "weaker". We do not exactly know, why the two launches are this different.
+As for the PurePursuit Controller, sadly the achieved good tuning in the Dev-Launch was by far too strong for the Leaderboard-Launch, which is why we needed to Hotfix the Steering in the last week to Tune Stanley alot "weaker". We do not exactly know, why the two launches are this different.
 (Dev-Launch and Leaderboard-Launch differentiate in synchronicity, Dev-Launch is synchronous, Leaderboard-Launch is asynchronous?)
 
 **NOTE:** In Dev-Launch, the Stanley Controller never surpassed PurePursuit in steering performance, so it was originally planned to simplify Acting and throw out the Stanley Controller.
