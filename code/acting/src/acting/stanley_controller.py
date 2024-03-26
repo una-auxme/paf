@@ -17,6 +17,7 @@ from trajectory_interpolation import points_to_vector
 
 K_CROSSERR = 0.4  # 1.24 was optimal in dev-launch!
 
+
 class StanleyController(CompatibleNode):
     def __init__(self):
         super(StanleyController, self).__init__('stanley_controller')
