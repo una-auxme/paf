@@ -11,8 +11,7 @@ from std_msgs.msg import Float32
 from acting.msg import Debug
 import numpy as np
 
-from helper_functions import vector_angle
-from trajectory_interpolation import points_to_vector
+from helper_functions import vector_angle, points_to_vector
 
 # Tuneable Values for PurePursuit-Algorithm
 K_LAD = 0.85  # optimal in dev-launch

@@ -8,18 +8,16 @@
 
 Robert Fischer, Alexander Hellmann
 
-
-
 ## Date
 
 26.03.2024
 
 <!-- TOC -->
 - [Overview of the Vehicle Controller Component](#overview-of-the-vehicle-controller-component)
-  - [Author](#author)
+  - [Authors](#authors)
   - [Date](#date)
   - [General Introduction to the Vehicle Controller Component](#general-introduction-to-the-vehicle-controller-component)
-  - [Vehicle controller Output](#vehicle-controller-output)
+  - [Vehicle Controller Output](#vehicle-controller-output)
   - [Emergency Brake](#emergency-brake)
   - [Unstuck Routine](#unstuck-routine)
 <!-- TOC -->

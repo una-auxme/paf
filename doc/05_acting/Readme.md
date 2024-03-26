@@ -2,7 +2,7 @@
 
 This folder contains the documentation of the acting component.
 
-1. [Architecture and API Documentation](./01_architecture_documentation.md)
+1. [Architecture](./01_architecture_documentation.md)
 2. [Overview of the Velocity Controller](./02_velocity_controller.md)
 3. [Overview of the Steering Controllers](./03_steering_controllers.md)
 4. [Overview of the Vehicle Controller Component](./04_vehicle_controller.md)

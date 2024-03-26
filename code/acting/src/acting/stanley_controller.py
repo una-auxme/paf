@@ -12,8 +12,8 @@ from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32
 from acting.msg import StanleyDebug
 
-from helper_functions import vector_angle
-from trajectory_interpolation import points_to_vector
+from helper_functions import vector_angle, points_to_vector
+
 
 K_CROSSERR = 0.4  # 1.24 was optimal in dev-launch!
 

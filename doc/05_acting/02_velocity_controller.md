@@ -31,16 +31,16 @@ For more information about PID-Controllers and how they work, follow [this link]
 
 Currently, we use a tuned PID-Controller which was tuned for the speed of 14 m/s (around 50 km/h), as this is the most commonly driven velocity in this simulation:
 
-![MISSING: PID-TUNING-IMAGE]()
+![MISSING: PID-TUNING-IMAGE](../00_assets/acting/VelContr_PID_StepResponse.png)
 
 Be aware, that the CARLA-Vehicle shifts gears automatically, resulting in the bumps you see!
 As PID-Controllers are linear by nature, the velocity-system is therefore linearized around 50 km/h, meaning the further you deviate from 50 km/h the worse the controller's performance gets:
 
-![MISSING: PID-LINEARIZATION-IMAGE]()
+![MISSING: PID-LINEARIZATION-IMAGE](../00_assets/acting/VelContr_PID_differentVelocities.png)
 
 As the Velocity Controller also has to handle braking, we currently use ```throttle```-optimized PID-Controller to calculate ```brake``` aswell (Since adding another Controller, like a P-Controller, did not work nearly as well!):
 
-![MISSING: PID-BRAKING-IMAGE]()
+![MISSING: PID-BRAKING-IMAGE](../00_assets/acting/VelContr_PID_BrakingWithThrottlePID.png)
 
 Currently, there is no backwards-driving implemented here, as this was not needed. Negative ```target_velocity``` signals are currently not accepted and will lead to an error being printed!
 Currently, there is no secondary linearization for lower velocities implemented. If more accuracy in lower velocities is needed, a second tuning for lower velocites may be a smart way to improve the controller's performance!

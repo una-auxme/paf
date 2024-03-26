@@ -20,7 +20,7 @@ import rospy
 from rospy import Publisher, Subscriber
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 
-from trajectory_interpolation import interpolate_route
+from helper_functions import interpolate_route
 
 """
 TEST_TYPE to choose which kind of Test to run:
