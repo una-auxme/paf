@@ -146,7 +146,7 @@ class PurePursuitController(CompatibleNode):
         self.debug_msg_pub.publish(debug_msg)
         # <-
         return steering_angle
-    
+
     def __get_target_point_index(self, ld: float) -> int:
         """
         Get the index of the target point on the current trajectory based on
