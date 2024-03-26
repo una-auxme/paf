@@ -14,14 +14,21 @@ from coordinate_transformation import CoordinateTransformer
 from coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
 
-GPS_RUNNING_AVG_ARGS: int = 5
+GPS_RUNNING_AVG_ARGS = 10
 
 '''
-This class implements a Kalman filter for a 3D object tracked in 3D space.
+For more information see the documentation in:
+../../doc/06_perception/08_kalman_filter.md
+
+This class implements a Kalman filter for a 3D object tracked in 2D space.
 It implements the data of the IMU and the GPS Sensors.
 The IMU Sensor provides the acceleration
 and the GPS Sensor provides the position.
 The Carla Speedometer provides the current Speed in the headed direction.
+
+The Z Coordinate (Latitude) is calculated by a simple Running Average of
+the last 10 GPS-z Measurements and is not in any way related
+to the Kalman Filter.
 
 The testing Noise for the GPS Sensor is defined as:
     "noise_alt_stddev": 0.000005,
@@ -56,7 +63,7 @@ The measurement matrix H is defined as:
 The process covariance matrix Q is defined as:
     self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
 The measurement covariance matrix R is defined as:
-    self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
+    self.R = np.diag([0.0007, 0.0007, 0, 0, 0, 0])
 '''
 
 
@@ -103,9 +110,6 @@ class KalmanFilter(CompatibleNode):
 
         self.x_pred = np.zeros((6, 1))  # Predicted state vector
         self.P_pred = np.zeros((6, 6))  # Predicted state covariance matrix
-
-        # Define Rolling Average for Kalman Output
-        self.avg_xyz = np.zeros((GPS_RUNNING_AVG_ARGS, 3))
 
         # Define state transition matrix
         '''
@@ -289,13 +293,6 @@ class KalmanFilter(CompatibleNode):
         """
         Publish the kalman location
         """
-        kalman_x = self.x_est[0, 0]
-        kalman_y = self.x_est[1, 0]
-
-        self.avg_xyz = np.roll(self.avg_xyz, -1, axis=0)
-        self.avg_xyz[-1] = np.matrix([kalman_x, kalman_y, self.latitude])
-
-        avg_x, avg_y, avg_z = np.mean(self.avg_xyz, axis=0)
 
         # Initialize the kalman-position
         kalman_position = PoseStamped()
@@ -307,14 +304,10 @@ class KalmanFilter(CompatibleNode):
 
         self.publish_seq.data += 1
 
-        # kalman_position.pose.position.x = self.x_est[0, 0]
-        # kalman_position.pose.position.y = self.x_est[1, 0]
+        kalman_position.pose.position.x = self.x_est[0, 0]
+        kalman_position.pose.position.y = self.x_est[1, 0]
 
-        # kalman_position.pose.position.z = self.latitude
-
-        kalman_position.pose.position.x = avg_x
-        kalman_position.pose.position.y = avg_y
-        kalman_position.pose.position.z = avg_z
+        kalman_position.pose.position.z = self.latitude
 
         kalman_position.pose.orientation.x = 0
         kalman_position.pose.orientation.y = 0
