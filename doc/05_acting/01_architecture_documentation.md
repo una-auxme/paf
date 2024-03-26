@@ -10,11 +10,11 @@ Alexander Hellmann-Schweikardt
 
 17.11.2023
 
-## Inner Architecture
+## Architecture
 
-![MISSING: ARCHITECTURE](https://github.com/una-auxme/paf23/blob/51-feature-acting-detailed-understanding-of-components-and-interfaces/doc/00_assets/acting/inner_architecture.png)
+![MISSING: Acting-ARCHITECTURE](../00_assets/acting/Architecture_Acting.png)
 
-## [Components](https://github.com/una-auxme/paf23/tree/main/code/acting/src/acting)
+## [Components](../../code/acting/src/acting)
 
 ### stanley_controller.py
 

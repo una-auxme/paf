@@ -30,14 +30,14 @@ Currently, two different, independently running Steering Controllers are impleme
 
 ## PurePursuit Controller
 
-The [PurePursuit Controller's](../../code/acting/src/acting/pure_pursuit_controller.py) main feature to determine a steering-output is the so-called **look-ahead-distance d_la**.
+The [PurePursuit Controller's](../../code/acting/src/acting/pure_pursuit_controller.py) main feature to determine a steering-output is the so-called **look-ahead-distance d_la** (l_d in Image).
 For more indepth information about the PurePursuit Controller, click [this link](https://de.mathworks.com/help/nav/ug/pure-pursuit-controller.html) and [this link](https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html).
 
 At every moment it checks a point of the trajectory in front of the vehicle with a distance of **d_la** and determines a steering-angle so that the vehicle will aim straight to this point of the trajectory.
 
-![MISSING: PurePursuit-SHOW-IMAGE]()
+<img src="../00_assets/acting/pure_pursuit.png" width="400">
 
-This **look-ahead-distance d_la** is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
+This **look-ahead-distance d_la**  is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
 
 ![MISSING: PurePursuit-Formulas]()
 
@@ -51,10 +51,10 @@ In the Leaderboard-Launch this sadly does not work the same, so it requires diff
 
 ## Stanley Controller
 
-The [Stanley Controller's](../../code/acting/src/acting/stanley.py) main features to determine a steering-output is the so-called **cross-track-error** and the **trajectory-heading**.
+The [Stanley Controller's](../../code/acting/src/acting/stanley.py) main features to determine a steering-output is the so-called **cross-track-error** (e_fa in Image) and the **trajectory-heading** (theta_e in Image).
 For more indepth information about the Stanley Controller, click [this link](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219) and [this link](https://ai.stanford.edu/~gabeh/papers/hoffmann_stanley_control07.pdf).
 
-![MISSING: Stanley-SHOW-IMAGE]()
+![MISSING: Stanley-SHOW-IMAGE](../00_assets/acting/stanley_controller.png)
 
 At every moment it checks the closest point of the trajectory to itself and determines a two steering-angles:
 
