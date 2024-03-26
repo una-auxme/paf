@@ -1,10 +1,10 @@
 # Overview of the Vehicle Controller Component
 
-**Summary:** This page provides an overview of the current status of both steering controllers, the PurePursuit and the Stanley Controller.
+**Summary:** This page provides an overview of the current status of the Vehicle Controller Component.
 
 ---
 
-## Author
+## Authors
 
 Robert Fischer, Alexander Hellmann
 
