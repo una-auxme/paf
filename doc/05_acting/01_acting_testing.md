@@ -6,18 +6,18 @@
 
 ## Author
 
-Julian Graf
+Alexander Hellmann
 
 ## Date
 
 09.01.2023
 
 <!-- TOC -->
-* [How to test acting components](#how-to-test-acting-components)
-  * [Author](#author)
-  * [Date](#date)
-  * [velocity_controller](#velocitycontroller)
-  * [Dummys](#dummys)
+- [How to test acting components](#how-to-test-acting-components)
+  - [Author](#author)
+  - [Date](#date)
+  - [velocity\_controller](#velocity_controller)
+  - [Dummys](#dummys)
 <!-- TOC -->
 
 ## velocity_controller
