@@ -2,6 +2,8 @@
 
 **Summary:** This page explains how the GPS sensor is handled including a short example on how to use it.
 
+**The Filter that's currently in use: [Kalman Filter](../../06_perception/08_kalman_filter.md)**
+
 ---
 
 ## Authors
