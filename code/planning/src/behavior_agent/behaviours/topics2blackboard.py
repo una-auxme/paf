@@ -4,7 +4,7 @@
 import py_trees
 import py_trees_ros
 
-from std_msgs.msg import Float32, Bool, Float32MultiArray
+from std_msgs.msg import Float32, Bool, Float32MultiArray, Int16
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 
@@ -36,6 +36,10 @@ def create_node(role_name):
          f"/paf/{role_name}/Center/traffic_light_state",
          'msg': TrafficLightState,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
+        {'name':
+         f"/paf/{role_name}/Center/traffic_light_y_distance",
+         'msg': Int16,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/max_velocity", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/speed_limit", 'msg': Float32,
@@ -52,6 +56,8 @@ def create_node(role_name):
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
         {'name': f"/paf/{role_name}/oncoming", 'msg': Float32,
          'clearing-policy': py_trees.common.ClearingPolicy.NEVER},
+        {'name': f"/paf/{role_name}/target_velocity", 'msg': Float32,
+         'clearing-policy': py_trees.common.ClearingPolicy.NEVER}
     ]
 
     topics2blackboard = py_trees.composites.Parallel("Topics to Blackboard")

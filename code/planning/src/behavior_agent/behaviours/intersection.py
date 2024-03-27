@@ -102,9 +102,13 @@ class Approach(py_trees.behaviour.Behaviour):
         # Update Light Info
         light_status_msg = self.blackboard.get(
             "/paf/hero/Center/traffic_light_state")
+        light_distance_y_msg = self.blackboard.get(
+            "/paf/hero/Center/traffic_light_y_distance")
         if light_status_msg is not None:
             self.traffic_light_status = get_color(light_status_msg.state)
             self.traffic_light_detected = True
+            if light_distance_y_msg is not None:
+                self.traffic_light_distance = light_distance_y_msg.data
 
         # Update stopline Info
         _dis = self.blackboard.get("/paf/hero/waypoint_distance")
@@ -125,8 +129,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_stopline_distance = self.stop_distance
         else:
             self.virtual_stopline_distance = 0.0
-
-        rospy.loginfo(f"Stopline distance: {self.virtual_stopline_distance}")
         target_distance = 5.0
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
@@ -151,12 +153,14 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
-        if self.virtual_stopline_distance > target_distance:
+        if (self.virtual_stopline_distance > target_distance) and \
+                (self.traffic_light_distance > 150):
             # too far
             print("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.virtual_stopline_distance < target_distance:
+                ((self.virtual_stopline_distance < target_distance) or
+                 (self.traffic_light_distance < 150)):
             # stopped
             print("stopped")
             return py_trees.common.Status.SUCCESS
@@ -265,8 +269,7 @@ class Wait(py_trees.behaviour.Behaviour):
         light_status_msg = self.blackboard.get(
             "/paf/hero/Center/traffic_light_state")
 
-        lidar_data = self.blackboard.get("/carla/hero/LIDAR_range")
-
+        lidar_data = None
         intersection_clear = True
         if lidar_data is not None:
             # if distance smaller than 10m, intersection is blocked

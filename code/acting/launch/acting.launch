@@ -19,7 +19,7 @@
     </node>
 
      <node pkg="acting" type="vehicle_controller.py" name="vehicle_controller" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="control_loop_rate" value="0.1" /> <!-- leaderboard expects commands every 0.05 seconds OTHERWISE IT LAGS REALLY BADLY-->
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
@@ -29,12 +29,11 @@
     </node>
     
     <!-- UNCOMMENT THIS TO USE THE DEBUG_NODE FOR ACTING-TESTING -->
-    <!--
-    <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
+    <!-- <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
         <param name="control_loop_rate" value="0.05" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
-    -->
+     -->
 
     <!-- If you want a live rqt_plots to show up automatically, include them like following example-plot for Velocity-Controller-Testing -->
     <!--node pkg="rqt_plot" type="rqt_plot" output="screen" name="velocity_test" args="/carla/hero/Speed /paf/hero/target_velocity /paf/hero/throttle /paf/hero/brake"/-->

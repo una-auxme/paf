@@ -4,7 +4,9 @@ from carla_msgs.msg import CarlaSpeedometer
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from simple_pid import PID
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
+from nav_msgs.msg import Path
+import rospy
 
 
 class VelocityController(CompatibleNode):
@@ -42,6 +44,19 @@ class VelocityController(CompatibleNode):
             f"/paf/{self.role_name}/brake",
             qos_profile=1)
 
+        self.reverse_pub: Publisher = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/reverse",
+            qos_profile=1)
+
+        # needed to prevent the car from driving before a path to follow is
+        # available. Might be needed later to slow down in curves
+        self.trajectory_sub: Subscriber = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory",
+            self.__set_trajectory,
+            qos_profile=1)
+
         self.__current_velocity: float = None
         self.__target_velocity: float = None
 
@@ -77,15 +92,32 @@ class VelocityController(CompatibleNode):
                 return
 
             if self.__target_velocity < 0:
-                self.logerr("VelocityController doesn't support backward "
-                            "driving yet.")
-                return
-            # very low target_velocities -> just stand still
-            if self.__target_velocity < 1:
+                # self.logerr("VelocityController doesn't support backward "
+                #             "driving yet.")
+                if self.__target_velocity == -3:
+                    #  -3 is the signal for reverse driving
+
+                    reverse = True
+                    throttle = 1
+                    brake = 0
+                    rospy.loginfo("VelocityController: reverse driving")
+
+                else:
+                    #  other negative values only lead to braking
+                    reverse = False
+                    brake = 1
+                    throttle = 0
+
+            # very low target_velocities -> stand
+            elif self.__target_velocity < 1:
+                reverse = False
                 brake = 1
                 throttle = 0
             else:
-                pid_t.setpoint = self.__target_velocity
+                reverse = False
+
+                v = self.__target_velocity
+                pid_t.setpoint = v
                 throttle = pid_t(self.__current_velocity)
                 # any throttle < 0 is used as brake signal
                 if throttle < 0:
@@ -93,6 +125,8 @@ class VelocityController(CompatibleNode):
                     throttle = 0
                 else:
                     brake = 0
+
+            self.reverse_pub.publish(reverse)
             self.brake_pub.publish(brake)
             self.throttle_pub.publish(throttle)
 

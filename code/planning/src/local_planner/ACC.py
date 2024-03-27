@@ -7,9 +7,9 @@ from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
 # from std_msgs.msg import String
-from std_msgs.msg import Float32MultiArray, Float32
-from collision_check import CollisionCheck
+from std_msgs.msg import Float32MultiArray, Float32, Bool
 import numpy as np
+from utils import interpolate_speed, calculate_rule_of_thumb
 
 
 class ACC(CompatibleNode):
@@ -21,6 +21,18 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__('ACC')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
+
+        # Get Unstuck flag and distance
+        self.unstuck_flag_sub: Subscriber = self.new_subscription(
+            Bool,
+            f"/paf/{self.role_name}/unstuck_flag",
+            self.__get_unstuck_flag,
+            qos_profile=1)
+        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/unstuck_distance",
+            self.__get_unstuck_distance,
+            qos_profile=1)
 
         # Get current speed
         self.velocity_sub: Subscriber = self.new_subscription(
@@ -67,6 +79,10 @@ class ACC(CompatibleNode):
             f"/paf/{self.role_name}/speed_limit",
             qos_profile=1)
 
+        # unstuck attributes
+        self.__unstuck_flag: bool = False
+        self.__unstuck_distance: float = -1
+
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: [float] = []
         # Current Trajectory
@@ -98,6 +114,22 @@ class ACC(CompatibleNode):
             return
         self.obstacle_speed = data.data[1]
         self.obstacle_distance = data.data[0]
+
+    def __get_unstuck_flag(self, data: Bool):
+        """_summary_
+
+        Args:
+            data (Bool): _description_
+        """
+        self.__unstuck_flag = data.data
+
+    def __get_unstuck_distance(self, data: Float32):
+        """_summary_
+
+        Args:
+            data (Float32): _description_
+        """
+        self.__unstuck_distance = data.data
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         """_summary_
@@ -148,6 +180,17 @@ class ACC(CompatibleNode):
             self.speed_limit = \
                 self.__speed_limits_OD[self.__current_wp_index]
             self.speed_limit_publisher.publish(self.speed_limit)
+        # in case we used the unstuck routine to drive backwards
+        # we have to follow WPs that are already passed
+        elif self.__unstuck_flag:
+            if self.__unstuck_distance is None\
+               or self.__unstuck_distance == -1:
+                return
+            self.__current_wp_index -= int(self.__unstuck_distance)
+            self.wp_publisher.publish(self.__current_wp_index)
+            self.speed_limit = \
+                self.__speed_limits_OD[self.__current_wp_index]
+            self.speed_limit_publisher.publish(self.speed_limit)
 
     def run(self):
         """
@@ -164,22 +207,20 @@ class ACC(CompatibleNode):
                     self.__current_velocity is not None:
                 # If we have obstalce speed and distance, we can
                 # calculate the safe speed
-                safety_distance = CollisionCheck.calculate_rule_of_thumb(
+                safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity)
                 if self.obstacle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
-                    # Lerp factor:
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
                     safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
-                    lerp_factor = 0.2
-                    safe_speed = (1 - lerp_factor) * self.__current_velocity +\
-                        lerp_factor * safe_speed
+
+                    safe_speed = interpolate_speed(safe_speed,
+                                                   self.__current_velocity)
                     if safe_speed < 1.0:
                         safe_speed = 0
-                    self.logerr("ACC: Safe speed: " + str(safe_speed) +
-                                " Distance: " + str(self.obstacle_distance))
+                    self.logerr("ACC: Safe speed: " + str(safe_speed))
                     self.velocity_pub.publish(safe_speed)
                 else:
                     # If safety distance is reached just hold current speed
@@ -197,6 +238,8 @@ class ACC(CompatibleNode):
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
                 # self.logerr("ACC: Speed limit: " + str(self.speed_limit))
+                # interpolated_speed = interpolate_speed(self.speed_limit,
+                #                                        self.__current_velocity)
                 self.velocity_pub.publish(self.speed_limit)
             else:
                 self.velocity_pub.publish(0)

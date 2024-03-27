@@ -1,32 +1,40 @@
 from scipy.spatial.transform import Rotation
 import numpy as np
 import math
+import carla
+import os
 # import rospy
 
 
-hyperparameters = {
-    "max_speed": 15,
-    "max_accel": 4.0,
-    "max_curvature": 30.0,
-    "max_road_width_l": 4,
-    "max_road_width_r": 4,
-    "d_road_w": 0.2,
-    "dt": 0.2,
-    "maxt": 30,
-    "mint": 6.0,
-    "d_t_s": 0.5,
-    "n_s_sample": 2.0,
-    "obstacle_clearance": 1.5,
-    "kd": 1.0,
-    "kv": 0.1,
-    "ka": 0.1,
-    "kj": 0.1,
-    "kt": 0.1,
-    "ko": 0.1,
-    "klat": 1.0,
-    "klon": 1.0,
-    "num_threads": 1,  # set 0 to avoid using threaded algorithm
-}
+"""
+This file represents the utility functions for the local planner and other
+components.
+It containes parameters and utility functions to reduce code in the ros nodes.
+"""
+
+# Number of waypoints to be used for the overtaking maneuver
+NUM_WAYPOINTS = 7
+# Factor for linear interpolation of target speed values for the ACC
+LERP_FACTOR = 0.5
+# Earth radius in meters for location_to_GPS
+EARTH_RADIUS_EQUA = 6378137.0
+
+
+def get_distance(pos_1, pos_2):
+    """Calculate the distance between two positions
+
+    Args:
+        pos1 (np.array): Position 1
+        pos2 (np.array): Position 2
+        # the np.array should be in the form of
+        # np.array([data.pose.position.x,
+                    data.pose.position.y,
+                    data.pose.position.z])
+
+    Returns:
+        float: Distance
+    """
+    return np.linalg.norm(pos_1 - pos_2)
 
 
 def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
@@ -44,7 +52,6 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
         dict: Dictionary with (lat,lon,z) coordinates
     """
 
-    EARTH_RADIUS_EQUA = 6378137.0   # pylint: disable=invalid-name
     scale = math.cos(lat_ref * math.pi / 180.0)
     mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
     my = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + lat_ref) *
@@ -58,6 +65,26 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     z = 703
 
     return {'lat': lat, 'lon': lon, 'z': z}
+
+
+def calculate_rule_of_thumb(emergency, speed):
+    """Calculates the rule of thumb as approximation
+    for the braking distance
+
+    Args:
+        emergency (bool): if emergency brake is initiated
+        speed (float): speed of the vehicle (km/h)
+
+    Returns:
+        float: distance calculated with rule of thumb
+    """
+    reaction_distance = speed
+    braking_distance = (speed * 0.36)**2
+    if emergency:
+        # Emergency brake is really effective in Carla
+        return reaction_distance + braking_distance / 2
+    else:
+        return reaction_distance + braking_distance
 
 
 def approx_obstacle_pos(distance: float, heading: float,
@@ -122,8 +149,6 @@ def spawn_car(distance):
     Args:
         distance (float): distance
     """
-    import carla
-    import os
     CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
     CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
 
@@ -144,21 +169,18 @@ def spawn_car(distance):
     spawnPoint = carla.Transform(ego_vehicle.get_location() +
                                  carla.Location(y=distance.data),
                                  ego_vehicle.get_transform().rotation)
-    spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
-                                  carla.Location(x=2.5, y=distance.data + 1),
-                                  ego_vehicle.get_transform().rotation)
+    # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
+    #                               carla.Location(x=2.5, y=distance.data + 1),
+    #                               ego_vehicle.get_transform().rotation)
     vehicle = world.spawn_actor(bp, spawnPoint)
-    vehicle2 = world.spawn_actor(bp, spawnpoint2)
-    vehicle2.set_autopilot(False)
+    # vehicle2 = world.spawn_actor(bp, spawnpoint2)
+    # vehicle2.set_autopilot(False)
     vehicle.set_autopilot(False)
-    # vehicle.set_location(loc)
-    # coords = vehicle.get_location()
-    # get spectator
-    spectator = world.get_spectator()
-    # set spectator to follow ego vehicle with offset
-    spectator.set_transform(
-        carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
-                        carla.Rotation(pitch=-90)))
+    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
+
+
+def interpolate_speed(speed_target, speed_current):
+    return (1 - LERP_FACTOR) * speed_current + LERP_FACTOR * speed_target
 
 
 def filter_vision_objects(float_array, oncoming):
@@ -193,8 +215,11 @@ def filter_vision_objects(float_array, oncoming):
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
     if float_array.size == 0:
         return None
-    # Filter out all objects that are not cars
-    all_cars = float_array[np.where(float_array[:, 0] == 2)]
+    # Filter out all objects that are not cars, Persons, Bycicles,
+    # Motorbikes, Busses or Trucks
+    all_cars = float_array[np.where(float_array[:, 0] <= 7)]
+    all_cars = all_cars[np.where(all_cars[:, 0] != 6)]
+    all_cars = all_cars[np.where(all_cars[:, 0] != 4)]
 
     # Get cars that are on our lane
     if oncoming:

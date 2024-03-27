@@ -5,7 +5,7 @@ import rospy
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-from std_msgs.msg import String, Float32, Bool, Float32MultiArray
+from std_msgs.msg import String, Float32, Bool, Float32MultiArray, Int16
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from carla_msgs.msg import CarlaSpeedometer
@@ -17,9 +17,12 @@ from perception.msg import Waypoint, LaneChange
 import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
-from utils import convert_to_ms, spawn_car
+from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS
 
 # from scipy.spatial._kdtree import KDTree
+
+
+UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
 
 
 class MotionPlanning(CompatibleNode):
@@ -33,7 +36,7 @@ class MotionPlanning(CompatibleNode):
     def __init__(self):
         super(MotionPlanning, self).__init__('MotionPlanning')
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.1)
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
 
         self.target_speed = 0.0
         self.__curr_behavior = None
@@ -54,6 +57,11 @@ class MotionPlanning(CompatibleNode):
         self.__corners = None
         self.__in_corner = False
         self.calculated = False
+        self.traffic_light_y_distance = np.inf
+        # unstuck routine variables
+        self.unstuck_distance = None
+        self.unstuck_overtake_flag = False
+        self.init_overtake_pos = None
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32,
@@ -114,13 +122,25 @@ class MotionPlanning(CompatibleNode):
             self.__set_change_point,
             qos_profile=1)
 
-        self.change_point_sub: Subscriber = self.new_subscription(
+        self.coll_point_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             self.__set_collision_point,
             qos_profile=1)
 
+        self.traffic_y_sub: Subscriber = self.new_subscription(
+            Int16,
+            f"/paf/{self.role_name}/Center/traffic_light_y_distance",
+            self.__set_traffic_y_distance,
+            qos_profile=1)
+        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/unstuck_distance",
+            self.__set_unstuck_distance,
+            qos_profile=1)
+
         # Publisher
+
         self.traj_pub: Publisher = self.new_publisher(
             msg_type=Path,
             topic=f"/paf/{self.role_name}/trajectory",
@@ -142,6 +162,14 @@ class MotionPlanning(CompatibleNode):
 
         self.logdebug("MotionPlanning started")
         self.counter = 0
+
+    def __set_unstuck_distance(self, data: Float32):
+        """Set unstuck distance
+
+        Args:
+            data (Float32): Unstuck distance
+        """
+        self.unstuck_distance = data.data
 
     def __set_speed_limit(self, data: Float32):
         """Set current speed limit
@@ -184,6 +212,10 @@ class MotionPlanning(CompatibleNode):
                                     data.pose.position.y,
                                     data.pose.position.z])
 
+    def __set_traffic_y_distance(self, data):
+        if data is not None:
+            self.traffic_light_y_distance = data.data
+
     def change_trajectory(self, distance_obj):
         """update trajectory for overtaking and convert it
         to a new Path message
@@ -199,17 +231,28 @@ class MotionPlanning(CompatibleNode):
         self.overtake_success_pub.publish(self.__overtake_status)
         return
 
-    def overtake_fallback(self, distance, pose_list):
+    def overtake_fallback(self, distance, pose_list, unstuck=False):
         # self.loginfo("Overtake Fallback!")
         # obstacle_position = approx_obstacle_pos(distance,
         #                                         self.current_heading,
         #                                         self.current_pos,
         #                                         self.current_speed)
-        selection = pose_list[int(self.current_wp):int(self.current_wp) +
-                              int(distance) + 7]
+        currentwp = self.current_wp
+        normal_x_offset = 2
+        unstuck_x_offset = 3  # could need adjustment with better steering
+        if unstuck:
+            selection = pose_list[int(currentwp)-2:int(currentwp) +
+                                  int(distance)+2 + NUM_WAYPOINTS]
+        else:
+            selection = pose_list[int(currentwp) + int(distance/2):
+                                  int(currentwp) +
+                                  int(distance) + NUM_WAYPOINTS]
         waypoints = self.convert_pose_to_array(selection)
 
-        offset = np.array([2, 0, 0])
+        if unstuck is True:
+            offset = np.array([unstuck_x_offset, 0, 0])
+        else:
+            offset = np.array([normal_x_offset, 0, 0])
         rotation_adjusted = Rotation.from_euler('z', self.current_heading +
                                                 math.radians(90))
         offset_front = rotation_adjusted.apply(offset)
@@ -237,8 +280,14 @@ class MotionPlanning(CompatibleNode):
         path = Path()
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
-        path.poses = pose_list[:int(self.current_wp)] + \
-            result + pose_list[int(self.current_wp + distance + 7):]
+        if unstuck:
+            path.poses = pose_list[:int(currentwp)-2] + \
+                result + pose_list[int(currentwp) +
+                                   int(distance) + 2 + NUM_WAYPOINTS:]
+        else:
+            path.poses = pose_list[:int(currentwp) + int(distance/2)] + \
+                result + pose_list[int(currentwp + distance + NUM_WAYPOINTS):]
+
         self.trajectory = path
 
     def __set_trajectory(self, data: Path):
@@ -406,6 +455,7 @@ class MotionPlanning(CompatibleNode):
         speed = 0.0
         split = "_"
         short_behavior = behavior.partition(split)[0]
+
         if short_behavior == "int":
             speed = self.__get_speed_intersection(behavior)
         elif short_behavior == "lc":
@@ -414,9 +464,50 @@ class MotionPlanning(CompatibleNode):
             speed = self.__get_speed_overtake(behavior)
         elif short_behavior == "parking":
             speed = bs.parking.speed
+        elif short_behavior == "us":
+            speed = self.__get_speed_unstuck(behavior)
         else:
             self.__overtake_status = -1
             speed = self.__get_speed_cruise()
+        return speed
+
+    def __get_speed_unstuck(self, behavior: str) -> float:
+        global UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE
+        speed = 0.0
+        if behavior == bs.us_unstuck.name:
+            speed = bs.us_unstuck.speed
+        elif behavior == bs.us_stop.name:
+            speed = bs.us_stop.speed
+        elif behavior == bs.us_overtake.name:
+            pose_list = self.trajectory.poses
+            if self.unstuck_distance is None:
+                self.logfatal("Unstuck distance not set")
+                return speed
+
+            if self.init_overtake_pos is not None \
+               and self.current_pos is not None:
+                distance = np.linalg.norm(
+                    self.init_overtake_pos[:2] - self.current_pos[:2])
+                # self.logfatal(f"Unstuck Distance in mp: {distance}")
+                # clear distance to last unstuck -> avoid spamming overtake
+                if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
+                    self.unstuck_overtake_flag = False
+                    self.logwarn("Unstuck Overtake Flag Cleared")
+
+            # to avoid spamming the overtake_fallback
+            if self.unstuck_overtake_flag is False:
+                # create overtake trajectory starting 6 meteres before
+                # the obstacle
+                # 6 worked well in tests, but can be adjusted
+                self.overtake_fallback(self.unstuck_distance, pose_list,
+                                       unstuck=True)
+                self.logfatal("Overtake Trajectory while unstuck!")
+                self.unstuck_overtake_flag = True
+                self.init_overtake_pos = self.current_pos[:2]
+            # else: overtake not possible
+
+            speed = bs.us_overtake.speed
+
         return speed
 
     def __get_speed_intersection(self, behavior: str) -> float:
@@ -468,8 +559,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_enter_slow.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_leave.name:
-            speed = convert_to_ms(10.)
-
+            speed = convert_to_ms(30.)
         return speed
 
     def __get_speed_cruise(self) -> float:
@@ -477,14 +567,13 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_intersection(self) -> float:
         target_distance = 5.0
-        virtual_stopline_distance = self.__calc_virtual_stopline()
+        stopline = self.__calc_virtual_stopline()
         # calculate speed needed for stopping
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((virtual_stopline_distance / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
-        if virtual_stopline_distance < target_distance:
+        if stopline < target_distance:
             v_stop = 0.0
         return v_stop
 
@@ -493,8 +582,7 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_change_point()
 
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((stopline / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
         if stopline < 5.0:
@@ -503,14 +591,12 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
-
         v_stop = max(convert_to_ms(10.),
-                     convert_to_ms((stopline / 30)
-                                   * 50))
+                     convert_to_ms(stopline / 0.8))
         if stopline < 6.0:
             v_stop = 0.0
 
-        self.logerr(f"Speed ovt: {v_stop}")
+        # self.logerr(f"Speed ovt: {v_stop}")
         return v_stop
 
     def __calc_virtual_change_point(self) -> float:
@@ -521,7 +607,13 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
-            return self.__stopline[0]
+            stopline = self.__stopline[0]
+            if self.traffic_light_y_distance < 250 and stopline > 10:
+                return 10
+            elif self.traffic_light_y_distance < 180 and stopline > 7:
+                return 0.0
+            else:
+                return stopline
         else:
             return 0.0
 

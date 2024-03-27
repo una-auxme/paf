@@ -309,7 +309,7 @@ def get_x_or_y_from_csv_file(file_name, type='x'):
         file_path = folder_path_y + file_name
 
     # Read the CSV file into a DataFrame
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, skiprows=8)
 
     # rename the columns
     df.columns = ['time', 'ideal_x', 'kalman_x', 'running_avg_x',
@@ -870,11 +870,11 @@ def calculate_RMSPE(ideal, estimated):
 # # plot_RMSPE_notched_box("data_26.csv")
 # plot_CEP("data_25.csv")
 # plot_CEP("data_26.csv")
-data = "data_26.csv"
+data = "data_50.csv"
 plot_CEP(data)
 plot_x_or_y_notched_box(data, type='x', error_type='MSE')
 plot_x_or_y_notched_box(data, type='x', error_type='MAE')
-plot_x_or_y_notched_box(data, type='y', error_type='MSE')
-plot_x_or_y_notched_box(data, type='y', error_type='MAE')
+# plot_x_or_y_notched_box(data, type='y', error_type='MSE')
+# plot_x_or_y_notched_box(data, type='y', error_type='MAE')
 
 plt.show()
