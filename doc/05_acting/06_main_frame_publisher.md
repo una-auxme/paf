@@ -16,12 +16,12 @@ Julian Graf
 - [Main frame publisher](#main-frame-publisher)
   - [Author](#author)
   - [Date](#date)
-  - [Main frame publisher](#main-frame-publisher-1)
+  - [Overview: Main frame publisher](#overview-main-frame-publisher)
   - [How to use](#how-to-use)
   - [Known issues](#known-issues)
 <!-- TOC -->
 
-## Main frame publisher
+## Overview: Main frame publisher
 
 The main frame publisher is needed to visualize the path created by the planning in rviz.
 The main frame publisher handles the translation between the static global frame and the moving hero frame.
