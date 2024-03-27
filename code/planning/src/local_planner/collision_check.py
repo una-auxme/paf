@@ -219,21 +219,9 @@ class CollisionCheck(CompatibleNode):
             float: Time until collision with obstacle in front
         """
         if (self.__current_velocity - obstacle_speed) == 0:
+            # If the speed difference is 0, we cannot calculate time
             return -1
         return distance / (self.__current_velocity - obstacle_speed)
-
-    def meters_to_collision(self, obstacle_speed, distance):
-        """Calculates the meters until collision with the obstacle in front
-
-        Args:
-            obstacle_speed (float): speed from obstacle in front
-            distance (float): distance from obstacle in front
-
-        Returns:
-            float: distance (in meters) until collision with obstacle in front
-        """
-        return self.time_to_collision(obstacle_speed, distance) * \
-            self.__current_velocity
 
     def check_crash(self, obstacle):
         """ Checks if and when the ego vehicle will crash
@@ -246,14 +234,15 @@ class CollisionCheck(CompatibleNode):
         distance, obstacle_speed = obstacle
 
         collision_time = self.time_to_collision(obstacle_speed, distance)
-        # collision_meter = self.meters_to_collision(obstacle_speed, distance)
-        # safe_distance2 = self.calculate_rule_of_thumb(False)
-        emergency_distance2 = calculate_rule_of_thumb(
+        # Calculate emergency distance based on current speed
+        emergency_distance = calculate_rule_of_thumb(
             True, self.__current_velocity)
         if collision_time > 0:
-            if distance < emergency_distance2:
+            # If time to collision is positive, a collision is ahead
+            if distance < emergency_distance:
+                # If distance is smaller than emergency distance, publish emergency brake
                 self.emergency_pub.publish(True)
-            # When no emergency brake is needed publish collision object
+            # Publish collision data to Decision Making and ACC
             data = Float32MultiArray(data=[distance, obstacle_speed])
             self.collision_pub.publish(data)
         else:
