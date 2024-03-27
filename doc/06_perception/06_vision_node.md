@@ -1,21 +1,43 @@
 # Vision Node
 
-The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation
-on several different models. The model can be specified as a parameter in the perception.launch file.
+The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation on multiple cameras at the same time. It can also subsripe to the lisdar_distance publisher and calculate distances of objects inside the detected bounding boxes.
 
-The VisionNode is currently using the yolov8x-seg model.
+## Model overview
 
-## Usage
+The Vision-Node implements a lot of different models which can be specified in the perception launch file.
 
-The following code shows how the Vision-Node is specified in perception.launch
+| Model                                 | Type         | Distance Calculation |
+|---------------------------------------|--------------|--------|
+| fasterrcnn_resnet50_fpn_v2            | detection    | no     |
+| fasterrcnn_mobilenet_v3_large_320_fpn | detection    | no     |
+| yolov8n                               | detection    | yes    |
+| yolov8s                               | detection    | yes    |
+| yolov8m                               | detection    | yes    |
+| yolov8l                               | detection    | yes    |
+| yolov8x                               | detection    | yes    |
+| yolo_nas_l                            | detection    | yes    |
+| yolo_nas_m                            | detection    | yes    |
+| yolo_nas_s                            | detection    | yes    |
+| rtdetr-l                              | detection    | yes    |
+| rtdetr-x                              | detection    | yes    |
+| sam_l                                 | detection    | yes    |
+| FastSAM-x                             | detection    | yes    |
+| deeplabv3_resnet101                   | segmentation | no     |
+| yolov8x-seg                           | segmentation | yes    |
 
-`
-<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen"><br>
+Next to that the Vision-Node implements 4 Camera-Angles which can also be set in the launch file.
+
+```xml
+<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
-     <!--
-      Object-Detection:
-      - fasterrcnn_resnet50_fpn_v2
+    <param name="center" value="True" />
+    <param name="back" value="False" />
+    <param name="left" value="False" />
+    <param name="right" value="False" />
+
+      <!--Object-Detection: 
+      - fasterrcnn_resnet50_fpn_v2 
       - fasterrcnn_mobilenet_v3_large_320_fpn
       - yolov8n
       - yolov8s
@@ -29,113 +51,67 @@ The following code shows how the Vision-Node is specified in perception.launch
       - rtdetr-x
       - sam_l
       - FastSAM-x
+
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg
+      - yolov8x-seg 
       -->
-    <param name="model" value="yolov8x-seg" />
+
+    <param name="model" value="rtdetr-l" />
   </node>
-`
-
-Depending on preferences and targets a different model can be used by replacing the value of the model parameter
-by one of the lines from the comment above.
-
-The Vision-Node will automatically switch between object-detection, imagesegmentation, load the correct weights and perform the correct preprocessing.
-
-For now the Vision-Node only supports pyTorch models. Within the next sprint it should be able to
-accept other frameworks aswell. It should also be possible to run object-detection and image-segmentation at the same time.
-
-## Model overview
-
-| Model                                 | Type         | Stable | Comments                              |
-|---------------------------------------|--------------|--------|---------------------------------------|
-| fasterrcnn_resnet50_fpn_v2            | detection    | no     | CUDA-Problems                         |
-| fasterrcnn_mobilenet_v3_large_320_fpn | detection    | no     | CUDA-Problems                         |
-| yolov8n                               | detection    | yes    |                                       |
-| yolov8s                               | detection    | yes    |                                       |
-| yolov8m                               | detection    | yes    |                                       |
-| yolov8l                               | detection    | yes    |                                       |
-| yolov8x                               | detection    | yes    |                                       |
-| yolo_nas_l                            | detection    | no     | Missing super_gradients package error |
-| yolo_nas_m                            | detection    | no     | Missing super_gradients package error |
-| yolo_nas_s                            | detection    | no     | Missing super_gradients package error |
-| rtdetr-l                              | detection    | yes    |                                       |
-| rtdetr-x                              | detection    | yes    |                                       |
-| sam_l                                 | detection    | no     | Ultralytics Error                     |
-| FastSAM-x                             | detection    | no     | CUDA Problems                         |
-| deeplabv3_resnet101                   | segmentation | no     | CUDA Problems, Segmentation Problems  |
-| yolov8x-seg                           | segmentation | yes    |                                       |
+```
 
 ## How it works
 
-### Initialization
+The Vision-Node basically operates in three stages.
 
-The Vision-Node contains a Dictionary with all it's models. Depending on the model parameter it will initialize the correct model and weights.
+1. Object-Detection
+2. Distance-Calculation
+3. Publishing of Ouptuts
 
-`self.model_dict = {
-            "fasterrcnn_resnet50_fpn_v2":
-            (fasterrcnn_resnet50_fpn_v2(
-                weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT),
-                FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT,
-                "detection",
-                "pyTorch"),
-            "fasterrcnn_mobilenet_v3_large_320_fpn":
-            (fasterrcnn_mobilenet_v3_large_320_fpn(
-                weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT),
-                FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT,
-                "detection",
-                "pyTorch"),
-            "deeplabv3_resnet101":
-            (deeplabv3_resnet101(
-                weights=DeepLabV3_ResNet101_Weights.DEFAULT),
-                DeepLabV3_ResNet101_Weights.DEFAULT,
-                "segmentation",
-                "pyTorch"),
-            'yolov8n': (YOLO, "yolov8n.pt", "detection", "ultralytics"),
-            'yolov8s': (YOLO, "yolov8s.pt", "detection", "ultralytics"),
-            'yolov8m': (YOLO, "yolov8m.pt", "detection", "ultralytics"),
-            'yolov8l': (YOLO, "yolov8l.pt", "detection", "ultralytics"),
-            'yolov8x': (YOLO, "yolov8x.pt", "detection", "ultralytics"),
-            'yolo_nas_l': (NAS, "yolo_nas_l.pt", "detection", "ultralytics"),
-            'yolo_nas_m': (NAS, "yolo_nas_m.pt", "detection", "ultralytics"),
-            'yolo_nas_s': (NAS, "yolo_nas_s.pt", "detection", "ultralytics"),
-            'rtdetr-l': (RTDETR, "rtdetr-l.pt", "detection", "ultralytics"),
-            'rtdetr-x': (RTDETR, "rtdetr-x.pt", "detection", "ultralytics"),
-            'yolov8x-seg': (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
-            'sam_l': (SAM, "sam_l.pt", "detection", "ultralytics"),
-            'FastSAM-x': (FastSAM, "FastSAM-x.pt", "detection", "ultralytics")}`
+### 1. Object-Detection
 
-### Core
+The object-detection can be run both ultralytics and pyTorch models. Depending on the model type the images from the cameras are preprocessed and than predicted by the model.
 
-The core of the Vision-Node is the handle_camera_image function.
-This function is automatically triggered by the Camera-Subscriber of the Vision-Node and performs the following steps:
+The object-detection can publish images to RViz under their specified camera angle and topic.
 
-1. Convert ImageMsg to CV2-Image
-2. Perform preprocessing on CV2-Image
-3. Forward image through model
-4. Call further processing function for output depending on type
-   1. Detection -> apply_bounding_boxes
-   2. Segmentation -> create_mask
-5. Convert CV2-Image to ImageMsg
-6. Publish ImageMsg over ImagePublisher
+![Object-Detection](../06_perception/experiments/object-detection-model_evaluation/asset-copies/1619_yolov8x_seg.jpg)
 
-## Visualization
+Please refer to the [model evaluation](../06_perception/experiments/object-detection-model_evaluation/README.md) for more detailed information about the performance of each model.
 
-The Vision-Node implements an ImagePublisher under the topic: "/paf/hero/Center/segmented_image"
+**Center Camera**
+![Center Camera](../00_assets/Front_Detection.png)
 
-The Configuration File of RViz has been changed accordingly to display the published images alongside with the Camera.
+**Back Camera**
+![Back Camera](../00_assets/Back_Detection.png)
 
-The build in Visualization of the YOLO-Models works very well.
+**Left Camera**
+![Left Camera](../00_assets/Left_Detection.png)
 
-## Known Issues
+**Right Camera**
+![Right Camera](../00_assets/Right_Detection.png)
 
-### Time
+## 2. Distance-Calculation
 
-When running on YOLO-Models the Time issue is fixed because ultralytics has some way of managing the CUDA-Resources very well.
+The Vision-Node reveives depth-images from the [lidar distance node](12_distance_to_objects.md) for the specified camera angle. It can than find the min x and min abs y distance within each bounding box that has been predicted by a model. This feature is implemented only for utralytics models.
 
-When running on different models, the CUDA-Error persists.
+The depth images have the same dimension as the camera image and contain x, y and z coordinates of the lidar coordinates system in the three RGB-Channels.
 
-## Segmentation
+![Depth Image](../00_assets/2_15_layover.png)
 
-For some reason the create_segmentation mask function works in a standalone project, but not in the Vision-Node.
-I stopped debugging, because the YOLO-Models work way better and build a very good and stable baseline.
+Read more about the calculation of Depth Image [here](12_distance-to_objects.md)
+
+## 3. Publishing of Outputs
+
+In order to provide valuble information for the [planning](../07_planning/README.md), the Vision-Node collects a set of information for each object and publishes a list of objects on the "distance_of_objects" Topic.
+
+- Class_Index
+- Min_X
+- Min_Abs_Y
+
+When no Lidar-Points are found inside a bounding box, the distances will both be set to np.inf.
+Check also [here](12_distance-to_objects.md) to learn more about this list.
+
+In order to provide good visual feedback of what is calculated in the Vision-Node, each camera angle publishes images with bounding boxes and the corresponding distance values found for the object.
+
+![Distance of objects](../00_assets/distance_visualization.png)
