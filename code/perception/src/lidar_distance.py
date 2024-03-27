@@ -20,10 +20,9 @@ class LidarDistance():
         """ Callback function, filters a PontCloud2 message
             by restrictions defined in the launchfile.
 
-            Publishes a range message containing the farest and
-            the closest point of the filtered result. Additionally,
-            publishes the filtered result as PointCloud2
-            on the topic defined in the launchfile.
+            Publishes a Depth image for the specified camera angle.
+            Each angle has do be delt with differently since the signs of the
+            coordinate system change with the view angle.
 
         :param data: a PointCloud2
         """
@@ -119,7 +118,8 @@ class LidarDistance():
         self.dist_array_right_publisher.publish(dist_array_right_msg)
 
     def listener(self):
-        """ Initializes the node and it's publishers
+        """
+        Initializes the node and it's publishers
         """
         # run simultaneously.
         rospy.init_node('lidar_distance')
@@ -180,8 +180,17 @@ class LidarDistance():
         rospy.spin()
 
     def reconstruct_img_from_lidar(self, coordinates_xyz, focus):
-        # reconstruct 3d LIDAR-Data and calculate 2D Pixel
-        # according to Camera-World
+        """
+        reconstruct 3d LIDAR-Data and calculate 2D Pixel
+        according to Camera-World
+
+        Args:
+            coordinates_xyz (np.array): filtered lidar points
+            focus (String): Camera Angle
+
+        Returns:
+            image: depth image for camera angle
+        """
 
         # intrinsic matrix for camera:
         # width -> 300, height -> 200, fov -> 100 (agent.py)
@@ -201,6 +210,7 @@ class LidarDistance():
         img = np.zeros(shape=(720, 1280), dtype=np.float32)
         dist_array = np.zeros(shape=(720, 1280, 3), dtype=np.float32)
         for c in coordinates_xyz:
+            # center depth image
             if focus == "Center":
                 point = np.array([c[1], c[2], c[0], 1])
                 pixel = np.matmul(m, point)
@@ -209,6 +219,8 @@ class LidarDistance():
                     img[719-y][1279-x] = c[0]
                     dist_array[719-y][1279-x] = \
                         np.array([c[0], c[1], c[2]], dtype=np.float32)
+
+            # back depth image
             if focus == "Back":
                 point = np.array([c[1], c[2], c[0], 1])
                 pixel = np.matmul(m, point)
@@ -217,6 +229,8 @@ class LidarDistance():
                     img[y][1279-x] = -c[0]
                     dist_array[y][1279-x] = \
                         np.array([-c[0], c[1], c[2]], dtype=np.float32)
+
+            # left depth image
             if focus == "Left":
                 point = np.array([c[0], c[2], c[1], 1])
                 pixel = np.matmul(m, point)
@@ -225,6 +239,8 @@ class LidarDistance():
                     img[719-y][1279-x] = c[1]
                     dist_array[y][1279-x] = \
                         np.array([c[0], c[1], c[2]], dtype=np.float32)
+
+            # right depth image
             if focus == "Right":
                 point = np.array([c[0], c[2], c[1], 1])
                 pixel = np.matmul(m, point)
