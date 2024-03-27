@@ -32,11 +32,11 @@ Running the training with `dvc exp run` in the traffic light detection directory
 ## Examples
 
 Result | Large | Small |
-|-----------|----------|----------|
-Green | ![Green-Large](assets/green_4.png)  |  ![Green-Small](assets/green_22.jpg)
-Yellow | ![Yellow-Large](assets/yellow_1.png)  |  ![Yellow-Small](assets/yellow_18.jpg)
-Red | ![Red-Large](assets/red_10.png)  |  ![Red-Small](assets/red_20.png)
-Back | ![Back-Large](assets/back_1.png)  |  ![Back-Small](assets/back_14.jpg)
+-----------|----------|----------|
+Green | ![Green-Large](assets/green_4.png)  |  ![Green-Small](assets/green_22.jpg) |
+Yellow | ![Yellow-Large](assets/yellow_1.png)  |  ![Yellow-Small](assets/yellow_18.jpg) |
+Red | ![Red-Large](assets/red_10.png)  |  ![Red-Small](assets/red_20.png) |
+Back | ![Back-Large](assets/back_1.png)  |  ![Back-Small](assets/back_14.jpg) |
 
 ## Verdict
 
