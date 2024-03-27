@@ -24,7 +24,7 @@
     </node>
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
-        <param name="control_loop_rate" value="0.05" />
+        <param name="control_loop_rate" value="0.1" />
         <param name="role_name" value="$(arg role_name)" />
     </node>
     
