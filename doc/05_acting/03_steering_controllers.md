@@ -10,7 +10,7 @@ Alexander Hellmann
 
 ## Date
 
-26.03.2024
+01.04.2024
 
 <!-- TOC -->
 - [Overview of the Steering Controllers](#overview-of-the-steering-controllers)
@@ -33,22 +33,22 @@ Currently, two different, independently running Steering Controllers are impleme
 The [PurePursuit Controller's](../../code/acting/src/acting/pure_pursuit_controller.py) main feature to determine a steering-output is the so-called **look-ahead-distance d_la** (l_d in Image).
 For more indepth information about the PurePursuit Controller, click [this link](https://de.mathworks.com/help/nav/ug/pure-pursuit-controller.html) and [this link](https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html).
 
-At every moment it checks a point of the trajectory in front of the vehicle with a distance of **d_la** and determines a steering-angle so that the vehicle will aim straight to this point of the trajectory.
+At every moment it checks a point of the trajectory in front of the vehicle with a distance of **$d_{la}$** and determines a steering-angle so that the vehicle will aim straight to this point of the trajectory.
 
 ![MISSING: PurePursuit-ShowImage](../00_assets/acting/Steering_PurePursuit.png)
 
-This **look-ahead-distance d_la**  is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
+This **look-ahead-distance $d_{la}$**  is velocity-dependent, as at higher velocities, the controller should look further ahead onto the trajectory.
 
-$$ d_{la} = k_{ld} * v $$
+$$ d_{la} = k_{ld} \cdot v $$
 
-$$ \delta = arctan({2 * L_{vehicle} * sin(\alpha) \over d_{la}})$$
+$$ \delta = arctan({2 \cdot L_{vehicle} \cdot sin(\alpha) \over d_{la}})$$
 
-To tune the PurePursuit Controller, you can tune the factor of this velocity-dependence **k_ld**.
-Also, for an unknown reason, we needed to add an amplification to the output-steering signal before publishing aswell **k_pub**, which highly optimized the steering performance in the dev-launch:
+To tune the PurePursuit Controller, you can tune the factor of this velocity-dependence **$k_{ld}$**.
+Also, for an unknown reason, we needed to add an amplification to the output-steering signal before publishing aswell **$k_{pub}$**, which highly optimized the steering performance in the dev-launch:
 
 ![MISSING: PurePursuit-Optimization_Image](../00_assets/acting/Steering_PurePursuit_Tuning.png)
 
-**NOTE:** The **look-ahead-distance d_la** should be highly optimally tuned already for optimal sensor data and on the dev-launch!
+**NOTE:** The **look-ahead-distance $d_{la}$** should be highly optimally tuned already for optimal sensor data and on the dev-launch!
 In the Leaderboard-Launch this sadly does not work the same, so it requires different tuning and needs to be optimized/fixed.
 
 ## Stanley Controller
@@ -60,14 +60,14 @@ For more indepth information about the Stanley Controller, click [this link](htt
 
 At every moment it checks the closest point of the trajectory to itself and determines a two steering-angles:
 
-- from checking the closest trajectory-point and its neighbours it calculates a **trajectory-heading** as the optimal steering for this point on the trajectory.
-- from getting the vector from the current position to the closest trajectory-point it calculates the **cross-track-error** with which it calculates a steering-angle to drive back onto the trajectory.
+- from checking the closest trajectory-point (and its neighbouring points) it calculates a **trajectory-heading $\theta_e$** as the optimal steering for this point on the trajectory.
+- from getting the vector from the current position to the closest trajectory-point it calculates the **cross-track-error $e_{fa}$** with which it calculates a steering-angle to drive back onto the trajectory.
 
 $$ \theta_e = \theta - \theta_p$$
 
-$$ \delta = \theta_e - arctan({k_{ce} * e_{fa} \over v})$$
+$$ \delta = \theta_e - arctan({k_{ce} \cdot e_{fa} \over v})$$
 
-To tune the Stanley Controller, you tune the factor **k_ce**, which amplifies (or diminishes) how strong the **cross-track-error**-calculated steering-angle will "flow" into the output steering-angle.
+To tune the Stanley Controller, you tune the factor **$k_{ce}$**, which amplifies (or diminishes) how strong the **cross-track-error**-calculated steering-angle will "flow" into the output steering-angle.
 
 ![MISSING: Stanley-Compared to PurePursuit](../00_assets/acting/Steering_Stanley_ComparedToPurePur.png)
 
