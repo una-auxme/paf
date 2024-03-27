@@ -6,9 +6,9 @@ import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
-# from rospy.numpy_msg import numpy_msg
+
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
-# from std_msgs.msg import String
+
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
 from utils import filter_vision_objects, calculate_rule_of_thumb
@@ -24,17 +24,13 @@ class CollisionCheck(CompatibleNode):
         super(CollisionCheck, self).__init__('CollisionCheck')
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
-        self.lidar_position_offset = 2
-        # self.obstacle_sub: Subscriber = self.new_subscription(
-        # )
         # Subscriber for current speed
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
             qos_profile=1)
-        # Subscriber for lidar distance
-        # TODO: Change to real lidar distance
+        # Subscriber for lidar objects
         self.lidar_dist = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/Center/object_distance",
@@ -50,6 +46,7 @@ class CollisionCheck(CompatibleNode):
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             qos_profile=1)
+        # Publisher for distance to oncoming traffic
         self.oncoming_pub = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/oncoming",
@@ -68,11 +65,23 @@ class CollisionCheck(CompatibleNode):
         self.logdebug("CollisionCheck started")
 
     def __set_all_distances(self, data: Float32MultiArray):
+        """Callback for lidar ibjects subscriber. Initiates collision check
+           for objects in front and oncoming traffic
+
+        Args:
+            data (Float32MultiArray): Message from lidar with distance objects
+        """
+        # Get distance to objects in front
         self.__set_distance(data)
+        # Get distance to oncoming traffic
         self.__set_distance_oncoming(data)
 
     def update_distance(self, reset):
-        """Updates the distance to the obstacle in front
+        """Updates distance to the obstacle in front or oncoming traffic.
+           Reset determines if the distance should be reset or only updated.
+
+        Args:
+            reset (Bool): True: Reset distance to obstacle in front; False: Update distance
         """
         if reset:
             # Reset all values if we do not have car in front
@@ -83,57 +92,73 @@ class CollisionCheck(CompatibleNode):
             self.collision_pub.publish(data)
             return
         if self.__object_first_position is None:
+            # Update distance to store second distance value for speed calculation
             self.__object_first_position = self.__object_last_position
             self.__object_last_position = None
             return
 
     def __set_distance(self, data: Float32MultiArray):
-        """Saves last distance from  LIDAR
+        """Filters objects and saves last distance from LIDAR for objects in front.
+           Afterwards initiates speed calculation
 
         Args:
-            data (Float32): Message from lidar with distance
+            data (Float32): Message from lidar with distance objects
         """
+        # Filter onjects in front
         nearest_object = filter_vision_objects(data.data, False)
         if nearest_object is None and \
                 self.__object_last_position is not None and \
                 rospy.get_rostime() - self.__object_last_position[0] > \
                 rospy.Duration(2):
+            # If no object is in front and last object is older than 2 seconds we assume no object is in front
             self.update_distance(True)
             return
         elif nearest_object is None:
+            # If no object is in front abort
             return
         self.__object_last_position = (rospy.get_rostime(), nearest_object[1])
+        # Update distance if this is first object since reset
         self.update_distance(False)
+        # Calculate speed of object in front and check collision
         self.calculate_obstacle_speed()
 
     def __set_distance_oncoming(self, data: Float32MultiArray):
-        """Saves last distance from  LIDAR
+        """Filters objects and saves last distance from LIDAR for oncoming traffic
 
         Args:
-            data (Float32): Message from lidar with distance
+            data (Float32): Message from lidar with distance objects
         """
+        # Filter for oncoming traffic objects
         nearest_object = filter_vision_objects(data.data, True)
         if (nearest_object is None and
                 self.__last_position_oncoming is not None and
                 rospy.get_rostime() - self.__last_position_oncoming[0] >
                 rospy.Duration(2)):
+             # If no oncoming traffic found and last object is older than 2 seconds we assume no object is in front
             self.update_distance_oncoming(True)
             return
         elif nearest_object is None:
+            # If no oncoming traffic abort
             return
 
         self.__last_position_oncoming =  \
             (rospy.get_rostime(), nearest_object[1])
+        # Update oncoming traffic distance if this is first object since reset
         self.update_distance_oncoming(False)
+        # Publish oncoming traffic to Decision Making
         self.oncoming_pub.publish(Float32(data=nearest_object[1]))
 
     def update_distance_oncoming(self, reset):
-        """Updates the distance to the obstacle in front
+        """Updates the distance to the oncoming traffic. Reset determines if the distance should be reset or only updated.
+
+        Args:
+            reset (Bool): True: Reset distance to oncoming traffic; False: Update distance
         """
         if reset:
             # Reset all values if we do not have car in front
             self.__last_position_oncoming = None
             self.__first_position_oncoming = None
+            # Publish np.inf to Decision Making
             self.oncoming_pub.publish(Float32(data=np.inf))
             return
         if self.__first_position_oncoming is None:
@@ -143,27 +168,28 @@ class CollisionCheck(CompatibleNode):
 
     def calculate_obstacle_speed(self):
         """Caluclate the speed of the obstacle in front of the ego vehicle
-            based on the distance between to timestamps
+            based on the distance between to timestamps. Then check for collision
         """
         # Check if current speed from vehicle is not None
         if self.__current_velocity is None or \
                 self.__object_first_position is None or \
                 self.__object_last_position is None:
             return
-        # If distance is np.inf no car is in front
         # Calculate time since last position update
         rospy_time_difference = self.__object_last_position[0] - \
             self.__object_first_position[0]
+        # Use nanoseconds for time difference to be more accurate and reduce error
         time_difference = rospy_time_difference.nsecs/1e9
         # Calculate distance (in m)
         distance = self.__object_last_position[1] - \
             self.__object_first_position[1]
         try:
-            # Speed is distance/time (m/s)
+            # Speed difference is distance/time (m/s)
             relative_speed = distance/time_difference
         except ZeroDivisionError:
+            # If time difference is 0, we cannot calculate speed
             return
-
+        # Calculate speed of obstacle in front
         speed = self.__current_velocity + relative_speed
         if speed < 0:
             speed = 0
@@ -171,6 +197,7 @@ class CollisionCheck(CompatibleNode):
         self.speed_publisher.publish(Float32(data=speed))
         # Check for crash
         self.check_crash((self.__object_last_position[1], speed))
+        # Update first position to calculate speed when next object is detected
         self.__object_first_position = self.__object_last_position
 
     def __get_current_velocity(self, data: CarlaSpeedometer,):
