@@ -139,6 +139,7 @@ def calc_egocar_yaw(pose: PoseStamped) -> float:
     _, _, yaw = euler_from_quaternion(quaternion)
     return normalize_angle(yaw)
 
+
 def points_to_vector(p_1: Tuple[float, float],
                      p_2: Tuple[float, float]) -> Tuple[float, float]:
     """
@@ -248,4 +249,3 @@ def interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5):
 
     route = route + [orig_route[-1]]
     return route
-
