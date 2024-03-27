@@ -39,6 +39,10 @@ The ```throttle``` and ```brake``` are already calculated in the correct range b
 
 The Vehicle Controller also reacts to ```emergency```-Messages, published by Planning:
 
+>TODO: ROBERT BÜDDE
+
 ## Unstuck Routine
 
 The Vehicle Controller also reads ```current_behavior```-Messages, published by Planning, currently reacting to the **unstuck-behavior**:
+
+>TODO: ROBERT BÜDDE
