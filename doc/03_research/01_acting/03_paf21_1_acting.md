@@ -9,7 +9,7 @@
 
 * Can detect curves on the planned trajectory
 * Calculates the speed in which to drive the detected Curve
-![Curve](https://github.com/ll7/paf21-1/raw/master/imgs/curve.PNG)
+![Curve](../../00_assets/research_assets/curve_detection_paf21_1.png)
 
 ## Speed Control
 
@@ -24,7 +24,7 @@
 * **Stanley Steering Controller**
   * Calculates steering angle from offset and heading error
   * includes PID controller
- ![Stanley Controller](https://github.com/ll7/paf21-1/raw/master/imgs/stanley.png)
+ ![Stanley Controller](../../00_assets/research_assets/stanley_paf21_1.png)
 
 ### Detected Curves
 

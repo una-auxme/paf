@@ -39,14 +39,14 @@ The job of this domain is to translate a preplanned trajectory into actual steer
 * input: waypoints
 * curve detection: returns distance to next curve
 * calculation of max curve speed as sqrt(friction_coefficient x gravity_accel x radius)
-* in Curve: [naive Controller](### Pure Pursuit)
-* on straights: [Stanley Controller](### Stanley)
+* in Curve: [naive Controller](###Pure_Pursuit)
+* on straights: [Stanley Controller](###Stanley)
 * interface to rosbridge
 
 ### [Paf 20/2](https://github.com/ll7/psaf2) and [Paf 21/2](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#readme)
 
 * input: odometry(position and velocity with uncertainty), local path
-* lateral: [Stanley Controller](### Stanley)
+* lateral: [Stanley Controller](###Stanley)
 * speed controller: pid
 * ACC (Adaptive Cruise Control): (speed, distance) -> PID
 * Unstuck-Routine (drive backwards)
@@ -67,12 +67,12 @@ The steering angle $\delta$ is defined as the angle of the front wheel to a line
 This angle $\delta$ can also be defined as $tan(\delta) = L/R$ with $L$ as the wheelbase and $R$ the radius from the reference point (rear axle) to the Instantaneous Center of Rotation (ICR).
 Due to the bicycle model we can calculate $R = \frac{L}{tan(\delta)}$.
 
-![Bicycle Model with ICR](../../00_assets/bicyclegeometry.png)
+![Bicycle Model with ICR](../../00_assets/research_assets/bicyclegeometry.png)
 *source: [[2]](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219)*
 
 We now try to aim the circular arc to intersect with a point on our trajectory. This target point is always a defined distance (look ahead distance $l_d$) away from our reference point (dangling carrot). This leads to the following relation:
 
-![Dangling carrot geometry](../../00_assets/danglingcarrotgeometry.png)
+![Dangling carrot geometry](../../00_assets/research_assets/danglingcarrotgeometry.png)
 *source: [[2]](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219)*
 
 $\frac{l_d}{sin(\alpha)}= 2R$, where $\alpha$ is the current heading error. Combining the two equations leads to our desired steering angle.
@@ -98,7 +98,7 @@ $$
 The Stanley controller, named after an autonomous offroad race car, takes the front axle as a reference, while still using the bicycle model. In addition to looking at the heading error $\psi$, close to what pure pursuit does, stanley also looks at the cross track error $e_e$.
 The cross track error $e_e$ is defined as the distance between the reference point and the closest point on our trajectory.
 
-![Stanley error with heading and cross track error](../../00_assets/stanleyerror.png)
+![Stanley error with heading and cross track error](../../00_assets/research_assets/stanleyerror.png)
 *source: [[2]](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219)*
 
 The first part of our steering angle tries to correct for this error $arctan(\frac{k_e*e_e}{k_v*v})$ while the second part just corrects for our heading error $\psi$.
@@ -115,7 +115,7 @@ With $k_e$ and $k_v$ being tuneable parameters for cross tracking error and spee
 
 The basic idea of MPC is to model the future behavior of the vehicle and compute an optimal control input that, minimizes an a priori defined cost functional.
 
-![MPC Controller](../../00_assets/mpc.webp)
+![MPC Controller](../../00_assets/research_assets/mpc.png)
 *source: [[5]](https://dingyan89.medium.com/three-methods-of-vehicle-lateral-control-pure-pursuit-stanley-and-mpc-db8cc1d32081)*
 
 * cost function can be designed to account for driving comfort
@@ -125,7 +125,7 @@ The basic idea of MPC is to model the future behavior of the vehicle and compute
 SMC systems are designed to drive the system states onto a particular surface in the state space, named sliding surface. Once the sliding surface is reached, sliding mode control keeps the states on the close neighborhood of the sliding surface.
 Real implementations of sliding mode control approximate theoretical behavior with a high-frequency and generally non-deterministic switching control signal that causes the system to chatter.
 
-![chattering](../../00_assets/chattering.gif)
+![chattering](../../00_assets/research_assets/chattering.gif)
 *source: [[9]](https://ieeexplore.ieee.org/document/1644542)*
 
 * simple

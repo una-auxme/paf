@@ -9,11 +9,11 @@
 - Lateral control
   - Pure Pursuit controller
 
-    ![Untitled](../../00_assets/research_assetes/pure_pursuit.png)
+    ![Untitled](../../00_assets/research_assets/pure_pursuit.png)
 
-    - Stanley controller
+  - Stanley controller
 
-    ![Untitled](../../00_assets/research_assetes/stanley_controller.png)
+    ![Untitled](../../00_assets/research_assets/stanley_controller.png)
 
 ### [List of Inputs/Outputs](https://github.com/una-auxme/paf23/blob/main/doc/03_research/01_acting/02_acting_implementation.md#list-of-inputsoutputs)
 
@@ -42,7 +42,7 @@ A short list of challenges for the implementation of a basic acting domain and h
 
 ### [Standardroutine](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#standardroutine)
 
-![Untitled](../../00_assets/research_assetes/standard_routine_paf21_2.png)
+![Untitled](../../00_assets/research_assets/standard_routine_paf21_2.png)
 
 - Longitudinal control
   - PID controller
@@ -149,7 +149,7 @@ Timer und Schwellenwerte um Stuck Situation zu erkennen
 
 ### [Messages](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#messages)
 
-![Untitled](../../00_assets/research_assetes/messages_paf21_2.png)
+![Untitled](../../00_assets/research_assets/messages_paf21_2.png)
 
 ### [StanleyController](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#stanleycontroller)
 
@@ -224,7 +224,7 @@ implements a longitudinal and lateral controller
 - Predicts future states using a kinematic model to optimize control inputs.
 - Parameters include mpc_horizon, mpc_steps, and mpc_weights
 
-![Untitled](../../00_assets/research_assetes/mpc.png)
+![Untitled](../../00_assets/research_assets/mpc.png)
 
 • cost function can be designed to account for driving comfort
 
