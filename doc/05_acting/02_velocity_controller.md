@@ -42,7 +42,15 @@ As the Velocity Controller also has to handle braking, we currently use ```throt
 
 ![MISSING: PID-BRAKING-IMAGE](../00_assets/acting/VelContr_PID_BrakingWithThrottlePID.png)
 
-Currently, there is no backwards-driving implemented here, as this was not needed. Negative ```target_velocity``` signals are currently not accepted and will lead to an error being printed!
+Currently, there is no general backwards-driving implemented here, as this was not needed (other than the [Unstuck Routine](/doc/07_planning/Behavior_detailed.md)).
+
+Negative ```target_velocity``` signals are currently taken care off by  braking until we stand still.
+The ONLY exception is a ```target_velocity``` of **-3!**!
+A ```target_velocity``` of **-3** indicates the unstuck behavior is running, which expects the car to be driving backwards for a specific amount of time without steering.
+
+When implementing a general backwards driving approach this has to be kept in mind, because we DO NOT try to drive at the speed of -3 m/s. We only use the -3 as a keyword for driving backwards at full throttle for a specefic amount of time!
+(see _UnstuckBehavior_ in [maneuvers.py](/code/planning/src/behavior_agent/behaviours/maneuvers.py))
+
 Currently, there is no secondary linearization for lower velocities implemented. If more accuracy in lower velocities is needed, a second tuning for lower velocites may be a smart way to improve the controller's performance!
 
 **NOTE:** This Tuning was achieved back in the Leaderboard 1.0 and may not be optimal anymore in the current Leaderboard 2.0, you are welcome to retune this Controller, if necessary!

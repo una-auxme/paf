@@ -96,7 +96,6 @@ class VelocityController(CompatibleNode):
                 #             "driving yet.")
                 if self.__target_velocity == -3:
                     #  -3 is the signal for reverse driving
-
                     reverse = True
                     throttle = 1
                     brake = 0
