@@ -20,4 +20,4 @@ This folder contains further documentation of the perception components.
 
 ## 8. [Kalman Filter](./08_kalman_filter.md)
 
-## 9. [Position Publisher Node](./09_position_publisher_node.md)
+## 9. [position_heading_publisher_node](./09_position_heading_publisher_node.md)
