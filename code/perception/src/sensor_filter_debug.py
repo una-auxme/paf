@@ -10,9 +10,7 @@ import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
-from sensor_msgs.msg import NavSatFix, Imu
-from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32
 from coordinate_transformation import CoordinateTransformer
 from coordinate_transformation import quat_to_heading
 # from tf.transformations import euler_from_quaternion
@@ -55,19 +53,15 @@ class SensorFilterDebugNode(CompatibleNode):
 
         # Tracked Attributes for Debugging
         self.current_pos = PoseStamped()
-        self.current_pos_debug_data = Float32MultiArray()
         self.current_heading = Float32()
-        self.current_heading_debug_data = Float32()
         self.carla_current_pos = PoseStamped()
         self.unfiltered_pos = PoseStamped()
-        self.unfiltered_pos_debug_data = Float32MultiArray()
+        self.unfiltered_heading = Float32()
 
         # test_filter attributes for any new filter to be tested
         # default is kalman filter
         self.test_filter_pos = PoseStamped()
-        self.test_filter_pos_debug_data = Float32MultiArray()
         self.test_filter_heading = Float32()
-        self.test_filter_heading_debug_data = Float32()
 
         # csv file attributes/ flags for plots
         self.csv_x_created = False
@@ -79,7 +73,7 @@ class SensorFilterDebugNode(CompatibleNode):
 
         self.loginfo("Sensor Filter Debug node started")
 
-    # region Subscriber START
+        # region Subscriber START
 
         # Current_pos subscriber:
         self.current_pos_subscriber = self.new_subscription(
@@ -114,10 +108,16 @@ class SensorFilterDebugNode(CompatibleNode):
             f"/paf/{self.role_name}/unfiltered_pos",
             self.set_unfiltered_pos,
             qos_profile=1)
+        # Unfiltered_heading subscriber:
+        self.unfiltered_heading_subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/unfiltered_heading",
+            self.set_unfiltered_heading,
+            qos_profile=1)
 
-    # endregion Subscriber END
+        # endregion Subscriber END
 
-    # region Publisher START
+        # region Publisher START
 
         # ideal carla publisher for easier debug with rqt_plot
         self.carla_heading_publisher = self.new_publisher(
@@ -140,7 +140,7 @@ class SensorFilterDebugNode(CompatibleNode):
             f"/paf/{self.role_name}/heading_debug",
             qos_profile=1)
 
-    # endregion Publisher END
+        # endregion Publisher END
 
     def set_carla_attributes(self):
         """
