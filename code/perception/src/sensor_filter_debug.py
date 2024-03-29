@@ -6,25 +6,22 @@ This node publishes all relevant topics for the ekf node.
 import os
 import csv
 import math
-import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
-from coordinate_transformation import CoordinateTransformer
-from coordinate_transformation import quat_to_heading
 # from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
-from xml.etree import ElementTree as eTree
 import rospy
 import threading
-import carla  # remove when publishing to leaderboard!
+import carla
 
 GPS_RUNNING_AVG_ARGS: int = 10
 DATA_SAVING_MAX_TIME: int = 45
+FOLDER_PATH: str = "Position_Heading_Datasets"
 
 
-class SensorFilterDebugNode(CompatibleNode):
+class position_heading_filter_debug_node(CompatibleNode):
     """
     Node publishes a filtered gps signal.
     This is achieved using a rolling average.
@@ -35,7 +32,8 @@ class SensorFilterDebugNode(CompatibleNode):
         :return:
         """
 
-        super(SensorFilterDebugNode, self).__init__('sensor_filter_debug_node')
+        super(position_heading_filter_debug_node, self).__init__(
+            'sensor_filter_debug_node')
 
         # basic info
         self.role_name = self.get_param("role_name", "hero")
@@ -57,6 +55,9 @@ class SensorFilterDebugNode(CompatibleNode):
         self.carla_current_pos = PoseStamped()
         self.unfiltered_pos = PoseStamped()
         self.unfiltered_heading = Float32()
+
+        self.position_debug_data = Float32MultiArray()
+        self.heading_debug_data = Float32MultiArray()
 
         # test_filter attributes for any new filter to be tested
         # default is kalman filter
@@ -142,147 +143,6 @@ class SensorFilterDebugNode(CompatibleNode):
 
         # endregion Publisher END
 
-    def set_carla_attributes(self):
-        """
-        This method sets the carla attributes.
-        """
-        for actor in self.world.get_actors():
-            if actor.attributes.get('role_name') == "hero":
-                self.carla_car = actor
-                break
-        if self.carla_car is None:
-            self.logwarn("Carla Hero car still none!")
-            return
-        else:
-            self.carla_current_pos = self.carla_car.get_location()
-            self.carla_current_heading = (
-                                        self.carla_car.get_transform()
-                                        .rotation.yaw
-                                        )
-
-    def position_debug(self):
-        """
-        This method is called every loop_rate.
-        It publishes and saves:
-        carla_current_pos.x,
-        carla_current_pos.y,
-        current_pos.x,
-        current_pos.y,
-        test_filter_pos.x
-        test_filter_pos.y
-
-        It publishes and saves error distances between:
-        carla_current_pos.x and current_pos.x,
-        carla_current_pos.y and current_pos.y
-        carla_current_pos and current_pos
-        carla_current_pos.x and test_filter_pos.x,
-        carla_current_pos.y and test_filter_pos.y
-        carla_current_pos and test_filter_pos
-
-        # carla_current_pos.x in debug.data[0]
-        # carla_current_pos.y in debug.data[1]
-        # current_pos.x in debug.data[2]
-        # current_pos.y in debug.data[3]
-        # test_filter_pos.x in debug.data[4]
-        # test_filter_pos.y in debug.data[5]
-        # carla_current_pos.x - current_pos.x in debug.data[6]
-        # carla_current_pos.y - current_pos.y in debug.data[7]
-        # sqrt[(carla_current_pos - current_pos)^2] in debug.data[8]
-        # carla_current_pos.x - test_filter_pos.x in debug.data[9]
-        # carla_current_pos.y - test_filter_pos.y in debug.data[10]
-        # sqrt[(carla_current_pos - test_filter_pos)^2] in debug.data[11]
-        """
-
-        if self.carla_car is None:
-            self.logwarn("""Carla Hero car still none!
-                         Can not record data for position_debug yet.""")
-            return
-
-        debug = Float32MultiArray()
-
-        debug.data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        # all x and y coordinates
-        debug.data[0] = self.carla_current_pos.x
-        debug.data[1] = self.carla_current_pos.y
-        debug.data[2] = self.current_pos.pose.position.x
-        debug.data[3] = self.current_pos.pose.position.y
-        debug.data[4] = self.test_filter_pos.pose.position.x
-        debug.data[5] = self.test_filter_pos.pose.position.y
-
-        # error between carla_current_pos and current_pos
-        debug.data[6] = (self.carla_current_pos.x
-                         - self.current_pos.pose.position.x)
-        debug.data[7] = (self.carla_current_pos.y
-                         - self.current_pos.pose.position.y)
-        debug.data[8] = math.sqrt((self.carla_current_pos.x
-                                  - self.current_pos.pose.position.x)**2
-                                  + (self.carla_current_pos.y
-                                  - self.current_pos.pose.position.y)**2)
-
-        # error between carla_current_pos and test_filter_pos
-        debug.data[9] = (self.carla_current_pos.x
-                         - self.test_filter_pos.pose.position.x)
-        debug.data[10] = (self.carla_current_pos.y
-                          - self.test_filter_pos.pose.position.y)
-        debug.data[11] = math.sqrt((self.carla_current_pos.x
-                                   - self.test_filter_pos.pose.position.x)**2
-                                   + (self.carla_current_pos.y
-                                   - self.test_filter_pos.pose.position.y)**2)
-
-        self.position_debug_data = debug
-        self.position_debug_publisher.publish(debug)
-        # for easier debugging with rqt_plot
-        self.carla_pos_publisher.publish(self.carla_current_pos)
-
-    def heading_debug(self):
-        """
-        This method is called every loop_rate.
-        It publishes and saves:
-        carla_current_heading,
-        current_heading,
-        test_filter_heading
-
-        It also publishes and saves heading differences between
-        carla_current_heading and current_heading,
-        carla_current_heading and test_filter_heading
-        to make filters comparable.
-
-        # carla_current_heading in debug.data[0]
-        # current_heading in debug.data[1]
-        # test_filter_heading in debug.data[2]
-        # carla_current_heading - current_heading in debug.data[3]
-        # carla_current_heading - test_filter_heading in debug.data[4]
-        """
-
-        if self.carla_car is None:
-            self.logwarn("""Carla Hero car still none!
-                         Can not record data for heading_debug yet.""")
-            return
-
-        debug = Float32MultiArray()
-
-        debug.data = [0, 0, 0, 0, 0]
-
-        # all heading values
-        debug.data[0] = self.carla_current_heading
-        debug.data[1] = self.current_heading.data
-        debug.data[2] = self.test_filter_heading.data
-
-        # error between carla_current_heading and current_heading
-        debug.data[0] = (self.carla_current_heading
-                         - self.current_heading.data)
-
-        # error between carla_current_heading and test_filter_heading
-        debug.data[1] = (self.carla_current_heading
-                         - self.test_filter_heading.data)
-
-        self.heading_debug_data = debug
-        self.heading_debug_publisher.publish(debug)
-
-        # for easier debugging with rqt_plot
-        self.carla_heading_publisher.publish(self.carla_current_heading)
-
     # region Subscriber Callbacks
     def set_unfiltered_pos(self, data: PoseStamped):
         """
@@ -317,27 +177,29 @@ class SensorFilterDebugNode(CompatibleNode):
     # endregion Subscriber Callbacks
 
     # region CSV data save methods
-    def save_position_errors(self):
+    # main saving method for position data
+    def save_position_data(self):
         """
         This method saves the current location errors in a csv file.
         in the folders of
         paf23/doc/06_perception/00_Experiments/kalman_datasets
         It does this for a limited amount of time.
         """
-        # if rospy.get_time() > 45 stop saving data:
+        # stop saving data when max is reached
         if rospy.get_time() > DATA_SAVING_MAX_TIME:
-            self.loginfo("STOPPED SAVING LOCATION DATA")
+            self.logwarn("STOPPED SAVING LOCATION DATA")
             return
 
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
-                     'src/00_Experiments/kalman_datasets/')
+                     'src/00_Experiments/' + FOLDER_PATH)
         folder_path_x = base_path + 'x_error'
         folder_path_y = base_path + 'y_error'
         # Ensure the directories exist
         os.makedirs(folder_path_x, exist_ok=True)
         os.makedirs(folder_path_y, exist_ok=True)
 
+        # Create the csv files ONCE if it does not exist
         if self.csv_x_created is False:
             self.csv_file_path_x = create_file(folder_path_x)
             self.csv_x_created = True
@@ -345,29 +207,11 @@ class SensorFilterDebugNode(CompatibleNode):
             self.csv_file_path_y = create_file(folder_path_y)
             self.csv_y_created = True
 
-        with open(self.csv_file_path_x, 'a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow([rospy.get_time(),
-                             self.ideal_current_pos.pose.position.x,
-                             self.kalman_pos.pose.position.x,
-                             self.current_pos.pose.position.x,
-                             self.unfiltered_pos.pose.position.x,
-                             self.kalman_pos_debug_data.data[0],
-                             self.current_pos_debug_data.data[0],
-                             self.unfiltered_pos_debug_data.data[0]])
+        self.write_csv_x()
+        self.write_csv_y()
 
-        with open(self.csv_file_path_y, 'a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow([rospy.get_time(),
-                             self.ideal_current_pos.pose.position.y,
-                             self.kalman_pos.pose.position.y,
-                             self.current_pos.pose.position.y,
-                             self.unfiltered_pos.pose.position.y,
-                             self.kalman_pos_debug_data.data[1],
-                             self.current_pos_debug_data.data[1],
-                             self.unfiltered_pos_debug_data.data[1]])
-
-    def save_heading_errors(self):
+    # main saving method for heading data
+    def save_heading_data(self):
         """
         This method saves the current heading errors in a csv file.
         in the folders of
@@ -376,32 +220,280 @@ class SensorFilterDebugNode(CompatibleNode):
         """
         # if rospy.get_time() > 45 stop saving data:
         if rospy.get_time() > DATA_SAVING_MAX_TIME:
-            self.loginfo("STOPPED SAVING HEADING DATA")
+            self.logwarn("STOPPED SAVING HEADING DATA")
             return
 
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
-                     'src/00_Experiments/kalman_datasets/')
+                     'src/00_Experiments' + FOLDER_PATH)
         folder_path_heading = base_path + 'heading_error'
 
         # Ensure the directories exist
         os.makedirs(folder_path_heading, exist_ok=True)
 
+        # Create the csv file ONCE if it does not exist
         if self.csv_heading_created is False:
             self.csv_file_path_heading = create_file(folder_path_heading)
             self.csv_heading_created = True
 
+        # Save the data into the csv file
+        self.write_csv_heading()
+
+    # helper methods for writing into csv files
+    def write_csv_heading(self):
         with open(self.csv_file_path_heading, 'a', newline='') as file:
             writer = csv.writer(file)
+            # Check if file is empty
+            if os.stat(self.csv_file_path_heading).st_size == 0:
+                writer.writerow([
+                    "Time",
+                    "Unfiltered",
+                    "Ideal(Carla)",
+                    "Current",
+                    "Test Filter",
+                    "Unfiltered Error",
+                    "Current Error"
+                    "Test Filter Error",
+                ])
             writer.writerow([rospy.get_time(),
-                             self.ideal_heading.data,
-                             self.kalman_heading.data,
+                             self.unfiltered_heading.data,
+                             self.carla_current_heading,
                              self.current_heading.data,
-                             self.kalman_heading_debug_data.data,
-                             self.current_heading_debug_data.data])
+                             self.test_filter_heading.data,
+                             self.heading_debug_data.data[0],
+                             self.heading_debug_data.data[1],
+                             self.heading_debug_data.data[2]
+                             ])
+
+    def write_csv_x(self):
+        with open(self.csv_file_path_x, 'a', newline='') as file:
+            writer = csv.writer(file)
+            # Check if file is empty and add first row
+            if os.stat(self.csv_file_path_x).st_size == 0:
+                writer.writerow([
+                    "Time",
+                    "Unfiltered",
+                    "Ideal (Carla)",
+                    "Current",
+                    "Test Filter",
+                    "Unfiltered Error",
+                    "Current Error",
+                    "Test Filter Error"
+                ])
+            writer.writerow([
+                rospy.get_time(),
+                self.unfiltered_pos.pose.position.x,
+                self.carla_current_pos.x,
+                self.current_pos.pose.position.x,
+                self.test_filter_pos.pose.position.x,
+                self.position_debug_data.data[8],
+                self.position_debug_data.data[11],
+                self.position_debug_data.data[14]
+                ])
+
+    def write_csv_y(self):
+        with open(self.csv_file_path_y, 'a', newline='') as file:
+            writer = csv.writer(file)
+            # Check if file is empty and add first row
+            if os.stat(self.csv_file_path_y).st_size == 0:
+                writer.writerow([
+                    "Time",
+                    "Unfiltered",
+                    "Ideal (Carla)",
+                    "Current",
+                    "Test Filter",
+                    "Unfiltered Error",
+                    "Current Error",
+                    "Test Filter Error"
+                ])
+            writer.writerow([
+                rospy.get_time(),
+                self.unfiltered_pos.pose.position.y,
+                self.carla_current_pos.y,
+                self.current_pos.pose.position.y,
+                self.test_filter_pos.pose.position.y,
+                self.position_debug_data.data[9],
+                self.position_debug_data.data[12],
+                self.position_debug_data.data[15]
+                ])
 
     # endregion CSV data save methods
 
+    def set_carla_attributes(self):
+        """
+        This method sets the carla attributes.
+        """
+        for actor in self.world.get_actors():
+            if actor.attributes.get('role_name') == "hero":
+                self.carla_car = actor
+                break
+        if self.carla_car is None:
+            self.logwarn("Carla Hero car still none!")
+            return
+        else:
+            self.carla_current_pos = self.carla_car.get_location()
+            self.carla_current_heading = (
+                                        self.carla_car.get_transform()
+                                        .rotation.yaw
+                                        )
+
+    def position_debug(self):
+        """
+        This method is called every loop_rate.
+
+        It publishes and saves:
+        unfiltered_pos.x,
+        unfiltered_pos.y,
+        carla_current_pos.x,
+        carla_current_pos.y,
+        current_pos.x,
+        current_pos.y,
+        test_filter_pos.x
+        test_filter_pos.y
+
+        It publishes and saves error distances between:
+        carla_current_pos.x and unfiltered_pos.x,
+        carla_current_pos.y and unfiltered_pos.y
+        carla_current_pos.x and current_pos.x,
+        carla_current_pos.y and current_pos.y
+        carla_current_pos.x and test_filter_pos.x,
+        carla_current_pos.y and test_filter_pos.y
+        carla_current_pos and test_filter_pos
+
+        # unfiltered_pos.x in debug.data[0]
+        # unfiltered_pos.y in debug.data[1]
+        # carla_current_pos.x in debug.data[2]
+        # carla_current_pos.y in debug.data[3]
+        # current_pos.x in debug.data[4]
+        # current_pos.y in debug.data[5]
+        # test_filter_pos.x in debug.data[6]
+        # test_filter_pos.y in debug.data[7]
+
+        # carla_current_pos.x - unfiltered_pos.x in debug.data[8]
+        # carla_current_pos.y - unfiltered_pos.y in debug.data[9]
+        # sqrt[(carla_current_pos - unfiltered_pos)^2] in debug.data[10]
+
+        # carla_current_pos.x - current_pos.x in debug.data[11]
+        # carla_current_pos.y - current_pos.y in debug.data[12]
+        # sqrt[(carla_current_pos - current_pos)^2] in debug.data[13]
+
+        # carla_current_pos.x - test_filter_pos.x in debug.data[14]
+        # carla_current_pos.y - test_filter_pos.y in debug.data[15]
+        # sqrt[(carla_current_pos - test_filter_pos)^2] in debug.data[16]
+        """
+
+        if self.carla_car is None:
+            self.logwarn("""Carla Hero car still none!
+                         Can not record data for position_debug yet.""")
+            return
+
+        debug = Float32MultiArray()
+
+        debug.data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        # all x and y coordinates
+        debug.data[0] = self.unfiltered_pos.pose.position.x
+        debug.data[1] = self.unfiltered_pos.pose.position.y
+        debug.data[2] = self.carla_current_pos.x
+        debug.data[3] = self.carla_current_pos.y
+        debug.data[4] = self.current_pos.pose.position.x
+        debug.data[5] = self.current_pos.pose.position.y
+        debug.data[6] = self.test_filter_pos.pose.position.x
+        debug.data[7] = self.test_filter_pos.pose.position.y
+
+        # error between carla_current_pos and unfiltered_pos
+        debug.data[8] = (self.carla_current_pos.x
+                         - self.unfiltered_pos.pose.position.x)
+        debug.data[9] = (self.carla_current_pos.y
+                         - self.unfiltered_pos.pose.position.y)
+        debug.data[10] = math.sqrt((self.carla_current_pos.x
+                                   - self.unfiltered_pos.pose.position.x)**2
+                                   + (self.carla_current_pos.y
+                                   - self.unfiltered_pos.pose.position.y)**2)
+
+        # error between carla_current_pos and current_pos
+        debug.data[11] = (self.carla_current_pos.x
+                          - self.current_pos.pose.position.x)
+        debug.data[12] = (self.carla_current_pos.y
+                          - self.current_pos.pose.position.y)
+        debug.data[13] = math.sqrt((self.carla_current_pos.x
+                                   - self.current_pos.pose.position.x)**2
+                                   + (self.carla_current_pos.y
+                                   - self.current_pos.pose.position.y)**2)
+
+        # error between carla_current_pos and test_filter_pos
+        debug.data[14] = (self.carla_current_pos.x
+                          - self.test_filter_pos.pose.position.x)
+        debug.data[15] = (self.carla_current_pos.y
+                          - self.test_filter_pos.pose.position.y)
+        debug.data[16] = math.sqrt((self.carla_current_pos.x
+                                   - self.test_filter_pos.pose.position.x)**2
+                                   + (self.carla_current_pos.y
+                                   - self.test_filter_pos.pose.position.y)**2)
+
+        self.position_debug_data = debug
+        self.position_debug_publisher.publish(debug)
+        # for easier debugging with rqt_plot
+        self.carla_pos_publisher.publish(self.carla_current_pos)
+
+    def heading_debug(self):
+        """
+        This method is called every loop_rate.
+        It publishes and saves:
+        unfiltered_heading,
+        carla_current_heading,
+        current_heading,
+        test_filter_heading
+
+        It also publishes and saves heading differences between:
+        carla_current_heading and unfiltered_heading,
+        carla_current_heading and current_heading,
+        carla_current_heading and test_filter_heading
+        to make filters comparable.
+
+        # unfiltered_heading in debug.data[0]
+        # carla_current_heading in debug.data[1]
+        # current_heading in debug.data[2]
+        # test_filter_heading in debug.data[3]
+        # carla_current_heading - unfiltered_heading in debug.data[4]
+        # carla_current_heading - current_heading in debug.data[5]
+        # carla_current_heading - test_filter_heading in debug.data[6]
+        """
+
+        if self.carla_car is None:
+            self.logwarn("""Carla Hero car still none!
+                         Can not record data for heading_debug yet.""")
+            return
+
+        debug = Float32MultiArray()
+
+        debug.data = [0, 0, 0, 0, 0, 0, 0, 0]
+
+        # all heading values
+        debug.data[0] = self.unfiltered_heading.data
+        debug.data[1] = self.carla_current_heading
+        debug.data[2] = self.current_heading.data
+        debug.data[3] = self.test_filter_heading.data
+
+        # error between carla_current_heading and unfiltered_heading
+        debug.data[4] = (self.carla_current_heading
+                         - self.unfiltered_heading.data)
+
+        # error between carla_current_heading and current_heading
+        debug.data[5] = (self.carla_current_heading
+                         - self.current_heading.data)
+
+        # error between carla_current_heading and test_filter_heading
+        debug.data[6] = (self.carla_current_heading
+                         - self.test_filter_heading.data)
+
+        self.heading_debug_data = debug
+        self.heading_debug_publisher.publish(debug)
+
+        # for easier debugging with rqt_plot
+        self.carla_heading_publisher.publish(self.carla_current_heading)
+
+    # Main method of the node
     def run(self):
         """
         Main loop of the node:
@@ -429,8 +521,9 @@ class SensorFilterDebugNode(CompatibleNode):
                 self.heading_debug()
 
                 # save debug data in csv files
-                self.save_position_errors()
-                self.save_heading_errors()
+                # (uncomment if not needed -> solely debugging with rqt_plot) 
+                self.save_position_data()
+                self.save_heading_data()
 
                 rospy.sleep(self.control_loop_rate)
 
@@ -463,7 +556,7 @@ def main(args=None):
 
     roscomp.init("position_heading_publisher_node_2", args=args)
     try:
-        node = SensorFilterDebugNode()
+        node = position_heading_filter_debug_node()
         node.run()
     except KeyboardInterrupt:
         pass
