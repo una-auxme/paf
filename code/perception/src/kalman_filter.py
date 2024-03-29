@@ -27,10 +27,13 @@ and the GPS Sensor provides the position.
 The Carla Speedometer provides the current Speed in the headed direction.
 
 The Z Coordinate (Latitude) is calculated by a simple Running Average of
-the last 10 GPS-z Measurements and is not in any way related
-to the Kalman Filter.
+the last 10 (GPS_RUNNING_AVG_ARGS) GPS-z Measurements and
+is not in any way related to the Kalman Filter.
 
-The testing Noise for the GPS Sensor is defined as:
+Noise values are derived from:
+https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py
+
+The Noise for the GPS Sensor is defined as:
     "noise_alt_stddev": 0.000005,
     "noise_lat_stddev": 0.000005,
     "noise_lon_stddev": 0.000005
