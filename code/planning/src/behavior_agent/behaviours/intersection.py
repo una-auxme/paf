@@ -5,6 +5,9 @@ from std_msgs.msg import String
 import rospy
 
 from .import behavior_speed as bs
+
+import planning  # noqa: F401
+
 from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
 
 """
@@ -281,7 +284,8 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return py_trees.common.Status.RUNNING
-            elif rospy.get_rostime - self.green_light_time < rospy.Duration(1)\
+            elif rospy.get_rostime() - self.green_light_time < \
+                    rospy.Duration(1)\
                     and traffic_light_status == "green":
                 rospy.loginfo("Confirm green light!")
                 return py_trees.common.Status.RUNNING
@@ -289,7 +293,8 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.loginfo(f"Light Status: {traffic_light_status}"
                               "-> prev was red")
                 return py_trees.common.Status.RUNNING
-            elif rospy.get_rostime - self.green_light_time > rospy.Duration(1)\
+            elif rospy.get_rostime() - self.green_light_time > \
+                    rospy.Duration(1)\
                     and traffic_light_status == "green":
                 rospy.loginfo(f"Light Status: {traffic_light_status}")
                 return py_trees.common.Status.SUCCESS

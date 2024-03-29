@@ -81,7 +81,8 @@ class CollisionCheck(CompatibleNode):
            Reset determines if the distance should be reset or only updated.
 
         Args:
-            reset (Bool): True: Reset distance to obstacle in front; False: Update distance
+            reset (Bool): True: Reset distance to obstacle in front; False:
+            Update distance
         """
         if reset:
             # Reset all values if we do not have car in front
@@ -92,13 +93,14 @@ class CollisionCheck(CompatibleNode):
             self.collision_pub.publish(data)
             return
         if self.__object_first_position is None:
-            # Update distance to store second distance value for speed calculation
+            # Update distance, store second distance value for speed
             self.__object_first_position = self.__object_last_position
             self.__object_last_position = None
             return
 
     def __set_distance(self, data: Float32MultiArray):
-        """Filters objects and saves last distance from LIDAR for objects in front.
+        """Filters objects and saves last distance from LIDAR
+           for objects in front.
            Afterwards initiates speed calculation
 
         Args:
@@ -110,7 +112,8 @@ class CollisionCheck(CompatibleNode):
                 self.__object_last_position is not None and \
                 rospy.get_rostime() - self.__object_last_position[0] > \
                 rospy.Duration(2):
-            # If no object is in front and last object is older than 2 seconds we assume no object is in front
+            # If no object is in front and last object is older than 2 seconds
+            # we assume no object is in front
             self.update_distance(True)
             return
         elif nearest_object is None:
@@ -123,7 +126,8 @@ class CollisionCheck(CompatibleNode):
         self.calculate_obstacle_speed()
 
     def __set_distance_oncoming(self, data: Float32MultiArray):
-        """Filters objects and saves last distance from LIDAR for oncoming traffic
+        """Filters objects and saves last distance from LIDAR for oncoming
+            traffic
 
         Args:
             data (Float32): Message from lidar with distance objects
@@ -134,7 +138,8 @@ class CollisionCheck(CompatibleNode):
                 self.__last_position_oncoming is not None and
                 rospy.get_rostime() - self.__last_position_oncoming[0] >
                 rospy.Duration(2)):
-             # If no oncoming traffic found and last object is older than 2 seconds we assume no object is in front
+            # If no oncoming traffic found and last object is older than 2
+            # seconds we assume no object is in front
             self.update_distance_oncoming(True)
             return
         elif nearest_object is None:
@@ -149,10 +154,12 @@ class CollisionCheck(CompatibleNode):
         self.oncoming_pub.publish(Float32(data=nearest_object[1]))
 
     def update_distance_oncoming(self, reset):
-        """Updates the distance to the oncoming traffic. Reset determines if the distance should be reset or only updated.
+        """Updates the distance to the oncoming traffic. Reset determines if
+        the distance should be reset or only updated.
 
         Args:
-            reset (Bool): True: Reset distance to oncoming traffic; False: Update distance
+            reset (Bool): True: Reset distance to oncoming traffic
+                            False: Update distance
         """
         if reset:
             # Reset all values if we do not have car in front
@@ -168,7 +175,8 @@ class CollisionCheck(CompatibleNode):
 
     def calculate_obstacle_speed(self):
         """Caluclate the speed of the obstacle in front of the ego vehicle
-            based on the distance between to timestamps. Then check for collision
+            based on the distance between to timestamps.
+            Then check for collision
         """
         # Check if current speed from vehicle is not None
         if self.__current_velocity is None or \
@@ -178,7 +186,8 @@ class CollisionCheck(CompatibleNode):
         # Calculate time since last position update
         rospy_time_difference = self.__object_last_position[0] - \
             self.__object_first_position[0]
-        # Use nanoseconds for time difference to be more accurate and reduce error
+        # Use nanoseconds for time difference to be more accurate
+        # and reduce error
         time_difference = rospy_time_difference.nsecs/1e9
         # Calculate distance (in m)
         distance = self.__object_last_position[1] - \
@@ -240,7 +249,8 @@ class CollisionCheck(CompatibleNode):
         if collision_time > 0:
             # If time to collision is positive, a collision is ahead
             if distance < emergency_distance:
-                # If distance is smaller than emergency distance, publish emergency brake
+                # If distance is smaller than emergency distance,
+                # publish emergency brake
                 self.emergency_pub.publish(True)
             # Publish collision data to Decision Making and ACC
             data = Float32MultiArray(data=[distance, obstacle_speed])

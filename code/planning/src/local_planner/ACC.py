@@ -213,7 +213,8 @@ class ACC(CompatibleNode):
             if self.obstacle_distance is not None and \
                     self.obstacle_speed is not None and \
                     self.__current_velocity is not None:
-                # If we have obstalce information, we can calculate the safe speed
+                # If we have obstalce information,
+                # we can calculate the safe speed
                 safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity)
                 if self.obstacle_distance < safety_distance:
@@ -241,7 +242,7 @@ class ACC(CompatibleNode):
                 # speed limit
                 self.velocity_pub.publish(self.speed_limit)
             else:
-                # If we don't have speed limits do not drive 
+                # If we don't have speed limits do not drive
                 # probably a problem accured in the global planner
                 self.velocity_pub.publish(0)
 

@@ -1,6 +1,6 @@
 # Global Planner
 
-**Summary:** [global_planner.py](.../code/planning/global_planner/src/global_planner.py):
+--Summary:-- [global_planner.py](.../code/planning/global_planner/src/global_planner.py):
 The global planner is responsible for collecting and preparing all data from the leaderboard and other intern
 components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter
@@ -97,21 +97,21 @@ To make the calculated waypoints available to other components it is formed into
 
 This node subscribes to the following needed topics:
 
-* OpenDrive Map:
-  * `/carla/{role_name}/OpenDRIVE` ([String](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html)) or `/carla/world_info` ([CarlaWorldInfo](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaworldinfomsg))
-* global Plan:
-  * `/carla/{role_name}/global_plan` ([CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
-* current agent position:
-  * `/paf/{role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- OpenDrive Map:
+  - `/carla/{role_name}/OpenDRIVE` ([String](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html)) or `/carla/world_info` ([CarlaWorldInfo](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaworldinfomsg))
+- global Plan:
+  - `/carla/{role_name}/global_plan` ([CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
+- current agent position:
+  - `/paf/{role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
 ### Outputs
 
 This node publishes the following topics:
 
-* preplanned trajectory:
-  * `/paf/{role_name}/trajectory` ([Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
-* prevailing speed limits:
-  * `/paf/{role_name}/speed_limits_OpenDrive`
+- preplanned trajectory:
+  - `/paf/{role_name}/trajectory` ([Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- prevailing speed limits:
+  - `/paf/{role_name}/speed_limits_OpenDrive`
   ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
 
 ## Testing

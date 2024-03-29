@@ -81,7 +81,8 @@ Nevertheless publish the collision information (object distance and speed) to AC
 
 ### [ACC](./ACC.md)
 
-The ACC is responsible for evaluating the target speed based on the current traffic situation. It recieves the speed limits from the global planner and the collisions from the Collision Check. The ACC permanently evaluates in an infinite loop if a collision is recieved and calculates a new target speed accordingly.
+The ACC is responsible for evaluating the target speed based on the current traffic situation. It recieves the speed limits from the global planner and the collisions from the Collision Check.
+The ACC permanently evaluates in an infinite loop if a collision is recieved and calculates a new target speed accordingly.
 
 **If a collision is recieved**: Caluclate the distance to stop at the current speed without the emergency brake as safety distance that should be kept.
 
