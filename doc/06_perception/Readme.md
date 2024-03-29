@@ -16,7 +16,7 @@ This folder contains further documentation of the perception components.
 
 ## 6. [Vision Node](./06_vision_node.md)
 
-## 7. [sensor_filter_debug.py](./07_sensor_filter_debug.md)
+## 7. [Position Heading Filter Debug Node](./07_position_heading_filter_debug_node.md)
 
 ## 8. [Kalman Filter](./08_kalman_filter.md)
 

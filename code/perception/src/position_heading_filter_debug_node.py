@@ -33,7 +33,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         super(position_heading_filter_debug_node, self).__init__(
-            'sensor_filter_debug_node')
+            'position_heading_filter_debug_node')
 
         # basic info
         self.role_name = self.get_param("role_name", "hero")
@@ -72,7 +72,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.csv_heading_created = False
         self.csv_file_path_heading = ''
 
-        self.loginfo("Sensor Filter Debug node started")
+        self.loginfo("Position Heading Filter Debug node started")
 
         # region Subscriber START
 
@@ -272,13 +272,13 @@ class position_heading_filter_debug_node(CompatibleNode):
             if os.stat(self.csv_file_path_x).st_size == 0:
                 writer.writerow([
                     "Time",
-                    "Unfiltered",
-                    "Ideal (Carla)",
-                    "Current",
-                    "Test Filter",
-                    "Unfiltered Error",
-                    "Current Error",
-                    "Test Filter Error"
+                    "Unfiltered X",
+                    "Ideal (Carla) X",
+                    "Current X",
+                    "Test Filter X",
+                    "Unfiltered X Error",
+                    "Current X Error",
+                    "Test Filter X Error"
                 ])
             writer.writerow([
                 rospy.get_time(),
@@ -298,13 +298,13 @@ class position_heading_filter_debug_node(CompatibleNode):
             if os.stat(self.csv_file_path_y).st_size == 0:
                 writer.writerow([
                     "Time",
-                    "Unfiltered",
-                    "Ideal (Carla)",
-                    "Current",
-                    "Test Filter",
-                    "Unfiltered Error",
-                    "Current Error",
-                    "Test Filter Error"
+                    "Unfiltered Y",
+                    "Ideal (Carla) Y",
+                    "Current Y",
+                    "Test Filter Y",
+                    "Unfiltered Y Error",
+                    "Current Y Error",
+                    "Test Filter Y Error"
                 ])
             writer.writerow([
                 rospy.get_time(),

@@ -1,8 +1,8 @@
-# sensor_filter_debug.py
+# position_heading_filter_debug_node.py
 
-**Summary:** [sensor_filter_debug.py](../../code/perception/src/sensor_filter_debug.py):
+**Summary:** [position_heading_filter_debug_node.py](../../code/perception/src/position_heading_filter_debug_node.py):
 
-The sensor_filter_debug node is responsible for collecting sensor data from the IMU and GNSS and process the data in such a way, that it shows the errors between the real is-state and the measured state.
+The position_heading_filter_debug_node node is responsible for collecting sensor data from the IMU and GNSS and process the data in such a way, that it shows the errors between the real is-state and the measured state.
 The data is the shown in multiple rqt_plots.
 
 ---
@@ -19,7 +19,7 @@ Robert Fischer
 
 ---
 <!-- TOC -->
-- [sensor\_filter\_debug.py](#sensor_filter_debugpy)
+- [sensor\_filter\_debug.py](#position_heading_filter_debugpy)
   - [Author](#author)
   - [Date](#date)
   - [Prerequisite](#prerequisite)
@@ -33,7 +33,7 @@ Robert Fischer
 
 ## Getting started
 
-Uncomment the sensor_filter_debug.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
+Uncomment the position_heading_filter_debug_node.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
 You can also uncomment the rqt_plots that seem useful to you, or create your own ones from the data published.
 You have to add the following sensors to the sensors inside the [dev_objects.json](../../code/agent/config/dev_objects.json):
 

@@ -4,7 +4,7 @@
   <arg name="control_loop_rate" default="0.1" />
 
   <!-- just for testing purposes -> Uncomment to use and see plots -->
-  <!-- <node pkg="perception" type="sensor_filter_debug.py" name="sensor_filter_debug" output="screen">
+  <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
     <param name="control_loop_rate" value="0.001" />
     <param name="role_name" value="$(arg role_name)" />
   </node> -->
