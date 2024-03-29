@@ -15,8 +15,8 @@ Source: https://github.com/ll7/psaf2
 class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
-    an lane change and behaviours.road_features.lanechange_ahead is
-    triggered. It than handles the approaching the lane change, slowing the
+    an lane change and behaviours.road_features.LaneChangeAhead is
+    triggered. It than handles approaching the lane change, slowing the
     vehicle down appropriately.
     """
     def __init__(self, name):
@@ -146,9 +146,7 @@ class Approach(py_trees.behaviour.Behaviour):
 
 class Wait(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the waiting in front of the stop line at the inter-
-    section until there either is no traffic light, the traffic light is
-    green or the intersection is clear.
+    This behavior handles the waiting in front of the lane change.
     """
     def __init__(self, name):
         """
@@ -165,7 +163,7 @@ class Wait(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -196,8 +194,7 @@ class Wait(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Waits in front of the intersection until there is a green light, the
-        intersection is clear or no traffic light at all.
+        Waits in front of the lane change until the lane change is free.
         :return: py_trees.common.Status.RUNNING, while traffic light is yellow
                  or red
                  py_trees.common.Status.SUCCESS, if the traffic light switched
@@ -215,16 +212,8 @@ class Wait(py_trees.behaviour.Behaviour):
             rospy.loginfo("Forward to enter")
             return py_trees.common.Status.SUCCESS
 
-        # if road_option == 5:
-        #     distance_lidar = self.blackboard. \
-        #         get("/carla/hero/LIDAR_range_rear_left")
-        # elif road_option == 6:
-        #     distance_lidar = self.blackboard. \
-        #         get("/carla/hero/LIDAR_range_rear_right")
-        # else:
-        #     distance_lidar = None
-
-        distance_lidar = 20  # Remove to wait
+        # ADD FEATURE: Check for Traffic
+        distance_lidar = 20
 
         change_clear = False
         if distance_lidar is not None:
@@ -297,7 +286,7 @@ class Enter(py_trees.behaviour.Behaviour):
         What to do here?
             Any initialisation you need before putting your behaviour to work.
         This prints a state status message and changes the driving speed for
-        the intersection.
+        the lane change.
         """
         rospy.loginfo("Enter next Lane")
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
@@ -310,7 +299,7 @@ class Enter(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Continues driving through the intersection until the vehicle gets
+        Continues driving through the lane change until the vehicle gets
         close enough to the next global way point.
         :return: py_trees.common.Status.RUNNING, if too far from intersection
                  py_trees.common.Status.SUCCESS, if stopped in front of inter-
@@ -323,8 +312,6 @@ class Enter(py_trees.behaviour.Behaviour):
 
         if next_waypoint_msg is None:
             return py_trees.common.Status.FAILURE
-        # if next_waypoint_msg.distance < 5 and
-            # not next_waypoint_msg.isStopLine:
         if next_waypoint_msg.distance < 5:
             rospy.loginfo("Drive on the next lane!")
             return py_trees.common.Status.RUNNING
@@ -367,7 +354,7 @@ class Leave(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
