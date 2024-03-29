@@ -11,24 +11,27 @@ to the other components of this project (acting, decision making,...).
 
 ## Author
 
-Simon Erlbacher, Niklas Vogel
+Samuel Kühnel
 
 ## Date
 
-29.03.2023
+29.03.2024
 
-## Prerequisite
+## Note
+
+This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
 ---
 <!-- TOC -->
-* [Global Planner](#global-planner)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Getting started](#getting-started)
-  * [Description](#description)
-    * [Inputs](#inputs)
-    * [Outputs](#outputs)
+- [Global Planner](#global-planner)
+  - [Author](#author)
+  - [Date](#date)
+  - [Note](#note)
+  - [Getting started](#getting-started)
+  - [Description](#description)
+    - [Inputs](#inputs)
+    - [Outputs](#outputs)
+  - [Testing](#testing)
 <!-- TOC -->
 
 ---
@@ -110,3 +113,27 @@ This node publishes the following topics:
 * prevailing speed limits:
   * `/paf/{role_name}/speed_limits_OpenDrive`
   ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
+
+## Testing
+
+To generate a initial trajectory in the developement environment, you can use the [dev_global_route.py](../../code/planning/src/global_planner/dev_global_route.py) node. This node generates the initial trajectory on town 12.
+
+Activate the node you need the do the following steps also described in [global_planner.py](../../code/planning/src/global_planner/global_planner.py):
+
+- Uncomment the following lines in [planning.launch](../../code/planning/launch/planning.launch):
+
+```xml
+<node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
+        <param name="from_txt" value="True" />
+        <param name="sampling_resolution" value="75.0" />
+        <param name="routes" value="/opt/leaderboard/data/routes_devtest.xml" />
+        <param name="global_route_txt" value="/code/planning/src/global_planner/global_route.txt" />
+        <param name="role_name" value="hero" />
+</node>
+```
+
+- Uncomment the following line in the bottom of the `init` method in [global_planner.py](../../code/planning/src/global_planner/global_planner.py):
+
+```python
+self.dev_load_world_info()
+```

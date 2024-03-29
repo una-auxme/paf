@@ -6,27 +6,29 @@
 
 ## Author
 
-Simon Erlbacher, Niklas Vogel
+Samuel Kühnel
 
 ## Date
 
-29.03.2023
+29.03.2024
 
-## Prerequisite
+## Note
+
+The Preplanning component was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
 ---
 <!-- TOC -->
-* [Preplanning](#preplanning)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Getting started](#getting-started)
-  * [Road option concept](#road-option-concept)
-  * [Road information](#road-information)
-  * [Junction](#junction)
-  * [Road interpolation](#road-interpolation)
-  * [How to use the implementation](#how-to-use-the-implementation)
-    * [Sources](#sources)
+- [Preplanning](#preplanning)
+  - [Author](#author)
+  - [Date](#date)
+  - [Note](#note)
+  - [Getting started](#getting-started)
+  - [Road option concept](#road-option-concept)
+  - [Road information](#road-information)
+  - [Junction](#junction)
+  - [Road interpolation](#road-interpolation)
+  - [How to use the implementation](#how-to-use-the-implementation)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ---

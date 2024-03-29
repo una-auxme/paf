@@ -9,6 +9,10 @@ Planning wiki contains different parts:
 - Preplanning
 - Global plan
 - Decision making
+- Local Planning:
+  - ACC
+  - Collision Check
+  - Motion Planning
 
 ---
 
