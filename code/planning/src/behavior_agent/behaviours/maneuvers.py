@@ -65,8 +65,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         When is this called?
         Every time your behaviour is ticked.
 
-        pose: 
-            position: 
+        pose:
+            position:
                 x: 294.43757083094295
                 y: -1614.961812061094
                 z: 211.1994649671884
