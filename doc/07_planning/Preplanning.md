@@ -1,20 +1,20 @@
 # Preplanning
 
---Summary:-- Preplanner holds the logic to create a trajectory out of an OpenDrive Map with the belonging road options
+**Summary:** Preplanner holds the logic to create a trajectory out of an OpenDrive Map with the belonging road options
 
 ---
 
 ## Author
 
-Samuel Kühnel
+Authors: Simon Erlbacher, Niklas Vogel
 
 ## Date
 
-29.03.2024
+29.03.2023
 
 ## Note
 
-The Preplanning component was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
+The Preplanning component was taken from the previous project PAF22.
 
 ---
 <!-- TOC -->

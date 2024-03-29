@@ -1,6 +1,6 @@
 # Global Planner
 
---Summary:-- [global_planner.py](.../code/planning/global_planner/src/global_planner.py):
+**Summary:** [global_planner.py](.../code/planning/global_planner/src/global_planner.py):
 The global planner is responsible for collecting and preparing all data from the leaderboard and other intern
 components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter

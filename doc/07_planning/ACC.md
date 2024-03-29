@@ -40,7 +40,3 @@ To run this node insert the following statement in the [planning.launch](../../c
     <param name="control_loop_rate" value="0.3" />
 </node>
 ```
-
-## Source
-
-Inspired by PAF 21-1
