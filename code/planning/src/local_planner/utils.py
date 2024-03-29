@@ -114,13 +114,16 @@ def approx_obstacle_pos(distance: float, heading: float,
     # Add ego position vector with distance vetor to get absolute position
     vehicle_position_global_start = ego_pos + absolute_position_local
 
+    # Calculate the front and back of the vehicle
     length = np.array([3, 0, 0])
     length_vector = rotation_matrix.apply(length)
 
+    # calculate the front left corner of the vehicle
     offset = np.array([1, 0, 0])
     rotation_adjusted = Rotation.from_euler('z', heading + math.radians(90))
     offset_front = rotation_adjusted.apply(offset)
 
+    # calculate back right corner of the vehicle
     rotation_adjusted = Rotation.from_euler('z', heading + math.radians(270))
     offset_back = rotation_adjusted.apply(offset)
 
