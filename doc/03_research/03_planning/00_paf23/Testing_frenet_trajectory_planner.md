@@ -78,7 +78,6 @@ Complete list of parameters:
 """
 ```
 
-## Pending Questions
+## Decision
 
-* Choose right side to pass the object.
-* How about moving objects?
+We decided not to use the FOT-Planner, as we got to many instable results and decided to implement a simpler version.
