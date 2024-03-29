@@ -5,21 +5,18 @@ from std_msgs.msg import String
 import rospy
 
 from . import behavior_speed as bs
+from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
 
 """
 Source: https://github.com/ll7/psaf2
 """
 
 
-def convert_to_ms(speed):
-    return speed / 3.6
-
-
 class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
-    an intersection and behaviours.road_features.intersection_ahead is
-    triggered. It than handles the approaching the intersection, slowing the
+    an lane change and behaviours.road_features.lanechange_ahead is
+    triggered. It than handles the approaching the lane change, slowing the
     vehicle down appropriately.
     """
     def __init__(self, name):
@@ -38,7 +35,7 @@ class Approach(py_trees.behaviour.Behaviour):
         validation of the behaviour's configuration.
 
         This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
+        by the ROS topics and the current behavior publisher.
         :param timeout: an initial timeout to see if the tree generation is
         successful
         :return: True, as the set up is successful.
@@ -57,10 +54,9 @@ class Approach(py_trees.behaviour.Behaviour):
         What to do here?
             Any initialisation you need before putting your behaviour to work.
         This initializes the variables needed to save information about the
-        stop line, stop signs and the traffic light.
+        lane change.
         """
         rospy.loginfo("Approaching Change")
-        self.start_time = rospy.get_time()
         self.change_detected = False
         self.change_distance = np.inf
         self.virtual_change_distance = np.inf
@@ -75,11 +71,10 @@ class Approach(py_trees.behaviour.Behaviour):
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Gets the current traffic light status, stop sign status
-        and the stop line distance
-        :return: py_trees.common.Status.RUNNING, if too far from intersection
-                 py_trees.common.Status.SUCCESS, if stopped in front of inter-
-                 section or entered the intersection
+        Gets the current lane change distance.
+        :return: py_trees.common.Status.RUNNING, if too far from lane change
+                 py_trees.common.Status.SUCCESS, if stopped in front of lane
+                 change or entered the lane change
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
@@ -89,24 +84,14 @@ class Approach(py_trees.behaviour.Behaviour):
             self.change_distance = _dis.distance
             self.change_detected = _dis.isLaneChange
             self.change_option = _dis.roadOption
-            rospy.loginfo(f"Change distance: {self.change_distance}")
+            # rospy.loginfo(f"Change distance: {self.change_distance}")
 
         # calculate virtual stopline
         if self.change_distance != np.inf and self.change_detected:
             self.virtual_change_distance = self.change_distance
 
-        # slow down before lane change
-        # if self.virtual_change_distance < 15.0:
-        #     if self.change_option == 5:
-        #         distance_lidar = self.blackboard. \
-        #             get("/carla/hero/LIDAR_range_rear_left")
-        #     elif self.change_option == 6:
-        #         distance_lidar = self.blackboard. \
-        #             get("/carla/hero/LIDAR_range_rear_right")
-        #     else:
-        #         distance_lidar = None
-
-            distance_lidar = 20  # Remove and adjust to check for cars behind
+            # ADD FEATURE: Check for Traffic
+            distance_lidar = 20
 
             if distance_lidar is not None and distance_lidar > 15.0:
                 rospy.loginfo("Change is free not slowing down!")
@@ -118,18 +103,21 @@ class Approach(py_trees.behaviour.Behaviour):
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
+
+        target_dis = TARGET_DISTANCE_TO_STOP
+
         if speedometer is not None:
             speed = speedometer.speed
         else:
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
-        if self.virtual_change_distance > 5 and self.blocked:
+        if self.virtual_change_distance > target_dis and self.blocked:
             # too far
             rospy.loginfo("still approaching")
             self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.virtual_change_distance < 5.0 and self.blocked:
+                self.virtual_change_distance < target_dis and self.blocked:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS

@@ -6,15 +6,12 @@ import numpy as np
 
 from . import behavior_speed as bs
 import planning  # noqa: F401
-from local_planner.utils import NUM_WAYPOINTS
+from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, \
+    convert_to_ms
 
 """
 Source: https://github.com/ll7/psaf2
 """
-
-
-def convert_to_ms(speed):
-    return speed / 3.6
 
 
 # Varaible to determine the distance to overtak the object
@@ -128,7 +125,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < 6.0:
+                self.ot_distance < TARGET_DISTANCE_TO_STOP:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
