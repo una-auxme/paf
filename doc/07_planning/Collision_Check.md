@@ -14,9 +14,8 @@ The Collision Check only consists of one node that contains all subscriper and p
 ### Published Topics
 
 - `/paf/hero/emergency`: Published when an emergency stop is required.
-- `/paf/hero/collision`: Publishes the distance to a collision.
+- `/paf/hero/collision`: Publishes the distance and speed from a collision object.
 - `/paf/hero/oncoming`: Publishes the distance to oncoming traffic.
-- `/paf/hero/cc_speed`: Publishes the vehicle's speed.
 
 ### Subscribed Topics
 

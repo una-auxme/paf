@@ -51,11 +51,6 @@ class CollisionCheck(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/oncoming",
             qos_profile=1)
-        # Approx speed publisher for ACC
-        self.speed_publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/cc_speed",
-            qos_profile=1)
         # Variables to save vehicle data
         self.__current_velocity: float = None
         self.__object_first_position: tuple = None
