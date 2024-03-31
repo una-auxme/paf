@@ -80,7 +80,6 @@ If activated it automatically saves the csv data in numerically ordered "data_##
 
 The CSV files columns are formatted in the following style:
 
-
 **X csv file example:**
 | Time | Unfiltered | Ideal(Carla) | Current | Test Filter | Unfiltered Error | Current Error | Test Filter Error |
 | ---- | ---------- | ------------ | ------- | ----------- | ---------------- | ------------- | ----------------- |
