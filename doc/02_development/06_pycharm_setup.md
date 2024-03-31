@@ -1,5 +1,7 @@
 # PyCharm Professional
 
+(Kept from previous group [paf22])
+
 For a seamless development experience, we recommend the use of [PyCharm Professional](https://www.jetbrains.com/pycharm/).
 
 ## Getting an education license

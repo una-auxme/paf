@@ -1,5 +1,7 @@
 # Project management
 
+(Kept from previous group [paf22])
+
 **Summary:** We use a [Github Project](https://github.com/users/ll7/projects/2) for project management.
 Any bugs or features requests are managed in Github.
 
@@ -18,19 +20,20 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Project management](#project-management)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Create bug or feature requests](#create-bug-or-feature-requests)
-    * [🐞 Bug](#-bug)
-      * [Example for "Bug"](#example-for--bug-)
-    * [💡 Feature](#-feature)
-      * [Example for "Feature"](#example-for--feature-)
-    * [🚗 Bug in CARLA Simulator](#-bug-in-carla-simulator)
-      * [Example for "Bug in CARLA Simulator"](#example-for--bug-in-carla-simulator-)
-  * [Create a Pull Request](#create-a-pull-request)
-  * [Merging a Pull Request](#merging-a-pull-request)
+- [Project management](#project-management)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Create bug or feature requests](#create-bug-or-feature-requests)
+    - [🐞 Bug](#-bug)
+      - [Example for "Bug"](#example-for-bug)
+    - [💡 Feature](#-feature)
+      - [Example for "Feature"](#example-for-feature)
+    - [🚗 Bug in CARLA Simulator](#-bug-in-carla-simulator)
+      - [Example for "Bug in CARLA Simulator"](#example-for-bug-in-carla-simulator)
+  - [Create a Pull Request](#create-a-pull-request)
+  - [Merging a Pull Request](#merging-a-pull-request)
+  - [Deadlines for pull requests and reviews](#deadlines-for-pull-requests-and-reviews)
 <!-- TOC -->
 
 ---

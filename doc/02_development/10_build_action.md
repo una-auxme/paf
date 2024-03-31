@@ -1,5 +1,7 @@
 # GitHub actions
 
+(Kept from previous group [paf22])
+
 **Summary:** This page explains the GitHub build action we use to first:
 
 - create an executable image of our work
@@ -24,17 +26,17 @@ Tim Dreier, Korbinian Stein
   - [Date](#date)
   - [Table of contents](#table-of-contents)
   - [General](#general)
-  - [The Dockerfile (`build/docker/build/Dockerfile`)](#the-dockerfile--builddockerbuilddockerfile-)
+  - [The Dockerfile (`build/docker/build/Dockerfile`)](#the-dockerfile-builddockerbuilddockerfile)
   - [The `build-and-push-image` job](#the-build-and-push-image-job)
-    - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository--actionscheckoutv3-)
-    - [2. Set up Docker Buildx (`docker/setup-buildx-action@v2`)](#2-set-up-docker-buildx--dockersetup-buildx-actionv2-)
-    - [3. Log in to the Container registry (`docker/login-action@v2`)](#3-log-in-to-the-container-registry--dockerlogin-actionv2-)
-    - [4. Bump version and push tag (`mathieudutour/github-tag-action`)](#4-bump-version-and-push-tag--mathieudutourgithub-tag-action-)
+    - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository-actionscheckoutv3)
+    - [2. Set up Docker Buildx (`docker/setup-buildx-action@v2`)](#2-set-up-docker-buildx-dockersetup-buildx-actionv2)
+    - [3. Log in to the Container registry (`docker/login-action@v2`)](#3-log-in-to-the-container-registry-dockerlogin-actionv2)
+    - [4. Bump version and push tag (`mathieudutour/github-tag-action`)](#4-bump-version-and-push-tag-mathieudutourgithub-tag-action)
       - [Example](#example)
     - [5. Get commit hash](#5-get-commit-hash)
     - [6. Build and push Docker image](#6-build-and-push-docker-image)
   - [The drive job](#the-drive-job)
-    - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository--actionscheckoutv3--1)
+    - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository-actionscheckoutv3-1)
     - [2. Run agent with docker-compose](#2-run-agent-with-docker-compose)
     - [3. Copy simulation results file out of container](#3-copy-simulation-results-file-out-of-container)
     - [4. Stop docker-compose stack](#4-stop-docker-compose-stack)

@@ -1,5 +1,7 @@
 # Git Style
 
+(Kept from previous group [paf22])
+
 **Summary:** This page gives an overview over different types of git workflows to choose from.
 
 ---
@@ -16,18 +18,19 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Git Style](#git-style)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Git workflow](#git-workflow)
-    * [Git Feature Branch](#git-feature-branch)
-      * [Branch strategy](#branch-strategy)
-  * [Git style](#git-style)
-    * [Branch naming](#branch-naming)
-    * [Commit messages](#commit-messages)
-    * [Git commands cheat sheet](#git-commands-cheat-sheet)
-  * [Sources](#sources)
+- [Git Style](#git-style)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Git workflow](#git-workflow)
+    - [Git Feature Branch](#git-feature-branch)
+      - [Branch strategy](#branch-strategy)
+  - [Git style](#git-style-1)
+    - [Branch naming](#branch-naming)
+      - [For example](#for-example)
+    - [Commit messages](#commit-messages)
+    - [Git commands cheat sheet](#git-commands-cheat-sheet)
+  - [Sources](#sources)
 <!-- TOC -->
 
 ## Git workflow

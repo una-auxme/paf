@@ -1,5 +1,7 @@
 # Review Guidelines
 
+(Kept from previous group [paf22])
+
 **Summary:** This page gives an overview over the steps that should be taken during a review and how to give a helpful and constructive review
 
 ---
@@ -16,18 +18,18 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Review Guidelines](#review-guidelines)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [How to review](#how-to-review)
-  * [How to comment on a pull request](#how-to-comment-on-a-pull-request)
-  * [Incorporating feedback](#incorporating-feedback)
-    * [Responding to comments](#responding-to-comments)
-    * [Applying suggested changes](#applying-suggested-changes)
-    * [Re-requesting a review](#re-requesting-a-review)
-    * [Resolving conversations](#resolving-conversations)
-  * [Sources](#sources)
+- [Review Guidelines](#review-guidelines)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [How to review](#how-to-review)
+  - [How to comment on a pull request](#how-to-comment-on-a-pull-request)
+  - [Incorporating feedback](#incorporating-feedback)
+    - [Responding to comments](#responding-to-comments)
+    - [Applying suggested changes](#applying-suggested-changes)
+    - [Re-requesting a review](#re-requesting-a-review)
+    - [Resolving conversations](#resolving-conversations)
+  - [Sources](#sources)
 <!-- TOC -->
 
 ---

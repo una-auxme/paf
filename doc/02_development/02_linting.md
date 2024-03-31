@@ -1,5 +1,7 @@
 # Linting
 
+(Kept from previous group [paf22])
+
 To ensure unified standards in the project, the following linters are applied during commit.
 
 ## 🐍 Python conventions

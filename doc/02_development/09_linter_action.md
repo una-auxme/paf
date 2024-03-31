@@ -1,5 +1,7 @@
 # Github actions
 
+(Kept from previous group [paf22])
+
 **Summary:** This page explains the GitHub lint action we use to unsure Code quality.
 
 ---
@@ -14,15 +16,15 @@ Tim Dreier
 
 ## Table of contents
 <!-- TOC -->
-* [Github actions](#github-actions)
-  * [Author](#author)
-  * [Date](#date)
-  * [Table of contents](#table-of-contents)
-  * [General](#general)
-  * [Pull requests](#pull-requests)
-  * [🚨 Common Problems](#-common-problems)
-    * [1. Error in the markdown linter](#1-error-in-the-markdown-linter)
-    * [2. Error in the python linter](#2-error-in-the-python-linter)
+- [Github actions](#github-actions)
+  - [Author](#author)
+  - [Date](#date)
+  - [Table of contents](#table-of-contents)
+  - [General](#general)
+  - [Pull requests](#pull-requests)
+  - [🚨 Common Problems](#-common-problems)
+    - [1. Error in the markdown linter](#1-error-in-the-markdown-linter)
+    - [2. Error in the python linter](#2-error-in-the-python-linter)
 <!-- TOC -->
 
 ## General
