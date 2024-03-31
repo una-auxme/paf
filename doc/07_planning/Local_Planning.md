@@ -28,6 +28,8 @@ Samuel Kühnel
     - [ACC](#acc)
   - [Motion Planning](#motion-planning)
     - [Cornering Speed](#cornering-speed)
+    - [Selecting the target velocity](#selecting-the-target-velocity)
+    - [Moving the trajectory](#moving-the-trajectory)
     - [Sources](#sources)
 <!-- TOC -->
 ## Overview
@@ -116,6 +118,20 @@ The cornering speed gets calculated at the beginning of the scenario, when the f
 - Get speed according to the length of the corner
 
 Lane changes are special, because you can drive the with normal speed eventhough they have a curve change (visible in the picture on the straights). They can get their own speed, because every lane change is way smaller than the smallest corner.
+
+### Selecting the target velocity
+
+The target velocity is a combination of the acc speed, the behavior speed and the cornering speed. Almost everytime the minimal speed is choosen. Exceptions are overtaking and the parking maneuver.
+
+![Scenario](../00_assets/planning/three_scenarios.png)
+
+In the first scenario on the left side the green ego vehicle chooses the acc speed to not cause a collision with the red car.
+In the second scenario the car is waiting at the intersection and chooses the behavior speed (wait at intersection), while the acc would say speedlimit.
+In the last scenario the car chooses the cornering speed to smoothly perform a 90° right turn.
+
+### Moving the trajectory
+
+![Overtake](../00_assets/planning/Overtake_car_trajectory.png)
 
 ### Sources
 
