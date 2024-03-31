@@ -1,5 +1,7 @@
 # Git commit message conventions
 
+(Kept from previous group [paf22])
+
 [Conventional Commits](https://www.conventionalcommits.org/) are enforced by [comlipy](https://gitlab.com/slashplus-build/comlipy/) during commit. The commit message should be structured as follows:
 
 ```text

@@ -1,5 +1,7 @@
 # Coding style guidelines
 
+(Kept from previous group [paf22])
+
 **Summary:** This page contains the coding rules we want to follow as a team to improve readability and reviewing of our code.This document is for reference only and should be consolidated in case of uncertainty of following the style guidelines. Based on PEP 8 (<https://pep8.org/>)
 
 ---
@@ -16,58 +18,59 @@ Josef Kircher
 
 VSCode Extensions:
 
-* autoDostring - Python Docstring Generator by Nils Werner
+- autoDostring - Python Docstring Generator by Nils Werner
 
 To get the ReST format like in Pycharm:
 
-* Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
+- Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
 
 ---
 <!-- TOC -->
-* [Coding style guidelines](#coding-style-guidelines)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Code lay-out](#code-lay-out)
-    * [Indentation](#indentation)
-    * [Tabs or Spaces?](#tabs-or-spaces)
-    * [Should a line break before or after a binary operator?](#should-a-line-break-before-or-after-a-binary-operator)
-    * [Blank Lines](#blank-lines)
-    * [Source File Encoding](#source-file-encoding)
-    * [Imports](#imports)
-    * [Module level dunder names](#module-level-dunder-names)
-  * [String Quotes](#string-quotes)
-  * [Whitespace in Expressions and Statements](#whitespace-in-expressions-and-statements)
-    * [Pet Peeves](#pet-peeves)
-    * [Other Recommendations](#other-recommendations)
-  * [When to use trailing commas](#when-to-use-trailing-commas)
-  * [Comments](#comments)
-    * [Block Comments](#block-comments)
-    * [Inline Comments](#inline-comments)
-    * [Documentation Strings](#documentation-strings)
-  * [Naming Conventions](#naming-conventions)
-    * [Overriding Principle](#overriding-principle)
-    * [Descriptive Naming Styles](#descriptive-naming-styles)
-    * [Prescriptive: Naming Conventions](#prescriptive-naming-conventions)
-      * [Names to Avoid](#names-to-avoid)
-      * [ASCII Compatibility](#ascii-compatibility)
-      * [Package and Module Names](#package-and-module-names)
-      * [Class Names](#class-names)
-      * [Type variable names](#type-variable-names)
-      * [Exception Names](#exception-names)
-      * [Global Variable Names](#global-variable-names)
-      * [Function Names](#function-names)
-      * [Function and method arguments](#function-and-method-arguments)
-      * [Method Names and Instance Variables](#method-names-and-instance-variables)
-      * [Constants](#constants)
-      * [Designing for inheritance](#designing-for-inheritance)
-    * [Public and internal interfaces](#public-and-internal-interfaces)
-  * [Programming Recommendations](#programming-recommendations)
-    * [Function Annotations](#function-annotations)
-  * [Footnotes](#footnotes)
-  * [Copyright](#copyright)
-    * [Source](#source)
+- [Coding style guidelines](#coding-style-guidelines)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Code lay-out](#code-lay-out)
+    - [Indentation](#indentation)
+    - [Tabs or Spaces?](#tabs-or-spaces)
+    - [Should a line break before or after a binary operator?](#should-a-line-break-before-or-after-a-binary-operator)
+    - [Blank Lines](#blank-lines)
+    - [Source File Encoding](#source-file-encoding)
+    - [Imports](#imports)
+    - [Module level dunder names](#module-level-dunder-names)
+  - [String Quotes](#string-quotes)
+  - [Whitespace in Expressions and Statements](#whitespace-in-expressions-and-statements)
+    - [Pet Peeves](#pet-peeves)
+    - [Other Recommendations](#other-recommendations)
+  - [When to use trailing commas](#when-to-use-trailing-commas)
+  - [Comments](#comments)
+    - [Block Comments](#block-comments)
+    - [Inline Comments](#inline-comments)
+    - [Documentation Strings](#documentation-strings)
+  - [Naming Conventions](#naming-conventions)
+    - [Overriding Principle](#overriding-principle)
+    - [Descriptive Naming Styles](#descriptive-naming-styles)
+    - [Prescriptive: Naming Conventions](#prescriptive-naming-conventions)
+      - [Names to Avoid](#names-to-avoid)
+      - [ASCII Compatibility](#ascii-compatibility)
+      - [Package and Module Names](#package-and-module-names)
+      - [Class Names](#class-names)
+      - [Type variable names](#type-variable-names)
+      - [Exception Names](#exception-names)
+      - [Global Variable Names](#global-variable-names)
+      - [Function Names](#function-names)
+      - [Function and method arguments](#function-and-method-arguments)
+      - [Method Names and Instance Variables](#method-names-and-instance-variables)
+      - [Constants](#constants)
+      - [Designing for inheritance](#designing-for-inheritance)
+    - [Public and internal interfaces](#public-and-internal-interfaces)
+  - [Programming Recommendations](#programming-recommendations)
+    - [Function Annotations](#function-annotations)
+  - [Footnotes](#footnotes)
+  - [Copyright](#copyright)
+    - [Source](#source)
 <!-- TOC -->
+---
 
 ## Code lay-out
 
