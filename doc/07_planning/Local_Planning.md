@@ -133,6 +133,8 @@ In the last scenario the car chooses the cornering speed to smoothly perform a 9
 
 ![Overtake](../00_assets/planning/Overtake_car_trajectory.png)
 
+The trajectory gets moved a fixed amount of meters to the left if an overtake is triggered.
+
 ### Sources
 
 <https://www.adac.de/verkehr/rund-um-den-fuehrerschein/erwerb/anhalteweg-berechnen/>
