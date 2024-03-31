@@ -32,17 +32,15 @@ class VehicleController(CompatibleNode):
         self.control_publisher: Publisher = self.new_publisher(
             CarlaEgoVehicleControl,
             f'/carla/{self.role_name}/vehicle_control_cmd',
-            qos_profile=10
-        )
+            qos_profile=10)
 
-        # Publisher for Status TODO: Where needed? Why carla?
+        # Publisher for Status TODO: Maybe unneccessary
         self.status_pub: Publisher = self.new_publisher(
             Bool,
             f"/carla/{self.role_name}/status",
             qos_profile=QoSProfile(
                 depth=1,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        )
+                durability=DurabilityPolicy.TRANSIENT_LOCAL))
 
         # Publisher for which steering-controller is mainly used
         # 1 = PurePursuit and 2 = Stanley
@@ -140,6 +138,7 @@ class VehicleController(CompatibleNode):
                 self.__emergency_brake(True)
                 return
 
+            # Velocities over 5 m/s = use Stanley, else use PurePuresuit
             if self.__velocity > 5:
                 steer = self._s_steer
             else:

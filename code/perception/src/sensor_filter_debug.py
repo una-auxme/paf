@@ -62,7 +62,7 @@ class SensorFilterDebugNode(CompatibleNode):
         self.csv_heading_created = False
         self.csv_file_path_heading = ''
 
-        self.loginfo("Position publisher node started")
+        self.loginfo("position_heading_publisher_node started")
 
         # basic info
         self.role_name = self.get_param("role_name", "hero")
@@ -625,7 +625,7 @@ def main(args=None):
     :return:
     """
 
-    roscomp.init("position_publisher_node_2", args=args)
+    roscomp.init("position_heading_publisher_node_2", args=args)
     try:
         node = SensorFilterDebugNode()
         node.run()
