@@ -397,7 +397,7 @@ def plot_csv_x_or_y(file_name, type='x'):
     plt.plot(df['Current'], 'g-', label='Current')
 
     # Plot the 'ideal' column with a red dotted line
-    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal') 
+    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal')
 
     # Display the legend
     plt.legend()
