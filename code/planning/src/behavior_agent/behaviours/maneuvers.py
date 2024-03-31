@@ -404,6 +404,9 @@ UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     """
+    Documentation to this behavior can be found in
+    /doc/07_planning/Behavior_detailed.md
+
     This behavior is triggered when the vehicle is stuck and needs to be
     unstuck. The behavior will then try to reverse and steer to the left or
     right to get out of the stuck situation.

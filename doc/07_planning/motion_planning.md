@@ -35,6 +35,8 @@ At the moment this is enough since the only present behaviors are Intersection, 
 
 When the Overtaking behavior will be added, choosing the minimum speed will not be sufficient.
 
+This file is also responsible for providing a ```target_speed of -3``` for acting, whenever we need to use the Unstuck Behavior. -3 is the only case we can drive backwards right now, since we only need it for the unstuck routine. It also creates an overtake trajectory, whenever the unstuck behavior calls for it.
+
 ### Inputs
 
 This node subscribes to the following topics:
