@@ -2,36 +2,44 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-FILE_START = 15
-FILE_END = 33
+# FILE START and END are only needed for the range
+# of files you want to search for the best tuned file
+FILE_START = 0
+FILE_END = 20
 
-file_name = "data_26.csv"
+FILE_NUM = 26  # Change this to plot your wanted file #
+
+
+# current file_name to plot the data of one file!
+file_name = "data_" + str(FILE_NUM) + ".csv"
+
+# folder paths/ file paths
 folder_path_x = "./x_error/"
 folder_path_y = "./y_error/"
-file_path_x = folder_path_x + file_name
-file_path_y = folder_path_y + file_name
-file_path_heading = "./heading_error/" + file_name
+folder_path_heading = "./heading_error/"
 
 
 # region PLOTS
-# DONE
+
 def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
     """
     Calculates the best tuned file by type and error type using a specific
     check type.
 
     Parameters:
-    type (str): The type of data to read. Either 'x' or 'y'. (default 'x')
+    type (str): The type of data to read. Either 'x', 'y' or 'h'. (default 'x')
     error_type (str): The type of error to calculate. Either 'MSE', 'MAE' or
-                      'RMSPE'. (default 'MSE')
+                    'RMSPE'. (default 'MSE')
     check_type (str): The type of error to calculate. Either 'IQR' or 'default'
+                    IQR: Lower IQR is better
+                    default: lowest MSE/MAE is better
+                    Both are helpful to find the best tuned config.
 
     Returns:
 
     """
     best_file = ""
     best_val = []
-    # best_error_data = ()
     for i in range(FILE_START, FILE_END):
         if i < 10:
             file_name = "data_0" + str(i) + ".csv"
@@ -39,33 +47,35 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
             file_name = "data_" + str(i) + ".csv"
 
         ideal, test_filter, current, unfiltered = (
-            get_x_or_y_from_csv_file(file_name, type))
+            get_x_or_y_or_h_from_csv_file(file_name, type))
 
+        # calculate the error for each method by error_type
         if error_type == 'MSE':
             # Calculate the MSE for each method
-            val_test_filter, test_filter_list = calculate_mse_x_or_y(
+            val_test_filter, test_filter_list = calculate_mse_x_or_y_or_h(
                                                 ideal,
                                                 test_filter)
-            val_current, current_list = calculate_mse_x_or_y(
+            val_current, current_list = calculate_mse_x_or_y_or_h(
                 ideal,
                 current)
-            val_unfiltered, unfiltered_list = calculate_mse_x_or_y(
+            val_unfiltered, unfiltered_list = calculate_mse_x_or_y_or_h(
                 ideal,
                 unfiltered)
         elif error_type == 'MAE':
             # Calculate the MAE for each method
-            val_test_filter, test_filter_list = calculate_mae_x_or_y(
+            val_test_filter, test_filter_list = calculate_mae_x_or_y_or_h(
                                                 ideal,
                                                 test_filter)
-            val_current, current_list = calculate_mae_x_or_y(
+            val_current, current_list = calculate_mae_x_or_y_or_h(
                 ideal,
                 current)
-            val_unfiltered, unfiltered_list = calculate_mae_x_or_y(ideal,
-                                                                   unfiltered)
+            val_unfiltered, unfiltered_list = calculate_mae_x_or_y_or_h(
+                                              ideal,
+                                              unfiltered)
 
         vals = [val_test_filter, val_current, val_unfiltered]
-        # error_lists = (test_filter_list, current_list, unfiltered_list)
 
+        # evaluate the best tuned file by check_type
         if check_type == 'IQR':
             q3, q1 = np.percentile(test_filter_list, [80, 0])
             iqr = q3 - q1
@@ -79,12 +89,10 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
                 if abs(iqr) < abs(best_val):
                     best_val = iqr
                     best_file = file_name
-                    # best_error_data = error_lists
         elif check_type == 'default':
             if i == FILE_START:
                 best_val = vals[0]
                 best_file = file_name
-                # best_error_data = error_lists
             else:
                 # compare the vals of the test_filter filter that
                 # is tuned the best
@@ -94,111 +102,65 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
                     # best_error_data = error_lists
 
     # plot the best file
-    plot_x_or_y_notched_box(best_file, type=type, error_type=error_type)
+    plot_x_or_y_or_h_notched_box(best_file, type=type, error_type=error_type)
     print(best_file)
     print(best_val)
+    return
 
 
-# DONE
-def plot_best_tuned_file():
+def plot_x_or_y_or_h_notched_box(file_name, type='x', error_type='MSE'):
     """
-    Plots the best tuned file
-
-    Parameters:
-    true_positions (numpy.ndarray): Die tatsächlichen Positionen.
-    estimated_positions (numpy.ndarray): Die geschätzten Positionen.
-
-    Returns:
-    tuple: best file as a String and the MSE's of the best file.
-    """
-    best_file = ""
-    best_mse = []
-    # best_error_data = ()
-    for i in range(FILE_START, FILE_END):
-        if i < 10:
-            file_name = "data_0" + str(i) + ".csv"
-        else:
-            file_name = "data_" + str(i) + ".csv"
-
-        ideal_pos, test_filter_pos, current_pos, unfiltered_pos = (
-            get_positions_from_csv_file(file_name))
-
-        # Calculate the Error for each method by error_type
-        val_test_filter, test_filter_list = calculate_mse(ideal_pos,
-                                                          test_filter_pos)
-        val_current, current_list = calculate_mse(ideal_pos,
-                                                  current_pos)
-        val_unfiltered, unfiltered_list = calculate_mse(ideal_pos,
-                                                        unfiltered_pos)
-
-        mses = [val_test_filter, val_current, val_unfiltered]
-        # error_lists = (test_filter_list, current_list, unfiltered_list)
-
-        # Show the plot
-        # plt.show()
-        if i == 2:
-            best_mse = mses
-            best_file = file_name
-        else:
-            # compare the mses of the test_filter filter that is tuned the best
-            if mses[0] < best_mse[0]:
-                best_mse = mses
-                best_file = file_name
-                # best_error_data = error_lists
-
-    # plot the best file
-    plot_MSE_notched_box(best_file)
-    print(best_file)
-    print(best_mse)
-
-
-# DONE
-def plot_x_or_y_notched_box(file_name, type='x', error_type='MSE'):
-    """
-    Calculates and plots the error of x or y data for any given error type.
+    Calculates and plots the error of x, y or heading data for any given
+    error type.
 
     Parameters:
     file_name (str): The name of the CSV file.
-    type (str): The type of data to read. Either 'x' or 'y'. (default 'x')
+    type (str): The type of data to read. Either 'x','y' or 'h'. (default 'x')
     error_type (str): The type of error to calculate.
-                      'MSE', 'MAE' (default 'MSE')
+                    'MSE', 'MAE' (default 'MSE')
 
     Returns:
     """
     if type == 'x':
-        ideal_pos, test_filter_pos, current_pos, unfiltered_pos = (
-            get_x_or_y_from_csv_file(file_name, 'x'))
+        ideal, test_filter, current, unfiltered = (
+            get_x_or_y_or_h_from_csv_file(file_name, 'x'))
     elif type == 'y':
-        ideal_pos, test_filter_pos, current_pos, unfiltered_pos = (
-            get_x_or_y_from_csv_file(file_name, 'y'))
+        ideal, test_filter, current, unfiltered = (
+            get_x_or_y_or_h_from_csv_file(file_name, 'y'))
+    elif type == 'h':
+        ideal, test_filter, current, unfiltered = (
+            get_x_or_y_or_h_from_csv_file(file_name, 'h'))
 
     if error_type == 'MSE':
         # Calculate the MSE for each method
-        val_test_filter, test_filter_list = calculate_mse_x_or_y(ideal_pos,
-                                                            test_filter_pos)
-        val_current, current_list = calculate_mse_x_or_y(
-            ideal_pos,
-            current_pos)
-        val_unfiltered, unfiltered_list = calculate_mse_x_or_y(
-            ideal_pos,
-            unfiltered_pos)
+        val_test_filter, test_filter_list = calculate_mse_x_or_y_or_h(
+            ideal,
+            test_filter)
+        val_current, current_list = calculate_mse_x_or_y_or_h(
+            ideal,
+            current)
+        val_unfiltered, unfiltered_list = calculate_mse_x_or_y_or_h(
+            ideal,
+            unfiltered)
     elif error_type == 'MAE':
         # Calculate the MAE for each method
-        val_test_filter, test_filter_list = calculate_mae_x_or_y(ideal_pos,
-                                                            test_filter_pos)
-        val_current, current_list = calculate_mae_x_or_y(
-            ideal_pos,
-            current_pos)
-        val_unfiltered, unfiltered_list = calculate_mae_x_or_y(ideal_pos,
-                                                               unfiltered_pos)
+        val_test_filter, test_filter_list = calculate_mae_x_or_y_or_h(
+            ideal,
+            test_filter)
+        val_current, current_list = calculate_mae_x_or_y_or_h(
+            ideal,
+            current)
+        val_unfiltered, unfiltered_list = calculate_mae_x_or_y_or_h(
+            ideal,
+            unfiltered)
 
     # Create a new figure
     fig, ax = plt.subplots()
 
-    # Create a list of all positions
-    pos_error_list = [test_filter_list, current_list, unfiltered_list]
+    # Create a list of all errors
+    error_list = [test_filter_list, current_list, unfiltered_list]
     # Create a box plot with notches
-    boxplot = ax.boxplot(pos_error_list, notch=True,
+    boxplot = ax.boxplot(error_list, notch=True,
                          labels=['Test Filter', 'Current', 'Unfiltered'],
                          patch_artist=True)
 
@@ -215,7 +177,7 @@ def plot_x_or_y_notched_box(file_name, type='x', error_type='MSE'):
                 ha='center', backgroundcolor='white')
 
         # Calculate IQR
-        q3, q1 = np.percentile(pos_error_list[i], [75, 0])
+        q3, q1 = np.percentile(error_list[i], [75, 0])
         iqr = q3 - q1
 
         # Get the y position for the IQR text
@@ -235,93 +197,6 @@ def plot_x_or_y_notched_box(file_name, type='x', error_type='MSE'):
     plt.show()
 
 
-# DONE
-def get_positions_from_csv_file(file_name):
-    """
-    Reads position data from CSV files and returns them as numpy arrays.
-
-    Args:
-        file_name (str): The name of the CSV file.
-
-    Returns:
-        tuple: A tuple containing four numpy arrays representing the positions.
-            - unfiltered_pos: The unfiltered positions.
-            - ideal_pos: The ideal positions.
-            - test_filter_pos: The positions estimated using test filter.
-            - current_pos: The positions estimated using current filter.
-    Raises:
-        FileNotFoundError: If the specified CSV file does not exist.
-    """
-    file_path_x = folder_path_x + file_name
-    file_path_y = folder_path_y + file_name
-
-    # Read the CSV file into a DataFrame
-    df_x = pd.read_csv(file_path_x)
-    df_y = pd.read_csv(file_path_y)
-
-    # Set the first column (time) as the index of the DataFrames
-    df_x.set_index(df_x.columns[0], inplace=True)
-    df_y.set_index(df_y.columns[0], inplace=True)
-
-    # create pos tuples of the x and y data and store them as numpy arrays
-    ideal_pos = np.array(list(zip(df_x['Ideal (Carla) X'],
-                                  df_y['Ideal (Carla) Y'])))
-    test_filter_pos = np.array(list(zip(df_x['Test Filter X'],
-                                        df_y['Test Filter Y'])))
-    current_pos = np.array(list(zip(df_x['Current X'],
-                                    df_y['Current Y'])))
-    unfiltered_pos = np.array(list(zip(df_x['Unfiltered X'],
-                                       df_y['Unfiltered Y'])))
-
-    return ideal_pos, test_filter_pos, current_pos, unfiltered_pos
-
-
-# DONE
-def get_x_or_y_from_csv_file(file_name, type='x'):
-    """
-    Reads x or y data from CSV files and returns them as numpy arrays.
-
-    Args:
-        file_name (str): The name of the CSV file.
-        type (str): The type of data to read. Either 'x' or 'y'. (default 'x')
-
-    Returns:
-        tuple: A tuple containing four numpy arrays representing the positions.
-            - ideal: The ideal positions.
-            - test_filter: The positions estimated using test_filter filtering.
-            - current: The positions calculated using a running
-              average.
-            - unfiltered: The unfiltered positions. """
-
-    if type == 'x':
-        file_path = folder_path_x + file_name
-    elif type == 'y':
-        file_path = folder_path_y + file_name
-
-    # Read the CSV file into a DataFrame
-    df = pd.read_csv(file_path, skiprows=8)
-
-    # Set the first column (time) as the index of the DataFrames
-    df.set_index(df.columns[0], inplace=True)
-
-    if type == 'x':
-        # store x as numpy arrays
-        ideal = np.array(df['Ideal (Carla) X'])
-        test_filter = np.array(df['Test Filter X'])
-        current = np.array(df['Current X'])
-        unfiltered = np.array(df['Unfiltered X'])
-    elif type == 'y':
-        # store y as numpy arrays
-        ideal = np.array(df['Ideal (Carla) Y'])
-        test_filter = np.array(df['Test Filter Y'])
-        current = np.array(df['Current Y'])
-        unfiltered = np.array(df['Unfiltered Y'])
-
-
-    return ideal, test_filter, current, unfiltered
-
-
-# DONE
 def plot_MSE_notched_box(file_name):
     """
     Calculates the Mean Squared Error (MSE) for position data.
@@ -337,10 +212,12 @@ def plot_MSE_notched_box(file_name):
         get_positions_from_csv_file(file_name))
 
     # Calculate the MSE for each method
-    val_test_filter, test_filter_list = calculate_mse(ideal_pos, test_filter_pos)
-    val_current, current_list = calculate_mse(ideal_pos,
-                                                      current_pos)
-    val_unfiltered, unfiltered_list = calculate_mse(ideal_pos, unfiltered_pos)
+    val_test_filter, test_filter_list = calculate_mse_pos(ideal_pos,
+                                                          test_filter_pos)
+    val_current, current_list = calculate_mse_pos(ideal_pos,
+                                                  current_pos)
+    val_unfiltered, unfiltered_list = calculate_mse_pos(ideal_pos,
+                                                        unfiltered_pos)
 
     # Create a new figure
     fig, ax = plt.subplots()
@@ -371,7 +248,6 @@ def plot_MSE_notched_box(file_name):
     plt.show()
 
 
-# DONE
 def plot_MAE_notched_box(file_name):
     """
     Calculates the Mean Absolute Error (MAE) for position data.
@@ -387,11 +263,12 @@ def plot_MAE_notched_box(file_name):
         get_positions_from_csv_file(file_name))
 
     # Calculate the MAE for each method
-    mae_test_filter, test_filter_list = calculate_mae(ideal_pos,
-                                                      test_filter_pos)
-    mae_current, current_list = calculate_mae(ideal_pos,
-                                              current_pos)
-    mae_unfiltered, unfiltered_list = calculate_mae(ideal_pos, unfiltered_pos)
+    mae_test_filter, test_filter_list = calculate_mae_pos(ideal_pos,
+                                                          test_filter_pos)
+    mae_current, current_list = calculate_mae_pos(ideal_pos,
+                                                  current_pos)
+    mae_unfiltered, unfiltered_list = calculate_mae_pos(ideal_pos,
+                                                        unfiltered_pos)
 
     # Create a new figure
     fig, ax = plt.subplots()
@@ -423,7 +300,6 @@ def plot_MAE_notched_box(file_name):
     plt.show()
 
 
-# DONE
 def plot_CEP(file_name):
     """
     Plots the CEP as error circles of different colors in the x-y plane.
@@ -464,10 +340,10 @@ def plot_CEP(file_name):
 
     # Create circles with the given radii
     circle_test_filter = plt.Circle((0, 0), cep_test_filter, fill=False,
-                               label='Test Filter',
-                               color='r')
+                                    label='Test Filter',
+                                    color='r')
     circle_current = plt.Circle((0, 0), cep_current, fill=False,
-                                    label='Current', color='g')
+                                label='Current', color='g')
     circle_unfiltered = plt.Circle((0, 0), cep_unfiltered, fill=False,
                                    label='Unfiltered', color='b')
 
@@ -495,28 +371,70 @@ def plot_CEP(file_name):
     plt.xlabel('Distance in Meters')
 
 
-# DONE
-def plot_csv_heading2(file_path):
+def plot_csv_x_or_y(file_name, type='x'):
+    """
+    Plots the x or y data from a CSV file.
+
+    Parameters:
+    file_name (str): The name of the CSV file.
+    """
+    if type == 'x':
+        file_path = folder_path_x + file_name
+    elif type == 'y':
+        file_path = folder_path_y + file_name
+
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
 
-    # Set the first column (time) as the index of the DataFrame
-    df.set_index(df.columns[0], inplace=True)
+    # Plot the 'test_filter' (blue) and 'current' (green)
+    plt.plot(df['Test Filter'], 'b-', label='Test Filter')
+    plt.plot(df['Current'], 'g-', label='Current')
 
-    # Select the first three columns
-    df_to_plot = df[df.columns[:3]]
+    # Plot the 'ideal' column with a red dotted line
+    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal') 
 
-    # Plot the 'test_filter_heading' and 'current_heading' columns with default
-    # line style
-    plt.plot(df_to_plot['Test Filter'], label='Test Filter Heading')
-    plt.plot(df_to_plot['Current'], label='Current Heading')
-
-    # Plot the 'ideal_heading' column with a blue dotted line
-    plt.plot(df_to_plot['Ideal (Carla)'], 'r:', label='Ideal Heading')
     # Display the legend
     plt.legend()
     # Plot the DataFrame
-    # df_to_plot.plot()
+    df.plot()
+
+    # Add a grid
+    plt.grid(True)
+
+    # Set the y-
+    # axis label to 'Distance in Meters'
+    plt.ylabel('Distance in Meters')
+
+    # Set the x-axis label to 'Time'
+    plt.xlabel('Time in seconds')
+
+    plt.title(type + ' Positions in Meters')
+
+
+def plot_csv_heading(file_name):
+    """
+    Plots the heading data from a CSV file.
+
+    Parameters:
+    file_name (str): The name of the CSV file.
+
+    Returns:
+    """
+    file_path_heading = folder_path_heading + file_name
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(file_path_heading)
+
+    # Plot the 'test_filter_heading' (blue) and 'current_heading' (green)
+    # line style
+    plt.plot(df['Test Filter'], 'b-', label='Test Filter Heading')
+    plt.plot(df['Current'], 'g-', label='Current Heading')
+
+    # Plot the 'ideal_heading' column with a blue dotted line
+    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal Heading')
+    # Display the legend
+    plt.legend()
+    # Plot the DataFrame
+    df.plot()
 
     # Add a grid
     plt.grid(True)
@@ -526,11 +444,53 @@ def plot_csv_heading2(file_path):
 
     # Set the x-axis label to 'Time'
     plt.xlabel('Time in seconds')
+
+
+def plot_csv_positions(file_name):
+    """
+    Plots the x AND y data from a CSV file.
+
+    Parameters:
+    file_name (str): The name of the CSV file.
+
+    Returns:
+    """
+    # Read the CSV file into a DataFrame
+    ideal, test_filter, current, unfiltered = (
+        get_positions_from_csv_file(file_name))
+
+    ideal_x, ideal_y = zip(*ideal)
+    test_filter_x, test_filter_y = zip(test_filter)
+    current_x, current_y = zip(current)
+    unfiltered_x, unfiltered_y = zip(unfiltered)
+
+    plt.plot(ideal_x, ideal_y, marker=',',
+             color='red', label='Ideal')
+    plt.plot(test_filter_x, test_filter_y, marker='.',
+             color='blue', label='Test Filter')
+    plt.plot(current_x, current_y, marker='.',
+             color='green', label='Current')
+    plt.plot(unfiltered_x, unfiltered_y, marker='.',
+             color='purple', label='Unfiltered')
+
+    # Display the legend
+    plt.legend()
+
+    # Add a grid
+    plt.grid(True)
+
+    # Set the y-axis label to 'Y Position in Meters'
+    plt.ylabel('Y Position in Meters')
+
+    # Set the x-axis label to 'X Position in Meters'
+    plt.xlabel('X Position in Meters')
+
+    plt.title('X and Y Positions in Meters')
 # endregion PLOTS
 
-# DONE
+
 # region CALCUATIONS
-def calculate_mae(ideal, estimated):
+def calculate_mae_pos(ideal, estimated):
     """
     Calculates the Mean Absolute Error (MAE) for position data.
 
@@ -550,27 +510,7 @@ def calculate_mae(ideal, estimated):
     return mae, error
 
 
-def calculate_mae_x_or_y(ideal, estimated):
-    """
-    Calculates the Mean Absolute Error (MAE) for x or y data.
-
-    Parameters:
-    ideal (numpy.ndarray): The ideal x or y positions.
-    estimated (numpy.ndarray): The estimated x or y positions.
-
-    Returns:
-    Tuple: A tuple containing the MAE and the error for each position.
-    """
-    # Calculate the errors
-    error = np.abs(ideal - estimated)
-
-    # Calculate the MAE
-    mae = np.mean(error)
-
-    return mae, error
-
-
-def calculate_mse(ideal, estimated):
+def calculate_mse_pos(ideal, estimated):
     """
     Calculates the Mean Squared Error (MSE) for position data.
 
@@ -590,16 +530,38 @@ def calculate_mse(ideal, estimated):
     return mse, error
 
 
-def calculate_mse_x_or_y(ideal, estimated):
+def calculate_mae_x_or_y_or_h(ideal, estimated):
     """
-    Calculates the Mean Squared Error (MSE) for x or y data.
+    Calculates the Mean Absolute Error (MAE) for x or y or heading data.
 
     Parameters:
-    ideal (numpy.ndarray): The ideal x or y positions.
-    estimated (numpy.ndarray): The estimated x or y positions.
+    ideal (numpy.ndarray): The ideal x or y positions or heading.
+    estimated (numpy.ndarray): The estimated x or y positions or heading.
 
     Returns:
-    Tuple: A tuple containing the MSE and the error for each position.
+    Tuple: A tuple containing the MAE and the error for each position
+        or heading.
+    """
+    # Calculate the errors
+    error = np.abs(ideal - estimated)
+
+    # Calculate the MAE
+    mae = np.mean(error)
+
+    return mae, error
+
+
+def calculate_mse_x_or_y_or_h(ideal, estimated):
+    """
+    Calculates the Mean Squared Error (MSE) for x or y or heading data.
+
+    Parameters:
+    ideal (numpy.ndarray): The ideal x or y positions oe heading.
+    estimated (numpy.ndarray): The estimated x or y positions or heading.
+
+    Returns:
+    Tuple: A tuple containing the MSE and the error for each position
+        or heading.
     """
     # Calculate the errors
     error = (ideal - estimated)**2
@@ -613,13 +575,15 @@ def calculate_mse_x_or_y(ideal, estimated):
 def calculate_cep(ideal, test_filter, current, unfiltered, percentile=90):
     """
     Calculates the Circular Error Probable (CEP) for position data.
+    Comparable to the Error Circle that Google Maps shows for position
+    uncertainty.
 
     Parameters:
     ideal (numpy.ndarray): The ideal positions.
     test_filter (numpy.ndarray): The positions estimated using test_filter
-                                 filtering.
+                                filtering.
     current (numpy.ndarray): The positions calculated using the current
-                             filter.
+                            filter.
     unfiltered (numpy.ndarray): The unfiltered positions.
     percentile (int): The percentile to use when calculating the CEP.
 
@@ -641,14 +605,126 @@ def calculate_cep(ideal, test_filter, current, unfiltered, percentile=90):
 # endregion CALCUATIONS
 
 
-# # plot_RMSPE_notched_box("data_26.csv")
-# plot_CEP("data_25.csv")
-# plot_CEP("data_26.csv")
-data = "data_50.csv"
-plot_CEP(data)
-plot_x_or_y_notched_box(data, type='x', error_type='MSE')
-plot_x_or_y_notched_box(data, type='x', error_type='MAE')
-# plot_x_or_y_notched_box(data, type='y', error_type='MSE')
-# plot_x_or_y_notched_box(data, type='y', error_type='MAE')
+# region helper methods:
+def get_positions_from_csv_file(file_name, file_name_y=file_name):
+    """
+    Reads position data from CSV files and returns them as numpy arrays.
 
-plt.show()
+    Args:
+        file_name (str): The name of the CSV file
+        file_name_y (str): The name of the CSV file for the y data.
+                           (default file_name; should be the same)
+
+    Returns:
+        tuple: A tuple containing four numpy arrays representing the positions.
+            - unfiltered_pos: The unfiltered positions.
+            - ideal_pos: The ideal positions.
+            - test_filter_pos: The positions estimated using test filter.
+            - current_pos: The positions estimated using current filter.
+    Raises:
+        FileNotFoundError: If the specified CSV file does not exist.
+    """
+    file_path_x = folder_path_x + file_name
+    file_path_y = folder_path_y + file_name
+
+    # Read the CSV file into a DataFrame
+    df_x = pd.read_csv(file_path_x)
+    df_y = pd.read_csv(file_path_y)
+
+    # Set the first column (time) as the index of the DataFrames
+    df_x.set_index(df_x.columns[0], inplace=True)
+    df_y.set_index(df_y.columns[0], inplace=True)
+
+    # create pos tuples of the x and y data and store them as numpy arrays
+    ideal_pos = np.array(list(zip(df_x['Ideal (Carla) X'],
+                                  df_y['Ideal (Carla) Y'])))
+    test_filter_pos = np.array(list(zip(df_x['Test Filter X'],
+                                        df_y['Test Filter Y'])))
+    current_pos = np.array(list(zip(df_x['Current X'],
+                                    df_y['Current Y'])))
+    unfiltered_pos = np.array(list(zip(df_x['Unfiltered X'],
+                                       df_y['Unfiltered Y'])))
+
+    return ideal_pos, test_filter_pos, current_pos, unfiltered_pos
+
+
+def get_x_or_y_or_h_from_csv_file(file_name, type='x'):
+    """
+    Reads x,y or heading data from CSV files and returns them as numpy arrays.
+
+    Args:
+        file_name (str): The name of the CSV file.
+        type (str): The type of data to read. Either 'x','y' or 'h'.
+                    (default 'x')
+
+    Returns:
+        tuple: A tuple containing four numpy arrays representing the positions.
+            - ideal: The ideal data.
+            - test_filter: The data estimated using test_filter filtering.
+            - current: The data calculated using a running
+            average.
+            - unfiltered: The unfiltered data. """
+
+    if type == 'x':
+        file_path = folder_path_x + file_name
+    elif type == 'y':
+        file_path = folder_path_y + file_name
+    elif type == 'h':
+        file_path = folder_path_heading + file_name
+
+    # Read the CSV file into a DataFrame
+    # (skip the first couple rows because of wrong measurements)
+    df = pd.read_csv(file_path, skiprows=8)
+
+    # Set the first column (time) as the index of the DataFrames
+    df.set_index(df.columns[0], inplace=True)
+
+    if type == 'x':
+        # store x as numpy arrays
+        ideal = np.array(df['Ideal (Carla) X'])
+        test_filter = np.array(df['Test Filter X'])
+        current = np.array(df['Current X'])
+        unfiltered = np.array(df['Unfiltered X'])
+    elif type == 'y':
+        # store y as numpy arrays
+        ideal = np.array(df['Ideal (Carla) Y'])
+        test_filter = np.array(df['Test Filter Y'])
+        current = np.array(df['Current Y'])
+        unfiltered = np.array(df['Unfiltered Y'])
+    elif type == 'h':
+        # store heading as numpy arrays
+        ideal = np.array(df['Ideal (Carla)'])
+        test_filter = np.array(df['Test Filter'])
+        current = np.array(df['Current'])
+        unfiltered = np.array(df['Unfiltered'])
+
+    return ideal, test_filter, current, unfiltered
+# endregion helper methods
+
+
+# main:
+if __name__ == "__main__":
+    # file_name can be changed by changing the FILE_NUM variable
+    data = file_name
+    plot_CEP(data)
+
+    plot_x_or_y_or_h_notched_box(data, type='x', error_type='MSE')
+    plot_x_or_y_or_h_notched_box(data, type='x', error_type='MAE')
+
+    # plot_x_or_y_or_h_notched_box(data, type='y', error_type='MSE')
+    # plot_x_or_y_or_h_notched_box(data, type='y', error_type='MAE')
+
+    # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MSE')
+    # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MAE')
+
+    # plot_best_tuned_file_by_type(type='x',error_type='MSE',check_type='IQR')
+    # plot_best_tuned_file_by_type(type='y',error_type='MSE',check_type='IQR')
+    # plot_best_tuned_file_by_type(type='h',error_type='MSE',check_type='IQR')
+
+    # plot_csv_x_or_y(data, type='x')
+    # plot_csv_x_or_y(data, type='y')
+    # plot_csv_heading(data)
+    # plot_csv_positions(data)
+
+    # always use plt.show() to show the plots
+    plt.show()
