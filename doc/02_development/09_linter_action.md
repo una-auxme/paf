@@ -81,4 +81,4 @@ This step even runs if the markdown linter has already failed.
 This way, all errors of different steps are directly visible
 instead of errors only becoming apparent after errors in the previous steps have been fixed.
 
-* <https://aschmelyun.com/blog/using-docker-run-inside-of-github-actions/>
+- <https://aschmelyun.com/blog/using-docker-run-inside-of-github-actions/>

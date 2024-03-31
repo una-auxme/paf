@@ -45,8 +45,8 @@ Josef Kircher
 
 Two types of branches:
 
-* Main: contains production ready code
-* Feature: new branches based on main for each feature
+- Main: contains production ready code
+- Feature: new branches based on main for each feature
 
 ## Git style
 

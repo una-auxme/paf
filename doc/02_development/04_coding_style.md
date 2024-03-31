@@ -18,11 +18,11 @@ Josef Kircher
 
 VSCode Extensions:
 
-* autoDostring - Python Docstring Generator by Nils Werner
+- autoDostring - Python Docstring Generator by Nils Werner
 
 To get the ReST format like in Pycharm:
 
-* Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
+- Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
 
 ---
 <!-- TOC -->
@@ -70,6 +70,7 @@ To get the ReST format like in Pycharm:
   - [Copyright](#copyright)
     - [Source](#source)
 <!-- TOC -->
+---
 
 ## Code lay-out
 

@@ -59,28 +59,28 @@ Josef Kircher
 
 ## How to comment on a pull request
 
-* Familiarize yourself with the context of the issue, and reasons why this Pull Request exists.
-* If you disagree strongly, consider giving it a few minutes before responding; think before you react.
-* Ask, don’t tell. (“What do you think about trying…?” rather than “Don’t do…”)
-* Explain your reasons why code should be changed. (Not in line with the style guide? A personal preference?)
-* Offer ways to simplify or improve code.
-* Avoid using derogatory terms, like “stupid”, when referring to the work someone has produced.
-* Be humble. (“I’m not sure, let’s try…”)
-* Avoid hyperbole. (“NEVER do…”)
-* Aim to develop professional skills, group knowledge and product quality, through group critique.
-* Be aware of negative bias with online communication. (If content is neutral, we assume the tone is negative.) Can you use positive language as opposed to neutral?
-* Use emoji to clarify tone. Compare “✨ ✨ Looks good 👍 ✨ ✨” to “Looks good.”
+- Familiarize yourself with the context of the issue, and reasons why this Pull Request exists.
+- If you disagree strongly, consider giving it a few minutes before responding; think before you react.
+- Ask, don’t tell. (“What do you think about trying…?” rather than “Don’t do…”)
+- Explain your reasons why code should be changed. (Not in line with the style guide? A personal preference?)
+- Offer ways to simplify or improve code.
+- Avoid using derogatory terms, like “stupid”, when referring to the work someone has produced.
+- Be humble. (“I’m not sure, let’s try…”)
+- Avoid hyperbole. (“NEVER do…”)
+- Aim to develop professional skills, group knowledge and product quality, through group critique.
+- Be aware of negative bias with online communication. (If content is neutral, we assume the tone is negative.) Can you use positive language as opposed to neutral?
+- Use emoji to clarify tone. Compare “✨ ✨ Looks good 👍 ✨ ✨” to “Looks good.”
 
 ## Incorporating feedback
 
 ### Responding to comments
 
-* Consider leading with an expression of appreciation, especially when feedback has been mixed.
-* Ask for clarification. (“I don’t understand, can you clarify?”)
-* Offer clarification, explain the decisions you made to reach a solution in question.
-* Try to respond to every comment.
-* Link to any follow up commits or Pull Requests. (“Good call! Done in 1682851”)
-* If there is growing confusion or debate, ask yourself if the written word is still the best form of communication. Talk (virtually) face-to-face, then mutually consider posting a follow-up to summarize any offline discussion (useful for others who be following along, now or later).
+- Consider leading with an expression of appreciation, especially when feedback has been mixed.
+- Ask for clarification. (“I don’t understand, can you clarify?”)
+- Offer clarification, explain the decisions you made to reach a solution in question.
+- Try to respond to every comment.
+- Link to any follow up commits or Pull Requests. (“Good call! Done in 1682851”)
+- If there is growing confusion or debate, ask yourself if the written word is still the best form of communication. Talk (virtually) face-to-face, then mutually consider posting a follow-up to summarize any offline discussion (useful for others who be following along, now or later).
 
 ### Applying suggested changes
 
