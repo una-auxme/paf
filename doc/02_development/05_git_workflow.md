@@ -68,7 +68,7 @@ GitHub does it for you, when you create a new branch from the issue you are work
 
 ---
 
-* proceed to [Commit Messages](./03_commit.md)
+- proceed to [Commit Messages](./03_commit.md)
 
 ### Git commands cheat sheet
 
