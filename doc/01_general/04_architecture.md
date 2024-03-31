@@ -29,6 +29,7 @@ Samuel Kühnel
     - [Local Planning](#local-planning)
       - [Collision Check](#collision-check)
       - [ACC](#acc)
+      - [Motion Planning](#motion-planning)
   - [Acting](#acting)
     - [Path following](#path-following)
     - [Velocity control](#velocity-control)
@@ -192,6 +193,32 @@ Publishes:
 - ```emergency``` ([std_msgs/Bool](https://docs.ros.org/en/api/std_msgs/html/msg/Bool.html))
 - ```collision``` ([std_msgs/Float32MultiArray](https://docs.ros.org/en/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```oncoming``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+
+#### [Motion Planning](../07_planning/motion_planning.md)
+
+Subscriptions:
+
+- ```Spawn_car``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```speed_limit``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```Speed``` ([carla_msgs/Speedometer](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```current_heading``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```trajectory_global``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```current_pos``` ([geometry_msgs/PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- ```curr_behavior``` ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
+- ```unchecked_emergency``` ([std_msgs/Bool](https://docs.ros.org/en/api/std_msgs/html/msg/Bool.html))
+- ```acc_velocity``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```waypoint_distance``` ([perception/Waypoint](../../code/perception/msg/Waypoint.msg))
+- ```lane_change_distance``` ([perception/LanecChange](../../code/perception/msg/LaneChange.msg))
+- ```collision``` ([std_msgs/Float32MultiArray](https://docs.ros.org/en/api/std_msgs/html/msg/Float32MultiArray.html))
+- ```traffic_light_y_distance``` ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
+- ```unstuck_distance``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+
+Publishes:
+
+- ```trajectory``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```target_velocity``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```current_wp``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```overtake_success``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 
 ## Acting
 

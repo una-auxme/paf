@@ -27,6 +27,7 @@ Samuel Kühnel
     - [Check for collision](#check-for-collision)
     - [ACC](#acc)
   - [Motion Planning](#motion-planning)
+    - [Cornering Speed](#cornering-speed)
     - [Sources](#sources)
 <!-- TOC -->
 ## Overview
@@ -101,6 +102,20 @@ With this formula we can ensure that the target speeds shrinks in relation on ho
 The target speed is published to Motion Planning that evaluates what speed should be driven also with respect to the current behavior.
 
 ## Motion Planning
+
+The Motion Planning is the central control of the Local Planning. Controlling the target velocity and the trajectory to be executed in the acting. Following features are implemented:
+
+### Cornering Speed
+
+![Corner Speed - Full Trajectory.png](../00_assets/planning/plot_full_trajectory_1_degree.png)
+
+The cornering speed gets calculated at the beginning of the scenario, when the full trajectory is received:
+
+- Calculate the angle of three points in the trajectory with atan2
+- Find indices with a difference of 1°
+- Get speed according to the length of the corner
+
+Lane changes are special, because you can drive the with normal speed eventhough they have a curve change (visible in the picture on the straights). They can get their own speed, because every lane change is way smaller than the smallest corner.
 
 ### Sources
 
