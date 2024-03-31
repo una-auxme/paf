@@ -521,7 +521,7 @@ class position_heading_filter_debug_node(CompatibleNode):
                 self.heading_debug()
 
                 # save debug data in csv files
-                # (uncomment if not needed -> solely debugging with rqt_plot) 
+                # (uncomment if not needed -> solely debugging with rqt_plot)
                 self.save_position_data()
                 self.save_heading_data()
 

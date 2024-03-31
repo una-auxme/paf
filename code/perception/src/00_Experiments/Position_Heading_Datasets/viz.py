@@ -2,6 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+"""
+The documentation on how to use this file can be found in
+docs/perception/07_perception_heading_filter_debug_node.md
+since it is used to visualize the data of the heading filter debug node.
+"""
+
 # FILE START and END are only needed for the range
 # of files you want to search for the best tuned file
 FILE_START = 0
@@ -625,7 +631,7 @@ def get_positions_from_csv_file(file_name, file_name_y=file_name):
         FileNotFoundError: If the specified CSV file does not exist.
     """
     file_path_x = folder_path_x + file_name
-    file_path_y = folder_path_y + file_name
+    file_path_y = folder_path_y + file_name_y
 
     # Read the CSV file into a DataFrame
     df_x = pd.read_csv(file_path_x)
