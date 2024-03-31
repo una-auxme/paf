@@ -1,122 +1,102 @@
-# Sprint 6
+# Sprint 5
 
 ## General ToDo's
 
-- [ ]
+- Merge PR
+- Fix Cuda Errors [Backlog]
+- Minimum Distance Publisher
 
 ## Perception
 
-- [ ] Display XYZ values in RGB
-  - [ ] Instead of visualization → Array
-- [ ] Test rear view camera
-- [ ] Interface between Local Planning and Lidar
-- [ ] Vehicle detection from the side
-- [ ] Lane Detection → Coordination with Planning [BACKLOG]
+- Merge Lidar and Vision Nodes {Leon}
+- Lidar Flickering {Leon}
+- Heading Bug Fix {Robert}
+  - Transformation to correct Yaw
+  - How is the Heading used in the rest of the code
+- Kalman Filter tuning {Robert}
+  - Heading
+  - Position
+  - Publishing the data
+- Additional cameras
+- Traffic Light Detection
+  - Detect traffic lights that are outside
 
 ## Planning
 
-- [ ] Trajectory for overtaking
-  - [ ] From when do you actually have to overtake
-  - [ ] Recognize obstacles in the trajectory
-  - [ ] How long do you have to overtake
-    - [ ] Update during the drive
-  - [ ] Stationary objects as the target of the overtaking process
-- [ ] Behaviour
-  - [ ] Recognize oncoming traffic
+- Continue publishing ACC Node → Ignore Emergency Break
+- Ignore red traffic lights if already in intersection [Backlog]
+  - → Test
+- Rebuild Planning Directory
+- Verify behaviours
+  - Build test node
+  - Also test in leaderboard if test node works
 
 ## Acting
 
-- [ ] Emergency Brake Fix
-  - [ ] Strong lag in leaderboard version
-  - [ ] Maybe without bug abuse → Max Brake
-- [ ] Stanley:
-  - [ ] Better suited (sources) for higher speeds, tuning for these speeds in the next sprint.
-- [ ] Vehicle Controller:
-  - [ ] If Stanley has also been tuned, question, revise and hopefully improve the sigmoid function which decides which of the Steering-Controller-Inputs is considered (and especially the mixed form of both controller inputs at the transition limit).
+- Test Emergency Breaks
+  - Via Testnode
+- Steering Tuning, Testing
+  - First Pure Pursuit (easier to tune)
+  - Then maybe Stanley
 
 ## Notes
 
-### Perception*
+Perception:
 
-- [ ] LIDAR:
-  - [ ] Position from Lidar fixed
-  - [ ] Flickering
-    - [ ] Low spin rate → more flickering / more data
-    - [ ] High spin rate → less flickering / less data
-    - [ ] 10 → best resolution
-    - [ ] 15 → sometimes no flickering
-    - [ ] 20 → no flickering, poor resolution
-    - [ ] → 15
-  - [ ] Distances from objects are determined
-- [ ] Traffic light detection:
-  - [ ] YOLO RTDETR
-  - [ ] 5 states, only 3 published
-  - [ ] WORKS GREAT!!
-- [ ] CUDA workaround:
-  - [ ] Ubuntu 22 Bib
-  - [ ] PyTorch 2 usable!
-- [ ] Next Steps:
-  - [ ] Currently only functional with yolo models → adapt to other models
-  - [ ] Display XYZ values in RGB
-    - [ ] Instead of visualization → Array
-  - [ ] Test rear view camera
-  - [ ] Interface between Local Planning and Lidar
-  - [ ] → Testing necessary!
-  - [ ] Attack test submit again as soon as available
-  - [ ] Lane Detection → Coordination with Planning [BACKLOG]
+- Limit Lidar data up and down (Z axis)
+  - Or merge multiple images
+  - Change Lidar Config because of flickering
+- Merge Lidar and Vision Nodes
+- Vision Node:
+  - Instead of yolov8x seg → rtdetr-x so you can see far enough for traffic lights
+- Traffic Light Detection:
+  - Extension of traffic light detection classes:
+    - Backside, Green, Yellow, Red, Side
+  - Publisher:
+    - Traffic_light_state
+    - Four states:
+      - 3 Colors + Unknown
+  - Red traffic lights are detected from the wrong side when turning
+    - → Planning has to work with this case
+- Tuned Kalman filter is amazing!!!
+  - Is published as kalman_pos
+  - Should replace current_pos
+- Heading Bug
+  - Dirty fix
+  - KalmannHeading is running
+- Kalman filter is as accurate as the old filter
+- YAAAAAAAAAAAAWWWW!
+- We now have a filter for the Heading, which we didn't have before
 
-### Planning*
+Planning:
 
-- [ ] Planning Package restructured
-  - [ ] Only one package now
-- [ ] ACC rework
-- [ ] Collision Check Bug:
-  - [ ] Was very laggy
-  - [ ] FIXED
-- [ ] Leave Parking Spot behaviour
-  - [ ] Flag that you can only park out once
-- [ ] WE DRIVE STRAIGHT AHEAD WELL WOHOOOO
-- [ ] Emergency brake → vehicle controller
-  - [ ] Simulator freezes
-- [ ] We get over intersections yipiiiii
-- [ ] Pylot → Implement Frenet Trajectory Planner for us
-- [ ] Carla Route in Dev Launch
-  - [ ] Advantage:
-    - [ ] Waypoints for intersections
-    - [ ] Possible to drive around the map once without obstacles
-  - [ ] RouteOptions documentation in preplanning.md
-- [ ] NEXT STEPS
-  - [ ] Fix Emergency Brake
-  - [ ] Local planning around objects
-    - [ ] Might be enough to avoid and then when you are next to the object calculate the trajectory again
-  - [ ] Maybe use middle lane as a limit when parking out
-  - [ ] Maybe wait a little longer before parking out, because of wrong coordinates
-  - [ ] Test with improved traffic light detection
-  - [ ] Add check if intersection is free
-  - [ ] Expand curve detection
+- At np.inf from collision check → no Collision
+- Fully integrate ACC and collision check + testing
+- Probably some adjustments
+- Remove ACC in consultation with Acting
+- ACC node should continue to publish messages even if full braking is present
+- Build speed calculation not linear
+  - → Brake harder the closer
+- Maybe ACC with target acceleration instead of target speed
+- ACC PID controller has been removed
+- Local Planning:
+  - Cleaned
+  - Rebuild Planning Directory
+  - Verify behaviours
+    - Build test node
+    - Also test in leaderboard if test node works
 
-### Acting*
+Acting:
 
-- [ ] Pure Pursuit:
-  - [ ] Low V
-  - [ ] Lookahead d calculated from v
-  - [ ] Look in the heading of the car on trajectory → calculate point
-    - [ ] Calculate vector → angle → steering angle
-  - [ ] Work:
-    - [ ] Simplified
-    - [ ] Min and maxdistance for lookahead set
-    - [ ] Always swings when driving straight :/
-    - [ ] At 10m/s very swinging → stanley
-    - [ ] Finished for now in linear form up to 40 kmh it works quite well
-- [ ] Stanley :
-  - [ ] Higher V
-  - [ ] Always looks at next point on trajectory
-    - [ ] Target value from position and heading
-    - [ ] Trajectory Heading also interesting if possible
-  - [ ] Work:
-    - [ ] Disabled → Tuning in the next sprint
-- [ ] Sigmoid:
-  - [ ] Switch between both from 4 m/s
-- [ ] PID Controller still controls steering
-  - [ ] Necessary?
-- [ ] Tune variable -5 on steering left out for now because probably unnecessary
+- Velocity_Controller
+  - Apply Integral Clipping only at higher or lower values
+
+Misc:
+
+- Extra msg folder that needs to be compiled first
+  - → Then every package can recognize the messages
+- Carla_Manual_Control → agent_manual.launch
+  - Press P key
+- Memory Leak:
+  - Swap-File in Linux as workaround (approx. 10 GB per minute)
+  - Limitation of RAM for the simulator
