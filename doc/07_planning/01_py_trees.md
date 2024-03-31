@@ -16,15 +16,15 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Pytrees](#pytrees)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Getting started](#getting-started)
-  * [What is Pytrees?](#what-is-pytrees)
-  * [Examples](#examples)
-  * [Common commands](#common-commands)
-    * [Sources](#sources)
+- [Pytrees](#pytrees)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Getting started](#getting-started)
+  - [What is Pytrees?](#what-is-pytrees)
+  - [Examples](#examples)
+  - [Common commands](#common-commands)
+    - [Sources](#sources)
 <!-- TOC -->
 ## Getting started
 
