@@ -7,7 +7,7 @@ The document contains an overview over all [nodes](#overview) and [topics](#topi
 
 ## Authors
 
-Samuel Kühnel
+Julius Miller, Alexander Hellmann, Samuel Kühnel
 
 ## Date
 
@@ -31,10 +31,9 @@ Samuel Kühnel
       - [ACC](#acc)
       - [Motion Planning](#motion-planning)
   - [Acting](#acting)
-    - [Path following](#path-following)
+    - [Path following with Steering Controllers](#path-following-with-steering-controllers)
     - [Velocity control](#velocity-control)
     - [Vehicle controller](#vehicle-controller)
-    - [Emergency](#emergency)
   - [Visualization](#visualization)
 <!-- TOC -->
 
@@ -222,43 +221,47 @@ Publishes:
 
 ## Acting
 
-The job of this component is to translate the trajectory planned by the [Planning](#Planning) component into
-steering controls for the vehicle.
-This node only takes on tasks that have lower computing time, so that a fast response of the component is ensured.
+The job of this component is to take the planned trajectory and target-velocities from the [Planning](#Planning) component and convert them into steering and throttle/brake controls for the CARLA-vehicle.
 
-Further information regarding the acting can be found [here](../03_research/01_acting/Readme.md).
+All information regarding research done about acting can be found [here](../03_research/01_acting/Readme.md).
 
-### Path following
+Indepth information about the currently implemented acting Components can be found [HERE](../05_acting/Readme.md)!
+
+### Path following with Steering Controllers
 
 Calculates steering angles that keep the ego vehicle on the path given by
 the [Local path planning](#Local-path-planning).
 
 Subscriptions:
 
-- ```path``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```trajectory``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```current_position``` [std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html])
+- ```current_heading``` [std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html])
+- ```current_velocity```[std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html])
 
 Publishes:
 
-- ```steer```
-  for ```vehicle_control_cmd_manual``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
+- ```steering_angle``` for ```vehicle_control_cmd``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
+
+For further indepth information about the currently implemented Steering Controllers click [HERE](../05_acting/03_steering_controllers.md)
 
 ### Velocity control
 
-Calculates velocity inputs to drive the velocity given by the [Local path planning](#Local-path-planning).
-If the node is given the distance to a car to follow, it reduces the velocity of the ego vehicle to hold a reasonable
-distance to the vehicle in front.
+Calculates acceleration values to drive the target-velocity given by the [Local path planning](#Local-path-planning).
 
 Subscriptions:
 
-- ```ego_position``` ([nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
-- ```max_velocity``` ([std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html]))
-- ```distance_to_next_vehicle``` ([std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html]))
-- ```path``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```target_velocity``` ([std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html]))
+- ```current_velocity```[std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html])
 
 Publishes:
 
-- ```throttle```,  ```brake```,  ```reverse```
-  for ```vehicle_control_cmd_manual``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
+- ```throttle```
+- ```brake```
+- ```reverse```
+for ```vehicle_control_cmd``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
+
+For further indepth information about the currently implemented Velocity Controller click [HERE](../05_acting/02_velocity_controller.md)
 
 ### Vehicle controller
 
@@ -266,25 +269,18 @@ Decides which steering controller to use and assembles [CarlaEgoVehicleControl.m
 
 Subscriptions:
 
-- ```throttle```,  ```brake```,  ```reverse```
-- ```steer```
+- ```throttle```
+- ```brake```
+- ```reverse```
+- ```steering_angle```
+- ```emergency```
+- ```current_behavior``` (to detect unstuck-routine)
 
 Publishes:
 
-- ```vehicle_control_cmd_manual``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
+- ```vehicle_control_cmd``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
 
-### Emergency
-
-Initiates emergency braking if an emergency-msg is received and notifies all notes when emergency braking is over.
-
-Subscriptions:
-
-- ```emergency``` ([std_msgs/Bool Message](http://docs.ros.org/en/api/std_msgs/html/msg/Bool.html))
-
-Publishes:
-
-- ```vehicle_control_cmd_manual``` ([CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg))
-- ```emergency``` ([std_msgs/Bool Message](http://docs.ros.org/en/api/std_msgs/html/msg/Bool.html))
+For further indepth information about the currently implemented Vehicle Controller click [HERE](../05_acting/04_vehicle_controller.md)
 
 ## Visualization
 

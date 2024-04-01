@@ -3,11 +3,10 @@
 """
 This node provides full testability for all Acting
 components by offering different testcases
-to hopefully fully implement and tune Acting without
+to fully implement, test and tune Acting without
 the need of working Perception and Planning components.
 This also generates Lists of all the important values
 to be saved in a file and plotted again.
-TODO: emergency brake behavior
 """
 
 import math
@@ -21,38 +20,44 @@ import rospy
 from rospy import Publisher, Subscriber
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 
-from trajectory_interpolation import interpolate_route
+from helper_functions import interpolate_route
 
-# TEST_TYPE to choose which kind of Test to run:
-# 0: Test Velocity Controller with constant one velocity
-# const. velocity = TARGET_VELOCITY_1
-# const. steering = 0
-# no trajectory
-# TURN OFF PP Controller in acting.launch!
-
-# 1: Test Velocity Controller with changing velocity
-# velocity = alternate all 20 secs: TARGET_VELOCITY_1/_2
-# const. steering = 0
-# no trajectory
-# TURN OFF PP Controller in acting.launch!
-
-# 2: Test Steering Controller on chooseable trajectory
-# velocity = TARGET_VELOCITY_1
-# steering = STEERING_CONTROLLER_USED (see below)
-# trajectory = TRAJECTORY_TYPE (see below)
-
-# 3: Test Emergency Breaks on TestType 1
-# const velocity = TARGET_VELOCITY_1
-# const steering = 0
-# no trajectory
-# Triggers emergency break after 15 Seconds
+"""
+TEST_TYPE to choose which kind of Test to run:
+- 0: Test Velocity Controller with constant one velocity
+const. velocity = TARGET_VELOCITY_1
+const. steering = 0
+no trajectory
+TURN OFF PP Controller in acting.launch!
+- 1: Test Velocity Controller with changing velocity
+velocity = alternate all 20 secs: TARGET_VELOCITY_1/_2
+const. steering = 0
+no trajectory
+TURN OFF PP Controller in acting.launch!
+- 2: Test Steering Controller on chooseable trajectory
+velocity = TARGET_VELOCITY_1
+steering = use acting.launch to selcet controller
+trajectory = TRAJECTORY_TYPE (see below)
+- 3: Test Emergency Breaks on TestType 1
+const velocity = TARGET_VELOCITY_1
+const steering = 0
+no trajectory
+Triggers emergency break after 15 Seconds
+"""
 TEST_TYPE = 2
 FIXED_STEERING: float = 0  # if fixed steering needed
 TARGET_VELOCITY_1: float = 10  # standard velocity
 TARGET_VELOCITY_2: float = 0  # second velocity to switch to
 # 0 = Straight ; 1 = Curve ; 2 = SineWave ; 3 = Overtake
 TRAJECTORY_TYPE = 3
+
+# This Component also prints collected data to the terminal,
+# if wanted. Use the following Variables to select what to print.
+# see lines 395 - 421 if you want to edit these!
 PRINT_AFTER_TIME = 10.0  # How long after Simulationstart to print data
+PRINT_TRAJECTORY = False  # True = prints the published trajectory
+PRINT_VELOCITY_DATA = False  # True = print target and current velocities
+PRINT_STEERING_DATA = False  # True = print stanley and pp steerings
 
 
 class Acting_Debug_Node(CompatibleNode):
@@ -104,25 +109,32 @@ class Acting_Debug_Node(CompatibleNode):
             self.__get_target_velocity,
             qos_profile=1)
 
-        # Subscriber for current_headng for plotting
+        # Subscriber for current_heading
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__get_heading,
             qos_profile=1)
 
-        # Subscriber for current_velocity for plotting
+        # Subscriber for current_velocity
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
             qos_profile=1)
 
-        # Subscriber for current_throttle for plotting
+        # Subscriber for current_throttle
         self.current_throttle_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/throttle",
             self.__get_throttle,
+            qos_profile=1)
+
+        # Subscriber for Stanley_steer
+        self.stanley_steer_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/stanley_steer",
+            self.__get_stanley_steer,
             qos_profile=1)
 
         # Subscriber for PurePursuit_steer
@@ -158,8 +170,8 @@ class Acting_Debug_Node(CompatibleNode):
         self.__throttles = []
         self.__current_headings = []
         self.__purepursuit_steers = []
+        self.__stanley_steers = []
         self.__vehicle_steers = []
-        self.stanley_cross_errors = []
         self.positions = []
 
         # Generate Trajectory as selected in TRAJECTORY_TYPE
@@ -286,6 +298,7 @@ class Acting_Debug_Node(CompatibleNode):
             pos.pose.orientation.w = 0
             self.path_msg.poses.append(pos)
 
+    # ALL SUBSCRIBER-FUNCTIONS HERE
     def __current_position_callback(self, data: PoseStamped):
         agent = data.pose.position
         self.x = agent.x
@@ -307,6 +320,11 @@ class Acting_Debug_Node(CompatibleNode):
 
     def __get_throttle(self, data: Float32):
         self.__throttles.append(float(data.data))
+
+    def __get_stanley_steer(self, data: Float32):
+        r = 1 / (math.pi / 2)
+        steering_float = float(data.data) * r
+        self.__stanley_steers.append(steering_float)
 
     def __get_purepursuit_steer(self, data: Float32):
         r = 1 / (math.pi / 2)
@@ -378,23 +396,30 @@ class Acting_Debug_Node(CompatibleNode):
             if not self.time_set:
                 self.checkpoint_time = rospy.get_time()
                 self.time_set = True
-                # print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
-                # print(self.current_trajectory)
-                # print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                if PRINT_TRAJECTORY:
+                    print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
+                    print(self.current_trajectory)
+                    print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
             if (self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME):
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-                # print(self.__max_velocities)
-                # print(self.__current_velocities)
-                # print(self.__throttles)
-                # print(self.__purepursuit_steers)
-                # print(self.__vehicle_steers)
-                # print(self.__current_headings)
-                print(self.positions)
+                if PRINT_VELOCITY_DATA:
+                    print(">> TARGET VELOCITIES <<")
+                    print(self.__max_velocities)
+                    print(">> CURRENT VELOCITIES <<")
+                    print(self.__current_velocities)
+                    print(">> THROTTLES <<")
+                    print(self.__throttles)
+                if PRINT_STEERING_DATA:
+                    print(">> PUREPURSUIT STEERS <<")
+                    print(self.__purepursuit_steers)
+                    print(">> STANLEY STEERS <<")
+                    print(self.__stanley_steers)
+                    print(">> ACTUAL POSITIONS <<")
+                    print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
-
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 

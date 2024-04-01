@@ -4,7 +4,9 @@
 
 The Kalman Filter node is responsible for filtering the location and heading data, by using an IMU and GNSS sensor together with the carla speedometer.
 
-As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a rolling average.
+As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a rolling average. (The z-coordinate did not need more accuracy for our purposes)
+
+This implements the STANDARD Kalman Filter and NOT the Extended Kalman Filter or any other non-linear variant of the Kalman Filter.
 
 ---
 
@@ -14,7 +16,7 @@ Robert Fischer
 
 ## Date
 
-03.12.2023
+29.03.2024
 
 ## Prerequisite
 
@@ -41,7 +43,7 @@ Robert Fischer
 
 Uncomment the kalman_filter.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
 
-Also change the pos_filter and heading_filter parameter values of the Position_Publisher_Node in the [perception.launch](../../code/perception/launch/perception.launch) file,
+Also change the pos_filter and heading_filter parameter values of the position_heading_publisher_node in the [perception.launch](../../code/perception/launch/perception.launch) file,
 to **"Kalman"**, depending on if you want to use the Filter for both the Position and the Heading.
 
 In the case of using the Filter for both, it should look like this:
@@ -69,10 +71,24 @@ Stackoverflow and other useful sites:
 
 This script implements a Kalman Filter.
 
-It is a recursive algorithm used to estimate the state of a system that can be modeled with linear equations.
+It is a recursive algorithm used to estimate the state of a system that can be modeled with **linear** equations.
 
-This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [Position Publisher Node](../../code/perception/src/Position_Publisher_Node.py))
+This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [position_heading_publisher_node](../../code/perception/src/position_heading_publisher_node.py))
 the orientation and angular velocity provided by the IMU sensor and the current speed in the headed direction by the Carla Speedometer.
+
+The noise values, which the filter was tuned with are derived from the official [LeaderBoard 2.0 Github repository](https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py):
+
+The Noise for the GPS Sensor is defined as:
+
+- "noise_alt_stddev": 0.000005
+- "noise_lat_stddev": 0.000005
+- "noise_lon_stddev": 0.000005
+
+The Noise for the IMU Sensor is defined as:
+
+- "noise_accel_stddev_x": 0.001
+- "noise_accel_stddev_y": 0.001
+- "noise_accel_stddev_z": 0.015
 
 As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a [rolling average](#also-important).
 
@@ -126,7 +142,7 @@ The process covariance matrix Q is defined as:
     self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
 
 The measurement covariance matrix R is defined as:
-    self.R = np.diag([0.0005, 0.0005, 0, 0, 0, 0])
+    self.R = np.diag([0.0007, 0.0007, 0, 0, 0, 0])
 
 ```
 
@@ -175,7 +191,7 @@ Then 3 Steps are run in the frequency of the `control_loop_rate`:
 
 ### Also Important
 
-The way that the xyz Position is made, only x and y are measured for the kalman filter, while the z component is filtered by a rolling average.
+The way that the xyz Position is created, only x and y are measured for the kalman filter, while the z component is filtered by a rolling average.
 
 ```Python
 
@@ -199,11 +215,11 @@ The way that the xyz Position is made, only x and y are measured for the kalman 
 
 ```
 
-The Kalman Location as well as the Kalman Heading are then subscribed to by the PositionPublisher and republished as **current_heading** and **current_pos**
+The Kalman Location as well as the Kalman Heading are then subscribed to by the position_heading_publisher_node and republished as **current_heading** and **current_pos**
 
 ### Inputs
 
-This node subscribes to the following needed topics:
+This node subscribes to the following  topics:
 
 - IMU:
   - `/carla/{role_name}/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
@@ -244,3 +260,9 @@ This is not the case, since the RAF has a way smaller spread of datapoints, maki
 
 The Kalman Filter on the other hand makes it possible for the data to be way below the 1 m error mark (with 0.48 m as its error median)
 and contain the data within a reasonable range.
+
+Keep in mind, that this Filter was tuned with simple movements which the Kalman Filter thrives in (driving in circles, straight, standing still), because there were no other possible movements at the time this filter was written.
+
+When it comes to more complex movements (driving the leaderboard route) it performs a little worse. Maybe tuning the filter with these scenarios could improve the filter by a little bit.
+
+The most improvement could probably only be achieved by implementing more complex NON LINEAR Kalman Filters (Extended; Unscented; etc.) or other non linear Filters that come to mind.

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import math
 from math import atan, sin
-
 import ros_compatibility as roscomp
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import Point, PoseStamped
@@ -12,18 +11,15 @@ from std_msgs.msg import Float32
 from acting.msg import Debug
 import numpy as np
 
-from helper_functions import vector_angle
-from trajectory_interpolation import points_to_vector
+from helper_functions import vector_angle, points_to_vector
 
 # Tuneable Values for PurePursuit-Algorithm
-K_LAD = 0.85
+K_LAD = 0.85  # optimal in dev-launch
 MIN_LA_DISTANCE = 2
 MAX_LA_DISTANCE = 25
 # Tuneable Factor before Publishing
 # "-1" because it is inverted to the steering carla expects
-# "4.75" proved to be important for a good steering
-# ONLY IN DEV.LAUNCH? (see documentation)
-K_PUB = -0.85  # (-4.75)
+K_PUB = -0.80  # (-4.75) would be optimal in dev-launch
 # Constant: wheelbase of car
 L_VEHICLE = 2.85
 
@@ -58,8 +54,7 @@ class PurePursuitController(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
-            qos_profile=1
-        )
+            qos_profile=1)
 
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
             Float32,
@@ -71,7 +66,7 @@ class PurePursuitController(CompatibleNode):
             f"/paf/{self.role_name}/pure_p_debug",
             qos_profile=1)
 
-        self.__position: (float, float) = None  # x, y
+        self.__position: tuple[float, float] = None  # x, y
         self.__path: Path = None
         self.__heading: float = None
         self.__velocity: float = None
@@ -123,7 +118,6 @@ class PurePursuitController(CompatibleNode):
         Calculates the steering angle based on the current information
         :return:
         """
-        # Simplified alot to increase understanding
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
         look_ahead_dist = np.clip(K_LAD * self.__velocity,
                                   MIN_LA_DISTANCE, MAX_LA_DISTANCE)
@@ -141,7 +135,7 @@ class PurePursuitController(CompatibleNode):
         alpha = target_vector_heading - self.__heading
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
         steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
-        steering_angle = K_PUB * steering_angle
+        steering_angle = K_PUB * steering_angle  # Needed for unknown reason
         # for debugging ->
         debug_msg = Debug()
         debug_msg.heading = self.__heading
@@ -151,6 +145,44 @@ class PurePursuitController(CompatibleNode):
         self.debug_msg_pub.publish(debug_msg)
         # <-
         return steering_angle
+
+    def __get_target_point_index(self, ld: float) -> int:
+        """
+        Get the index of the target point on the current trajectory based on
+        the look ahead distance.
+        :param ld: look ahead distance
+        :return:
+        """
+        if len(self.__path.poses) < 2:
+            return -1
+
+        # initialize min dist and idx very high and -1
+        min_dist = 10e1000
+        min_dist_idx = -1
+        # might be more elegant to only look at points
+        # _ahead_ of the closest point on the trajectory
+        for i in range(self.__tp_idx, len(self.__path.poses)):
+            pose: PoseStamped = self.__path.poses[i]
+            dist = self.__dist_to(pose.pose.position)
+            dist2ld = dist - ld
+            # can be optimized
+            if min_dist > dist2ld > 0:
+                min_dist = dist2ld
+                min_dist_idx = i
+        return min_dist_idx
+
+    def __dist_to(self, pos: Point) -> float:
+        """
+        Distance between current position and target position (only (x,y))
+        :param pos: targeted position
+        :return: distance
+        """
+        x_current = self.__position[0]
+        y_current = self.__position[1]
+        x_target = pos.x
+        y_target = pos.y
+        d = (x_target - x_current)**2 + (y_target - y_current)**2
+        return math.sqrt(d)
 
     def __set_position(self, data: PoseStamped, min_diff=0.001):
         """
@@ -190,52 +222,10 @@ class PurePursuitController(CompatibleNode):
         self.__path = data
 
     def __set_heading(self, data: Float32):
-        """
-        Updates the current heading
-        :return:
-        """
         self.__heading = data.data
 
     def __set_velocity(self, data: CarlaSpeedometer):
         self.__velocity = data.speed
-
-    def __get_target_point_index(self, ld: float) -> int:
-        """
-        Get the index of the target point on the current trajectory based on
-        the look ahead distance.
-        :param ld: look ahead distance
-        :return:
-        """
-        if len(self.__path.poses) < 2:
-            return -1
-
-        # initialize min dist and idx very high and -1
-        min_dist = 10e1000
-        min_dist_idx = -1
-        # might be more elegant to only look at points
-        # _ahead_ of the closest point on the trajectory
-        for i in range(self.__tp_idx, len(self.__path.poses)):
-            pose: PoseStamped = self.__path.poses[i]
-            dist = self.__dist_to(pose.pose.position)
-            dist2ld = dist - ld
-            # can be optimized
-            if min_dist > dist2ld > 0:
-                min_dist = dist2ld
-                min_dist_idx = i
-        return min_dist_idx
-
-    def __dist_to(self, pos: Point) -> float:
-        """
-        Distance between current position and target position (only (x,y))
-        :param pos: targeted position
-        :return: distance
-        """
-        x_current = self.__position[0]
-        y_current = self.__position[1]
-        x_target = pos.x
-        y_target = pos.y
-        d = (x_target - x_current)**2 + (y_target - y_current)**2
-        return math.sqrt(d)
 
 
 def main(args=None):

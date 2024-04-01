@@ -6,62 +6,62 @@
 
 ## Authors
 
-Julian Graf
-
-Gabriel Schwald
+Alexander Hellmann
 
 ## Date
 
-29.03.2023
+01.04.2024
 
 ---
 
 <!-- TOC -->
-* [Acting](#acting)
-  * [Authors](#authors)
-  * [Date](#date)
-  * [Basics](#basics)
-  * [Content of this package](#content-of-this-package)
-    * [Longitudinal controllers](#longitudinal-controllers)
-    * [Lateral controllers](#lateral-controllers)
-    * [Vehicle controller](#vehicle-controller)
-    * [Visualization](#visualization)
-  * [more Content](#more-content)
+- [Acting](#acting)
+  - [Authors](#authors)
+  - [Date](#date)
+  - [Acting Documentation](#acting-documentation)
+  - [Test/Debug/Tune Acting-Components](#testdebugtune-acting-components)
+  - [Longitudinal controllers (Velocity Controller)](#longitudinal-controllers-velocity-controller)
+  - [Lateral controllers (Steering Controllers)](#lateral-controllers-steering-controllers)
+  - [Vehicle controller](#vehicle-controller)
+  - [Visualization of the HeroFrame in rviz](#visualization-of-the-heroframe-in-rviz)
 <!-- TOC -->
 
-## Basics
+## Acting Documentation
 
-In order to further understand the general idea of our approach to the acting component please refer to  the documentation of our [research](../../doc/03_research/01_acting) and our planned [general definition](../../doc/01_general/04_architecture.md#acting).
+In order to further understand the general idea of the taken approach to the acting component please refer to the documentation of the [research](../../doc/03_research/01_acting/Readme.md) done and see the planned [general definition](../../doc/01_general/04_architecture.md#acting).
 
----
+It is also highly recommended to go through the indepth [Acting-Documentation](../../doc/05_acting/Readme.md)!
 
-## Content of this package
+## Test/Debug/Tune Acting-Components
 
-This package contain all acting nodes. For general information on what the acting does, see the [planned architecture](./../../doc/01_general/04_architecture.md#acting).
+The Acting_Debug_Node can be used as a simulated Planning package, publishing adjustable target velocities, steerings and trajectories as needed.
 
-### Longitudinal controllers
+For more information about this node and how to use it, please read the [documentation](../../doc/05_acting/05_acting_testing.md).
+You can also find more information in the commented [code](./src/acting/Acting_Debug_Node.py).
 
-The longitudinal controller is implemented as a PID velocity controller ([VelocityController](./src/acting/velocity_controller.py)). The acting also publishes a max velocity based onn upcoming curves ([ActingVelocityPublisher](./src/acting/acting_velocity_publisher.py)).
-There also is an [ACC](../../doc/05_acting/02_acc.md) implemented in acting ([Acc](./src/acting/acc.py)).
+## Longitudinal controllers (Velocity Controller)
 
-### Lateral controllers
+The longitudinal controller is implemented as a PID velocity controller.
 
-There are two steering controllers implemented in the acting:
+For more information about this controller, either read the [documentation](../../doc/05_acting/02_velocity_controller.md) or go through the commented [code](./src/acting/velocity_controller.py).
 
-* Pure Persuit Controller
-* Stanley Controller
+## Lateral controllers (Steering Controllers)
 
-For further information see [lateral controllers](./../../doc/05_acting/03_lateral_controller.md).
-Both controllers provide live telemetry (on paf/hero/purep_debug and paf/hero/stanley_debug).
+There are two steering controllers currently implemented, both providing live telemetry via Debug-Messages:
 
-### Vehicle controller
+- Pure Persuit Controller (paf/hero/pure_p_debug)
+- Stanley Controller (paf/hero/stanley_debug)
 
-The [VehicleController](./src/acting/vehicle_controller.py) collects all necessary msgs and publishes the [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#carlaegovehiclecontrol) for the [Carla ros bridge](https://github.com/carla-simulator/ros-bridge).
+For further information about the steering controllers, either read the [documentation](./../../doc/05_acting/03_steering_controllers.md) or go through the commented code of [stanley_controller](./src/acting/stanley_controller.py) or [purepursuit_controller](./src/acting/pure_pursuit_controller.py).
 
-### Visualization
+## Vehicle controller
 
-For information about vizualizing the upcomming path in rviz see [Main frame publisher](../../doc/05_acting/04_main_frame_publisher.md)
+The VehicleController collects all necessary msgs from the other controllers and publishes the [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#carlaegovehiclecontrol) for the [Carla ros bridge](https://github.com/carla-simulator/ros-bridge).
 
-## more Content
+It also executes emergency-brakes and the unstuck-routine, if detected.
 
-For more detailed information on all relevant components of the acting domain please refer to [the acting documentation](../../doc/05_acting).
+For more information about this controller, either read the [documentation](../../doc/05_acting/04_vehicle_controller.md) or go through the commented [code](./src/acting/vehicle_controller.py).
+
+## Visualization of the HeroFrame in rviz
+
+For information about vizualizing the upcomming path in rviz see [Main frame publisher](../../doc/05_acting/06_main_frame_publisher.md)

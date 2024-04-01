@@ -36,9 +36,12 @@ Julius Miller
 This module is responsible for adjusting the current speed and the current trajectory according to the traffic situation. It subscribes to topics that provide information about the current speed of the vehicle, the current heading and many more to navigate safely in the simulation.
 It publishes topics that provide information about the target speed, trajectoy changes, current waypoint and if an overtake was successful.
 
+This file is also responsible for providing a ```target_speed of -3``` for acting, whenever we need to use the Unstuck Behavior. -3 is the only case we can drive backwards right now,
+since we only need it for the unstuck routine. It also creates an overtake trajectory, whenever the unstuck behavior calls for it.
+
 ## Component
 
-The Motion Planning only consists of one node that contains all subscriper and publishers. It uses some utility functions from [utils.py](../../code//planning/src/local_planner/utils.py).
+The Motion Planning only consists of one node that contains all subscriper and publishers. It uses some utility functions from [utils.py](../../code/planning/src/local_planner/utils.py).
 
 ## ROS Data Interface
 
