@@ -12,19 +12,21 @@ Josef Kircher
 
 31.01.2023
 
-## Prerequisite
+## Note
+
+This documentation was taken from the previous project PAF22.
 
 ---
 <!-- TOC -->
-* [Pytrees](#pytrees)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Getting started](#getting-started)
-  * [What is Pytrees?](#what-is-pytrees)
-  * [Examples](#examples)
-  * [Common commands](#common-commands)
-    * [Sources](#sources)
+- [Pytrees](#pytrees)
+  - [Author](#author)
+  - [Date](#date)
+  - [Note](#note)
+  - [Getting started](#getting-started)
+  - [What is Pytrees?](#what-is-pytrees)
+  - [Examples](#examples)
+  - [Common commands](#common-commands)
+    - [Sources](#sources)
 <!-- TOC -->
 ## Getting started
 

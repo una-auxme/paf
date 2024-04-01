@@ -135,6 +135,25 @@ In the last scenario the car chooses the cornering speed to smoothly perform a 9
 
 The trajectory gets moved a fixed amount of meters to the left if an overtake is triggered.
 
+A problem here is the side where we want to move our trajecotry points. As the car moves independently troughout the underlying coordiantes (see figure below) we need to find the direction where to move the waypoints.
+
+For this we use our current heading around the z-axis of our car to determine the direction where we are looking. To move the points to the left we need to add another 90 degrees to our rotation.
+
+```python
+rotation_adjusted = Rotation.from_euler('z', self.current_heading +
+                                                math.radians(90))
+```
+
+After generating our target roatation we generate a offset vector with the number of meters to move our points as x-value. Then we rotate this vector and add it to the desired waypoint (see red vector in figure below)
+
+![Vector math](../00_assets/planning/vector_calculation.png)
+
+```python
+offset = np.array([offset_meters, 0, 0])
+offset_front = rotation_adjusted.apply(offset)
+waypoint_off = waypoint + offset_front
+```
+
 ## Sources
 
 <https://www.adac.de/verkehr/rund-um-den-fuehrerschein/erwerb/anhalteweg-berechnen/>
