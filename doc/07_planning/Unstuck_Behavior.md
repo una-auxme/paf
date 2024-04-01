@@ -21,6 +21,7 @@ Robert Fischer
 <!-- TOC -->
 
 ## Explanation
+
 The Unstuck Behavior is triggered whenever we find ourselves in a stuck situation for some specified amount of time. This Behavior can overwrite any other behavior, since we can also get stuck waiting inside other behaviors.
 
 The Unstuck Behavior works with two Timers:
