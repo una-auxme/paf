@@ -48,7 +48,7 @@ The msgs necessary to control the vehicle via the Carla bridge can be
 found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg)
 
 ![Architecture overview](../00_assets/overview.jpg)
-The miro-board can be found [here]([CarlaEgoVehicleControl.msg](https://miro.com/app/board/uXjVPC_3kvU=/)).
+The miro-board can be found [here](https://miro.com/welcomeonboard/a1F0d1dya2FneWNtbVk4cTBDU1NiN3RiZUIxdGhHNzJBdk5aS3N4VmdBM0R5c2Z1VXZIUUN4SkkwNHpuWlk2ZXwzNDU4NzY0NTMwNjYwNzAyODIzfDI=?share_link_id=785020837509).
 
 ## Perception
 

@@ -3,18 +3,7 @@
 Using the vision node and the lidar distance node we can calculate the distance of detected objects.
 We can solve this problem from two directions mapping either pixel into the 3D-World or mapping 3D-LidarPoints into Pixel.
 
-This file will first discuss a simple Minimum Distance Publisher and will than explain the mapping of 3D-Points into 2D.
-
-## Minimum Distance
-
-This part of the node analysis the LIDAR-Data in a small corridor right in front of the vehicle.
-This corridor is similar to what is explained in 03_lidar_distance_utility.md
-
-We retrieve the (X, Y, Z) coordinates of every LIDAR-Point in this corridor.
-We than check for the nearest cluster of Points, where there are at least 5 LIDAR-Points within a Range of 0.2 Meters.
-That way we dont accidently classify a sensor error or a tiny object as an obstacle.
-
-We publish a 3D-Graph of the analysis on the topic: "/paf/hero/Center/min_dist_image"
+This file will will explain the mapping of 3D-Points into 2D.
 
 ## Converting 3D-Points into 2D-Camera-Space
 
@@ -80,14 +69,14 @@ The resulting Image takes the distance in meters as values for its pixels. It th
 
 In the next step we want to get the distance for every bounding box the object-detection found.
 
-We want to return a list of tuple containing a class, an absolut distance and X, Y, Z coordinates of the objcet, like this:
+We want to return a list of tuple containing a class_index, min x, and min abs y of the objcet, like this:
 
 [
-    [class_id, abs_distance, X, Y, Z],
-    [12.0, 7.970812491638262, 5.6549606, -5.5982423, -0.4636328],
-    [12.0, 8.684970384807999, 5.6547265, 6.57918, -0.40886718],
+    [class_id, min x, min abs y],
+    [12.0, 5.6549606, -5.5982423],
+    [12.0, 5.6547265, 6.57918],
     ...,
-    [2.0, 1.3798048392074562, 1.065586, -0.60292965, -0.63628906]
+    [2.0, 1.065586, -0.60292965]
 ]
 
 Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image,
