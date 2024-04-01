@@ -1,5 +1,7 @@
 # Install python packages
 
+(Kept from previous group [paf22])
+
 **Summary:** This page gives a short overview how to add python packages to the project.
 
 ---

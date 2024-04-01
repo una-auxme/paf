@@ -1,5 +1,7 @@
 # Data Version Control (DVC)
 
+(Kept from previous group [paf22])
+
 **Summary:** This page describes what DVC is and how/where to use it.
 
 ---
@@ -14,27 +16,27 @@ Tim Dreier
 
 ## Table of contents
 <!-- TOC -->
-* [Data Version Control (DVC)](#data-version-control--dvc-)
-  * [Author](#author)
-  * [Date](#date)
-  * [Table of contents](#table-of-contents)
-  * [General](#general)
-    * [Installation](#installation)
-    * [Storage](#storage)
-  * [Using DVC](#using-dvc)
-    * [Add file or folder to DVC](#add-file-or-folder-to-dvc)
-    * [Pull / push](#pull--push)
-      * [Authentication](#authentication)
-    * [Using data with the python API](#using-data-with-the-python-api)
-    * [Data pipelines](#data-pipelines)
-    * [Experiments](#experiments)
-      * [Setup a new experiment](#setup-a-new-experiment)
-      * [Common commands](#common-commands)
-        * [Run training](#run-training)
-        * [Show all experiments](#show-all-experiments)
-        * [Commit an experiment](#commit-an-experiment)
-      * [Dvclive](#dvclive)
-  * [Example](#example)
+- [Data Version Control (DVC)](#data-version-control-dvc)
+  - [Author](#author)
+  - [Date](#date)
+  - [Table of contents](#table-of-contents)
+  - [General](#general)
+    - [Installation](#installation)
+    - [Storage](#storage)
+  - [Using DVC](#using-dvc)
+    - [Add file or folder to DVC](#add-file-or-folder-to-dvc)
+    - [Pull / push](#pull--push)
+      - [Authentication](#authentication)
+    - [Using data with the python API](#using-data-with-the-python-api)
+    - [Data pipelines](#data-pipelines)
+    - [Experiments](#experiments)
+      - [Setup a new experiment](#setup-a-new-experiment)
+      - [Common commands](#common-commands)
+        - [Run training](#run-training)
+        - [Show all experiments](#show-all-experiments)
+        - [Commit an experiment](#commit-an-experiment)
+      - [Dvclive](#dvclive)
+  - [Example](#example)
 <!-- TOC -->
 
 ## General

@@ -6,10 +6,16 @@
 
 Planning wiki contains different parts:
 
-- Preplanning
-- Global plan
-- Decision making
+<!-- TOC -->
 
+- [Planning Wiki](#planning-wiki)
+  - [Structure](#structure)
+  - [Overview](#overview)
+    - [Preplanning](#preplanning)
+    - [Global plan](#global-plan)
+    - [Decision making](#decision-making)
+    - [Local Planning](#local-planning)
+<!-- TOC -->
 ---
 
 ## Overview
@@ -37,3 +43,10 @@ the information. All possible traffic scenarios are covered in this component. T
 decision tree, which is easy to adapt and to expand.
 
 ![img.png](../00_assets/decision_tree_example.png)
+
+### [Local Planning](./Local_Planning.md)
+
+The Local Planning component is responsible for evaluating short term decisions in the local environment of the ego vehicle. It containes components responsible for detecting collisions and reacting e. g. lowering speed.
+The local planning also executes behaviors e. g. changes the trajectory for an overtake.
+
+![Overtake](../00_assets/planning/Overtake_car_trajectory.png)

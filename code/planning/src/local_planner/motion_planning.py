@@ -17,7 +17,8 @@ from perception.msg import Waypoint, LaneChange
 import planning  # noqa: F401
 from behavior_agent.behaviours import behavior_speed as bs
 
-from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS
+from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS, \
+    TARGET_DISTANCE_TO_STOP
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -65,7 +66,7 @@ class MotionPlanning(CompatibleNode):
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/test",
+            f"/paf/{self.role_name}/spawn_car",
             spawn_car,
             qos_profile=1)
         self.speed_limit_sub = self.new_subscription(
@@ -232,11 +233,6 @@ class MotionPlanning(CompatibleNode):
         return
 
     def overtake_fallback(self, distance, pose_list, unstuck=False):
-        # self.loginfo("Overtake Fallback!")
-        # obstacle_position = approx_obstacle_pos(distance,
-        #                                         self.current_heading,
-        #                                         self.current_pos,
-        #                                         self.current_speed)
         currentwp = self.current_wp
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
@@ -265,11 +261,6 @@ class MotionPlanning(CompatibleNode):
         result = []
         for i in range(len(result_x)):
             position = Point(result_x[i], result_y[i], 0)
-            # quaternion = tf.transformations.quaternion_from_euler(0,
-            #                                                         0,
-            #                                                          iyaw[i])
-            # orientation = Quaternion(x=quaternion[0], y=quaternion[1],
-            #                              z=quaternion[2], w=quaternion[3])
             orientation = Quaternion(x=0, y=0,
                                      z=0, w=0)
             pose = Pose(position, orientation)
@@ -357,7 +348,7 @@ class MotionPlanning(CompatibleNode):
             if dist < 8:  # lane_change
                 return 8
             elif dist < 25:
-                return 4  # 6
+                return 4
             elif dist < 50:
                 return 7
             else:
@@ -566,8 +557,9 @@ class MotionPlanning(CompatibleNode):
         return self.__acc_speed
 
     def __calc_speed_to_stop_intersection(self) -> float:
-        target_distance = 5.0
+        target_distance = TARGET_DISTANCE_TO_STOP
         stopline = self.__calc_virtual_stopline()
+
         # calculate speed needed for stopping
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms(stopline / 0.8))
@@ -577,7 +569,6 @@ class MotionPlanning(CompatibleNode):
             v_stop = 0.0
         return v_stop
 
-    # TODO: Find out purpose
     def __calc_speed_to_stop_lanechange(self) -> float:
         stopline = self.__calc_virtual_change_point()
 
@@ -585,7 +576,7 @@ class MotionPlanning(CompatibleNode):
                      convert_to_ms(stopline / 0.8))
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
-        if stopline < 5.0:
+        if stopline < TARGET_DISTANCE_TO_STOP:
             v_stop = 0.0
         return v_stop
 
@@ -593,10 +584,9 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_overtake()
         v_stop = max(convert_to_ms(10.),
                      convert_to_ms(stopline / 0.8))
-        if stopline < 6.0:
+        if stopline < TARGET_DISTANCE_TO_STOP:
             v_stop = 0.0
 
-        # self.logerr(f"Speed ovt: {v_stop}")
         return v_stop
 
     def __calc_virtual_change_point(self) -> float:
@@ -618,7 +608,6 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_overtake(self) -> float:
-        # self.logerr(f"Overtake point: {self.__collision_point}")
         if (self.__collision_point is not None) and \
                 self.__collision_point != np.inf:
             return self.__collision_point

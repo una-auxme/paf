@@ -12,6 +12,8 @@ components.
 It containes parameters and utility functions to reduce code in the ros nodes.
 """
 
+# Distance to stop in Intersection, Lanechange, Overtake
+TARGET_DISTANCE_TO_STOP = 5.0
 # Number of waypoints to be used for the overtaking maneuver
 NUM_WAYPOINTS = 7
 # Factor for linear interpolation of target speed values for the ACC
@@ -106,21 +108,22 @@ def approx_obstacle_pos(distance: float, heading: float,
     # Create distance vector with 0 rotation
     relative_position_local = np.array([distance, 0, 0])
 
-    # speed vector
-    speed_vector = rotation_matrix.apply(np.array([speed, 0, 0]))
     # Rotate distance vector to match heading
     absolute_position_local = rotation_matrix.apply(relative_position_local)
 
-    # Add egomposition vector with distance vetor to get absolute position
+    # Add ego position vector with distance vetor to get absolute position
     vehicle_position_global_start = ego_pos + absolute_position_local
 
+    # Calculate the front and back of the vehicle
     length = np.array([3, 0, 0])
     length_vector = rotation_matrix.apply(length)
 
+    # calculate the front left corner of the vehicle
     offset = np.array([1, 0, 0])
     rotation_adjusted = Rotation.from_euler('z', heading + math.radians(90))
     offset_front = rotation_adjusted.apply(offset)
 
+    # calculate back right corner of the vehicle
     rotation_adjusted = Rotation.from_euler('z', heading + math.radians(270))
     offset_back = rotation_adjusted.apply(offset)
 
@@ -128,7 +131,7 @@ def approx_obstacle_pos(distance: float, heading: float,
         length_vector + offset_back
 
     return vehicle_position_global_start + offset_front, \
-        vehicle_position_global_end, speed_vector
+        vehicle_position_global_end
 
 
 def convert_to_ms(speed: float):
@@ -169,14 +172,17 @@ def spawn_car(distance):
     spawnPoint = carla.Transform(ego_vehicle.get_location() +
                                  carla.Location(y=distance.data),
                                  ego_vehicle.get_transform().rotation)
+
+    vehicle = world.spawn_actor(bp, spawnPoint)
+    vehicle.set_autopilot(False)
+    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
+
+    # Spawn second vehicle
     # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
     #                               carla.Location(x=2.5, y=distance.data + 1),
     #                               ego_vehicle.get_transform().rotation)
-    vehicle = world.spawn_actor(bp, spawnPoint)
     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
     # vehicle2.set_autopilot(False)
-    vehicle.set_autopilot(False)
-    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
 
 
 def interpolate_speed(speed_target, speed_current):
@@ -194,18 +200,6 @@ def filter_vision_objects(float_array, oncoming):
 
     Args:
         data (ndarray): numpy array with vision objects
-    """
-
-    """
-    LEON:
-
-    Ihr bekommt jetzt nur 3-Werte -> ClassIndex, Min_X, Min_Abs_Y
-
-    Min_Abs_Y ist der nähste Punkt vom Object zu Y=0 also der Mitte.
-
-    Damit habt ihr immer automatisch den
-    nähesten und wichtigsten Punkt des Objekts.
-
     """
 
     # Reshape array to 3 columns and n rows (one row per object)

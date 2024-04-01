@@ -65,8 +65,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         When is this called?
         Every time your behaviour is ticked.
 
-        pose: 
-            position: 
+        pose:
+            position:
                 x: 294.43757083094295
                 y: -1614.961812061094
                 z: 211.1994649671884
@@ -404,6 +404,9 @@ UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     """
+    Documentation to this behavior can be found in
+    /doc/07_planning/Behavior_detailed.md
+
     This behavior is triggered when the vehicle is stuck and needs to be
     unstuck. The behavior will then try to reverse and steer to the left or
     right to get out of the stuck situation.

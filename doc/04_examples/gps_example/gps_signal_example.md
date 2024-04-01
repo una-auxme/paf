@@ -2,6 +2,8 @@
 
 **Summary:** This page explains how the GPS sensor is handled including a short example on how to use it.
 
+**The Filter that's currently in use: [Kalman Filter](../../06_perception/08_kalman_filter.md)**
+
 ---
 
 ## Authors
@@ -14,13 +16,14 @@ Gabriel Schwald
 
 ---
 <!-- TOC -->
-* [GPS sensor](#gps-sensor)
-  * [Authors](#authors)
-    * [Date](#date)
-  * [Raw sensor data](#raw-sensor-data)
-  * [Filters for the sensor data](#filters-for-the-sensor-data)
-    * [Intuitive filter](#intuitive-filter)
-    * [Rolling average](#rolling-average)
+- [GPS sensor](#gps-sensor)
+  - [Authors](#authors)
+    - [Date](#date)
+  - [Raw sensor data](#raw-sensor-data)
+  - [Filters for the sensor data](#filters-for-the-sensor-data)
+    - [Intuitive filter](#intuitive-filter)
+    - [Rolling average](#rolling-average)
+    - [Kalman Filter](#kalman-filter)
 <!-- TOC -->
 
 ## Raw sensor data
@@ -77,8 +80,29 @@ The output is equal to the average of all $n$ vectors.
 
 More arguments smooth out the gps signal, however the also add sluggishness to the output.
 The number of arguments taken into account can be adjusted using the
-[RUNNING_GPS_AVG_ARGS](../../../code/perception/src/Position_Publisher_Node.py) constant.
+[RUNNING_GPS_AVG_ARGS](../../../code/perception/src/position_heading_publisher_node.py) constant.
 
 This was the method ultimately chosen with $n=10$, leading to the following gps signal.
 
 ![Final gps signal (n=10)](../../00_assets/filter_img/rolling_avg_10.png)
+
+### Kalman Filter
+
+A little more complex, but quicker reacting filter is the [Kalman Filter](../../06_perception/08_kalman_filter.md).
+
+It is heavily dependent on which system model you use and how you tune its parameters.
+When done correctly it reduces the GPS noise greatly without adding any delay to the output such as the filters above do.
+
+![MAE Boxed Graph of Location Error with respect to ideal Location](../../../doc/00_assets/perception/data_26_MAE_Boxed.png)
+
+In the upper graph a smaller box indicates less noise. Also the lower values are, the less deviation from the ideal position we have.
+
+This is the graph that was used for tuning the kalman parameters:
+![MSE Boxed Graph of Location Error with respect to ideal Location](../../../doc/00_assets/perception/data_26_MSE_Boxed.png)
+It's depciting the MSE (mean squared errors) for the error distace to the ideal position.
+
+As you can see the filtered Positions are still noisy, but way closer to the ideal position. In comparison, the running average filter is not as noisy, but constantly wrong by about 1 meter, because it is time delayed.
+
+This Filter was tuned in simple situations (standing still, driving circles, driving farward), which results in worse performance when driving in more complex ways. (Complex Movements generally are not easy for the normal Kalman Filer to correct completely)
+
+This is why the Kalman Filter performance can still be improved by using more complex models or a new more complex kalman filter, such as the non-linear or Extended Kalman Filter. Of course other filters may work better as well

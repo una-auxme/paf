@@ -97,9 +97,9 @@ class IntersectionAhead(py_trees.behaviour.Behaviour):
 
 class LaneChangeAhead(py_trees.behaviour.Behaviour):
     """
-    This behaviour checkes wheather there is an intersection in front of the
+    This behaviour checkes wheather there is an lane change in front of the
     ego vehicle or not and triggers the rest of the decision tree handling the
-     intersection.
+     lane change.
     """
     def __init__(self, name):
         """
@@ -135,7 +135,7 @@ class LaneChangeAhead(py_trees.behaviour.Behaviour):
         What to do here?
             Any initialisation you need before putting your behaviour to work.
         This initializes the variables needed to save information about the
-        stop line.
+        lane change.
         """
         self.dist = 0
 
@@ -147,13 +147,12 @@ class LaneChangeAhead(py_trees.behaviour.Behaviour):
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Gets the current distance to the next intersection.
+        Gets the current distance to the next lane change.
         :return: py_trees.common.Status.SUCCESS, if the vehicle is within range
-                    of the intersection
+                    of the lane change
                  py_trees.common.Status.FAILURE, if we are too far away from
-                 the intersection
+                 the lane change
         """
-        # TODO change this part to the actual source of intersection detection
         bb = self.blackboard.get("/paf/hero/lane_change_distance")
         if bb is None:
             return py_trees.common.Status.FAILURE
