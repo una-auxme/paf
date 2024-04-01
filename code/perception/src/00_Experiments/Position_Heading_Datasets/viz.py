@@ -13,7 +13,7 @@ since it is used to visualize the data of the heading filter debug node.
 FILE_START = 0
 FILE_END = 20
 
-FILE_NUM = 26  # Change this to plot your wanted file #
+FILE_NUM = "00"  # Change this to plot your wanted file #
 
 
 # current file_name to plot the data of one file!
@@ -176,7 +176,7 @@ def plot_x_or_y_or_h_notched_box(file_name, type='x', error_type='MSE'):
     tuple = zip(boxplot['boxes'], colors, boxplot['medians'],
                 boxplot['whiskers'][::2])
 
-    for i, (box, color, median) in enumerate(tuple):
+    for i, (box, color, median, whiskers) in enumerate(tuple):
         box.set_facecolor(color)
         median_val = median.get_ydata()[1]
         ax.text(i+1, median_val, f'Median: {median_val:.2f}', va='center',
@@ -327,14 +327,14 @@ def plot_CEP(file_name):
     df_y.set_index(df_y.columns[0], inplace=True)
 
     # create pos tuples of the x and y data and store them as numpy arrays
-    ideal_pos = np.array(list(zip(df_x['Ideal (Carla) X'],
-                                  df_y['Ideal (Carla) Y'])))
-    test_filter_pos = np.array(list(zip(df_x['Test Filter X'],
-                                        df_y['Test Filter Y'])))
-    current_pos = np.array(list(zip(df_x['Current X'],
-                                    df_y['Current Y'])))
-    unfiltered_pos = np.array(list(zip(df_x['Unfiltered X'],
-                                       df_y['Unfiltered Y'])))
+    ideal_pos = np.array(list(zip(df_x['Ideal (Carla)'],
+                                  df_y['Ideal (Carla)'])))
+    test_filter_pos = np.array(list(zip(df_x['Test Filter'],
+                                        df_y['Test Filter'])))
+    current_pos = np.array(list(zip(df_x['Current'],
+                                    df_y['Current'])))
+    unfiltered_pos = np.array(list(zip(df_x['Unfiltered'],
+                                       df_y['Unfiltered'])))
 
     # create CEP for each method
     cep_test_filter, cep_current, cep_unfiltered = calculate_cep(
@@ -642,14 +642,14 @@ def get_positions_from_csv_file(file_name, file_name_y=file_name):
     df_y.set_index(df_y.columns[0], inplace=True)
 
     # create pos tuples of the x and y data and store them as numpy arrays
-    ideal_pos = np.array(list(zip(df_x['Ideal (Carla) X'],
-                                  df_y['Ideal (Carla) Y'])))
-    test_filter_pos = np.array(list(zip(df_x['Test Filter X'],
-                                        df_y['Test Filter Y'])))
-    current_pos = np.array(list(zip(df_x['Current X'],
-                                    df_y['Current Y'])))
-    unfiltered_pos = np.array(list(zip(df_x['Unfiltered X'],
-                                       df_y['Unfiltered Y'])))
+    ideal_pos = np.array(list(zip(df_x['Ideal (Carla)'],
+                                  df_y['Ideal (Carla)'])))
+    test_filter_pos = np.array(list(zip(df_x['Test Filter'],
+                                        df_y['Test Filter'])))
+    current_pos = np.array(list(zip(df_x['Current'],
+                                    df_y['Current'])))
+    unfiltered_pos = np.array(list(zip(df_x['Unfiltered'],
+                                       df_y['Unfiltered'])))
 
     return ideal_pos, test_filter_pos, current_pos, unfiltered_pos
 
@@ -680,23 +680,23 @@ def get_x_or_y_or_h_from_csv_file(file_name, type='x'):
 
     # Read the CSV file into a DataFrame
     # (skip the first couple rows because of wrong measurements)
-    df = pd.read_csv(file_path, skiprows=8)
+    df = pd.read_csv(file_path)
 
     # Set the first column (time) as the index of the DataFrames
     df.set_index(df.columns[0], inplace=True)
 
     if type == 'x':
         # store x as numpy arrays
-        ideal = np.array(df['Ideal (Carla) X'])
-        test_filter = np.array(df['Test Filter X'])
-        current = np.array(df['Current X'])
-        unfiltered = np.array(df['Unfiltered X'])
+        ideal = np.array(df['Ideal (Carla)'])
+        test_filter = np.array(df['Test Filter'])
+        current = np.array(df['Current'])
+        unfiltered = np.array(df['Unfiltered'])
     elif type == 'y':
         # store y as numpy arrays
-        ideal = np.array(df['Ideal (Carla) Y'])
-        test_filter = np.array(df['Test Filter Y'])
-        current = np.array(df['Current Y'])
-        unfiltered = np.array(df['Unfiltered Y'])
+        ideal = np.array(df['Ideal (Carla)'])
+        test_filter = np.array(df['Test Filter'])
+        current = np.array(df['Current'])
+        unfiltered = np.array(df['Unfiltered'])
     elif type == 'h':
         # store heading as numpy arrays
         ideal = np.array(df['Ideal (Carla)'])
@@ -717,8 +717,8 @@ if __name__ == "__main__":
     plot_x_or_y_or_h_notched_box(data, type='x', error_type='MSE')
     plot_x_or_y_or_h_notched_box(data, type='x', error_type='MAE')
 
-    # plot_x_or_y_or_h_notched_box(data, type='y', error_type='MSE')
-    # plot_x_or_y_or_h_notched_box(data, type='y', error_type='MAE')
+    plot_x_or_y_or_h_notched_box(data, type='y', error_type='MSE')
+    plot_x_or_y_or_h_notched_box(data, type='y', error_type='MAE')
 
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MSE')
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MAE')

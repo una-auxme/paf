@@ -5,7 +5,6 @@ from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from simple_pid import PID
 from std_msgs.msg import Float32, Bool
-from nav_msgs.msg import Path
 import rospy
 
 
@@ -47,14 +46,6 @@ class VelocityController(CompatibleNode):
         self.reverse_pub: Publisher = self.new_publisher(
             Bool,
             f"/paf/{self.role_name}/reverse",
-            qos_profile=1)
-
-        # needed to prevent the car from driving before a path to follow is
-        # available. Might be needed later to slow down in curves
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
             qos_profile=1)
 
         self.__current_velocity: float = None

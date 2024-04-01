@@ -87,7 +87,7 @@ The CSV files columns are formatted in the following style:
 | 0.2  | 20.0       | 20.1         | 20.2    | 20.3        | 0.1              | 0.2           | 0.3               |
 
 **Y csv file example:**
-| Time | Unfiltered Y | Ideal (Carla) Y | Current Y | Test Filter Y | Unfiltered Y Error | Current Y Error | Test Filter Y Error |
+| Time | Unfiltered | Ideal (Carla) | Current | Test Filter | Unfiltered Error | Current Error | Test Filter Error |
 | ---- | ------------ | --------------- | --------- | ------------- | ------------------ | --------------- | -------------------- |
 | 0.1  | 10.0         | 10.1            | 10.2      | 10.3          | 0.1                | 0.2             | 0.3                  |
 | 0.2  | 20.0         | 20.1            | 20.2      | 20.3          | 0.1                | 0.2             | 0.3                  |
@@ -175,6 +175,8 @@ This node publishes the following topics:
 ## Visualization
 
 The visualisation of the saved csv data is a really useful tool for debugging and tuning filters.
+
+It can be used to debug X data, Y data and Heading (h) data.
 
 To be able to save data in csv files you just need to uncomment the saving methods in the main loop as stated in the [Getting Started](#getting-started) chapter.
 
