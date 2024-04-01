@@ -1,38 +1,70 @@
-[//]: # ()
-[//]: # (""")
+# Behavior Tree
 
-[//]: # (Source: https://github.com/ll7/psaf2)
+**Summary:** This page contains a simple explanation for the behavior tree. For more technical insights have a look at the [code](../../code/planning/src/behavior_agent/behaviours) itself.
 
-[//]: # (""")
+**Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
-# behaviour_agent
+---
 
-**Disclaimer**: As we mainly built our decision tree on the previous [PAF project](https://github.com/ll7/psaf2), most part of the documentation was added here and adjusted to the changes we made.
+## Author
+
+Julius Miller
+
+## Date
+
+01.04.2024
+
+## Prerequisite
+
+---
+<!-- TOC -->
+- [Behavior Tree](#behavior-tree)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [About](#about)
+  - [Our behaviour tree](#our-behaviour-tree)
+    - [Behavior](#behavior)
+      - [Selector](#selector)
+      - [Sequence](#sequence)
+      - [Condition](#condition)
+      - [Subtree](#subtree)
+    - [Intersection](#intersection)
+      - [Legend](#legend)
+    - [Other Behaviors](#other-behaviors)
+  - [Developing guide](#developing-guide)
+    - [Tree Definition](#tree-definition)
+    - [Behaviours](#behaviours)
+      - [Blackboard](#blackboard)
+    - [Guidelines](#guidelines)
+      - [Non-Blocking](#non-blocking)
+      - [Functions](#functions)
+        - [`__init__()`](#__init__)
+        - [`setup()`](#setup)
+        - [`initialise()`](#initialise)
+        - [`update()`](#update)
+        - [`terminate()`](#terminate)
+<!-- TOC -->
 
 ## About
 
-This Package implements a behaviour agent for our autonomous car using **Behaviour Trees**. It uses the `py_trees` Framework, that works well with ROS.
+This Package implements a behaviour agent for our autonomous car using **Behaviour Trees**. It uses the [py_trees](./01_py_trees.md) Framework, that works well with ROS.
 For visualization at runtime you might want to also install this [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
 ## Our behaviour tree
 
 The following section describes the behaviour tree we use for normal driving using all functionality provided by the agent. In the actual implementation this is part of a bigger tree, that handles things like writing topics to the blackboard, starting and finishing the decision tree.
-The following description is not complete, it just contains the most common behaviours and subtrees. For a complete description have a look at the [tree-description](behaviortree.xml) and the [bt-specs](behavior_tree_spec.md).
-Note that we didn't actually implement all the behaviours from this design, due to time and functionality limitations.
+The following tree is a simplification.
 
-### Legend
+![Simple Tree](../00_assets/planning/simple_final_tree.png)
 
-The following notation is used in this documentation:
-
-![BT Legend](../00_assets/legend_bt.png)
-
-#### Behavior
+### Behavior
 
 Represent an action the decision tree should execute. It has three return values representing the state of the behavior:
 
-* `SUCCESS`: The action has been performed successfully.
-* `RUNNING`: The action is still being executed.
-* `Failure`: The action couldn't be executed.
+- `SUCCESS`: The action has been performed successfully.
+- `RUNNING`: The action is still being executed.
+- `Failure`: The action couldn't be executed.
 
 #### Selector
 
@@ -50,65 +82,35 @@ Is always the first child of a sequence. It decides if the sequence should be ex
 
 Represents a specific task/scenario which is handled by the decision tree.
 
-### Big Picture
-
-![BT Big Picture](../00_assets/top-level.png)
-
-This top-level tree consists mainly of subtrees that are explained below. If none of the subtrees fit the current situation, the behaviour_agent goes into `Cruising`-behaviour, where it just follows the Path at an appropriate speed.
-
 ### Intersection
+
+#### Legend
+
+![BT Legend](../00_assets/legend_bt.png)
 
 ![BT Intersection](../00_assets/intersection.png)
 
 If there is an intersection coming up, the agent executes the following sequence of behaviours:
 
-* Approach Intersection
+- Approach Intersection
 
-    Slows down and stops at line if a stop sign or a yellow or red traffic light is detected
+    Slows down and stops at line if a yellow or red traffic light is detected
 
-* Wait at Intersection
+- Wait at Intersection
 
     Waits for traffic lights or higher priority traffic
 
-* Enter Intersection
+- Enter Intersection
 
     Enters the intersection and follows it predetermined path through the intersection
 
-* Leave Intersection
+- Leave Intersection
 
     Leaves the intersection in the right direction
 
-### Overtaking
+### Other Behaviors
 
-The Overtaking subtree is quite big to accommodate for different overtaking scenarios. Here is an overview of that subtree further refining it.
-
-![Overtaking](../00_assets/overtaking_overview.png)
-
-Please have a look at the [tree-description](behaviortree.xml) and the [bt-specs](behavior_tree_spec.md) for a more detailed description. The Multi-Lane Overtaking Subtree looks like this:
-
-![BT Overtaking](../00_assets/multi_lane.png)
-
-* Multi Lane?
-
-    Checks the map data: does the current road have more than one lane?
-
-* Left Lane available?
-
-    The lane detection checks if there is a lane to the left
-
-* Wait for Left Lane free
-
-    Waits for the left lane to be free. This has a timeout.
-
-* Switch Lane Left
-
-    Triggers a lane switch to the left by calling the local planner
-
-### Right-Hand Driving
-
-This subtree makes the ego vehicle switch back to the right lane, if the road ahead is free enough. It is quite similar to the Multi-Lane Overtaking Subtree, just with reversed directions.
-
-![BT Right Hand](../00_assets/Right_lane.png)
+Lane Change and Overtake are built just like Intersection. So there is always an Approach, Wait, Enter and Leave part.
 
 ## Developing guide
 
@@ -184,7 +186,3 @@ Main function of a behaviour, that gets called everytime the behaviour is ticked
 ##### `terminate()`
 
 This gets called, whenever a behaviour is cancelled by a higher priority branch. Use to terminate middleware connections or asynchronous Calculations, whose results are not needed anymore.
-
-## Authors
-
-Josef Kircher

@@ -6,18 +6,15 @@ import numpy as np
 
 from . import behavior_speed as bs
 import planning  # noqa: F401
-from local_planner.utils import NUM_WAYPOINTS
+from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, \
+    convert_to_ms
 
 """
 Source: https://github.com/ll7/psaf2
 """
 
 
-def convert_to_ms(speed):
-    return speed / 3.6
-
-
-# Varaible to determine the distance to overtak the object
+# Varaible to determine the distance to overtake the object
 OVERTAKE_EXECUTING = 0
 
 
@@ -84,7 +81,7 @@ class Approach(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, if too far from overtaking
                  py_trees.common.Status.SUCCESS, if stopped behind the blocking
                  object or entered the process.
-                 py_trees.common.Status.FAILURE,
+                 py_trees.common.Status.FAILURE, if the overtake is aborted
         """
         global OVERTAKE_EXECUTING
         # Update distance to collision object
@@ -128,7 +125,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < 6.0:
+                self.ot_distance < TARGET_DISTANCE_TO_STOP:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
@@ -333,8 +330,6 @@ class Enter(py_trees.behaviour.Behaviour):
         else:
             rospy.loginfo("Overtake: Waiting for status update")
             return py_trees.common.Status.RUNNING
-        # Currently not in use
-        # Can be used to check if we can go back to the original lane
 
     def terminate(self, new_status):
         """
@@ -407,7 +402,7 @@ class Leave(py_trees.behaviour.Behaviour):
            - Triggering, checking, monitoring. Anything...but do not block!
            - Set a feedback message
            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Abort this subtree
+        Abort this subtree, if overtake distance is big enough
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
         global OVERTAKE_EXECUTING

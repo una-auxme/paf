@@ -12,14 +12,16 @@ Josef Kircher
 
 31.01.2023
 
-## Prerequisite
+## Note
+
+This documentation was taken from the previous project PAF22.
 
 ---
 <!-- TOC -->
 - [Pytrees](#pytrees)
   - [Author](#author)
   - [Date](#date)
-  - [Prerequisite](#prerequisite)
+  - [Note](#note)
   - [Getting started](#getting-started)
   - [What is Pytrees?](#what-is-pytrees)
   - [Examples](#examples)

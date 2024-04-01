@@ -6,27 +6,29 @@
 
 ## Author
 
-Simon Erlbacher, Niklas Vogel
+Authors: Simon Erlbacher, Niklas Vogel
 
 ## Date
 
 29.03.2023
 
-## Prerequisite
+## Note
+
+The Preplanning component was taken from the previous project PAF22.
 
 ---
 <!-- TOC -->
-* [Preplanning](#preplanning)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Getting started](#getting-started)
-  * [Road option concept](#road-option-concept)
-  * [Road information](#road-information)
-  * [Junction](#junction)
-  * [Road interpolation](#road-interpolation)
-  * [How to use the implementation](#how-to-use-the-implementation)
-    * [Sources](#sources)
+- [Preplanning](#preplanning)
+  - [Author](#author)
+  - [Date](#date)
+  - [Note](#note)
+  - [Getting started](#getting-started)
+  - [Road option concept](#road-option-concept)
+  - [Road information](#road-information)
+  - [Junction](#junction)
+  - [Road interpolation](#road-interpolation)
+  - [How to use the implementation](#how-to-use-the-implementation)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ---
@@ -44,17 +46,17 @@ The leaderboard provides target points and instructions. Every target point cont
 
 We need to cover the following instructions for intersections:
 
-* Turn left: 1
-* Turn right: 2
-* Straight: 3
+- Turn left: 1
+- Turn right: 2
+- Straight: 3
 
 The number shows which direction we need to cross an intersection.
 
 We need to cover the following instructions for lane changes:
 
-* No change: 4
-* Change left: 5
-* Change right: 6
+- No change: 4
+- Change left: 5
+- Change right: 6
 
 We also get the information when we need to change a lane. For example before we reach an intersection.
 
@@ -69,19 +71,19 @@ a lane "change left".
 
 Important information we get from the xodr file.
 
-* road geometry
-* speed limit
-* intersections
-* traffic signs (not used in this project)
-* successor and predecessor information about roads
-* lane information (lane for driving?)
-* lane width
+- road geometry
+- speed limit
+- intersections
+- traffic signs (not used in this project)
+- successor and predecessor information about roads
+- lane information (lane for driving?)
+- lane width
 
 The listed information from the OpenDrive map is used to calculate the trajectory and to give further information
-to other components. The traffic signs information could **not** be used, because the information about the signs
+to other components. The traffic signs information could --not-- be used, because the information about the signs
 only holds id values which have to be solved with the carla API. Also the name of the traffic signs is not consistent.
 That is why we would need to get the information for every traffic sign id from carla. This would crash with the
-leaderboard requirements. We are **not** allowed to use ground truth information from the game engine.
+leaderboard requirements. We are --not-- allowed to use ground truth information from the game engine.
 
 ![img.png](../00_assets/Road0_cutout.png)
 

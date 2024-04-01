@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import ros_compatibility as roscomp
-# import tf.transformations
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber, Publisher
 from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
 from nav_msgs.msg import Path
-# from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, Float32, Bool
 import numpy as np
 from utils import interpolate_speed, calculate_rule_of_thumb
@@ -22,7 +20,7 @@ class ACC(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
 
-        # Get Unstuck flag and distance
+        # Get Unstuck flag and distance for unstuck routine
         self.unstuck_flag_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/unstuck_flag",
@@ -41,7 +39,7 @@ class ACC(CompatibleNode):
             self.__get_current_velocity,
             qos_profile=1)
 
-        # Get initial set of speed limits
+        # Get initial set of speed limits from global planner
         self.speed_limit_OD_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/speed_limits_OpenDrive",
@@ -55,21 +53,27 @@ class ACC(CompatibleNode):
             self.__set_trajectory,
             qos_profile=1)
 
+        # Get current position to determine current waypoint
         self.pose_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1)
+
+        # Get approximated speed from obstacle in front
         self.approx_speed_sub = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             self.__collision_callback,
             qos_profile=1)
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
             qos_profile=1)
+
+        # Publish current waypoint and speed limit
         self.wp_publisher: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/current_wp",
@@ -93,7 +97,7 @@ class ACC(CompatibleNode):
         self.__current_velocity: float = None
         # Distance and speed from possible collsion object
         self.obstacle_speed: tuple = None
-        # Obstalce distance
+        # Obstacle distance
         self.obstacle_distance = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
@@ -109,6 +113,7 @@ class ACC(CompatibleNode):
             data (Float32): Speed from obstacle in front
         """
         if np.isinf(data.data[0]):
+            # If no obstacle is in front, we reset all values
             self.obstacle_speed = None
             self.obstacle_distance = None
             return
@@ -116,26 +121,26 @@ class ACC(CompatibleNode):
         self.obstacle_distance = data.data[0]
 
     def __get_unstuck_flag(self, data: Bool):
-        """_summary_
+        """Set unstuck flag
 
         Args:
-            data (Bool): _description_
+            data (Bool): Unstuck flag
         """
         self.__unstuck_flag = data.data
 
     def __get_unstuck_distance(self, data: Float32):
-        """_summary_
+        """Set unstuck distance
 
         Args:
-            data (Float32): _description_
+            data (Float32): Unstuck distance
         """
         self.__unstuck_distance = data.data
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
-        """_summary_
+        """Set current velocity
 
         Args:
-            data (CarlaSpeedometer): _description_
+            data (CarlaSpeedometer): Current velocity from carla
         """
         self.__current_velocity = float(data.speed)
 
@@ -166,14 +171,17 @@ class ACC(CompatibleNode):
             return
 
         agent = data.pose.position
+        # Get current waypoint
         current_wp = self.__trajectory.poses[self.__current_wp_index].\
             pose.position
+        # Get next waypoint
         next_wp = self.__trajectory.poses[self.__current_wp_index + 1].\
             pose.position
         # distances from agent to current and next waypoint
         d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
         d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
         if d_new < d_old:
+            # If distance to next waypoint is smaller than to current
             # update current waypoint and corresponding speed limit
             self.__current_wp_index += 1
             self.wp_publisher.publish(self.__current_wp_index)
@@ -199,14 +207,14 @@ class ACC(CompatibleNode):
         """
         def loop(timer_event=None):
             """
-            Checks if distance to a possible object is too small and
+            Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
             if self.obstacle_distance is not None and \
                     self.obstacle_speed is not None and \
                     self.__current_velocity is not None:
-                # If we have obstalce speed and distance, we can
-                # calculate the safe speed
+                # If we have obstalce information,
+                # we can calculate the safe speed
                 safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity)
                 if self.obstacle_distance < safety_distance:
@@ -215,19 +223,14 @@ class ACC(CompatibleNode):
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
                     safe_speed = self.obstacle_speed * \
                         (self.obstacle_distance / safety_distance)
-
+                    # Interpolate speed for smoother braking
                     safe_speed = interpolate_speed(safe_speed,
                                                    self.__current_velocity)
                     if safe_speed < 1.0:
                         safe_speed = 0
-                    self.logerr("ACC: Safe speed: " + str(safe_speed))
                     self.velocity_pub.publish(safe_speed)
                 else:
                     # If safety distance is reached just hold current speed
-                    # if self.obstacle_speed < 1.0:
-                    #     self.obstacle_speed = 0
-                    # self.logerr("ACC: my speed: " +
-                    #             str(self.__current_velocity))
                     if self.__current_velocity < 1.0:
                         safe_speed = 0
                     else:
@@ -237,11 +240,10 @@ class ACC(CompatibleNode):
             elif self.speed_limit is not None:
                 # If we have no obstacle, we want to drive with the current
                 # speed limit
-                # self.logerr("ACC: Speed limit: " + str(self.speed_limit))
-                # interpolated_speed = interpolate_speed(self.speed_limit,
-                #                                        self.__current_velocity)
                 self.velocity_pub.publish(self.speed_limit)
             else:
+                # If we don't have speed limits do not drive
+                # probably a problem accured in the global planner
                 self.velocity_pub.publish(0)
 
         self.new_timer(self.control_loop_rate, loop)
