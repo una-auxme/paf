@@ -139,22 +139,22 @@ Publishes:
 
 ### [Decision Making](../07_planning/Behavior_tree.md)
 
-Checks whether the path from [Preplanning](#Preplanning) actually can be taken.
-If the data from the [Perception](#Perception) indicates that the path needs to be adjusted,
-this node decides which actions to take.
-Based on this decision, the [Local path planning](#Local-path-planning) plans a new path accordingly.
+Decides which speed is the right one to pass through a certain situation and
+also checks if an overtake is necessary.
+Everything is based on the data from the Perception [Perception](#Perception).
 
 Subscriptions:
 
-- ```map``` ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
-- ```navigation``` (waypoints and high-level route description)
-- ```odometry``` ([nav_msgs/Odometry](https://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html))
-- ```provisional_path``` ([nav_msgs/Path Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```Speed``` ([carla_msgs/Speedometer](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```collision``` ([std_msgs/Float32MultiArray](https://docs.ros.org/en/api/std_msgs/html/msg/Float32MultiArray.html))
+- ```overtake_success``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```oncoming``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- ```target_velocity``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - all data from [Perception](#Perception)
 
 Publishes:
 
-- ```decision``` ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
+- ```curr_behavior``` ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 
 ### [Local Planning](../07_planning/Local_Planning.md)
 

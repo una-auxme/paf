@@ -30,7 +30,7 @@ Samuel Kühnel
     - [Cornering Speed](#cornering-speed)
     - [Selecting the target velocity](#selecting-the-target-velocity)
     - [Moving the trajectory](#moving-the-trajectory)
-    - [Sources](#sources)
+  - [Sources](#sources)
 <!-- TOC -->
 ## Overview
 
@@ -135,6 +135,6 @@ In the last scenario the car chooses the cornering speed to smoothly perform a 9
 
 The trajectory gets moved a fixed amount of meters to the left if an overtake is triggered.
 
-### Sources
+## Sources
 
 <https://www.adac.de/verkehr/rund-um-den-fuehrerschein/erwerb/anhalteweg-berechnen/>
