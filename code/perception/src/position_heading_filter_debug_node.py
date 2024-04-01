@@ -9,7 +9,7 @@ import math
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Header
 # from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 import rospy
@@ -18,7 +18,7 @@ import carla
 
 GPS_RUNNING_AVG_ARGS: int = 10
 DATA_SAVING_MAX_TIME: int = 45
-FOLDER_PATH: str = "Position_Heading_Datasets"
+FOLDER_PATH: str = "/Position_Heading_Datasets"
 
 
 class position_heading_filter_debug_node(CompatibleNode):
@@ -43,16 +43,16 @@ class position_heading_filter_debug_node(CompatibleNode):
         CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
         CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
-        self.world = self.client.get_world()
-        self.world.wait_for_tick()
+        self.world = None
         self.carla_car = None
 
-        self.set_carla_attributes()
+        # self.set_carla_attributes()
 
         # Tracked Attributes for Debugging
         self.current_pos = PoseStamped()
         self.current_heading = Float32()
-        self.carla_current_pos = PoseStamped()
+        self.carla_current_pos = carla.Location()
+        self.carla_current_heading = 0.0
         self.unfiltered_pos = PoseStamped()
         self.unfiltered_heading = Float32()
 
@@ -144,6 +144,13 @@ class position_heading_filter_debug_node(CompatibleNode):
         # endregion Publisher END
 
     # region Subscriber Callbacks
+
+    def set_unfiltered_heading(self, data: Float32):
+        """
+        This method is called when new unfiltered_heading data is received.
+        """
+        self.unfiltered_heading = data
+
     def set_unfiltered_pos(self, data: PoseStamped):
         """
         This method is called when new unfiltered_pos data is received.
@@ -193,8 +200,8 @@ class position_heading_filter_debug_node(CompatibleNode):
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
                      'src/00_Experiments/' + FOLDER_PATH)
-        folder_path_x = base_path + 'x_error'
-        folder_path_y = base_path + 'y_error'
+        folder_path_x = base_path + '/x_error'
+        folder_path_y = base_path + '/y_error'
         # Ensure the directories exist
         os.makedirs(folder_path_x, exist_ok=True)
         os.makedirs(folder_path_y, exist_ok=True)
@@ -226,7 +233,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
                      'src/00_Experiments' + FOLDER_PATH)
-        folder_path_heading = base_path + 'heading_error'
+        folder_path_heading = base_path + '/heading_error'
 
         # Ensure the directories exist
         os.makedirs(folder_path_heading, exist_ok=True)
@@ -248,7 +255,7 @@ class position_heading_filter_debug_node(CompatibleNode):
                 writer.writerow([
                     "Time",
                     "Unfiltered",
-                    "Ideal(Carla)",
+                    "Ideal (Carla)",
                     "Current",
                     "Test Filter",
                     "Unfiltered Error",
@@ -272,13 +279,13 @@ class position_heading_filter_debug_node(CompatibleNode):
             if os.stat(self.csv_file_path_x).st_size == 0:
                 writer.writerow([
                     "Time",
-                    "Unfiltered X",
-                    "Ideal (Carla) X",
-                    "Current X",
-                    "Test Filter X",
-                    "Unfiltered X Error",
-                    "Current X Error",
-                    "Test Filter X Error"
+                    "Unfiltered",
+                    "Ideal (Carla)",
+                    "Current",
+                    "Test Filter",
+                    "Unfiltered Error",
+                    "Current Error",
+                    "Test Filter Error"
                 ])
             writer.writerow([
                 rospy.get_time(),
@@ -298,13 +305,13 @@ class position_heading_filter_debug_node(CompatibleNode):
             if os.stat(self.csv_file_path_y).st_size == 0:
                 writer.writerow([
                     "Time",
-                    "Unfiltered Y",
-                    "Ideal (Carla) Y",
-                    "Current Y",
-                    "Test Filter Y",
-                    "Unfiltered Y Error",
-                    "Current Y Error",
-                    "Test Filter Y Error"
+                    "Unfiltered",
+                    "Ideal (Carla)",
+                    "Current",
+                    "Test Filter",
+                    "Unfiltered Error",
+                    "Current Error",
+                    "Test Filter Error"
                 ])
             writer.writerow([
                 rospy.get_time(),
@@ -328,13 +335,22 @@ class position_heading_filter_debug_node(CompatibleNode):
                 self.carla_car = actor
                 break
         if self.carla_car is None:
-            self.logwarn("Carla Hero car still none!")
+            # self.logwarn("Carla Hero car still none!")
             return
         else:
-            self.carla_current_pos = self.carla_car.get_location()
-            self.carla_current_heading = (
-                                        self.carla_car.get_transform()
-                                        .rotation.yaw
+            # save carla Position
+            # for some reason the carla y is flipped
+            carla_pos = self.carla_car.get_location()
+            carla_pos.y = -carla_pos.y
+            self.carla_current_pos = carla_pos
+
+            # save carla Heading
+            # for some reason the carla yaw is in flipped degrees
+            # -> convert to radians
+            # -> also flip the sign to minus
+            self.carla_current_heading = -math.radians(
+                                         self.carla_car.get_transform()
+                                         .rotation.yaw
                                         )
 
     def position_debug(self):
@@ -383,13 +399,13 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         if self.carla_car is None:
-            self.logwarn("""Carla Hero car still none!
-                         Can not record data for position_debug yet.""")
+            # self.logwarn("""Carla Hero car still none!
+            #              Can not record data for position_debug yet.""")
             return
 
         debug = Float32MultiArray()
 
-        debug.data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        debug.data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         # all x and y coordinates
         debug.data[0] = self.unfiltered_pos.pose.position.x
@@ -433,8 +449,11 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         self.position_debug_data = debug
         self.position_debug_publisher.publish(debug)
+
         # for easier debugging with rqt_plot
-        self.carla_pos_publisher.publish(self.carla_current_pos)
+        # Publish carla Location as PoseStamped:
+        self.carla_pos_publisher.publish(carla_location_to_pose_stamped(
+                                         self.carla_current_pos))
 
     def heading_debug(self):
         """
@@ -461,13 +480,13 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         if self.carla_car is None:
-            self.logwarn("""Carla Hero car still none!
-                         Can not record data for heading_debug yet.""")
+            # self.logwarn("""Carla Hero car still none!
+            #              Can not record data for heading_debug yet.""")
             return
 
         debug = Float32MultiArray()
 
-        debug.data = [0, 0, 0, 0, 0, 0, 0, 0]
+        debug.data = [0, 0, 0, 0, 0, 0, 0]
 
         # all heading values
         debug.data[0] = self.unfiltered_heading.data
@@ -502,6 +521,21 @@ class position_heading_filter_debug_node(CompatibleNode):
         - saves position and heading errors in csv files (if uncommented)
         :return:
         """
+        # Retry connecting to the CARLA simulator up to 5 times
+        for _ in range(5):
+            try:
+                self.world = self.client.get_world()
+                break
+            except RuntimeError:
+                print("Failed to connect to the CARLA simulator, retrying...")
+                rospy.sleep(1)  # Wait for 1 second before retrying
+        self.world.wait_for_tick()
+
+        # Wait for the car to be spawned
+        # Otherwise we save invalid data (before car teleports
+        # to start position)
+        rospy.sleep(5)
+
         def loop():
             """
             Loop for the data gathering
@@ -512,8 +546,8 @@ class position_heading_filter_debug_node(CompatibleNode):
 
                 # if carla_car still not found -> skip
                 if self.carla_car is None:
-                    self.logwarn("""Carla Hero car still none!
-                                 Can not record data for debug yet.""")
+                    # self.logwarn("""Carla Hero car still none!
+                    #              Can not record data for debug yet.""")
                     continue
 
                 # update & publish pos debug and heading debug
@@ -545,6 +579,29 @@ def create_file(folder_path):
                 pass
             return file_path
         i += 1
+
+
+def carla_location_to_pose_stamped(location: carla.Location) -> PoseStamped:
+    """
+    Convert a carla.Location to a geometry_msgs/PoseStamped message.
+    """
+    pose_stamped = PoseStamped()
+    # Fill in the header
+    pose_stamped.header = Header()
+    pose_stamped.header.stamp = rospy.Time.now()
+
+    # Fill in the pose
+    pose_stamped.pose.position.x = location.x
+    pose_stamped.pose.position.y = location.y
+    pose_stamped.pose.position.z = location.z
+
+    # Assuming you have no orientation information
+    pose_stamped.pose.orientation.x = 0
+    pose_stamped.pose.orientation.y = 0
+    pose_stamped.pose.orientation.z = 0
+    pose_stamped.pose.orientation.w = 1
+
+    return pose_stamped
 
 
 def main(args=None):
