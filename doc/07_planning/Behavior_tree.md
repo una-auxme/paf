@@ -48,7 +48,7 @@ Julius Miller
 
 ## About
 
-This Package implements a behaviour agent for our autonomous car using **Behaviour Trees**. It uses the `py_trees` Framework, that works well with ROS.
+This Package implements a behaviour agent for our autonomous car using **Behaviour Trees**. It uses the [py_trees](./01_py_trees.md) Framework, that works well with ROS.
 For visualization at runtime you might want to also install this [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
 ## Our behaviour tree
@@ -62,9 +62,9 @@ The following tree is a simplification.
 
 Represent an action the decision tree should execute. It has three return values representing the state of the behavior:
 
-* `SUCCESS`: The action has been performed successfully.
-* `RUNNING`: The action is still being executed.
-* `Failure`: The action couldn't be executed.
+- `SUCCESS`: The action has been performed successfully.
+- `RUNNING`: The action is still being executed.
+- `Failure`: The action couldn't be executed.
 
 #### Selector
 
@@ -92,19 +92,19 @@ Represents a specific task/scenario which is handled by the decision tree.
 
 If there is an intersection coming up, the agent executes the following sequence of behaviours:
 
-* Approach Intersection
+- Approach Intersection
 
     Slows down and stops at line if a yellow or red traffic light is detected
 
-* Wait at Intersection
+- Wait at Intersection
 
     Waits for traffic lights or higher priority traffic
 
-* Enter Intersection
+- Enter Intersection
 
     Enters the intersection and follows it predetermined path through the intersection
 
-* Leave Intersection
+- Leave Intersection
 
     Leaves the intersection in the right direction
 

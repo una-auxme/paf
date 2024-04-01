@@ -80,4 +80,4 @@ Complete list of parameters:
 
 ## Decision
 
-We decided not to use the FOT-Planner, as we got to many instable results and decided to implement a simpler version.
+We decided not to use the FOT-Planner, as we got too many instable results and decided to implement a simpler version.
