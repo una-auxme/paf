@@ -19,7 +19,7 @@ and [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support,
 
 Afterwards, you can set up and execute the project with the following two commands:
 
-```shell
+```bash
 # Setup project
 b5 install
 
@@ -37,4 +37,4 @@ If you contribute to this project please read the guidelines first. They can be 
 
 ## Research
 
-The research of existing projects we did can be found [here](./doc/03_research/Readme.md).
+The research on existing projects we did can be found [here](./doc/03_research/Readme.md).
