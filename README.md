@@ -4,7 +4,7 @@
 
 To be able to execute and develop the project, you need a Linux system equipped with:
 
-- NVIDIA GPU (everything >= RTX 2060 should be fine)
+- NVIDIA GPU (everything >= RTX 3070 should be fine)
 - A minimum of 16G of RAM - A minimum of 100G of free disk space
 
 As the project is still in early development, these requirements are subject to change.
