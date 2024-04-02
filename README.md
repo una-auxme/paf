@@ -12,7 +12,6 @@ The current state as of 2024-03-25 of the project can be seen in the following v
 
 [![Video of the latest agent](https://img.youtube.com/vi/2sR87lO9-Aw/0.jpg)](https://www.youtube.com/watch?v=2sR87lO9-Aw)
 
-
 ## Prerequisites
 
 To be able to execute and develop the project, you need a Linux system equipped with:
