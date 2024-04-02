@@ -2,14 +2,17 @@
 
 If you contribute to this project please read the following guidelines first:
 
-1. [Linting](./02_linting.md)
+1. [Documentation Requirements](./13_documentation_requirements.md)
 2. [Commit](./03_commit.md)
-3. [Coding style](./04_coding_style.md)
-4. [Git Style](./05_git_workflow.md)
-5. [Reviewing](./07_review_guideline.md)
-6. [Project management](./08_project_management.md)
-7. [GitHub actions](./09_actions.md)
-8. [Install python packages](./10_installing_python_packages.md)
+3. [Linting](./02_linting.md)
+4. [Coding style](./04_coding_style.md)
+5. [Git Style](./05_git_workflow.md)
+6. [Reviewing](./07_review_guideline.md)
+7. [Project management](./08_project_management.md)
+8. Github actions
+   1. [linting action](./09_linter_action.md)
+   2. [build action](./10_build_action.md)
+9. [Install python packages](./10_installing_python_packages.md)
 
 ## Templates
 
