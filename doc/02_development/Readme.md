@@ -13,6 +13,7 @@ If you contribute to this project please read the following guidelines first:
    1. [linting action](./09_linter_action.md)
    2. [build action](./10_build_action.md)
 9. [Install python packages](./10_installing_python_packages.md)
+10. [Discord Webhook Documentation](./12_discord_webhook.md)
 
 ## Templates
 
