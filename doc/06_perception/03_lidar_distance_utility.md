@@ -1,5 +1,7 @@
 # Lidar Distance Utility
 
+!!! No longer used after **paf22** !!!
+
 **Summary:**
 
 This node can filter points from a [PoinCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html)
