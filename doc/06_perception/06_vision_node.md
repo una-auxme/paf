@@ -1,10 +1,11 @@
 # Vision Node
 
-The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation on multiple cameras at the same time. It can also subsripe to the lisdar_distance publisher and calculate distances of objects inside the detected bounding boxes.
+The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation on multiple cameras at the same time.
+It can also subscribe to the lidar_distance publisher and calculate distances of objects inside the detected bounding boxes.
 
 ## Model overview
 
-The Vision-Node implements a lot of different models which can be specified in the perception launch file.
+The Vision-Node implements an interface for a lot of different models which can be specified in the perception launch file.
 
 | Model                                 | Type         | Distance Calculation |
 |---------------------------------------|--------------|--------|
