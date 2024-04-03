@@ -16,3 +16,7 @@ This folder contains further documentation of the perception components.
     1. not used since paf22
 11. [Efficient PS](./04_efficientps.md)
     1. not used scince paf22 and never successfully tested
+
+## Experiments
+
+- The overview of performance evaluations is located in the [experiments](./experiments/README.md) folder.
