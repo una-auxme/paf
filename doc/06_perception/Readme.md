@@ -16,5 +16,3 @@ This folder contains further documentation of the perception components.
     1. not used since paf22
 11. [Efficient PS](./04_efficientps.md)
     1. not used scince paf22 and never successfully tested
-12. [Autoware Perception](../03_research/02_perception/05-autoware-perception.md)
-    1. this is research
