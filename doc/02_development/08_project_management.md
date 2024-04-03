@@ -9,8 +9,8 @@ Any bugs or features requests are managed in Github.
 
 ## Author
 
-Tim Dreier
-Josef Kircher
+- Tim Dreier
+- Josef Kircher
 
 ## Date
 
