@@ -71,6 +71,7 @@ In the next step we want to get the distance for every bounding box the object-d
 
 We want to return a list of tuple containing a class_index, min x, and min abs y of the objcet, like this:
 
+```txt
 [
     [class_id, min x, min abs y],
     [12.0, 5.6549606, -5.5982423],
@@ -78,6 +79,7 @@ We want to return a list of tuple containing a class_index, min x, and min abs y
     ...,
     [2.0, 1.065586, -0.60292965]
 ]
+```
 
 Since we cant be certain we will find a Lidar-Point in the depth image for every Pixel in the bounding box of the original image,
 we will check for the minimum value within the bounding box in the depth image.
