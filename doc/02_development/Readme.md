@@ -41,4 +41,4 @@ This template functions a template for who to build knowledge articles for every
 
 ## Discord Webhook
 
-[Discord Webhook Documentation](./11_discord_webhook.md)
+[Discord Webhook Documentation](./12_discord_webhook.md)
