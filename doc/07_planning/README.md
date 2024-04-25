@@ -42,7 +42,7 @@ The decision making collects most of the available information of the other comp
 the information. All possible traffic scenarios are covered in this component. The decision making uses a so called
 decision tree, which is easy to adapt and to expand.
 
-![img.png](../00_assets/decision_tree_example.png)
+![Simple Tree](../00_assets/planning/simple_final_tree.png)
 
 ### [Local Planning](./Local_Planning.md)
 

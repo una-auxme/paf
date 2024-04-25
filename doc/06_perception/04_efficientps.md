@@ -1,5 +1,7 @@
 # EfficientPS
 
+!!! EfficientPS is no longer used after **paf22**!!!
+
 **Summary:** This document gives a short overview about EfficientPS and its training process.
 
 ---

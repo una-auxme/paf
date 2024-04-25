@@ -1,10 +1,11 @@
 # Vision Node
 
-The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation on multiple cameras at the same time. It can also subsripe to the lisdar_distance publisher and calculate distances of objects inside the detected bounding boxes.
+The Visison Node provides an adaptive interface that is able to perform object-detection and/or image-segmentation on multiple cameras at the same time.
+It can also subscribe to the lidar_distance publisher and calculate distances of objects inside the detected bounding boxes.
 
 ## Model overview
 
-The Vision-Node implements a lot of different models which can be specified in the perception launch file.
+The Vision-Node implements an interface for a lot of different models which can be specified in the perception launch file.
 
 | Model                                 | Type         | Distance Calculation |
 |---------------------------------------|--------------|--------|
@@ -93,13 +94,13 @@ Please refer to the [model evaluation](../06_perception/experiments/object-detec
 
 ## 2. Distance-Calculation
 
-The Vision-Node reveives depth-images from the [lidar distance node](12_distance_to_objects.md) for the specified camera angle. It can than find the min x and min abs y distance within each bounding box that has been predicted by a model. This feature is implemented only for utralytics models.
+The Vision-Node reveives depth-images from the [lidar distance node](10_distance_to_objects.md) for the specified camera angle. It can than find the min x and min abs y distance within each bounding box that has been predicted by a model. This feature is implemented only for utralytics models.
 
 The depth images have the same dimension as the camera image and contain x, y and z coordinates of the lidar coordinates system in the three RGB-Channels.
 
 ![Depth Image](../00_assets/2_15_layover.png)
 
-Read more about the calculation of Depth Image [here](12_distance-to_objects.md)
+Read more about the calculation of Depth Image [here](10_distance_to_objects.md)
 
 ## 3. Publishing of Outputs
 
@@ -110,7 +111,7 @@ In order to provide valuble information for the [planning](../07_planning/README
 - Min_Abs_Y
 
 When no Lidar-Points are found inside a bounding box, the distances will both be set to np.inf.
-Check also [here](12_distance-to_objects.md) to learn more about this list.
+Check also [here](10_distance_to_objects.md) to learn more about this list.
 
 In order to provide good visual feedback of what is calculated in the Vision-Node, each camera angle publishes images with bounding boxes and the corresponding distance values found for the object.
 

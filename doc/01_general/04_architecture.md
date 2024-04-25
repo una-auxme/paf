@@ -55,7 +55,8 @@ The miro-board can be found [here](https://miro.com/welcomeonboard/a1F0d1dya2Fne
 The perception is responsible for the efficient conversion of raw sensor and map data into a useful
 environment representation that can be used by the [Planning](#Planning) for further processing.
 
-Further information regarding the perception can be found [here](../03_research/02_perception/Readme.md).
+Further information regarding the perception can be found [here](../06_perception/Readme.md).
+Research for the perception can be found [here](../03_research/02_perception/Readme.md).
 
 ### Obstacle Detection and Classification
 
@@ -119,7 +120,8 @@ The planning uses the data from the [Perception](#Perception) to find a path on 
 its destination. It also detects situations and reacts accordingly in traffic. It publishes signals such as a trajecotry or a target
 speed to acting.
 
-Further information regarding the planning can be found [here](../03_research/03_planning/Readme.md).
+Further information regarding the planning can be found [here](../07_planning/README.md).
+Research for the planning can be found [here](../03_research/03_planning/Readme.md).
 
 ### [Global Planning](../07_planning/Global_Planner.md)
 
