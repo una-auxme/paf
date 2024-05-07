@@ -9,6 +9,7 @@ project(agent)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED)
 
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 

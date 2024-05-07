@@ -8,7 +8,8 @@
 # FROM carlasim/carla:0.9.14 as carla
 
 # supply the base image with an environment supporting ROS UI via x11
-FROM osrf/ros:noetic-desktop-full-focal
+FROM osrf/ros:humble-desktop-full
+
 
 # COPY --from=carla /home/carla/PythonAPI /opt/carla/PythonAPI
 
@@ -66,20 +67,24 @@ ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-li
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
         mlocate python3-pip wget git python-is-python3 \
-        ros-noetic-ackermann-msgs \
-        ros-noetic-derived-object-msgs \
-        ros-noetic-carla-msgs \
-        ros-noetic-pcl-conversions \
-        ros-noetic-rviz \
-        ros-noetic-rqt \
-        ros-noetic-pcl-ros \
-        ros-noetic-rosbridge-suite \
-        ros-noetic-rosbridge-server \
-        ros-noetic-robot-pose-ekf \
-        ros-noetic-ros-numpy \
-        ros-noetic-py-trees-ros \
-        ros-noetic-rqt-py-trees \
-        ros-noetic-rqt-reconfigure
+        ros-humble-ackermann-msgs \
+        ros-humble-derived-object-msgs \
+        # ros-noetic-carla-msgs \
+        ros-humble-pcl-conversions \
+        ros-humble-rviz2 \
+        ros-humble-rqt \
+        ros-humble-geometry2 \
+        ros-humble-pcl-ros \
+        ros-humble-rosbridge-suite \
+        ros-humble-rosbridge-server \
+        # ros-humble-robot-pose-ekf \ # TODO
+        # ros-humble-ros-numpy \ # TODO
+        # ros-humble-py-trees-ros \ # TODO
+        # ros-humble-rqt-py-trees \
+        ros-humble-py-trees \
+        ros-humble-py-trees-ros-interfaces \
+        ros-humble-py-trees-ros \
+        ros-humble-rqt-reconfigure
 
 SHELL ["/bin/bash", "-c"]
 
@@ -99,14 +104,15 @@ WORKDIR /catkin_ws
 RUN sudo chown $USERNAME:$USERNAME /catkin_ws && mkdir src
 
 # install the CARLA ROS bridge
-ARG ROS_BRIDGE_GITHUB_URL=https://github.com/carla-simulator/ros-bridge
-RUN git clone -b leaderboard-2.0 --recurse-submodules --single-branch $ROS_BRIDGE_GITHUB_URL src/ros-bridge
+# TODO go back to official repo and use ament_package_dependencie to use tf2_eigen
+ARG ROS_BRIDGE_GITHUB_URL=https://github.com/LeonStrecker/ros-bridge.git
+RUN git clone -b leonstrecker --recurse-submodules --single-branch $ROS_BRIDGE_GITHUB_URL src/ros-bridge
 # apply patch to fix the build of carla_ros_bridge
 RUN cd src/ros-bridge/carla_ackermann_control && \
     sed -i '24 i \  <build_depend condition="$ROS_VERSION == 1">carla_msgs</build_depend>' package.xml
-RUN source /opt/ros/noetic/setup.bash && \
+RUN source /opt/ros/humble/setup.bash && \
     rosdep update && rosdep install --from-paths src --ignore-src -r && \
-    catkin_make install
+    colcon build
 
 ENV CARLA_ROS_BRIDGE_ROOT=/catkin_ws/src/ros-bridge
 
