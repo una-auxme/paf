@@ -66,11 +66,20 @@ ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-li
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
         mlocate python3-pip wget git python-is-python3 \
-        ros-noetic-ackermann-msgs ros-noetic-derived-object-msgs \
-        ros-noetic-carla-msgs ros-noetic-pcl-conversions \
-        ros-noetic-rviz ros-noetic-rqt ros-noetic-pcl-ros ros-noetic-rosbridge-suite ros-noetic-rosbridge-server \
-        ros-noetic-robot-pose-ekf ros-noetic-ros-numpy \
-        ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure
+        ros-noetic-ackermann-msgs \
+        ros-noetic-derived-object-msgs \
+        ros-noetic-carla-msgs \
+        ros-noetic-pcl-conversions \
+        ros-noetic-rviz \
+        ros-noetic-rqt \
+        ros-noetic-pcl-ros \
+        ros-noetic-rosbridge-suite \
+        ros-noetic-rosbridge-server \
+        ros-noetic-robot-pose-ekf \
+        ros-noetic-ros-numpy \
+        ros-noetic-py-trees-ros \
+        ros-noetic-rqt-py-trees \
+        ros-noetic-rqt-reconfigure
 
 SHELL ["/bin/bash", "-c"]
 
