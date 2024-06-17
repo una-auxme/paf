@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  carla-simulator:
+    image: carlasim/carla:latest
+    command: /bin/bash ./CarlaUE4.sh
+    environment:
+      - DISPLAY=${DISPLAY}
+    privileged: true
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities: ["gpu"]
