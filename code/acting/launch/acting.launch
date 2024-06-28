@@ -1,7 +1,7 @@
 <!---->
 <launch>
     <arg name="role_name" default="hero" />
-    <arg name="control_loop_rate" default="0.1" />
+    <arg name="control_loop_rate" default="0.05" /> 
 
     <node pkg="acting" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
@@ -19,18 +19,18 @@
     </node>
 
      <node pkg="acting" type="vehicle_controller.py" name="vehicle_controller" output="screen">
-        <param name="control_loop_rate" value="0.1" /> <!-- leaderboard expects commands every 0.05 seconds OTHERWISE IT LAGS REALLY BADLY-->
+        <param name="control_loop_rate" value="$(arg control_loop_rate)"  /> <!-- leaderboard expects commands every 0.05 seconds OTHERWISE IT LAGS REALLY BADLY-->
         <param name="role_name" value="$(arg role_name)" />
     </node>
 
     <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
-        <param name="control_loop_rate" value="0.1" />
+        <param name="control_loop_rate" value="$(arg control_loop_rate)"  />
         <param name="role_name" value="$(arg role_name)" />
     </node>
     
     <!-- UNCOMMENT THIS TO USE THE DEBUG_NODE FOR ACTING-TESTING -->
     <!-- <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
-        <param name="control_loop_rate" value="0.05" />
+        <param name="control_loop_rate" value="$(arg control_loop_rate)"  />
         <param name="role_name" value="$(arg role_name)" />
     </node>
      -->
