@@ -24,4 +24,9 @@ Julian Trommer and Lennart Luttkus
   - Start the server as described above
 - set the host ip address from the remote machine as the new carla-ip address
 - start the agent on your local machine
-  
+
+## How do you know that you do not have enough compute resources?
+
+```bash
+watch -n 1 nvidia-smi
+```
