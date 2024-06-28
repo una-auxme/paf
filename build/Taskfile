@@ -16,6 +16,16 @@ task:run_dev() {
   docker:compose -f docker-compose.dev.yaml up
 }
 
+task:run_distributed() {
+  xhost +local:docker
+  docker:compose -f docker-compose.distributed.yaml up
+}
+
+task:run_dev_distributed() {
+  xhost +local:docker
+  docker:compose -f docker-compose.dev.distributed.yaml up
+}
+
 task:restart() {
     container="$1"
     docker:compose restart "${container:-agent}"
