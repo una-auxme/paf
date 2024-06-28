@@ -1,6 +1,7 @@
 # Distributed Simulation
 
-If you have not enough compute resources, start the `carla-simulator-server' on a remote machine and execute the agent on your local machine.
+If you have not enough compute resources, start the `carla-simulator-server` on a remote machine and execute the agent on your local machine.
+As far as we know, you need more than **10 GB of VRAM** to run the server and the agent on the same machine.
 
 ## Author
 
@@ -24,6 +25,35 @@ Julian Trommer and Lennart Luttkus
   - Start the server as described above
 - set the host ip address from the remote machine as the new carla-ip address
 - start the agent on your local machine
+
+### Ensure similarity between normal docker-compose and distributed docker-compose files
+
+Carefully compare that their are no major differences between the `docker-compose.yml` and `docker-compose.distributed.yml` files.
+Mainly, the `carla-simulator` service will not be executed in the non-distributed version.
+
+### Set the `<ip-address>` of the carla simulator in docker-compose distributed files
+
+Replace the argument `<carla-server-ip-address>` with the ip address of the remote machine.
+You can find the ip address of the remote machine by executing the following command on the remote machine:
+
+```bash
+hostname -I
+```
+
+Typically, the ip address is the first one in the list.
+`172.xxx.xxx.xxx` is the localhost address and not the relevant address.
+
+Replace the ip-address in the following files:
+
+- `docker-compose.distributed.yml`
+- `docker-compose.dev.distributed.yml`
+
+### Start the agent on your local machine
+
+```bash
+b5 run_distributed
+b5 run_dev_distributed
+```
 
 ## How do you know that you do not have enough compute resources?
 
