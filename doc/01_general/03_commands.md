@@ -1,5 +1,7 @@
 # ⌨️ Available commands
 
+A specific `b5` workflow for gpu installation in this project is specified in an issue comment: <https://github.com/una-auxme/paf23/issues/260#issuecomment-2196852330>
+
 ## General commands
 
 ### `b5 run`
