@@ -1,35 +1,4 @@
-version: "3"
-
 services:
-  flake8:
-    image: alpine/flake8
-    command: .
-    volumes:
-      - ../:/apps
-
-  comlipy:
-    build: docker/comlipy
-    command: .
-    volumes:
-      - ../:/apps
-
-  mdlint:
-    image: peterdavehello/markdownlint:0.32.2
-    command: markdownlint .
-    volumes:
-      - ../:/md
-
-  roscore:
-    image: ros:noetic
-    command: roscore
-    environment:
-      - ROS_MASTER_URI=http://roscore:11311
-      - ROS_HOSTNAME=roscore
-    expose:
-      - 11311
-    networks:
-      - ros
-
   agent:
     build:
       dockerfile: build/docker/agent/Dockerfile
@@ -46,9 +15,11 @@ services:
           devices:
             - driver: nvidia
               capabilities: [ gpu ]
+    # Starts the npc agent of the leaderboard
     #command: bash -c "sleep 10 && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/opt/leaderboard/leaderboard/autoagents/npc_agent.py --host=carla-simulator --track=SENSORS"
-    command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"
-    # command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=/opt/leaderboard/data/routes_devtest.xml --agent=/workspace/code/agent/src/agent/agent.py --host=paf23-carla-simulator-1 --track=MAP"
+    
+    # Starts the paf agent
+    command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"
 
     logging:
       driver: "local"
@@ -57,9 +28,12 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
       - ROS_MASTER_URI=http://roscore:11311
-      - CARLA_SIM_HOST=<carla-server-ip-address>
+      - CARLA_SIM_HOST=carla-simulator
       - ROS_HOSTNAME=agent
       - XDG_RUNTIME_DIR=/tmp/runtime-carla
+      # - ROUTE=/opt/leaderboard/data/routes_devtest.xml
+      # Simple route without special scenarios
+      - ROUTE=/workspace/code/routes/routes_simple.xml
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # if you change the volume here also change the copy command

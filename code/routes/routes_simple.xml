@@ -1,3 +1,4 @@
+<!-- Devtest route without special scenarios -->
 <routes>
    <route id="0" town="Town12">
       <weathers>

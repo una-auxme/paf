@@ -1,0 +1,15 @@
+include:
+  - linter_services.yaml
+  - roscore_service.yaml
+
+services:
+  agent:
+    extends:
+      file: agent_service.yaml
+      service: agent
+    command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"
+    environment:
+      - CARLA_SIM_HOST=137.250.121.39
+
+networks:
+  carla:

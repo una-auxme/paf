@@ -1,0 +1,31 @@
+services:
+  # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
+  carla-simulator:
+    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini"
+    image: ghcr.io/una-auxme/paf23:leaderboard-2.0
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+    expose:
+      - 2000
+      - 2001
+      - 2002
+    environment:
+      - DISPLAY
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - XDG_RUNTIME_DIR=/tmp/runtime-carla
+    networks:
+      - carla
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./CustomCarlaSettings.ini:/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini
+
+networks:
+  carla:

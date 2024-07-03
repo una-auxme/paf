@@ -5,36 +5,6 @@
 # General commands
 ##########################################
 
-task:run() {
-    # assure that docker can connect to the local X11-server
-    xhost +local:docker
-    docker:compose up "$@"
-}
-
-task:run_dev() {
-  xhost +local:docker
-  docker:compose -f docker-compose.dev.yaml up
-}
-
-task:run_distributed() {
-  xhost +local:docker
-  docker:compose -f docker-compose.distributed.yaml up
-}
-
-task:run_dev_distributed() {
-  xhost +local:docker
-  docker:compose -f docker-compose.dev.distributed.yaml up
-}
-
-task:restart() {
-    container="$1"
-    docker:compose restart "${container:-agent}"
-}
-
-task:halt() {
-    docker:compose down "$@"
-}
-
 task:shell() {
     container="$1"
     command="$2"
@@ -58,7 +28,7 @@ install:gpu-support() {
 
     if [ -z "$(command -v docker-nvidia)" ]
     then
-      task:nvidia:enable
+      echo -e "Juhu! Alles ist richtig installiert für NVIDIA-Support! Hier ein Keks für dich :D"
     else
       RED='\033[0;31m'
       NC='\033[0m'
@@ -66,16 +36,6 @@ install:gpu-support() {
       echo -e "${RED}WARNING: NVIDIA Container Toolkit not installed. The project won't run as expected!${NC}"
       echo -e "${RED}#####################################################################################${NC}"
     fi
-}
-
-task:update() {
-    docker:update
-}
-
-task:nvidia:enable() {
-    # Writes the content of templates/config.nvidia.yml.jinja2 to config.local.yml
-    # This file tells b5 to read docker-compose.nvidia.yml in addition to docker-compose.yml
-    template:render --overwrite ask-if-older templates/config.nvidia.yml.jinja2 config.local.yml
 }
 
 ##########################################
