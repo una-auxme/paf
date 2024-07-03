@@ -60,19 +60,19 @@ class PAF22Agent(ROS1Agent):
             {
                 'type': 'sensor.other.radar',
                 'id': 'RADAR',
-                'x': 0.7, 'y': -0.4, 'z': 1.60,
-                'roll': 0.0, 'pitch': 0.0, 'yaw': -45.0,
+                'x': 2.0, 'y': 0.0, 'z': 0.7,
+                'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
                 'horizontal_fov': 30, 'vertical_fov': 30
                 },
             {
                 'type': 'sensor.other.gnss',
                 'id': 'GPS',
-                'x': 0.7, 'y': -0.4, 'z': 1.60
+                'x': 0.0, 'y': 0.0, 'z': 0.0
                 },
             {
                 'type': 'sensor.other.imu',
                 'id': 'IMU',
-                'x': 0.7, 'y': -0.4, 'z': 1.60,
+                'x': 0.0, 'y': 0.0, 'z': 0.0,
                 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0
                 },
             {
