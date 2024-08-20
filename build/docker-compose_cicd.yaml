@@ -1,0 +1,5 @@
+include:
+  # linter runs in a seperate workflow
+  - roscore_service.yaml
+  - carla-simulator_service.yaml
+  - agent_service.yaml
