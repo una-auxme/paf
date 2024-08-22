@@ -2,4 +2,11 @@ include:
   # linter runs in a seperate workflow
   - roscore_service.yaml
   - carla-simulator_service.yaml
-  - agent_service.yaml
+
+services:
+  agent:
+    extends:
+      file: agent_service.yaml
+      service: agent
+    environment:
+      - CHECKPOINT_ENDPOINT=/tmp/simulation_results.json

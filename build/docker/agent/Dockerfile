@@ -179,8 +179,6 @@ RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash", "-c", "sleep 10 && \
-sudo chown -R carla:carla ../code/ && \
-sudo chmod -R a+w ../code/ && \
 python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py \
 --debug=${DEBUG_CHALLENGE} \
 --repetitions=${REPETITIONS} \
