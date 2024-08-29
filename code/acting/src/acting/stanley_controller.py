@@ -80,7 +80,7 @@ class StanleyController(CompatibleNode):
             :return:
             """
             if self.__path is None:
-                self.logwarn("StanleyController hasn't received a path yet"
+                self.logwarn("StanleyController hasn't received a path yet "
                              "and can therefore not publish steering")
                 return
             if self.__position is None:
