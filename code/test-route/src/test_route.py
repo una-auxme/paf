@@ -115,23 +115,29 @@ class TestRoute(CompatibleNode):
                 self.hero = self.hero[0]
                 break
 
-    def set_spectator(self):
+    def set_spectator(self, set_rotation=False):
         transform = self.hero.get_transform()
-        location = carla.Location(x=transform.location.x,
-                                  y=transform.location.y,
-                                  z=transform.location.z + 2)
-        self.spectator.set_transform(
-            carla.Transform(
-                location, carla.Rotation(
-                    pitch=transform.rotation.pitch - 15,
-                    yaw=transform.rotation.yaw,
-                    roll=transform.rotation.roll
+        location = carla.Location(
+            x=transform.location.x,
+            y=transform.location.y,
+            z=transform.location.z + 2)
+
+        if set_rotation:
+            self.spectator.set_transform(
+                carla.Transform(
+                    location, carla.Rotation(
+                        pitch=transform.rotation.pitch - 15,
+                        yaw=transform.rotation.yaw,
+                        roll=transform.rotation.roll
+                    )
                 )
             )
-        )
+        else:
+            self.spectator.set_location(location)
 
     def run(self):
         self.loginfo('Test-Route node running')
+        self.set_spectator(set_rotation=True)
 
         def loop(timer_event=None):
             self.set_spectator()
