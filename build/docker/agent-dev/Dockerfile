@@ -20,9 +20,6 @@ RUN sudo apt-get update && sudo apt-get install -y \
 
 ADD ./build/docker/agent-dev/dev_entrypoint.sh /dev_entrypoint.sh
 
-RUN chmod +x /dev_entrypoint.sh
-
-
 # Set the development entry point
 ENTRYPOINT ["/dev_entrypoint.sh"]
 

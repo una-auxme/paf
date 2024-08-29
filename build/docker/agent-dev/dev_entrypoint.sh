@@ -11,11 +11,6 @@ export CARLA_ROOT=/opt/carla
 export SCENARIO_RUNNER_ROOT=/opt/scenario_runner
 export LEADERBOARD_ROOT=/opt/leaderboard
 
-# Print a welcome message
-echo "Welcome to the CARLA development environment!"
-echo "ROS Noetic and CARLA dependencies are set up."
-echo "Your workspace is at /workspace/code"
-
 # Execute the command passed to the script, or start a bash session if no command was given
 if [ $# -eq 0 ]; then
     exec bash

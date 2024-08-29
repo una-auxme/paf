@@ -16,7 +16,7 @@ services:
             - driver: nvidia
               capabilities: [ gpu ]
     volumes:
-      - ./code:/workspace/code
+      - ../:/workspace
     environment:
       - DISPLAY=${DISPLAY}
     network_mode: host
