@@ -1,0 +1,18 @@
+services:
+  flake8:
+    image: alpine/flake8
+    command: .
+    volumes:
+      - ../:/apps
+
+  comlipy:
+    build: docker/comlipy
+    command: .
+    volumes:
+      - ../:/apps
+
+  mdlint:
+    image: peterdavehello/markdownlint:0.32.2
+    command: markdownlint .
+    volumes:
+      - ../:/md

@@ -1,0 +1,14 @@
+services:
+  roscore:
+    image: ros:noetic
+    command: roscore
+    environment:
+      - ROS_MASTER_URI=http://roscore:11311
+      - ROS_HOSTNAME=roscore
+    expose:
+      - 11311
+    networks:
+      - ros
+
+networks:
+  ros:

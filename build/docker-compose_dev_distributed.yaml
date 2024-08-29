@@ -1,0 +1,15 @@
+include:
+  - linter_services.yaml
+  - roscore_service.yaml
+
+services:
+  agent:
+    extends:
+      file: agent_service.yaml
+      service: agent
+    command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"
+    environment:
+      - CARLA_SIM_HOST=<carla_server_ip_address>
+
+networks:
+  carla:

@@ -1,0 +1,11 @@
+include:
+  - linter_services.yaml
+  - roscore_service.yaml
+  - carla-simulator_service.yaml
+
+services:
+  agent:
+    extends:
+      file: agent_service.yaml
+      service: agent
+    command: bash -c "sleep 10 && roslaunch agent/launch/dev.launch"

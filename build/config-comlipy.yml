@@ -1,3 +1,4 @@
+# comlipy config file (commit naming)
 global:
   help: 'Help: https://github.com/ll7/paf22/blob/main/doc/developement/commit.md'
 

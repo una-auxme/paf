@@ -178,7 +178,9 @@ WORKDIR /workspace/code
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["bash", "-c", "sleep 10 && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=${DEBUG_CHALLENGE} \
+CMD ["bash", "-c", "sleep 10 && \
+python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py \
+--debug=${DEBUG_CHALLENGE} \
 --repetitions=${REPETITIONS} \
 --checkpoint=${CHECKPOINT_ENDPOINT} \
 --track=${CHALLENGE_TRACK} \
