@@ -15,7 +15,7 @@
 
   <!-- Synchronous mode-->
   <arg name='synchronous_mode_wait_for_vehicle_control_command' default='False'/>
-  <arg name='fixed_delta_seconds' default='0.1'/>
+  <arg name='fixed_delta_seconds' default='0.05'/>
 
 
   <include file="$(find carla_ros_bridge)/launch/carla_ros_bridge.launch">
