@@ -61,8 +61,30 @@ Issue #28 called "Setup dev environment"
 
 => `28-setup-dev-environment`
 
-**Note: You won't need to manually create these branch names in most cases -
-GitHub does it for you, when you create a new branch from the issue you are working on.**
+### Branch naming workflow
+
+The following two options are available for creating a new branch:
+
+1. **Web Interface**: You can create a new branch by clicking the "Create branch" button in the GitHub web interface.
+2. **VSCode Extension**: Alternatively, use the "GitHub.vscode-pull-request-github" extension in Visual Studio Code.
+
+#### Branch Creation Settings
+
+The `.vscode/settings.json` file in this repository contains settings that automatically name the branch based on the issue number and the title of the issue.
+
+#### Creating a Branch in the Web Interface
+
+To create a branch in the web interface, follow these steps:
+
+![Create Branch](../00_assets/github_create_a_branch.png)
+
+#### Creating a Branch in VSCode
+
+In Visual Studio Code, use the "GitHub.vscode-pull-request-github" extension.
+
+1. Navigate to the "Issues" tab, where you will find queries defined in the `.vscode/settings.json` file.
+2. These queries allow you to access different issues.
+3. Click the button "->" to create a new branch from the selected issue, check out the branch, and assign the issue to yourself.
 
 ### Commit messages
 
