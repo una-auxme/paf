@@ -80,7 +80,7 @@ To create a branch in the web interface, follow these steps:
 
 #### Creating a Branch in VSCode
 
-In Visual Studio Code, use the "GitHub.vscode-pull-request-github" extension. 
+In Visual Studio Code, use the "GitHub.vscode-pull-request-github" extension.
 
 1. Navigate to the "Issues" tab, where you will find queries defined in the `.vscode/settings.json` file.
 2. These queries allow you to access different issues.
