@@ -1,3 +1,4 @@
+# compose file for the CI/CD pipeline
 include:
   # linter runs in a seperate workflow
   - roscore_service.yaml

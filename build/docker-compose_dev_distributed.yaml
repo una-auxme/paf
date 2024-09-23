@@ -1,3 +1,4 @@
+# compose file for the development environment with distributed mode
 include:
   - linter_services.yaml
   - roscore_service.yaml

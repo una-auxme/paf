@@ -19,4 +19,5 @@
             "query": "state:open repo:${owner}/${repository} sort:created-desc"
         }
     ],
+    "ltex.language": "en-US"
 }
