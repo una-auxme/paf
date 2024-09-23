@@ -1,6 +1,9 @@
 # Build Directory Documentation
 
-This document provides an overview of the build structure of the project, detailing the purpose and usage of the various configuration files located in the `build` directory. The project utilizes Docker and Docker Compose to manage services and dependencies, facilitating both normal and distributed execution modes.
+This document provides an overview of the build structure of the project,
+detailing the purpose and usage of the various configuration files located in the `build` directory.
+The project utilizes Docker and Docker Compose to manage services and dependencies,
+facilitating both normal and distributed execution modes.
 
 ## Table of Contents
 
@@ -163,4 +166,7 @@ To run the project using the provided Docker Compose files:
 
 ## Conclusion
 
-This documentation should help you understand the build structure and how to work with the different Docker configurations provided in the project. Whether you are developing locally, running complex simulations, or integrating with CI/CD pipelines, these configurations are designed to facilitate a smooth workflow.
+This documentation should help you understand the build structure and how to
+work with the different Docker configurations provided in the project.
+Whether you are developing locally, running complex simulations,
+or integrating with CI/CD pipelines, these configurations are designed to facilitate a smooth workflow.
