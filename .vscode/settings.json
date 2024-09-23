@@ -1,0 +1,22 @@
+{
+    "githubIssues.issueBranchTitle": "${issueNumber}-${sanitizedIssueTitle}",
+    "githubIssues.queries": [
+    
+        {
+            "label": "My Issues",
+            "query": "default"
+        },
+        {
+            "label": "Created Issues",
+            "query": "author:${user} state:open repo:${owner}/${repository} sort:created-desc"
+        },
+        {
+            "label": "Assigned Issues",
+            "query": "assignee:${user} state:open repo:${owner}/${repository} sort:created-desc"
+        },
+        {
+            "label": "All Issues",
+            "query": "state:open repo:${owner}/${repository} sort:created-desc"
+        }
+    ],
+}
