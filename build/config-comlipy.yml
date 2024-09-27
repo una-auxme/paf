@@ -6,6 +6,7 @@ rules:
   scope-min-length:
     applicable: 'always'
     value: 2
+    level: 1
   type-enum:
     applicable: 'always'
     value:
@@ -13,10 +14,10 @@ rules:
       - 'feat'
       - 'fix'
       - 'other'
-    level: 2
+    level: 1
   subject-case:
     applicable: 'never'
     value:
       - 'upper-case'
-    level: 2
+    level: 1
 
