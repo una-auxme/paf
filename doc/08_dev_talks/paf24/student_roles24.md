@@ -1,3 +1,4 @@
+# Student Roles for Autonomous Vehicle Development Team
 
 ## Role overview
 
@@ -75,6 +76,8 @@
   - Ensure seamless integration between different tools (e.g., CARLA, ROS, Jenkins) and handle infrastructure troubleshooting.
   - Develop and manage version control strategies, ensuring smooth collaboration across teams and maintaining code integrity.
 
+## Autonomous Vehicle Development Team
+
 ```mermaid
 graph TD
     SE[Systems Engineer] --> DME[Decision-Making Engineer]
@@ -91,7 +94,7 @@ graph TD
     DME --> CSE
     DME --> MLE
     
-    PE --> MLE
+    PE <--> MLE
     PE --> LME
     PE --> PPE
     
@@ -106,6 +109,8 @@ graph TD
     IE --> SE
     IE --> TVE
     IE --> MLE
+
+    LME --> DME
     
     subgraph Module Teams
         DME
