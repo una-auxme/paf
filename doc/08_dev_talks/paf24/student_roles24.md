@@ -9,7 +9,8 @@
   - Define system-level architecture, ensuring each module (e.g., sensors, planning, control) interacts through well-defined interfaces.
   - Manage requirements (e.g. in issues) and ensure each team's outputs align with the overall system goals, including performance, reliability, and safety standards.
   - Serve as the point of contact for inter-team communication, ensuring alignment between roles such as Perception Engineers, Control Engineers, and Decision-Making Engineers.
-  - Take responsibility for identifying and managing dependencies between subsystems and methods, especially in relation to the timeline. Ensure that the sequence of development is logical and efficient, avoiding resource investment in features that rely on unfinished or unavailable modules. For example, avoid focusing efforts on decision-making algorithms that depend on perception data (e.g., stop lines) if it’s clear that the sensors or detection mechanisms won't be ready until later stages of the project.
+  - Take responsibility for identifying and managing dependencies between subsystems and methods, especially in relation to the timeline. Ensure that the sequence of development is logical and efficient, avoiding resource investment in features that rely on unfinished or unavailable modules. 
+    - For example, avoid focusing efforts on decision-making algorithms that depend on perception data (e.g., stop lines) if it’s clear that the sensors or detection mechanisms won't be ready until later stages of the project.
   - Develop and enforce a systems integration strategy that covers continuous testing, validation, and verification of the autonomous driving stack.
   - Ensure proper data flow between modules using middleware (e.g., ROS).
   - Define and monitor key performance indicators (KPIs) for each subsystem, ensuring they collectively meet reliability, stability, and safety goals.
