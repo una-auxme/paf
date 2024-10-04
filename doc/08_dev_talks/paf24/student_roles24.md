@@ -78,7 +78,7 @@ graph TD
     SE --> LME[Localization and Mapping Engineer]
     SE --> PPE[Path Planning Engineer]
     SE --> CSE[Control Systems Engineer]
-    SE --> TVE[Testing and Validation Engineer]
+    SE --> TVE[Testing and Validation Eng.]
     SE --> IE[Infrastructure Engineer]
     
     DME --> PE
