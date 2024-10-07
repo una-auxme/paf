@@ -118,7 +118,7 @@ $ docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 Failed to initialize NVML: Unknown Error
 ```
 
-> [!TIP] Solution found in https://stackoverflow.com/a/78137688
+> [!TIP] Solution found in <https://stackoverflow.com/a/78137688>
 
 ```shell
 sudo vim /etc/nvidia-container-runtime/config.toml
@@ -140,5 +140,5 @@ docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 
 Based on:
 
-1. https://bobcares.com/blog/docker-failed-to-initialize-nvml-unknown-error/ 
-2. https://bbs.archlinux.org/viewtopic.php?id=266915
+1. <https://bobcares.com/blog/docker-failed-to-initialize-nvml-unknown-error/>
+2. <https://bbs.archlinux.org/viewtopic.php?id=266915>
