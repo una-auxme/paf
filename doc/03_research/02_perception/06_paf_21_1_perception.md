@@ -2,7 +2,7 @@
 
 ## 1. Architecture
 
-![image](https://github.com/una-auxme/paf23/assets/102369315/07328c78-83d7-425c-802e-8cc49430e6c1)
+![image](https://github.com/una-auxme/paf/assets/102369315/07328c78-83d7-425c-802e-8cc49430e6c1)
 
 ### **Key Features**
 

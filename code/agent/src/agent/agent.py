@@ -4,10 +4,10 @@ import math
 
 
 def get_entry_point():
-    return 'PAF22Agent'
+    return 'PAFAgent'
 
 
-class PAF22Agent(ROS1Agent):
+class PAFAgent(ROS1Agent):
 
     def setup(self, path_to_conf_file):
         self.track = Track.MAP
@@ -88,4 +88,4 @@ class PAF22Agent(ROS1Agent):
         return sensors
 
     def destroy(self):
-        super(PAF22Agent, self).destroy()
+        super(PAFAgent, self).destroy()

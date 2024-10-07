@@ -1,4 +1,4 @@
-IMAGE_BASE_FOLDER = '/home/maxi/paf23/code/output/12-dev/rgb/center'
+IMAGE_BASE_FOLDER = '/home/maxi/paf/code/output/12-dev/rgb/center'
 
 IMAGES_FOR_TEST = {
     'start': '1600.png',

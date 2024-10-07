@@ -9,22 +9,22 @@ LIDAR-Data comes in Pointclouds from a specific LIDAR-Topic.
 `rospy.Subscriber(rospy.get_param('~source_topic', "/carla/hero/LIDAR"),
                          PointCloud2, self.callback)`
 
-Read more about the LIDAR-Sensor [here](https://github.com/una-auxme/paf23/blob/main/doc/06_perception/03_lidar_distance_utility.md)
+Read more about the LIDAR-Sensor [here](https://github.com/una-auxme/paf/blob/main/doc/06_perception/03_lidar_distance_utility.md)
 
 ## Processing
 
 The goal is to identify Objects and their distance. Therefor we need to calculate distances from the pointcloud data.
 To do this the lidar-distance node first converts pointcloud data to an array, which contains cartesian coordinates.
 
-`paf23-agent-1            |  (76.12445   , -1.6572031e+01, 13.737187  , 0.7287409 )`
+`paf-agent-1            |  (76.12445   , -1.6572031e+01, 13.737187  , 0.7287409 )`
 
-`paf23-agent-1            |  (71.9434    , -1.8718828e+01, 13.107929  , 0.7393809 )`
+`paf-agent-1            |  (71.9434    , -1.8718828e+01, 13.107929  , 0.7393809 )`
 
-`paf23-agent-1            |  (-0.3482422 , -1.6367188e-02, -0.20128906, 0.99839103)`
+`paf-agent-1            |  (-0.3482422 , -1.6367188e-02, -0.20128906, 0.99839103)`
 
-`paf23-agent-1            |  (-0.3486328 , -1.4062500e-02, -0.20152344, 0.99838954)`
+`paf-agent-1            |  (-0.3486328 , -1.4062500e-02, -0.20152344, 0.99838954)`
 
-`paf23-agent-1            |  (-0.35070312, -2.3828126e-03, -0.2025    , 0.99838144)`
+`paf-agent-1            |  (-0.35070312, -2.3828126e-03, -0.2025    , 0.99838144)`
 
 The first three values of each row correspon to x, y, z.
 

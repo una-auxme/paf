@@ -2,7 +2,7 @@
 
 ## 1.Architecture
 
-![image](https://github.com/una-auxme/paf23/assets/102369315/6b3fb964-e650-442a-a674-8e0471d931a9)
+![image](https://github.com/una-auxme/paf/assets/102369315/6b3fb964-e650-442a-a674-8e0471d931a9)
 
 Focus on:
 
@@ -16,7 +16,7 @@ Focus on:
 
 Autowares perception is very complex and uses a variety of mechnaism to gather as much information as possible about the surroundings of the car.
 
-![image](https://github.com/una-auxme/paf23/assets/102369315/23f9699e-85c7-44c6-b9fa-a603dc73afcf)
+![image](https://github.com/una-auxme/paf/assets/102369315/23f9699e-85c7-44c6-b9fa-a603dc73afcf)
 
 For the perception Autoware mainly uses the following Sensors:
 

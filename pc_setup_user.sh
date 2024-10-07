@@ -1,7 +1,7 @@
 cd
 mkdir git
 cd git
-git clone https://github.com/una-auxme/paf23.git
+git clone https://github.com/una-auxme/paf.git
 
-cd paf23
+cd paf
 ./dc-run-file.sh build/docker-compose.yaml

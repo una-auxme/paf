@@ -152,7 +152,7 @@ def spawn_car(distance):
     Args:
         distance (float): distance
     """
-    CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
+    CARLA_HOST = os.environ.get('CARLA_HOST', 'paf-carla-simulator-1')
     CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
 
     client = carla.Client(CARLA_HOST, CARLA_PORT)

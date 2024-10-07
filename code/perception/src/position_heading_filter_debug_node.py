@@ -40,7 +40,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
         # carla attributes
-        CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
+        CARLA_HOST = os.environ.get('CARLA_HOST', 'paf-carla-simulator-1')
         CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
         self.world = None
@@ -189,7 +189,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
         This method saves the current location errors in a csv file.
         in the folders of
-        paf23/doc/06_perception/00_Experiments/kalman_datasets
+        paf/doc/06_perception/00_Experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # stop saving data when max is reached
@@ -222,7 +222,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
         This method saves the current heading errors in a csv file.
         in the folders of
-        paf23/doc/06_perception/00_Experiments/kalman_datasets
+        paf/doc/06_perception/00_Experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # if rospy.get_time() > 45 stop saving data:

@@ -29,7 +29,7 @@ RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
-RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
+RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
   && mkdir -p /opt/carla \
