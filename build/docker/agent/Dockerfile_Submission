@@ -26,7 +26,7 @@ RUN apt-get update \
 # install dependencies for libgit2 and Carla PythonAPI
 RUN apt-get install wget unzip
 
-RUN wget https://github.com/una-auxme/paf23/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
+RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -O PythonAPI.zip \
   && unzip PythonAPI.zip \
   && rm PythonAPI.zip \
   && mkdir -p /opt/carla \

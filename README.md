@@ -1,4 +1,4 @@
-# Praktikum Autonomes Fahren 2023 - PAF23
+# Praktikum Autonomes Fahren - PAF
 
 This repository contains the source code for the "Praktikum Autonomes Fahren" at the Chair of Mechatronics from the University of Augsburg in the winter semester of 2023/2024.
 The goal of the project is to develop a self-driving car that can navigate through a simulated environment.

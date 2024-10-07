@@ -1,6 +1,6 @@
 # comlipy config file (commit naming)
 global:
-  help: 'Help: https://github.com/ll7/paf22/blob/main/doc/developement/commit.md'
+  help: 'Help: https://github.com/una-auxme/paf/blob/main/doc/02_development/03_commit.md'
 
 rules:
   scope-min-length:

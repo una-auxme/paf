@@ -6,7 +6,7 @@ include:
 
 services:
   agent:
-    image: ghcr.io/una-auxme/paf23:${AGENT_VERSION:-latest}
+    image: ghcr.io/una-auxme/paf:${AGENT_VERSION:-latest}
     init: true
     tty: true
     logging:

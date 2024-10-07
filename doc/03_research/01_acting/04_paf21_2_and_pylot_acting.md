@@ -15,7 +15,7 @@
 
     ![Untitled](../../00_assets/research_assets/stanley_controller.png)
 
-### [List of Inputs/Outputs](https://github.com/una-auxme/paf23/blob/main/doc/03_research/01_acting/02_acting_implementation.md#list-of-inputsoutputs)
+### [List of Inputs/Outputs](https://github.com/una-auxme/paf/blob/main/doc/03_research/01_acting/02_acting_implementation.md#list-of-inputsoutputs)
 
 - Subscribes to:
   - [nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) : to get the current position and heading
@@ -25,7 +25,7 @@
 - Publishes:
   - [CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehiclecontrolmsg) : to actually control the vehicles throttle, steering
 
-### [Challenges](https://github.com/una-auxme/paf23/blob/main/doc/03_research/01_acting/02_acting_implementation.md#challenges)
+### [Challenges](https://github.com/una-auxme/paf/blob/main/doc/03_research/01_acting/02_acting_implementation.md#challenges)
 
 A short list of challenges for the implementation of a basic acting domain and how they these could be tackled based on the requirements mentioned above.
 
