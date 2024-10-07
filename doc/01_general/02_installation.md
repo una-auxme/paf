@@ -103,3 +103,42 @@ sudo systemctl restart docker
     ```
 
 ([possible reason](https://stackoverflow.com/a/73256004))
+
+### Vulkan device not available
+
+Cannot find a compatible Vulkan Device.
+Try updating your video driver to a more recent version and make sure your video card supports Vulkan.
+
+![Vulkan device not available](../00_assets/vulkan_device_not_available.png)
+
+Verify the issue with the following command:
+
+```shell
+$ docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+Failed to initialize NVML: Unknown Error
+```
+
+> [!TIP] Solution found in <https://stackoverflow.com/a/78137688>
+
+```shell
+sudo vim /etc/nvidia-container-runtime/config.toml
+```
+
+, then changed `no-cgroups = false`, save
+
+Restart docker daemon:
+
+```shell
+sudo systemctl restart docker
+```
+
+, then you can test by running
+
+```shell
+docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+```
+
+Based on:
+
+1. <https://bobcares.com/blog/docker-failed-to-initialize-nvml-unknown-error/>
+2. <https://bbs.archlinux.org/viewtopic.php?id=266915>
