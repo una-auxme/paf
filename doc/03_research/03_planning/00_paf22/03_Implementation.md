@@ -16,15 +16,18 @@ Simon Erlbacher, Niklas Vogel
 
 ---
 <!-- TOC -->
-* [Planning Implementation](#planning-implementation)
-  * [Authors](#authors)
-  * [Date](#date)
-  * [Overview](#overview)
-  * [Preplanning](#preplanning)
-  * [Decision Making](#decision-making)
-  * [Local Path Planning](#local-path-planning)
-  * [Next steps](#next-steps)
-* [Sources](#sources)
+- [Planning Implementation](#planning-implementation)
+  - [Authors](#authors)
+  - [Date](#date)
+  - [Overview](#overview)
+  - [Preplanning](#preplanning)
+  - [Decision Making](#decision-making)
+  - [Local Path Planning](#local-path-planning)
+    - [Velocity profile](#velocity-profile)
+    - [Update path](#update-path)
+    - [Measure distance](#measure-distance)
+  - [Next steps](#next-steps)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ---
@@ -50,14 +53,14 @@ Lanelet Model Example :
 
 Input:
 
-* Map
-* Navigation Waypoints
-* (Odometry data (sensoring))
-* (GNUU data (sensoring))
+- Map
+- Navigation Waypoints
+- (Odometry data (sensoring))
+- (GNUU data (sensoring))
 
 Output:
 
-* Route (Sequences of Lanelets and Points) (local path planning, decision making)
+- Route (Sequences of Lanelets and Points) (local path planning, decision making)
 
 ---
 
@@ -74,13 +77,13 @@ The system needs to make good predictions to avoid collisions. The Perception da
 
 Input:
 
-* Lanelet data (preplanning, local path planning)
-* perception data (traffic lights situation, pedestrians,...)
+- Lanelet data (preplanning, local path planning)
+- perception data (traffic lights situation, pedestrians,...)
 
 Output:
 
-* updated driving status (acting, local path planning)
-* Lanelet data (acting)
+- updated driving status (acting, local path planning)
+- Lanelet data (acting)
 
 ---
 
@@ -96,11 +99,11 @@ This will be calculated directly after the preplanning created a trajectory. The
 
 Input:
 
-* Trajectory points (preplanning)
+- Trajectory points (preplanning)
 
 Output:
 
-* Max. Velocity (Acting)
+- Max. Velocity (Acting)
 
 ### Update path
 
@@ -111,14 +114,14 @@ It also tells the velocity profile to update because of the new trajectory.
 
 Input:
 
-* lanelet modell (preplanning)
-* update command (decision making)
-* information about blocked lanelets (decision making, perception)
+- lanelet modell (preplanning)
+- update command (decision making)
+- information about blocked lanelets (decision making, perception)
 
 Output:
 
-* updated trajectory (acting, decision making)
-* update command (velocity profile)
+- updated trajectory (acting, decision making)
+- update command (velocity profile)
 
 ### Measure distance
 
@@ -126,24 +129,24 @@ This module measures the distance to obstacles, especially cars, with the Lidar 
 
 Input:
 
-* Lidar Sensor data (perception, sensoring)
+- Lidar Sensor data (perception, sensoring)
 
 Output:
 
-* distance value (acting)
+- distance value (acting)
 
 ---
 
 ## Next steps
 
-* Another Coordination with Perception to prevent overlaps with Map Manager, Map enrichment,
-* Implement Map Manager to convert data into a compatible type for route planning and to extract additional informations (Speed Limits, trafic signs, traffic lights)
-* Implement a commonroad route planner (old projects and Gitlab TUM)
-* Analyze Lanelet plan and be familiar with it (Which information can we additionally receive from the plan?)
-* Enrich Lanelet Modell/Map with additional Informations (additional/parallel Lanes, Speed Limits, trafic signs, traffic lights)
-* Choose the Decision Maker (Evaluate Markov Modell in combination with occupancy grid)
-* calculate and evaluate distances with given perceptions
-* Publish available and needed data (data available in this stage)
+- Another Coordination with Perception to prevent overlaps with Map Manager, Map enrichment,
+- Implement Map Manager to convert data into a compatible type for route planning and to extract additional informations (Speed Limits, trafic signs, traffic lights)
+- Implement a commonroad route planner (old projects and Gitlab TUM)
+- Analyze Lanelet plan and be familiar with it (Which information can we additionally receive from the plan?)
+- Enrich Lanelet Modell/Map with additional Informations (additional/parallel Lanes, Speed Limits, trafic signs, traffic lights)
+- Choose the Decision Maker (Evaluate Markov Modell in combination with occupancy grid)
+- calculate and evaluate distances with given perceptions
+- Publish available and needed data (data available in this stage)
 
 ---
 

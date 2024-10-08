@@ -15,14 +15,14 @@ Marco Riedenauer
 28.03.2023
 
 <!-- TOC -->
-* [EfficientPS](#efficientps)
-  * [Author](#author)
-  * [Date](#date)
-  * [Model Overview](#model-overview)
-  * [Training](#training)
-    * [Labels](#labels)
-    * [Training parameters](#training-parameters)
-    * [Train](#train)
+- [EfficientPS](#efficientps)
+  - [Author](#author)
+  - [Date](#date)
+  - [Model Overview](#model-overview)
+  - [Training](#training)
+    - [Labels](#labels)
+    - [Training parameters](#training-parameters)
+    - [Train](#train)
 <!-- TOC -->
 
 ## Model Overview
@@ -35,13 +35,13 @@ case, since we used half the image size.
 ![EfficientPS Structure](../00_assets/efficientps_structure.png)
 [Source](https://arxiv.org/pdf/2004.02307.pdf)
 
-* Feature Extraction:
+- Feature Extraction:
   This is the first part of the model on which all following parts depend on. In this part, all important features are
   extracted from the input image.
-* Semantic Segmentation Head: As the name implies, this part of the model computes a semantic segmentation on the
+- Semantic Segmentation Head: As the name implies, this part of the model computes a semantic segmentation on the
   extracted features.
-* Instance Segmentation Head: This part computes the instance segmentation on things on the extracted features.
-* Panoptic Fusion: As the last part of the model, this component is responsible for combining the information gathered
+- Instance Segmentation Head: This part computes the instance segmentation on things on the extracted features.
+- Panoptic Fusion: As the last part of the model, this component is responsible for combining the information gathered
   by the semantic segmentation and the instance segmentation heads. The output of this component and thereby the model
   is an image where stuff is semantic segmented and things are instance segmented.
 
@@ -64,19 +64,19 @@ All adaptable training parameters can be found and changed in
 
 The most important configs are:
 
-* MODEL/ROI_HEADS/NUM_CLASSES: Number of instance classes
-* DATASET_PATH: Path to dataset root
-* TRAIN_JSON: Relative path from DATASET_PATH to train json file
-* VALID_JSON: Relative path from DATASET_PATH to validation json file
-* PRED_DIR: Directory to save predictions in
-* PRED_JSON: Name of prediction json file
-* CHECKPOINT_PATH: Path of already trained models you want to train furthermore
-* BATCH_SIZE: Number of images to be loaded during on training step
-* NUM_CLASSES: Number of all classes
+- MODEL/ROI_HEADS/NUM_CLASSES: Number of instance classes
+- DATASET_PATH: Path to dataset root
+- TRAIN_JSON: Relative path from DATASET_PATH to train json file
+- VALID_JSON: Relative path from DATASET_PATH to validation json file
+- PRED_DIR: Directory to save predictions in
+- PRED_JSON: Name of prediction json file
+- CHECKPOINT_PATH: Path of already trained models you want to train furthermore
+- BATCH_SIZE: Number of images to be loaded during on training step
+- NUM_CLASSES: Number of all classes
 
 ### Train
 
-To start the training, just execute the following command in b5 shell:
+To start the training, just execute the following command in an attached shell:
 
 ```shell
 python3 perception/src/panoptic_segmentation/train_net.py

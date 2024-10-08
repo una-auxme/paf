@@ -13,15 +13,15 @@ Marco Riedenauer
 19.02.2023
 
 <!-- TOC -->
-* [Dataset structure](#dataset-structure)
-  * [Author](#author)
-  * [Date](#date)
-  * [Converting the dataset](#converting-the-dataset)
-  * [Preparation of the dataset for training](#preparation-of-the-dataset-for-training)
-    * [Explanation of the conversion of groundtruth images](#explanation-of-the-conversion-of-groundtruth-images)
-      * [Things](#things)
-      * [Stuff](#stuff)
-    * [Explanation of creating json files](#explanation-of-creating-json-files)
+- [Dataset structure](#dataset-structure)
+  - [Author](#author)
+  - [Date](#date)
+  - [Converting the dataset](#converting-the-dataset)
+  - [Preparation of the dataset for training](#preparation-of-the-dataset-for-training)
+    - [Explanation of the conversion of groundtruth images](#explanation-of-the-conversion-of-groundtruth-images)
+      - [Things](#things)
+      - [Stuff](#stuff)
+    - [Explanation of creating json files](#explanation-of-creating-json-files)
 <!-- TOC -->
 
 ## Converting the dataset
@@ -64,7 +64,7 @@ following structure:
 When the dataset has the correct structure, the groundtruth images have to be converted to COCO format and some
 json files have to be created.
 
-To do so, execute the following command in your b5 shell:
+To do so, execute the following command in an attached shell:
 
 ```shell
 python3 perception/src/panoptic_segmentation/preparation/createPanopticImgs.py --dataset_folder <path_to_dataset_root>

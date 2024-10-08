@@ -6,7 +6,7 @@ MD013:
   tables: false
 
 MD004:
-  style: "consistent"
+  style: dash
 
 MD051: false
 

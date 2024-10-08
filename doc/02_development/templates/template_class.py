@@ -71,28 +71,14 @@ class TestClass:
     #   6. Docstrings           #
     #############################
     def test_function4(self, param1, param2):
-        # This docstring style is supported by Sphinx and helps with automated API documentation creation, automatically created by PyCharm
-        """
-        This is the description of the function.
+        # This docstring style is the default google style of the autoDocstring extension and helps with automated API documentation creation
+        """This is the description of the function.
 
-        :param param1: first parameter
-        :param param2: second parameter
-        :return: return value(s)
+        Args:
+            param1 (_type_): _description_
+            param2 (_type_): _description_
         """
         pass
-
-    def test_function5(self, param1, param2):
-        # This docstring style is supported by Sphinx and helps with automated API documentation creation, automatically created by VSCode extension autoDocstring
-        # VSCode Extentsion: autoDocstring- Python Docstring Generator by Nils Werner
-        # To get the ReST format like in Pycharm
-        # Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
-        """_summary_
-
-        :param param1: _description_
-        :param param2: _description_
-        :return: _description_
-        """
-        return param1
 
     # main function of the class
     def main(self):

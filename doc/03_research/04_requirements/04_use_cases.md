@@ -16,33 +16,163 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Use cases in Carla Leaderboard](#use-cases-in-carla-leaderboard)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [1. Control loss due to bad road condition](#1-control-loss-due-to-bad-road-condition)
-  * [2. Unprotected left turn at intersection with oncoming traffic](#2-unprotected-left-turn-at-intersection-with-oncoming-traffic)
-  * [3. Right turn at an intersection with crossing traffic](#3-right-turn-at-an-intersection-with-crossing-traffic)
-  * [4. Crossing negotiation at unsignalized intersection](#4-crossing-negotiation-at-unsignalized-intersection)
-  * [5. Crossing traffic running a red light at intersection](#5-crossing-traffic-running-a-red-light-at-intersection)
-  * [6. Highway merge from on-ramp](#6-highway-merge-from-on-ramp)
-  * [7. Highway cut-in from on-ramp](#7-highway-cut-in-from-on-ramp)
-  * [8. Static cut-in](#8-static-cut-in)
-  * [9. Highway exit](#9-highway-exit)
-  * [10. Yield to emergency vehicle](#10-yield-to-emergency-vehicle)
-  * [11. Obstacle in lane](#11-obstacle-in-lane)
-  * [12. Door Obstacle](#12-door-obstacle)
-  * [13. Slow moving hazard at lane edge](#13-slow-moving-hazard-at-lane-edge)
-  * [14. Vehicle invading lane on bend](#14-vehicle-invading-lane-on-bend)
-  * [15. Longitudinal control after leading vehicle brakes](#15-longitudinal-control-after-leading-vehicle-brakes)
-  * [16. Obstacle avoidance without prior action](#16-obstacle-avoidance-without-prior-action)
-  * [17. Pedestrian emerging from behind parked vehicle](#17-pedestrian-emerging-from-behind-parked-vehicle)
-  * [18. Obstacle avoidance with prior action](#18-obstacle-avoidance-with-prior-action)
-  * [19. Parking Cut-in](#19-parking-cut-in)
-  * [20. Lane changing to evade slow leading vehicle](#20-lane-changing-to-evade-slow-leading-vehicle)
-  * [21. Passing obstacle with oncoming traffic](#21-passing-obstacle-with-oncoming-traffic)
-  * [22. Parking Exit](#22-parking-exit)
-  * [Sources](#sources)
+- [Use cases in Carla Leaderboard](#use-cases-in-carla-leaderboard)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [1. Control loss due to bad road condition](#1-control-loss-due-to-bad-road-condition)
+    - [Description](#description)
+    - [Pre-condition(Event)](#pre-conditionevent)
+    - [Driving functions](#driving-functions)
+    - [Outcome](#outcome)
+    - [Associated use cases](#associated-use-cases)
+  - [2. Unprotected left turn at intersection with oncoming traffic](#2-unprotected-left-turn-at-intersection-with-oncoming-traffic)
+    - [Description](#description-1)
+    - [Basic flow](#basic-flow)
+    - [Pre-condition(Event)](#pre-conditionevent-1)
+    - [Driving functions](#driving-functions-1)
+    - [Outcome](#outcome-1)
+    - [Associated use cases](#associated-use-cases-1)
+  - [3. Right turn at an intersection with crossing traffic](#3-right-turn-at-an-intersection-with-crossing-traffic)
+    - [Description](#description-2)
+    - [Basic flow](#basic-flow-1)
+    - [Pre-condition(Event)](#pre-conditionevent-2)
+    - [Driving functions](#driving-functions-2)
+    - [Outcome](#outcome-2)
+    - [Associated use cases](#associated-use-cases-2)
+  - [4. Crossing negotiation at unsignalized intersection](#4-crossing-negotiation-at-unsignalized-intersection)
+    - [Description](#description-3)
+    - [Basic flow](#basic-flow-2)
+    - [Pre-condition(Event)](#pre-conditionevent-3)
+    - [Driving functions](#driving-functions-3)
+    - [Outcome](#outcome-3)
+    - [Associated use cases](#associated-use-cases-3)
+  - [5. Crossing traffic running a red light at intersection](#5-crossing-traffic-running-a-red-light-at-intersection)
+    - [Description](#description-4)
+    - [Pre-condition(Event)](#pre-conditionevent-4)
+    - [Driving functions](#driving-functions-4)
+    - [Outcome](#outcome-4)
+    - [Associated use cases](#associated-use-cases-4)
+  - [6. Highway merge from on-ramp](#6-highway-merge-from-on-ramp)
+    - [Description](#description-5)
+    - [Basic flow](#basic-flow-3)
+    - [Pre-condition(Event)](#pre-conditionevent-5)
+    - [Driving functions](#driving-functions-5)
+    - [Outcome](#outcome-5)
+    - [Associated use cases](#associated-use-cases-5)
+  - [7. Highway cut-in from on-ramp](#7-highway-cut-in-from-on-ramp)
+    - [Description](#description-6)
+    - [Basic flow](#basic-flow-4)
+    - [Pre-condition(Event)](#pre-conditionevent-6)
+    - [Driving functions](#driving-functions-6)
+    - [Outcome](#outcome-6)
+    - [Associated use cases](#associated-use-cases-6)
+  - [8. Static cut-in](#8-static-cut-in)
+    - [Description](#description-7)
+    - [Basic flow](#basic-flow-5)
+    - [Pre-condition(Event)](#pre-conditionevent-7)
+    - [Driving functions](#driving-functions-7)
+    - [Outcome](#outcome-7)
+    - [Associated use cases](#associated-use-cases-7)
+  - [9. Highway exit](#9-highway-exit)
+    - [Description](#description-8)
+    - [Basic flow](#basic-flow-6)
+    - [Pre-condition(Event)](#pre-conditionevent-8)
+    - [Driving functions](#driving-functions-8)
+    - [Outcome](#outcome-8)
+    - [Associated use cases](#associated-use-cases-8)
+  - [10. Yield to emergency vehicle](#10-yield-to-emergency-vehicle)
+    - [Description](#description-9)
+    - [Basic flow](#basic-flow-7)
+    - [Pre-condition(Event)](#pre-conditionevent-9)
+    - [Driving functions](#driving-functions-9)
+    - [Outcome](#outcome-9)
+    - [Associated use cases](#associated-use-cases-9)
+  - [11. Obstacle in lane](#11-obstacle-in-lane)
+    - [Description](#description-10)
+    - [Basic flow](#basic-flow-8)
+    - [Pre-condition(Event)](#pre-conditionevent-10)
+    - [Driving functions](#driving-functions-10)
+    - [Outcome](#outcome-10)
+    - [Associated use cases](#associated-use-cases-10)
+  - [12. Door Obstacle](#12-door-obstacle)
+    - [Description](#description-11)
+    - [Basic flow](#basic-flow-9)
+    - [Pre-condition(Event)](#pre-conditionevent-11)
+    - [Driving functions](#driving-functions-11)
+    - [Outcome](#outcome-11)
+    - [Associated use cases](#associated-use-cases-11)
+  - [13. Slow moving hazard at lane edge](#13-slow-moving-hazard-at-lane-edge)
+    - [Description](#description-12)
+    - [Basic flow](#basic-flow-10)
+    - [Pre-condition(Event)](#pre-conditionevent-12)
+    - [Driving functions](#driving-functions-12)
+    - [Outcome](#outcome-12)
+    - [Associated use cases](#associated-use-cases-12)
+  - [14. Vehicle invading lane on bend](#14-vehicle-invading-lane-on-bend)
+    - [Description](#description-13)
+    - [Basic flow](#basic-flow-11)
+    - [Pre-condition(Event)](#pre-conditionevent-13)
+    - [Driving functions](#driving-functions-13)
+    - [Outcome](#outcome-13)
+    - [Associated use cases](#associated-use-cases-13)
+  - [15. Longitudinal control after leading vehicle brakes](#15-longitudinal-control-after-leading-vehicle-brakes)
+    - [Description](#description-14)
+    - [Basic flow](#basic-flow-12)
+    - [Pre-condition(Event)](#pre-conditionevent-14)
+    - [Driving functions](#driving-functions-14)
+    - [Outcome](#outcome-14)
+    - [Associated use cases](#associated-use-cases-14)
+  - [16. Obstacle avoidance without prior action](#16-obstacle-avoidance-without-prior-action)
+    - [Description](#description-15)
+    - [Basic flow](#basic-flow-13)
+    - [Pre-condition(Event)](#pre-conditionevent-15)
+    - [Driving functions](#driving-functions-15)
+    - [Outcome](#outcome-15)
+    - [Associated use cases](#associated-use-cases-15)
+  - [17. Pedestrian emerging from behind parked vehicle](#17-pedestrian-emerging-from-behind-parked-vehicle)
+    - [Description](#description-16)
+    - [Basic flow](#basic-flow-14)
+    - [Pre-condition(Event)](#pre-conditionevent-16)
+    - [Driving functions](#driving-functions-16)
+    - [Outcome](#outcome-16)
+    - [Associated use cases](#associated-use-cases-16)
+  - [18. Obstacle avoidance with prior action](#18-obstacle-avoidance-with-prior-action)
+    - [Description](#description-17)
+    - [Basic flow](#basic-flow-15)
+    - [Pre-condition(Event)](#pre-conditionevent-17)
+    - [Driving functions](#driving-functions-17)
+    - [Outcome](#outcome-17)
+    - [Associated use cases](#associated-use-cases-17)
+  - [19. Parking Cut-in](#19-parking-cut-in)
+    - [Description](#description-18)
+    - [Basic flow](#basic-flow-16)
+    - [Pre-condition(Event)](#pre-conditionevent-18)
+    - [Driving functions](#driving-functions-18)
+    - [Outcome](#outcome-18)
+    - [Associated use cases](#associated-use-cases-18)
+  - [20. Lane changing to evade slow leading vehicle](#20-lane-changing-to-evade-slow-leading-vehicle)
+    - [Description](#description-19)
+    - [Basic flow](#basic-flow-17)
+    - [Pre-condition(Event)](#pre-conditionevent-19)
+    - [Driving functions](#driving-functions-19)
+    - [Outcome](#outcome-19)
+    - [Associated use cases](#associated-use-cases-19)
+  - [21. Passing obstacle with oncoming traffic](#21-passing-obstacle-with-oncoming-traffic)
+    - [Description](#description-20)
+    - [Basic flow](#basic-flow-18)
+    - [Pre-condition(Event)](#pre-conditionevent-20)
+    - [Driving functions](#driving-functions-20)
+    - [Outcome](#outcome-20)
+    - [Associated use cases](#associated-use-cases-20)
+  - [22. Parking Exit](#22-parking-exit)
+    - [Description](#description-21)
+    - [Basic flow](#basic-flow-19)
+    - [Pre-condition(Event)](#pre-conditionevent-21)
+    - [Driving functions](#driving-functions-21)
+    - [Outcome](#outcome-21)
+    - [Associated use cases](#associated-use-cases-21)
+  - [Sources](#sources)
 <!-- TOC -->
 
 ---
@@ -61,9 +191,9 @@ Loss of control
 
 ### Driving functions
 
-* Control steering angle, throttle and brake to counter unexpected movements
+- Control steering angle, throttle and brake to counter unexpected movements
 
-* (Opt): Sense wheel friction to predict unexpected behaviour
+- (Opt): Sense wheel friction to predict unexpected behaviour
 
 ### Outcome
 
@@ -98,13 +228,13 @@ Global route wants you to perform a left turn at an intersection
 
 ### Driving functions
 
-* Sense street signs and traffic lights
-* Observe the intersection
-* Sense oncoming traffic
-* (Check indicator of oncoming traffic)
-* Sense pedestrians in your drive path
-* Steer the vehicle in a left turn
-* Predict if a turn is possible before oncoming traffic reaches the intersection
+- Sense street signs and traffic lights
+- Observe the intersection
+- Sense oncoming traffic
+- (Check indicator of oncoming traffic)
+- Sense pedestrians in your drive path
+- Steer the vehicle in a left turn
+- Predict if a turn is possible before oncoming traffic reaches the intersection
 
 ### Outcome
 
@@ -144,13 +274,13 @@ Global route wants you to perform a right turn at an intersection
 
 ### Driving functions
 
-* Sense street signs and traffic lights
-* Observe the intersection
-* Sense crossing traffic
-* Check indicator of crossing traffic
-* Sense pedestrians in your drive path
-* Steer the vehicle in a right turn
-* Predict if a turn is possible before crossing traffic reaches the intersection
+- Sense street signs and traffic lights
+- Observe the intersection
+- Sense crossing traffic
+- Check indicator of crossing traffic
+- Sense pedestrians in your drive path
+- Steer the vehicle in a right turn
+- Predict if a turn is possible before crossing traffic reaches the intersection
 
 ### Outcome
 
@@ -192,10 +322,10 @@ No traffic lights or street signs are sensed and agent is at an intersection
 
 ### Driving functions
 
-* Sense street signs and traffic lights
-* Observe the intersection
-* Sense pedestrians in your drive path
-* Steering the vehicle
+- Sense street signs and traffic lights
+- Observe the intersection
+- Sense pedestrians in your drive path
+- Steering the vehicle
 
 ### Outcome
 
@@ -225,10 +355,10 @@ Vehicle enters intersection while having a red light
 
 ### Driving functions
 
-* Sense street signs and traffic lights
-* Observe the intersection
-* Sense crossing traffic
-* Emergency brake
+- Sense street signs and traffic lights
+- Observe the intersection
+- Sense crossing traffic
+- Emergency brake
 
 ### Outcome
 
@@ -269,10 +399,10 @@ Vehicle enters a highway
 
 ### Driving functions
 
-* Sense speed of surrounding traffic
-* Sense length of ramp
-* Adjust speed to enter highway
-* Turn into highway
+- Sense speed of surrounding traffic
+- Sense length of ramp
+- Adjust speed to enter highway
+- Turn into highway
 
 ### Outcome
 
@@ -310,11 +440,11 @@ Vehicle enters a highway
 
 ### Driving functions
 
-* Sense speed of surrounding traffic
-* Adjust speed to let vehicle enter highway
-* Change lane
-* Decelerate
-* Brake
+- Sense speed of surrounding traffic
+- Adjust speed to let vehicle enter highway
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -352,11 +482,11 @@ Vehicle tries to cut-in
 
 ### Driving functions
 
-* Sense speed of surrounding traffic
-* Adjust speed to let vehicle enter lane
-* Change lane
-* Decelerate
-* Brake
+- Sense speed of surrounding traffic
+- Adjust speed to let vehicle enter lane
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -397,12 +527,12 @@ Vehicle leaves a highway
 
 ### Driving functions
 
-* Sense speed of surrounding traffic
-* Sense distance to off-ramp
-* Adjust speed to change lane
-* Change lane
-* Decelerate
-* Brake
+- Sense speed of surrounding traffic
+- Sense distance to off-ramp
+- Adjust speed to change lane
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -441,10 +571,10 @@ Emergency vehicle behind us
 
 ### Driving functions
 
-* Sense emergency vehicle
-* Sense speed of surrounding traffic
-* Adjust speed to change lane
-* Change lane
+- Sense emergency vehicle
+- Sense speed of surrounding traffic
+- Adjust speed to change lane
+- Change lane
 
 ### Outcome
 
@@ -481,11 +611,11 @@ Obstacle on lane
 
 ### Driving functions
 
-* Sense obstacles
-* Sense speed of surrounding traffic
-* Change lane
-* Decelerate
-* Brake
+- Sense obstacles
+- Sense speed of surrounding traffic
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -536,11 +666,11 @@ Door opens in lane
 
 ### Driving functions
 
-* Sense opening door
-* Sense speed of surrounding traffic
-* Change lane
-* Decelerate
-* Brake
+- Sense opening door
+- Sense speed of surrounding traffic
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -585,11 +715,11 @@ slow moving hazard(bicycle) in lane
 
 ### Driving functions
 
-* Sense slow moving hazards
-* Sense speed of surrounding traffic
-* Change lane
-* Decelerate
-* Brake
+- Sense slow moving hazards
+- Sense speed of surrounding traffic
+- Change lane
+- Decelerate
+- Brake
 
 ### Outcome
 
@@ -632,10 +762,10 @@ Bend in the road and a vehicle invading our lane
 
 ### Driving functions
 
-* Sense vehicle on our lane
-* Decelerate
-* Brake
-* Move to right part of lane
+- Sense vehicle on our lane
+- Decelerate
+- Brake
+- Move to right part of lane
 
 ### Outcome
 
@@ -667,10 +797,10 @@ Vehicle in front suddenly slows down
 
 ### Driving functions
 
-* Sense vehicle on our lane
-* Sense vehicle speed
-* Decelerate
-* Emergency-/Brake
+- Sense vehicle on our lane
+- Sense vehicle speed
+- Decelerate
+- Emergency-/Brake
 
 ### Outcome
 
@@ -709,9 +839,9 @@ Obstacle in front suddenly appears
 
 ### Driving functions
 
-* Sense obstacle on our lane
-* Decelerate
-* Emergency-/Brake
+- Sense obstacle on our lane
+- Decelerate
+- Emergency-/Brake
 
 ### Outcome
 
@@ -760,9 +890,9 @@ Pedestrian in front suddenly appears from behind a parked car.
 
 ### Driving functions
 
-* Sense pedestrian on our lane
-* Decelerate
-* Emergency-/Brake
+- Sense pedestrian on our lane
+- Decelerate
+- Emergency-/Brake
 
 ### Outcome
 
@@ -803,9 +933,9 @@ Obstacle in planned driving path
 
 ### Driving functions
 
-* Sense obstacle in driving path
-* Decelerate
-* Emergency-/Brake
+- Sense obstacle in driving path
+- Decelerate
+- Emergency-/Brake
 
 ### Outcome
 
@@ -842,9 +972,9 @@ Parked car tries to join traffic
 
 ### Driving functions
 
-* Sense parked car starts moving
-* Decelerate
-* Emergency-/Brake
+- Sense parked car starts moving
+- Decelerate
+- Emergency-/Brake
 
 ### Outcome
 
@@ -883,11 +1013,11 @@ Speed of car is under a certain threshold
 
 ### Driving functions
 
-* Sense speed of traffic
-* Sense vehicles in surrounding lanes
-* Decelerate
-* Emergency-/Brake
-* Change lane
+- Sense speed of traffic
+- Sense vehicles in surrounding lanes
+- Decelerate
+- Emergency-/Brake
+- Change lane
 
 ### Outcome
 
@@ -929,14 +1059,14 @@ Obstacle in front of us with oncoming traffic
 
 ### Driving functions
 
-* Sense obstacle
-* Sense length of obstacle
-* Sense speed, distance of oncoming traffic
-* Sense vehicles in surrounding lanes
-* Decelerate
-* Brake
-* Change lane
-* Rejoin old lane after the obstacle
+- Sense obstacle
+- Sense length of obstacle
+- Sense speed, distance of oncoming traffic
+- Sense vehicles in surrounding lanes
+- Decelerate
+- Brake
+- Change lane
+- Rejoin old lane after the obstacle
 
 ### Outcome
 
@@ -981,11 +1111,11 @@ Ego-vehicle is parked and wants to join traffic
 
 ### Driving functions
 
-* Sense space of parking bay
-* Sense speed, distance of traffic
-* Sense vehicles in lane the agent wants to join
-* Accelerate
-* Change lane(Join traffic)
+- Sense space of parking bay
+- Sense speed, distance of traffic
+- Sense vehicles in lane the agent wants to join
+- Accelerate
+- Change lane(Join traffic)
 
 ### Outcome
 

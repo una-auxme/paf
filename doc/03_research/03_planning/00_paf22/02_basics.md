@@ -10,32 +10,32 @@ Simon Erlbacher, Niklas Vogel
 
 ---
 <!-- TOC -->
-* [Grundrecherche im Planing](#grundrecherche-im-planing)
-  * [Authors](#authors)
-  * [Datum](#datum)
-  * [PAF 2021-1](#paf-2021-1)
-    * [Vehicle Controller](#vehicle-controller)
-    * [Decision-Making-Component](#decision-making-component)
-  * [PAF 2021-2](#paf-2021-2)
-  * [PAF 2020 (1 & 2)](#paf-2020-1--2)
-  * [Informationen aus alten Projekten](#informationen-aus-alten-projekten)
-  * [Planning Unterteilung](#planning-unterteilung)
-  * [Probleme](#probleme)
-  * [Lokalisierung](#lokalisierung)
-  * [Hindernisse erkennen](#hindernisse-erkennen)
-  * [Sicherheitseigenschaften](#sicherheitseigenschaften)
-  * [Decision Making (Behaviour Planner)](#decision-making-behaviour-planner)
-  * [Trajektorie](#trajektorie)
-  * [Trajektorie Tracking](#trajektorie-tracking)
-  * [Offene Fragen aus dem Issue](#offene-fragen-aus-dem-issue)
-    * [Was ist zu tun?](#was-ist-zu-tun)
-    * [Eingang](#eingang)
-    * [Ausgang](#ausgang)
-    * [Wie sehen die Daten vom Leaderboard für das Global Planning aus](#wie-sehen-die-daten-vom-leaderboard-für-das-global-planning-aus)
-    * [Daten aus dem LB und Global planning, wie kann daraus eine Trajektorie generiert werden](#daten-aus-dem-lb-und-global-planning-wie-kann-daraus-eine-trajektorie-generiert-werden)
-    * [Wie sieht die Grenze zwischen global und local plan aus?](#wie-sieht-die-grenze-zwischen-global-und-local-plan-aus)
-    * [Müssen Staus umfahren werden?](#müssen-staus-umfahren-werden)
-    * [Sollgeschwindigkeitsplanung](#sollgeschwindigkeitsplanung)
+- [Grundrecherche im Planing](#grundrecherche-im-planing)
+  - [Authors](#authors)
+  - [Datum](#datum)
+  - [PAF 2021-1](#paf-2021-1)
+    - [Vehicle Controller](#vehicle-controller)
+    - [Decision-Making-Component](#decision-making-component)
+  - [PAF 2021-2](#paf-2021-2)
+  - [PAF 2020 (1 \& 2)](#paf-2020-1--2)
+  - [Informationen aus alten Projekten](#informationen-aus-alten-projekten)
+  - [Planning Unterteilung](#planning-unterteilung)
+  - [Probleme](#probleme)
+  - [Lokalisierung](#lokalisierung)
+  - [Hindernisse erkennen](#hindernisse-erkennen)
+  - [Sicherheitseigenschaften](#sicherheitseigenschaften)
+  - [Decision Making (Behaviour Planner)](#decision-making-behaviour-planner)
+  - [Trajektorie](#trajektorie)
+  - [Trajektorie Tracking](#trajektorie-tracking)
+  - [Offene Fragen aus dem Issue](#offene-fragen-aus-dem-issue)
+    - [Was ist zu tun?](#was-ist-zu-tun)
+    - [Eingang](#eingang)
+    - [Ausgang](#ausgang)
+    - [Wie sehen die Daten vom Leaderboard für das Global Planning aus](#wie-sehen-die-daten-vom-leaderboard-für-das-global-planning-aus)
+    - [Daten aus dem LB und Global planning, wie kann daraus eine Trajektorie generiert werden](#daten-aus-dem-lb-und-global-planning-wie-kann-daraus-eine-trajektorie-generiert-werden)
+    - [Wie sieht die Grenze zwischen global und local plan aus?](#wie-sieht-die-grenze-zwischen-global-und-local-plan-aus)
+    - [Müssen Staus umfahren werden?](#müssen-staus-umfahren-werden)
+    - [Sollgeschwindigkeitsplanung](#sollgeschwindigkeitsplanung)
 <!-- TOC -->
 
 ## [PAF 2021-1](https://github.com/ll7/paf21-1)
@@ -57,15 +57,15 @@ Die Kurvendetektion berechnet die maximale Kurvengeschwindigkeit durch Ermittlun
 
 Inputs:
 
-* Fahrzeugposition
-* Fahrzeugorientierung
-* Fahrzeuggeschwindigkeit
-* Fahrtrajektorie
+- Fahrzeugposition
+- Fahrzeugorientierung
+- Fahrzeuggeschwindigkeit
+- Fahrtrajektorie
 
 Outputs:
 
-* Sollgeschwindigkeit
-* Lenkwinkel
+- Sollgeschwindigkeit
+- Lenkwinkel
 
 ### Decision-Making-Component
 
@@ -82,16 +82,16 @@ Finite-state machine für Manöver:
 
 Inputs:
 
-* Geschwindigkeit
-* Objekt auf Trajektorie
-* Ampelsignale
-* Geschwindigkeitsbegrenzung
-* Geschwindigkeit und Position anderer Verkehrsteilnehmer
-* Target Lane
+- Geschwindigkeit
+- Objekt auf Trajektorie
+- Ampelsignale
+- Geschwindigkeitsbegrenzung
+- Geschwindigkeit und Position anderer Verkehrsteilnehmer
+- Target Lane
 
 Outputs:
 
-* "Actions" (Bremsen, Beschleunigen, Halten, Spurwechsel...)
+- "Actions" (Bremsen, Beschleunigen, Halten, Spurwechsel...)
 
 Globaler Planer Überblick:
 ![Alt text](https://github.com/ll7/paf21-1/raw/master/imgs/Global%20Planer.png)
@@ -100,21 +100,21 @@ Globaler Planer Überblick:
 
 verantwortlich für die Routenplanung und Pfadplanung für das Ego-Vehicle sowie die erkannten Verkehrsteilnehmer.
 
-* global_planner
-  * Planung einer Route von einem Startpunkt zu einem oder einer Liste an Zielpunkten
-  * Commonroad Route Planner (TUM) -> Liste an Routen-Lanelets sowie eine Liste an Punkten mit Abstand etwa 10cm
-  * Anreicherung mit parallelen Spuren
-* local_planner
-  * Lokale Pfadplanung inklusive Spurwahl, Ampelmanagement und Spurwechsel
-  * erlaubte Geschwindigkeit, sowie die bevorzugte Spur basierend auf der Hinderniserkennung (obstacle planner) wird ergänzt
-  * "beste"/schnellste Möglichkeit wird errechnet und weiter an acting geschickt
-* obstacle_planner
-  * Verwaltung von dynamischen hindernissen
-  * Vorhersage von Pfaden anderer Fahrzeuge und generieren von Folgefahrzeug-Informationen
-  * Verwerfen von "irrelevanten" Fahrezeugen
+- global_planner
+  - Planung einer Route von einem Startpunkt zu einem oder einer Liste an Zielpunkten
+  - Commonroad Route Planner (TUM) -> Liste an Routen-Lanelets sowie eine Liste an Punkten mit Abstand etwa 10cm
+  - Anreicherung mit parallelen Spuren
+- local_planner
+  - Lokale Pfadplanung inklusive Spurwahl, Ampelmanagement und Spurwechsel
+  - erlaubte Geschwindigkeit, sowie die bevorzugte Spur basierend auf der Hinderniserkennung (obstacle planner) wird ergänzt
+  - "beste"/schnellste Möglichkeit wird errechnet und weiter an acting geschickt
+- obstacle_planner
+  - Verwaltung von dynamischen hindernissen
+  - Vorhersage von Pfaden anderer Fahrzeuge und generieren von Folgefahrzeug-Informationen
+  - Verwerfen von "irrelevanten" Fahrezeugen
 
-* Geschwindigkeitsplanung/Kontrolle wie 2021-1 + Bremswegplanung [Details](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_planning#bremsweg)
-* Map Manager für die Verwaltung aller statischen Kartendaten
+- Geschwindigkeitsplanung/Kontrolle wie 2021-1 + Bremswegplanung [Details](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_planning#bremsweg)
+- Map Manager für die Verwaltung aller statischen Kartendaten
 
 ## PAF 2020 ([1](https://github.com/ll7/psaf1) & [2](https://github.com/ll7/psaf2))
 
@@ -129,14 +129,14 @@ Teilbaum "Intersection" als Beispiel:
 
 "If there is a Intersection coming up the agent executes the following sequence of behaviours:
 
-* Approach Intersection
-  * Slows down, gets into the right lane for turning and stops at line
-* Wait at Intersection
-  * Waits for traffic lights or higher priority traffic
-* Enter Intersection
-  * Enters the intersection and stops again, if there is higher priority oncoming traffic
-* Leave Intersection
-  * Leaves the intersection in the right direction"
+- Approach Intersection
+  - Slows down, gets into the right lane for turning and stops at line
+- Wait at Intersection
+  - Waits for traffic lights or higher priority traffic
+- Enter Intersection
+  - Enters the intersection and stops again, if there is higher priority oncoming traffic
+- Leave Intersection
+  - Leaves the intersection in the right direction"
 
 [Kompletter Entscheidungsbaum](https://github.com/ll7/psaf2/tree/main/Planning/behavior_agent)
 
@@ -144,8 +144,8 @@ Teilbaum "Intersection" als Beispiel:
 
 Quellen:
 
-* <https://arxiv.org/pdf/2010.12598.pdf>
-* <https://www.shuffleai.blog/blog/Simple_Understanding_of_Kinematic_Bicycle_Model.html>
+- <https://arxiv.org/pdf/2010.12598.pdf>
+- <https://www.shuffleai.blog/blog/Simple_Understanding_of_Kinematic_Bicycle_Model.html>
 
 ![architektur gewinnterteam19](../../00_assets/gewinnerteam19-architektur.png)
 
@@ -163,8 +163,8 @@ Planning Übersicht
 
 ## Probleme
 
-* Kollision mit statischen Objekten (Gehsteig)
-* Kollision mit Fußgängern die unerwartetes Verhalten zeigen
+- Kollision mit statischen Objekten (Gehsteig)
+- Kollision mit Fußgängern die unerwartetes Verhalten zeigen
 
 Es wird vorgeschlagen ein festes Notfallmanöver für das Fahrzeug zu erstellen, welches mit einer schnelleren Reaktionszeit greift, um unerwartete Kollisionen zu verhindern.
 
@@ -221,16 +221,16 @@ Einfache Berechnung einer Kollision
 
 Wichtig ist die Sicherheitseigenschaft von Autonomen Fahrzeugen. Risiken können in drei KLassen unterteilt werden:
 
-* Kollision mit statischen Objekten
-* Kollision mit dynamischen Objekten
-* Kollision mit unerwarteten Objekten
+- Kollision mit statischen Objekten
+- Kollision mit dynamischen Objekten
+- Kollision mit unerwarteten Objekten
 
 In dem Beispielprojekt wurde eine Bewertung der Überlappung von Trajekotrien verschiedener Objekte zur HAnd genommen.
 Es wird eine mögliche Kollisionszone bestimmt. Das Fahrzeug hat hierbei drei Zonen auf seiner Trajektorie.
 
-* Danger Zone: Hier muss sofort gestoppt werden wenn ein Trajektorien Konflikt detektiert wird
-* Warning Zone: Hier entsprechend die Geschwindigkeit anpassen im Verhältnis zu der DTC (distance to collision)
-* Safe Zone
+- Danger Zone: Hier muss sofort gestoppt werden wenn ein Trajektorien Konflikt detektiert wird
+- Warning Zone: Hier entsprechend die Geschwindigkeit anpassen im Verhältnis zu der DTC (distance to collision)
+- Safe Zone
 
 Die Kollision benötigt die Position eines möglichen Kollisionsgegenstandes und seine Form.
 Wenn die Orientierung und die Geschwindigkeit verfügbar sind, kann eine Vorhersage zu der zukünftigen Position getroffen werden, um Konflikte zu vermeiden.
@@ -243,9 +243,9 @@ Annahme: Alle Verkehrsteilnehmer haben konstante Geschwindigkeit (sonst Berechnu
 
 Verkehrsszenario einer Kreuzung mit verschiedenen Zonen.
 
-* Roter Bereich: Fahrzeug verlangsamt seine Geschwindigkeit
-* Grüner Bereich: Fahrzeug kommt zum stehen
-* Oranger Bereich (Intersection): Fahrzeug betritt diesen Bereich nur,wenn kein anderer Verkehrsteilnehmer in diesem erkannt wird
+- Roter Bereich: Fahrzeug verlangsamt seine Geschwindigkeit
+- Grüner Bereich: Fahrzeug kommt zum stehen
+- Oranger Bereich (Intersection): Fahrzeug betritt diesen Bereich nur,wenn kein anderer Verkehrsteilnehmer in diesem erkannt wird
 ![statemachines](../../00_assets/statemachines.png)
 
 Aufteilung in mehrere state machines
@@ -253,13 +253,13 @@ Aufteilung in mehrere state machines
 Eine state machine oder Aufteileung in mehrere state machines
 Vorteile von mehreren state machines:
 
-* Geringere Berechnungszeit
-* einfacher zu erstellen und Instand zu halten
+- Geringere Berechnungszeit
+- einfacher zu erstellen und Instand zu halten
 
 Nachteile von mehreren state machines:
 
-* Sehr viele Regeln
-* Regeln zwischen state machines können sich wiederholen
+- Sehr viele Regeln
+- Regeln zwischen state machines können sich wiederholen
 
 Reinforcement Learning, Rule based System, Markov Decision Process
 
@@ -289,8 +289,8 @@ Fehlerminimierung bei der Trajektorienberechnung
 
 ## Trajektorie Tracking
 
-* Stanley Controller
-* Pure Pursuit Controller
+- Stanley Controller
+- Pure Pursuit Controller
 
 ## Offene Fragen aus dem [Issue](https://github.com/ll7/paf22/issues/26)
 
@@ -302,45 +302,45 @@ Dabei werden andere Fahrzeuge im näheren Umfeld des eigenen Fahrzeugs auch in d
 
 ### Eingang
 
-* Fahrzeugposition
-* Fahrzeugorientierung
-* Fahrzeuggeschwindigkeit
-* Fahrtrajektorie bzw anzufahrende Punkte aus denen trajektorie errechnet werden kann
-* Objekte auf Trajektorie
-* Ampelsignale und Verkehrsschilder
-* Geschwindigkeitsbegrenzung
-* Geschwindigkeit und Position anderer Verkehrsteilnehmer
-* Target Lane
+- Fahrzeugposition
+- Fahrzeugorientierung
+- Fahrzeuggeschwindigkeit
+- Fahrtrajektorie bzw anzufahrende Punkte aus denen trajektorie errechnet werden kann
+- Objekte auf Trajektorie
+- Ampelsignale und Verkehrsschilder
+- Geschwindigkeitsbegrenzung
+- Geschwindigkeit und Position anderer Verkehrsteilnehmer
+- Target Lane
 
 ### Ausgang
 
-* "Actions"
-  * Bremsen
-  * Beschleunigen
-  * Halten
-  * Spurwechsel
-  * ...
+- "Actions"
+  - Bremsen
+  - Beschleunigen
+  - Halten
+  - Spurwechsel
+  - ...
 
 Oder
 
-* Sollgeschwindigkeit
-* Lenkwinkel
+- Sollgeschwindigkeit
+- Lenkwinkel
 
 ### Wie sehen die Daten vom Leaderboard für das Global Planning aus
 
 "For each route, agents will be initialized at a starting point and directed to drive to a destination point, provided with a description of the route through GPS style coordinates, map coordinates and route instructions."
 
-* GPS coordinates Beispiel:
-  * {'z': 0.0, 'lat': 48.99822669411668, 'lon': 8.002271601998707}
-* Map/World coordinates Beispiel:
-  * {'x': 153.7, 'y': 15.6, 'z': 0.0}
-* Route Instructions:
-  * RoadOption.CHANGELANELEFT: Move one lane to the left.
-  * RoadOption.CHANGELANERIGHT: Move one lane to the right.
-  * RoadOption.LANEFOLLOW: Continue in the current lane.
-  * RoadOption.LEFT: Turn left at the intersection.
-  * RoadOption.RIGHT: Turn right at the intersection.
-  * RoadOption.STRAIGHT: Keep straight at the intersection.
+- GPS coordinates Beispiel:
+  - {'z': 0.0, 'lat': 48.99822669411668, 'lon': 8.002271601998707}
+- Map/World coordinates Beispiel:
+  - {'x': 153.7, 'y': 15.6, 'z': 0.0}
+- Route Instructions:
+  - RoadOption.CHANGELANELEFT: Move one lane to the left.
+  - RoadOption.CHANGELANERIGHT: Move one lane to the right.
+  - RoadOption.LANEFOLLOW: Continue in the current lane.
+  - RoadOption.LEFT: Turn left at the intersection.
+  - RoadOption.RIGHT: Turn right at the intersection.
+  - RoadOption.STRAIGHT: Keep straight at the intersection.
 
 "The distance between two consecutive waypoints could be up to hundreds of meters. Do not rely on these as your principal mechanism to navigate the environment."
 
@@ -352,9 +352,9 @@ Des Weiteren steh als globale Map ein OpenDRIVE file als String geparsed zur Ver
 
 [Beispiel 2021-2](#paf-2021-2):
 
-* global_planner (Planung einer Route von einem Startpunkt zu einem oder einer Liste an Zielpunkten)
-  * Commonroad Route Planner (TUM) -> Liste an Routen-Lanelets sowie eine Liste an Punkten mit Abstand etwa 10cm
-  * (Anreicherung mit parallelen Spuren)
+- global_planner (Planung einer Route von einem Startpunkt zu einem oder einer Liste an Zielpunkten)
+  - Commonroad Route Planner (TUM) -> Liste an Routen-Lanelets sowie eine Liste an Punkten mit Abstand etwa 10cm
+  - (Anreicherung mit parallelen Spuren)
 
 ### Wie sieht die Grenze zwischen global und local plan aus?
 
@@ -372,12 +372,12 @@ Route deviation — If an agent deviates more than 30 meters from the assigned r
 
 ### Sollgeschwindigkeitsplanung
 
-* Schilder
-  * vor Ampeln, Schildern, Kreisverkehren, Kreuzungen verzögern und langsamer werden
-* Kurvenfahrt
-  * siehe [maximale Kurvengeschwindigkeit](#vehicle-controller)
-* Vorausfahrendes Auto
-  * Geschwindigkeit an dieses Anpassen oder überholen wenn möglich
-* Straßenverhältnisse
-  * "variety of situations: including freeways, urban areas, residential districts and rural settings"
-  * "variety of weather conditions: including daylight scenes, sunset, rain, fog, and night, among others"
+- Schilder
+  - vor Ampeln, Schildern, Kreisverkehren, Kreuzungen verzögern und langsamer werden
+- Kurvenfahrt
+  - siehe [maximale Kurvengeschwindigkeit](#vehicle-controller)
+- Vorausfahrendes Auto
+  - Geschwindigkeit an dieses Anpassen oder überholen wenn möglich
+- Straßenverhältnisse
+  - "variety of situations: including freeways, urban areas, residential districts and rural settings"
+  - "variety of weather conditions: including daylight scenes, sunset, rain, fog, and night, among others"

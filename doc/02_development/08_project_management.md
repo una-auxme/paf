@@ -86,12 +86,6 @@ CARLA simulator crashes on startup on your machine.
 To create a pull request, go to the [branches overview](https://github.com/ll7/paf22/branches) and select ``New Pull Request`` for the branch you want to create a PR for.
 ![img.png](../00_assets/branch_overview.png)
 
-Alternatively you can create a PR directly from PyCharm using the ``Pull Request`` tab on the sidebar.
-
-![img.png](../00_assets/Pycharm_PR.png)
-
-For completing the pull request, fill out the template that opens up automatically.
-
 Merge the pull request after the review process is complete and all the feedback from the reviewer has been worked in.
 
 For more information about the review process, see [Review process](./07_review_guideline.md).

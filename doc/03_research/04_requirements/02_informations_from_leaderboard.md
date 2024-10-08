@@ -19,52 +19,52 @@ none
 ---
 
 <!-- TOC -->
-* [Requirements of Carla Leaderboard](#requirements-of-carla-leaderboard)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Task](#task)
-  * [Participation modalities](#participation-modalities)
-    * [Route format](#route-format)
-    * [Sensors](#sensors)
-  * [Evaluation](#evaluation)
-    * [Main score](#main-score)
-    * [Driving Score for route i](#driving-score-for-route-i)
-    * [Infraction penalty](#infraction-penalty)
-    * [Shutdown criteria](#shutdown-criteria)
-  * [Submission](#submission)
-    * [Sources](#sources)
+- [Requirements of Carla Leaderboard](#requirements-of-carla-leaderboard)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Task](#task)
+  - [Participation modalities](#participation-modalities)
+    - [Route format](#route-format)
+    - [Sensors](#sensors)
+  - [Evaluation](#evaluation)
+    - [Main score](#main-score)
+    - [Driving score for single route](#driving-score-for-single-route)
+    - [Infraction penalty](#infraction-penalty)
+    - [Shutdown criteria](#shutdown-criteria)
+  - [Submission](#submission)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ---
 
 ## Task
 
-* an autonomous agent should drive through a set of predefined routes
-* for each route:
-  * initialization at a starting point
-  * directed to drive to a destination point
-  * route described by GPS coordinates **or** map coordinates **or** route instructions
-* route situations:
-  * freeways
-  * urban areas
-  * residential districts
-  * rural settings
-* weather conditions:
-  * daylight
-  * sunset
-  * rain
-  * fog
-  * night
-  * more ...
+- an autonomous agent should drive through a set of predefined routes
+- for each route:
+  - initialization at a starting point
+  - directed to drive to a destination point
+  - route described by GPS coordinates **or** map coordinates **or** route instructions
+- route situations:
+  - freeways
+  - urban areas
+  - residential districts
+  - rural settings
+- weather conditions:
+  - daylight
+  - sunset
+  - rain
+  - fog
+  - night
+  - more ...
 
 Possible traffic signs (not complete):
 
-* Stop sign
-* Speed limitation
-* Traffic lights
-* Arrows on street
-* Stop sign on street
+- Stop sign
+- Speed limitation
+- Traffic lights
+- Arrows on street
+- Stop sign on street
 
 ## Participation modalities
 
@@ -100,12 +100,12 @@ Second, world coordinates and a route option
 
 High-level commands (rood options) are:
 
-* RoadOption.**CHANGELANELEFT**: Move one lane to the left.
-* RoadOption.**CHANGELANERIGHT**: Move one lane to the right.
-* RoadOption.**LANEFOLLOW**: Continue in the current lane.
-* RoadOption.**LEFT**: Turn left at the intersection.
-* RoadOption.**RIGHT**: Turn right at the intersection.
-* RoadOption.**STRAIGHT**: Keep straight at the intersection.
+- RoadOption.**CHANGELANELEFT**: Move one lane to the left.
+- RoadOption.**CHANGELANERIGHT**: Move one lane to the right.
+- RoadOption.**LANEFOLLOW**: Continue in the current lane.
+- RoadOption.**LEFT**: Turn left at the intersection.
+- RoadOption.**RIGHT**: Turn right at the intersection.
+- RoadOption.**STRAIGHT**: Keep straight at the intersection.
 
 **Important:** If the semantics of left and right are ambiguous, the next position should be used to clarify the path.
 
@@ -131,9 +131,9 @@ Determination how "good" the agent performs on the Leaderboard.
 
 The driving proficiency of an agent can be characterized by multiple metrics.
 
-* `Driving score:` Product between route completion and infractions penalty
-* `Route completion:` Percentage of the route distance completed by an agent
-* `Infraction penalty:` The leaderboard tracks several types of infractions which reduce the score
+- `Driving score:` Product between route completion and infractions penalty
+- `Route completion:` Percentage of the route distance completed by an agent
+- `Infraction penalty:` The leaderboard tracks several types of infractions which reduce the score
 
 Every agent starts with a base infraction score of 1.0 at the beginning.
 
@@ -147,36 +147,36 @@ Product of route completion and infraction penalty of this route
 
 Not complying with traffic rules will result in a penalty. Multiple penalties can be applied per route. Infractions ordered by severity are:
 
-* collisions with pedestrians: 0.50
-* collisions with other vehicles: 0.60
-* collisions with static elements: 0.65
-* running a red light: 0.70
-* running a stop sign: 0.80
+- collisions with pedestrians: 0.50
+- collisions with other vehicles: 0.60
+- collisions with static elements: 0.65
+- running a red light: 0.70
+- running a stop sign: 0.80
 
 It is possible that the vehicle is stuck in some scenario. After a timeout of **4 minutes** the vehicle will be released, however a penalty is applied
 
-* scenario timeout (feature behaviours can block ego vehicle): 0.70
+- scenario timeout (feature behaviours can block ego vehicle): 0.70
 
 Agent should keep a minimum speed compared to the nearby traffic. The penalty is increases with the difference in speed.
 
-* Failure to maintain minimum speed: 0.70
+- Failure to maintain minimum speed: 0.70
 
 Agent should let emergency vehicles from behind pass.
 
-* Failure to yield to emergency vehicle: 0.70
+- Failure to yield to emergency vehicle: 0.70
 
 If the agent drives off-road that percentage does not count towards the road completion
 
-* Off-road driving: not considered towards the computation of the route completion score
+- Off-road driving: not considered towards the computation of the route completion score
 
 ### Shutdown criteria
 
 Some events will interrupt the simulation of that resulting in an incomplete route
 
-* route deviation - more than 30 meters from assigned route
-* agent blocked - if agent does not take an action for 180 seconds
-* simulation timeout - no client-server communication in 60 seconds
-* route timeout - simulation takes too long to finish
+- route deviation - more than 30 meters from assigned route
+- agent blocked - if agent does not take an action for 180 seconds
+- simulation timeout - no client-server communication in 60 seconds
+- route timeout - simulation takes too long to finish
 
 ## Submission
 

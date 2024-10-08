@@ -24,11 +24,11 @@ Tim Dreier
 
 ---
 <!-- TOC -->
-* [Lidar Distance Utility](#lidar-distance-utility)
-  * [Author](#author)
-  * [Date](#date)
-  * [Configuration](#configuration)
-    * [Example](#example)
+- [Lidar Distance Utility](#lidar-distance-utility)
+  - [Author](#author)
+  - [Date](#date)
+  - [Configuration](#configuration)
+    - [Example](#example)
 <!-- TOC -->
 
 ## Configuration

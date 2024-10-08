@@ -16,24 +16,23 @@ Josef Kircher, Simon Erlbacher
 
 ---
 <!-- TOC -->
-* [Requirements](#requirements)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Requirements from Leaderboard tasks](#requirements-from-leaderboard-tasks)
-  * [Carla Leaderboard Score](#carla-leaderboard-score)
-  * [Prioritized driving aspects](#prioritized-driving-aspects)
-  * [more Content](#more-content)
-    * [Sources](#sources)
+- [Requirements](#requirements)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Requirements from Leaderboard tasks](#requirements-from-leaderboard-tasks)
+  - [Prioritized driving aspects](#prioritized-driving-aspects)
+  - [more Content](#more-content)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ## Requirements from Leaderboard tasks
 
-* follow waypoints on a route
-* don't deviate from route by more than 30 meters
-* act in accordance with traffic rules
-* don't get blocked
-* complete 10 routes (2 weather conditions)
+- follow waypoints on a route
+- don't deviate from route by more than 30 meters
+- act in accordance with traffic rules
+- don't get blocked
+- complete 10 routes (2 weather conditions)
 
 ---
 
@@ -45,33 +44,33 @@ Also, it is appropriate to implement the basic features of an autonomous car fir
 
 `Very important:`
 
-* Recognize the street limitations
-* Recognize pedestrians
-* Follow the waypoints
-* Recognize traffic lights
-* Recognize obstacles
-* Recognize cars in front of the agent (keep distance)
-* Steering, accelerate, decelerate
-* Street rules (no street signs available)
-* Change lane (obstacles)
+- Recognize the street limitations
+- Recognize pedestrians
+- Follow the waypoints
+- Recognize traffic lights
+- Recognize obstacles
+- Recognize cars in front of the agent (keep distance)
+- Steering, accelerate, decelerate
+- Street rules (no street signs available)
+- Change lane (obstacles)
 
 `Important:`
 
-* Check Intersection
-* Sense traffic (speed and trajectory)
-* Predict traffic
-* Emergency brake
-* Sense length of ramp
-* Recognize space (Turn into highway)
-* Change lane (safe)
-* Recognize emergency vehicle
-* Recognize unexpected dynamic situations (opening door, bycicles,...)
+- Check Intersection
+- Sense traffic (speed and trajectory)
+- Predict traffic
+- Emergency brake
+- Sense length of ramp
+- Recognize space (Turn into highway)
+- Change lane (safe)
+- Recognize emergency vehicle
+- Recognize unexpected dynamic situations (opening door, bycicles,...)
 
 `Less important:`
 
-* Smooth driving (accelerate, decelerate, stop)
-* Weather Condition
-* Predict pedestrians
+- Smooth driving (accelerate, decelerate, stop)
+- Weather Condition
+- Predict pedestrians
 
 ---
 

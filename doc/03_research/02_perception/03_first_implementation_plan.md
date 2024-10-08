@@ -15,23 +15,24 @@ Marco Riedenauer
 
 ---
 <!-- TOC -->
-* [First Implementation Plan](#first-implementation-plan)
-  * [Authors](#authors)
-  * [Date](#date)
-  * [Overview](#overview)
-  * [Panoptic Segmentation](#panoptic-segmentation)
-    * [Things and Stuff](#things-and-stuff)
-      * [Things](#things)
-      * [Stuff](#stuff)
-    * [Segmentation Overview](#segmentation-overview)
-    * [Image Panoptic Segmentation](#image-panoptic-segmentation)
-    * [LIDAR Panoptic Segmentation](#lidar-panoptic-segmentation)
-  * [Position Validation](#position-validation)
-  * [Obstacle Detection and Object Classification](#obstacle-detection-and-object-classification)
-  * [Lane Detection](#lane-detection)
-  * [Traffic Light Detection](#traffic-light-detection)
-  * [Traffic Sign Detection](#traffic-sign-detection)
-  * [Prediction](#prediction)
+- [First Implementation Plan](#first-implementation-plan)
+  - [Authors](#authors)
+  - [Date](#date)
+  - [Overview](#overview)
+  - [Panoptic Segmentation](#panoptic-segmentation)
+    - [Things and Stuff](#things-and-stuff)
+      - [Things](#things)
+      - [Stuff](#stuff)
+    - [Segmentation Overview](#segmentation-overview)
+    - [Image Panoptic Segmentation](#image-panoptic-segmentation)
+    - [LIDAR Panoptic Segmentation](#lidar-panoptic-segmentation)
+  - [Position Validation](#position-validation)
+  - [Obstacle Detection and Object Classification](#obstacle-detection-and-object-classification)
+  - [Lane Detection](#lane-detection)
+  - [Traffic Light Detection](#traffic-light-detection)
+  - [Traffic Sign Detection](#traffic-sign-detection)
+  - [Prediction](#prediction)
+  - [Possible Issues/Milestones](#possible-issuesmilestones)
 <!-- TOC -->
 
 ---
@@ -58,11 +59,11 @@ Stuff is the term used to define objects that don’t have proper geometry but a
 
 There are three different kinds of image segmentation:
 
-* **Semantic Segmentation**: \
+- **Semantic Segmentation**: \
     Classification of every pixel or point in an image or LIDAR map into different classes (car, person, street, ...)
-* **Instance Segmentation**: \
+- **Instance Segmentation**: \
     Detection of the different instances of things.
-* **Panoptic Segmentation**: \
+- **Panoptic Segmentation**: \
     Combination of semantic segmentation and instance segmentation. Detection of stuff plus instances of things.
 
 ![Segmentation](../../00_assets/segmentation.png)
@@ -129,11 +130,11 @@ As classification net I would recommend the [net implemented by PAF21-1](https:/
 
 Possible states are:
 
-* green
-* orange
-* red
-* off
-* backside
+- green
+- orange
+- red
+- off
+- backside
 
 ---
 
@@ -159,11 +160,11 @@ No implementation plan yet.
 
 ## Possible Issues/Milestones
 
-* Implement/Adapt panoptic segmentation model (EfficientPS)
-* (Implement/Adapt) LIDAR panoptic segmentation model (EfficientLPS)
-* Choose datasets for training
-* Generate own training data for fine-tuning
-* Implement classification net for traffic light/sign classification
-* Find ways for lane detection
-* Find solutions/implementations for the projection of LIDAR, Radar and image data
-* Position validation necessary?
+- Implement/Adapt panoptic segmentation model (EfficientPS)
+- (Implement/Adapt) LIDAR panoptic segmentation model (EfficientLPS)
+- Choose datasets for training
+- Generate own training data for fine-tuning
+- Implement classification net for traffic light/sign classification
+- Find ways for lane detection
+- Find solutions/implementations for the projection of LIDAR, Radar and image data
+- Position validation necessary?

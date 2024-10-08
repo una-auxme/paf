@@ -19,38 +19,38 @@ Gabriel Schwald, Julian Graf
 
 The job of this domain is to translate a preplanned trajectory into actual steering controls for the vehicle.
 
-* safety:
-  * never exceeding vehicle limits
-  * never exceeding speed limits
-  * never leaf path
-* driving comfort?
+- safety:
+  - never exceeding vehicle limits
+  - never exceeding speed limits
+  - never leaf path
+- driving comfort?
 
 ## Solutions from old PAF projects
 
 ### [Paf 20/1](https://github.com/ll7/psaf1/tree/master/psaf_ros/psaf_steering)
 
-* [carla_ackermann_control](https://carla.readthedocs.io/projects/ros-bridge/en/latest/carla_ackermann_control/) modified for [twist-msgs](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html)
-* input: [twist-msgs](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html) (for velocity)
-* velocity control: PID
-* lateral control: PD (heading error)
+- [carla_ackermann_control](https://carla.readthedocs.io/projects/ros-bridge/en/latest/carla_ackermann_control/) modified for [twist-msgs](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html)
+- input: [twist-msgs](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Twist.html) (for velocity)
+- velocity control: PID
+- lateral control: PD (heading error)
 
 ### [Paf 21/1](https://github.com/ll7/paf21-1/wiki/Vehicle-Controller)
 
-* input: waypoints
-* curve detection: returns distance to next curve
-* calculation of max curve speed as sqrt(friction_coefficient x gravity_accel x radius)
-* in Curve: [naive Controller](###Pure_Pursuit)
-* on straights: [Stanley Controller](###Stanley)
-* interface to rosbridge
+- input: waypoints
+- curve detection: returns distance to next curve
+- calculation of max curve speed as sqrt(friction_coefficient x gravity_accel x radius)
+- in Curve: [naive Controller](###Pure_Pursuit)
+- on straights: [Stanley Controller](###Stanley)
+- interface to rosbridge
 
 ### [Paf 20/2](https://github.com/ll7/psaf2) and [Paf 21/2](https://github.com/ll7/paf21-2/tree/main/paf_ros/paf_actor#readme)
 
-* input: odometry(position and velocity with uncertainty), local path
-* lateral: [Stanley Controller](###Stanley)
-* speed controller: pid
-* ACC (Adaptive Cruise Control): (speed, distance) -> PID
-* Unstuck-Routine (drive backwards)
-* Emergency Modus: fastest possible braking ([Tests](https://github.com/ll7/paf21-2/blob/main/docs/paf_actor/backwards/braking.md) -> handbrake with throttle, 30° steering and reverse)
+- input: odometry(position and velocity with uncertainty), local path
+- lateral: [Stanley Controller](###Stanley)
+- speed controller: pid
+- ACC (Adaptive Cruise Control): (speed, distance) -> PID
+- Unstuck-Routine (drive backwards)
+- Emergency Modus: fastest possible braking ([Tests](https://github.com/ll7/paf21-2/blob/main/docs/paf_actor/backwards/braking.md) -> handbrake with throttle, 30° steering and reverse)
 
 ## Lateral control
 
@@ -87,11 +87,11 @@ $$
 \delta(t) = arctan(2L*\frac{sin(\alpha)}{K_d*v})
 $$
 
-* simple controller
-* ignores dynamic forces
-* assumes no-slip condition
-* possible improvement: vary the look-ahead distance based on vehicle velocity
-* not really suited for straights, because ICR moves towards infinity this case
+- simple controller
+- ignores dynamic forces
+- assumes no-slip condition
+- possible improvement: vary the look-ahead distance based on vehicle velocity
+- not really suited for straights, because ICR moves towards infinity this case
 
 ### Stanley
 
@@ -118,7 +118,7 @@ The basic idea of MPC is to model the future behavior of the vehicle and compute
 ![MPC Controller](../../00_assets/research_assets/mpc.png)
 *source: [[5]](https://dingyan89.medium.com/three-methods-of-vehicle-lateral-control-pure-pursuit-stanley-and-mpc-db8cc1d32081)*
 
-* cost function can be designed to account for driving comfort
+- cost function can be designed to account for driving comfort
 
 ### [SMC](https://en.wikipedia.org/wiki/Sliding_mode_control) (sliding mode control)
 
@@ -128,10 +128,10 @@ Real implementations of sliding mode control approximate theoretical behavior wi
 ![chattering](../../00_assets/research_assets/chattering.gif)
 *source: [[9]](https://ieeexplore.ieee.org/document/1644542)*
 
-* simple
-* robust
-* stabile
-* disadvantage: chattering -> controller is ill-suited for this application
+- simple
+- robust
+- stabile
+- disadvantage: chattering -> controller is ill-suited for this application
 
 Sources:
 
@@ -155,20 +155,20 @@ PID: already implemented in [ROS](http://wiki.ros.org/pid) (and [CARLA](https://
 
 Further information:
 
-* <https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1996_1/coulter_r_craig_1996_1.pdf>
+- <https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1996_1/coulter_r_craig_1996_1.pdf>
 
 ## Interface
 
 **subscribes** to:
 
-* current position
+- current position
   ([nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html)) from Perception?
-* path ([nav_msgs/Path Message](https://docs.ros.org/en/api/nav_msgs/html/msg/Path.html)) or target point ([geometry_msgs/Pose.msg](https://docs.ros.org/en/api/geometry_msgs/html/msg/Pose.html))
-* (maximal) velocity to drive
-* (distance and speed of vehicle to follow)
-* (commands for special routines)
-* (Distance to obstacles for turning/min turning radius)
-* (Road conditions)
+- path ([nav_msgs/Path Message](https://docs.ros.org/en/api/nav_msgs/html/msg/Path.html)) or target point ([geometry_msgs/Pose.msg](https://docs.ros.org/en/api/geometry_msgs/html/msg/Pose.html))
+- (maximal) velocity to drive
+- (distance and speed of vehicle to follow)
+- (commands for special routines)
+- (Distance to obstacles for turning/min turning radius)
+- (Road conditions)
 
 **publishes**:
 [CarlaEgoVehicleControl.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehiclecontrolmsg) or [ackermann_msgs/AckermannDrive.msg](https://docs.ros.org/en/api/ackermann_msgs/html/msg/AckermannDrive.html)
@@ -177,10 +177,10 @@ Further information:
 
 In the [CarlaEgoVehicleInfo.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehicleinfomsg) we get a [CarlaEgoVehicleInfoWheel.msg](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehicleinfowheelmsg) which provides us with
 
-* tire_friction (a scalar value that indicates the friction of the wheel)
-* max_steer_angle (the maximum angle in degrees that the wheel can steer)
-* max_brake_torque (the maximum brake torque in Nm)
-* max_handbrake_torque (the maximum handbrake torque in Nm)
+- tire_friction (a scalar value that indicates the friction of the wheel)
+- max_steer_angle (the maximum angle in degrees that the wheel can steer)
+- max_brake_torque (the maximum brake torque in Nm)
+- max_handbrake_torque (the maximum handbrake torque in Nm)
 
 The max curve speed can be calculated as sqrt(**friction_coefficient**  *gravity_accel* curve_radius).
 
@@ -193,12 +193,12 @@ For debugging purposes the vehicles path can be visualized using [carlaviz](http
 
 ## Additional functionality (open for discussion)
 
-* ACC (Adaptive Cruise Control): reduces speed to keep set distance to vehicle in front (see also [cruise control technology review](https://www.sciencedirect.com/science/article/pii/S004579069700013X),
+- ACC (Adaptive Cruise Control): reduces speed to keep set distance to vehicle in front (see also [cruise control technology review](https://www.sciencedirect.com/science/article/pii/S004579069700013X),
 [a comprehensive review of the development of adaptive cruise control systems](https://www.researchgate.net/publication/245309633_A_comprehensive_review_of_the_development_of_adaptive_cruise_control_systems),
 [towards an understanding of adaptive cruise control](https://www.sciencedirect.com/science/article/pii/S0968090X0000022X), [Encyclopedia of Systems and Control](https://dokumen.pub/encyclopedia-of-systems-and-control-2nd-ed-2021-3030441830-9783030441838.html))
-* emergency braking: stops the car as fast as possible
-* emergency braking assistant: uses Lidar as proximity sensor and breaks if it would come to a collision without breaking
-* parallel parking: executes [fixed parking sequence](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5705869) to parallel park vehicle in given parking space
-* U-Turn: performs u-turn
-* Driving backwards: might a need different controller configuration
-* Unstuck routine: performs fixed routine (e.g. driving backwards) if the car hasn't moved in a while
+- emergency braking: stops the car as fast as possible
+- emergency braking assistant: uses Lidar as proximity sensor and breaks if it would come to a collision without breaking
+- parallel parking: executes [fixed parking sequence](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5705869) to parallel park vehicle in given parking space
+- U-Turn: performs u-turn
+- Driving backwards: might a need different controller configuration
+- Unstuck routine: performs fixed routine (e.g. driving backwards) if the car hasn't moved in a while

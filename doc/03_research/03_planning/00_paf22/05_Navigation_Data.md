@@ -14,13 +14,13 @@ Niklas Vogel
 
 ---
 <!-- TOC -->
-* [Navigation Data Research](#navigation-data-research)
-  * [Author](#author)
-  * [Date](#date)
-  * [How to receive navigation data](#how-to-receive-navigation-data)
-  * [Structure of navigation data](#structure-of-navigation-data)
-  * [Visualisation of received navigation data](#visualisation-of-received-navigation-data)
-* [Sources](#sources)
+- [Navigation Data Research](#navigation-data-research)
+  - [Author](#author)
+  - [Date](#date)
+  - [How to receive navigation data](#how-to-receive-navigation-data)
+  - [Structure of navigation data](#structure-of-navigation-data)
+  - [Visualisation of received navigation data](#visualisation-of-received-navigation-data)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ## How to receive navigation data
@@ -58,15 +58,15 @@ Therefore, the Map is published as topic ``/carla/hero/OpenDrive`` in [OpenDRIVE
 
 The route is published in the following topics:
 
-* ``/carla/hero/global_plan`` ([carla_msgs/CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
-* ``/carla/hero/global_plan_gnss`` ([carla_msgs/CarlaGnnsRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaGnssRoute.msg))
+- ``/carla/hero/global_plan`` ([carla_msgs/CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
+- ``/carla/hero/global_plan_gnss`` ([carla_msgs/CarlaGnnsRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaGnssRoute.msg))
 
 ## Structure of navigation data
 
 Routes consist of tuples of a position and a high level route instruction command which should be taken at that point.
 Positions are either given as GPS coordinates or as world coordinates:
 
-* GPS coordinates:
+- GPS coordinates:
 
 ```yaml
 [({'z': 0.0, 'lat': 48.99822669411668, 'lon': 8.002271601998707}, RoadOption.LEFT),
@@ -75,7 +75,7 @@ Positions are either given as GPS coordinates or as world coordinates:
  ({'z': 0.0, 'lat': 48.99822679980298, 'lon': 8.002735250105061}, RoadOption.STRAIGHT)]
 ```
 
-* World coordinates:
+- World coordinates:
 
 ```yaml
 [({'x': 153.7, 'y': 15.6, 'z': 0.0}, RoadOption.LEFT),
@@ -84,14 +84,14 @@ Positions are either given as GPS coordinates or as world coordinates:
  ({'x': 180.7, 'y': 45.1, 'z': 1.2}, RoadOption.STRAIGHT)]
 ```
 
-* High-level route instruction commands (road options):
+- High-level route instruction commands (road options):
 
-  * RoadOption.**CHANGELANELEFT**: Move one lane to the left.
-  * RoadOption.**CHANGELANERIGHT**: Move one lane to the right.
-  * RoadOption.**LANEFOLLOW**: Continue in the current lane.
-  * RoadOption.**LEFT**: Turn left at the intersection.
-  * RoadOption.**RIGHT**: Turn right at the intersection.
-  * RoadOption.**STRAIGHT**: Keep straight at the intersection.
+  - RoadOption.**CHANGELANELEFT**: Move one lane to the left.
+  - RoadOption.**CHANGELANERIGHT**: Move one lane to the right.
+  - RoadOption.**LANEFOLLOW**: Continue in the current lane.
+  - RoadOption.**LEFT**: Turn left at the intersection.
+  - RoadOption.**RIGHT**: Turn right at the intersection.
+  - RoadOption.**STRAIGHT**: Keep straight at the intersection.
 
 **Important:** Distance between route points can be up to hundreds of meters.
   
@@ -103,7 +103,7 @@ WIP
 
 notes from team intern meeting:
 
-* leaderboard evaluation visualisiert die route und scenarien evtl schon... evtl wert genauer zu betrachten
+- leaderboard evaluation visualisiert die route und scenarien evtl schon... evtl wert genauer zu betrachten
 
 ### Sources
 

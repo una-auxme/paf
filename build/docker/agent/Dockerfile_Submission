@@ -141,7 +141,7 @@ ENV CARLA_SIM_HOST=localhost
 ENV CARLA_SIM_WAIT_SECS=15
 ENV SCENARIO_RUNNER_PATH=/opt/scenario_runner
 
-# setup python path for PyCharm integration
+# setup python path
 RUN echo /catkin_ws/install/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /catkin_ws/devel/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
     echo /opt/ros/noetic/lib/python3/dist-packages >> /home/$USERNAME/.local/lib/python3.8/site-packages/carla.pth && \
