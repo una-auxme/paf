@@ -17,7 +17,6 @@ Marco Riedenauer
 ## First install
 
 For execution of the program, cuda-toolkit v11.7 has to be installed on both, your computer and the docker container.
-Cuda-toolkit should already be installed on the docker container by executing ```b5 install``` in your build folder:
 
 For installing cuda-toolkit on your computer, execute step-by-step the following commands in your command line:
 
@@ -51,8 +50,3 @@ the installer outputs that already another version of cuda-toolkit is installed,
 you have to uninstall the old version first.
 
 This can be done by executing the file `cuda-uninstaller` in the installation folder, usually `/usr/local/cuda-x.y/bin`.
-
-### Executing b5 install/update leads to an error of incompatible nvcc and drivers
-
-I had this problem after reinstalling cuda-toolkit on my computer. The best workaround I found is to uninstall all
-NVIDIA drivers and cuda-toolkit and reinstall both of them.

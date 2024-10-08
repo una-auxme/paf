@@ -51,8 +51,8 @@ Replace the ip-address in the following files:
 ### Start the agent on your local machine
 
 ```bash
-b5 run_distributed
-b5 run_dev_distributed
+docker compose -f build/docker-compose_distributed.yaml up
+docker compose -f build/docker-compose_dev_distributed.yaml up
 ```
 
 ## How do you know that you do not have enough compute resources?

@@ -81,11 +81,9 @@ index d1ae1df..ef1b503 100644
 
 To run the dataset generator, first the Carla Simulator has to be running:
 
-  ```bash
-  b5 run carla-simulator
-  ```
+Start the docker containr `leaderboard-2.0`.
 
-You can then run the dataset generator by executing the following command in the `b5 shell`:
+You can then run the dataset generator by executing the following command in an attached shell:
 
 ```bash
 python3 perception/src/dataset_generator.py --host carla-simulator --port 2000 --use-empty-world
@@ -119,7 +117,7 @@ the
     # ...
 ```
 
-Once the leaderboard evaluator is running, you can start the dataset generator in the `b5 shell`:
+Once the leaderboard evaluator is running, you can start the dataset generator in an attached shell:
 
 ```bash
 python3 perception/src/dataset_generator.py --host carla-simulator --port 2000

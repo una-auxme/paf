@@ -1,38 +1,12 @@
 # 🛠️ Installation
 
-To run the project you have to install [b5](https://github.com/team23/b5) and [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support, [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
+To run the project you have to install [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support, [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 
-For development, we further recommend PyCharm Professional. More information about its installation can be found in [PyCharm Setup](../02_development/06_pycharm_setup.md)
+For development, we recommend Visual Studio Code with the plugins that are recommended inside the `.vscode` folder.
 
 ## Installation
 
-If not yet installed first install b5 and docker as described in section [b5 installation](#b5-installation) and [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support).
-
-After that setting up the project and executing it is as easy as that:
-
-```shell
-# Setup project
-b5 install
-
-# Run project
-b5 run
-```
-
-## b5 installation
-
-Make sure you have installed python and pip. If not yet installed, you can do by the following (Ubuntu):
-
-```shell
-# Install python3
-sudo apt install python3
-```
-
-Afterwards just install b5 by running:
-
-```shell
-# Install b5
-pip install b5
-```
+If not yet installed first install docker as described in section [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support).
 
 ## Docker with NVIDIA GPU support
 
@@ -89,20 +63,6 @@ sudo systemctl restart docker
 ```
 
 ## 🚨 Common Problems
-
-### `b5: command not found`
-
----
-
-1. If you already installed b5 (`pip install b5`) try to log out and log back in.
-
-2. If that doesn't help add this line to your `~/.bash_profile` or `~/.bashrc`:
-
-    ```shell
-    export PATH=$PATH:$HOME/.local/bin
-    ```
-
-([possible reason](https://stackoverflow.com/a/73256004))
 
 ### Vulkan device not available
 

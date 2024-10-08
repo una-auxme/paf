@@ -183,7 +183,7 @@ To be able to save data in csv files you just need to uncomment the saving metho
 To use the [viz.py](../../code/perception/src/00_Experiments/Position_Heading_Datasets/viz.py) file you will have to:
 
 1. Configure the main method to your likings inside the viz.py: ![picture](/doc/00_assets/perception/sensor_debug_viz_config.png)
-2. Open up the b5 shell typing ```b5 shell``` into the terminal
+2. Open up an attached shell
 3. Navigate to the code/perception/src/00_Experiments/Position_Heading folder using ```cd```
 4. run the viz.py using ```python viz.py```
 
