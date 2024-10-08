@@ -16,28 +16,27 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Re-evaluation of decision making component](#re-evaluation-of-decision-making-component)
-  * [**Summary:** This page gives a foundation for the re-evaluation of the decision-making](#summary-this-page-gives-a-foundation-for-the-re-evaluation-of-the-decision-making)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Reasons for re-evaluation](#reasons-for-re-evaluation)
-  * [Options](#options)
-    * [Pylot](#pylot)
-    * [Pytrees](#pytrees)
-      * [Pros](#pros)
-      * [Cons](#cons)
-  * [Conclusion](#conclusion)
-    * [Sources](#sources)
+- [Re-evaluation of decision making component](#re-evaluation-of-decision-making-component)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Reasons for re-evaluation](#reasons-for-re-evaluation)
+  - [Options](#options)
+    - [Pylot](#pylot)
+    - [Pytrees](#pytrees)
+      - [Pros](#pros)
+      - [Cons](#cons)
+  - [Conclusion](#conclusion)
+    - [Sources](#sources)
 <!-- TOC -->
 ## Reasons for re-evaluation
 
 In the last sprint, I tried to get a graphic tool to work with the docker container withing the project. That failed, but I still think, that a graphical representation would be helpful.
 Other reasons are:
 
-* not much time has been allocated for the state machine so far
-* using SMACH would result in a mostly from scratch implementation
-* harder to debug due to the lack of a graphic representation
+- not much time has been allocated for the state machine so far
+- using SMACH would result in a mostly from scratch implementation
+- harder to debug due to the lack of a graphic representation
 
 ## Options
 
@@ -56,18 +55,18 @@ As it is looking very promising, I list here a few arguments to help support my 
 
 #### Pros
 
-* support a graphical representation at runtime with rqt
-* a lot of similar driving scenarios as the old team
-* so a lot of code can be recycled
-* quite intuitive and easy to understand
-* only a limited amount of commands (easy to learn)
-* well documented
-* maintained
+- support a graphical representation at runtime with rqt
+- a lot of similar driving scenarios as the old team
+- so a lot of code can be recycled
+- quite intuitive and easy to understand
+- only a limited amount of commands (easy to learn)
+- well documented
+- maintained
 
 #### Cons
 
-* only a couple of decision can be made inside the tree, so it might be more complicated to depict the complex behaviour of the ego vehicle
-* A lot of time was invested in the design of the original state machine, might be needed to be adapted
+- only a couple of decision can be made inside the tree, so it might be more complicated to depict the complex behaviour of the ego vehicle
+- A lot of time was invested in the design of the original state machine, might be needed to be adapted
 
 ## Conclusion
 

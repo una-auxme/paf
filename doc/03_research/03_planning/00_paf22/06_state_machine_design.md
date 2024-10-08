@@ -14,33 +14,32 @@ Josef Kircher
 
 ---
 <!-- TOC -->
-* [Title of wiki page](#title-of-wiki-page)
-  * [Author](#author)
-  * [Date](#date)
-  * [Super state machine](#super-state-machine)
-  * [Driving state machine](#driving-state-machine)
-    * [KEEP](#keep)
-    * [ACCEL](#accel)
-    * [Brake](#brake)
-  * [Lane change state machine](#lane-change-state-machine)
-    * [DECIDE_LANE_CHANGE](#decidelanechange)
-    * [CHANGE_LANE_LEFT](#changelaneleft)
-    * [CHANGE_LANE_RIGHT](#changelaneright)
-  * [Intersection state machine](#intersection-state-machine)
-    * [APPROACH_INTERSECTION](#approachintersection)
-    * [IN_INTERSECTION](#inintersection)
-    * [TURN_LEFT](#turnleft)
-    * [STRAIGHT](#straight)
-    * [TURN_RIGHT](#turnright)
-    * [LEAVE_INTERSECTION](#leaveintersection)
-  * [Stop sign/traffic light state machine](#stop-signtraffic-light-state-machine)
-    * [STOP_NEAR](#stopnear)
-    * [STOP_SLOW_DOWN](#stopslowdown)
-    * [STOP_WILL_STOP](#stopwillstop)
-    * [STOP_WAIT](#stopwait)
-    * [STOP_GO](#stopgo)
-  * [Implementation](#implementation)
-    * [Sources](#sources)
+- [State machine design](#state-machine-design)
+  - [Author](#author)
+  - [Date](#date)
+  - [Super state machine](#super-state-machine)
+  - [Driving state machine](#driving-state-machine)
+    - [KEEP](#keep)
+    - [UPDATE\_TARGET\_SPEED](#update_target_speed)
+  - [Lane change state machine](#lane-change-state-machine)
+    - [DECIDE\_LANE\_CHANGE](#decide_lane_change)
+    - [CHANGE\_LANE\_LEFT](#change_lane_left)
+    - [CHANGE\_LANE\_RIGHT](#change_lane_right)
+  - [Intersection state machine](#intersection-state-machine)
+    - [APPROACH\_INTERSECTION](#approach_intersection)
+    - [IN\_INTERSECTION](#in_intersection)
+    - [TURN\_LEFT](#turn_left)
+    - [STRAIGHT](#straight)
+    - [TURN\_RIGHT](#turn_right)
+    - [LEAVE\_INTERSECTION](#leave_intersection)
+  - [Stop sign/traffic light state machine](#stop-signtraffic-light-state-machine)
+    - [STOP\_NEAR](#stop_near)
+    - [STOP\_SLOW\_DOWN](#stop_slow_down)
+    - [STOP\_WILL\_STOP](#stop_will_stop)
+    - [STOP\_WAIT](#stop_wait)
+    - [STOP\_GO](#stop_go)
+  - [Implementation](#implementation)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ## Super state machine
@@ -51,9 +50,9 @@ The super state machine functions as a controller of the main functions of the a
 
 Those functions are
 
-* following the road and brake in front of obstacles if needed
-* drive across an intersection
-* change lane
+- following the road and brake in front of obstacles if needed
+- drive across an intersection
+- change lane
 
 ## Driving state machine
 
@@ -61,8 +60,8 @@ Those functions are
 
 Transition:
 
-* From `Intersection state machine`
-* From `Lane change state machine`
+- From `Intersection state machine`
+- From `Lane change state machine`
 
 This state machine controls the speed of the ego-vehicle. It either tells the acting part of the ego vehicle to `UPDATE_TARGET_SPEED` or `KEEP` the velocity.
 
@@ -74,7 +73,7 @@ If there is an event requiring the ego-vehicle to change the lane as mentioned i
 
 Transition:
 
-* From `UPDATE_TARGET_SPEED`
+- From `UPDATE_TARGET_SPEED`
 
 Keep the current target speed, applied most of the time. From here changes to the `UPDATE_TARGET_SPEED` state are performed, if events require a change of `target_speed`.
 
@@ -82,7 +81,7 @@ Keep the current target speed, applied most of the time. From here changes to th
 
 Transition:
 
-* From `KEEP` if `new target_speed` is smaller or greater than current `target_speed` or an `obstacle` or the `leading_vehicle` is in braking distance.
+- From `KEEP` if `new target_speed` is smaller or greater than current `target_speed` or an `obstacle` or the `leading_vehicle` is in braking distance.
 
 Set a new target speed and change back to `KEEP` state afterwards.
 
@@ -92,26 +91,26 @@ Set a new target speed and change back to `KEEP` state afterwards.
 
 Transition:
 
-* From `driving state machine` by `lane_change_requested`
+- From `driving state machine` by `lane_change_requested`
 
 This state machine completes the change of a lane. This is triggered from the super state machine and can have multiple triggers. Those include:
 
-* Join highway
-* Leave highway
-* RoadOption:
-  * CHANGELANELEFT
-  * CHANGELANERIGHT
-  * KEEPLANE
-* avoid obstacle(doors, static objects)
-* give way to emergency vehicle
-* overtake slow moving vehicle
-* leave a parking bay
+- Join highway
+- Leave highway
+- RoadOption:
+  - CHANGELANELEFT
+  - CHANGELANERIGHT
+  - KEEPLANE
+- avoid obstacle(doors, static objects)
+- give way to emergency vehicle
+- overtake slow moving vehicle
+- leave a parking bay
 
 ### DECIDE_LANE_CHANGE
 
 Transition:
 
-* From super state machine by above triggers
+- From super state machine by above triggers
 
 From the super state machine the transition to change the lane is given by one of the above triggers. This state decides to which lane should be changed dependent on the trigger.
 It takes into account if there are lanes to the left and/or right and if the lane change is requested by a roadOption command.
@@ -120,7 +119,7 @@ It takes into account if there are lanes to the left and/or right and if the lan
 
 Transition:
 
-* From `DECIDE_LANE_CHANGE` by `RoadOption.CHANGELANELEFT` or `obstacle_in_lane` or `leader_vehicle_speed < LEADERTHRESHOLD`
+- From `DECIDE_LANE_CHANGE` by `RoadOption.CHANGELANELEFT` or `obstacle_in_lane` or `leader_vehicle_speed < LEADERTHRESHOLD`
 
 This state performs a lane change to the lane on the left.
 
@@ -134,8 +133,8 @@ If an obstacle or a slow leading vehicle are the reasons for the lane change, to
 
 Transition:
 
-* From `DECIDE_LANE_CHANGE` by `RoadOption.CHANGELANERIGHT` or `emergency_vehicle_in_front`
-* From `CHANGE_LANE_LEFT` by `passing_obstacle` or `slow_leading_vehicle`
+- From `DECIDE_LANE_CHANGE` by `RoadOption.CHANGELANERIGHT` or `emergency_vehicle_in_front`
+- From `CHANGE_LANE_LEFT` by `passing_obstacle` or `slow_leading_vehicle`
 
 For changing to the right lane it is assumed, that the traffic in this lane flows in the driving direction of the ego vehicle.
 
@@ -147,7 +146,7 @@ The lane change should be performed if the lane is free and there are no fast mo
 
 Transition:
 
-* From `driving state machine` by `intersection_detected`
+- From `driving state machine` by `intersection_detected`
 
 This state machine handles the passing of an intersection.
 
@@ -163,8 +162,8 @@ If there are is a traffic light or a stop sign at the intersection change to the
 
 Transition:
 
-* From `STOP_SIGN/TRAFFIC SM` by `clearing the traffic light, stop sign`
-* From `APPROACH_INTERSECTION` by `detecting an unsignalized and cleared intersection`
+- From `STOP_SIGN/TRAFFIC SM` by `clearing the traffic light, stop sign`
+- From `APPROACH_INTERSECTION` by `detecting an unsignalized and cleared intersection`
 
 After the approach of the intersection and clear a possible traffic light/stop sign, the ego vehicle enters the intersection.
 
@@ -174,7 +173,7 @@ From there the RoadOption decides in which direction the ego vehicle should turn
 
 Transition:
 
-* From `IN_INTERSECTION` by `RoadOption.LEFT`
+- From `IN_INTERSECTION` by `RoadOption.LEFT`
 
 Check for pedestrians on the driving path. If the path is clear of pedestrians, make sure there will be no crashes during the turning process with oncoming traffic.
 
@@ -182,7 +181,7 @@ Check for pedestrians on the driving path. If the path is clear of pedestrians, 
 
 Transition:
 
-* From `IN_INTERSECTION` by `RoadOption.STRAIGHT`
+- From `IN_INTERSECTION` by `RoadOption.STRAIGHT`
 
 Check if there is a vehicle running a red light in the intersection. Pass the intersection.
 
@@ -190,7 +189,7 @@ Check if there is a vehicle running a red light in the intersection. Pass the in
 
 Transition:
 
-* From `IN_INTERSECTION` by `RoadOption.RIGHT`
+- From `IN_INTERSECTION` by `RoadOption.RIGHT`
 
 Check for pedestrians on the driving path. If the path is clear of pedestrians, make sure there will be no crashes during the turning process with crossing traffic.
 
@@ -198,7 +197,7 @@ Check for pedestrians on the driving path. If the path is clear of pedestrians, 
 
 Transition:
 
-* From `TURN_RIGHT`, `STRAIGHT` or `TURN_LEFT` by passing a distance from the intersection.
+- From `TURN_RIGHT`, `STRAIGHT` or `TURN_LEFT` by passing a distance from the intersection.
 
 ## Stop sign/traffic light state machine
 
@@ -206,7 +205,7 @@ Transition:
 
 Transition:
 
-* From `APPROACH_INTERSECTION` by `stop_sign_detected or traffic_light_detected`
+- From `APPROACH_INTERSECTION` by `stop_sign_detected or traffic_light_detected`
 
 This state machine handles the handling of stop signs and traffic lights.
 
@@ -218,7 +217,7 @@ If the traffic light/stop sign is near, reduce speed. Avoid crashes with slowly 
 
 Transitions:
 
-* From `STOP_NEAR` if `distance greater braking distance`.
+- From `STOP_NEAR` if `distance greater braking distance`.
 
 Slow down near the traffic light to be able to react to quick changes.
 
@@ -226,10 +225,10 @@ Slow down near the traffic light to be able to react to quick changes.
 
 Transition:
 
-* From `STOP_NEAR` if `distance < braking distance` while sensing a traffic_light that is `red` or `yellow` or a `stop sign`
-* From `STOP_SLOW_DOWN` if `distance < braking distance`
-* From `STOP_GO` if the traffic light changes from `green` to `yellow` or `red` and the ego vehicle can stop in front of the stop sign/traffic light.
-* From `STOP_WAIT` if the there is a predominant stop sign and the ego vehicle didn't reach the stop line.
+- From `STOP_NEAR` if `distance < braking distance` while sensing a traffic_light that is `red` or `yellow` or a `stop sign`
+- From `STOP_SLOW_DOWN` if `distance < braking distance`
+- From `STOP_GO` if the traffic light changes from `green` to `yellow` or `red` and the ego vehicle can stop in front of the stop sign/traffic light.
+- From `STOP_WAIT` if the there is a predominant stop sign and the ego vehicle didn't reach the stop line.
 
 Stop in front of the traffic light or the stop sign.
 
@@ -237,7 +236,7 @@ Stop in front of the traffic light or the stop sign.
 
 Transition:
 
-* From `STOP_WILL_STOP` by either vehicle has stopped or distance to stop line is less than 2 meters
+- From `STOP_WILL_STOP` by either vehicle has stopped or distance to stop line is less than 2 meters
 
 The vehicle has stopped and waits eiter until leading vehicle continues to drive or traffic rules permit to continue driving.
 
@@ -245,9 +244,9 @@ The vehicle has stopped and waits eiter until leading vehicle continues to drive
 
 Transition:
 
-* From `STOP_NEAR` if traffic light is `green` or `off`
-* From `STOP_SLOW_DOWN` if traffic light is `green` or `off`
-* FROM `STOP_WAIT` if traffic light is `green` or `off`
+- From `STOP_NEAR` if traffic light is `green` or `off`
+- From `STOP_SLOW_DOWN` if traffic light is `green` or `off`
+- FROM `STOP_WAIT` if traffic light is `green` or `off`
 
 Ego vehicle starts to accelerate to clear the traffic sign/traffic light or continues to drive if the traffic light is green or deactivated.
 

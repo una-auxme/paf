@@ -16,18 +16,20 @@ Josef Kircher
 
 VSCode Extensions:
 
-* Markdown All in One by Yu Zhang (for TOC)
+- Markdown All in One by Yu Zhang (for TOC)
 
 ---
+
 <!-- TOC -->
-* [Title of wiki page](#title-of-wiki-page)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Some Content](#some-content)
-  * [more Content](#more-content)
-    * [Sources](#sources)
+- [Title of wiki page](#title-of-wiki-page)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Some Content](#some-content)
+  - [more Content](#more-content)
+    - [Sources](#sources)
 <!-- TOC -->
+
 ## Some Content
 
 ## more Content

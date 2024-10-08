@@ -16,7 +16,7 @@ Josef Kircher
 
 VSCode Extensions:
 
-* Markdown All in One by Yu Zhang (for TOC)
+- Markdown All in One by Yu Zhang (for TOC)
 
 ---
 
@@ -74,9 +74,9 @@ Ordered List
 ---
 Unordered List
 
-* First item
-* Second item
-* Third item
+- First item
+- Second item
+- Third item
 
 ---
 Code  
@@ -142,10 +142,10 @@ Strikethrough
 
 Task List
 
-* [x] Write the press release
-* [ ] Update the website
+- [x] Write the press release
+- [ ] Update the website
 
-* [ ] Contact the media
+- [ ] Contact the media
 
 ---
 
