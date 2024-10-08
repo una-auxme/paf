@@ -5,12 +5,6 @@ services:
     volumes:
       - ../:/apps
 
-  comlipy:
-    build: docker/comlipy
-    command: .
-    volumes:
-      - ../:/apps
-
   mdlint:
     image: peterdavehello/markdownlint:0.32.2
     command: markdownlint .
