@@ -7,21 +7,24 @@ facilitating both normal and distributed execution modes.
 
 ## Table of Contents
 
-- [Directory Structure](#directory-structure)
-- [Base Service Files](#base-service-files)
-  - [`agent_service.yaml`](#agent_serviceyaml)
-  - [`carla-simulator_service.yaml`](#carla-simulator_serviceyaml)
-  - [`linter_services.yaml`](#linter_servicesyaml)
-  - [`roscore_service.yaml`](#roscore_serviceyaml)
-- [Docker Compose Files](#docker-compose-files)
-  - [`docker-compose.yaml`](#docker-composeyaml)
-  - [`docker-compose_dev.yaml`](#docker-composedevyaml)
-  - [`docker-compose_cicd.yaml`](#docker-compose_cicdyaml)
-- [Execution Modes](#execution-modes)
-  - [Normal Execution](#normal-execution)
-  - [Distributed Execution](#distributed-execution)
-- [Usage](#usage)
-- [Notes](#notes)
+- [Build Directory Documentation](#build-directory-documentation)
+  - [Table of Contents](#table-of-contents)
+  - [Directory Structure](#directory-structure)
+  - [Base Service Files](#base-service-files)
+    - [`agent_service.yaml`](#agent_serviceyaml)
+    - [`carla-simulator_service.yaml`](#carla-simulator_serviceyaml)
+    - [`linter_services.yaml`](#linter_servicesyaml)
+    - [`roscore_service.yaml`](#roscore_serviceyaml)
+  - [Docker Compose Files](#docker-compose-files)
+    - [`docker-compose.yaml`](#docker-composeyaml)
+    - [`docker-compose_dev.yaml`](#docker-compose_devyaml)
+    - [`docker-compose_cicd.yaml`](#docker-compose_cicdyaml)
+  - [Execution Modes](#execution-modes)
+    - [Normal Execution](#normal-execution)
+    - [Distributed Execution](#distributed-execution)
+  - [Usage](#usage)
+  - [Notes](#notes)
+  - [Conclusion](#conclusion)
 
 ## Directory Structure
 
@@ -65,7 +68,6 @@ Defines the configuration for the `carla-simulator` service, which runs the CARL
 Defines services for code linting and static analysis. Includes:
 
 - **flake8**: For Python linting.
-- **comlipy**: Custom linting based on project requirements.
 - **mdlint**: For Markdown file linting.
 - **Volumes**: Mounts the project directory for linting files within the container.
 

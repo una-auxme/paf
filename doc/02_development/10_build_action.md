@@ -32,7 +32,6 @@ Tim Dreier, Korbinian Stein
     - [2. Set up Docker Buildx (`docker/setup-buildx-action@v2`)](#2-set-up-docker-buildx-dockersetup-buildx-actionv2)
     - [3. Log in to the Container registry (`docker/login-action@v2`)](#3-log-in-to-the-container-registry-dockerlogin-actionv2)
     - [4. Bump version and push tag (`mathieudutour/github-tag-action`)](#4-bump-version-and-push-tag-mathieudutourgithub-tag-action)
-      - [Example](#example)
     - [5. Get commit hash](#5-get-commit-hash)
     - [6. Build and push Docker image](#6-build-and-push-docker-image)
   - [The drive job](#the-drive-job)
@@ -85,18 +84,6 @@ Example taken from [here](https://docs.github.com/en/actions/publishing-packages
 ### 4. Bump version and push tag ([`mathieudutour/github-tag-action`](https://github.com/mathieudutour/github-tag-action))
 
 If the current commit is on the `main` branch, this action bumps the version and pushes a new tag to the repo.
-Creates a new tag with a [semantic version](https://semver.org/) number for the release.
-The version number is determinated by the name of the commits in the release.
-
-This is possible since [conventional commits](https://www.conventionalcommits.org/) are enforced by comlipy as
-described [here](./02_linting.md).
-
-#### Example
-
-| Commit message                                         | Release type  | Previous version number | New version number |
-|--------------------------------------------------------|---------------|-------------------------|--------------------|
-| fix(#39): build failing due to incorrect configuration | Patch Release | 0.0.1                   | 0.0.2              |
-| feat(#39): Add automatic build process                 | Minor Release | 0.0.1                   | 0.1.0              |
 
 Major releases can be done manually (e.g. `git tag v1.0.0`).
 
