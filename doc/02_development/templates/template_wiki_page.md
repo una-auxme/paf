@@ -20,34 +20,24 @@ VSCode Extensions:
 
 ---
 
-How to generate a TOC in VSCode and Pycharm:
+How to generate a TOC in VSCode:
 
 VSCode:
 
-1. Install Markdown All in One via Extensions
-2. ``Ctrl+Shift+P``
-3. Command "Create Table of Contents"
-
-Cosmetic change: Markdown All in One uses `-` as unordered list indicator, to change it to `*` like in Pycharm
-
-Go to Extension setting and change it under `Markdown>Extension>Toc>Unordered List:Marker`
-
-Pycharm:
-
-1. ``Alt+Ins``
-2. Select Table of Contents
-3. To update Table of Contents follow Step 1. and select Update Table of Contents
+1. ``Ctrl+Shift+P``
+2. Command "Create Table of Contents"
 
 <!-- TOC -->
-* [Title of wiki page](#title-of-wiki-page)
-  * [Author](#author)
-  * [Date](#date)
-  * [Prerequisite](#prerequisite)
-  * [Cheat Sheet](#cheat-sheet)
-    * [Basics](#basics)
-    * [Extended](#extended)
-  * [more Content](#more-content)
-    * [Sources](#sources)
+- [Title of wiki page](#title-of-wiki-page)
+  - [Author](#author)
+  - [Date](#date)
+  - [Prerequisite](#prerequisite)
+  - [Cheat Sheet](#cheat-sheet)
+    - [Basics](#basics)
+    - [Extended](#extended)
+      - [My Great Heading {#custom-id}](#my-great-heading-custom-id)
+  - [more Content](#more-content)
+    - [Sources](#sources)
 <!-- TOC -->
 
 ## Cheat Sheet

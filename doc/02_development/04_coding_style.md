@@ -20,10 +20,6 @@ VSCode Extensions:
 
 - autoDostring - Python Docstring Generator by Nils Werner
 
-To get the ReST format like in Pycharm:
-
-- Go to Extension setting and change it under `Auto Doctring:Docstring Format` to `sphinx-notypes`
-
 ---
 <!-- TOC -->
 - [Coding style guidelines](#coding-style-guidelines)
