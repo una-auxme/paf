@@ -45,10 +45,9 @@ There is a very simple example for pytrees.
 
 Run:
 
-1. call `b5 update` to update docker container
-2. call `b5 run` to start container
-3. in a second shell call `b5 shell`
-4. run `py-trees-demo-behaviour-lifecycle` to execute the example
+1. Start the dev container for the agent
+2. Attach a shell to the container
+3. run `py-trees-demo-behaviour-lifecycle` to execute the example
 
 ## Common commands
 

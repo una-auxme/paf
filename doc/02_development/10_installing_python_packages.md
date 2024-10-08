@@ -28,15 +28,3 @@ An example how this file could look like is given below:
 torch==1.13.0
 torchvision==0.1.9
 ```
-
-To install the added packages run `b5 install` afterwards.
-
-## Common Problems
-
-Sometimes, PyCharm does not recognize installed packages on the docker container.
-This leads to the problem that the program cannot be started in PyCharm via the run button, but only via command line.
-
-A workaround for this problem is:
-
-1. Run ```docker compose build``` in the console in the build folder.
-2. Click on the python interpreter in the lower right corner and reselect it.

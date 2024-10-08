@@ -18,8 +18,6 @@ To enforce unified standards in all python files, we use [Flake8](https://pypi.o
 
 To enforce unified standards in all markdown files, we use [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli). More details on it can be found in the according documentation.
 
-The markdown linter can fix some errors on its own by executing `b5 markdown:fix`.
-
 ## 🚨 Common Problems
 
 Currently, we are not aware about any Problems.
