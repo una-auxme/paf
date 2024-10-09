@@ -2,7 +2,7 @@
 include:
   # linter runs in a seperate workflow
   - roscore_service.yaml
-  - carla-simulator_service.yaml
+  - docker-compose.carla-simulator.yaml
 
 services:
   agent:

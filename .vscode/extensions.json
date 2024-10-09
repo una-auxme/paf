@@ -10,6 +10,7 @@
         "ms-python.flake8",
         "bierner.markdown-mermaid",
         "richardkotze.git-mob",
-        "ms-vscode-remote.remote-containers"
+        "ms-vscode-remote.remote-containers",
+        "valentjn.vscode-ltex"
     ]
 }

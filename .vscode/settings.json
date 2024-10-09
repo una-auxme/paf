@@ -19,5 +19,12 @@
             "query": "state:open repo:${owner}/${repository} sort:created-desc"
         }
     ],
-    "ltex.language": "en-US"
+    "ltex.language": "en-US",
+    "docker.commands.composeUp": [
+        {
+            "label": "Compose Up",
+            "template": "xhost +local: && ${composeCommand} ${configurationFile} up"
+        }
+    ],
+    "workbench.iconTheme": "vscode-icons"
 }
