@@ -1,10 +1,8 @@
 # Research
 
-This folder contains every research we did before we started the project.
+This folder contains the research of each individual group at the start of the project.
 
-The research is structured in the following folders:
+The research is structured in folders for each year:
 
-- [Acting](./acting/README.md)
-- [Perception](./perception/README.md)
-- [Planning](./planning/README.md)
-- [Requirements](./requirements/README.md)
+- [PAF22](./paf22/)
+- [PAF23](./paf23/)
