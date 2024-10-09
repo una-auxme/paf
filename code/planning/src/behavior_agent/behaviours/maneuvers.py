@@ -405,7 +405,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     """
     Documentation to this behavior can be found in
-    /doc/07_planning/Behavior_detailed.md
+    /doc/planning/Behavior_detailed.md
 
     This behavior is triggered when the vehicle is stuck and needs to be
     unstuck. The behavior will then try to reverse and steer to the left or

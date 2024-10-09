@@ -189,7 +189,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
         This method saves the current location errors in a csv file.
         in the folders of
-        paf/doc/06_perception/00_Experiments/kalman_datasets
+        paf/doc/perception/experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # stop saving data when max is reached
@@ -199,7 +199,7 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
-                     'src/00_Experiments/' + FOLDER_PATH)
+                     'src/experiments/' + FOLDER_PATH)
         folder_path_x = base_path + '/x_error'
         folder_path_y = base_path + '/y_error'
         # Ensure the directories exist
@@ -222,7 +222,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
         This method saves the current heading errors in a csv file.
         in the folders of
-        paf/doc/06_perception/00_Experiments/kalman_datasets
+        paf/doc/perception/experiments/kalman_datasets
         It does this for a limited amount of time.
         """
         # if rospy.get_time() > 45 stop saving data:
@@ -232,7 +232,7 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         # Specify the path to the folder where you want to save the data
         base_path = ('/workspace/code/perception/'
-                     'src/00_Experiments' + FOLDER_PATH)
+                     'src/experiments' + FOLDER_PATH)
         folder_path_heading = base_path + '/heading_error'
 
         # Ensure the directories exist

@@ -145,7 +145,7 @@ Distributed execution separates the agent and the CARLA simulator onto different
 - Running large vision models that require extensive VRAM.
 - The single machine's resources are insufficient to handle both the agent and simulator.
 
-**Note**: In distributed execution, the CARLA simulator must be running on a second desktop PC, and the `CARLA_SIM_HOST` environment variable should be set accordingly. Further information can be found in [here](../doc/02_development/14_distributed_simulation.md).  
+**Note**: In distributed execution, the CARLA simulator must be running on a second desktop PC, and the `CARLA_SIM_HOST` environment variable should be set accordingly. Further information can be found in [here](../doc/development/distributed_simulation.md).  
 
 ## Usage
 

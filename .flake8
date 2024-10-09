@@ -3,5 +3,5 @@ exclude= code/planning/src/behavior_agent/behavior_tree.py,
          code/planning/src/behavior_agent/behaviours/__init__.py,
          code/planning/src/behavior_agent/behaviours,
          code/planning/__init__.py,
-         doc/02_development/templates/template_class_no_comments.py,
-         doc/02_development/templates/template_class.py
+         doc/development/templates/template_class_no_comments.py,
+         doc/development/templates/template_class.py

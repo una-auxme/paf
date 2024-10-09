@@ -1,6 +1,6 @@
 # Praktikum Autonomes Fahren - PAF
 
-This repository contains the source code for the "Praktikum Autonomes Fahren" at the Chair of Mechatronics from the University of Augsburg in the winter semester of 2023/2024.
+This repository contains the source code for the "Praktikum Autonomes Fahren" at the Chair of Mechatronics from the University of Augsburg.
 The goal of the project is to develop a self-driving car that can navigate through a simulated environment.
 The project is based on the [CARLA simulator](https://carla.org/) and uses the [ROS](https://www.ros.org/) framework for communication between the different components.
 In the future, the project aims to contribute to the [CARLA Autonomous Driving Challenge](https://leaderboard.carla.org/challenge/).
@@ -27,12 +27,12 @@ To run the project you have to install [docker](https://docs.docker.com/engine/i
 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 `docker` and `nvidia-docker` are used to run the project in a containerized environment with GPU support.
 
-More detailed instructions about setup and execution can be found [here](./doc/01_general/Readme.md).
+More detailed instructions about setup and execution can be found [here](./doc/general/Readme.md).
 
 ## Development
 
-If you contribute to this project please read the guidelines first. They can be found [here](./doc/02_development/Readme.md).
+If you contribute to this project please read the guidelines first. They can be found [here](./doc/development/Readme.md).
 
 ## Research
 
-The research on existing projects we did can be found [here](./doc/03_research/Readme.md).
+The research on existing projects we did can be found [here](./doc/research/Readme.md).

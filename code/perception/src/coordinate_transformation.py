@@ -118,7 +118,7 @@ def ecef_to_enu(x, y, z, lat0, lon0, h0):
 def quat_to_heading(quaternion):
     """
     Converts a quaternion to a heading of the car in radians
-    (see ../../doc/06_perception/00_coordinate_transformation.md)
+    (see ../../doc/perception/coordinate_transformation.md)
     :param quaternion: quaternion of the car as a list [q.x, q.y, q.z, q.w]
                        where q is the quaternion
     :return: heading of the car in radians (float)
