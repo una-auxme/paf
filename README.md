@@ -27,12 +27,12 @@ To run the project you have to install [docker](https://docs.docker.com/engine/i
 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 `docker` and `nvidia-docker` are used to run the project in a containerized environment with GPU support.
 
-More detailed instructions about setup and execution can be found [here](./doc/general/Readme.md).
+More detailed instructions about setup and execution can be found [here](./doc/general/README.md).
 
 ## Development
 
-If you contribute to this project please read the guidelines first. They can be found [here](./doc/development/Readme.md).
+If you contribute to this project please read the guidelines first. They can be found [here](./doc/development/README.md).
 
 ## Research
 
-The research on existing projects we did can be found [here](./doc/research/Readme.md).
+The research on existing projects we did can be found [here](./doc/research/README.md).

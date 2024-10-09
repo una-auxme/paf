@@ -55,8 +55,8 @@ The miro-board can be found [here](https://miro.com/welcomeonboard/a1F0d1dya2Fne
 The perception is responsible for the efficient conversion of raw sensor and map data into a useful
 environment representation that can be used by the [Planning](#Planning) for further processing.
 
-Further information regarding the perception can be found [here](../perception/Readme.md).
-Research for the perception can be found [here](../research/perception/Readme.md).
+Further information regarding the perception can be found [here](../perception/README.md).
+Research for the perception can be found [here](../research/perception/README.md).
 
 ### Obstacle Detection and Classification
 
@@ -121,7 +121,7 @@ its destination. It also detects situations and reacts accordingly in traffic. I
 speed to acting.
 
 Further information regarding the planning can be found [here](../planning/README.md).
-Research for the planning can be found [here](../research/planning/Readme.md).
+Research for the planning can be found [here](../research/planning/README.md).
 
 ### [Global Planning](../planning/Global_Planner.md)
 
@@ -225,9 +225,9 @@ Publishes:
 
 The job of this component is to take the planned trajectory and target-velocities from the [Planning](#Planning) component and convert them into steering and throttle/brake controls for the CARLA-vehicle.
 
-All information regarding research done about acting can be found [here](../research/acting/Readme.md).
+All information regarding research done about acting can be found [here](../research/acting/README.md).
 
-Indepth information about the currently implemented acting Components can be found [HERE](../acting/Readme.md)!
+Indepth information about the currently implemented acting Components can be found [HERE](../acting/README.md)!
 
 ### Path following with Steering Controllers
 

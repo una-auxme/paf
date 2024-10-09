@@ -162,7 +162,7 @@ navigate among them and commit only the ones that we need to Git." [(Source)](ht
 Detailed documentation with a [good example](https://github.com/iterative/example-dvc-experiments)
 can be found [here](https://dvc.org/doc/start/experiment-management/experiments).
 
-A working experiment in this project can be found [here](../../code/perception/src/traffic_light_detection/Readme.md).
+A working experiment in this project can be found [here](../../code/perception/src/traffic_light_detection/README.md).
 
 #### Setup a new experiment
 

@@ -62,6 +62,10 @@ Restart the Docker daemon to complete the installation after setting the default
 sudo systemctl restart docker
 ```
 
+## VS Code Extensions
+
+The repository comes with a suite of recommended VS Code extensions. Install them via the `Extensions` tab inside VS Code.
+
 ## 🚨 Common Problems
 
 ### Vulkan device not available

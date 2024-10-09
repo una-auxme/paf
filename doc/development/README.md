@@ -30,7 +30,7 @@ If you just want to copy an empty class use this class.
 
 ### [`template_component_readme.md`](./templates/template_component_readme.md)
 
-This template functions a template for who to describe a component. IT should be contained in every component as `Readme.md`.
+This template functions a template for who to describe a component. IT should be contained in every component as `README.md`.
 
 ### [`template_wiki_page.md`](./templates/template_wiki_page.md)
 
