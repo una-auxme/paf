@@ -1,11 +1,15 @@
+# compose file for the development environment
+# routes_simple.xml
 include:
-  - linter_services.yaml
+  - docker-compose.linter.yaml
   - roscore_service.yaml
-  - carla-simulator_service.yaml
+  - docker-compose.carla-simulator.yaml
 
 services:
   agent:
     extends:
       file: agent_service.yaml
       service: agent
+    environment:
+      - ROUTE=/workspace/code/routes/routes_simple.xml
     command: bash -c "sleep 10 && sudo chown -R carla:carla ../code/ && sudo chmod -R a+w ../code/ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"
