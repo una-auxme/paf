@@ -45,15 +45,12 @@ Typically, the ip address is the first one in the list.
 
 Replace the ip-address in the following files:
 
-- `docker-compose.distributed.yml`
-- `docker-compose.dev.distributed.yml`
+- `build/docker-compose.devroute-distributed.yaml`
+- `build/docker-compose.leaderboard-distributed.yaml`
 
 ### Start the agent on your local machine
 
-```bash
-docker compose -f build/docker-compose_distributed.yaml up
-docker compose -f build/docker-compose_dev_distributed.yaml up
-```
+Navigate to the files mentioned above in the VS Code Explorer and select `Compose Up` after right-clicking one of the files.
 
 ## How do you know that you do not have enough compute resources?
 
