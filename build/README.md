@@ -12,13 +12,14 @@ facilitating both normal and distributed execution modes.
   - [Directory Structure](#directory-structure)
   - [Base Service Files](#base-service-files)
     - [`agent_service.yaml`](#agent_serviceyaml)
-    - [`carla-simulator_service.yaml`](#carla-simulator_serviceyaml)
-    - [`linter_services.yaml`](#linter_servicesyaml)
     - [`roscore_service.yaml`](#roscore_serviceyaml)
   - [Docker Compose Files](#docker-compose-files)
-    - [`docker-compose.yaml`](#docker-composeyaml)
-    - [`docker-compose_dev.yaml`](#docker-compose_devyaml)
-    - [`docker-compose_cicd.yaml`](#docker-compose_cicdyaml)
+    - [`docker-compose.carla-simulator.yaml`](#docker-composecarla-simulatoryaml)
+    - [`docker-compose.linter.yaml`](#docker-composelinteryaml)
+    - [`docker-compose.leaderboard.yaml`](#docker-composeleaderboardyaml)
+    - [`docker-compose.devroute.yaml`](#docker-composedevrouteyaml)
+    - [`docker-compose.dev.yaml`](#docker-composedevyaml)
+    - [`docker-compose.cicd.yaml`](#docker-composecicdyaml)
   - [Execution Modes](#execution-modes)
     - [Normal Execution](#normal-execution)
     - [Distributed Execution](#distributed-execution)
@@ -32,13 +33,14 @@ The `build` directory contains the necessary configuration and setup files for b
 
 - **Base Service Files**
   - `agent_service.yaml`
-  - `carla-simulator_service.yaml`
-  - `linter_services.yaml`
   - `roscore_service.yaml`
 - **Docker Compose Files**
-  - `docker-compose.yaml`
-  - `docker-compose_dev.yaml`
-  - `docker-compose_cicd.yaml`
+  - `docker-compose.carla-simulator.yaml`
+  - `docker-compose.linter.yaml`
+  - `docker-compose.leaderboard.yaml`
+  - `docker-compose.devroute.yaml`
+  - `docker-compose.dev.yaml`
+  - `docker-compose.cicd.yaml`
 
 ## Base Service Files
 
@@ -53,24 +55,6 @@ Defines the configuration for the `agent` service, which represents the autonomo
 - **Volumes**: Mounts directories like `/workspace` to share code and data between the host and the container.
 - **Networks**: Connects the agent to the `carla` and `ros` networks.
 
-### `carla-simulator_service.yaml`
-
-Defines the configuration for the `carla-simulator` service, which runs the CARLA simulator. Key configurations include:
-
-- **Image**: Uses the CARLA simulator image tailored for the project.
-- **Command**: Starts the simulator with specific settings such as resolution, quality level, and disabling sound.
-- **Environment Variables**: Sets variables like `DISPLAY` and NVIDIA capabilities.
-- **Volumes**: Shares the X11 UNIX socket and custom CARLA settings.
-- **Networks**: Connects to the `carla` network.
-
-### `linter_services.yaml`
-
-Defines services for code linting and static analysis. Includes:
-
-- **flake8**: For Python linting.
-- **mdlint**: For Markdown file linting.
-- **Volumes**: Mounts the project directory for linting files within the container.
-
 ### `roscore_service.yaml`
 
 Defines the `roscore` service for running the ROS master node. Key configurations include:
@@ -82,24 +66,42 @@ Defines the `roscore` service for running the ROS master node. Key configuration
 
 ## Docker Compose Files
 
-The Docker Compose files orchestrate multiple services defined in the base service files, allowing for different execution scenarios.
+The Docker Compose files allow the execution of different components or whole scenarios that include multiple services.
 
-### `docker-compose.yaml`
+### `docker-compose.carla-simulator.yaml`
+
+Defines the configuration for the `carla-simulator` service, which runs the CARLA simulator. Key configurations include:
+
+- **Image**: Uses the CARLA simulator image tailored for the project.
+- **Command**: Starts the simulator with specific settings such as resolution, quality level, and disabling sound.
+- **Environment Variables**: Sets variables like `DISPLAY` and NVIDIA capabilities.
+- **Volumes**: Shares the X11 UNIX socket and custom CARLA settings.
+- **Networks**: Connects to the `carla` network.
+
+### `docker-compose.linter.yaml`
+
+Defines services for code linting and static analysis. Includes:
+
+- **flake8**: For Python linting.
+- **mdlint**: For Markdown file linting.
+- **Volumes**: Mounts the project directory for linting files within the container.
+
+### `docker-compose.leaderboard.yaml`
 
 - **Includes**:
-  - `linter_services.yaml`
+  - `docker-compose.linter.yaml`
+  - `docker-compose.carla-simulator.yaml`
   - `roscore_service.yaml`
-  - `carla-simulator_service.yaml`
 - **Services**:
   - Extends the `agent` service from `agent_service.yaml`.
 - **Purpose**: Runs the agent with special scenarios included. Solving these scenarios is the primary goal of the project.
 
-### `docker-compose_dev.yaml`
+### `docker-compose.devroute.yaml`
 
 - **Includes**:
-  - `linter_services.yaml`
+  - `docker-compose.linter.yaml`
+  - `docker-compose.carla-simulator.yaml`
   - `roscore_service.yaml`
-  - `carla-simulator_service.yaml`
 - **Services**:
   - Extends the `agent` service from `agent_service.yaml`.
 - **Environment Overrides**:
@@ -108,11 +110,17 @@ The Docker Compose files orchestrate multiple services defined in the base servi
   - Runs the agent with simplified settings suitable for development and testing.
 - **Purpose**: Provides a minimal setup for development without special scenarios.
 
-### `docker-compose_cicd.yaml`
+### `docker-compose.dev.yaml`
+
+- **Services**:
+  - Defines an `agent-dev` service using the corresponding Dockerfile.
+- **Purpose**: Provides a container for attaching a VS Code instance for development.
+
+### `docker-compose.cicd.yaml`
 
 - **Includes**:
+  - `docker-compose.carla-simulator.yaml`
   - `roscore_service.yaml`
-  - `carla-simulator_service.yaml`
 - **Services**:
   - Defines an `agent` service using a prebuilt image from the project's container registry.
 - **Dependencies**:
@@ -137,34 +145,22 @@ Distributed execution separates the agent and the CARLA simulator onto different
 - Running large vision models that require extensive VRAM.
 - The single machine's resources are insufficient to handle both the agent and simulator.
 
-**Note**: In distributed execution, the CARLA simulator must be running on a second desktop PC, and the `CARLA_SIM_HOST` environment variable should be set accordingly.
+**Note**: In distributed execution, the CARLA simulator must be running on a second desktop PC, and the `CARLA_SIM_HOST` environment variable should be set accordingly. Further information can be found in [here](../doc/02_development/14_distributed_simulation.md).  
 
 ## Usage
 
-To run the project using the provided Docker Compose files:
-
-- **Standard Execution with Special Scenarios**:
-
-  ```bash
-  docker-compose -f build/docker-compose.yaml up
-  ```
-
-- **Development Execution without Special Scenarios**:
-
-  ```bash
-  docker-compose -f build/docker-compose_dev.yaml up
-  ```
+To run the project using the provided Docker Compose files simply navigate to the files in the VS Code Explorer and select `Compose Up` after right-clicking the file.
 
 - **CI/CD Execution**:
 
-  The `docker-compose_cicd.yaml` is intended to be used within CI/CD pipelines and may be invoked as part of automated scripts.
+  The `docker-compose.cicd.yaml` is intended to be used within CI/CD pipelines and may be invoked as part of automated scripts.
 
 ## Notes
 
 - Ensure that you have NVIDIA GPU support configured if running models that require GPU acceleration.
 - The `agent_service.yaml` and other base service files are crucial for defining the common configurations and should not be modified unless necessary.
 - When running in distributed mode, update the `CARLA_SIM_HOST` environment variable in the appropriate service configurations to point to the simulator's IP address.
-- The linter services defined in `linter_services.yaml` can be used to maintain code quality and should be run regularly during development.
+- The linter services defined in `docker-compose.linter.yaml` can be used to maintain code quality and should be run regularly during development.
 
 ## Conclusion
 
