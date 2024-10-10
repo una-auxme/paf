@@ -4,15 +4,8 @@
 
 **Summary:** This page gives a short overview how to add python packages to the project.
 
----
-
-## Author
-
-Tim Dreier
-
-## Date
-
-7.12.2022
+- [Install python packages](#install-python-packages)
+  - [Adding packages with pip](#adding-packages-with-pip)
 
 ## Adding packages with pip
 

@@ -1,10 +1,28 @@
 # Basic research perception
 
-The perception is responsible for the efficient conversion of raw sensor and map data
+**Summary:** The perception is responsible for the efficient conversion of raw sensor and map data
 into a useful environment representation that can be used by the planning for further processing.
 
 This includes the classification and localization of relevant entities in traffic and also the preparation
 of this data to enable a fast processing of this data in the planning layer.
+
+- [Basic research perception](#basic-research-perception)
+  - [Interfaces](#interfaces)
+    - [Input](#input)
+    - [Output](#output)
+  - [Environment](#environment)
+    - [What objects have to be detected?](#what-objects-have-to-be-detected)
+    - [Special case traffic light (PAF21-1)](#special-case-traffic-light-paf21-1)
+  - [Algorithms for classification/localization](#algorithms-for-classificationlocalization)
+  - [Prediction](#prediction)
+  - [Map data](#map-data)
+  - [Limitations of the sensors and perception](#limitations-of-the-sensors-and-perception)
+    - [LIDAR](#lidar)
+    - [RADAR](#radar)
+    - [Camera](#camera)
+  - [Training data](#training-data)
+  - [Classification of situations](#classification-of-situations)
+  - [Combination of 2D camera data and 3D RADAR/LIDAR data](#combination-of-2d-camera-data-and-3d-radarlidar-data)
 
 ## Interfaces
 

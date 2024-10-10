@@ -1,5 +1,17 @@
 # 🛠️ Installation
 
+**Summary:** This page explains the installation process for the project.
+
+- [🛠️ Installation](#️-installation)
+  - [Installation](#installation)
+  - [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support)
+    - [Docker](#docker)
+    - [Allow non-root user to execute Docker commands](#allow-non-root-user-to-execute-docker-commands)
+    - [NVIDIA Container toolkit](#nvidia-container-toolkit)
+  - [VS Code Extensions](#vs-code-extensions)
+  - [🚨 Common Problems](#-common-problems)
+    - [Vulkan device not available](#vulkan-device-not-available)
+
 To run the project you have to install [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support, [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 
 For development, we recommend Visual Studio Code with the plugins that are recommended inside the `.vscode` folder.

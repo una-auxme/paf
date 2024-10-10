@@ -2,15 +2,12 @@
 
 **Summary:** New Features and changes made with the CARLA leaderboard-2.0
 
----
-
-## Author
-
-Samuel Kühnel
-
-## Date
-
-17.11.2023
+- [Overview leaderboard 2.0](#overview-leaderboard-20)
+  - [General Information](#general-information)
+    - [Submissions](#submissions)
+  - [New Features](#new-features)
+    - [Maps](#maps)
+    - [Scenarios and training database](#scenarios-and-training-database)
 
 ## General Information
 

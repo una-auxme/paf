@@ -4,27 +4,12 @@
 
 **The Filter that's currently in use: [Kalman Filter](../../perception/kalman_filter.md)**
 
----
-
-## Authors
-
-Gabriel Schwald
-
-### Date
-
-07.01.2023
-
----
-<!-- TOC -->
 - [GPS sensor](#gps-sensor)
-  - [Authors](#authors)
-    - [Date](#date)
   - [Raw sensor data](#raw-sensor-data)
   - [Filters for the sensor data](#filters-for-the-sensor-data)
     - [Intuitive filter](#intuitive-filter)
     - [Rolling average](#rolling-average)
     - [Kalman Filter](#kalman-filter)
-<!-- TOC -->
 
 ## Raw sensor data
 

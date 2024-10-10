@@ -2,24 +2,10 @@
 
 **Summary:** This page provides an overview of the current status of both steering controllers, the PurePursuit and the Stanley Controller.
 
----
-
-## Author
-
-Alexander Hellmann
-
-## Date
-
-01.04.2024
-
-<!-- TOC -->
 - [Overview of the Steering Controllers](#overview-of-the-steering-controllers)
-  - [Author](#author)
-  - [Date](#date)
   - [General Introduction to Steering Controllers](#general-introduction-to-steering-controllers)
   - [PurePursuit Controller](#purepursuit-controller)
   - [Stanley Controller](#stanley-controller)
-<!-- TOC -->
 
 ## General Introduction to Steering Controllers
 

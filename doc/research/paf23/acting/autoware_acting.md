@@ -1,5 +1,15 @@
 # Research: [Autoware Acting](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/control/#autoware-control-design)
 
+**Summary:** This page contains the research into the action component of Autoware.
+
+- [Research: Autoware Acting](#research-autoware-acting)
+  - [Inputs](#inputs)
+    - [General Component Architecture](#general-component-architecture)
+    - [With the Control Module](#with-the-control-module)
+  - [Trajectory Follower](#trajectory-follower)
+  - [Vehicle Command Gate](#vehicle-command-gate)
+  - [Outputs](#outputs)
+
 ## Inputs
 
 - Odometry (position and orientation, from Localization module)

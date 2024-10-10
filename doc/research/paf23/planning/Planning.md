@@ -1,5 +1,14 @@
 # Planning
 
+**Summary:** This page contains research into the planning component of the PAF21_2 group.
+
+- [Planning](#planning)
+  - [What is Planning?](#what-is-planning)
+    - [PAF21 - 2](#paf21---2)
+    - [Autoware](#autoware)
+  - [Resumee](#resumee)
+    - [Notes](#notes)
+
 ## What is Planning?
 
 Finding the optimal path from start to goal, taking into account the static and dynamic conditions and transfering a suitable trajectory to the acting system

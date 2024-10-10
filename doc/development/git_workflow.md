@@ -4,24 +4,7 @@
 
 **Summary:** This page gives an overview over different types of git workflows to choose from.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-07.11.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Git Style](#git-style)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Git workflow](#git-workflow)
     - [Git Feature Branch](#git-feature-branch)
       - [Branch strategy](#branch-strategy)
@@ -35,7 +18,6 @@ Josef Kircher
     - [Commit messages](#commit-messages)
     - [Git commands cheat sheet](#git-commands-cheat-sheet)
   - [Sources](#sources)
-<!-- TOC -->
 
 ## Git workflow
 

@@ -2,23 +2,8 @@
 
 **Summary:** This file explains the unstuck behavior used as a fallback to recover from stuck situations.
 
----
-
-## Author
-
-Robert Fischer
-
-## Date
-
-01.04.2024
-
----
-<!-- TOC -->
 - [Unstuck Behavior](#unstuck-behavior)
-  - [Author](#author)
-  - [Date](#date)
   - [Explanation](#explanation)
-<!-- TOC -->
 
 ## Explanation
 

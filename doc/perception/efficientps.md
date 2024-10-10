@@ -4,26 +4,12 @@
 
 **Summary:** This document gives a short overview about EfficientPS and its training process.
 
----
-
-## Author
-
-Marco Riedenauer
-
-## Date
-
-28.03.2023
-
-<!-- TOC -->
 - [EfficientPS](#efficientps)
-  - [Author](#author)
-  - [Date](#date)
   - [Model Overview](#model-overview)
   - [Training](#training)
     - [Labels](#labels)
     - [Training parameters](#training-parameters)
     - [Train](#train)
-<!-- TOC -->
 
 ## Model Overview
 

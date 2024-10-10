@@ -2,24 +2,7 @@
 
 **Summary:** This page contains a set of possible use cases containing a description of the scenario, the functions the agent has to have to pass that scenario as well as the event triggering that use case, the flow through that use case and the outcome.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-21.11.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Use cases in Carla Leaderboard](#use-cases-in-carla-leaderboard)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [1. Control loss due to bad road condition](#1-control-loss-due-to-bad-road-condition)
     - [Description](#description)
     - [Pre-condition(Event)](#pre-conditionevent)
@@ -173,9 +156,6 @@ Josef Kircher
     - [Outcome](#outcome-21)
     - [Associated use cases](#associated-use-cases-21)
   - [Sources](#sources)
-<!-- TOC -->
-
----
 
 ## 1. Control loss due to bad road condition
 

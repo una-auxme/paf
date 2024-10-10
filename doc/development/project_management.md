@@ -5,25 +5,7 @@
 **Summary:** We use a [Github Project](https://github.com/users/ll7/projects/2) for project management.
 Any bugs or features requests are managed in Github.
 
----
-
-## Author
-
-- Tim Dreier
-- Josef Kircher
-
-## Date
-
-23.11.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Project management](#project-management)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Create bug or feature requests](#create-bug-or-feature-requests)
     - [🐞 Bug](#-bug)
       - [Example for "Bug"](#example-for-bug)
@@ -34,9 +16,6 @@ Any bugs or features requests are managed in Github.
   - [Create a Pull Request](#create-a-pull-request)
   - [Merging a Pull Request](#merging-a-pull-request)
   - [Deadlines for pull requests and reviews](#deadlines-for-pull-requests-and-reviews)
-<!-- TOC -->
-
----
 
 ## Create bug or feature requests
 

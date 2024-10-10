@@ -2,22 +2,7 @@
 
 **Summary:** This node publishes the `current_pos` (Location of the car) and `current_heading` (Orientation of the car around the Z- axis) for every Node that needs to work with that. It also publishes all unfiltered Position and Heading signals for the Filter nodes to work with (such as Kalman).
 
----
-
-## Author
-
-Robert Fischer
-
-## Date
-
-14.01.2024
-
-## Prerequisite
-
 - [position\_heading\_publisher\_node](#position_heading_publisher_node)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Usage](#usage)
   - [Modular Extension / Template](#modular-extension--template)
     - [Heading Functions](#heading-functions)

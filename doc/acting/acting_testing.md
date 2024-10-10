@@ -2,24 +2,10 @@
 
 **Summary:** This page shows ways to test and tune acting components and to verify that they work as intended.
 
----
-
-## Author
-
-Alexander Hellmann
-
-## Date
-
-01.04.2024
-
-<!-- TOC -->
 - [How to test/tune acting components independedly](#how-to-testtune-acting-components-independedly)
-  - [Author](#author)
-  - [Date](#date)
   - [Acting\_Debug\_Node](#acting_debug_node)
     - [Setup for Testing with the Debug-Node](#setup-for-testing-with-the-debug-node)
     - [Operating the Debug-Node](#operating-the-debug-node)
-<!-- TOC -->
 
 ## Acting_Debug_Node
 

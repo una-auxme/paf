@@ -1,23 +1,5 @@
 # Planning Wiki
 
----
-
-## Structure
-
-Planning wiki contains different parts:
-
-<!-- TOC -->
-
-- [Planning Wiki](#planning-wiki)
-  - [Structure](#structure)
-  - [Overview](#overview)
-    - [Preplanning](#preplanning)
-    - [Global plan](#global-plan)
-    - [Decision making](#decision-making)
-    - [Local Planning](#local-planning)
-<!-- TOC -->
----
-
 ## Overview
 
 ### [Preplanning](./Preplanning.md)

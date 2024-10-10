@@ -2,24 +2,7 @@
 
 **Summary:** This page gives a foundation for the re-evaluation of the decision-making
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-26.01.2023
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Re-evaluation of decision making component](#re-evaluation-of-decision-making-component)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Reasons for re-evaluation](#reasons-for-re-evaluation)
   - [Options](#options)
     - [Pylot](#pylot)
@@ -28,7 +11,7 @@ Josef Kircher
       - [Cons](#cons)
   - [Conclusion](#conclusion)
     - [Sources](#sources)
-<!-- TOC -->
+
 ## Reasons for re-evaluation
 
 In the last sprint, I tried to get a graphic tool to work with the docker container withing the project. That failed, but I still think, that a graphical representation would be helpful.

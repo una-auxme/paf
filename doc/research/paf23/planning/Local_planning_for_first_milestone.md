@@ -2,15 +2,9 @@
 
 **Summary:** This document states the implementation plan for the local planning.
 
----
-
-## Author
-
-Julius Miller
-
-## Date
-
-03.12.2023
+- [Local Planning for first milestone](#local-planning-for-first-milestone)
+  - [Research](#research)
+  - [New Architecture for first milestone](#new-architecture-for-first-milestone)
 
 ## Research
 

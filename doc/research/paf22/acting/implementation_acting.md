@@ -2,30 +2,14 @@
 
 **Summary:** On this page you can find the results of the basic research on acting summed up into resulting requirements and function, that were already agreed upon.
 
----
+This document sums up all functions already agreed upon in [#24](https://github.com/ll7/paf22/issues/24) regarding [acting](../acting/acting.md), that could be implemented in the next sprint.
 
-## Authors
-
-Gabriel Schwald
-
-### Date
-
-20.11.2022
-
----
-
-<!-- TOC -->
 - [Requirements and challenges for an acting implementation](#requirements-and-challenges-for-an-acting-implementation)
-  - [Authors](#authors)
-    - [Date](#date)
   - [Planned basic implementation of the Acting domain](#planned-basic-implementation-of-the-acting-domain)
   - [List of basic functions](#list-of-basic-functions)
   - [List of Inputs/Outputs](#list-of-inputsoutputs)
   - [Challenges](#challenges)
   - [Next steps](#next-steps)
-<!-- TOC -->
-
-This document sums up all functions already agreed upon in [#24](https://github.com/ll7/paf22/issues/24) regarding [acting](../acting/acting.md), that could be implemented in the next sprint.
 
 ## Planned basic implementation of the Acting domain
 

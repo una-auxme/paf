@@ -2,24 +2,7 @@
 
 **Summary:** This page contains the conceptual and theoretical explanations for the Local Planning component. For more technical documentation have a look at the other linked documentation files.
 
----
-
-## Author
-
-Samuel Kühnel
-
-## Date
-
-29.03.2024
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Local Planning](#local-planning)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Overview](#overview)
   - [Collision Check](#collision-check)
     - [Apply filters](#apply-filters)
@@ -31,7 +14,7 @@ Samuel Kühnel
     - [Selecting the target velocity](#selecting-the-target-velocity)
     - [Moving the trajectory](#moving-the-trajectory)
   - [Sources](#sources)
-<!-- TOC -->
+
 ## Overview
 
 The Local Planning component is responsible for evaluating short term decisions in the local environment of the ego vehicle. Some examples can be collision avoidance, reducing speed or emergency brakes.

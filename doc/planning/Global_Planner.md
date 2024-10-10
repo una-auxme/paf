@@ -7,34 +7,14 @@ After finishing that this node initiates the calculation of a trajectory based o
 from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published
 to the other components of this project (acting, decision making,...).
 
----
-
-## Author
-
-Samuel Kühnel
-
-## Date
-
-29.03.2024
-
-## Note
-
 This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
----
-<!-- TOC -->
 - [Global Planner](#global-planner)
-  - [Author](#author)
-  - [Date](#date)
-  - [Note](#note)
   - [Getting started](#getting-started)
   - [Description](#description)
     - [Inputs](#inputs)
     - [Outputs](#outputs)
   - [Testing](#testing)
-<!-- TOC -->
-
----
 
 ## Getting started
 

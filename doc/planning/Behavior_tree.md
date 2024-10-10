@@ -4,24 +4,7 @@
 
 **Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
----
-
-## Author
-
-Julius Miller
-
-## Date
-
-01.04.2024
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Behavior Tree](#behavior-tree)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [About](#about)
   - [Our behaviour tree](#our-behaviour-tree)
     - [Behavior](#behavior)
@@ -44,7 +27,6 @@ Julius Miller
         - [`initialise()`](#initialise)
         - [`update()`](#update)
         - [`terminate()`](#terminate)
-<!-- TOC -->
 
 ## About
 

@@ -4,24 +4,7 @@
 
 **Summary:** This page gives an overview over the steps that should be taken during a review and how to give a helpful and constructive review
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-17.11.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Review Guidelines](#review-guidelines)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [How to review](#how-to-review)
   - [How to comment on a pull request](#how-to-comment-on-a-pull-request)
   - [Incorporating feedback](#incorporating-feedback)
@@ -30,9 +13,6 @@ Josef Kircher
     - [Re-requesting a review](#re-requesting-a-review)
     - [Resolving conversations](#resolving-conversations)
   - [Sources](#sources)
-<!-- TOC -->
-
----
 
 ## How to review
 

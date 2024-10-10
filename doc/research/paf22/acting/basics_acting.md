@@ -2,18 +2,22 @@
 
 **Summary:** On this page you can find the results of the basic research on acting.
 
----
-
-## Authors
-
-Gabriel Schwald, Julian Graf
-
-### Date
-
-14.11.2022
-
----
-[[TOC]]
+- [Basic research acting](#basic-research-acting)
+  - [Objective](#objective)
+  - [Solutions from old PAF projects](#solutions-from-old-paf-projects)
+    - [Paf 20/1](#paf-201)
+    - [Paf 21/1](#paf-211)
+    - [Paf 20/2 and Paf 21/2](#paf-202-and-paf-212)
+  - [Lateral control](#lateral-control)
+    - [Pure Pursuit](#pure-pursuit)
+    - [Stanley](#stanley)
+    - [MPC (Model Predictive Control) / receding horizon control](#mpc-model-predictive-control--receding-horizon-control)
+    - [SMC (sliding mode control)](#smc-sliding-mode-control)
+  - [Velocity control](#velocity-control)
+  - [Interface](#interface)
+  - [Limits](#limits)
+  - [Visualization](#visualization)
+  - [Additional functionality (open for discussion)](#additional-functionality-open-for-discussion)
 
 ## Objective
 

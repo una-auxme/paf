@@ -1,6 +1,15 @@
 # Planned Architecture
 
-Provide  an overview for a possible planning architecture consisting of Global Planner, Local Planner and Decision Making.
+**Summary:** Provide an overview for a possible planning architecture consisting of Global Planner, Local Planner and Decision Making.
+
+- [Planned Architecture](#planned-architecture)
+  - [Overview](#overview)
+  - [Components](#components)
+    - [Global Plan](#global-plan)
+    - [Decision Making](#decision-making)
+    - [Local Plan](#local-plan)
+  - [Interfaces](#interfaces)
+  - [Prioritisation](#prioritisation)
 
 ## Overview
 

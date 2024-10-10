@@ -1,18 +1,8 @@
 # Grundrecherche im Planing
 
-## Authors
+**Summary:** This page contains the resarch of planning components of previous years.
 
-Simon Erlbacher, Niklas Vogel
-
-## Datum
-
-15.11.2022
-
----
-<!-- TOC -->
 - [Grundrecherche im Planing](#grundrecherche-im-planing)
-  - [Authors](#authors)
-  - [Datum](#datum)
   - [PAF 2021-1](#paf-2021-1)
     - [Vehicle Controller](#vehicle-controller)
     - [Decision-Making-Component](#decision-making-component)
@@ -36,7 +26,6 @@ Simon Erlbacher, Niklas Vogel
     - [Wie sieht die Grenze zwischen global und local plan aus?](#wie-sieht-die-grenze-zwischen-global-und-local-plan-aus)
     - [Müssen Staus umfahren werden?](#müssen-staus-umfahren-werden)
     - [Sollgeschwindigkeitsplanung](#sollgeschwindigkeitsplanung)
-<!-- TOC -->
 
 ## [PAF 2021-1](https://github.com/ll7/paf21-1)
 

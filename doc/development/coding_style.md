@@ -4,28 +4,7 @@
 
 **Summary:** This page contains the coding rules we want to follow as a team to improve readability and reviewing of our code.This document is for reference only and should be consolidated in case of uncertainty of following the style guidelines. Based on PEP 8 (<https://pep8.org/>)
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-04.11.2022
-
-## Prerequisite
-
-VSCode Extensions:
-
-- autoDostring - Python Docstring Generator by Nils Werner
-
----
-<!-- TOC -->
 - [Coding style guidelines](#coding-style-guidelines)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Code lay-out](#code-lay-out)
     - [Indentation](#indentation)
     - [Tabs or Spaces?](#tabs-or-spaces)
@@ -65,8 +44,6 @@ VSCode Extensions:
   - [Footnotes](#footnotes)
   - [Copyright](#copyright)
     - [Source](#source)
-<!-- TOC -->
----
 
 ## Code lay-out
 

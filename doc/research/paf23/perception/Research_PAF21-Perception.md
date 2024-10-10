@@ -1,8 +1,17 @@
 # Sprint 0: Research Samuel Kühnel
 
-## PAF 21-2
+**Summary:** This page contains the research into the perception component of the PAF21_2 group.
 
-### Perception
+- [Sprint 0: Research Samuel Kühnel](#sprint-0-research-samuel-kühnel)
+  - [Perception](#perception)
+    - [Obstacle detection](#obstacle-detection)
+    - [TrafficLightDetection](#trafficlightdetection)
+    - [Problems and solutions](#problems-and-solutions)
+  - [Resume](#resume)
+    - [Perception](#perception-1)
+    - [Planning](#planning)
+
+## Perception
 
 ### Obstacle detection
 
@@ -26,7 +35,7 @@
 - Yellow painted traffic lights distort traffic light phase detection → **Solution**: Filter out red and green sections beforehand using masks and convert remaining image to grayscale and add masks again.
 - **Problem without solution**: European traffic lights can sometimes not be recognized at the stop line.
 
-## Resumee
+## Resume
 
 ### Perception
 

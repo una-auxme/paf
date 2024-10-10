@@ -2,32 +2,13 @@
 
 **Summary:** pytrees is a python library used to generate and inspect decision trees. It has a very clear structure and is easy to understand, so it is used in this project.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-31.01.2023
-
-## Note
-
-This documentation was taken from the previous project PAF22.
-
----
-<!-- TOC -->
 - [Pytrees](#pytrees)
-  - [Author](#author)
-  - [Date](#date)
-  - [Note](#note)
   - [Getting started](#getting-started)
   - [What is Pytrees?](#what-is-pytrees)
   - [Examples](#examples)
   - [Common commands](#common-commands)
     - [Sources](#sources)
-<!-- TOC -->
+
 ## Getting started
 
 Pytrees is integrated in this project's dockerfile, so no setup is required.

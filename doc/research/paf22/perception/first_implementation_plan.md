@@ -1,23 +1,9 @@
 # First Implementation Plan
 
-This document shows the initial ideas for the implementation of the perception module.
+**Summary:** This document shows the initial ideas for the implementation of the perception module.
 It includes the various detection and classification modules that are necessary for an efficient and reliable workflow.
 
----
-
-## Authors
-
-Marco Riedenauer
-
-## Date
-
-26.11.2022
-
----
-<!-- TOC -->
 - [First Implementation Plan](#first-implementation-plan)
-  - [Authors](#authors)
-  - [Date](#date)
   - [Overview](#overview)
   - [Panoptic Segmentation](#panoptic-segmentation)
     - [Things and Stuff](#things-and-stuff)
@@ -33,9 +19,6 @@ Marco Riedenauer
   - [Traffic Sign Detection](#traffic-sign-detection)
   - [Prediction](#prediction)
   - [Possible Issues/Milestones](#possible-issuesmilestones)
-<!-- TOC -->
-
----
 
 ## Overview
 

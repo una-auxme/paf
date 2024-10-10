@@ -3,28 +3,12 @@
 **Summary:** The dataset generator located in perception/src/dataset_generator.py is a standalone script, directly
 hooking into the Carla Python API. It is used to generate a dataset to train perception models.
 
----
-
-## Author
-
-Korbinian Stein
-
-## Date
-
-24.01.2023
-
-<!-- TOC -->
-
 - [Dataset generator](#dataset-generator)
-  - [Author](#author)
-  - [Date](#date)
   - [Necessary adjustments](#necessary-adjustments)
     - [Dockerfile](#dockerfile)
     - [docker-compose.yml](#docker-composeyml)
   - [Usage](#usage)
     - [Using with leaderboard](#using-with-leaderboard)
-
-<!-- TOC -->
 
 ## Necessary adjustments
 

@@ -2,24 +2,7 @@
 
 **Summary:** This page gives a brief summary over possible decision-making choices their ad- and disadvantages as well as the opportunity to interchange them later on. Also, possible implementation options for those concepts are given.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-01.12.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Decision-making module](#decision-making-module)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Decision-making algorithms](#decision-making-algorithms)
     - [Finite State machine](#finite-state-machine)
       - [Advantages](#advantages)
@@ -54,7 +37,6 @@ Josef Kircher
       - [pytrees](#pytrees)
   - [Conclusion](#conclusion)
     - [Sources](#sources)
-<!-- TOC -->
 
 ## Decision-making algorithms
 

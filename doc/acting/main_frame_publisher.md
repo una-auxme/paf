@@ -2,24 +2,10 @@
 
 **Summary:** This page informs about the main frame publisher
 
----
-
-## Author
-
-Julian Graf
-
-## Date
-
-29.03.2023
-
-<!-- TOC -->
 - [Main frame publisher](#main-frame-publisher)
-  - [Author](#author)
-  - [Date](#date)
   - [Overview: Main frame publisher](#overview-main-frame-publisher)
   - [How to use](#how-to-use)
   - [Known issues](#known-issues)
-<!-- TOC -->
 
 ## Overview: Main frame publisher
 

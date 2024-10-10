@@ -3,21 +3,7 @@
 **Summary:** This page gives an overview over the planned general architecture of the vehicle agent.
 The document contains an overview over all [nodes](#overview) and [topics](#topics).
 
----
-
-## Authors
-
-Julius Miller, Alexander Hellmann, Samuel Kühnel
-
-## Date
-
-29.03.2024
-
----
-<!-- TOC -->
 - [Planned architecture of vehicle agent](#planned-architecture-of-vehicle-agent)
-  - [Authors](#authors)
-  - [Date](#date)
   - [Overview](#overview)
   - [Perception](#perception)
     - [Obstacle Detection and Classification](#obstacle-detection-and-classification)
@@ -35,7 +21,6 @@ Julius Miller, Alexander Hellmann, Samuel Kühnel
     - [Velocity control](#velocity-control)
     - [Vehicle controller](#vehicle-controller)
   - [Visualization](#visualization)
-<!-- TOC -->
 
 ## Overview
 

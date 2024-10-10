@@ -1,9 +1,14 @@
 # Getting the Distance to Objects
 
-Using the vision node and the lidar distance node we can calculate the distance of detected objects.
-We can solve this problem from two directions mapping either pixel into the 3D-World or mapping 3D-LidarPoints into Pixel.
+**Summary:** Using the vision node and the lidar distance node we can calculate the distance of detected objects.
+We can solve this problem from two directions mapping either pixel into the 3D-World or mapping 3D-LidarPoints into Pixel. This file will explain the mapping of 3D-Points into 2D.
 
-This file will will explain the mapping of 3D-Points into 2D.
+- [Getting the Distance to Objects](#getting-the-distance-to-objects)
+  - [Converting 3D-Points into 2D-Camera-Space](#converting-3d-points-into-2d-camera-space)
+    - [Concept](#concept)
+    - [Purpose](#purpose)
+    - [Implementation](#implementation)
+  - [LIDAR-Configuration](#lidar-configuration)
 
 ## Converting 3D-Points into 2D-Camera-Space
 

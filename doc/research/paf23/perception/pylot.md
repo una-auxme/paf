@@ -1,10 +1,16 @@
 # Pylot - Perception
 
-**Authors:** Maximilian Jannack
+**Summary:** This page contains the research into the perception component of pylot.
 
-**Date:** 12.11.2023
-
----
+- [Pylot - Perception](#pylot---perception)
+  - [Detection](#detection)
+    - [Obstacle detection](#obstacle-detection)
+    - [Traffic light detection](#traffic-light-detection)
+    - [Lane detection](#lane-detection)
+  - [Obstacle Tracking](#obstacle-tracking)
+  - [Depth Estimation](#depth-estimation)
+  - [Segmentation](#segmentation)
+  - [Lidar](#lidar)
 
 ## [Detection](https://pylot.readthedocs.io/en/latest/perception.detection.html)
 

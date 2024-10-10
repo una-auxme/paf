@@ -2,26 +2,10 @@
 
 **Summary:** Used for various helper functions such as quat_to_heading, that are useful in a lot of cases. **It is not yet fully documented**.
 
----
-
-## Author
-
-Robert Fischer
-
-## Date
-
-12.01.2024
-
-<!-- TOC -->
-
 - [Coordinate Transformation](#coordinate-transformation)
-  - [Author](#author)
-  - [Date](#date)
   - [Usage](#usage)
   - [Methods](#methods)
     - [quat\_to\_heading(quaternion)](#quat_to_headingquaternion)
-
-<!-- TOC -->
 
 ## Usage
 

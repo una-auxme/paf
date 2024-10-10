@@ -2,25 +2,11 @@
 
 **Summary:** This page provides an overview of the current status of the Vehicle Controller Component.
 
----
-
-## Authors
-
-Robert Fischer, Alexander Hellmann
-
-## Date
-
-01.04.2024
-
-<!-- TOC -->
 - [Overview of the Vehicle Controller Component](#overview-of-the-vehicle-controller-component)
-  - [Authors](#authors)
-  - [Date](#date)
   - [General Introduction to the Vehicle Controller Component](#general-introduction-to-the-vehicle-controller-component)
   - [Vehicle Controller Output](#vehicle-controller-output)
   - [Emergency Brake](#emergency-brake)
   - [Unstuck Routine](#unstuck-routine)
-<!-- TOC -->
 
 ## General Introduction to the Vehicle Controller Component
 

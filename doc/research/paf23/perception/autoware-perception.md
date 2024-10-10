@@ -1,5 +1,12 @@
 # Autoware Perception
 
+**Summary:** This page contains the research into the perception component of Autoware.
+
+- [Autoware Perception](#autoware-perception)
+  - [1.Architecture](#1architecture)
+  - [2.Detection Mechanisms](#2detection-mechanisms)
+  - [3. Conclusion](#3-conclusion)
+
 ## 1.Architecture
 
 ![image](https://github.com/una-auxme/paf/assets/102369315/6b3fb964-e650-442a-a674-8e0471d931a9)

@@ -1,6 +1,12 @@
 # LIDAR-Data
 
-This File discusses where the LIDAR-Data comes from, how its processed and how we could possibly use it.
+**Summary:** This File discusses where the LIDAR-Data comes from, how its processed and how we could possibly use it.
+
+- [LIDAR-Data](#lidar-data)
+  - [Origin](#origin)
+  - [Processing](#processing)
+  - [Distance Calculation](#distance-calculation)
+  - [Open questions](#open-questions)
 
 ## Origin
 

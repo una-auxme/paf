@@ -1,5 +1,15 @@
 # Research: PAF21_1 Acting
 
+**Summary:** This page contains the research into the action component of the PAF21_1 group.
+
+- [Research: PAF21\_1 Acting](#research-paf21_1-acting)
+  - [Inputs](#inputs)
+  - [Curve Detection](#curve-detection)
+  - [Speed Control](#speed-control)
+  - [Steering Control](#steering-control)
+    - [Straight Trajectories](#straight-trajectories)
+    - [Detected Curves](#detected-curves)
+
 ## Inputs
 
 - waypoints of the planned route

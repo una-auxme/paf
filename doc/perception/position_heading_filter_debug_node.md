@@ -11,32 +11,12 @@ Using the Carla API could disqualify us from the leaderboard when submitting ont
 Uncomment (maybe even remove) this file when submitting to the official leaderboard.
 This file is only for debugging!
 
----
-
-## Author
-
-Robert Fischer
-
-## Date
-
-31.03.2024
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [position\_heading\_filter\_debug\_node.py](#position_heading_filter_debug_nodepy)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Getting started](#getting-started)
   - [Description](#description)
     - [Inputs](#inputs)
     - [Outputs](#outputs)
   - [Visualization](#visualization)
-<!-- TOC -->
-
----
 
 ## Getting started
 

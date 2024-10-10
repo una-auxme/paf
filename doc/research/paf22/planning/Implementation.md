@@ -1,24 +1,9 @@
 # Planning Implementation
 
-**Summary:**
-The document gives a first impression of how the planning could/should work
+**Summary:** The document gives a first impression of how the planning could/should work
 and how the topics are edited
 
----
-
-## Authors
-
-Simon Erlbacher, Niklas Vogel
-
-## Date
-
-29.11.2022
-
----
-<!-- TOC -->
 - [Planning Implementation](#planning-implementation)
-  - [Authors](#authors)
-  - [Date](#date)
   - [Overview](#overview)
   - [Preplanning](#preplanning)
   - [Decision Making](#decision-making)
@@ -28,9 +13,6 @@ Simon Erlbacher, Niklas Vogel
     - [Measure distance](#measure-distance)
   - [Next steps](#next-steps)
     - [Sources](#sources)
-<!-- TOC -->
-
----
 
 ## Overview
 

@@ -2,27 +2,7 @@
 
 **Summary:** This page contains the project informations from the CARLA leaderboard. More specific summary after page is finished.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-17.11.2022
-
-## Prerequisite
-
-none
-
----
-
-<!-- TOC -->
 - [Requirements of Carla Leaderboard](#requirements-of-carla-leaderboard)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Task](#task)
   - [Participation modalities](#participation-modalities)
     - [Route format](#route-format)
@@ -34,9 +14,6 @@ none
     - [Shutdown criteria](#shutdown-criteria)
   - [Submission](#submission)
     - [Sources](#sources)
-<!-- TOC -->
-
----
 
 ## Task
 

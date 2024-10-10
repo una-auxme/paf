@@ -2,23 +2,9 @@
 
 **Summary:** This page provides an overview of the current status of the velocity_controller.
 
----
-
-## Author
-
-Alexander Hellmann
-
-## Date
-
-01.04.2024
-
-<!-- TOC -->
 - [Overview of the Velocity Controller](#overview-of-the-velocity-controller)
-  - [Author](#author)
-  - [Date](#date)
   - [General Introduction to Velocity Controller](#general-introduction-to-velocity-controller)
   - [Current Implementation](#current-implementation)
-<!-- TOC -->
 
 ## General Introduction to Velocity Controller
 

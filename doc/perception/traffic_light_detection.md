@@ -1,5 +1,18 @@
 # Traffic Light Detection
 
+**Summary:** This page explains how traffic lights are detected and interpreted.
+
+- [Traffic Light Detection](#traffic-light-detection)
+  - [Vision Node](#vision-node)
+  - [TrafficLightNode](#trafficlightnode)
+    - [Attributes](#attributes)
+    - [Methods](#methods)
+    - [Functions](#functions)
+    - [Usage](#usage)
+  - [Filtering of images](#filtering-of-images)
+    - [1. Vision Node](#1-vision-node)
+    - [2. Traffic Light Node](#2-traffic-light-node)
+
 ## Vision Node
 
 For each analyzed image, it is checked whether an object with the ID=9 (traffic light) is detected.

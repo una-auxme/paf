@@ -2,15 +2,11 @@
 
 **Summary:** This document summarizes the Frenet Optimal Trajectory planner used in the pylot project
 
----
-
-## Author
-
-Samuel Kühnel
-
-## Date
-
-15.01.2024
+- [Frenet Optimal Trajectory](#frenet-optimal-trajectory)
+  - [Setup](#setup)
+  - [Example Usage](#example-usage)
+  - [Inputs](#inputs)
+  - [Decision](#decision)
 
 ## Setup
 

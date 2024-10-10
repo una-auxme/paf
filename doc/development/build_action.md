@@ -7,23 +7,7 @@
 - create an executable image of our work
 - evaluate our Agent with the leaderboard
 
----
-
-## Authors
-
-Tim Dreier, Korbinian Stein
-
-## Date
-
-2.12.2022
-
-## Table of contents
-
-<!-- TOC -->
-
 - [GitHub actions](#github-actions)
-  - [Authors](#authors)
-  - [Date](#date)
   - [Table of contents](#table-of-contents)
   - [General](#general)
   - [The Dockerfile (`build/docker/build/Dockerfile`)](#the-dockerfile-builddockerbuilddockerfile)
@@ -42,16 +26,14 @@ Tim Dreier, Korbinian Stein
     - [5. Comment result in pull request `actions/github-script@v6`](#5-comment-result-in-pull-request-actionsgithub-scriptv6)
   - [Simulation results](#simulation-results)
 
-<!-- TOC -->
-
 ## General
 
 The workflow defined in [`.github/workflows/build.yml`](../../.github/workflows/build.yml) creates an executable image
 which can later be submitted to the [CARLA leaderboard](https://leaderboard.carla.org) and pushes it
 to [GitHub Packages](ghcr.io).
 
-The image can then be pulled with `docker pull ghcr.io/ll7/paf22:latest` to get the latest version
-or `docker pull ghcr.io/ll7/paf22:<version>` to get a specific version.
+The image can then be pulled with `docker pull ghcr.io/una-auxme/paf:latest` to get the latest version
+or `docker pull ghcr.io/una-auxme/paf:<version>` to get a specific version.
 
 If action is triggered by a pull request the created image is then used to execute a test run in the leaderboard, using
 the devtest routes. The results of this simulation are then added as a comment to the pull request.
@@ -109,10 +91,10 @@ Same step as in the [build job](#1-checkout-repository--actionscheckoutv3-)
 
 ### 2. Run agent with docker-compose
 
-Runs the agent with the [`build/docker-compose.test.yml`](../../build/docker-compose.test.yml) that only contains the
+Runs the agent with the [`build/docker-compose.cicd.yaml`](../../build/docker-compose.cicd.yaml) that only contains the
 bare minimum components for test execution:
 
-- Carla Simulator (running in headless mode)
+- Carla Simulator
 - roscore
 - Agent container, run through the
   Carla [`leaderboard_evaluator`](https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/leaderboard_evaluator.py).

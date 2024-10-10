@@ -4,28 +4,12 @@
 
 **Summary:** This page explains the GitHub lint action we use to unsure Code quality.
 
----
-
-## Author
-
-Tim Dreier
-
-## Date
-
-25.11.2022
-
-## Table of contents
-<!-- TOC -->
 - [Github actions](#github-actions)
-  - [Author](#author)
-  - [Date](#date)
-  - [Table of contents](#table-of-contents)
   - [General](#general)
   - [Pull requests](#pull-requests)
   - [🚨 Common Problems](#-common-problems)
     - [1. Error in the markdown linter](#1-error-in-the-markdown-linter)
     - [2. Error in the python linter](#2-error-in-the-python-linter)
-<!-- TOC -->
 
 ## General
 
@@ -41,7 +25,7 @@ on: pull_request
 
 The actions uses the same linters described in the section [Linting](./linting.md).
 
-Event though the linters are already executed during commit,
+Event though the linters are already active during development,
 the execution on pull request ensures that nobody skips the linter during commit.
 
 ## Pull requests

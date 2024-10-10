@@ -2,18 +2,7 @@
 
 **Summary**: This documentation shows the current Acting Architecture.
 
-## Authors
-
-Alexander Hellmann
-
-## Date
-
-01.04.2024
-
-<!-- TOC -->
 - [Architecture](#architecture)
-  - [Authors](#authors)
-  - [Date](#date)
   - [Acting Architecture](#acting-architecture)
   - [Summary of Acting Components](#summary-of-acting-components)
     - [pure\_pursuit\_controller.py](#pure_pursuit_controllerpy)
@@ -22,7 +11,6 @@ Alexander Hellmann
     - [vehicle\_controller.py](#vehicle_controllerpy)
     - [helper\_functions.py](#helper_functionspy)
     - [MainFramePublisher.py](#mainframepublisherpy)
-<!-- TOC -->
 
 ## Acting Architecture
 

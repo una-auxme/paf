@@ -2,22 +2,7 @@
 
 **Summary:** Evaluate the reading of the OpenDrive map in other projects and outline recommended further steps.
 
----
-
-## Authors
-
-Simon Erlbacher
-
-### Date
-
-10.01.2023
-
----
-
-<!-- TOC -->
 - [OpenDrive Format](#opendrive-format)
-  - [Authors](#authors)
-    - [Date](#date)
   - [General](#general)
   - [Different Projects](#different-projects)
     - [PSAF1](#psaf1)
@@ -30,7 +15,6 @@ Simon Erlbacher
     - [Implementation details](#implementation-details)
   - [Follow-up Issues](#follow-up-issues)
   - [Sources](#sources)
-<!-- TOC -->
 
 ## General
 

@@ -1,6 +1,9 @@
 # Sprint 0: Research Samuel Kühnel
 
-## Pylot
+**Summary:** This page contains the research into the planning component of pylot.
+
+- [Sprint 0: Research Samuel Kühnel](#sprint-0-research-samuel-kühnel)
+  - [Planning](#planning)
 
 ## Planning
 

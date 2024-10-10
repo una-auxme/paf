@@ -2,26 +2,11 @@
 
 **Summary:** This page gives an overview and summary of how navigation data can be received, how it is structured and a visualisation of where the route instructions are placed on the ego vehicle route.
 
----
-
-## Author
-
-Niklas Vogel
-
-## Date
-
-14.12.2022
-
----
-<!-- TOC -->
 - [Navigation Data Research](#navigation-data-research)
-  - [Author](#author)
-  - [Date](#date)
   - [How to receive navigation data](#how-to-receive-navigation-data)
   - [Structure of navigation data](#structure-of-navigation-data)
   - [Visualisation of received navigation data](#visualisation-of-received-navigation-data)
     - [Sources](#sources)
-<!-- TOC -->
 
 ## How to receive navigation data
 

@@ -3,33 +3,13 @@
 **Summary:** [motion_planning.py](.../code/planning/local_planner/src/motion_planning.py):
 The motion planning is responsible for collecting all the speeds from the different components and choosing the optimal one to be fowarded into the acting. It also is capabale to change the trajectory for a overtaking maneuver.
 
----
-
-## Author
-
-Julius Miller
-
-## Date
-
-31.03.2023
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Motion Planning](#motion-planning)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Overview](#overview)
   - [Component](#component)
   - [ROS Data Interface](#ros-data-interface)
     - [Subscribed Topics](#subscribed-topics)
     - [Published Topics](#published-topics)
   - [Node Creation + Running Tests](#node-creation--running-tests)
-<!-- TOC -->
-
----
 
 ## Overview
 

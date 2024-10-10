@@ -1,6 +1,8 @@
 # Discord Webhook
 
-Author: Lennart Luttkus, 15.11.2023
+**Summary**: This page explains the webhook that posts updates of the repository to Discord.
+
+- [Discord Webhook](#discord-webhook)
 
 The discord bot has access to the `#gitupdates` text channel on our discord server.
 It is an Integration as a Webhook.

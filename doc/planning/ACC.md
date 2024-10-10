@@ -1,12 +1,12 @@
 # ACC (Adaptive Cruise Control)
 
-## About
+**Summary:** The ACC module is a ROS node responsible for adaptive speed control in an autonomous vehicle. It receives information about possible collisions, the current speed, the trajectory, and the speed limits. Based on this information, it calculates the desired speed and publishes it.
 
-The ACC module is a ROS node responsible for adaptive speed control in an autonomous vehicle. It receives information about possible collisions, the current speed, the trajectory, and the speed limits. Based on this information, it calculates the desired speed and publishes it.
-
-## Components
-
-This module doesn't contain more components.
+- [ACC (Adaptive Cruise Control)](#acc-adaptive-cruise-control)
+  - [ROS Data Interface](#ros-data-interface)
+    - [Published Topics](#published-topics)
+    - [Subscribed Topics](#subscribed-topics)
+  - [Node Creation + Running Tests](#node-creation--running-tests)
 
 ## ROS Data Interface
 

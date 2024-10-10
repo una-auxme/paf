@@ -8,24 +8,7 @@ As of now it is working with a 2D x-y-Transition model, which is why the current
 
 This implements the STANDARD Kalman Filter and NOT the Extended Kalman Filter or any other non-linear variant of the Kalman Filter.
 
----
-
-## Author
-
-Robert Fischer
-
-## Date
-
-29.03.2024
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Kalman Filter](#kalman-filter)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Getting started](#getting-started)
   - [Description](#description)
     - [1. Predict](#1-predict)
@@ -35,9 +18,6 @@ Robert Fischer
     - [Inputs](#inputs)
     - [Outputs](#outputs)
   - [Performance](#performance)
-<!-- TOC -->
-
----
 
 ## Getting started
 

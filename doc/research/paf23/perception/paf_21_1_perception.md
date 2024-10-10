@@ -1,5 +1,15 @@
 # Paf_21_1 - Perception
 
+**Summary:** This page contains the research into the perception component of the PAF21_1 group.
+
+- [Paf\_21\_1 - Perception](#paf_21_1---perception)
+  - [1. Architecture](#1-architecture)
+    - [**Key Features**](#key-features)
+  - [2. Sensors](#2-sensors)
+  - [3. Object-Detection](#3-object-detection)
+  - [4. TrafficLight-Detection](#4-trafficlight-detection)
+  - [5. Conclusion](#5-conclusion)
+
 ## 1. Architecture
 
 ![image](https://github.com/una-auxme/paf/assets/102369315/07328c78-83d7-425c-802e-8cc49430e6c1)

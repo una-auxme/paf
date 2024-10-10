@@ -2,29 +2,11 @@
 
 **Summary:** This page contains the requirements obtained from the Carla Leaderboard website as well as former projects in the `Praktikum Autonomes Fahren`
 
----
-
-## Author
-
-Josef Kircher, Simon Erlbacher
-
-## Date
-
-17.11.2022
-
-## Prerequisite
-
----
-<!-- TOC -->
 - [Requirements](#requirements)
-  - [Author](#author)
-  - [Date](#date)
-  - [Prerequisite](#prerequisite)
   - [Requirements from Leaderboard tasks](#requirements-from-leaderboard-tasks)
   - [Prioritized driving aspects](#prioritized-driving-aspects)
   - [more Content](#more-content)
     - [Sources](#sources)
-<!-- TOC -->
 
 ## Requirements from Leaderboard tasks
 

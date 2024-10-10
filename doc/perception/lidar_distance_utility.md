@@ -12,24 +12,9 @@ Additionally, it publishes a [Range](http://docs.ros.org/en/melodic/api/sensor_m
 containing the closest and the farest point.
 This can then be used to detect the distance to the closest object in front of us.
 
----
-
-## Author
-
-Tim Dreier
-
-## Date
-
-16.03.2023
-
----
-<!-- TOC -->
 - [Lidar Distance Utility](#lidar-distance-utility)
-  - [Author](#author)
-  - [Date](#date)
   - [Configuration](#configuration)
     - [Example](#example)
-<!-- TOC -->
 
 ## Configuration
 

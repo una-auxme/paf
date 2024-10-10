@@ -2,27 +2,13 @@
 
 **Summary:** This document gives a short overview about the structure of our dataset that is needed to train EfficientPS.
 
----
-
-## Author
-
-Marco Riedenauer
-
-## Date
-
-19.02.2023
-
-<!-- TOC -->
 - [Dataset structure](#dataset-structure)
-  - [Author](#author)
-  - [Date](#date)
   - [Converting the dataset](#converting-the-dataset)
   - [Preparation of the dataset for training](#preparation-of-the-dataset-for-training)
     - [Explanation of the conversion of groundtruth images](#explanation-of-the-conversion-of-groundtruth-images)
       - [Things](#things)
       - [Stuff](#stuff)
     - [Explanation of creating json files](#explanation-of-creating-json-files)
-<!-- TOC -->
 
 ## Converting the dataset
 

@@ -1,9 +1,14 @@
 # Collision Check
 
-## Overview
+**Summary:** This module is responsible for detecting collisions and reporting them. It subscribes to topics that provide information about the current speed of the vehicle and the distances to objects detected by a LIDAR sensor.
+It publishes topics that provide information about emergency stops, the distance to collisions, the distance to oncoming traffic, and the approximated speed of the obstacle in front.
 
-This module is responsible for detecting collisions and reporting them. It subscribes to topics that provide information about the current speed of the vehicle and the distances to objects detected by a LIDAR sensor.
-It publishes topics that provide information about emergency stops, the distance to collisions, the distance to oncoming traffic, and the approximated speed of the obstacle in front
+- [Collision Check](#collision-check)
+  - [Component](#component)
+  - [ROS Data Interface](#ros-data-interface)
+    - [Published Topics](#published-topics)
+    - [Subscribed Topics](#subscribed-topics)
+  - [Node Creation + Running Tests](#node-creation--running-tests)
 
 ## Component
 

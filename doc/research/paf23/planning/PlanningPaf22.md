@@ -1,6 +1,20 @@
 # Planning in PAF 22
 
+**Summary:** This page contains research into the planning component of the PAF22 group.
+
 [(Github)](https://github.com/ll7/paf22)
+
+- [Planning in PAF 22](#planning-in-paf-22)
+  - [Architecture](#architecture)
+    - [Preplanning](#preplanning)
+    - [Decision Making](#decision-making)
+    - [Local path planning](#local-path-planning)
+  - [Planning documentation](#planning-documentation)
+    - [Preplanning in code](#preplanning-in-code)
+    - [Global Plan in code](#global-plan-in-code)
+    - [Decision Making in code](#decision-making-in-code)
+  - [Conclusion](#conclusion)
+    - [What can be done next](#what-can-be-done-next)
 
 ## Architecture
 

@@ -4,22 +4,7 @@
 
 **Summary:** This page describes what DVC is and how/where to use it.
 
----
-
-## Author
-
-Tim Dreier
-
-## Date
-
-8.12.2022
-
-## Table of contents
-<!-- TOC -->
 - [Data Version Control (DVC)](#data-version-control-dvc)
-  - [Author](#author)
-  - [Date](#date)
-  - [Table of contents](#table-of-contents)
   - [General](#general)
     - [Installation](#installation)
     - [Storage](#storage)
@@ -37,7 +22,6 @@ Tim Dreier
         - [Commit an experiment](#commit-an-experiment)
       - [Dvclive](#dvclive)
   - [Example](#example)
-<!-- TOC -->
 
 ## General
 

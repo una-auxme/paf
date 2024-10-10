@@ -2,26 +2,7 @@
 
 **Summary:** Preplanner holds the logic to create a trajectory out of an OpenDrive Map with the belonging road options
 
----
-
-## Author
-
-Authors: Simon Erlbacher, Niklas Vogel
-
-## Date
-
-29.03.2023
-
-## Note
-
-The Preplanning component was taken from the previous project PAF22.
-
----
-<!-- TOC -->
 - [Preplanning](#preplanning)
-  - [Author](#author)
-  - [Date](#date)
-  - [Note](#note)
   - [Getting started](#getting-started)
   - [Road option concept](#road-option-concept)
   - [Road information](#road-information)
@@ -29,9 +10,6 @@ The Preplanning component was taken from the previous project PAF22.
   - [Road interpolation](#road-interpolation)
   - [How to use the implementation](#how-to-use-the-implementation)
     - [Sources](#sources)
-<!-- TOC -->
-
----
 
 ## Getting started
 

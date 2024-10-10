@@ -2,21 +2,7 @@
 
 **Summary:** This page gives an overview of the design of the state machine and further describes states and transitions.
 
----
-
-## Author
-
-Josef Kircher
-
-## Date
-
-09.12.2022
-
----
-<!-- TOC -->
 - [State machine design](#state-machine-design)
-  - [Author](#author)
-  - [Date](#date)
   - [Super state machine](#super-state-machine)
   - [Driving state machine](#driving-state-machine)
     - [KEEP](#keep)
@@ -40,7 +26,6 @@ Josef Kircher
     - [STOP\_GO](#stop_go)
   - [Implementation](#implementation)
     - [Sources](#sources)
-<!-- TOC -->
 
 ## Super state machine
 

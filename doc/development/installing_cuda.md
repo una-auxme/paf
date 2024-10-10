@@ -4,15 +4,10 @@
 
 **Summary:** This page gives a short overview how to install cuda-toolkit on your computer.
 
----
-
-## Author
-
-Marco Riedenauer
-
-## Date
-
-10.01.2023
+- [Install cuda-toolkit](#install-cuda-toolkit)
+  - [First install](#first-install)
+  - [Common Problems](#common-problems)
+    - [Wrong version of cuda-toolkit installed](#wrong-version-of-cuda-toolkit-installed)
 
 ## First install
 
