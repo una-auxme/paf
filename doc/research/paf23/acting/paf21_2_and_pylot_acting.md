@@ -29,7 +29,6 @@
     - [**utils.py**](#utilspy)
   - [MPC Control Code](#mpc-control-code)
 
-
 ## Acting
 
 - Longitudinal control
