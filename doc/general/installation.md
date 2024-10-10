@@ -1,9 +1,8 @@
 # 🛠️ Installation
 
-**Summary:** This page explains the installation process for the project.
+**Summary:** This page explains the installation process for the
 
 - [🛠️ Installation](#️-installation)
-  - [Installation](#installation)
   - [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support)
     - [Docker](#docker)
     - [Allow non-root user to execute Docker commands](#allow-non-root-user-to-execute-docker-commands)
@@ -16,13 +15,11 @@ To run the project you have to install [docker](https://docs.docker.com/engine/i
 
 For development, we recommend Visual Studio Code with the plugins that are recommended inside the `.vscode` folder.
 
-## Installation
+## Docker with NVIDIA GPU support
 
 If not yet installed first install docker as described in section [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support).
 
-## Docker with NVIDIA GPU support
-
-For this installation, it's easiest to follow the guide in the [NVIDIA docs](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
+For NVIDIA GPU support it's easiest to follow the guide in the [NVIDIA docs](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 
 For simplicity, we list the necessary steps here:
 
@@ -51,7 +48,7 @@ After this, _restart_ your system to propagate the group changes.
 
 ### NVIDIA Container toolkit
 
-Setup the package repository and the GPG key:
+Set up the package repository and the GPG key:
 
 ```shell
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \

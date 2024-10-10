@@ -1,5 +1,7 @@
 # Documentation Requirements
 
+**Summary:** This document provides the guidelines for the documentation.
+
 - [Documentation Requirements](#documentation-requirements)
   - [Readability and Maintainability](#readability-and-maintainability)
   - [Code Structure](#code-structure)

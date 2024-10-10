@@ -1,15 +1,20 @@
 # Distributed Simulation
 
-If you have not enough compute resources, start the `carla-simulator-server` on a remote machine and execute the agent on your local machine.
-As far as we know, you need more than **10 GB of VRAM** to run the server and the agent on the same machine.
+**Summary:** This page documents the distributed execution of the Carla simulator and the agent.
 
 - [Distributed Simulation](#distributed-simulation)
+  - [General](#general)
   - [Remote Machine Setup](#remote-machine-setup)
   - [Local Machine Setup](#local-machine-setup)
     - [Ensure similarity between normal docker-compose and distributed docker-compose files](#ensure-similarity-between-normal-docker-compose-and-distributed-docker-compose-files)
     - [Set the `<ip-address>` of the carla simulator in docker-compose distributed files](#set-the-ip-address-of-the-carla-simulator-in-docker-compose-distributed-files)
     - [Start the agent on your local machine](#start-the-agent-on-your-local-machine)
   - [How do you know that you do not have enough compute resources?](#how-do-you-know-that-you-do-not-have-enough-compute-resources)
+
+## General
+
+If you have not enough compute resources, start the `carla-simulator` on a remote machine and execute the agent on your local machine.
+As far as we know, you need more than **10 GB of VRAM** to run the server and the agent on the same machine.
 
 ## Remote Machine Setup
 

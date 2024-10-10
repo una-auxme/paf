@@ -21,15 +21,19 @@ To be able to execute and develop the project, you need a Linux system equipped 
 
 As the project is still in early development, these requirements are subject to change.
 
-## Installation
+## Getting started
+
+### Installation
 
 To run the project you have to install [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support,
 [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 `docker` and `nvidia-docker` are used to run the project in a containerized environment with GPU support.
 
-More detailed instructions about setup and execution can be found [here](./doc/general/README.md).
+More detailed instructions about the setup can be found [here](./doc/general/installation.md).
 
 ## Development
+
+To get an overview of the current architecture of the agent you can look at the general documentation [here](./doc/general/architecture.md). The individual components are explained in the README files of their subfolders.
 
 If you contribute to this project please read the guidelines first. They can be found [here](./doc/development/README.md).
 

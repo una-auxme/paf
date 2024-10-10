@@ -1,14 +1,15 @@
-# Build Directory Documentation
+# Execution
 
-This document provides an overview of the build structure of the project,
-detailing the purpose and usage of the various configuration files located in the `build` directory.
+This document provides an overview of how to execute the project,
+detailing the purpose and usage of the various configuration files located in the [build](../../build/) directory.
 The project utilizes Docker and Docker Compose to manage services and dependencies,
 facilitating both normal and distributed execution modes.
 
 ## Table of Contents
 
-- [Build Directory Documentation](#build-directory-documentation)
+- [Execution](#execution)
   - [Table of Contents](#table-of-contents)
+  - [Quick Start](#quick-start)
   - [Directory Structure](#directory-structure)
   - [Base Service Files](#base-service-files)
     - [`agent_service.yaml`](#agent_serviceyaml)
@@ -27,6 +28,10 @@ facilitating both normal and distributed execution modes.
   - [Notes](#notes)
   - [Conclusion](#conclusion)
 
+## Quick Start
+
+In order to start the default leaderboard execution simply navigate to the [build](../../build/) folder and select the `Compose up` option in the right-click menu of the `docker-compose.leaderboard.yaml` file.
+
 ## Directory Structure
 
 The `build` directory contains the necessary configuration and setup files for building and running the project services. Below is an overview of the key files:
@@ -44,7 +49,7 @@ The `build` directory contains the necessary configuration and setup files for b
 
 ## Base Service Files
 
-The base service files define the configurations for individual services used in the project. These files are included or extended in the Docker Compose files to create different execution setups.
+The base service files define the configurations for individual services used in the project. These files are included or extended in the Docker Compose files to create different execution setups and are not intended for standalone execution.
 
 ### `agent_service.yaml`
 

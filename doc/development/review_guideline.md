@@ -7,6 +7,7 @@
 - [Review Guidelines](#review-guidelines)
   - [How to review](#how-to-review)
   - [How to comment on a pull request](#how-to-comment-on-a-pull-request)
+  - [CodeRabbit](#coderabbit)
   - [Incorporating feedback](#incorporating-feedback)
     - [Responding to comments](#responding-to-comments)
     - [Applying suggested changes](#applying-suggested-changes)
@@ -16,7 +17,7 @@
 
 ## How to review
 
-1. Select der PR you want to review on GitHub
+1. Select the PR you want to review on GitHub
 ![img.png](../assets/PR_overview.png)
 2. Go to Files Changed
 ![img.png](../assets/Files_Changed.png)
@@ -50,6 +51,10 @@
 - Aim to develop professional skills, group knowledge and product quality, through group critique.
 - Be aware of negative bias with online communication. (If content is neutral, we assume the tone is negative.) Can you use positive language as opposed to neutral?
 - Use emoji to clarify tone. Compare “✨ ✨ Looks good 👍 ✨ ✨” to “Looks good.”
+
+## CodeRabbit
+
+The repository also comes with CodeRabbit integration. This tool generates automatic reviews for a pull request. Although the proposed changes do not have to be incorporated, they can point to a better solution for parts of the implementation.
 
 ## Incorporating feedback
 
