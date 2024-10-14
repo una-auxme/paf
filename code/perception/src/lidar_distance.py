@@ -12,7 +12,7 @@ from cv_bridge import CvBridge
 
 
 class LidarDistance():
-    """ See doc/06_perception/03_lidar_distance_utility.md on
+    """ See doc/perception/lidar_distance_utility.md on
         how to configute this node
     """
 

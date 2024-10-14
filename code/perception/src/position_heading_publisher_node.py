@@ -36,7 +36,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
     must be added in the constructor for clean modular programming!
 
     For more information:
-    ../../doc/06_perception/09_position_heading_publisher_node.md
+    ../../doc/perception/position_heading_publisher_node.md
     """
 
     def __init__(self):

@@ -18,7 +18,7 @@ GPS_RUNNING_AVG_ARGS = 10
 
 '''
 For more information see the documentation in:
-../../doc/06_perception/08_kalman_filter.md
+../../doc/perception/kalman_filter.md
 
 This class implements a Kalman filter for a 3D object tracked in 2D space.
 It implements the data of the IMU and the GPS Sensors.
@@ -75,7 +75,7 @@ class KalmanFilter(CompatibleNode):
     This class implements a Kalman filter for the
     Heading and Position of the car.
     For more information see the documentation in:
-    ../../doc/06_perception/08_kalman_filter.md
+    ../../doc/perception/kalman_filter.md
     """
     def __init__(self):
         """
