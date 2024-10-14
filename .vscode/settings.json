@@ -23,7 +23,7 @@
     "docker.commands.composeUp": [
         {
             "label": "Compose Up",
-            "template": "xhost +local: && ${composeCommand} ${configurationFile} up"
+            "template": "xhost +local: && USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) ${composeCommand} ${configurationFile} up"
         }
     ],
     "workbench.iconTheme": "vscode-icons"

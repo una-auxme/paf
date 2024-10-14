@@ -5,6 +5,12 @@ services:
     volumes:
       - ../:/apps
 
+  black:
+    image: pyfound/black
+    command: black --check ./apps/
+    volumes:
+      - ../:/apps
+
   mdlint:
     image: peterdavehello/markdownlint:0.32.2
     command: markdownlint .

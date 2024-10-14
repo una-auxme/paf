@@ -12,9 +12,9 @@ FROM osrf/ros:noetic-desktop-full-focal
 
 # COPY --from=carla /home/carla/PythonAPI /opt/carla/PythonAPI
 
-ARG USERNAME=carla
-ARG USER_UID=999
-ARG USER_GID=$USER_UID
+ARG USERNAME
+ARG USER_UID
+ARG USER_GID
 ARG DEBIAN_FRONTEND=noninteractive
 
 # install rendering dependencies for rviz / rqt
