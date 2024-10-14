@@ -1,0 +1,21 @@
+name: Check code format
+
+on:
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+    format:
+        name: Check code files format
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check out the repo
+            uses: actions/checkout@v2
+          # Execute the python formatter
+          - name: Run the python formatter
+            uses: addnab/docker-run-action@v3
+            with:
+              image: pyfound/black
+              options: -v ${{ github.workspace}}:/apps
+              run: black --check ./apps/
