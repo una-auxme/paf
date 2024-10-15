@@ -12,6 +12,7 @@ env:
 
 jobs:
   build-and-push-image:
+    name: Build agent and push image
     runs-on: self-hosted
     outputs:
       version: ${{ steps.build.version.outputs.version }}
