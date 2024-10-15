@@ -9,25 +9,21 @@ import random
 
 
 def create_argparse():
-    argparser = ArgumentParser(
-        description='CARLA Dataset Converter')
+    argparser = ArgumentParser(description="CARLA Dataset Converter")
+    argparser.add_argument("input_dir", help="Path to the input directory")
+    argparser.add_argument("output_dir", help="Path to the output directory")
     argparser.add_argument(
-        'input_dir',
-        help='Path to the input directory')
-    argparser.add_argument(
-        'output_dir',
-        help='Path to the output directory')
-    argparser.add_argument(
-        '--force',
+        "--force",
         default=False,
-        action='store_true',
-        help='Overwrite output if already exists')
+        action="store_true",
+        help="Overwrite output if already exists",
+    )
     argparser.add_argument(
-        '--shuffle',
+        "--shuffle",
         default=False,
-        action='store_true',
-        help='Shuffle the dataset before splitting it'
-             ' into train, test and validation sets'
+        action="store_true",
+        help="Shuffle the dataset before splitting it"
+        " into train, test and validation sets",
     )
     return argparser
 
@@ -64,35 +60,35 @@ def main():
             output_dir.mkdir()
         else:
             raise ValueError(
-                f"given output_dir ({output_dir.as_posix()}) already exists!")
+                f"given output_dir ({output_dir.as_posix()}) already exists!"
+            )
     if not input_dir.is_dir():
-        raise ValueError(
-            f"input_dir ({input_dir.as_posix()}) needs to be a directory")
+        raise ValueError(f"input_dir ({input_dir.as_posix()}) needs to be a directory")
 
     # first create the necessary directories
-    groundtruth = output_dir / 'groundtruth'
+    groundtruth = output_dir / "groundtruth"
     groundtruth.mkdir(parents=True)
 
     rgb_files = {}
     instance_files = {}
 
     # populate dicts
-    for file in input_dir.rglob('*.png'):
+    for file in input_dir.rglob("*.png"):
         side = file.parts[-2]
-        if 'rgb' in file.parts:
+        if "rgb" in file.parts:
             add_to_side_list(rgb_files, side, file)
-        if 'instance' in file.parts:
+        if "instance" in file.parts:
             add_to_side_list(instance_files, side, file)
 
     # sort images according to their sequence number
     for side in rgb_files:
-        rgb_files[side] = sorted(rgb_files[side],
-                                 key=lambda path: int(path.stem))
-        instance_files[side] = sorted(instance_files[side],
-                                      key=lambda path: int(path.stem))
+        rgb_files[side] = sorted(rgb_files[side], key=lambda path: int(path.stem))
+        instance_files[side] = sorted(
+            instance_files[side], key=lambda path: int(path.stem)
+        )
 
-        print(f'rgb_files[{side}] length: {len(rgb_files[side])}')
-        print(f'instance_files[{side}] length: {len(instance_files[side])}')
+        print(f"rgb_files[{side}] length: {len(rgb_files[side])}")
+        print(f"instance_files[{side}] length: {len(instance_files[side])}")
 
     splits = [train, test, val]
     split_names = ["train", "test", "val"]
@@ -128,9 +124,8 @@ def main():
                 # convert_image_to_cityscapes_labelids(
                 #    instance_image,
                 #    groundtruth_target_dir / instance_file_name)   zzzyy
-                copyfile(instance_image,
-                         groundtruth_target_dir / instance_file_name)
+                copyfile(instance_image, groundtruth_target_dir / instance_file_name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

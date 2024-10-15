@@ -1,9 +1,10 @@
-name: Build, publish and run tests
+name: Build and push image
 
 on:
-  push:
-    branches: [ 'main' ]
-  pull_request:
+  workflow_run:
+    workflows: ["Check code format", "Linter markdown and code"]
+    types:
+      - completed
 
 env:
   REGISTRY: ghcr.io
@@ -38,19 +39,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Bump version and push tag
-        # only run on push to main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: tag
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release_branches: main
-
-      - name: Get commit hash
-        id: hash
-        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         id: build
         uses: docker/build-push-action@v3
@@ -59,72 +47,6 @@ jobs:
           file: ./build/docker/build/Dockerfile
           push: true
           # tag 'latest' and version on push to main, otherwise use the commit hash
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.new_version == '' && steps.hash.outputs.hash || steps.tag.outputs.new_version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'latest' || steps.hash.outputs.hash }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Output version
-        id: version
-        # take either the created tag or the commit hash
-        run: echo "version=${{ steps.tag.outputs.new_version == '' && steps.hash.outputs.hash || steps.tag.outputs.new_version }}" >> $GITHUB_OUTPUT
-  drive:
-    runs-on: self-hosted
-    needs: build-and-push-image
-    # run only on pull request for now
-    if: github.event_name == 'pull_request'
-    env:
-      AGENT_VERSION: ${{ needs.build-and-push-image.outputs.version }}
-      COMPOSE_FILE: ./build/docker-compose.cicd.yaml
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Print environment variables (DEBUG)
-        run: |
-          echo "AGENT_VERSION=${AGENT_VERSION}"
-          echo "COMPOSE_FILE=${COMPOSE_FILE}"
-      - name: Get commit hash
-        id: hash
-        run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      - name: Set AGENT_VERSION from hash (workaround)
-        run: echo "AGENT_VERSION=${{ steps.hash.outputs.hash }}" >> $GITHUB_ENV
-      - name: Run docker-compose
-        run: docker compose up --quiet-pull --exit-code-from agent
-      - name: Copy results
-        run: docker compose cp agent:/tmp/simulation_results.json .
-      - name: Stop docker-compose
-        # always run this step, to clean up even on error
-        if: always()
-        run: docker compose down -v
-      # add rendered JSON as comment to the pull request
-      - name: Add simulation results as comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # this script reads the simulation_results.json and creates a comment on the pull request with the results.
-          script: |
-            const fs = require('fs');
-            // read the simulation results
-            const results = fs.readFileSync('./simulation_results.json', 'utf8');
-            let resultsJson = JSON.parse(results);
-            // create a markdown table of the results
-            let resultsTable = resultsJson.values.map((values, i) => {
-              return `| ${resultsJson.labels[i]} | ${values} |`;
-            });
-            // create a markdown table header
-            let resultsTableHeader = `| Metric | Value |`;
-            // create a markdown table divider
-            let resultsTableDivider = `| --- | --- |`;
-            // add everything to the resultsTable
-            resultsTable = resultsTableHeader + '\n' + resultsTableDivider + '\n' + resultsTable.join('\n');
-            // add the results as a comment to the pull request
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: "## Simulation results\n" + resultsTable
-            });
-      - name: Prune all images older than 30 days from self-hosted runner
-        run: docker image prune -a --force --filter "until=720h"

@@ -17,6 +17,7 @@ class IntersectionAhead(py_trees.behaviour.Behaviour):
     ego vehicle or not and triggers the rest of the decision tree handling the
      intersection.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -91,8 +92,10 @@ class IntersectionAhead(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class LaneChangeAhead(py_trees.behaviour.Behaviour):
@@ -101,6 +104,7 @@ class LaneChangeAhead(py_trees.behaviour.Behaviour):
     ego vehicle or not and triggers the rest of the decision tree handling the
      lane change.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -174,8 +178,10 @@ class LaneChangeAhead(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class OvertakeAhead(py_trees.behaviour.Behaviour):
@@ -183,6 +189,7 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
     This behaviour checks whether an object that needs to be overtaken is
     ahead
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -241,13 +248,13 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         current_position = self.blackboard.get("/paf/hero/current_pos")
         current_heading = self.blackboard.get("/paf/hero/current_heading").data
 
-        if obstacle_msg is None or \
-                current_position is None or \
-                current_heading is None:
+        if obstacle_msg is None or current_position is None or current_heading is None:
             return py_trees.common.Status.FAILURE
-        current_position = [current_position.pose.position.x,
-                            current_position.pose.position.y,
-                            current_position.pose.position.z]
+        current_position = [
+            current_position.pose.position.x,
+            current_position.pose.position.y,
+            current_position.pose.position.z,
+        ]
 
         obstacle_distance = obstacle_msg.data[0]
         obstacle_speed = obstacle_msg.data[1]
@@ -255,11 +262,12 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         if obstacle_distance == np.Inf:
             return py_trees.common.Status.FAILURE
         # calculate approx collision position in global coords
-        rotation_matrix = Rotation.from_euler('z', current_heading)
+        rotation_matrix = Rotation.from_euler("z", current_heading)
         # Apply current heading to absolute distance vector
         # and add to current position
         pos_moved_in_x_direction = current_position + rotation_matrix.apply(
-                np.array([obstacle_distance, 0, 0]))
+            np.array([obstacle_distance, 0, 0])
+        )
 
         if np.linalg.norm(pos_moved_in_x_direction - current_position) < 1:
             # current collision is not near trajectory lane
@@ -285,8 +293,10 @@ class OvertakeAhead(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class MultiLane(py_trees.behaviour.Behaviour):
@@ -295,6 +305,7 @@ class MultiLane(py_trees.behaviour.Behaviour):
     one lane in the driving direction. This could be used to change lanes to
     the right to perhaps evade an emergency vehicle.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -367,8 +378,10 @@ class MultiLane(py_trees.behaviour.Behaviour):
            down
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class SingleLineDotted(py_trees.behaviour.Behaviour):
@@ -376,6 +389,7 @@ class SingleLineDotted(py_trees.behaviour.Behaviour):
     This behavior checks if it is allowed to switch lanes one a single lane
     street.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -445,8 +459,10 @@ class SingleLineDotted(py_trees.behaviour.Behaviour):
            down
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class RightLaneAvailable(py_trees.behaviour.Behaviour):
@@ -454,6 +470,7 @@ class RightLaneAvailable(py_trees.behaviour.Behaviour):
     This behavior checks if there is a lane to the right of the agent it could
     change to.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -522,8 +539,10 @@ class RightLaneAvailable(py_trees.behaviour.Behaviour):
            down
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class LeftLaneAvailable(py_trees.behaviour.Behaviour):
@@ -531,6 +550,7 @@ class LeftLaneAvailable(py_trees.behaviour.Behaviour):
     On a multi-lane, this behavior checks if there is a lane to the left of the
     agent it could change to, to overtake.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -602,5 +622,7 @@ class LeftLaneAvailable(py_trees.behaviour.Behaviour):
            down
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s ]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s ]"
+            % (self.name, self.status, new_status)
+        )

@@ -3,9 +3,16 @@ import numpy as np
 
 
 # https://gist.github.com/bigsnarfdude/bbfdf343cc2fc818dc08b58c0e1374ae
-def bounding_box(points, min_x=-np.inf, max_x=np.inf, min_y=-np.inf,
-                 max_y=np.inf, min_z=-np.inf, max_z=np.inf):
-    """ Compute a bounding_box filter on the given points
+def bounding_box(
+    points,
+    min_x=-np.inf,
+    max_x=np.inf,
+    min_y=-np.inf,
+    max_y=np.inf,
+    min_z=-np.inf,
+    max_z=np.inf,
+):
+    """Compute a bounding_box filter on the given points
 
     Parameters
     ----------
@@ -31,9 +38,9 @@ def bounding_box(points, min_x=-np.inf, max_x=np.inf, min_y=-np.inf,
 
     """
 
-    bound_x = np.logical_and(points['x'] > min_x, points['x'] < max_x)
-    bound_y = np.logical_and(points['y'] > min_y, points['y'] < max_y)
-    bound_z = np.logical_and(points['z'] > min_z, points['z'] < max_z)
+    bound_x = np.logical_and(points["x"] > min_x, points["x"] < max_x)
+    bound_y = np.logical_and(points["y"] > min_y, points["y"] < max_y)
+    bound_z = np.logical_and(points["z"] > min_z, points["z"] < max_z)
 
     bb_filter = bound_x & bound_y & bound_z
 
@@ -42,7 +49,7 @@ def bounding_box(points, min_x=-np.inf, max_x=np.inf, min_y=-np.inf,
 
 # https://stackoverflow.com/questions/15575878/how-do-you-remove-a-column-from-a-structured-numpy-array
 def remove_field_name(a, name):
-    """ Removes a column from a structured numpy array
+    """Removes a column from a structured numpy array
 
     :param a: structured numoy array
     :param name: name of the column to remove

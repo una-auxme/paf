@@ -2,10 +2,11 @@ services:
   agent:
     build:
       dockerfile: build/docker/agent/Dockerfile
-      args:
-        - USER_UID=${DOCKER_HOST_UNIX_UID:-1000}
-        - USER_GID=${DOCKER_HOST_UNIX_GID:-1000}
       context: ../
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
     init: true
     tty: true
     shm_size: 2gb

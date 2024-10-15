@@ -9,8 +9,8 @@ from queue import Queue
 from threading import Thread
 
 # get carla host and port from environment variables
-CARLA_HOST = os.environ.get('CARLA_HOST', 'localhost')
-CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+CARLA_HOST = os.environ.get("CARLA_HOST", "localhost")
+CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
 
 
 def destroy_actors(actors):
@@ -25,13 +25,13 @@ def setup_empty_world(client):
     world.wait_for_tick()
 
     # destroy all actors
-    destroy_actors(world.get_actors().filter('vehicle.*'))
-    destroy_actors(world.get_actors().filter('walker.*'))
-    destroy_actors(world.get_actors().filter('controller.*'))
+    destroy_actors(world.get_actors().filter("vehicle.*"))
+    destroy_actors(world.get_actors().filter("walker.*"))
+    destroy_actors(world.get_actors().filter("controller.*"))
 
     # spawn ego vehicle
     blueprint_library = world.get_blueprint_library()
-    bp = blueprint_library.filter('vehicle.*')[0]
+    bp = blueprint_library.filter("vehicle.*")[0]
     ego_vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
     ego_vehicle.set_autopilot(True)
 
@@ -39,8 +39,10 @@ def setup_empty_world(client):
     spectator = world.get_spectator()
     # set spectator to follow ego vehicle with offset
     spectator.set_transform(
-        carla.Transform(ego_vehicle.get_location() + carla.Location(z=50),
-                        carla.Rotation(pitch=-90)))
+        carla.Transform(
+            ego_vehicle.get_location() + carla.Location(z=50), carla.Rotation(pitch=-90)
+        )
+    )
 
     # create traffic manager
     traffic_manager = client.get_trafficmanager(8000)
@@ -50,32 +52,30 @@ def setup_empty_world(client):
     blueprint_library = world.get_blueprint_library()
     count = 0
     while count < 14:
-        bp = choice(blueprint_library.filter('walker.pedestrian.*'))
+        bp = choice(blueprint_library.filter("walker.pedestrian.*"))
         spawn_point = carla.Transform()
         spawn_point.location = world.get_random_location_from_navigation()
-        traffic_pedestrian = world.try_spawn_actor(bp,
-                                                   spawn_point)
+        traffic_pedestrian = world.try_spawn_actor(bp, spawn_point)
         if traffic_pedestrian is None:
             continue
 
-        controller_bp = blueprint_library.find('controller.ai.walker')
-        ai_controller = world.try_spawn_actor(controller_bp, carla.Transform(),
-                                              traffic_pedestrian)
+        controller_bp = blueprint_library.find("controller.ai.walker")
+        ai_controller = world.try_spawn_actor(
+            controller_bp, carla.Transform(), traffic_pedestrian
+        )
         ai_controller.start()
-        ai_controller.go_to_location(
-            world.get_random_location_from_navigation())
+        ai_controller.go_to_location(world.get_random_location_from_navigation())
         ai_controller.set_max_speed(1.0)
 
         count += 1
 
     # spawn traffic vehicles
     for i in range(18):
-        bp = choice(blueprint_library.filter('vehicle.*'))
-        traffic_vehicle = world.spawn_actor(bp,
-                                            world.get_map().get_spawn_points()[
-                                                i + 1])
-        traffic_manager.vehicle_percentage_speed_difference(traffic_vehicle,
-                                                            0.0)
+        bp = choice(blueprint_library.filter("vehicle.*"))
+        traffic_vehicle = world.spawn_actor(
+            bp, world.get_map().get_spawn_points()[i + 1]
+        )
+        traffic_manager.vehicle_percentage_speed_difference(traffic_vehicle, 0.0)
         traffic_vehicle.set_autopilot(True)
 
     return ego_vehicle
@@ -94,13 +94,13 @@ class DatasetGenerator:
             "center": Queue(),
             "right": Queue(),
             "back": Queue(),
-            "left": Queue()
+            "left": Queue(),
         }
         self.instance_camera_queues = {
             "center": Queue(),
             "right": Queue(),
             "back": Queue(),
-            "left": Queue()
+            "left": Queue(),
         }
 
     def save_image(self, image, dir):
@@ -112,39 +112,37 @@ class DatasetGenerator:
     def setup_cameras(self, world, ego_vehicle):
         # get instance segmentation camera blueprint
         instance_camera_bp = world.get_blueprint_library().find(
-            'sensor.camera.instance_segmentation'
+            "sensor.camera.instance_segmentation"
         )
         # get camera blueprint
-        camera_bp = world.get_blueprint_library().find('sensor.camera.rgb')
-        camera_bp.set_attribute('sensor_tick', '1.0')
+        camera_bp = world.get_blueprint_library().find("sensor.camera.rgb")
+        camera_bp.set_attribute("sensor_tick", "1.0")
 
         # set leaderboard attributes
-        camera_bp.set_attribute('lens_circle_multiplier', '0.0')
-        camera_bp.set_attribute('lens_circle_falloff', '5.0')
-        camera_bp.set_attribute('chromatic_aberration_intensity', '0.5')
-        camera_bp.set_attribute('chromatic_aberration_offset', '0.0')
+        camera_bp.set_attribute("lens_circle_multiplier", "0.0")
+        camera_bp.set_attribute("lens_circle_falloff", "5.0")
+        camera_bp.set_attribute("chromatic_aberration_intensity", "0.5")
+        camera_bp.set_attribute("chromatic_aberration_offset", "0.0")
 
         IMAGE_WIDTH = 1280
         IMAGE_HEIGHT = 720
         # set resolution
-        camera_bp.set_attribute('image_size_x', str(IMAGE_WIDTH))
-        camera_bp.set_attribute('image_size_y', str(IMAGE_HEIGHT))
+        camera_bp.set_attribute("image_size_x", str(IMAGE_WIDTH))
+        camera_bp.set_attribute("image_size_y", str(IMAGE_HEIGHT))
 
-        instance_camera_bp.set_attribute('sensor_tick', '1.0')
+        instance_camera_bp.set_attribute("sensor_tick", "1.0")
 
         # set resolution
-        instance_camera_bp.set_attribute('image_size_x', str(IMAGE_WIDTH))
-        instance_camera_bp.set_attribute('image_size_y', str(IMAGE_HEIGHT))
+        instance_camera_bp.set_attribute("image_size_x", str(IMAGE_WIDTH))
+        instance_camera_bp.set_attribute("image_size_y", str(IMAGE_HEIGHT))
 
-        camera_init_transform = carla.Transform(
-            carla.Location(z=1.7)
-        )
+        camera_init_transform = carla.Transform(carla.Location(z=1.7))
 
         for i, direction in enumerate(self.directions):
             print("Creating camera {}".format(direction))
 
-            camera_bp.set_attribute('role_name', direction)
-            instance_camera_bp.set_attribute('role_name', direction)
+            camera_bp.set_attribute("role_name", direction)
+            instance_camera_bp.set_attribute("role_name", direction)
             # add rotation to camera transform
             camera_init_transform.rotation.yaw = i * 90
             # create camera
@@ -152,20 +150,19 @@ class DatasetGenerator:
                 camera_bp,
                 camera_init_transform,
                 attach_to=ego_vehicle,
-                attachment_type=carla.AttachmentType.Rigid
+                attachment_type=carla.AttachmentType.Rigid,
             )
             # create instance segmentation camera
             instance_camera = world.spawn_actor(
                 instance_camera_bp,
                 camera_init_transform,
                 attach_to=ego_vehicle,
-                attachment_type=carla.AttachmentType.Rigid
+                attachment_type=carla.AttachmentType.Rigid,
             )
-            camera.listen(
-                lambda image, dir=direction: self.save_image(image, dir))
+            camera.listen(lambda image, dir=direction: self.save_image(image, dir))
             instance_camera.listen(
-                lambda image, dir=direction: self.save_segmented_image(
-                    image, dir))
+                lambda image, dir=direction: self.save_segmented_image(image, dir)
+            )
 
             self.cameras.append(camera)
             self.instance_cameras.append(instance_camera)
@@ -179,17 +176,11 @@ class DatasetGenerator:
             image = image_queue.get()
             if counter < 2500:
                 image.save_to_disk(
-                    '{}/rgb/{}/{}.png'.format(
-                        output_dir, direction,
-                        counter
-                    )
+                    "{}/rgb/{}/{}.png".format(output_dir, direction, counter)
                 )
                 instance_image = instance_image_queue.get()
                 instance_image.save_to_disk(
-                    '{}/instance/{}/{}.png'.format(
-                        output_dir, direction,
-                        counter
-                    )
+                    "{}/instance/{}/{}.png".format(output_dir, direction, counter)
                 )
                 counter += 1
 
@@ -199,8 +190,9 @@ class DatasetGenerator:
             for direction in self.directions:
                 thread_stop_event = threading.Event()
                 self.thread_stop_events.append(thread_stop_event)
-                t = Thread(target=self.save_images_worker,
-                           args=(direction, thread_stop_event))
+                t = Thread(
+                    target=self.save_images_worker, args=(direction, thread_stop_event)
+                )
                 self.threads.append(t)
                 t.start()
 
@@ -211,53 +203,51 @@ class DatasetGenerator:
             t.join()
 
 
-def find_ego_vehicle(world, role_name='hero'):
-    if world.get_actors().filter('vehicle.*'):
+def find_ego_vehicle(world, role_name="hero"):
+    if world.get_actors().filter("vehicle.*"):
         # get ego vehicle with hero role
-        for actor in world.get_actors().filter('vehicle.*'):
-            if actor.attributes['role_name'] == role_name:
+        for actor in world.get_actors().filter("vehicle.*"):
+            if actor.attributes["role_name"] == role_name:
                 return actor
 
 
 def create_argparse():
-    argparser = argparse.ArgumentParser(
-        description='CARLA Dataset Generator')
+    argparser = argparse.ArgumentParser(description="CARLA Dataset Generator")
     argparser.add_argument(
-        '--output-dir',
-        metavar='DIR',
-        default='output',
-        help='Path to the output directory')
-    argparser.add_argument(
-        '--host',
-        metavar='H',
-        default='localhost',
-        help='host of the carla server'
+        "--output-dir",
+        metavar="DIR",
+        default="output",
+        help="Path to the output directory",
     )
     argparser.add_argument(
-        '--port',
-        metavar='P',
-        default=2000,
-        type=int,
-        help='port of the carla server'
+        "--host", metavar="H", default="localhost", help="host of the carla server"
     )
     argparser.add_argument(
-        '--use-empty-world',
-        action='store_true',
-        help='set up an empty world and spawn ego vehicle',
-        default=False
+        "--port", metavar="P", default=2000, type=int, help="port of the carla server"
     )
     argparser.add_argument(
-        '--town',
-        metavar='T',
-        default='Town12',
-        help='town to load'
+        "--use-empty-world",
+        action="store_true",
+        help="set up an empty world and spawn ego vehicle",
+        default=False,
     )
+    argparser.add_argument("--town", metavar="T", default="Town12", help="town to load")
     return argparser
 
 
-if __name__ == '__main__':
-    towns = {"Town01", "Town02", "Town03", "Town04", "Town05", "Town06",
-             "Town07", "Town10", "Town11", "Town12"}
+if __name__ == "__main__":
+    towns = {
+        "Town01",
+        "Town02",
+        "Town03",
+        "Town04",
+        "Town05",
+        "Town06",
+        "Town07",
+        "Town10",
+        "Town11",
+        "Town12",
+    }
     argparser = create_argparse()
     args = argparser.parse_args()
     town = args.town
@@ -280,7 +270,7 @@ if __name__ == '__main__':
         ego_vehicle = find_ego_vehicle(world)
 
     if not ego_vehicle:
-        raise RuntimeError('No vehicle found in the world')
+        raise RuntimeError("No vehicle found in the world")
 
     dataset_generator = DatasetGenerator(output_dir)
     dataset_generator.setup_cameras(world, ego_vehicle)

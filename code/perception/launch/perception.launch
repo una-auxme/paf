@@ -41,8 +41,8 @@
     <param name="right" value="False" />
 
       <!--Object-Detection: 
-      - fasterrcnn_resnet50_fpn_v2 
-      - fasterrcnn_mobilenet_v3_large_320_fpn
+      - frcnn_resnet50_fpn_v2 
+      - frcnn_mobilenet_v3_large_320_fpn
       - yolov8n
       - yolov8s
       - yolov8m

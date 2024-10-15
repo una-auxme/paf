@@ -11,6 +11,7 @@
         "bierner.markdown-mermaid",
         "richardkotze.git-mob",
         "ms-vscode-remote.remote-containers",
-        "valentjn.vscode-ltex"
+        "valentjn.vscode-ltex",
+        "ms-python.black-formatter"
     ]
 }

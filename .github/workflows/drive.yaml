@@ -1,0 +1,63 @@
+name: Evaluate agent
+
+on:
+  workflow_run:
+    workflows: ["Build and push image"]
+    types:
+      - completed
+
+jobs:
+  drive:
+    runs-on: self-hosted
+    needs: build-and-push-image
+    # run only on pull request for now
+    if: github.event_name == 'pull_request'
+    env:
+      AGENT_VERSION: latest
+      COMPOSE_FILE: ./build/docker-compose.cicd.yaml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Print environment variables (DEBUG)
+        run: |
+          echo "AGENT_VERSION=${AGENT_VERSION}"
+          echo "COMPOSE_FILE=${COMPOSE_FILE}"
+      - name: Run docker-compose
+        run: docker compose up --quiet-pull --exit-code-from agent
+      - name: Copy results
+        run: docker compose cp agent:/tmp/simulation_results.json .
+      - name: Stop docker-compose
+        # always run this step, to clean up even on error
+        if: always()
+        run: docker compose down -v
+      # add rendered JSON as comment to the pull request
+      - name: Add simulation results as comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # this script reads the simulation_results.json and creates a comment on the pull request with the results.
+          script: |
+            const fs = require('fs');
+            // read the simulation results
+            const results = fs.readFileSync('./simulation_results.json', 'utf8');
+            let resultsJson = JSON.parse(results);
+            // create a markdown table of the results
+            let resultsTable = resultsJson.values.map((values, i) => {
+              return `| ${resultsJson.labels[i]} | ${values} |`;
+            });
+            // create a markdown table header
+            let resultsTableHeader = `| Metric | Value |`;
+            // create a markdown table divider
+            let resultsTableDivider = `| --- | --- |`;
+            // add everything to the resultsTable
+            resultsTable = resultsTableHeader + '\n' + resultsTableDivider + '\n' + resultsTable.join('\n');
+            // add the results as a comment to the pull request
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "## Simulation results\n" + resultsTable
+            });
+      - name: Prune all images older than 30 days from self-hosted runner
+        run: docker image prune -a --force --filter "until=720h"

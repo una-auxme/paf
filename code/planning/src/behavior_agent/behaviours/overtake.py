@@ -4,10 +4,8 @@ from std_msgs.msg import String
 import rospy
 import numpy as np
 
-from . import behavior_speed as bs
-import planning  # noqa: F401
-from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, \
-    convert_to_ms
+from behaviours import behavior_speed as bs
+from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms
 
 """
 Source: https://github.com/ll7/psaf2
@@ -25,6 +23,7 @@ class Approach(py_trees.behaviour.Behaviour):
     behaviours.road_features.overtake_ahead is triggered.
     It than handles the procedure for overtaking.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -46,9 +45,9 @@ class Approach(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior",
-                                                 String, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -103,8 +102,10 @@ class Approach(py_trees.behaviour.Behaviour):
             else:
                 distance_oncoming = 35
 
-            if distance_oncoming is not None and \
-                    distance_oncoming > self.clear_distance:
+            if (
+                distance_oncoming is not None
+                and distance_oncoming > self.clear_distance
+            ):
                 rospy.loginfo("Overtake is free not slowing down!")
                 self.curr_behavior_pub.publish(bs.ot_app_free.name)
                 return py_trees.common.Status.SUCCESS
@@ -124,8 +125,7 @@ class Approach(py_trees.behaviour.Behaviour):
             # too far
             rospy.loginfo("still approaching")
             return py_trees.common.Status.RUNNING
-        elif speed < convert_to_ms(2.0) and \
-                self.ot_distance < TARGET_DISTANCE_TO_STOP:
+        elif speed < convert_to_ms(2.0) and self.ot_distance < TARGET_DISTANCE_TO_STOP:
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
@@ -144,9 +144,9 @@ class Approach(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -155,6 +155,7 @@ class Wait(py_trees.behaviour.Behaviour):
     which is blocking the road.
     The Ego vehicle is waiting to get a clear path for overtaking.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -175,9 +176,9 @@ class Wait(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -251,9 +252,9 @@ class Wait(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -261,6 +262,7 @@ class Enter(py_trees.behaviour.Behaviour):
     This behavior handles the switching to a new lane in the
     overtaking procedure.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -281,9 +283,9 @@ class Enter(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -342,9 +344,9 @@ class Enter(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Leave(py_trees.behaviour.Behaviour):
@@ -352,6 +354,7 @@ class Leave(py_trees.behaviour.Behaviour):
     This behaviour defines the leaf of this subtree, if this behavior is
     reached, the vehicle peformed the overtake.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -372,9 +375,9 @@ class Leave(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -389,8 +392,7 @@ class Leave(py_trees.behaviour.Behaviour):
         """
         self.curr_behavior_pub.publish(bs.ot_leave.name)
         data = self.blackboard.get("/paf/hero/current_pos")
-        self.first_pos = np.array([data.pose.position.x,
-                                   data.pose.position.y])
+        self.first_pos = np.array([data.pose.position.x, data.pose.position.y])
         rospy.loginfo(f"Leave Overtake: {self.first_pos}")
         return True
 
@@ -407,8 +409,7 @@ class Leave(py_trees.behaviour.Behaviour):
         """
         global OVERTAKE_EXECUTING
         data = self.blackboard.get("/paf/hero/current_pos")
-        self.current_pos = np.array([data.pose.position.x,
-                                    data.pose.position.y])
+        self.current_pos = np.array([data.pose.position.x, data.pose.position.y])
         distance = np.linalg.norm(self.first_pos - self.current_pos)
         if distance > OVERTAKE_EXECUTING + NUM_WAYPOINTS:
             rospy.loginfo(f"Left Overtake: {self.current_pos}")
@@ -427,6 +428,6 @@ class Leave(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )

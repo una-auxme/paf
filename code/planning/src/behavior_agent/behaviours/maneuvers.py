@@ -2,7 +2,8 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
-from . import behavior_speed as bs
+from behaviours import behavior_speed as bs
+
 # from behavior_agent.msg import BehaviorSpeed
 
 """
@@ -15,6 +16,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
     This behavior is triggered in the beginning when the vehicle needs
     to leave the parking space.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -40,9 +42,9 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         successful
         :return: True, as there is nothing to set up.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior",
-                                                 String, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.initPosition = None
         return True
@@ -90,13 +92,20 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         speed = self.blackboard.get("/carla/hero/Speed")
         if self.called is False:
             # calculate distance between start and current position
-            if position is not None and \
-                    self.initPosition is not None and \
-                    speed is not None:
-                startPos = np.array([position.pose.position.x,
-                                     position.pose.position.y])
-                endPos = np.array([self.initPosition.pose.position.x,
-                                   self.initPosition.pose.position.y])
+            if (
+                position is not None
+                and self.initPosition is not None
+                and speed is not None
+            ):
+                startPos = np.array(
+                    [position.pose.position.x, position.pose.position.y]
+                )
+                endPos = np.array(
+                    [
+                        self.initPosition.pose.position.x,
+                        self.initPosition.pose.position.y,
+                    ]
+                )
                 distance = np.linalg.norm(startPos - endPos)
                 if distance < 1 or speed.speed < 2:
                     self.curr_behavior_pub.publish(bs.parking.name)
@@ -121,8 +130,10 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class SwitchLaneLeft(py_trees.behaviour.Behaviour):
@@ -131,6 +142,7 @@ class SwitchLaneLeft(py_trees.behaviour.Behaviour):
     switch to the lane to the left. A check if the lane is free might be added
     in the future.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -205,8 +217,10 @@ class SwitchLaneLeft(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class SwitchLaneRight(py_trees.behaviour.Behaviour):
@@ -215,6 +229,7 @@ class SwitchLaneRight(py_trees.behaviour.Behaviour):
     switch to the lane to the right. A check if the lane is free might be added
     in the future.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -281,8 +296,10 @@ class SwitchLaneRight(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Cruise(py_trees.behaviour.Behaviour):
@@ -296,6 +313,7 @@ class Cruise(py_trees.behaviour.Behaviour):
     speed control = acting via speed limits and target_speed
     following the trajectory = acting
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -320,9 +338,9 @@ class Cruise(py_trees.behaviour.Behaviour):
         :return: True, as there is nothing to set up.
         """
 
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior",
-                                                 String, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
 
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
@@ -369,8 +387,10 @@ class Cruise(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 def get_distance(pos_1, pos_2):
@@ -402,7 +422,6 @@ UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 
 
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
-
     """
     Documentation to this behavior can be found in
     /doc/planning/Behavior_detailed.md
@@ -411,6 +430,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     unstuck. The behavior will then try to reverse and steer to the left or
     right to get out of the stuck situation.
     """
+
     def reset_stuck_values(self):
         self.unstuck_overtake_count = 0
         self.stuck_timer = rospy.Time.now()
@@ -421,16 +441,20 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.last_stuck_duration_log = self.stuck_duration
         self.last_wait_stuck_duration_log = self.wait_stuck_duration
 
-        stuck_duration_diff = (self.stuck_duration -
-                               self.last_stuck_duration_log)
-        wait_stuck_duration_diff = (self.wait_stuck_duration -
-                                    self.last_wait_stuck_duration_log)
+        stuck_duration_diff = self.stuck_duration - self.last_stuck_duration_log
+        wait_stuck_duration_diff = (
+            self.wait_stuck_duration - self.last_wait_stuck_duration_log
+        )
 
-        if self.stuck_duration.secs > TRIGGER_STUCK_DURATION.secs/2 \
-           and stuck_duration_diff.secs >= 1:
+        if (
+            self.stuck_duration.secs > TRIGGER_STUCK_DURATION.secs / 2
+            and stuck_duration_diff.secs >= 1
+        ):
             rospy.logwarn(f"Stuck for {self.stuck_duration.secs} s")
-        if self.wait_stuck_duration.secs > TRIGGER_WAIT_STUCK_DURATION.secs/2\
-           and wait_stuck_duration_diff.secs >= 1:
+        if (
+            self.wait_stuck_duration.secs > TRIGGER_WAIT_STUCK_DURATION.secs / 2
+            and wait_stuck_duration_diff.secs >= 1
+        ):
             rospy.logwarn(f"Wait stuck for {self.wait_stuck_duration.secs} s")
 
     def __init__(self, name):
@@ -469,15 +493,15 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         successful
         :return: True, as there is nothing to set up.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior",
-                                                 String, queue_size=1)
-        self.pub_unstuck_distance = rospy.Publisher("/paf/hero/"
-                                                    "unstuck_distance",
-                                                    Float32, queue_size=1)
-        self.pub_unstuck_flag = rospy.Publisher("/paf/hero/"
-                                                "unstuck_flag",
-                                                Bool, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
+        self.pub_unstuck_distance = rospy.Publisher(
+            "/paf/hero/" "unstuck_distance", Float32, queue_size=1
+        )
+        self.pub_unstuck_flag = rospy.Publisher(
+            "/paf/hero/" "unstuck_flag", Bool, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
 
         return True
@@ -527,18 +551,24 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         # print fatal error if stuck for too long
         if self.stuck_duration >= TRIGGER_STUCK_DURATION:
-            rospy.logfatal(f"""Should be Driving but Stuck in one place
+            rospy.logfatal(
+                f"""Should be Driving but Stuck in one place
                            for more than {TRIGGER_STUCK_DURATION.secs}\n
-                           -> starting unstuck routine""")
+                           -> starting unstuck routine"""
+            )
             self.init_pos = pos_to_np_array(
-                self.blackboard.get("/paf/hero/current_pos"))
+                self.blackboard.get("/paf/hero/current_pos")
+            )
         elif self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
-            rospy.logfatal(f"""Wait Stuck in one place
+            rospy.logfatal(
+                f"""Wait Stuck in one place
                            for more than {TRIGGER_WAIT_STUCK_DURATION.secs}
                            \n
-                           -> starting unstuck routine""")
+                           -> starting unstuck routine"""
+            )
             self.init_pos = pos_to_np_array(
-                self.blackboard.get("/paf/hero/current_pos"))
+                self.blackboard.get("/paf/hero/current_pos")
+            )
 
         return True
 
@@ -563,15 +593,16 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         #     self.stuck_timer = rospy.Time.now()
         #     self.wait_stuck_timer = rospy.Time.now()
 
-        self.current_pos = pos_to_np_array(
-            self.blackboard.get("/paf/hero/current_pos"))
+        self.current_pos = pos_to_np_array(self.blackboard.get("/paf/hero/current_pos"))
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
 
         if self.init_pos is None or self.current_pos is None:
             return py_trees.common.Status.FAILURE
         # if no stuck detected, return failure
-        if self.stuck_duration < TRIGGER_STUCK_DURATION and \
-           self.wait_stuck_duration < TRIGGER_WAIT_STUCK_DURATION:
+        if (
+            self.stuck_duration < TRIGGER_STUCK_DURATION
+            and self.wait_stuck_duration < TRIGGER_WAIT_STUCK_DURATION
+        ):
             # rospy.logfatal("No stuck detected.")
             self.pub_unstuck_flag.publish(False)
             # unstuck distance -1 is set, to reset the unstuck distance
@@ -579,7 +610,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.FAILURE
 
         # stuck detected -> unstuck routine
-        if rospy.Time.now()-self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
+        if rospy.Time.now() - self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
             self.pub_unstuck_flag.publish(True)
             rospy.logfatal("Unstuck routine running.")
@@ -590,21 +621,20 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 self.curr_behavior_pub.publish(bs.us_stop.name)
                 return py_trees.common.Status.RUNNING
             # vehicle has stopped:
-            unstuck_distance = get_distance(self.init_pos,
-                                            self.current_pos)
+            unstuck_distance = get_distance(self.init_pos, self.current_pos)
             self.pub_unstuck_distance.publish(unstuck_distance)
 
             # check if vehicle needs to overtake:
             # save current pos to last_unstuck_positions
-            self.last_unstuck_positions = np.roll(self.last_unstuck_positions,
-                                                  -1, axis=0)
+            self.last_unstuck_positions = np.roll(
+                self.last_unstuck_positions, -1, axis=0
+            )
             self.last_unstuck_positions[-1] = self.init_pos
 
             # if last unstuck was too far away, no overtake
             # we only want to overtake when we tried to unstuck twice
             # this case is the first time ever we tried to unstuck
-            if np.array_equal(self.last_unstuck_positions[0],
-                              np.array([0, 0])):
+            if np.array_equal(self.last_unstuck_positions[0], np.array([0, 0])):
                 self.reset_stuck_values()
                 rospy.logwarn("Unstuck routine finished.")
                 return py_trees.common.Status.FAILURE
@@ -614,9 +644,12 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             # if the distance between the last and the first unstuck position
             # is too far, we don't want to overtake, since its the first
             # unstuck routine at this position on the map
-            if get_distance(self.last_unstuck_positions[0],
-                            self.last_unstuck_positions[-1])\
-               > UNSTUCK_CLEAR_DISTANCE:
+            if (
+                get_distance(
+                    self.last_unstuck_positions[0], self.last_unstuck_positions[-1]
+                )
+                > UNSTUCK_CLEAR_DISTANCE
+            ):
                 self.reset_stuck_values()
                 rospy.logwarn("Unstuck routine finished.")
                 return py_trees.common.Status.FAILURE
@@ -646,5 +679,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )

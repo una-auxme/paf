@@ -16,17 +16,19 @@
 # imports are always on the top of a file
 
 # imports in seperate lines
-import os
-import sys
+# import os
+# import sys
 
-# Use from x import y where x is the package prefix and y is the module name with no prefix.
-from matplotlib import pyplot
+# Use from x import y where x is the package prefix and
+# y is the module name with no prefix.
+# from matplotlib import pyplot
 
 # Use import y as z only when z is a standard abbreviation (e.g., np for numpy).
-import numpy as np
+# import numpy as np
 
 
 # two  blank lines between top level functions and class definition
+
 
 #############################
 #   3. Class-Defintion      #
@@ -44,7 +46,8 @@ class TestClass:
         self.x = 0.0
         # one leading underscore for non-public instance and method names
         self._name = "Max"
-        # use a trailing underscore to avoid collision of attribute names with reserved keywords
+        # use a trailing underscore to avoid collision of attribute names
+        # with reserved keywords
         self.if_ = False
 
     # function names should be lower case with underscores to improve readability
@@ -71,7 +74,8 @@ class TestClass:
     #   6. Docstrings           #
     #############################
     def test_function4(self, param1, param2):
-        # This docstring style is the default google style of the autoDocstring extension and helps with automated API documentation creation
+        # This docstring style is the default google style of the autoDocstring
+        # extension and helps with automated API documentation creation
         """This is the description of the function.
 
         Args:

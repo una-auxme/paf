@@ -1,6 +1,9 @@
-name: linter
+name: Linter markdown and code
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - "main"
 
 jobs:
     linter:
@@ -13,16 +16,13 @@ jobs:
           - name: Run the markdown linter
             uses: addnab/docker-run-action@v3
             with:
-                image: peterdavehello/markdownlint:0.32.2
-                options: -v ${{ github.workspace }}:/md
-                run: |
-                    markdownlint .
+              image: peterdavehello/markdownlint:0.32.2
+              options: -v ${{ github.workspace }}:/md
+              run: markdownlint .
            # Execute the python linter (executes even if the previous step failed)
           - name: Run the python linter
-            if: always()
             uses: addnab/docker-run-action@v3
             with:
               image: alpine/flake8
               options: -v ${{ github.workspace }}:/apps
-              run: |
-                flake8 code
+              run: flake8 .

@@ -20,46 +20,45 @@ K_CROSSERR = 0.4  # 1.24 was optimal in dev-launch!
 
 class StanleyController(CompatibleNode):
     def __init__(self):
-        super(StanleyController, self).__init__('stanley_controller')
-        self.loginfo('StanleyController node started')
+        super(StanleyController, self).__init__("stanley_controller")
+        self.loginfo("StanleyController node started")
 
-        self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
+        self.role_name = self.get_param("role_name", "ego_vehicle")
 
         # Subscribers
         self.position_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_path,
-            qos_profile=1)
+            Path, f"/paf/{self.role_name}/trajectory", self.__set_path, qos_profile=1
+        )
 
         self.path_sub: Subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.__set_position,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__set_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.stanley_steer_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/stanley_steer",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/stanley_steer", qos_profile=1
+        )
 
         self.debug_publisher: Publisher = self.new_publisher(
-            StanleyDebug,
-            f"/paf/{self.role_name}/stanley_debug",
-            qos_profile=1)
+            StanleyDebug, f"/paf/{self.role_name}/stanley_debug", qos_profile=1
+        )
 
         self.__position: tuple[float, float] = None  # x , y
         self.__path: Path = None
@@ -71,7 +70,7 @@ class StanleyController(CompatibleNode):
         Starts the main loop of the node
         :return:
         """
-        self.loginfo('StanleyController node running')
+        self.loginfo("StanleyController node running")
 
         def loop(timer_event=None):
             """
@@ -80,25 +79,33 @@ class StanleyController(CompatibleNode):
             :return:
             """
             if self.__path is None:
-                self.logwarn("StanleyController hasn't received a path yet "
-                             "and can therefore not publish steering")
+                self.logwarn(
+                    "StanleyController hasn't received a path yet "
+                    "and can therefore not publish steering"
+                )
                 return
             if self.__position is None:
-                self.logwarn("StanleyController hasn't received the"
-                             "position of the vehicle yet "
-                             "and can therefore not publish steering")
+                self.logwarn(
+                    "StanleyController hasn't received the"
+                    "position of the vehicle yet "
+                    "and can therefore not publish steering"
+                )
                 return
 
             if self.__heading is None:
-                self.logwarn("StanleyController hasn't received the"
-                             "heading of the vehicle yet and"
-                             "can therefore not publish steering")
+                self.logwarn(
+                    "StanleyController hasn't received the"
+                    "heading of the vehicle yet and"
+                    "can therefore not publish steering"
+                )
                 return
 
             if self.__velocity is None:
-                self.logwarn("StanleyController hasn't received the "
-                             "velocity of the vehicle yet "
-                             "and can therefore not publish steering")
+                self.logwarn(
+                    "StanleyController hasn't received the "
+                    "velocity of the vehicle yet "
+                    "and can therefore not publish steering"
+                )
                 return
             self.stanley_steer_pub.publish(self.__calculate_steer())
 
@@ -125,8 +132,9 @@ class StanleyController(CompatibleNode):
         closest_point: PoseStamped = self.__path.poses[closest_point_idx]
         cross_err = self.__get_cross_err(closest_point.pose.position)
         # * -1 because it is inverted compared to PurePursuit
-        steering_angle = 1 * (heading_err + atan((K_CROSSERR * cross_err)
-                                                 / current_velocity))
+        steering_angle = 1 * (
+            heading_err + atan((K_CROSSERR * cross_err) / current_velocity)
+        )
         # -> for debugging
         debug_msg = StanleyDebug()
         debug_msg.heading = self.__heading
@@ -174,10 +182,11 @@ class StanleyController(CompatibleNode):
 
         if index > 0:
             # Calculate heading from the previous point on the trajectory
-            prv_point: Point = self.__path.poses[index-1].pose.position
+            prv_point: Point = self.__path.poses[index - 1].pose.position
 
-            prv_v_x, prv_v_y = points_to_vector((prv_point.x, prv_point.y),
-                                                (cur_pos.x, cur_pos.y))
+            prv_v_x, prv_v_y = points_to_vector(
+                (prv_point.x, prv_point.y), (cur_pos.x, cur_pos.y)
+            )
 
             heading_sum += vector_angle(prv_v_x, prv_v_y)
             heading_sum_args += 1
@@ -186,8 +195,9 @@ class StanleyController(CompatibleNode):
             # Calculate heading to the following point on the trajectory
             aft_point: Point = self.__path.poses[index + 1].pose.position
 
-            aft_v_x, aft_v_y = points_to_vector((aft_point.x, aft_point.y),
-                                                (cur_pos.x, cur_pos.y))
+            aft_v_x, aft_v_y = points_to_vector(
+                (aft_point.x, aft_point.y), (cur_pos.x, cur_pos.y)
+            )
 
             heading_sum += vector_angle(aft_v_x, aft_v_y)
             heading_sum_args += 1
@@ -210,8 +220,10 @@ class StanleyController(CompatibleNode):
         if self.__heading is not None:
             alpha = self.__heading + (math.pi / 2)
         v_e_0 = (0, 1)
-        v_e = (cos(alpha)*v_e_0[0] - sin(alpha)*v_e_0[1],
-               sin(alpha)*v_e_0[0] + cos(alpha)*v_e_0[1])
+        v_e = (
+            cos(alpha) * v_e_0[0] - sin(alpha) * v_e_0[1],
+            sin(alpha) * v_e_0[0] + cos(alpha) * v_e_0[1],
+        )
 
         # define a vector (v_ab) with length 10 centered on the cur pos
         # of the vehicle, with a heading parallel to that of the vehicle
@@ -221,8 +233,7 @@ class StanleyController(CompatibleNode):
         v_ab = (b[0] - a[0], b[1] - a[1])
         v_am = (pos.x - a[0], pos.y - a[1])
 
-        c = np.array([[v_ab[0], v_am[0]],
-                      [v_ab[1], v_am[1]]])
+        c = np.array([[v_ab[0], v_am[0]], [v_ab[1], v_am[1]]])
         temp_sign = np.linalg.det(c)
 
         min_sign = 0.01  # to avoid rounding errors
@@ -268,9 +279,11 @@ class StanleyController(CompatibleNode):
         # check if the new position is valid
         dist = self.__dist_to(data.pose.position)
         if dist < min_diff:
-            self.logdebug("New position disregarded, "
-                          f"as dist ({round(dist, 3)}) to current pos "
-                          f"< min_diff ({round(min_diff, 3)})")
+            self.logdebug(
+                "New position disregarded, "
+                f"as dist ({round(dist, 3)}) to current pos "
+                f"< min_diff ({round(min_diff, 3)})"
+            )
             return
 
         new_x = data.pose.position.x
@@ -296,7 +309,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init('stanley_controller', args=args)
+    roscomp.init("stanley_controller", args=args)
 
     try:
         node = StanleyController()
@@ -307,5 +320,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

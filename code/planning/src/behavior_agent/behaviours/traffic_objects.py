@@ -14,6 +14,7 @@ class NotSlowedByCarInFront(py_trees.behaviour.Behaviour):
     More cases could be added later on. This behavior should be triggered by
     the perception.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -87,14 +88,17 @@ class NotSlowedByCarInFront(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class WaitLeftLaneFree(py_trees.behaviour.Behaviour):
     """
     This behavior checks if it is safe to change to the lane on the left.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -173,14 +177,17 @@ class WaitLeftLaneFree(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class WaitRightLaneFree(py_trees.behaviour.Behaviour):
     """
     This behavior checks if it is safe to change to the lane on the left.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -257,8 +264,10 @@ class WaitRightLaneFree(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class NotSlowedByCarInFrontRight(py_trees.behaviour.Behaviour):
@@ -266,6 +275,7 @@ class NotSlowedByCarInFrontRight(py_trees.behaviour.Behaviour):
     Checks if there is a car on the lane to the right that would slow the
     agent down.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -336,14 +346,17 @@ class NotSlowedByCarInFrontRight(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class OvertakingPossible(py_trees.behaviour.Behaviour):
     """
     Checks if the overtaking is possible.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is to only
@@ -414,5 +427,7 @@ class OvertakingPossible(py_trees.behaviour.Behaviour):
 
         writes a status message to the console when the behaviour terminates
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )

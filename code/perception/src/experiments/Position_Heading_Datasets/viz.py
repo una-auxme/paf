@@ -27,7 +27,8 @@ folder_path_heading = "./heading_error/"
 
 # region PLOTS
 
-def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
+
+def plot_best_tuned_file_by_type(type="x", error_type="MSE", check_type="IQR"):
     """
     Calculates the best tuned file by type and error type using a specific
     check type.
@@ -52,37 +53,34 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
         else:
             file_name = "data_" + str(i) + ".csv"
 
-        ideal, test_filter, current, unfiltered = (
-            get_x_or_y_or_h_from_csv_file(file_name, type))
+        ideal, test_filter, current, unfiltered = get_x_or_y_or_h_from_csv_file(
+            file_name, type
+        )
 
         # calculate the error for each method by error_type
-        if error_type == 'MSE':
+        if error_type == "MSE":
             # Calculate the MSE for each method
             val_test_filter, test_filter_list = calculate_mse_x_or_y_or_h(
-                                                ideal,
-                                                test_filter)
-            val_current, current_list = calculate_mse_x_or_y_or_h(
-                ideal,
-                current)
+                ideal, test_filter
+            )
+            val_current, current_list = calculate_mse_x_or_y_or_h(ideal, current)
             val_unfiltered, unfiltered_list = calculate_mse_x_or_y_or_h(
-                ideal,
-                unfiltered)
-        elif error_type == 'MAE':
+                ideal, unfiltered
+            )
+        elif error_type == "MAE":
             # Calculate the MAE for each method
             val_test_filter, test_filter_list = calculate_mae_x_or_y_or_h(
-                                                ideal,
-                                                test_filter)
-            val_current, current_list = calculate_mae_x_or_y_or_h(
-                ideal,
-                current)
+                ideal, test_filter
+            )
+            val_current, current_list = calculate_mae_x_or_y_or_h(ideal, current)
             val_unfiltered, unfiltered_list = calculate_mae_x_or_y_or_h(
-                                              ideal,
-                                              unfiltered)
+                ideal, unfiltered
+            )
 
         vals = [val_test_filter, val_current, val_unfiltered]
 
         # evaluate the best tuned file by check_type
-        if check_type == 'IQR':
+        if check_type == "IQR":
             q3, q1 = np.percentile(test_filter_list, [80, 0])
             iqr = q3 - q1
             if i == FILE_START:
@@ -95,7 +93,7 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
                 if abs(iqr) < abs(best_val):
                     best_val = iqr
                     best_file = file_name
-        elif check_type == 'default':
+        elif check_type == "default":
             if i == FILE_START:
                 best_val = vals[0]
                 best_file = file_name
@@ -114,7 +112,7 @@ def plot_best_tuned_file_by_type(type='x', error_type='MSE', check_type='IQR'):
     return
 
 
-def plot_x_or_y_or_h_notched_box(file_name, type='x', error_type='MSE'):
+def plot_x_or_y_or_h_notched_box(file_name, type="x", error_type="MSE"):
     """
     Calculates and plots the error of x, y or heading data for any given
     error type.
@@ -127,38 +125,33 @@ def plot_x_or_y_or_h_notched_box(file_name, type='x', error_type='MSE'):
 
     Returns:
     """
-    if type == 'x':
-        ideal, test_filter, current, unfiltered = (
-            get_x_or_y_or_h_from_csv_file(file_name, 'x'))
-    elif type == 'y':
-        ideal, test_filter, current, unfiltered = (
-            get_x_or_y_or_h_from_csv_file(file_name, 'y'))
-    elif type == 'h':
-        ideal, test_filter, current, unfiltered = (
-            get_x_or_y_or_h_from_csv_file(file_name, 'h'))
+    if type == "x":
+        ideal, test_filter, current, unfiltered = get_x_or_y_or_h_from_csv_file(
+            file_name, "x"
+        )
+    elif type == "y":
+        ideal, test_filter, current, unfiltered = get_x_or_y_or_h_from_csv_file(
+            file_name, "y"
+        )
+    elif type == "h":
+        ideal, test_filter, current, unfiltered = get_x_or_y_or_h_from_csv_file(
+            file_name, "h"
+        )
 
-    if error_type == 'MSE':
+    if error_type == "MSE":
         # Calculate the MSE for each method
         val_test_filter, test_filter_list = calculate_mse_x_or_y_or_h(
-            ideal,
-            test_filter)
-        val_current, current_list = calculate_mse_x_or_y_or_h(
-            ideal,
-            current)
-        val_unfiltered, unfiltered_list = calculate_mse_x_or_y_or_h(
-            ideal,
-            unfiltered)
-    elif error_type == 'MAE':
+            ideal, test_filter
+        )
+        val_current, current_list = calculate_mse_x_or_y_or_h(ideal, current)
+        val_unfiltered, unfiltered_list = calculate_mse_x_or_y_or_h(ideal, unfiltered)
+    elif error_type == "MAE":
         # Calculate the MAE for each method
         val_test_filter, test_filter_list = calculate_mae_x_or_y_or_h(
-            ideal,
-            test_filter)
-        val_current, current_list = calculate_mae_x_or_y_or_h(
-            ideal,
-            current)
-        val_unfiltered, unfiltered_list = calculate_mae_x_or_y_or_h(
-            ideal,
-            unfiltered)
+            ideal, test_filter
+        )
+        val_current, current_list = calculate_mae_x_or_y_or_h(ideal, current)
+        val_unfiltered, unfiltered_list = calculate_mae_x_or_y_or_h(ideal, unfiltered)
 
     # Create a new figure
     fig, ax = plt.subplots()
@@ -166,37 +159,53 @@ def plot_x_or_y_or_h_notched_box(file_name, type='x', error_type='MSE'):
     # Create a list of all errors
     error_list = [test_filter_list, current_list, unfiltered_list]
     # Create a box plot with notches
-    boxplot = ax.boxplot(error_list, notch=True,
-                         labels=['Test Filter', 'Current', 'Unfiltered'],
-                         patch_artist=True)
+    boxplot = ax.boxplot(
+        error_list,
+        notch=True,
+        labels=["Test Filter", "Current", "Unfiltered"],
+        patch_artist=True,
+    )
 
     # fill with colors and put median vals in the boxes
-    colors = ['pink', 'lightblue', 'lightgreen']
+    colors = ["pink", "lightblue", "lightgreen"]
 
-    tuple = zip(boxplot['boxes'], colors, boxplot['medians'],
-                boxplot['whiskers'][::2])
+    tuple = zip(boxplot["boxes"], colors, boxplot["medians"], boxplot["whiskers"][::2])
 
     for i, (box, color, median, whiskers) in enumerate(tuple):
         box.set_facecolor(color)
         median_val = median.get_ydata()[1]
-        ax.text(i+1, median_val, f'Median: {median_val:.2f}', va='center',
-                ha='center', backgroundcolor='white')
+        ax.text(
+            i + 1,
+            median_val,
+            f"Median: {median_val:.2f}",
+            va="center",
+            ha="center",
+            backgroundcolor="white",
+        )
 
         # Calculate IQR
         q3, q1 = np.percentile(error_list[i], [75, 0])
         iqr = q3 - q1
 
         # Get the y position for the IQR text
-        median_y = boxplot['medians'][i].get_ydata()[0]  # height of the notch
+        median_y = boxplot["medians"][i].get_ydata()[0]  # height of the notch
 
         # Add the IQR text
-        ax.text(i+0.8, median_y, f'IQR: {iqr:.2f}', va='center',
-                ha='center', rotation=90, color='red', backgroundcolor='white')
+        ax.text(
+            i + 0.8,
+            median_y,
+            f"IQR: {iqr:.2f}",
+            va="center",
+            ha="center",
+            rotation=90,
+            color="red",
+            backgroundcolor="white",
+        )
 
     # Set the labels
-    ax.set_xlabel('Filter')
+    ax.set_xlabel("Filter")
     ax.set_ylabel(error_type)
-    ax.set_title(error_type + ' of ' + type + ' for different methods')
+    ax.set_title(error_type + " of " + type + " for different methods")
     ax.yaxis.grid(True)
 
     # Show the plot
@@ -215,15 +224,13 @@ def plot_MSE_notched_box(file_name):
     float: Mean Squared Error (MSE).
     """
     ideal_pos, test_filter_pos, current_pos, unfiltered_pos = (
-        get_positions_from_csv_file(file_name))
+        get_positions_from_csv_file(file_name)
+    )
 
     # Calculate the MSE for each method
-    val_test_filter, test_filter_list = calculate_mse_pos(ideal_pos,
-                                                          test_filter_pos)
-    val_current, current_list = calculate_mse_pos(ideal_pos,
-                                                  current_pos)
-    val_unfiltered, unfiltered_list = calculate_mse_pos(ideal_pos,
-                                                        unfiltered_pos)
+    val_test_filter, test_filter_list = calculate_mse_pos(ideal_pos, test_filter_pos)
+    val_current, current_list = calculate_mse_pos(ideal_pos, current_pos)
+    val_unfiltered, unfiltered_list = calculate_mse_pos(ideal_pos, unfiltered_pos)
 
     # Create a new figure
     fig, ax = plt.subplots()
@@ -231,23 +238,33 @@ def plot_MSE_notched_box(file_name):
     # Create a list of all positions
     pos_mse_list = [test_filter_list, current_list, unfiltered_list]
     # Create a box plot with notches
-    boxplot = ax.boxplot(pos_mse_list, notch=True,
-                         labels=['Test Filter', 'Current', 'Unfiltered'],
-                         patch_artist=True)
+    boxplot = ax.boxplot(
+        pos_mse_list,
+        notch=True,
+        labels=["Test Filter", "Current", "Unfiltered"],
+        patch_artist=True,
+    )
 
     # fill with colors and put median vals in the boxes
-    colors = ['pink', 'lightblue', 'lightgreen']
-    for i, (box, color, median) in enumerate(zip(boxplot['boxes'], colors,
-                                                 boxplot['medians'])):
+    colors = ["pink", "lightblue", "lightgreen"]
+    for i, (box, color, median) in enumerate(
+        zip(boxplot["boxes"], colors, boxplot["medians"])
+    ):
         box.set_facecolor(color)
         median_val = median.get_ydata()[1]
-        ax.text(i+1, median_val, f'Median: {median_val:.2f}', va='center',
-                ha='center', backgroundcolor='white')
+        ax.text(
+            i + 1,
+            median_val,
+            f"Median: {median_val:.2f}",
+            va="center",
+            ha="center",
+            backgroundcolor="white",
+        )
 
     # Set the labels
-    ax.set_xlabel('Method')
-    ax.set_ylabel('MSE')
-    ax.set_title('MSE for different methods')
+    ax.set_xlabel("Method")
+    ax.set_ylabel("MSE")
+    ax.set_title("MSE for different methods")
     ax.yaxis.grid(True)
 
     # Show the plot
@@ -266,15 +283,13 @@ def plot_MAE_notched_box(file_name):
     float: Mean Absolute Error (MAE).
     """
     ideal_pos, test_filter_pos, current_pos, unfiltered_pos = (
-        get_positions_from_csv_file(file_name))
+        get_positions_from_csv_file(file_name)
+    )
 
     # Calculate the MAE for each method
-    mae_test_filter, test_filter_list = calculate_mae_pos(ideal_pos,
-                                                          test_filter_pos)
-    mae_current, current_list = calculate_mae_pos(ideal_pos,
-                                                  current_pos)
-    mae_unfiltered, unfiltered_list = calculate_mae_pos(ideal_pos,
-                                                        unfiltered_pos)
+    mae_test_filter, test_filter_list = calculate_mae_pos(ideal_pos, test_filter_pos)
+    mae_current, current_list = calculate_mae_pos(ideal_pos, current_pos)
+    mae_unfiltered, unfiltered_list = calculate_mae_pos(ideal_pos, unfiltered_pos)
 
     # Create a new figure
     fig, ax = plt.subplots()
@@ -283,23 +298,33 @@ def plot_MAE_notched_box(file_name):
     pos_mae_list = [test_filter_list, current_list, unfiltered_list]
 
     # Create a box plot with notches
-    boxplot = ax.boxplot(pos_mae_list, notch=True,
-                         labels=['Test Filter', 'Current', 'Unfiltered'],
-                         patch_artist=True)
+    boxplot = ax.boxplot(
+        pos_mae_list,
+        notch=True,
+        labels=["Test Filter", "Current", "Unfiltered"],
+        patch_artist=True,
+    )
 
     # fill with colors and put median vals in the boxes
-    colors = ['pink', 'lightblue', 'lightgreen']
-    for i, (box, color, median) in enumerate(zip(boxplot['boxes'], colors,
-                                                 boxplot['medians'])):
+    colors = ["pink", "lightblue", "lightgreen"]
+    for i, (box, color, median) in enumerate(
+        zip(boxplot["boxes"], colors, boxplot["medians"])
+    ):
         box.set_facecolor(color)
         median_val = median.get_ydata()[1]
-        ax.text(i+1, median_val, f'Median: {median_val:.2f}', va='center',
-                ha='center', backgroundcolor='white')
+        ax.text(
+            i + 1,
+            median_val,
+            f"Median: {median_val:.2f}",
+            va="center",
+            ha="center",
+            backgroundcolor="white",
+        )
 
     # Set the labels
-    ax.set_xlabel('Method')
-    ax.set_ylabel('MAE')
-    ax.set_title('MAE for different methods')
+    ax.set_xlabel("Method")
+    ax.set_ylabel("MAE")
+    ax.set_title("MAE for different methods")
     ax.yaxis.grid(True)
 
     # Show the plot
@@ -327,31 +352,30 @@ def plot_CEP(file_name):
     df_y.set_index(df_y.columns[0], inplace=True)
 
     # create pos tuples of the x and y data and store them as numpy arrays
-    ideal_pos = np.array(list(zip(df_x['Ideal (Carla)'],
-                                  df_y['Ideal (Carla)'])))
-    test_filter_pos = np.array(list(zip(df_x['Test Filter'],
-                                        df_y['Test Filter'])))
-    current_pos = np.array(list(zip(df_x['Current'],
-                                    df_y['Current'])))
-    unfiltered_pos = np.array(list(zip(df_x['Unfiltered'],
-                                       df_y['Unfiltered'])))
+    ideal_pos = np.array(list(zip(df_x["Ideal (Carla)"], df_y["Ideal (Carla)"])))
+    test_filter_pos = np.array(list(zip(df_x["Test Filter"], df_y["Test Filter"])))
+    current_pos = np.array(list(zip(df_x["Current"], df_y["Current"])))
+    unfiltered_pos = np.array(list(zip(df_x["Unfiltered"], df_y["Unfiltered"])))
 
     # create CEP for each method
     cep_test_filter, cep_current, cep_unfiltered = calculate_cep(
-        ideal_pos, test_filter_pos, current_pos, unfiltered_pos)
+        ideal_pos, test_filter_pos, current_pos, unfiltered_pos
+    )
 
     # plot the cep as error circles of different colors in the x-y plane
     # Create a new figure
     fig, ax = plt.subplots()
 
     # Create circles with the given radii
-    circle_test_filter = plt.Circle((0, 0), cep_test_filter, fill=False,
-                                    label='Test Filter',
-                                    color='r')
-    circle_current = plt.Circle((0, 0), cep_current, fill=False,
-                                label='Current', color='g')
-    circle_unfiltered = plt.Circle((0, 0), cep_unfiltered, fill=False,
-                                   label='Unfiltered', color='b')
+    circle_test_filter = plt.Circle(
+        (0, 0), cep_test_filter, fill=False, label="Test Filter", color="r"
+    )
+    circle_current = plt.Circle(
+        (0, 0), cep_current, fill=False, label="Current", color="g"
+    )
+    circle_unfiltered = plt.Circle(
+        (0, 0), cep_unfiltered, fill=False, label="Unfiltered", color="b"
+    )
 
     # Add the circles to the plot
     ax.add_artist(circle_test_filter)
@@ -359,10 +383,14 @@ def plot_CEP(file_name):
     ax.add_artist(circle_unfiltered)
 
     # Set the limits of the plot to show all circles
-    ax.set_xlim(-max(cep_test_filter, cep_current, cep_unfiltered),
-                max(cep_test_filter, cep_current, cep_unfiltered))
-    ax.set_ylim(-max(cep_test_filter, cep_current, cep_unfiltered),
-                max(cep_test_filter, cep_current, cep_unfiltered))
+    ax.set_xlim(
+        -max(cep_test_filter, cep_current, cep_unfiltered),
+        max(cep_test_filter, cep_current, cep_unfiltered),
+    )
+    ax.set_ylim(
+        -max(cep_test_filter, cep_current, cep_unfiltered),
+        max(cep_test_filter, cep_current, cep_unfiltered),
+    )
 
     # Add a legend
     plt.legend()
@@ -371,33 +399,33 @@ def plot_CEP(file_name):
     plt.grid(True)
 
     # Set the y-axis label to 'Distance in Meters'
-    plt.ylabel('Distance in Meters')
+    plt.ylabel("Distance in Meters")
 
     # Set the x-axis label to 'Distance in Meters'
-    plt.xlabel('Distance in Meters')
+    plt.xlabel("Distance in Meters")
 
 
-def plot_csv_x_or_y(file_name, type='x'):
+def plot_csv_x_or_y(file_name, type="x"):
     """
     Plots the x or y data from a CSV file.
 
     Parameters:
     file_name (str): The name of the CSV file.
     """
-    if type == 'x':
+    if type == "x":
         file_path = folder_path_x + file_name
-    elif type == 'y':
+    elif type == "y":
         file_path = folder_path_y + file_name
 
     # Read the CSV file into a DataFrame
     df = pd.read_csv(file_path)
 
     # Plot the 'test_filter' (blue) and 'current' (green)
-    plt.plot(df['Test Filter'], 'b-', label='Test Filter')
-    plt.plot(df['Current'], 'g-', label='Current')
+    plt.plot(df["Test Filter"], "b-", label="Test Filter")
+    plt.plot(df["Current"], "g-", label="Current")
 
     # Plot the 'ideal' column with a red dotted line
-    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal')
+    plt.plot(df["Ideal (Carla)"], "r:", label="Ideal")
 
     # Display the legend
     plt.legend()
@@ -409,12 +437,12 @@ def plot_csv_x_or_y(file_name, type='x'):
 
     # Set the y-
     # axis label to 'Distance in Meters'
-    plt.ylabel('Distance in Meters')
+    plt.ylabel("Distance in Meters")
 
     # Set the x-axis label to 'Time'
-    plt.xlabel('Time in seconds')
+    plt.xlabel("Time in seconds")
 
-    plt.title(type + ' Positions in Meters')
+    plt.title(type + " Positions in Meters")
 
 
 def plot_csv_heading(file_name):
@@ -432,11 +460,11 @@ def plot_csv_heading(file_name):
 
     # Plot the 'test_filter_heading' (blue) and 'current_heading' (green)
     # line style
-    plt.plot(df['Test Filter'], 'b-', label='Test Filter Heading')
-    plt.plot(df['Current'], 'g-', label='Current Heading')
+    plt.plot(df["Test Filter"], "b-", label="Test Filter Heading")
+    plt.plot(df["Current"], "g-", label="Current Heading")
 
     # Plot the 'ideal_heading' column with a blue dotted line
-    plt.plot(df['Ideal (Carla)'], 'r:', label='Ideal Heading')
+    plt.plot(df["Ideal (Carla)"], "r:", label="Ideal Heading")
     # Display the legend
     plt.legend()
     # Plot the DataFrame
@@ -446,10 +474,10 @@ def plot_csv_heading(file_name):
     plt.grid(True)
 
     # Set the y-axis label to 'Radians'
-    plt.ylabel('Heading in Radians')
+    plt.ylabel("Heading in Radians")
 
     # Set the x-axis label to 'Time'
-    plt.xlabel('Time in seconds')
+    plt.xlabel("Time in seconds")
 
 
 def plot_csv_positions(file_name):
@@ -462,22 +490,19 @@ def plot_csv_positions(file_name):
     Returns:
     """
     # Read the CSV file into a DataFrame
-    ideal, test_filter, current, unfiltered = (
-        get_positions_from_csv_file(file_name))
+    ideal, test_filter, current, unfiltered = get_positions_from_csv_file(file_name)
 
     ideal_x, ideal_y = zip(*ideal)
     test_filter_x, test_filter_y = zip(test_filter)
     current_x, current_y = zip(current)
     unfiltered_x, unfiltered_y = zip(unfiltered)
 
-    plt.plot(ideal_x, ideal_y, marker=',',
-             color='red', label='Ideal')
-    plt.plot(test_filter_x, test_filter_y, marker='.',
-             color='blue', label='Test Filter')
-    plt.plot(current_x, current_y, marker='.',
-             color='green', label='Current')
-    plt.plot(unfiltered_x, unfiltered_y, marker='.',
-             color='purple', label='Unfiltered')
+    plt.plot(ideal_x, ideal_y, marker=",", color="red", label="Ideal")
+    plt.plot(
+        test_filter_x, test_filter_y, marker=".", color="blue", label="Test Filter"
+    )
+    plt.plot(current_x, current_y, marker=".", color="green", label="Current")
+    plt.plot(unfiltered_x, unfiltered_y, marker=".", color="purple", label="Unfiltered")
 
     # Display the legend
     plt.legend()
@@ -486,12 +511,14 @@ def plot_csv_positions(file_name):
     plt.grid(True)
 
     # Set the y-axis label to 'Y Position in Meters'
-    plt.ylabel('Y Position in Meters')
+    plt.ylabel("Y Position in Meters")
 
     # Set the x-axis label to 'X Position in Meters'
-    plt.xlabel('X Position in Meters')
+    plt.xlabel("X Position in Meters")
 
-    plt.title('X and Y Positions in Meters')
+    plt.title("X and Y Positions in Meters")
+
+
 # endregion PLOTS
 
 
@@ -528,7 +555,7 @@ def calculate_mse_pos(ideal, estimated):
     Tuple: A tuple containing the MSE and the error for each position.
     """
     # Calculate the errors
-    error = np.linalg.norm(ideal - estimated, axis=1)**2
+    error = np.linalg.norm(ideal - estimated, axis=1) ** 2
 
     # Calculate the MSE
     mse = np.mean(error)
@@ -570,7 +597,7 @@ def calculate_mse_x_or_y_or_h(ideal, estimated):
         or heading.
     """
     # Calculate the errors
-    error = (ideal - estimated)**2
+    error = (ideal - estimated) ** 2
 
     # Calculate the MSE
     mse = np.mean(error)
@@ -597,9 +624,9 @@ def calculate_cep(ideal, test_filter, current, unfiltered, percentile=90):
     tuple: A tuple containing the CEP for each method.
     """
     # Calculate the errors
-    error_test_filter = np.sqrt(np.sum((test_filter - ideal)**2, axis=1))
-    error_current = np.sqrt(np.sum((current - ideal)**2, axis=1))
-    error_unfiltered = np.sqrt(np.sum((unfiltered - ideal)**2, axis=1))
+    error_test_filter = np.sqrt(np.sum((test_filter - ideal) ** 2, axis=1))
+    error_current = np.sqrt(np.sum((current - ideal) ** 2, axis=1))
+    error_unfiltered = np.sqrt(np.sum((unfiltered - ideal) ** 2, axis=1))
 
     # Calculate the CEP for each method
     cep_test_filter = np.percentile(error_test_filter, percentile)
@@ -607,6 +634,7 @@ def calculate_cep(ideal, test_filter, current, unfiltered, percentile=90):
     cep_unfiltered = np.percentile(error_unfiltered, percentile)
 
     return cep_test_filter, cep_current, cep_unfiltered
+
 
 # endregion CALCUATIONS
 
@@ -642,19 +670,15 @@ def get_positions_from_csv_file(file_name, file_name_y=file_name):
     df_y.set_index(df_y.columns[0], inplace=True)
 
     # create pos tuples of the x and y data and store them as numpy arrays
-    ideal_pos = np.array(list(zip(df_x['Ideal (Carla)'],
-                                  df_y['Ideal (Carla)'])))
-    test_filter_pos = np.array(list(zip(df_x['Test Filter'],
-                                        df_y['Test Filter'])))
-    current_pos = np.array(list(zip(df_x['Current'],
-                                    df_y['Current'])))
-    unfiltered_pos = np.array(list(zip(df_x['Unfiltered'],
-                                       df_y['Unfiltered'])))
+    ideal_pos = np.array(list(zip(df_x["Ideal (Carla)"], df_y["Ideal (Carla)"])))
+    test_filter_pos = np.array(list(zip(df_x["Test Filter"], df_y["Test Filter"])))
+    current_pos = np.array(list(zip(df_x["Current"], df_y["Current"])))
+    unfiltered_pos = np.array(list(zip(df_x["Unfiltered"], df_y["Unfiltered"])))
 
     return ideal_pos, test_filter_pos, current_pos, unfiltered_pos
 
 
-def get_x_or_y_or_h_from_csv_file(file_name, type='x'):
+def get_x_or_y_or_h_from_csv_file(file_name, type="x"):
     """
     Reads x,y or heading data from CSV files and returns them as numpy arrays.
 
@@ -669,13 +693,13 @@ def get_x_or_y_or_h_from_csv_file(file_name, type='x'):
             - test_filter: The data estimated using test_filter filtering.
             - current: The data calculated using a running
             average.
-            - unfiltered: The unfiltered data. """
+            - unfiltered: The unfiltered data."""
 
-    if type == 'x':
+    if type == "x":
         file_path = folder_path_x + file_name
-    elif type == 'y':
+    elif type == "y":
         file_path = folder_path_y + file_name
-    elif type == 'h':
+    elif type == "h":
         file_path = folder_path_heading + file_name
 
     # Read the CSV file into a DataFrame
@@ -685,26 +709,28 @@ def get_x_or_y_or_h_from_csv_file(file_name, type='x'):
     # Set the first column (time) as the index of the DataFrames
     df.set_index(df.columns[0], inplace=True)
 
-    if type == 'x':
+    if type == "x":
         # store x as numpy arrays
-        ideal = np.array(df['Ideal (Carla)'])
-        test_filter = np.array(df['Test Filter'])
-        current = np.array(df['Current'])
-        unfiltered = np.array(df['Unfiltered'])
-    elif type == 'y':
+        ideal = np.array(df["Ideal (Carla)"])
+        test_filter = np.array(df["Test Filter"])
+        current = np.array(df["Current"])
+        unfiltered = np.array(df["Unfiltered"])
+    elif type == "y":
         # store y as numpy arrays
-        ideal = np.array(df['Ideal (Carla)'])
-        test_filter = np.array(df['Test Filter'])
-        current = np.array(df['Current'])
-        unfiltered = np.array(df['Unfiltered'])
-    elif type == 'h':
+        ideal = np.array(df["Ideal (Carla)"])
+        test_filter = np.array(df["Test Filter"])
+        current = np.array(df["Current"])
+        unfiltered = np.array(df["Unfiltered"])
+    elif type == "h":
         # store heading as numpy arrays
-        ideal = np.array(df['Ideal (Carla)'])
-        test_filter = np.array(df['Test Filter'])
-        current = np.array(df['Current'])
-        unfiltered = np.array(df['Unfiltered'])
+        ideal = np.array(df["Ideal (Carla)"])
+        test_filter = np.array(df["Test Filter"])
+        current = np.array(df["Current"])
+        unfiltered = np.array(df["Unfiltered"])
 
     return ideal, test_filter, current, unfiltered
+
+
 # endregion helper methods
 
 
@@ -714,11 +740,11 @@ if __name__ == "__main__":
     data = file_name
     plot_CEP(data)
 
-    plot_x_or_y_or_h_notched_box(data, type='x', error_type='MSE')
-    plot_x_or_y_or_h_notched_box(data, type='x', error_type='MAE')
+    plot_x_or_y_or_h_notched_box(data, type="x", error_type="MSE")
+    plot_x_or_y_or_h_notched_box(data, type="x", error_type="MAE")
 
-    plot_x_or_y_or_h_notched_box(data, type='y', error_type='MSE')
-    plot_x_or_y_or_h_notched_box(data, type='y', error_type='MAE')
+    plot_x_or_y_or_h_notched_box(data, type="y", error_type="MSE")
+    plot_x_or_y_or_h_notched_box(data, type="y", error_type="MAE")
 
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MSE')
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MAE')
