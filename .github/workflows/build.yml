@@ -2,7 +2,7 @@ name: Build and push image
 
 on:
   workflow_run:
-    workflows: ["Check code format", "Linter markdown and code"]
+    workflows: ["Check code format"]
     types:
       - completed
 
