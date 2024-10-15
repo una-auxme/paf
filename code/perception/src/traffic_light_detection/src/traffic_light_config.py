@@ -7,7 +7,7 @@ class TrafficLightConfig:
 
     def __init__(self):
         # General settings
-        self.DEVICE = ('cuda' if torch.cuda.is_available() else 'cpu')
+        self.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
         self.TIME = datetime.now().strftime("%d.%m.%Y_%H.%M")
 
         # Training

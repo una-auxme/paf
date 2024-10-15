@@ -2,12 +2,13 @@
 # import rospy
 import numpy as np
 import rospy
+
 # import tf.transformations
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
 
-from carla_msgs.msg import CarlaSpeedometer   # , CarlaWorldInfo
+from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
 
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
@@ -21,7 +22,7 @@ class CollisionCheck(CompatibleNode):
     """
 
     def __init__(self):
-        super(CollisionCheck, self).__init__('CollisionCheck')
+        super(CollisionCheck, self).__init__("CollisionCheck")
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
         # Subscriber for current speed
@@ -29,28 +30,27 @@ class CollisionCheck(CompatibleNode):
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Subscriber for lidar objects
         self.lidar_dist = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/Center/object_distance",
             self.__set_all_distances,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Publisher for emergency stop
         self.emergency_pub = self.new_publisher(
-            Bool,
-            f"/paf/{self.role_name}/emergency",
-            qos_profile=1)
+            Bool, f"/paf/{self.role_name}/emergency", qos_profile=1
+        )
         # Publisher for distance to collision
         self.collision_pub = self.new_publisher(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/collision",
-            qos_profile=1)
+            Float32MultiArray, f"/paf/{self.role_name}/collision", qos_profile=1
+        )
         # Publisher for distance to oncoming traffic
         self.oncoming_pub = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/oncoming",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/oncoming", qos_profile=1
+        )
         # Variables to save vehicle data
         self.__current_velocity: float = None
         self.__object_first_position: tuple = None
@@ -103,10 +103,11 @@ class CollisionCheck(CompatibleNode):
         """
         # Filter onjects in front
         nearest_object = filter_vision_objects(data.data, False)
-        if nearest_object is None and \
-                self.__object_last_position is not None and \
-                rospy.get_rostime() - self.__object_last_position[0] > \
-                rospy.Duration(2):
+        if (
+            nearest_object is None
+            and self.__object_last_position is not None
+            and rospy.get_rostime() - self.__object_last_position[0] > rospy.Duration(2)
+        ):
             # If no object is in front and last object is older than 2 seconds
             # we assume no object is in front
             self.update_distance(True)
@@ -129,10 +130,12 @@ class CollisionCheck(CompatibleNode):
         """
         # Filter for oncoming traffic objects
         nearest_object = filter_vision_objects(data.data, True)
-        if (nearest_object is None and
-                self.__last_position_oncoming is not None and
-                rospy.get_rostime() - self.__last_position_oncoming[0] >
-                rospy.Duration(2)):
+        if (
+            nearest_object is None
+            and self.__last_position_oncoming is not None
+            and rospy.get_rostime() - self.__last_position_oncoming[0]
+            > rospy.Duration(2)
+        ):
             # If no oncoming traffic found and last object is older than 2
             # seconds we assume no object is in front
             self.update_distance_oncoming(True)
@@ -141,8 +144,7 @@ class CollisionCheck(CompatibleNode):
             # If no oncoming traffic abort
             return
 
-        self.__last_position_oncoming =  \
-            (rospy.get_rostime(), nearest_object[1])
+        self.__last_position_oncoming = (rospy.get_rostime(), nearest_object[1])
         # Update oncoming traffic distance if this is first object since reset
         self.update_distance_oncoming(False)
         # Publish oncoming traffic to Decision Making
@@ -170,26 +172,28 @@ class CollisionCheck(CompatibleNode):
 
     def calculate_obstacle_speed(self):
         """Caluclate the speed of the obstacle in front of the ego vehicle
-            based on the distance between to timestamps.
-            Then check for collision
+        based on the distance between to timestamps.
+        Then check for collision
         """
         # Check if current speed from vehicle is not None
-        if self.__current_velocity is None or \
-                self.__object_first_position is None or \
-                self.__object_last_position is None:
+        if (
+            self.__current_velocity is None
+            or self.__object_first_position is None
+            or self.__object_last_position is None
+        ):
             return
         # Calculate time since last position update
-        rospy_time_difference = self.__object_last_position[0] - \
-            self.__object_first_position[0]
+        rospy_time_difference = (
+            self.__object_last_position[0] - self.__object_first_position[0]
+        )
         # Use nanoseconds for time difference to be more accurate
         # and reduce error
-        time_difference = rospy_time_difference.nsecs/1e9
+        time_difference = rospy_time_difference.nsecs / 1e9
         # Calculate distance (in m)
-        distance = self.__object_last_position[1] - \
-            self.__object_first_position[1]
+        distance = self.__object_last_position[1] - self.__object_first_position[1]
         try:
             # Speed difference is distance/time (m/s)
-            relative_speed = distance/time_difference
+            relative_speed = distance / time_difference
         except ZeroDivisionError:
             # If time difference is 0, we cannot calculate speed
             return
@@ -204,7 +208,10 @@ class CollisionCheck(CompatibleNode):
         # Update first position to calculate speed when next object is detected
         self.__object_first_position = self.__object_last_position
 
-    def __get_current_velocity(self, data: CarlaSpeedometer,):
+    def __get_current_velocity(
+        self,
+        data: CarlaSpeedometer,
+    ):
         """Saves current velocity of the ego vehicle
 
         Args:
@@ -228,7 +235,7 @@ class CollisionCheck(CompatibleNode):
         return distance / (self.__current_velocity - obstacle_speed)
 
     def check_crash(self, obstacle):
-        """ Checks if and when the ego vehicle will crash
+        """Checks if and when the ego vehicle will crash
             with the obstacle in front
 
         Args:
@@ -239,8 +246,7 @@ class CollisionCheck(CompatibleNode):
 
         collision_time = self.time_to_collision(obstacle_speed, distance)
         # Calculate emergency distance based on current speed
-        emergency_distance = calculate_rule_of_thumb(
-            True, self.__current_velocity)
+        emergency_distance = calculate_rule_of_thumb(True, self.__current_velocity)
         if collision_time > 0:
             # If time to collision is positive, a collision is ahead
             if distance < emergency_distance:
@@ -268,7 +274,7 @@ if __name__ == "__main__":
     main function starts the CollisionCheck node
     :param args:
     """
-    roscomp.init('CollisionCheck')
+    roscomp.init("CollisionCheck")
 
     try:
         node = CollisionCheck()

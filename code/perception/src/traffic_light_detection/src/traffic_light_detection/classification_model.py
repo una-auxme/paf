@@ -12,17 +12,21 @@ class ClassificationModel(nn.Module):
         @param num_classes: Number of classes
         """
         super(ClassificationModel, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=4,
-                               kernel_size=5, padding='same')
+        self.conv1 = nn.Conv2d(
+            in_channels=in_channels, out_channels=4, kernel_size=5, padding="same"
+        )
         self.batch_norm1 = nn.BatchNorm2d(num_features=4)
-        self.conv2 = nn.Conv2d(in_channels=4, out_channels=4, kernel_size=5,
-                               padding='same')
+        self.conv2 = nn.Conv2d(
+            in_channels=4, out_channels=4, kernel_size=5, padding="same"
+        )
         self.max_pool1 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.conv3 = nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,
-                               padding='same')
+        self.conv3 = nn.Conv2d(
+            in_channels=4, out_channels=4, kernel_size=3, padding="same"
+        )
         self.max_pool2 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.conv4 = nn.Conv2d(in_channels=4, out_channels=4, kernel_size=3,
-                               padding='same')
+        self.conv4 = nn.Conv2d(
+            in_channels=4, out_channels=4, kernel_size=3, padding="same"
+        )
         self.max_pool3 = nn.MaxPool2d(kernel_size=(2, 2))
         self.flatten = nn.Flatten()
         self.dropout = nn.Dropout(p=0.3)
@@ -63,6 +67,8 @@ class ClassificationModel(nn.Module):
                 print(f"Pretrained model loaded from {path}")
                 return model
             except Exception as e:
-                print(f"No pretrained model found at {path}: {e}\n"
-                      f"Created new model with random weights.")
+                print(
+                    f"No pretrained model found at {path}: {e}\n"
+                    f"Created new model with random weights."
+                )
         return model.eval()

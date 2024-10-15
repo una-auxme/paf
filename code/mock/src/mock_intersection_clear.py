@@ -10,18 +10,17 @@ class MockIntersectionClearPublisher(CompatibleNode):
     This node publishes intersection clear information. It can be used for
     testing.
     """
-    def __init__(self):
-        super(MockIntersectionClearPublisher, self).\
-            __init__('intersectionClearMock')
 
-        self.control_loop_rate = self.get_param('control_loop_rate', 10)
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
+    def __init__(self):
+        super(MockIntersectionClearPublisher, self).__init__("intersectionClearMock")
+
+        self.control_loop_rate = self.get_param("control_loop_rate", 10)
+        self.role_name = self.get_param("role_name", "ego_vehicle")
         # self.enabled = self.get_param('enabled', False)
 
         self.stop_sign_pub: Publisher = self.new_publisher(
-            Bool,
-            f"/paf/{self.role_name}/intersection_clear",
-            qos_profile=1)
+            Bool, f"/paf/{self.role_name}/intersection_clear", qos_profile=1
+        )
         self.delta = 0.2
         self.distance = 75.0
         self.isClear = False
@@ -33,7 +32,7 @@ class MockIntersectionClearPublisher(CompatibleNode):
         """
         # if not self.enabled:
         #     return
-        self.loginfo('Stopsignmock node running')
+        self.loginfo("Stopsignmock node running")
 
         def loop(timer_event=None):
             """
@@ -47,6 +46,7 @@ class MockIntersectionClearPublisher(CompatibleNode):
             if self.distance < 0.0:
                 self.isClear = True
             self.stop_sign_pub.publish(msg)
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
@@ -56,7 +56,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init('velocity_publisher_dummy', args=args)
+    roscomp.init("velocity_publisher_dummy", args=args)
 
     try:
         node = MockIntersectionClearPublisher()
@@ -67,5 +67,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

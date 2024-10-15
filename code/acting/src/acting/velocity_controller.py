@@ -15,38 +15,37 @@ class VelocityController(CompatibleNode):
     """
 
     def __init__(self):
-        super(VelocityController, self).__init__('velocity_controller')
-        self.loginfo('VelocityController node started')
+        super(VelocityController, self).__init__("velocity_controller")
+        self.loginfo("VelocityController node started")
 
-        self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
+        self.role_name = self.get_param("role_name", "ego_vehicle")
 
         self.target_velocity_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/target_velocity",
             self.__get_target_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.throttle_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/throttle",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/throttle", qos_profile=1
+        )
 
         self.brake_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/brake",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/brake", qos_profile=1
+        )
 
         self.reverse_pub: Publisher = self.new_publisher(
-            Bool,
-            f"/paf/{self.role_name}/reverse",
-            qos_profile=1)
+            Bool, f"/paf/{self.role_name}/reverse", qos_profile=1
+        )
 
         self.__current_velocity: float = None
         self.__target_velocity: float = None
@@ -56,7 +55,7 @@ class VelocityController(CompatibleNode):
         Starts the main loop of the node
         :return:
         """
-        self.loginfo('VelocityController node running')
+        self.loginfo("VelocityController node running")
         # PID for throttle
         pid_t = PID(0.60, 0.00076, 0.63)
         # since we use this for braking aswell, allow -1 to 0.
@@ -71,15 +70,19 @@ class VelocityController(CompatibleNode):
             :return:
             """
             if self.__target_velocity is None:
-                self.logdebug("VelocityController hasn't received target"
-                              "_velocity yet. target_velocity has been set to"
-                              "default value 0")
+                self.logdebug(
+                    "VelocityController hasn't received target"
+                    "_velocity yet. target_velocity has been set to"
+                    "default value 0"
+                )
                 self.__target_velocity = 0
 
             if self.__current_velocity is None:
-                self.logdebug("VelocityController  hasn't received "
-                              "current_velocity yet and can therefore not"
-                              "publish a throttle value")
+                self.logdebug(
+                    "VelocityController  hasn't received "
+                    "current_velocity yet and can therefore not"
+                    "publish a throttle value"
+                )
                 return
 
             if self.__target_velocity < 0:
@@ -135,7 +138,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init('velocity_controller', args=args)
+    roscomp.init("velocity_controller", args=args)
 
     try:
         node = VelocityController()
@@ -146,5 +149,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

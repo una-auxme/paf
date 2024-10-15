@@ -7,6 +7,7 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
+
 # from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32, String
 from coordinate_transformation import CoordinateTransformer
@@ -46,7 +47,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
         """
 
         super(PositionHeadingPublisherNode, self).__init__(
-            'position_heading_publisher_node')
+            "position_heading_publisher_node"
+        )
 
         """
         Possible Filters:
@@ -56,9 +58,12 @@ class PositionHeadingPublisherNode(CompatibleNode):
         # Filter used:
         self.pos_filter = self.get_param("pos_filter", "Kalman")
         self.heading_filter = self.get_param("heading_filter", "Kalman")
-        self.loginfo("position_heading_publisher_node started with Pos Filter:"
-                     + self.pos_filter +
-                     " and Heading Filter: " + self.heading_filter)
+        self.loginfo(
+            "position_heading_publisher_node started with Pos Filter:"
+            + self.pos_filter
+            + " and Heading Filter: "
+            + self.heading_filter
+        )
 
         # basic info
         self.role_name = self.get_param("role_name", "hero")
@@ -71,25 +76,28 @@ class PositionHeadingPublisherNode(CompatibleNode):
         self.avg_xyz = np.zeros((GPS_RUNNING_AVG_ARGS, 3))
         self.avg_gps_counter: int = 0
 
-    # region Subscriber START
+        # region Subscriber START
 
         self.map_sub = self.new_subscription(
             String,
             "/carla/" + self.role_name + "/OpenDRIVE",
             self.get_geoRef,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.imu_subscriber = self.new_subscription(
             Imu,
             "/carla/" + self.role_name + "/IMU",
             self.publish_unfiltered_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.gps_subscriber = self.new_subscription(
             NavSatFix,
             "/carla/" + self.role_name + "/GPS",
             self.publish_unfiltered_gps,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Create subscribers depending on the filter used
         # Pos Filter:
@@ -98,13 +106,15 @@ class PositionHeadingPublisherNode(CompatibleNode):
                 PoseStamped,
                 "/paf/" + self.role_name + "/kalman_pos",
                 self.publish_kalman_pos_as_current_pos,
-                qos_profile=1)
+                qos_profile=1,
+            )
         elif self.pos_filter == "RunningAvg":
             self.gps_subscriber_for_running_avg = self.new_subscription(
                 NavSatFix,
                 "/carla/" + self.role_name + "/GPS",
                 self.publish_running_avg_pos_as_current_pos,
-                qos_profile=1)
+                qos_profile=1,
+            )
         elif self.pos_filter == "None":
             # No additional subscriber needed since the unfiltered GPS data is
             # subscribed by self.gps_subscriber
@@ -118,7 +128,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
                 Float32,
                 "/paf/" + self.role_name + "/kalman_heading",
                 self.publish_current_heading,
-                qos_profile=1)
+                qos_profile=1,
+            )
         elif self.heading_filter == "None":
             # No additional subscriber needed since the unfiltered heading
             # data is subscribed by self.imu_subscriber
@@ -126,35 +137,31 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         # insert additional elifs for other filters here
 
-    # endregion Subscriber END
+        # endregion Subscriber END
 
-    # region Publisher START
+        # region Publisher START
         # Orientation
         self.unfiltered_heading_publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/unfiltered_heading",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/unfiltered_heading", qos_profile=1
+        )
 
         # 3D Odometry (GPS) for Filters
         self.unfiltered_gps_publisher = self.new_publisher(
-            PoseStamped,
-            f"/paf/{self.role_name}/unfiltered_pos",
-            qos_profile=1)
+            PoseStamped, f"/paf/{self.role_name}/unfiltered_pos", qos_profile=1
+        )
         # Publishes current_pos depending on the filter used
         self.cur_pos_publisher = self.new_publisher(
-            PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
-            qos_profile=1)
+            PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
+        )
 
         self.__heading: float = 0
         self.__heading_publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/current_heading",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
+        )
 
     # endregion Publisher END
 
-# region HEADING FUNCTIONS
+    # region HEADING FUNCTIONS
     def publish_unfiltered_heading(self, data: Imu):
         """
         This method is called when new IMU data is received.
@@ -162,10 +169,12 @@ class PositionHeadingPublisherNode(CompatibleNode):
         :param data: new IMU measurement
         :return:
         """
-        data_orientation_q = [data.orientation.x,
-                              data.orientation.y,
-                              data.orientation.z,
-                              data.orientation.w]
+        data_orientation_q = [
+            data.orientation.x,
+            data.orientation.y,
+            data.orientation.z,
+            data.orientation.w,
+        ]
 
         heading = quat_to_heading(data_orientation_q)
 
@@ -205,9 +214,9 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
     # insert new heading functions here...
 
-# endregion HEADING FUNCTIONS END
+    # endregion HEADING FUNCTIONS END
 
-# region POSITION FUNCTIONS
+    # region POSITION FUNCTIONS
 
     def publish_running_avg_pos_as_current_pos(self, data: NavSatFix):
         """
@@ -314,7 +323,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
     # insert new position functions here...
 
-# endregion POSITION FUNCTIONS END
+    # endregion POSITION FUNCTIONS END
 
     def get_geoRef(self, opendrive: String):
         """_summary_
@@ -336,8 +345,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
         indexLatEnd = geoRefText.find(" ", indexLat)
         indexLonEnd = geoRefText.find(" ", indexLon)
 
-        latValue = float(geoRefText[indexLat + len(latString):indexLatEnd])
-        lonValue = float(geoRefText[indexLon + len(lonString):indexLonEnd])
+        latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
+        lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
 
         CoordinateTransformer.la_ref = latValue
         CoordinateTransformer.ln_ref = lonValue

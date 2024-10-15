@@ -20,12 +20,12 @@ class TestClass:
 
     def test_function2(cls):
         """
-        
+
         :return:
         """
         pass
 
-    def test_function3(self):       # inline comment
+    def test_function3(self):  # inline comment
         # This is a block comment
         # It goes over multiple lines
         # All comments start with a blank space
@@ -51,9 +51,9 @@ class TestClass:
         return param1
 
     def main(self):
-        """_summary_
-        """
+        """_summary_"""
         print("Hello World")
+
 
 if __name__ == "__main__":
     runner = TestClass()

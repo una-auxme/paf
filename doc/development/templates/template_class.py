@@ -28,6 +28,7 @@ import numpy as np
 
 # two  blank lines between top level functions and class definition
 
+
 #############################
 #   3. Class-Defintion      #
 #############################

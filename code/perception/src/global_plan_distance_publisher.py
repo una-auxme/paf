@@ -8,6 +8,7 @@ from carla_msgs.msg import CarlaRoute
 from perception.msg import Waypoint, LaneChange
 
 import math
+
 # import rospy
 
 
@@ -24,8 +25,7 @@ class GlobalPlanDistance(CompatibleNode):
         :return:
         """
 
-        super(GlobalPlanDistance, self).__init__('global_plan_distance'
-                                                 '_publisher')
+        super(GlobalPlanDistance, self).__init__("global_plan_distance" "_publisher")
         self.loginfo("GlobalPlanDistance node started")
 
         # basic info
@@ -42,23 +42,25 @@ class GlobalPlanDistance(CompatibleNode):
             PoseStamped,
             "/paf/" + self.role_name + "/current_pos",
             self.update_position,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.global_plan_subscriber = self.new_subscription(
             CarlaRoute,
             "/carla/" + self.role_name + "/global_plan",
             self.update_global_route,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.waypoint_publisher = self.new_publisher(
-            Waypoint,
-            "/paf/" + self.role_name + "/waypoint_distance",
-            qos_profile=1)
+            Waypoint, "/paf/" + self.role_name + "/waypoint_distance", qos_profile=1
+        )
 
         self.lane_change_publisher = self.new_publisher(
             LaneChange,
             "/paf/" + self.role_name + "/lane_change_distance",
-            qos_profile=1)
+            qos_profile=1,
+        )
 
     def update_position(self, pos):
         """
@@ -78,35 +80,38 @@ class GlobalPlanDistance(CompatibleNode):
         # points to navigate to
         if self.global_route is not None and self.global_route:
 
-            current_distance = distance(self.global_route[0].position,
-                                        self.current_pos.position)
-            next_distance = distance(self.global_route[1].position,
-                                     self.current_pos.position)
+            current_distance = distance(
+                self.global_route[0].position, self.current_pos.position
+            )
+            next_distance = distance(
+                self.global_route[1].position, self.current_pos.position
+            )
 
             # if the road option indicates an intersection, the distance to the
             # next waypoint is also the distance to the stop line
             if self.road_options[0] < 4:
                 # print("publish waypoint")
 
-                self.waypoint_publisher.publish(
-                    Waypoint(current_distance, True))
+                self.waypoint_publisher.publish(Waypoint(current_distance, True))
                 self.lane_change_publisher.publish(
-                    LaneChange(current_distance, False, self.road_options[0]))
+                    LaneChange(current_distance, False, self.road_options[0])
+                )
             else:
-                self.waypoint_publisher.publish(
-                    Waypoint(current_distance, False))
+                self.waypoint_publisher.publish(Waypoint(current_distance, False))
                 if self.road_options[0] == 5 or self.road_options[0] == 6:
                     self.lane_change_publisher.publish(
-                        LaneChange(current_distance, True,
-                                   self.road_options[0]))
+                        LaneChange(current_distance, True, self.road_options[0])
+                    )
             # if we reached the next waypoint, pop it and the next point will
             # be published
             if current_distance < 2.5 or next_distance < current_distance:
                 self.road_options.pop(0)
                 self.global_route.pop(0)
 
-                if self.road_options[0] in {5, 6} and \
-                   self.road_options[0] == self.road_options[1]:
+                if (
+                    self.road_options[0] in {5, 6}
+                    and self.road_options[0] == self.road_options[1]
+                ):
                     self.road_options[1] = 4
 
                 print(f"next road option = {self.road_options[0]}")

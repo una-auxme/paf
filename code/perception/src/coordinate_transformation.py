@@ -7,9 +7,11 @@ based on https://gist.github.com/govert/1b373696c9a27ff4c72a.
 A good source to read up on the different reference frames is:
 http://dirsig.cis.rit.edu/docs/new/coordinates.html
 """
+
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation
+
 # from tf.transformations import euler_from_quaternion
 
 
@@ -55,12 +57,14 @@ def geodetic_to_enu(lat, lon, alt):
 
     scale = math.cos(CoordinateTransformer.la_ref * math.pi / 180.0)
     basex = scale * math.pi * a / 180.0 * CoordinateTransformer.ln_ref
-    basey = scale * a * math.log(
-        math.tan((90.0 + CoordinateTransformer.la_ref) * math.pi / 360.0))
+    basey = (
+        scale
+        * a
+        * math.log(math.tan((90.0 + CoordinateTransformer.la_ref) * math.pi / 360.0))
+    )
 
     x = scale * math.pi * a / 180.0 * lon - basex
-    y = scale * a * math.log(
-        math.tan((90.0 + lat) * math.pi / 360.0)) - basey
+    y = scale * a * math.log(math.tan((90.0 + lat) * math.pi / 360.0)) - basey
 
     # Is not necessary in new version
     # y *= -1
@@ -139,6 +143,7 @@ def quat_to_heading(quaternion):
     heading = theta
 
     return heading
+
 
 # old functions
 # def quat_to_heading(msg):

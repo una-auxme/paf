@@ -25,37 +25,38 @@ For this you need to follow 3 steps:
 class DevGlobalRoute(CompatibleNode):
 
     def __init__(self):
-        super(DevGlobalRoute, self).__init__('DevGlobalRoute')
+        super(DevGlobalRoute, self).__init__("DevGlobalRoute")
         self.role_name = self.get_param("role_name", "hero")
         self.from_txt = self.get_param("from_txt", True)
 
         if self.from_txt:
             self.global_route_txt = self.get_param(
-                'global_route_txt',
-                "/code/planning/src/global_planner/global_route.txt")
+                "global_route_txt", "/code/planning/src/global_planner/global_route.txt"
+            )
         else:
-            self.sampling_resolution = self.get_param('sampling_resolution',
-                                                      100.0)
+            self.sampling_resolution = self.get_param("sampling_resolution", 100.0)
             # consecutively increasing sequence ID for header_msg
             self.seq = 0
             self.routes = self.get_param(
-                'routes', "/opt/leaderboard/data/routes_devtest.xml")
+                "routes", "/opt/leaderboard/data/routes_devtest.xml"
+            )
 
         self.map_sub = self.new_subscription(
             msg_type=CarlaWorldInfo,
             topic="/carla/world_info",
             callback=self.world_info_callback,
-            qos_profile=10)
+            qos_profile=10,
+        )
 
         self.global_plan_pub = self.new_publisher(
             msg_type=CarlaRoute,
-            topic='/carla/' + self.role_name + '/global_plan',
+            topic="/carla/" + self.role_name + "/global_plan",
             qos_profile=QoSProfile(
-                depth=1,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL)
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
-        self.logerr('DevGlobalRoute-Node started')
+        self.logerr("DevGlobalRoute-Node started")
 
     def world_info_callback(self, data: CarlaWorldInfo) -> None:
         """
@@ -69,8 +70,10 @@ class DevGlobalRoute(CompatibleNode):
                 with open(f"/workspace{self.global_route_txt}", "r") as txt:
                     input_routes = txt.read()
             except FileNotFoundError:
-                self.logerr(f"/workspace{self.global_route_txt} not found... "
-                            f"current working directory is'{os.getcwd()}'")
+                self.logerr(
+                    f"/workspace{self.global_route_txt} not found... "
+                    f"current working directory is'{os.getcwd()}'"
+                )
                 raise
 
             self.logerr("DevRoute: TXT READ")
@@ -85,11 +88,11 @@ class DevGlobalRoute(CompatibleNode):
                 secs = int(route.split("secs: ")[1].split("\n")[0])
                 nsecs = int(route.split("nsecs:")[1].split("\n")[0])
                 frame_id = route.split('"')[1]
-                header_list.append(
-                    Header(seq, rospy.Time(secs, nsecs), frame_id))
+                header_list.append(Header(seq, rospy.Time(secs, nsecs), frame_id))
                 road_options_str = route.split("[")[1].split("]")[0].split(",")
-                road_options_list.append([int(road_option)
-                                          for road_option in road_options_str])
+                road_options_list.append(
+                    [int(road_option) for road_option in road_options_str]
+                )
                 poses_str = route.split("position:")[1:]
                 poses = []
                 for pose in poses_str:
@@ -105,21 +108,21 @@ class DevGlobalRoute(CompatibleNode):
                     orientation = Quaternion(x, y, z, w)
                     poses.append(Pose(position, orientation))
                 poses_list.append(poses)
-            self.global_plan_pub.publish(header_list[0], road_options_list[0],
-                                         poses_list[0])
+            self.global_plan_pub.publish(
+                header_list[0], road_options_list[0], poses_list[0]
+            )
         else:
 
-            with open(self.routes, 'r', encoding='utf-8') as file:
+            with open(self.routes, "r", encoding="utf-8") as file:
                 my_xml = file.read()
 
             # Use xmltodict to parse and convert the XML document
             routes_dict = xmltodict.parse(my_xml)
-            route = routes_dict['routes']['route'][0]
-            town = route['@town']
+            route = routes_dict["routes"]["route"][0]
+            town = route["@town"]
 
             if town not in data.map_name:
-                self.logerr(f"Map '{data.map_name}' doesnt match routes "
-                            f"'{town}'")
+                self.logerr(f"Map '{data.map_name}' doesnt match routes " f"'{town}'")
                 return
 
             # Convert data into a carla.Map
@@ -130,15 +133,15 @@ class DevGlobalRoute(CompatibleNode):
 
             # plan the route between given waypoints
             route_trace = []
-            waypoints = route['waypoints']['position']
+            waypoints = route["waypoints"]["position"]
             prepoint = waypoints[0]
             for waypoint in waypoints[1:]:
-                start = carla.Location(float(prepoint['@x']),
-                                       float(prepoint['@y']),
-                                       float(prepoint['@z']))
-                origin = carla.Location(float(waypoint['@x']),
-                                        float(waypoint['@y']),
-                                        float(waypoint['@z']))
+                start = carla.Location(
+                    float(prepoint["@x"]), float(prepoint["@y"]), float(prepoint["@z"])
+                )
+                origin = carla.Location(
+                    float(waypoint["@x"]), float(waypoint["@y"]), float(waypoint["@z"])
+                )
                 part_route_trace = grp.trace_route(start, origin)
                 route_trace.extend(part_route_trace)
                 prepoint = waypoint
@@ -152,9 +155,11 @@ class DevGlobalRoute(CompatibleNode):
 
                 rotation = waypoint.transform.rotation
                 quaternion = tf.transformations.quaternion_from_euler(
-                    rotation.roll, rotation.pitch, rotation.yaw)
-                orientation = Quaternion(quaternion[0], quaternion[1],
-                                         quaternion[2], quaternion[3])
+                    rotation.roll, rotation.pitch, rotation.yaw
+                )
+                orientation = Quaternion(
+                    quaternion[0], quaternion[1], quaternion[2], quaternion[3]
+                )
 
                 poses.append(Pose(position, orientation))
                 road_options.append(road_option)
@@ -169,10 +174,10 @@ class DevGlobalRoute(CompatibleNode):
 
 if __name__ == "__main__":
     """
-          main function starts the NavManager node
-          :param args:
+    main function starts the NavManager node
+    :param args:
     """
-    roscomp.init('DevGlobalRoute')
+    roscomp.init("DevGlobalRoute")
 
     try:
         DevGlobalRoute()

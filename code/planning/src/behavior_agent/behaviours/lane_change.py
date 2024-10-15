@@ -19,6 +19,7 @@ class Approach(py_trees.behaviour.Behaviour):
     triggered. It than handles approaching the lane change, slowing the
     vehicle down appropriately.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -40,9 +41,9 @@ class Approach(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior",
-                                                 String, queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -116,13 +117,19 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo("still approaching")
             self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
             return py_trees.common.Status.RUNNING
-        elif speed < convert_to_ms(2.0) and \
-                self.virtual_change_distance < target_dis and self.blocked:
+        elif (
+            speed < convert_to_ms(2.0)
+            and self.virtual_change_distance < target_dis
+            and self.blocked
+        ):
             # stopped
             rospy.loginfo("stopped")
             return py_trees.common.Status.SUCCESS
-        elif speed > convert_to_ms(5.0) and \
-                self.virtual_change_distance < 3.5 and not self.blocked:
+        elif (
+            speed > convert_to_ms(5.0)
+            and self.virtual_change_distance < 3.5
+            and not self.blocked
+        ):
             # running over line
             return py_trees.common.Status.SUCCESS
         else:
@@ -139,15 +146,16 @@ class Approach(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Wait(py_trees.behaviour.Behaviour):
     """
     This behavior handles the waiting in front of the lane change.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -168,9 +176,9 @@ class Wait(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -241,9 +249,9 @@ class Wait(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -252,6 +260,7 @@ class Enter(py_trees.behaviour.Behaviour):
     sets a speed and finishes if the ego vehicle is close to the end of the
     intersection.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -272,9 +281,9 @@ class Enter(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -307,8 +316,7 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        next_waypoint_msg = self.blackboard.\
-            get("/paf/hero/lane_change_distance")
+        next_waypoint_msg = self.blackboard.get("/paf/hero/lane_change_distance")
 
         if next_waypoint_msg is None:
             return py_trees.common.Status.FAILURE
@@ -329,9 +337,9 @@ class Enter(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class Leave(py_trees.behaviour.Behaviour):
@@ -339,6 +347,7 @@ class Leave(py_trees.behaviour.Behaviour):
     This behaviour defines the leaf of this subtree, if this behavior is
     reached, the vehicle left the intersection.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -359,9 +368,9 @@ class Leave(py_trees.behaviour.Behaviour):
         successful
         :return: True, as the set up is successful.
         """
-        self.curr_behavior_pub = rospy.Publisher("/paf/hero/"
-                                                 "curr_behavior", String,
-                                                 queue_size=1)
+        self.curr_behavior_pub = rospy.Publisher(
+            "/paf/hero/" "curr_behavior", String, queue_size=1
+        )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
@@ -404,6 +413,6 @@ class Leave(py_trees.behaviour.Behaviour):
         :param new_status: new state after this one is terminated
         """
         self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]" % (self.name,
-                                                             self.status,
-                                                             new_status))
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )

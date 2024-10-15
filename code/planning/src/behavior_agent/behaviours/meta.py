@@ -14,6 +14,7 @@ class Start(py_trees.behaviour.Behaviour):
     This behavior is the first one being called when the decision tree starts,
     it sets a first target_speed
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -35,9 +36,9 @@ class Start(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.target_speed_pub = rospy.Publisher("paf/hero/"
-                                                "max_velocity",
-                                                Float32, queue_size=1)
+        self.target_speed_pub = rospy.Publisher(
+            "paf/hero/" "max_velocity", Float32, queue_size=1
+        )
         return True
 
     def initialise(self):
@@ -76,14 +77,17 @@ class Start(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )
 
 
 class End(py_trees.behaviour.Behaviour):
     """
     This behavior is called as the last one when the agent finished the path.
     """
+
     def __init__(self, name):
         """
         Minimal one-time initialisation. Other one-time initialisation
@@ -105,9 +109,9 @@ class End(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.target_speed_pub = rospy.Publisher("/paf/hero/"
-                                                "max_velocity",
-                                                Float32, queue_size=1)
+        self.target_speed_pub = rospy.Publisher(
+            "/paf/hero/" "max_velocity", Float32, queue_size=1
+        )
         return True
 
     def initialise(self):
@@ -150,5 +154,7 @@ class End(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug("  %s [Foo::terminate().terminate()][%s->%s]" %
-                          (self.name, self.status, new_status))
+        self.logger.debug(
+            "  %s [Foo::terminate().terminate()][%s->%s]"
+            % (self.name, self.status, new_status)
+        )

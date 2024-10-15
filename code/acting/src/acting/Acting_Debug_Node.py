@@ -71,35 +71,33 @@ class Acting_Debug_Node(CompatibleNode):
         Constructor of the class
         :return:
         """
-        super(Acting_Debug_Node, self).__init__('dummy_trajectory_pub')
-        self.loginfo('Acting_Debug_Node node started')
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
-        self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
+        super(Acting_Debug_Node, self).__init__("dummy_trajectory_pub")
+        self.loginfo("Acting_Debug_Node node started")
+        self.role_name = self.get_param("role_name", "ego_vehicle")
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
 
         # Publisher for Dummy Trajectory
         self.trajectory_pub: Publisher = self.new_publisher(
-            Path,
-            "/paf/" + self.role_name + "/trajectory",
-            qos_profile=1)
+            Path, "/paf/" + self.role_name + "/trajectory", qos_profile=1
+        )
 
         # Publisher for Dummy Velocity
         self.velocity_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/target_velocity",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/target_velocity", qos_profile=1
+        )
 
         # PurePursuit: Publisher for Dummy PP-Steer
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/pure_pursuit_steer",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/pure_pursuit_steer", qos_profile=1
+        )
 
         # Subscriber of current_pos, used for Steering Debugging
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.__current_position_callback,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # ---> EVALUATION/TUNING: Subscribers for plotting
         # Subscriber for target_velocity for plotting
@@ -107,55 +105,61 @@ class Acting_Debug_Node(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/target_velocity",
             self.__get_target_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for current_heading
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__get_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for current_velocity
         self.current_velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for current_throttle
         self.current_throttle_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/throttle",
             self.__get_throttle,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for Stanley_steer
         self.stanley_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
             self.__get_stanley_steer,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for PurePursuit_steer
         self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
             self.__get_purepursuit_steer,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Subscriber for vehicle_steer
         self.vehicle_steer_sub: Subscriber = self.new_subscription(
             CarlaEgoVehicleControl,
-            f'/carla/{self.role_name}/vehicle_control_cmd',
+            f"/carla/{self.role_name}/vehicle_control_cmd",
             self.__get_vehicle_steer,
-            qos_profile=10)
+            qos_profile=10,
+        )
 
         # Publisher for emergency brake testing
         self.emergency_pub: Publisher = self.new_publisher(
-            Bool,
-            f"/paf/{self.role_name}/emergency",
-            qos_profile=1)
+            Bool, f"/paf/{self.role_name}/emergency", qos_profile=1
+        )
 
         # Initialize all needed "global" variables here
         self.current_trajectory = []
@@ -181,16 +185,12 @@ class Acting_Debug_Node(CompatibleNode):
         # Spawncoords at the simulationstart
         startx = 984.5
         starty = -5442.0
-        if (TRAJECTORY_TYPE == 0):  # Straight trajectory
-            self.current_trajectory = [
-                (startx, starty),
-                (startx, starty-200)
-            ]
+        if TRAJECTORY_TYPE == 0:  # Straight trajectory
+            self.current_trajectory = [(startx, starty), (startx, starty - 200)]
 
-        elif (TRAJECTORY_TYPE == 1):  # straight into 90° Curve
+        elif TRAJECTORY_TYPE == 1:  # straight into 90° Curve
             self.current_trajectory = [
                 (984.5, -5442.0),
-
                 (984.5, -5563.5),
                 (985.0, -5573.2),
                 (986.3, -5576.5),
@@ -198,12 +198,11 @@ class Acting_Debug_Node(CompatibleNode):
                 (988.7, -5579.0),
                 (990.5, -5579.8),
                 (1000.0, -5580.2),
-
                 (1040.0, -5580.0),
-                (1070.0, -5580.0)
+                (1070.0, -5580.0),
             ]
 
-        elif (TRAJECTORY_TYPE == 2):  # Sinewave Serpentines trajectory
+        elif TRAJECTORY_TYPE == 2:  # Sinewave Serpentines trajectory
             # Generate a sine-wave with the global Constants to
             # automatically generate a trajectory with serpentine waves
             cycles = 4  # how many sine cycles
@@ -224,53 +223,50 @@ class Acting_Debug_Node(CompatibleNode):
                 traj_y -= 2
                 trajectory_wave.append((traj_x, traj_y))
             # back to the middle of the road
-            trajectory_wave.append((startx, traj_y-2))
+            trajectory_wave.append((startx, traj_y - 2))
             # add a long straight path after the serpentines
-            trajectory_wave.append((startx, starty-200))
+            trajectory_wave.append((startx, starty - 200))
             self.current_trajectory = trajectory_wave
 
-        elif (TRAJECTORY_TYPE == 3):  # 2 Lane Switches
+        elif TRAJECTORY_TYPE == 3:  # 2 Lane Switches
             self.current_trajectory = [
                 (startx, starty),
-                (startx-0.5, starty-10),
-                (startx-0.5, starty-20),
-
-                (startx-0.4, starty-21),
-                (startx-0.3, starty-22),
-                (startx-0.2, starty-23),
-                (startx-0.1, starty-24),
-                (startx, starty-25),
-                (startx+0.1, starty-26),
-                (startx+0.2, starty-27),
-                (startx+0.3, starty-28),
-                (startx+0.4, starty-29),
-                (startx+0.5, starty-30),
-                (startx+0.6, starty-31),
-                (startx+0.7, starty-32),
-                (startx+0.8, starty-33),
-                (startx+0.9, starty-34),
-                (startx+1.0, starty-35),
-                (startx+1.0, starty-50),
-
-                (startx+1.0, starty-51),
-                (startx+0.9, starty-52),
-                (startx+0.8, starty-53),
-                (startx+0.7, starty-54),
-                (startx+0.6, starty-55),
-                (startx+0.5, starty-56),
-                (startx+0.4, starty-57),
-                (startx+0.3, starty-58),
-                (startx+0.2, starty-59),
-                (startx+0.1, starty-60),
-                (startx, starty-61),
-                (startx-0.1, starty-62),
-                (startx-0.2, starty-63),
-                (startx-0.3, starty-64),
-                (startx-0.4, starty-65),
-                (startx-0.5, starty-66),
-
-                (startx-0.5, starty-100),
-                ]
+                (startx - 0.5, starty - 10),
+                (startx - 0.5, starty - 20),
+                (startx - 0.4, starty - 21),
+                (startx - 0.3, starty - 22),
+                (startx - 0.2, starty - 23),
+                (startx - 0.1, starty - 24),
+                (startx, starty - 25),
+                (startx + 0.1, starty - 26),
+                (startx + 0.2, starty - 27),
+                (startx + 0.3, starty - 28),
+                (startx + 0.4, starty - 29),
+                (startx + 0.5, starty - 30),
+                (startx + 0.6, starty - 31),
+                (startx + 0.7, starty - 32),
+                (startx + 0.8, starty - 33),
+                (startx + 0.9, starty - 34),
+                (startx + 1.0, starty - 35),
+                (startx + 1.0, starty - 50),
+                (startx + 1.0, starty - 51),
+                (startx + 0.9, starty - 52),
+                (startx + 0.8, starty - 53),
+                (startx + 0.7, starty - 54),
+                (startx + 0.6, starty - 55),
+                (startx + 0.5, starty - 56),
+                (startx + 0.4, starty - 57),
+                (startx + 0.3, starty - 58),
+                (startx + 0.2, starty - 59),
+                (startx + 0.1, starty - 60),
+                (startx, starty - 61),
+                (startx - 0.1, starty - 62),
+                (startx - 0.2, starty - 63),
+                (startx - 0.3, starty - 64),
+                (startx - 0.4, starty - 65),
+                (startx - 0.5, starty - 66),
+                (startx - 0.5, starty - 100),
+            ]
         self.updated_trajectory(self.current_trajectory)
 
     def updated_trajectory(self, target_trajectory):
@@ -347,21 +343,21 @@ class Acting_Debug_Node(CompatibleNode):
             depending on the selected TEST_TYPE
             """
             # Drive const. velocity on fixed straight steering
-            if (TEST_TYPE == 0):
+            if TEST_TYPE == 0:
                 self.driveVel = TARGET_VELOCITY_1
                 self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
                 self.velocity_pub.publish(self.driveVel)
 
             # Drive alternating velocities on fixed straight steering
-            elif (TEST_TYPE == 1):
+            elif TEST_TYPE == 1:
                 if not self.time_set:
                     self.drive_Vel = TARGET_VELOCITY_1
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switch_time_set = True
-                if (self.switch_checkpoint_time < rospy.get_time() - 10):
+                if self.switch_checkpoint_time < rospy.get_time() - 10:
                     self.switch_checkpoint_time = rospy.get_time()
                     self.switchVelocity = not self.switchVelocity
-                    if (self.switchVelocity):
+                    if self.switchVelocity:
                         self.driveVel = TARGET_VELOCITY_2
                     else:
                         self.driveVel = TARGET_VELOCITY_1
@@ -369,7 +365,7 @@ class Acting_Debug_Node(CompatibleNode):
                 self.velocity_pub.publish(self.driveVel)
 
             # drive const. velocity on trajectoy with steering controller
-            elif (TEST_TYPE == 2):
+            elif TEST_TYPE == 2:
                 # Continuously update path and publish it
                 self.drive_Vel = TARGET_VELOCITY_1
                 self.updated_trajectory(self.current_trajectory)
@@ -378,13 +374,13 @@ class Acting_Debug_Node(CompatibleNode):
 
             # drive const. velocity on fixed straight steering and
             # trigger an emergency brake after 15 secs
-            elif (TEST_TYPE == 3):
+            elif TEST_TYPE == 3:
                 # Continuously update path and publish it
                 self.drive_Vel = TARGET_VELOCITY_1
                 if not self.time_set:
                     self.checkpoint_time = rospy.get_time()
                     self.time_set = True
-                if (self.checkpoint_time < rospy.get_time() - 15.0):
+                if self.checkpoint_time < rospy.get_time() - 15.0:
                     self.checkpoint_time = rospy.get_time()
                     self.emergency_pub.publish(True)
                 self.pure_pursuit_steer_pub.publish(FIXED_STEERING)
@@ -402,7 +398,7 @@ class Acting_Debug_Node(CompatibleNode):
                     print(">>>>>>>>>>>> TRAJECTORY <<<<<<<<<<<<<<")
 
             # Uncomment the prints of the data you want to plot
-            if (self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME):
+            if self.checkpoint_time < rospy.get_time() - PRINT_AFTER_TIME:
                 self.checkpoint_time = rospy.get_time()
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
                 if PRINT_VELOCITY_DATA:
@@ -420,6 +416,7 @@ class Acting_Debug_Node(CompatibleNode):
                     print(">> ACTUAL POSITIONS <<")
                     print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 

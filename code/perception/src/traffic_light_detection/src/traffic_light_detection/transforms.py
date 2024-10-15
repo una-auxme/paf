@@ -8,7 +8,7 @@ def load_image(path):
     Loads an image from the given path
     @rtype: RGB-coded PIL image
     """
-    image = Image.open(path).convert('RGB')
+    image = Image.open(path).convert("RGB")
     return image
 
 
@@ -56,7 +56,7 @@ class ApplyMask(object):
             mask
         @param path: Path to the mask
         """
-        self.mask = functional.to_tensor(Image.open(path).convert('L'))
+        self.mask = functional.to_tensor(Image.open(path).convert("L"))
 
     def __call__(self, image):
         mask = torchvision.transforms.Resize(image.shape[1:])(self.mask)

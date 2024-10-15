@@ -1,7 +1,7 @@
-'''
+"""
 Docs: https://www.tensorflow.org/hub/tutorials/tf2_object_detection,
 https://pylot.readthedocs.io/en/latest/perception.detection.html
-'''
+"""
 
 from globals import IMAGE_BASE_FOLDER, IMAGES_FOR_TEST
 
@@ -20,55 +20,57 @@ import matplotlib.pyplot as plt
 
 from object_detection.utils import visualization_utils as viz_utils
 
-matplotlib.use('TkAgg')
+matplotlib.use("TkAgg")
 
-tf.get_logger().setLevel('ERROR')
+tf.get_logger().setLevel("ERROR")
 
 ALL_MODELS = [
-    'faster-rcnn',
-    'ssdlite-mobilenet-v2',
-    'ssd-mobilenet-fpn-640',
-    'ssd-mobilenet-v1',
-    'ssd-mobilenet-v1-fpn'
+    "faster-rcnn",
+    "ssdlite-mobilenet-v2",
+    "ssd-mobilenet-fpn-640",
+    "ssd-mobilenet-v1",
+    "ssd-mobilenet-v1-fpn",
 ]
 
-MODEL_BASE_FOLDER = '/home/maxi/Downloads/models/obstacle_detection'
+MODEL_BASE_FOLDER = "/home/maxi/Downloads/models/obstacle_detection"
 
-LABEL_FILE = '/home/maxi/Downloads/pylot.names'
+LABEL_FILE = "/home/maxi/Downloads/pylot.names"
 
 
 def load_image_into_numpy_array(path):
-    image_data = tf.io.gfile.GFile(path, 'rb').read()
+    image_data = tf.io.gfile.GFile(path, "rb").read()
     image = Image.open(BytesIO(image_data))
 
     (im_width, im_height) = image.size
-    return np.array(image.convert('RGB').getdata()).reshape(
-        (1, im_height, im_width, 3)).astype(np.uint8)
+    return (
+        np.array(image.convert("RGB").getdata())
+        .reshape((1, im_height, im_width, 3))
+        .astype(np.uint8)
+    )
 
 
 def load_model(model_name):
     model_handle = os.path.join(MODEL_BASE_FOLDER, model_name)
 
-    print('Selected model: ' + model_name)
+    print("Selected model: " + model_name)
 
-    print('Loading model...', end='')
+    print("Loading model...", end="")
     hub_model = hub.load(model_handle)
-    print(' done!')
+    print(" done!")
 
     return hub_model
 
 
 def get_category_index(label_file):
-    with open(label_file, 'r') as f:
+    with open(label_file, "r") as f:
         labels = f.readlines()
         labels = [label.strip() for label in labels]
-        category_index = \
-            {i: {'id': i, 'name': name} for i, name in enumerate(labels)}
+        category_index = {i: {"id": i, "name": name} for i, name in enumerate(labels)}
     return category_index
 
 
-if not os.path.exists(f'{IMAGE_BASE_FOLDER}/result'):
-    os.makedirs(f'{IMAGE_BASE_FOLDER}/result')
+if not os.path.exists(f"{IMAGE_BASE_FOLDER}/result"):
+    os.makedirs(f"{IMAGE_BASE_FOLDER}/result")
 
 category_index = get_category_index(LABEL_FILE)
 
@@ -82,16 +84,16 @@ for m in ALL_MODELS:
         image_tensor = tf.convert_to_tensor(image_np)
 
         if first_gen:
-            print('Running warmup inference...')
-            model.signatures['serving_default'](image_tensor)
+            print("Running warmup inference...")
+            model.signatures["serving_default"](image_tensor)
             first_gen = False
 
-        print(f'Running inference for {p}... ')
+        print(f"Running inference for {p}... ")
 
         start_time = perf_counter()
 
         # running inference
-        results = model.signatures['serving_default'](image_tensor)
+        results = model.signatures["serving_default"](image_tensor)
 
         elapsed_time = perf_counter() - start_time
 
@@ -104,20 +106,20 @@ for m in ALL_MODELS:
 
         viz_utils.visualize_boxes_and_labels_on_image_array(
             image_np_with_detections[0],
-            result['boxes'][0],
-            (result['classes'][0] + label_id_offset).astype(int),
-            result['scores'][0],
+            result["boxes"][0],
+            (result["classes"][0] + label_id_offset).astype(int),
+            result["scores"][0],
             category_index,
             use_normalized_coordinates=True,
             max_boxes_to_draw=200,
-            min_score_thresh=.10,
-            agnostic_mode=False)
+            min_score_thresh=0.10,
+            agnostic_mode=False,
+        )
 
         file_name = Path(image_path).stem
 
         plt.figure(figsize=(32, 18))
-        plt.title(f'Pylot (TF) - {m} - {p} - {elapsed_time*1000:.0f}ms',
-                  fontsize=30)
+        plt.title(f"Pylot (TF) - {m} - {p} - {elapsed_time*1000:.0f}ms", fontsize=30)
         plt.imshow(image_np_with_detections[0])
-        plt.savefig(f'{IMAGE_BASE_FOLDER}/result/{file_name}_TF_{m}.jpg')
+        plt.savefig(f"{IMAGE_BASE_FOLDER}/result/{file_name}_TF_{m}.jpg")
         plt.close()

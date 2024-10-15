@@ -10,6 +10,7 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, Header
+
 # from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 import rospy
@@ -26,6 +27,7 @@ class position_heading_filter_debug_node(CompatibleNode):
     Node publishes a filtered gps signal.
     This is achieved using a rolling average.
     """
+
     def __init__(self):
         """
         Constructor / Setup
@@ -33,15 +35,16 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         super(position_heading_filter_debug_node, self).__init__(
-            'position_heading_filter_debug_node')
+            "position_heading_filter_debug_node"
+        )
 
         # basic info
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
         # carla attributes
-        CARLA_HOST = os.environ.get('CARLA_HOST', 'paf-carla-simulator-1')
-        CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+        CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
+        CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
         self.world = None
         self.carla_car = None
@@ -66,11 +69,11 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         # csv file attributes/ flags for plots
         self.csv_x_created = False
-        self.csv_file_path_x = ''
+        self.csv_file_path_x = ""
         self.csv_y_created = False
-        self.csv_file_path_y = ''
+        self.csv_file_path_y = ""
         self.csv_heading_created = False
-        self.csv_file_path_heading = ''
+        self.csv_file_path_heading = ""
 
         self.loginfo("Position Heading Filter Debug node started")
 
@@ -81,40 +84,46 @@ class position_heading_filter_debug_node(CompatibleNode):
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.set_current_pos,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Current_heading subscriber:
         self.current_heading_subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.set_current_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # test_filter_pos subscriber:
         self.test_filter_pos_subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/kalman_pos",
             self.set_test_filter_pos,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # test_filter_heading subscriber:
         self.test_filter_heading_subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/kalman_heading",
             self.set_test_filter_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Unfiltered_pos subscriber:
         self.unfiltered_pos_subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/unfiltered_pos",
             self.set_unfiltered_pos,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Unfiltered_heading subscriber:
         self.unfiltered_heading_subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/unfiltered_heading",
             self.set_unfiltered_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # endregion Subscriber END
 
@@ -122,24 +131,20 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         # ideal carla publisher for easier debug with rqt_plot
         self.carla_heading_publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/carla_current_heading",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/carla_current_heading", qos_profile=1
+        )
 
         self.carla_pos_publisher = self.new_publisher(
-            PoseStamped,
-            f"/paf/{self.role_name}/carla_current_pos",
-            qos_profile=1)
+            PoseStamped, f"/paf/{self.role_name}/carla_current_pos", qos_profile=1
+        )
 
         # Error Publisher
         self.position_debug_publisher = self.new_publisher(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/position_debug",
-            qos_profile=1)
+            Float32MultiArray, f"/paf/{self.role_name}/position_debug", qos_profile=1
+        )
         self.heading_debug_publisher = self.new_publisher(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/heading_debug",
-            qos_profile=1)
+            Float32MultiArray, f"/paf/{self.role_name}/heading_debug", qos_profile=1
+        )
 
         # endregion Publisher END
 
@@ -198,10 +203,9 @@ class position_heading_filter_debug_node(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = ('/workspace/code/perception/'
-                     'src/experiments/' + FOLDER_PATH)
-        folder_path_x = base_path + '/x_error'
-        folder_path_y = base_path + '/y_error'
+        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        folder_path_x = base_path + "/x_error"
+        folder_path_y = base_path + "/y_error"
         # Ensure the directories exist
         os.makedirs(folder_path_x, exist_ok=True)
         os.makedirs(folder_path_y, exist_ok=True)
@@ -231,9 +235,8 @@ class position_heading_filter_debug_node(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = ('/workspace/code/perception/'
-                     'src/experiments' + FOLDER_PATH)
-        folder_path_heading = base_path + '/heading_error'
+        base_path = "/workspace/code/perception/" "src/experiments" + FOLDER_PATH
+        folder_path_heading = base_path + "/heading_error"
 
         # Ensure the directories exist
         os.makedirs(folder_path_heading, exist_ok=True)
@@ -248,81 +251,93 @@ class position_heading_filter_debug_node(CompatibleNode):
 
     # helper methods for writing into csv files
     def write_csv_heading(self):
-        with open(self.csv_file_path_heading, 'a', newline='') as file:
+        with open(self.csv_file_path_heading, "a", newline="") as file:
             writer = csv.writer(file)
             # Check if file is empty
             if os.stat(self.csv_file_path_heading).st_size == 0:
-                writer.writerow([
-                    "Time",
-                    "Unfiltered",
-                    "Ideal (Carla)",
-                    "Current",
-                    "Test Filter",
-                    "Unfiltered Error",
-                    "Current Error"
-                    "Test Filter Error",
-                ])
-            writer.writerow([rospy.get_time(),
-                             self.unfiltered_heading.data,
-                             self.carla_current_heading,
-                             self.current_heading.data,
-                             self.test_filter_heading.data,
-                             self.heading_debug_data.data[0],
-                             self.heading_debug_data.data[1],
-                             self.heading_debug_data.data[2]
-                             ])
+                writer.writerow(
+                    [
+                        "Time",
+                        "Unfiltered",
+                        "Ideal (Carla)",
+                        "Current",
+                        "Test Filter",
+                        "Unfiltered Error",
+                        "Current Error" "Test Filter Error",
+                    ]
+                )
+            writer.writerow(
+                [
+                    rospy.get_time(),
+                    self.unfiltered_heading.data,
+                    self.carla_current_heading,
+                    self.current_heading.data,
+                    self.test_filter_heading.data,
+                    self.heading_debug_data.data[0],
+                    self.heading_debug_data.data[1],
+                    self.heading_debug_data.data[2],
+                ]
+            )
 
     def write_csv_x(self):
-        with open(self.csv_file_path_x, 'a', newline='') as file:
+        with open(self.csv_file_path_x, "a", newline="") as file:
             writer = csv.writer(file)
             # Check if file is empty and add first row
             if os.stat(self.csv_file_path_x).st_size == 0:
-                writer.writerow([
-                    "Time",
-                    "Unfiltered",
-                    "Ideal (Carla)",
-                    "Current",
-                    "Test Filter",
-                    "Unfiltered Error",
-                    "Current Error",
-                    "Test Filter Error"
-                ])
-            writer.writerow([
-                rospy.get_time(),
-                self.unfiltered_pos.pose.position.x,
-                self.carla_current_pos.x,
-                self.current_pos.pose.position.x,
-                self.test_filter_pos.pose.position.x,
-                self.position_debug_data.data[8],
-                self.position_debug_data.data[11],
-                self.position_debug_data.data[14]
-                ])
+                writer.writerow(
+                    [
+                        "Time",
+                        "Unfiltered",
+                        "Ideal (Carla)",
+                        "Current",
+                        "Test Filter",
+                        "Unfiltered Error",
+                        "Current Error",
+                        "Test Filter Error",
+                    ]
+                )
+            writer.writerow(
+                [
+                    rospy.get_time(),
+                    self.unfiltered_pos.pose.position.x,
+                    self.carla_current_pos.x,
+                    self.current_pos.pose.position.x,
+                    self.test_filter_pos.pose.position.x,
+                    self.position_debug_data.data[8],
+                    self.position_debug_data.data[11],
+                    self.position_debug_data.data[14],
+                ]
+            )
 
     def write_csv_y(self):
-        with open(self.csv_file_path_y, 'a', newline='') as file:
+        with open(self.csv_file_path_y, "a", newline="") as file:
             writer = csv.writer(file)
             # Check if file is empty and add first row
             if os.stat(self.csv_file_path_y).st_size == 0:
-                writer.writerow([
-                    "Time",
-                    "Unfiltered",
-                    "Ideal (Carla)",
-                    "Current",
-                    "Test Filter",
-                    "Unfiltered Error",
-                    "Current Error",
-                    "Test Filter Error"
-                ])
-            writer.writerow([
-                rospy.get_time(),
-                self.unfiltered_pos.pose.position.y,
-                self.carla_current_pos.y,
-                self.current_pos.pose.position.y,
-                self.test_filter_pos.pose.position.y,
-                self.position_debug_data.data[9],
-                self.position_debug_data.data[12],
-                self.position_debug_data.data[15]
-                ])
+                writer.writerow(
+                    [
+                        "Time",
+                        "Unfiltered",
+                        "Ideal (Carla)",
+                        "Current",
+                        "Test Filter",
+                        "Unfiltered Error",
+                        "Current Error",
+                        "Test Filter Error",
+                    ]
+                )
+            writer.writerow(
+                [
+                    rospy.get_time(),
+                    self.unfiltered_pos.pose.position.y,
+                    self.carla_current_pos.y,
+                    self.current_pos.pose.position.y,
+                    self.test_filter_pos.pose.position.y,
+                    self.position_debug_data.data[9],
+                    self.position_debug_data.data[12],
+                    self.position_debug_data.data[15],
+                ]
+            )
 
     # endregion CSV data save methods
 
@@ -331,7 +346,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         This method sets the carla attributes.
         """
         for actor in self.world.get_actors():
-            if actor.attributes.get('role_name') == "hero":
+            if actor.attributes.get("role_name") == "hero":
                 self.carla_car = actor
                 break
         if self.carla_car is None:
@@ -349,9 +364,8 @@ class position_heading_filter_debug_node(CompatibleNode):
             # -> convert to radians
             # -> also flip the sign to minus
             self.carla_current_heading = -math.radians(
-                                         self.carla_car.get_transform()
-                                         .rotation.yaw
-                                        )
+                self.carla_car.get_transform().rotation.yaw
+            )
 
     def position_debug(self):
         """
@@ -418,42 +432,37 @@ class position_heading_filter_debug_node(CompatibleNode):
         debug.data[7] = self.test_filter_pos.pose.position.y
 
         # error between carla_current_pos and unfiltered_pos
-        debug.data[8] = (self.carla_current_pos.x
-                         - self.unfiltered_pos.pose.position.x)
-        debug.data[9] = (self.carla_current_pos.y
-                         - self.unfiltered_pos.pose.position.y)
-        debug.data[10] = math.sqrt((self.carla_current_pos.x
-                                   - self.unfiltered_pos.pose.position.x)**2
-                                   + (self.carla_current_pos.y
-                                   - self.unfiltered_pos.pose.position.y)**2)
+        debug.data[8] = self.carla_current_pos.x - self.unfiltered_pos.pose.position.x
+        debug.data[9] = self.carla_current_pos.y - self.unfiltered_pos.pose.position.y
+        debug.data[10] = math.sqrt(
+            (self.carla_current_pos.x - self.unfiltered_pos.pose.position.x) ** 2
+            + (self.carla_current_pos.y - self.unfiltered_pos.pose.position.y) ** 2
+        )
 
         # error between carla_current_pos and current_pos
-        debug.data[11] = (self.carla_current_pos.x
-                          - self.current_pos.pose.position.x)
-        debug.data[12] = (self.carla_current_pos.y
-                          - self.current_pos.pose.position.y)
-        debug.data[13] = math.sqrt((self.carla_current_pos.x
-                                   - self.current_pos.pose.position.x)**2
-                                   + (self.carla_current_pos.y
-                                   - self.current_pos.pose.position.y)**2)
+        debug.data[11] = self.carla_current_pos.x - self.current_pos.pose.position.x
+        debug.data[12] = self.carla_current_pos.y - self.current_pos.pose.position.y
+        debug.data[13] = math.sqrt(
+            (self.carla_current_pos.x - self.current_pos.pose.position.x) ** 2
+            + (self.carla_current_pos.y - self.current_pos.pose.position.y) ** 2
+        )
 
         # error between carla_current_pos and test_filter_pos
-        debug.data[14] = (self.carla_current_pos.x
-                          - self.test_filter_pos.pose.position.x)
-        debug.data[15] = (self.carla_current_pos.y
-                          - self.test_filter_pos.pose.position.y)
-        debug.data[16] = math.sqrt((self.carla_current_pos.x
-                                   - self.test_filter_pos.pose.position.x)**2
-                                   + (self.carla_current_pos.y
-                                   - self.test_filter_pos.pose.position.y)**2)
+        debug.data[14] = self.carla_current_pos.x - self.test_filter_pos.pose.position.x
+        debug.data[15] = self.carla_current_pos.y - self.test_filter_pos.pose.position.y
+        debug.data[16] = math.sqrt(
+            (self.carla_current_pos.x - self.test_filter_pos.pose.position.x) ** 2
+            + (self.carla_current_pos.y - self.test_filter_pos.pose.position.y) ** 2
+        )
 
         self.position_debug_data = debug
         self.position_debug_publisher.publish(debug)
 
         # for easier debugging with rqt_plot
         # Publish carla Location as PoseStamped:
-        self.carla_pos_publisher.publish(carla_location_to_pose_stamped(
-                                         self.carla_current_pos))
+        self.carla_pos_publisher.publish(
+            carla_location_to_pose_stamped(self.carla_current_pos)
+        )
 
     def heading_debug(self):
         """
@@ -495,16 +504,13 @@ class position_heading_filter_debug_node(CompatibleNode):
         debug.data[3] = self.test_filter_heading.data
 
         # error between carla_current_heading and unfiltered_heading
-        debug.data[4] = (self.carla_current_heading
-                         - self.unfiltered_heading.data)
+        debug.data[4] = self.carla_current_heading - self.unfiltered_heading.data
 
         # error between carla_current_heading and current_heading
-        debug.data[5] = (self.carla_current_heading
-                         - self.current_heading.data)
+        debug.data[5] = self.carla_current_heading - self.current_heading.data
 
         # error between carla_current_heading and test_filter_heading
-        debug.data[6] = (self.carla_current_heading
-                         - self.test_filter_heading.data)
+        debug.data[6] = self.carla_current_heading - self.test_filter_heading.data
 
         self.heading_debug_data = debug
         self.heading_debug_publisher.publish(debug)
@@ -566,16 +572,16 @@ class position_heading_filter_debug_node(CompatibleNode):
 
 
 def create_file(folder_path):
-    '''
+    """
     This function creates a new csv file in the folder_path
     in correct sequence looking like data_00.csv, data_01.csv, ...
     and returns the path to the file.
-    '''
+    """
     i = 0
     while True:
-        file_path = f'{folder_path}/data_{str(i).zfill(2)}.csv'
+        file_path = f"{folder_path}/data_{str(i).zfill(2)}.csv"
         if not os.path.exists(file_path):
-            with open(file_path, 'w', newline=''):
+            with open(file_path, "w", newline=""):
                 pass
             return file_path
         i += 1
