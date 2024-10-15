@@ -3,6 +3,10 @@ services:
     build:
       dockerfile: build/docker/agent/Dockerfile
       context: ../
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
     init: true
     tty: true
     shm_size: 2gb

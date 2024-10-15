@@ -42,7 +42,7 @@ class VisionNode(CompatibleNode):
 
         # dictionary of pretrained models
         self.model_dict = {
-            "fasterrcnn_resnet50_fpn_v2": (
+            "frcnn_resnet50_fpn_v2": (
                 fasterrcnn_resnet50_fpn_v2(
                     weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
                 ),
@@ -50,7 +50,7 @@ class VisionNode(CompatibleNode):
                 "detection",
                 "pyTorch",
             ),
-            "fasterrcnn_mobilenet_v3_large_320_fpn": (
+            "frcnn_mobilenet_v3_large_320_fpn": (
                 fasterrcnn_mobilenet_v3_large_320_fpn(
                     weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
                 ),

@@ -10,9 +10,9 @@ from sensor_msgs.msg import Image as ImageMsg
 from perception.msg import TrafficLightState
 from std_msgs.msg import Int16
 from cv_bridge import CvBridge
-from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (
+from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (  # noqa: E501
     TrafficLightInference,
-)  # noqa: E501
+)
 import cv2
 import numpy as np
 

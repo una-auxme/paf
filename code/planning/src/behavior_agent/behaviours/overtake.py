@@ -4,8 +4,7 @@ from std_msgs.msg import String
 import rospy
 import numpy as np
 
-from . import behavior_speed as bs
-import planning  # noqa: F401
+from behaviours import behavior_speed as bs
 from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms
 
 """

@@ -2,6 +2,8 @@
 # import tf.transformations
 import ros_compatibility as roscomp
 import rospy
+import sys
+import os
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
@@ -14,10 +16,11 @@ from scipy.spatial.transform import Rotation
 import math
 
 from perception.msg import Waypoint, LaneChange
-import planning  # noqa: F401
-from behavior_agent.behaviours import behavior_speed as bs
 
 from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP
+
+sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
+from behaviours import behavior_speed as bs  # type: ignore # noqa: E402
 
 # from scipy.spatial._kdtree import KDTree
 

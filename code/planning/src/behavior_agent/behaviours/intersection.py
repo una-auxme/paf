@@ -3,12 +3,16 @@ import numpy as np
 from std_msgs.msg import String
 
 import rospy
+import sys
+import os
 
-from . import behavior_speed as bs
+from behaviours import behavior_speed as bs
 
-import planning  # noqa: F401
-
-from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
+sys.path.append(os.path.abspath(sys.path[0] + "/.."))
+from local_planner.utils import (  # type: ignore # noqa: E402
+    TARGET_DISTANCE_TO_STOP,
+    convert_to_ms,
+)
 
 """
 Source: https://github.com/ll7/psaf2

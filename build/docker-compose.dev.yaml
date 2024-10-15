@@ -1,5 +1,8 @@
 # compose file for the development without a driving vehicle
 # "interactive" development without a car
+include:
+  - roscore_service.yaml
+
 services:
   agent-dev:
     build:
@@ -24,5 +27,4 @@ services:
       - DISPLAY=${DISPLAY}
     network_mode: host
     privileged: true
-    entrypoint: ["/dev_entrypoint.sh"]
     command: bash -c "sudo chown -R ${USER_UID}:${USER_GID} ../ && sudo chmod -R a+w ../ && bash"

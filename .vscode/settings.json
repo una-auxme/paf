@@ -1,7 +1,6 @@
 {
     "githubIssues.issueBranchTitle": "${issueNumber}-${sanitizedIssueTitle}",
     "githubIssues.queries": [
-    
         {
             "label": "My Issues",
             "query": "default"

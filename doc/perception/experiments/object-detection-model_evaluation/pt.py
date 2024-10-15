@@ -20,8 +20,8 @@ from torchvision import transforms
 from torchvision.transforms.functional import to_pil_image
 
 ALL_MODELS = {
-    "fasterrcnn_mobilenet_v3_large_320_fpn": FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
-    "fasterrcnn_resnet50_fpn_v2": FasterRCNN_ResNet50_FPN_V2_Weights,
+    "frcnn_mobilenet_v3_large_320_fpn": FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
+    "frcnn_resnet50_fpn_v2": FasterRCNN_ResNet50_FPN_V2_Weights,
     "retinanet_resnet50_fpn_v2": RetinaNet_ResNet50_FPN_V2_Weights,
 }
 

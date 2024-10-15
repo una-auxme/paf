@@ -4,7 +4,7 @@ from std_msgs.msg import String
 
 import rospy
 
-from . import behavior_speed as bs
+from behaviours import behavior_speed as bs
 from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
 
 """

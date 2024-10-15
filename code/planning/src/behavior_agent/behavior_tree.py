@@ -5,14 +5,20 @@ from py_trees.behaviours import Running
 import py_trees_ros
 import rospy
 import sys
-import behaviours
+from behaviours import (
+    intersection,
+    lane_change,
+    overtake,
+    maneuvers,
+    meta,
+    road_features,
+    topics2blackboard,
+)
 from py_trees.composites import Parallel, Selector, Sequence
 
 """
 Source: https://github.com/ll7/psaf2
 """
-
-# flake8: noqa: E501
 
 
 def grow_a_tree(role_name):
@@ -23,34 +29,26 @@ def grow_a_tree(role_name):
             Selector(
                 "Priorities",
                 children=[
-                    behaviours.maneuvers.UnstuckRoutine("Unstuck Routine"),
+                    maneuvers.UnstuckRoutine("Unstuck Routine"),
                     Selector(
                         "Road Features",
                         children=[
-                            behaviours.maneuvers.LeaveParkingSpace(
-                                "Leave Parking Space"
-                            ),
+                            maneuvers.LeaveParkingSpace("Leave Parking Space"),
                             Sequence(
                                 "Intersection",
                                 children=[
-                                    behaviours.road_features.IntersectionAhead(
+                                    road_features.IntersectionAhead(
                                         "Intersection Ahead?"
                                     ),
                                     Sequence(
                                         "Intersection Actions",
                                         children=[
-                                            behaviours.intersection.Approach(
+                                            intersection.Approach(
                                                 "Approach Intersection"
                                             ),
-                                            behaviours.intersection.Wait(
-                                                "Wait Intersection"
-                                            ),
-                                            behaviours.intersection.Enter(
-                                                "Enter Intersection"
-                                            ),
-                                            behaviours.intersection.Leave(
-                                                "Leave Intersection"
-                                            ),
+                                            intersection.Wait("Wait Intersection"),
+                                            intersection.Enter("Enter Intersection"),
+                                            intersection.Leave("Leave Intersection"),
                                         ],
                                     ),
                                 ],
@@ -63,22 +61,14 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Laneswitch",
                                 children=[
-                                    behaviours.road_features.LaneChangeAhead(
-                                        "Lane Change Ahead?"
-                                    ),
+                                    road_features.LaneChangeAhead("Lane Change Ahead?"),
                                     Sequence(
                                         "Lane Change Actions",
                                         children=[
-                                            behaviours.lane_change.Approach(
-                                                "Approach Change"
-                                            ),
-                                            behaviours.lane_change.Wait("Wait Change"),
-                                            behaviours.lane_change.Enter(
-                                                "Enter Change"
-                                            ),
-                                            behaviours.lane_change.Leave(
-                                                "Leave Change"
-                                            ),
+                                            lane_change.Approach("Approach Change"),
+                                            lane_change.Wait("Wait Change"),
+                                            lane_change.Enter("Enter Change"),
+                                            lane_change.Leave("Leave Change"),
                                         ],
                                     ),
                                 ],
@@ -86,25 +76,21 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Overtaking",
                                 children=[
-                                    behaviours.road_features.OvertakeAhead(
-                                        "Overtake Ahead?"
-                                    ),
+                                    road_features.OvertakeAhead("Overtake Ahead?"),
                                     Sequence(
                                         "Overtake Actions",
                                         children=[
-                                            behaviours.overtake.Approach(
-                                                "Approach Overtake"
-                                            ),
-                                            behaviours.overtake.Wait("Wait Overtake"),
-                                            behaviours.overtake.Enter("Enter Overtake"),
-                                            behaviours.overtake.Leave("Leave Overtake"),
+                                            overtake.Approach("Approach Overtake"),
+                                            overtake.Wait("Wait Overtake"),
+                                            overtake.Enter("Enter Overtake"),
+                                            overtake.Leave("Leave Overtake"),
                                         ],
                                     ),
                                 ],
                             ),
                         ],
                     ),
-                    behaviours.maneuvers.Cruise("Cruise"),
+                    maneuvers.Cruise("Cruise"),
                 ],
             )
         ],
@@ -112,12 +98,12 @@ def grow_a_tree(role_name):
 
     metarules = Sequence(
         "Meta",
-        children=[behaviours.meta.Start("Start"), rules, behaviours.meta.End("End")],
+        children=[meta.Start("Start"), rules, meta.End("End")],
     )
     root = Parallel(
         "Root",
         children=[
-            behaviours.topics2blackboard.create_node(role_name),
+            topics2blackboard.create_node(role_name),
             metarules,
             Running("Idle"),
         ],

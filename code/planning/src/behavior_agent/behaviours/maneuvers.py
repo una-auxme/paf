@@ -2,7 +2,7 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
-from . import behavior_speed as bs
+from behaviours import behavior_speed as bs
 
 # from behavior_agent.msg import BehaviorSpeed
 
