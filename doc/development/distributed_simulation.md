@@ -33,7 +33,7 @@ As far as we know, you need more than **10 GB of VRAM** to run the server and th
 
 ### Ensure similarity between normal docker-compose and distributed docker-compose files
 
-Carefully compare that their are no major differences between the `docker-compose.yml` and `docker-compose.distributed.yml` files.
+Carefully compare that their are no major differences between the `docker-compose.*.yaml` and `docker-compose.*-distributed.yaml` files.
 Mainly, the `carla-simulator` service will not be executed in the non-distributed version.
 
 ### Set the `<ip-address>` of the carla simulator in docker-compose distributed files

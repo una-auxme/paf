@@ -2,7 +2,7 @@ name: Build and push image
 
 on:
   workflow_run:
-    workflows: ["Check code format", "Linter markdown and code"]
+    workflows: ["Check code format"]
     types:
       - completed
 
@@ -12,6 +12,7 @@ env:
 
 jobs:
   build-and-push-image:
+    name: Build and push image
     runs-on: self-hosted
     outputs:
       version: ${{ steps.build.version.outputs.version }}
