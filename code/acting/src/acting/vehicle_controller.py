@@ -21,41 +21,45 @@ class VehicleController(CompatibleNode):
     """
 
     def __init__(self):
-        super(VehicleController, self).__init__('vehicle_controller')
-        self.loginfo('VehicleController node started')
-        self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
+        super(VehicleController, self).__init__("vehicle_controller")
+        self.loginfo("VehicleController node started")
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
+        self.role_name = self.get_param("role_name", "ego_vehicle")
 
         self.__curr_behavior = None  # only unstuck behavior is relevant here
 
         # Publisher for Carla Vehicle Control Commands
         self.control_publisher: Publisher = self.new_publisher(
             CarlaEgoVehicleControl,
-            f'/carla/{self.role_name}/vehicle_control_cmd',
-            qos_profile=10)
+            f"/carla/{self.role_name}/vehicle_control_cmd",
+            qos_profile=10,
+        )
 
         # Publisher for Status TODO: Maybe unneccessary
         self.status_pub: Publisher = self.new_publisher(
             Bool,
             f"/carla/{self.role_name}/status",
             qos_profile=QoSProfile(
-                depth=1,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL))
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         # Publisher for which steering-controller is mainly used
         # 1 = PurePursuit and 2 = Stanley
         self.controller_pub: Publisher = self.new_publisher(
             Float32,
             f"/paf/{self.role_name}/controller",
-            qos_profile=QoSProfile(depth=10,
-                                   durability=DurabilityPolicy.TRANSIENT_LOCAL)
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         self.emergency_pub: Publisher = self.new_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
-            qos_profile=QoSProfile(depth=10,
-                                   durability=DurabilityPolicy.TRANSIENT_LOCAL)
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         # Subscribers
@@ -63,51 +67,53 @@ class VehicleController(CompatibleNode):
             String,
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
             self.__set_emergency,
-            qos_profile=QoSProfile(depth=10,
-                                   durability=DurabilityPolicy.TRANSIENT_LOCAL)
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.throttle_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/throttle",
             self.__set_throttle,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.brake_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/brake",
-            self.__set_brake,
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/brake", self.__set_brake, qos_profile=1
+        )
 
         self.reverse_sub: Subscriber = self.new_subscription(
-            Bool,
-            f"/paf/{self.role_name}/reverse",
-            self.__set_reverse,
-            qos_profile=1)
+            Bool, f"/paf/{self.role_name}/reverse", self.__set_reverse, qos_profile=1
+        )
 
         self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
             self.__set_pure_pursuit_steer,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.stanley_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/stanley_steer",
             self.__set_stanley_steer,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.__reverse: bool = False
         self.__emergency: bool = False
@@ -123,7 +129,7 @@ class VehicleController(CompatibleNode):
         :return:
         """
         self.status_pub.publish(True)
-        self.loginfo('VehicleController node running')
+        self.loginfo("VehicleController node running")
 
         def loop(timer_event=None) -> None:
             """
@@ -143,8 +149,10 @@ class VehicleController(CompatibleNode):
                 steer = self._s_steer
             else:
                 # while doing the unstuck routine we don't want to steer
-                if self.__curr_behavior == "us_unstuck" or \
-                   self.__curr_behavior == "us_stop":
+                if (
+                    self.__curr_behavior == "us_unstuck"
+                    or self.__curr_behavior == "us_stop"
+                ):
                     steer = 0
                 else:
                     steer = self._p_steer
@@ -157,8 +165,7 @@ class VehicleController(CompatibleNode):
             message.throttle = self.__throttle
             message.brake = self.__brake
             message.steer = steer
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
             self.control_publisher.publish(message)
 
         self.new_timer(self.control_loop_rate, loop)
@@ -204,8 +211,7 @@ class VehicleController(CompatibleNode):
             message.reverse = True
             message.hand_brake = True
             message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
         else:
             self.__emergency = False
             message.throttle = 0
@@ -214,8 +220,7 @@ class VehicleController(CompatibleNode):
             message.reverse = False
             message.hand_brake = False
             message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(),
-                                                         from_sec=True)
+            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
         self.control_publisher.publish(message)
 
     def __get_velocity(self, data: CarlaSpeedometer) -> None:
@@ -230,11 +235,12 @@ class VehicleController(CompatibleNode):
             return
         if data.speed < 0.1:  # vehicle has come to a stop
             self.__emergency_brake(False)
-            self.loginfo("Emergency breaking disengaged "
-                         "(Emergency breaking has been executed successfully)")
+            self.loginfo(
+                "Emergency breaking disengaged "
+                "(Emergency breaking has been executed successfully)"
+            )
             for _ in range(7):  # publish 7 times just to be safe
-                self.emergency_pub.publish(
-                    Bool(False))
+                self.emergency_pub.publish(Bool(False))
 
     def __set_throttle(self, data):
         self.__throttle = data.data
@@ -246,12 +252,12 @@ class VehicleController(CompatibleNode):
         self.__reverse = data.data
 
     def __set_pure_pursuit_steer(self, data: Float32):
-        r = (math.pi / 2)  # convert from RAD to [-1;1]
-        self._p_steer = (data.data / r)
+        r = math.pi / 2  # convert from RAD to [-1;1]
+        self._p_steer = data.data / r
 
     def __set_stanley_steer(self, data: Float32):
-        r = (math.pi / 2)  # convert from RAD to [-1;1]
-        self._s_steer = (data.data / r)
+        r = math.pi / 2  # convert from RAD to [-1;1]
+        self._s_steer = data.data / r
 
 
 def main(args=None):
@@ -259,7 +265,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init('vehicle_controller', args=args)
+    roscomp.init("vehicle_controller", args=args)
 
     try:
         node = VehicleController()
@@ -270,5 +276,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

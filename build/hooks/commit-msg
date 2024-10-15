@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# get the commit message
-commit_msg=$(<"${1:-}")
-
-b5 comlipy "$commit_msg"

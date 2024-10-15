@@ -26,45 +26,44 @@ L_VEHICLE = 2.85
 
 class PurePursuitController(CompatibleNode):
     def __init__(self):
-        super(PurePursuitController, self).__init__('pure_pursuit_controller')
-        self.loginfo('PurePursuitController node started')
+        super(PurePursuitController, self).__init__("pure_pursuit_controller")
+        self.loginfo("PurePursuitController node started")
 
-        self.control_loop_rate = self.get_param('control_loop_rate', 0.05)
-        self.role_name = self.get_param('role_name', 'ego_vehicle')
+        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
+        self.role_name = self.get_param("role_name", "ego_vehicle")
 
         self.position_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_path,
-            qos_profile=1)
+            Path, f"/paf/{self.role_name}/trajectory", self.__set_path, qos_profile=1
+        )
 
         self.path_sub: Subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.__set_position,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__set_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/pure_pursuit_steer",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/pure_pursuit_steer", qos_profile=1
+        )
 
         self.debug_msg_pub: Publisher = self.new_publisher(
-            Debug,
-            f"/paf/{self.role_name}/pure_p_debug",
-            qos_profile=1)
+            Debug, f"/paf/{self.role_name}/pure_p_debug", qos_profile=1
+        )
 
         self.__position: tuple[float, float] = None  # x, y
         self.__path: Path = None
@@ -77,7 +76,7 @@ class PurePursuitController(CompatibleNode):
         Starts the main loop of the node
         :return:
         """
-        self.loginfo('PurePursuitController node running')
+        self.loginfo("PurePursuitController node running")
 
         def loop(timer_event=None):
             """
@@ -86,26 +85,34 @@ class PurePursuitController(CompatibleNode):
             :return:
             """
             if self.__path is None:
-                self.logdebug("PurePursuitController hasn't received a path "
-                              "yet and can therefore not publish steering")
+                self.logdebug(
+                    "PurePursuitController hasn't received a path "
+                    "yet and can therefore not publish steering"
+                )
                 return
 
             if self.__position is None:
-                self.logdebug("PurePursuitController hasn't received the "
-                              "position of the vehicle yet "
-                              "and can therefore not publish steering")
+                self.logdebug(
+                    "PurePursuitController hasn't received the "
+                    "position of the vehicle yet "
+                    "and can therefore not publish steering"
+                )
                 return
 
             if self.__heading is None:
-                self.logdebug("PurePursuitController hasn't received the "
-                              "heading of the vehicle yet and "
-                              "can therefore not publish steering")
+                self.logdebug(
+                    "PurePursuitController hasn't received the "
+                    "heading of the vehicle yet and "
+                    "can therefore not publish steering"
+                )
                 return
 
             if self.__velocity is None:
-                self.logdebug("PurePursuitController hasn't received the "
-                              "velocity of the vehicle yet "
-                              "and can therefore not publish steering")
+                self.logdebug(
+                    "PurePursuitController hasn't received the "
+                    "velocity of the vehicle yet "
+                    "and can therefore not publish steering"
+                )
                 return
 
             self.pure_pursuit_steer_pub.publish(self.__calculate_steer())
@@ -119,16 +126,17 @@ class PurePursuitController(CompatibleNode):
         :return:
         """
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
-        look_ahead_dist = np.clip(K_LAD * self.__velocity,
-                                  MIN_LA_DISTANCE, MAX_LA_DISTANCE)
+        look_ahead_dist = np.clip(
+            K_LAD * self.__velocity, MIN_LA_DISTANCE, MAX_LA_DISTANCE
+        )
         # Get the target position on the trajectory in look_ahead distance
         self.__tp_idx = self.__get_target_point_index(look_ahead_dist)
         target_wp: PoseStamped = self.__path.poses[self.__tp_idx]
         # Get the vector from the current position to the target position
-        target_v_x, target_v_y = points_to_vector((self.__position[0],
-                                                   self.__position[1]),
-                                                  (target_wp.pose.position.x,
-                                                   target_wp.pose.position.y))
+        target_v_x, target_v_y = points_to_vector(
+            (self.__position[0], self.__position[1]),
+            (target_wp.pose.position.x, target_wp.pose.position.y),
+        )
         # Get the target heading from that vector
         target_vector_heading = vector_angle(target_v_x, target_v_y)
         # Get the error between current heading and target heading
@@ -181,7 +189,7 @@ class PurePursuitController(CompatibleNode):
         y_current = self.__position[1]
         x_target = pos.x
         y_target = pos.y
-        d = (x_target - x_current)**2 + (y_target - y_current)**2
+        d = (x_target - x_current) ** 2 + (y_target - y_current) ** 2
         return math.sqrt(d)
 
     def __set_position(self, data: PoseStamped, min_diff=0.001):
@@ -206,9 +214,11 @@ class PurePursuitController(CompatibleNode):
             # if new position is to close to current, do not accept it
             # too close = closer than min_diff = 0.001 meters
             # for debugging purposes:
-            self.logdebug("New position disregarded, "
-                          f"as dist ({round(dist, 3)}) to current pos "
-                          f"< min_diff ({round(min_diff, 3)})")
+            self.logdebug(
+                "New position disregarded, "
+                f"as dist ({round(dist, 3)}) to current pos "
+                f"< min_diff ({round(min_diff, 3)})"
+            )
             return
         new_x = data.pose.position.x
         new_y = data.pose.position.y
@@ -230,10 +240,10 @@ class PurePursuitController(CompatibleNode):
 
 def main(args=None):
     """
-      main function starts the pure pursuit controller node
-      :param args:
+    main function starts the pure pursuit controller node
+    :param args:
     """
-    roscomp.init('pure_pursuit_controller', args=args)
+    roscomp.init("pure_pursuit_controller", args=args)
 
     try:
         node = PurePursuitController()
@@ -244,5 +254,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

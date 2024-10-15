@@ -1,0 +1,15 @@
+include:
+  - docker-compose.linter.yaml
+  - roscore_service.yaml
+
+services:
+  agent:
+    extends:
+      file: agent_service.yaml
+      service: agent
+    command: bash -c "sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && sudo chmod -R a+w ../ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"
+    environment:
+      - CARLA_SIM_HOST=<carla_server_ip_address>
+
+networks:
+  carla:

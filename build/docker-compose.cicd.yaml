@@ -1,0 +1,32 @@
+# compose file for the CI/CD pipeline
+include:
+  # linter runs in a seperate workflow
+  - roscore_service.yaml
+  - docker-compose.carla-simulator.yaml
+
+services:
+  agent:
+    image: ghcr.io/una-auxme/paf:${AGENT_VERSION:-latest}
+    init: true
+    tty: true
+    logging:
+      driver: "local"
+    depends_on:
+      - carla-simulator
+      - roscore
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_MASTER_URI=http://roscore:11311
+      - CARLA_SIM_HOST=carla-simulator
+      - ROS_HOSTNAME=agent
+      - CHECKPOINT_ENDPOINT=/tmp/simulation_results.json
+    networks:
+      - carla
+      - ros

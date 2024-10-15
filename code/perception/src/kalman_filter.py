@@ -16,9 +16,9 @@ from xml.etree import ElementTree as eTree
 
 GPS_RUNNING_AVG_ARGS = 10
 
-'''
+"""
 For more information see the documentation in:
-../../doc/06_perception/08_kalman_filter.md
+../../doc/perception/kalman_filter.md
 
 This class implements a Kalman filter for a 3D object tracked in 2D space.
 It implements the data of the IMU and the GPS Sensors.
@@ -67,7 +67,7 @@ The process covariance matrix Q is defined as:
     self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
 The measurement covariance matrix R is defined as:
     self.R = np.diag([0.0007, 0.0007, 0, 0, 0, 0])
-'''
+"""
 
 
 class KalmanFilter(CompatibleNode):
@@ -75,16 +75,17 @@ class KalmanFilter(CompatibleNode):
     This class implements a Kalman filter for the
     Heading and Position of the car.
     For more information see the documentation in:
-    ../../doc/06_perception/08_kalman_filter.md
+    ../../doc/perception/kalman_filter.md
     """
+
     def __init__(self):
         """
         Constructor / Setup
         :return:
         """
-        super(KalmanFilter, self).__init__('kalman_filter_node')
+        super(KalmanFilter, self).__init__("kalman_filter_node")
 
-        self.loginfo('KalmanFilter node started')
+        self.loginfo("KalmanFilter node started")
         # basic info
         self.transformer = None  # for coordinate transformation
         self.role_name = self.get_param("role_name", "hero")
@@ -97,7 +98,7 @@ class KalmanFilter(CompatibleNode):
         self.initialized = False
 
         # state vector X
-        '''
+        """
         [
             [initial_x],
             [initial_y],
@@ -106,7 +107,7 @@ class KalmanFilter(CompatibleNode):
             [yaw],
             [omega_z],
         ]
-        '''
+        """
         self.x_est = np.zeros((6, 1))  # estimated state vector
 
         self.P_est = np.zeros((6, 6))  # estiamted state covariance matrix
@@ -115,7 +116,7 @@ class KalmanFilter(CompatibleNode):
         self.P_pred = np.zeros((6, 6))  # Predicted state covariance matrix
 
         # Define state transition matrix
-        '''
+        """
         # [x                ...             ]
         # [y                ...             ]
         # [v_x              ...             ]
@@ -128,27 +129,35 @@ class KalmanFilter(CompatibleNode):
         v_y = v_y
         yaw = yaw + omega_z * dt
         omega_z = omega_z
-        '''
-        self.A = np.array([[1, 0, self.dt, 0, 0, 0],
-                           [0, 1, 0, self.dt, 0, 0],
-                           [0, 0, 1, 0, 0, 0],
-                           [0, 0, 0, 1, 0, 0],
-                           [0, 0, 0, 0, 1, self.dt],
-                           [0, 0, 0, 0, 0, 1]])
+        """
+        self.A = np.array(
+            [
+                [1, 0, self.dt, 0, 0, 0],
+                [0, 1, 0, self.dt, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, self.dt],
+                [0, 0, 0, 0, 0, 1],
+            ]
+        )
 
         # Define measurement matrix
-        '''
+        """
         1. GPS: x, y
         2. Velocity: v_x, v_y
         3. IMU: yaw, omega_z
         -> 6 measurements for a state vector of 6
-        '''
-        self.H = np.array([[1, 0, 0, 0, 0, 0],   # x
-                           [0, 1, 0, 0, 0, 0],   # y
-                           [0, 0, 1, 0, 0, 0],   # v_x
-                           [0, 0, 0, 1, 0, 0],   # v_y
-                           [0, 0, 0, 0, 1, 0],   # yaw
-                           [0, 0, 0, 0, 0, 1]])  # omega_z
+        """
+        self.H = np.array(
+            [
+                [1, 0, 0, 0, 0, 0],  # x
+                [0, 1, 0, 0, 0, 0],  # y
+                [0, 0, 1, 0, 0, 0],  # v_x
+                [0, 0, 0, 1, 0, 0],  # v_y
+                [0, 0, 0, 0, 1, 0],  # yaw
+                [0, 0, 0, 0, 0, 1],
+            ]
+        )  # omega_z
 
         # Define Measurement Variables
         self.z_gps = np.zeros((2, 1))  # GPS measurements (x, y)
@@ -167,25 +176,28 @@ class KalmanFilter(CompatibleNode):
 
         self.latitude = 0  # latitude of the current position
 
-    # Subscriber
+        # Subscriber
         # Initialize the subscriber for the OpenDrive Map
         self.map_sub = self.new_subscription(
             String,
             "/carla/" + self.role_name + "/OpenDRIVE",
             self.get_geoRef,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Initialize the subscriber for the IMU Data
         self.imu_subscriber = self.new_subscription(
             Imu,
             "/carla/" + self.role_name + "/IMU",
             self.update_imu_data,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Initialize the subscriber for the GPS Data
         self.gps_subscriber = self.new_subscription(
             NavSatFix,
             "/carla/" + self.role_name + "/GPS",
             self.update_gps_data,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Initialize the subscriber for the unfiltered_pos in XYZ
         self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
         self.avg_gps_counter: int = 0
@@ -193,25 +205,25 @@ class KalmanFilter(CompatibleNode):
             PoseStamped,
             "/paf/" + self.role_name + "/unfiltered_pos",
             self.update_unfiltered_pos,
-            qos_profile=1)
+            qos_profile=1,
+        )
         # Initialize the subscriber for the velocity
         self.velocity_subscriber = self.new_subscription(
             CarlaSpeedometer,
             "/carla/" + self.role_name + "/Speed",
             self.update_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
-    # Publisher
+        # Publisher
         # Initialize the publisher for the kalman-position
         self.kalman_position_publisher = self.new_publisher(
-            PoseStamped,
-            "/paf/" + self.role_name + "/kalman_pos",
-            qos_profile=1)
+            PoseStamped, "/paf/" + self.role_name + "/kalman_pos", qos_profile=1
+        )
         # Initialize the publisher for the kalman-heading
         self.kalman_heading_publisher = self.new_publisher(
-            Float32,
-            "/paf/" + self.role_name + "/kalman_heading",
-            qos_profile=1)
+            Float32, "/paf/" + self.role_name + "/kalman_heading", qos_profile=1
+        )
 
     def run(self):
         """
@@ -223,16 +235,20 @@ class KalmanFilter(CompatibleNode):
             rospy.sleep(1)
         rospy.sleep(1)
 
-        self.loginfo('KalmanFilter started its loop!')
+        self.loginfo("KalmanFilter started its loop!")
 
         # initialize the state vector x_est and the covariance matrix P_est
         # initial state vector x_0
-        self.x_0 = np.array([[self.z_gps[0, 0]],
-                             [self.z_gps[1, 0]],
-                             [self.z_v[0, 0]],
-                             [self.z_v[1, 0]],
-                             [self.z_imu[0, 0]],
-                             [self.z_imu[1, 0]]])
+        self.x_0 = np.array(
+            [
+                [self.z_gps[0, 0]],
+                [self.z_gps[1, 0]],
+                [self.z_v[0, 0]],
+                [self.z_v[1, 0]],
+                [self.z_imu[0, 0]],
+                [self.z_imu[1, 0]],
+            ]
+        )
         self.x_est = np.copy(self.x_0)  # estimated initial state vector
         self.P_est = np.eye(6) * 1  # estiamted initialstatecovariancematrix
 
@@ -331,10 +347,12 @@ class KalmanFilter(CompatibleNode):
         orientation_w = imu_data.orientation.w
 
         # Calculate the heading based on the orientation given by the IMU
-        data_orientation_q = [orientation_x,
-                              orientation_y,
-                              orientation_z,
-                              orientation_w]
+        data_orientation_q = [
+            orientation_x,
+            orientation_y,
+            orientation_z,
+            orientation_w,
+        ]
 
         heading = quat_to_heading(data_orientation_q)
 
@@ -417,8 +435,8 @@ class KalmanFilter(CompatibleNode):
         indexLatEnd = geoRefText.find(" ", indexLat)
         indexLonEnd = geoRefText.find(" ", indexLon)
 
-        latValue = float(geoRefText[indexLat + len(latString):indexLatEnd])
-        lonValue = float(geoRefText[indexLon + len(lonString):indexLonEnd])
+        latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
+        lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
 
         CoordinateTransformer.la_ref = latValue
         CoordinateTransformer.ln_ref = lonValue
@@ -431,7 +449,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init('kalman_filter_node', args=args)
+    roscomp.init("kalman_filter_node", args=args)
 
     try:
         node = KalmanFilter()
@@ -442,5 +460,5 @@ def main(args=None):
         roscomp.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

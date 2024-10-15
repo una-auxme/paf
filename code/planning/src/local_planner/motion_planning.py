@@ -2,6 +2,8 @@
 # import tf.transformations
 import ros_compatibility as roscomp
 import rospy
+import sys
+import os
 
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
@@ -14,11 +16,11 @@ from scipy.spatial.transform import Rotation
 import math
 
 from perception.msg import Waypoint, LaneChange
-import planning  # noqa: F401
-from behavior_agent.behaviours import behavior_speed as bs
 
-from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS, \
-    TARGET_DISTANCE_TO_STOP
+from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP
+
+sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
+from behaviours import behavior_speed as bs  # type: ignore # noqa: E402
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -35,7 +37,7 @@ class MotionPlanning(CompatibleNode):
     """
 
     def __init__(self):
-        super(MotionPlanning, self).__init__('MotionPlanning')
+        super(MotionPlanning, self).__init__("MotionPlanning")
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
 
@@ -65,101 +67,107 @@ class MotionPlanning(CompatibleNode):
         self.init_overtake_pos = None
         # Subscriber
         self.test_sub = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/spawn_car",
-            spawn_car,
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/spawn_car", spawn_car, qos_profile=1
+        )
         self.speed_limit_sub = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/speed_limit",
             self.__set_speed_limit,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_current_velocity,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.head_sub = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.trajectory_sub = self.new_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory_global",
             self.__set_trajectory,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.current_pos_sub = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.__set_current_pos,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.curr_behavior_sub: Subscriber = self.new_subscription(
             String,
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/unchecked_emergency",
             self.__check_emergency,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.acc_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/acc_velocity",
             self.__set_acc_speed,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.stopline_sub: Subscriber = self.new_subscription(
             Waypoint,
             f"/paf/{self.role_name}/waypoint_distance",
             self.__set_stopline,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.change_point_sub: Subscriber = self.new_subscription(
             LaneChange,
             f"/paf/{self.role_name}/lane_change_distance",
             self.__set_change_point,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.coll_point_sub: Subscriber = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/collision",
             self.__set_collision_point,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         self.traffic_y_sub: Subscriber = self.new_subscription(
             Int16,
             f"/paf/{self.role_name}/Center/traffic_light_y_distance",
             self.__set_traffic_y_distance,
-            qos_profile=1)
+            qos_profile=1,
+        )
         self.unstuck_distance_sub: Subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/unstuck_distance",
             self.__set_unstuck_distance,
-            qos_profile=1)
+            qos_profile=1,
+        )
 
         # Publisher
 
         self.traj_pub: Publisher = self.new_publisher(
-            msg_type=Path,
-            topic=f"/paf/{self.role_name}/trajectory",
-            qos_profile=1)
+            msg_type=Path, topic=f"/paf/{self.role_name}/trajectory", qos_profile=1
+        )
         self.velocity_pub: Publisher = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/target_velocity",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/target_velocity", qos_profile=1
+        )
 
         self.wp_subs = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/current_wp",
-            self.__set_wp,
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/current_wp", self.__set_wp, qos_profile=1
+        )
         self.overtake_success_pub = self.new_publisher(
-            Float32,
-            f"/paf/{self.role_name}/overtake_success",
-            qos_profile=1)
+            Float32, f"/paf/{self.role_name}/overtake_success", qos_profile=1
+        )
 
         self.logdebug("MotionPlanning started")
         self.counter = 0
@@ -209,9 +217,9 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (PoseStamped): current position
         """
-        self.current_pos = np.array([data.pose.position.x,
-                                    data.pose.position.y,
-                                    data.pose.position.z])
+        self.current_pos = np.array(
+            [data.pose.position.x, data.pose.position.y, data.pose.position.z]
+        )
 
     def __set_traffic_y_distance(self, data):
         if data is not None:
@@ -237,20 +245,25 @@ class MotionPlanning(CompatibleNode):
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
         if unstuck:
-            selection = pose_list[int(currentwp)-2:int(currentwp) +
-                                  int(distance)+2 + NUM_WAYPOINTS]
+            selection = pose_list[
+                int(currentwp) - 2 : int(currentwp) + int(distance) + 2 + NUM_WAYPOINTS
+            ]
         else:
-            selection = pose_list[int(currentwp) + int(distance/2):
-                                  int(currentwp) +
-                                  int(distance) + NUM_WAYPOINTS]
+            selection = pose_list[
+                int(currentwp)
+                + int(distance / 2) : int(currentwp)
+                + int(distance)
+                + NUM_WAYPOINTS
+            ]
         waypoints = self.convert_pose_to_array(selection)
 
         if unstuck is True:
             offset = np.array([unstuck_x_offset, 0, 0])
         else:
             offset = np.array([normal_x_offset, 0, 0])
-        rotation_adjusted = Rotation.from_euler('z', self.current_heading +
-                                                math.radians(90))
+        rotation_adjusted = Rotation.from_euler(
+            "z", self.current_heading + math.radians(90)
+        )
         offset_front = rotation_adjusted.apply(offset)
         offset_front = offset_front[:2]
         waypoints_off = waypoints + offset_front
@@ -261,8 +274,7 @@ class MotionPlanning(CompatibleNode):
         result = []
         for i in range(len(result_x)):
             position = Point(result_x[i], result_y[i], 0)
-            orientation = Quaternion(x=0, y=0,
-                                     z=0, w=0)
+            orientation = Quaternion(x=0, y=0, z=0, w=0)
             pose = Pose(position, orientation)
             pos = PoseStamped()
             pos.header.frame_id = "global"
@@ -272,12 +284,17 @@ class MotionPlanning(CompatibleNode):
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
         if unstuck:
-            path.poses = pose_list[:int(currentwp)-2] + \
-                result + pose_list[int(currentwp) +
-                                   int(distance) + 2 + NUM_WAYPOINTS:]
+            path.poses = (
+                pose_list[: int(currentwp) - 2]
+                + result
+                + pose_list[int(currentwp) + int(distance) + 2 + NUM_WAYPOINTS :]
+            )
         else:
-            path.poses = pose_list[:int(currentwp) + int(distance/2)] + \
-                result + pose_list[int(currentwp + distance + NUM_WAYPOINTS):]
+            path.poses = (
+                pose_list[: int(currentwp) + int(distance / 2)]
+                + result
+                + pose_list[int(currentwp + distance + NUM_WAYPOINTS) :]
+            )
 
         self.trajectory = path
 
@@ -389,8 +406,9 @@ class MotionPlanning(CompatibleNode):
         """
         result_array = np.empty((len(poses), 2))
         for pose in range(len(poses)):
-            result_array[pose] = np.array([poses[pose].pose.position.x,
-                                           poses[pose].pose.position.y])
+            result_array[pose] = np.array(
+                [poses[pose].pose.position.x, poses[pose].pose.position.y]
+            )
         return result_array
 
     def __check_emergency(self, data: Bool):
@@ -435,8 +453,7 @@ class MotionPlanning(CompatibleNode):
 
     def __set_change_point(self, data: LaneChange):
         if data is not None:
-            self.__change_point = \
-                (data.distance, data.isLaneChange, data.roadOption)
+            self.__change_point = (data.distance, data.isLaneChange, data.roadOption)
 
     def __set_collision_point(self, data: Float32MultiArray):
         if data.data is not None:
@@ -475,10 +492,10 @@ class MotionPlanning(CompatibleNode):
                 self.logfatal("Unstuck distance not set")
                 return speed
 
-            if self.init_overtake_pos is not None \
-               and self.current_pos is not None:
+            if self.init_overtake_pos is not None and self.current_pos is not None:
                 distance = np.linalg.norm(
-                    self.init_overtake_pos[:2] - self.current_pos[:2])
+                    self.init_overtake_pos[:2] - self.current_pos[:2]
+                )
                 # self.logfatal(f"Unstuck Distance in mp: {distance}")
                 # clear distance to last unstuck -> avoid spamming overtake
                 if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
@@ -490,8 +507,7 @@ class MotionPlanning(CompatibleNode):
                 # create overtake trajectory starting 6 meteres before
                 # the obstacle
                 # 6 worked well in tests, but can be adjusted
-                self.overtake_fallback(self.unstuck_distance, pose_list,
-                                       unstuck=True)
+                self.overtake_fallback(self.unstuck_distance, pose_list, unstuck=True)
                 self.logfatal("Overtake Trajectory while unstuck!")
                 self.unstuck_overtake_flag = True
                 self.init_overtake_pos = self.current_pos[:2]
@@ -550,7 +566,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_enter_slow.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_leave.name:
-            speed = convert_to_ms(30.)
+            speed = convert_to_ms(30.0)
         return speed
 
     def __get_speed_cruise(self) -> float:
@@ -561,8 +577,7 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_stopline()
 
         # calculate speed needed for stopping
-        v_stop = max(convert_to_ms(10.),
-                     convert_to_ms(stopline / 0.8))
+        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
         if stopline < target_distance:
@@ -572,8 +587,7 @@ class MotionPlanning(CompatibleNode):
     def __calc_speed_to_stop_lanechange(self) -> float:
         stopline = self.__calc_virtual_change_point()
 
-        v_stop = max(convert_to_ms(10.),
-                     convert_to_ms(stopline / 0.8))
+        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
         if v_stop > bs.lc_app_init.speed:
             v_stop = bs.lc_app_init.speed
         if stopline < TARGET_DISTANCE_TO_STOP:
@@ -582,8 +596,7 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
-        v_stop = max(convert_to_ms(10.),
-                     convert_to_ms(stopline / 0.8))
+        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
         if stopline < TARGET_DISTANCE_TO_STOP:
             v_stop = 0.0
 
@@ -608,8 +621,7 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_overtake(self) -> float:
-        if (self.__collision_point is not None) and \
-                self.__collision_point != np.inf:
+        if (self.__collision_point is not None) and self.__collision_point != np.inf:
             return self.__collision_point
         else:
             return 0.0
@@ -621,15 +633,17 @@ class MotionPlanning(CompatibleNode):
         """
 
         def loop(timer_event=None):
-            if (self.__curr_behavior is not None and
-                    self.__acc_speed is not None and
-                    self.__corners is not None):
+            if (
+                self.__curr_behavior is not None
+                and self.__acc_speed is not None
+                and self.__corners is not None
+            ):
                 self.trajectory.header.stamp = rospy.Time.now()
                 self.traj_pub.publish(self.trajectory)
-                self.update_target_speed(self.__acc_speed,
-                                         self.__curr_behavior)
+                self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
+
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
 
@@ -639,7 +653,7 @@ if __name__ == "__main__":
     main function starts the MotionPlanning node
     :param args:
     """
-    roscomp.init('MotionPlanning')
+    roscomp.init("MotionPlanning")
     try:
         node = MotionPlanning()
         node.run()

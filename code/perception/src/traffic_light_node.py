@@ -10,8 +10,9 @@ from sensor_msgs.msg import Image as ImageMsg
 from perception.msg import TrafficLightState
 from std_msgs.msg import Int16
 from cv_bridge import CvBridge
-from traffic_light_detection.src.traffic_light_detection.traffic_light_inference \
-    import TrafficLightInference  # noqa: E501
+from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (  # noqa: E501
+    TrafficLightInference,
+)
 import cv2
 import numpy as np
 
@@ -37,20 +38,19 @@ class TrafficLightNode(CompatibleNode):
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_camera_image,
             topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
-            qos_profile=1
+            qos_profile=1,
         )
 
     def setup_traffic_light_publishers(self):
         self.traffic_light_publisher = self.new_publisher(
             msg_type=TrafficLightState,
             topic=f"/paf/{self.role_name}/{self.side}/traffic_light_state",
-            qos_profile=1
+            qos_profile=1,
         )
         self.traffic_light_distance_publisher = self.new_publisher(
             msg_type=Int16,
-            topic=f"/paf/{self.role_name}/{self.side}" +
-            "/traffic_light_y_distance",
-            qos_profile=1
+            topic=f"/paf/{self.role_name}/{self.side}" + "/traffic_light_y_distance",
+            qos_profile=1,
         )
 
     def auto_invalidate_state(self):
@@ -74,8 +74,12 @@ class TrafficLightNode(CompatibleNode):
         rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
         result, data = self.classifier(cv2_image)
 
-        if data[0][0] > 1e-15 and data[0][3] > 1e-15 or \
-           data[0][0] > 1e-10 or data[0][3] > 1e-10:
+        if (
+            data[0][0] > 1e-15
+            and data[0][3] > 1e-15
+            or data[0][0] > 1e-10
+            or data[0][3] > 1e-10
+        ):
             return  # too uncertain, may not be a traffic light
 
         if not is_front(rgb_image):
@@ -123,8 +127,7 @@ def is_front(image):
     mask = get_light_mask(image)
 
     # Find contours in the thresholded image, use only the largest one
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-                                   cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
     contour = contours[0] if contours else None
 

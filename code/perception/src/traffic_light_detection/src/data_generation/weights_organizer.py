@@ -18,9 +18,11 @@ class WeightsOrganizer:
         try:
             os.makedirs(self.cfg.WEIGHTS_PATH, exist_ok=True)
         except FileExistsError:
-            sys.exit(f"The directory {self.cfg.WEIGHTS_PATH} already exists."
-                     f"Cannot create weights-directory for training."
-                     f"Try again in at least one minute.")
+            sys.exit(
+                f"The directory {self.cfg.WEIGHTS_PATH} already exists."
+                f"Cannot create weights-directory for training."
+                f"Try again in at least one minute."
+            )
 
     def save(self, accuracy, val_accuracy):
         """
@@ -28,14 +30,18 @@ class WeightsOrganizer:
         @param accuracy: Accuracy of the model in the last epoch
         @param val_accuracy: Accuracy of the model on the validation-subset
         """
-        filename = self.cfg.WEIGHTS_PATH + f"model_acc_{round(accuracy, 2)}" \
-                                         + f"_val_{round(val_accuracy, 2)}.pt"
+        filename = (
+            self.cfg.WEIGHTS_PATH
+            + f"model_acc_{round(accuracy, 2)}"
+            + f"_val_{round(val_accuracy, 2)}.pt"
+        )
         if len(self.best) == 0:
             torch.save(self.model.state_dict(), filename)
             self.best.append((accuracy, val_accuracy, filename))
-        elif val_accuracy > self.best[len(self.best) - 1][1] or \
-            (val_accuracy >= self.best[len(self.best) - 1][1] and
-             accuracy > self.best[len(self.best) - 1][0]):
+        elif val_accuracy > self.best[len(self.best) - 1][1] or (
+            val_accuracy >= self.best[len(self.best) - 1][1]
+            and accuracy > self.best[len(self.best) - 1][0]
+        ):
 
             if len(self.best) == 1:
                 delete = self.best[0][2]

@@ -8,6 +8,10 @@
         "njpwerner.autodocstring",
         "ms-azuretools.vscode-docker",
         "ms-python.flake8",
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "richardkotze.git-mob",
+        "ms-vscode-remote.remote-containers",
+        "valentjn.vscode-ltex",
+        "ms-python.black-formatter"
     ]
 }

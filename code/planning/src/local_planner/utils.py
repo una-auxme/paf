@@ -3,6 +3,7 @@ import numpy as np
 import math
 import carla
 import os
+
 # import rospy
 
 
@@ -56,17 +57,19 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
 
     scale = math.cos(lat_ref * math.pi / 180.0)
     mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
-    my = scale * EARTH_RADIUS_EQUA * math.log(math.tan((90.0 + lat_ref) *
-                                                       math.pi / 360.0))
+    my = (
+        scale
+        * EARTH_RADIUS_EQUA
+        * math.log(math.tan((90.0 + lat_ref) * math.pi / 360.0))
+    )
     mx += x
     my -= y
 
     lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
-    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) /\
-        math.pi - 90.0
+    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
     z = 703
 
-    return {'lat': lat, 'lon': lon, 'z': z}
+    return {"lat": lat, "lon": lon, "z": z}
 
 
 def calculate_rule_of_thumb(emergency, speed):
@@ -81,7 +84,7 @@ def calculate_rule_of_thumb(emergency, speed):
         float: distance calculated with rule of thumb
     """
     reaction_distance = speed
-    braking_distance = (speed * 0.36)**2
+    braking_distance = (speed * 0.36) ** 2
     if emergency:
         # Emergency brake is really effective in Carla
         return reaction_distance + braking_distance / 2
@@ -89,8 +92,9 @@ def calculate_rule_of_thumb(emergency, speed):
         return reaction_distance + braking_distance
 
 
-def approx_obstacle_pos(distance: float, heading: float,
-                        ego_pos: np.array, speed: float):
+def approx_obstacle_pos(
+    distance: float, heading: float, ego_pos: np.array, speed: float
+):
     """calculate the position of the obstacle in the global coordinate system
         based on ego position, heading and distance
 
@@ -103,7 +107,7 @@ def approx_obstacle_pos(distance: float, heading: float,
     Returns:
         np.array: approximated position of the obstacle
     """
-    rotation_matrix = Rotation.from_euler('z', heading)
+    rotation_matrix = Rotation.from_euler("z", heading)
 
     # Create distance vector with 0 rotation
     relative_position_local = np.array([distance, 0, 0])
@@ -120,18 +124,18 @@ def approx_obstacle_pos(distance: float, heading: float,
 
     # calculate the front left corner of the vehicle
     offset = np.array([1, 0, 0])
-    rotation_adjusted = Rotation.from_euler('z', heading + math.radians(90))
+    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(90))
     offset_front = rotation_adjusted.apply(offset)
 
     # calculate back right corner of the vehicle
-    rotation_adjusted = Rotation.from_euler('z', heading + math.radians(270))
+    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(270))
     offset_back = rotation_adjusted.apply(offset)
 
-    vehicle_position_global_end = vehicle_position_global_start + \
-        length_vector + offset_back
+    vehicle_position_global_end = (
+        vehicle_position_global_start + length_vector + offset_back
+    )
 
-    return vehicle_position_global_start + offset_front, \
-        vehicle_position_global_end
+    return vehicle_position_global_start + offset_front, vehicle_position_global_end
 
 
 def convert_to_ms(speed: float):
@@ -152,8 +156,8 @@ def spawn_car(distance):
     Args:
         distance (float): distance
     """
-    CARLA_HOST = os.environ.get('CARLA_HOST', 'paf23-carla-simulator-1')
-    CARLA_PORT = int(os.environ.get('CARLA_PORT', '2000'))
+    CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
+    CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
 
     client = carla.Client(CARLA_HOST, CARLA_PORT)
 
@@ -165,13 +169,14 @@ def spawn_car(distance):
     # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
     bp = blueprint_library.filter("model3")[0]
     for actor in world.get_actors():
-        if actor.attributes.get('role_name') == "hero":
+        if actor.attributes.get("role_name") == "hero":
             ego_vehicle = actor
             break
 
-    spawnPoint = carla.Transform(ego_vehicle.get_location() +
-                                 carla.Location(y=distance.data),
-                                 ego_vehicle.get_transform().rotation)
+    spawnPoint = carla.Transform(
+        ego_vehicle.get_location() + carla.Location(y=distance.data),
+        ego_vehicle.get_transform().rotation,
+    )
 
     vehicle = world.spawn_actor(bp, spawnPoint)
     vehicle.set_autopilot(False)
@@ -204,7 +209,7 @@ def filter_vision_objects(float_array, oncoming):
 
     # Reshape array to 3 columns and n rows (one row per object)
     float_array = np.asarray(float_array)
-    float_array = np.reshape(float_array, (float_array.size//3, 3))
+    float_array = np.reshape(float_array, (float_array.size // 3, 3))
     # Filter all rows that contain np.inf
     float_array = float_array[~np.any(np.isinf(float_array), axis=1), :]
     if float_array.size == 0:
@@ -217,8 +222,7 @@ def filter_vision_objects(float_array, oncoming):
 
     # Get cars that are on our lane
     if oncoming:
-        cars_in_front = \
-            all_cars[np.where(all_cars[:, 2] > 0.3)]
+        cars_in_front = all_cars[np.where(all_cars[:, 2] > 0.3)]
         if cars_in_front.size != 0:
             cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] < 1.3)]
     else:

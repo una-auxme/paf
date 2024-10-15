@@ -1,7 +1,6 @@
 {
     "githubIssues.issueBranchTitle": "${issueNumber}-${sanitizedIssueTitle}",
     "githubIssues.queries": [
-    
         {
             "label": "My Issues",
             "query": "default"
@@ -19,5 +18,13 @@
             "query": "state:open repo:${owner}/${repository} sort:created-desc"
         }
     ],
-    "ltex.language": "en-US"
+    "ltex.language": "en-US",
+    "docker.commands.composeUp": [
+        {
+            "label": "Compose Up",
+            "template": "xhost +local: && USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) ${composeCommand} ${configurationFile} up"
+        }
+    ],
+    "workbench.iconTheme": "vscode-icons",
+    "editor.formatOnSave": true
 }
