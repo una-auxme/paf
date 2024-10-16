@@ -1,22 +1,28 @@
-# Development guidelines
+# Development in PAF
+
+## First steps
+
+If this is your first time working with the project you can follow the first steps in [/doc/development/first_steps.md](/doc/development/first_steps.md).
+
+## Development guidelines
 
 If you contribute to this project please read the following guidelines first:
 
 1. [Documentation Requirements](./documentation_requirements.md)
 2. [Linting](./linting.md)
-3. [Coding style](./coding_style.md)
-4. [Git Style](./git_workflow.md)
-5. [Reviewing](./review_guideline.md)
-6. [Project management](./project_management.md)
-7. Github actions
+3. [Git Style](./git_workflow.md)
+4. [Reviewing](./review_guideline.md)
+5. [Project management](./project_management.md)
+6. Github actions
    1. [linting action](./linter_action.md)
    2. [build action](./build_action.md)
-8. [Install python packages](./installing_python_packages.md)
-9. [Discord Webhook Documentation](./discord_webhook.md)
+   3. [drive action](./drive_action.md)
+7. [Install python packages](./installing_python_packages.md)
+8. [Discord Webhook Documentation](./discord_webhook.md)
 
 ## Templates
 
-Templates for documentation and code are provided in [`doc/development/templates`](./templates).
+Templates for documentation and code are provided in [`doc/development/templates`](./templates). These templates are to be used for new files that are added to the project.
 
 ### [`template_class.py`](./templates/template_class.py)
 

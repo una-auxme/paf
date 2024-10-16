@@ -17,7 +17,9 @@ To enforce unified standards in all python files, we use [Flake8](https://pypi.o
 - pycodestyle
 - Ned Batchelder’s McCabe script
 
-. More details on it can be found in the documentation of Flake8.
+More details on it can be found in the documentation of Flake8.
+
+We also use [black](https://github.com/psf/black) as a code formatter to unify the coding style.
 
 ## 💬 Markdown Linter
 

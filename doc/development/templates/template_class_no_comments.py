@@ -15,40 +15,17 @@ class TestClass:
         self._name = "Max"
         self.if_ = False
 
-    def test_function1(self, param1):
-        pass
-
-    def test_function2(cls):
-        """
-
-        :return:
-        """
-        pass
-
-    def test_function3(self):  # inline comment
-        # This is a block comment
-        # It goes over multiple lines
-        # All comments start with a blank space
-        pass
-
-    def test_function4(self, param1, param2):
-        """
-        This is the description of the function.
-
-        :param param1: first parameter
-        :param param2: second parameter
-        :return: return value(s)
-        """
-        pass
-
-    def test_function5(self, param1, param2):
+    def test_function(self, param1: int, param2: float) -> str:
         """_summary_
 
-        :param param1: _description_
-        :param param2: _description_
-        :return: _description_
+        Args:
+            param1 (int): _description_
+            param2 (float): _description_
+
+        Returns:
+            str: _description_
         """
-        return param1
+        pass
 
     def main(self):
         """_summary_"""

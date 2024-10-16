@@ -1,8 +1,9 @@
 # 🛠️ Installation
 
-**Summary:** This page explains the installation process for the
+**Summary:** This page explains the installation process for the project.
 
 - [🛠️ Installation](#️-installation)
+  - [General](#general)
   - [Docker with NVIDIA GPU support](#docker-with-nvidia-gpu-support)
     - [Docker](#docker)
     - [Allow non-root user to execute Docker commands](#allow-non-root-user-to-execute-docker-commands)
@@ -10,6 +11,10 @@
   - [VS Code Extensions](#vs-code-extensions)
   - [🚨 Common Problems](#-common-problems)
     - [Vulkan device not available](#vulkan-device-not-available)
+
+## General
+
+Installation scripts are provided in the base folder of the repository ([pc_setup_admin.sh](/pc_setup_admin.sh) and [pc_setup_user.sh](/pc_setup_user.sh)). How to use these files is briefly described in [pc_setup.sh](/pc_setup.sh). The installation process in described in further detail here.
 
 To run the project you have to install [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support, [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
 
