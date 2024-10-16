@@ -34,7 +34,7 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # if you change the volume here also change the copy command
-      # in ``build/docker/build/Dockerfile
+      # in ``build/docker/agent/Dockerfile
       - ../:/workspace
       # mount git config for dvc
       - ../.gitconfig:/home/carla/.gitconfig

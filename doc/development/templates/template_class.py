@@ -50,37 +50,17 @@ class TestClass:
         # with reserved keywords
         self.if_ = False
 
-    # function names should be lower case with underscores to improve readability
-    # always use self as first argument for istance methods
-    def test_function1(self):
-        pass
-
-    # single blank line between method definitions
-    # always use cls as first argument for class functions
-    def test_function2(cls):
-        pass
-
-    #############################
-    #   5. Comments             #
-    #############################
-
-    def test_function3(self):  # inline comment
-        # This is a block comment
-        # It goes over multiple lines
-        # All comments start with a blank space
-        pass
-
-    #############################
-    #   6. Docstrings           #
-    #############################
-    def test_function4(self, param1, param2):
-        # This docstring style is the default google style of the autoDocstring
-        # extension and helps with automated API documentation creation
-        """This is the description of the function.
+    # This docstring style is the default google style of the autoDocstring
+    # extension for automated API documentation creation
+    def test_function(self, param1: int, param2: float) -> str:
+        """_summary_
 
         Args:
-            param1 (_type_): _description_
-            param2 (_type_): _description_
+            param1 (int): _description_
+            param2 (float): _description_
+
+        Returns:
+            str: _description_
         """
         pass
 

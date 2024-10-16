@@ -45,9 +45,10 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./build/docker/build/Dockerfile
+          file: ./build/docker/agent/Dockerfile
           push: true
           # tag 'latest' and version on push to main, otherwise use the commit hash
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: USERNAME=paf,USER_UID=1000,USER_GID=1000

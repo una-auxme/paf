@@ -3,6 +3,7 @@
 **Summary:** This document provides the guidelines for the documentation.
 
 - [Documentation Requirements](#documentation-requirements)
+  - [Python Docstrings](#python-docstrings)
   - [Readability and Maintainability](#readability-and-maintainability)
   - [Code Structure](#code-structure)
   - [Efficiency and Performance](#efficiency-and-performance)
@@ -14,11 +15,22 @@
   - [Scalability](#scalability)
   - [Consistency with Coding Standards](#consistency-with-coding-standards)
 
+## Python Docstrings
+
+The project comes with an extension to automatically generate docstrings. It is mandatory to use it if you comment your code.
+
+To generate a docstring you have to be in the development container and then a popup will apear after writing three quotation marks:
+
+![docstring_popup.png](/doc/assets/development/docstring_popup.png)
+
+Press `Enter` or select the option and it should produce a docstring that looks like this:
+
+![docstring.png](/doc/assets/development/docstring.png)
+
 ## Readability and Maintainability
 
 - **Consistent Formatting:** Code should follow a consistent and readable formatting style. Tools like linters or formatters can help enforce a consistent code style.
   - [linting](./linting.md)
-  - [coding_style](./coding_style.md)
 - **Meaningful Names:** Variable and function names should be descriptive and convey the purpose of the code.
 - **Comments:** Clear and concise comments should be used where necessary to explain complex logic or provide context.
 
@@ -55,7 +67,6 @@
 ## Version Control
 
 - **Commit Messages:** Use descriptive and meaningful commit messages to track changes effectively.
-  - [commit](./commit.md)
 - **Branching Strategy:** Follow a consistent and well-defined branching strategy to manage code changes.
 
 ## Scalability
