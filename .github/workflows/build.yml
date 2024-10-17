@@ -5,6 +5,9 @@ on:
     workflows: ["Check code format"]
     types:
       - completed
+  push:
+    branches:
+      - main
 
 env:
   REGISTRY: ghcr.io
