@@ -5,6 +5,9 @@ on:
     workflows: ["Check code format"]
     types:
       - completed
+  push:
+    branches:
+      - main
 
 env:
   REGISTRY: ghcr.io
@@ -51,4 +54,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: USERNAME=paf,USER_UID=1000,USER_GID=1000
+          build-args: |
+            USERNAME=paf
+            USER_UID=1000
+            USER_GID=1000
