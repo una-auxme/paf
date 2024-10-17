@@ -26,14 +26,14 @@ RUN apt-get update \
 # install dependencies for libgit2 and Carla PythonAPI
 RUN apt-get install wget unzip
 
-RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip -q -o /dev/null -O PythonAPI.zip \
+RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip --quiet -O PythonAPI.zip \
     && unzip PythonAPI.zip \
     && rm PythonAPI.zip \
     && mkdir -p /opt/carla \
     && mv PythonAPI /opt/carla/PythonAPI
 
 # build libgit2
-RUN wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -q -o /dev/null -O libgit2-1.5.0.tar.gz \
+RUN wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz --quiet -O libgit2-1.5.0.tar.gz \
     && tar xzf libgit2-1.5.0.tar.gz \
     && cd libgit2-1.5.0/ \
     && cmake . \
@@ -44,9 +44,9 @@ RUN wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.5.0.tar.gz -q -
     && rm -r libgit2-1.5.0/
 
 # CUDA installation
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin -q -o /dev/null \
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin --quiet \
     && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb -q -o /dev/null \
+    && wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb --quiet \
     && dpkg -i cuda-repo-ubuntu2004-11-7-local_11.7.0-515.43.04-1_amd64.deb \
     && cp /var/cuda-repo-ubuntu2004-11-7-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
     && apt-get update \
