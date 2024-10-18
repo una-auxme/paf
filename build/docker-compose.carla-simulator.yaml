@@ -12,7 +12,7 @@ services:
           devices:
             - driver: nvidia
               count: "all"
-              capabilities: [compute,utility,graphics,display]
+              capabilities: [ gpu ]
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
     expose:
       - 2000
