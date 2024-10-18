@@ -44,7 +44,7 @@ sudo nvidia-ctk runtime configure --runtime=docker # configure the runtime to us
 sudo systemctl restart docker
 
 sudo nvidia-ctk runtime configure --runtime=docker --config=/home/"$1"/.config/docker/daemon.json
-sudo chown "$1":"$1" /home/"$1"/.config/docker/daemon.json
+sudo chown -R "$1":"$1" /home/"$1"/.config
 
 sudo systemctl restart docker
 
