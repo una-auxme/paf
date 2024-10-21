@@ -202,7 +202,7 @@ class CollisionCheck(CompatibleNode):
         if speed < 0:
             speed = 0
         # Publish speed to ACC for permanent distance check
-        self.speed_publisher.publish(Float32(data=speed))
+        # self.speed_publisher.publish(Float32(data=speed))
         # Check for crash
         self.check_crash((self.__object_last_position[1], speed))
         # Update first position to calculate speed when next object is detected
