@@ -1,5 +1,11 @@
 # Sprint Review Presentation
 
+**Summary:** Guidelines for creating effective presentations for Sprint Reviews in the PAF project.
+
+- [1. General Sprint Progress Overview Presentation](#1-general-sprint-progress-overview-presentation)
+- [2. Individual Pull Request (PR) Presentations](#2-individual-pull-request-pr-presentations)
+- [3. Presentation Style](#3-presentation-style)
+
 Creating a good presentation for a **Sprint Review** in PAF is important for communicating the team's achievements, identifying challenges, and planning for future work.
 
 To present the sprint progress effectively, especially when dealing with complex software projects, it can be beneficial to split the presentations into two distinct parts:
@@ -7,17 +13,10 @@ To present the sprint progress effectively, especially when dealing with complex
 1. **General Sprint Progress Overview**: This focuses on the big-picture updates, team-wide accomplishments, challenges, and next steps.
 2. **Individual Pull Request (PR) Presentations**: These dive into the details of specific features or changes made during the sprint.
 
->[!INFO] Table of Contents
-
-- [1. General Sprint Progress Overview Presentation](#1-general-sprint-progress-overview-presentation)
-- [2. Individual Pull Request (PR) Presentations](#2-individual-pull-request-pr-presentations)
-- [3. Presentation Style](#3-presentation-style)
-
----
-
 ## 1. General Sprint Progress Overview Presentation
 
 This presentation is designed for a broader audience and focuses on the overall progress made during the sprint. It highlights major milestones, project status, and challenges, without diving into technical implementation details.
+There should be one general overview presentation per sprint, typically delivered a new student who has not presented the general overview before.
 
 **Structure of the General Overview**:
 
@@ -34,7 +33,7 @@ This presentation is designed for a broader audience and focuses on the overall 
   - Any improvements in testing or driving score.
 - **Next Steps**: Outline the focus areas for the next sprint, upcoming deadlines, and potential risks.
 
-**Duration**: 10-20 minutes, depending on the complexity of the sprint.
+**Duration**: 5-20 minutes, depending on the complexity of the sprint.
 
 ## 2. Individual Pull Request (PR) Presentations
 
