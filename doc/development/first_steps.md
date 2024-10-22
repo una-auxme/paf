@@ -27,7 +27,8 @@ Then navigate to the `Docker` tab in VS Code and attach a VS Code window to the 
 
 ![attach.png](/doc/assets/development/attach.png)
 
-A new VS Code window will open, and you now have all the project files with the correct python paths and code completion.
+A new VS Code window will open. You need to also install all VS Code extensions inside the container. Navigate to the `Extensions` tab in VS Code and install all extensions under the `Installed` menu.
+After that you can open the folder `/workspace` inside the container with all the project files with the correct python paths and code completion.
 
 ## Linting and formatting
 
