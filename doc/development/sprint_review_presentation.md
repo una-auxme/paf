@@ -77,4 +77,4 @@ Not every PR has to be presented, but **every student should be able to highligh
 
 ---
 
-next: [Sprint Planning Guidelines](spring_planning_guidelines.md)
+next: [Sprint Planning Guidelines](sprint_planning_guidelines.md)
