@@ -20,7 +20,6 @@ body:
         - What is the problem?
         - What is the expected behavior?
         - What is the actual behavior?
-      required: true
 
   - type: textarea
     id: definition_of_done
@@ -33,7 +32,6 @@ body:
         - [ ] Documentation updated
         - [ ] Code review passed
         - [ ] All tests passing
-      required: false
 
   - type: input
     id: effort_estimate
@@ -41,7 +39,6 @@ body:
       label: "Effort Estimate"
       description: "Estimate the effort required (e.g., in hours)"
       placeholder: "Enter effort estimate here"
-      required: false
 
   - type: textarea
     id: testability
@@ -49,7 +46,6 @@ body:
       label: "Testability"
       description: "How can the implementation be tested?"
       placeholder: "Enter testing methods here"
-      required: false
 
   - type: textarea
     id: dependencies
@@ -60,7 +56,6 @@ body:
         Enter dependencies here
         - Task A must be completed before this task can start
         - Link issues here with #<issue number>
-      required: false
 
   - type: markdown
     id: prioritization
