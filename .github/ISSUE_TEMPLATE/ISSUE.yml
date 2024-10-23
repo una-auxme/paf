@@ -27,7 +27,12 @@ body:
     attributes:
       label: "Definition of Done"
       description: "What needs to be completed for the task to be considered done?"
-      placeholder: "Enter definition of done here"
+      placeholder: |
+        Example criteria:
+        - [ ] Implementation completed and tested
+        - [ ] Documentation updated
+        - [ ] Code review passed
+        - [ ] All tests passing
       required: false
 
   - type: input
@@ -72,6 +77,8 @@ body:
     attributes:
       value: |
         Add any relevant labels to this issue:
+
+        standard labels:
         - bug: Something isn't working
         - enhancement: New feature or request
         - help wanted: Extra attention is needed
@@ -79,8 +86,10 @@ body:
         - documentation: Improvements or additions to documentation
         - question: Further information is requested
         - wontfix: This will not be worked on
-        - perception
-        - planning
-        - acting
-        - research
-        - infrastructure
+
+        project-specific labels:
+        - perception: Related to sensor processing and scene understanding
+        - planning: Related to path planning and decision making
+        - acting: Related to vehicle control and actuation
+        - research: Related to research and experimentation
+        - infrastructure: Related to system infrastructure and setup
