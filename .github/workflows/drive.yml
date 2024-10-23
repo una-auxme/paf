@@ -12,6 +12,7 @@ jobs:
     env:
       AGENT_VERSION: latest
       COMPOSE_FILE: ./build/docker-compose.cicd.yaml
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -29,7 +30,6 @@ jobs:
         run: docker compose down -v
       # add rendered JSON as comment to the pull request
       - name: Add simulation results as comment
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

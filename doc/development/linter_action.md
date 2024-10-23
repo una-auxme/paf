@@ -4,29 +4,24 @@
 
 **Summary:** This page explains the GitHub lint action we use to unsure Code quality.
 
-- [GitHub actions](#github-actions)
-  - [General](#general)
-  - [Pull requests](#pull-requests)
-  - [🚨 Common Problems](#-common-problems)
-    - [1. Error in the markdown linter](#1-error-in-the-markdown-linter)
-    - [2. Error in the python linter](#2-error-in-the-python-linter)
+- [General](#general)
+- [Pull requests](#pull-requests)
+- [🚨 Common Problems](#-common-problems)
+  - [1. Error in the markdown linter](#1-error-in-the-markdown-linter)
+  - [2. Error in the python linter](#2-error-in-the-python-linter)
 
 ## General
 
 We use a GitHub action to verify code quality.
 These actions are defined in `.github/workflows/linter.yml` and `.github/workflows/format.yml`.
 
-The actions are executed only on pull requests in order not to exceed the [minutes per month included in the Github](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions) free plan.
-This is done by limiting the execution of the action by the following line:
-
-```yaml
-on: pull_request
-```
+The actions are executed on pull requests and on merges to the main branch.
+This should not lead to issues regarding the [GitHub billing plan](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions). If any issues are encountered the linter action can also be run on the self-host runner.
 
 The actions use the same linters described in the section [Linting](./linting.md).
 
 Event though the linters are already active during development,
-the execution on pull request ensures that nobody skips the linter during commit.
+the execution ensures that nobody skips the linter during commit.
 
 ## Pull requests
 

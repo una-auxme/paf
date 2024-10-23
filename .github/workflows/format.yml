@@ -1,10 +1,12 @@
 name: Check code format
 
 on:
-  workflow_run:
-    workflows: ["Linter markdown and code"]
-    types:
-      - completed
+  pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - main
 
 jobs:
     format:

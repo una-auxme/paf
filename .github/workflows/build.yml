@@ -1,10 +1,9 @@
 name: Build and push image
 
 on:
-  workflow_run:
-    workflows: ["Check code format"]
-    types:
-      - completed
+  pull_request:
+    branches:
+      - "main"
   push:
     branches:
       - main
@@ -43,8 +42,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Test build
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./build/docker/agent/Dockerfile
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            USERNAME=paf
+            USER_UID=1000
+            USER_GID=1000
+
       - name: Build and push Docker image
         id: build
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v3
         with:
           context: .
