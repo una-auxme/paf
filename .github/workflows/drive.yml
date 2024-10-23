@@ -29,7 +29,6 @@ jobs:
         run: docker compose down -v
       # add rendered JSON as comment to the pull request
       - name: Add simulation results as comment
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
