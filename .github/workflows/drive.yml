@@ -12,6 +12,7 @@ jobs:
     env:
       AGENT_VERSION: latest
       COMPOSE_FILE: ./build/docker-compose.cicd.yaml
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
