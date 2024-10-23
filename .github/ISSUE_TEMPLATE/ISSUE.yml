@@ -1,0 +1,86 @@
+name: "Issue Template"
+description: "Template for creating issues"
+title: "<issue title>"
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Please fill out all relevant fields:
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Detailed Description"
+      description: "Describe the issue in detail"
+      placeholder: |
+        Enter description here
+        - What is the problem?
+        - What is the expected behavior?
+        - What is the actual behavior?
+      required: true
+
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: "Definition of Done"
+      description: "What needs to be completed for the task to be considered done?"
+      placeholder: "Enter definition of done here"
+      required: false
+
+  - type: input
+    id: effort_estimate
+    attributes:
+      label: "Effort Estimate"
+      description: "Estimate the effort required (e.g., in hours)"
+      placeholder: "Enter effort estimate here"
+      required: false
+
+  - type: textarea
+    id: testability
+    attributes:
+      label: "Testability"
+      description: "How can the implementation be tested?"
+      placeholder: "Enter testing methods here"
+      required: false
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "Dependencies"
+      description: "Are there dependencies on other tasks or systems?"
+      placeholder: |
+        Enter dependencies here
+        - Task A must be completed before this task can start
+        - Link issues here with #<issue number>
+      required: false
+
+  - type: markdown
+    id: prioritization
+    attributes:
+      value: |
+        Add a priority label to this issue (p1 to p4) based on the following criteria:
+        - p1: Critical issue that needs immediate attention
+        - p2: Important issue that should be addressed soon
+        - p3: Issue that should be addressed in the near future
+        - p4: Issue that can be addressed later
+
+  - type: markdown
+    id: labels
+    attributes:
+      value: |
+        Add any relevant labels to this issue:
+        - bug: Something isn't working
+        - enhancement: New feature or request
+        - help wanted: Extra attention is needed
+        - discussion: Discussion is needed
+        - documentation: Improvements or additions to documentation
+        - question: Further information is requested
+        - wontfix: This will not be worked on
+        - perception
+        - planning
+        - acting
+        - research
+        - infrastructure
