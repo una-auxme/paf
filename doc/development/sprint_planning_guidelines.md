@@ -54,14 +54,14 @@ Integrate learnings from the previous sprint’s retrospective. Ask:
 
 1. **Assign Tasks**
    - Assign each issue to at least one team member.
-2. Capacity Planing:
+2. **Capacity Planning**:
    - Consider each team member's availability and workload when assigning
 3. **Review for Missed Problems**
    - Have any potential problems been overlooked?
 4. **Ensure Workload Distribution**
    - Confirm that everyone has an appropriate amount of work.
 5. **Clarify Next Steps**
-   - Does everyone know where to start and what their next steps are?
+   - Does everyone know where to start, and what their next steps are?
 6. **Clarify Communication Expectations**
    - Define the expected communication process throughout the sprint.
 
