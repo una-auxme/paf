@@ -44,9 +44,13 @@ sudo nvidia-ctk runtime configure --runtime=docker # configure the runtime to us
 sudo systemctl restart docker
 
 sudo nvidia-ctk runtime configure --runtime=docker --config=/home/"$1"/.config/docker/daemon.json
+sudo chown -R "$1":"$1" /home/"$1"/.config
 
 sudo systemctl restart docker
 
-sudo nvidia-ctk config --set nvidia-container-cli.no-cgroups --in-place
+# Could be removed, because it does not appear to work
+sudo nvidia-ctk config --set nvidia-container-cli.no-cgroups=false --in-place
 
 sudo snap install --classic code
+
+sudo nano /etc/nvidia-container-runtime/config.toml

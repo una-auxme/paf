@@ -243,15 +243,22 @@ class VisionNode(CompatibleNode):
         img_msg.header = image.header
 
         # publish img to corresponding angle topic
-        side = rospy.resolve_name(img_msg.header.frame_id).split("/")[2]
-        if side == "Center":
-            self.publisher_center.publish(img_msg)
-        if side == "Back":
-            self.publisher_back.publish(img_msg)
-        if side == "Left":
-            self.publisher_left.publish(img_msg)
-        if side == "Right":
-            self.publisher_right.publish(img_msg)
+        header_id = rospy.resolve_name(img_msg.header.frame_id)
+        if (
+            "Center" in header_id
+            or "Back" in header_id
+            or "Left" in header_id
+            or "Right" in header_id
+        ):
+            side = header_id.split("/")[2]
+            if side == "Center":
+                self.publisher_center.publish(img_msg)
+            if side == "Back":
+                self.publisher_back.publish(img_msg)
+            if side == "Left":
+                self.publisher_left.publish(img_msg)
+            if side == "Right":
+                self.publisher_right.publish(img_msg)
 
     def handle_dist_array(self, dist_array):
         """

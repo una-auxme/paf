@@ -15,6 +15,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
+              count: "all"
               capabilities: [ gpu ]
     # executes default command specified in agent Dockerfile
     # build/docker/agent/Dockerfile

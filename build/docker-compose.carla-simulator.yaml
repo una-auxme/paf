@@ -11,7 +11,9 @@ services:
         reservations:
           devices:
             - driver: nvidia
+              count: "all"
               capabilities: [ gpu ]
+              # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
     expose:
       - 2000
       - 2001
