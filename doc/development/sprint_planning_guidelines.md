@@ -85,5 +85,13 @@ Integrate learnings from the previous sprint’s retrospective. Ask:
 
 ## 6. Daily Stand-up
 
-- Engage in the daily asynchronous stand-up:
-  - Example format: *Today, I am working on issue `#xyz`. I’m facing a challenge with this aspect, but otherwise, things are progressing well.*
+- Engage in the daily asynchronous stand-up using the following format:
+  ```
+  1. Yesterday: What did you complete?
+     - Completed tasks/PRs: #xyz, #abc
+  2. Today: What are you working on?
+     - Current task: #def
+     - Blocked by/Waiting for: (if any)
+  3. Challenges/Help needed?
+     - Any blockers or risks to discuss
+  ```
