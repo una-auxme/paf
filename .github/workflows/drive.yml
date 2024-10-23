@@ -21,7 +21,9 @@ jobs:
           echo "AGENT_VERSION=${AGENT_VERSION}"
           echo "COMPOSE_FILE=${COMPOSE_FILE}"
       - name: Run docker-compose
-        run: docker compose up --quiet-pull --exit-code-from agent
+        run: |
+          xhost +local:
+          USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) docker compose up --quiet-pull --exit-code-from agent
       - name: Copy results
         run: docker compose cp agent:/tmp/simulation_results.json .
       - name: Stop docker-compose
