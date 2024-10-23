@@ -73,7 +73,11 @@ Integrate learnings from the previous sprint’s retrospective. Ask:
 2. **Set Escalation Plan**
    - Define when and how issues should be escalated if problems arise.
    - Where and when do you need help?
-3. **Plan the Pull Request**
+3. **Plan Pull Requests**
+   - Break down implementation into logical PR sizes
+   - Define PR review requirements and assignments
+   - Plan PR dependencies and merge order
+   - Document testing requirements for each PR
 4. **Sprint Review Preparation**
    - Prepare for the **Sprint Review** at the end of the sprint, ensuring:
      - Tasks are complete and meet the Definition of Done.
