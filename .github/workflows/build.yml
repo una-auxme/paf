@@ -50,8 +50,8 @@ jobs:
           file: ./build/docker/agent/Dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=local
+          cache-to: type=local,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -67,8 +67,8 @@ jobs:
           push: true
           # tag 'latest' and version on push to main, otherwise use the commit hash
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=local
+          cache-to: type=local,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -86,3 +86,4 @@ jobs:
         with:
           name: pr_id
           path: pr/
+          retention-days: 1
