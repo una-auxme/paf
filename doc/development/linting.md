@@ -1,13 +1,10 @@
 # Linting
 
-(Kept from previous group [paf22])
-
 **Summary:** To ensure unified standards in the project, the following linters are applied during commit.
 
-- [Linting](#linting)
-  - [🐍 Python conventions](#-python-conventions)
-  - [💬 Markdown Linter](#-markdown-linter)
-  - [🚨 Common Problems](#-common-problems)
+- [🐍 Python conventions](#-python-conventions)
+- [💬 Markdown Linter](#-markdown-linter)
+- [🚨 Common Problems](#-common-problems)
 
 ## 🐍 Python conventions
 
