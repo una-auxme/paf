@@ -11,8 +11,9 @@
   - [4.3. Re-requesting a review](#43-re-requesting-a-review)
   - [4.4. Resolving conversations](#44-resolving-conversations)
 - [5. Merging a Pull Request](#5-merging-a-pull-request)
-  - [5.1. Required Checks](#51-required-checks)
-  - [5.2. Deleting the branch](#52-deleting-the-branch)
+  - [5.1. Pre-merge Checklist](#51-pre-merge-checklist)
+  - [5.2. Required Checks](#52-required-checks)
+  - [5.3. Deleting the branch](#53-deleting-the-branch)
 - [6. Deadlines for pull requests and reviews](#6-deadlines-for-pull-requests-and-reviews)
 - [7. Sources](#7-sources)
 
@@ -98,22 +99,31 @@ If a new commit took place it is encouraged to comment the commit SHA to have a 
 
 ## 5. Merging a Pull Request
 
-The reviewer should always be the person to merge the PR after an approved review.
+### 5.1. Pre-merge Checklist
 
-If the reviewer has anything he/she would like to have changed or clarified, the review should be marked as `Request Changes`.
-If there are no uncertainties the reviewer merges the PR. After a revision of the requested changes the reviewer conducts a second review, if he/she is satisfied with the changes, the PR will be merged by him/her.
+Before merging, ensure:
+- [ ] All conversations are resolved
+- [ ] Required CI/CD checks are passing
+- [ ] No pending change requests
+- [ ] Code has been reviewed thoroughly
+- [ ] Documentation is up-to-date
 
-Long story short, the reviewer who approves the PR should merge. Only approve if there is nothing to change.
+The reviewer should always be the person to merge the PR after an approved review.  
 
-### 5.1. Required Checks
+If the reviewer has anything he/she would like to have changed or clarified, the review should be marked as `Request Changes`.  
+If there are no uncertainties the reviewer merges the PR. After a revision of the requested changes the reviewer conducts a second review, if he/she is satisfied with the changes, the PR will be merged by him/her.  
 
-Before merging a pull request, the request checks by the CI/CD pipeline should be successful. If the checks fail, the pull request should not be merged.
+Long story short, the reviewer who approves the PR should merge. Only approve if there is nothing to change.  
 
-> [!INFO] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.
+### 5.2. Required Checks  
 
-### 5.2. Deleting the branch
+Before merging a pull request, the request checks by the CI/CD pipeline should be successful. If the checks fail, the pull request should not be merged.  
 
-After the PR is merged, the branch should be deleted. This should be done by the person who merged the PR.
+> [!INFO] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.  
+
+### 5.3. Deleting the branch  
+
+After the PR is merged, the branch should be deleted. This should be done by the person who merged the PR.  
 
 ## 6. Deadlines for pull requests and reviews
 

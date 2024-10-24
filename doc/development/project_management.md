@@ -19,6 +19,13 @@ To create a pull request, go to the [branches overview](https://github.com/una-a
 ![img.png](../assets/branch_overview.png)
 <!-- TODO image is outdated -->
 
-Merge the pull request after the review process is complete and all the feedback from the reviewer has been worked in.
+Merge the pull request after:
+
+1. The review process is complete
+2. All reviewer feedback has been addressed
+3. All required checks have passed
+4. The branch is up-to-date with the main branch
+
+After merging, remember to delete the source branch to keep the repository clean. 
 
 >[!INFO] For more information about the review process, see [Review process](./review_guideline.md).
