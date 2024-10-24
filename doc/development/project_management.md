@@ -26,6 +26,6 @@ Merge the pull request after:
 3. All required checks have passed
 4. The branch is up-to-date with the main branch
 
-After merging, remember to delete the source branch to keep the repository clean. 
+After merging, remember to delete the source branch to keep the repository clean.
 
 >[!INFO] For more information about the review process, see [Review process](./review_guideline.md).

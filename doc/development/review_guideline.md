@@ -102,28 +102,29 @@ If a new commit took place it is encouraged to comment the commit SHA to have a 
 ### 5.1. Pre-merge Checklist
 
 Before merging, ensure:
+
 - [ ] All conversations are resolved
 - [ ] Required CI/CD checks are passing
 - [ ] No pending change requests
 - [ ] Code has been reviewed thoroughly
 - [ ] Documentation is up-to-date
 
-The reviewer should always be the person to merge the PR after an approved review.  
+The reviewer should always be the person to merge the PR after an approved review.
 
-If the reviewer has anything he/she would like to have changed or clarified, the review should be marked as `Request Changes`.  
-If there are no uncertainties the reviewer merges the PR. After a revision of the requested changes the reviewer conducts a second review, if he/she is satisfied with the changes, the PR will be merged by him/her.  
+If the reviewer has anything he/she would like to have changed or clarified, the review should be marked as `Request Changes`.
+If there are no uncertainties the reviewer merges the PR. After a revision of the requested changes the reviewer conducts a second review, if he/she is satisfied with the changes, the PR will be merged by him/her.
 
-Long story short, the reviewer who approves the PR should merge. Only approve if there is nothing to change.  
+Long story short, the reviewer who approves the PR should merge. Only approve if there is nothing to change.
 
-### 5.2. Required Checks  
+### 5.2. Required Checks
 
-Before merging a pull request, the request checks by the CI/CD pipeline should be successful. If the checks fail, the pull request should not be merged.  
+Before merging a pull request, the request checks by the CI/CD pipeline should be successful. If the checks fail, the pull request should not be merged.
 
-> [!INFO] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.  
+> [!INFO] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.
 
-### 5.3. Deleting the branch  
+### 5.3. Deleting the branch
 
-After the PR is merged, the branch should be deleted. This should be done by the person who merged the PR.  
+After the PR is merged, the branch should be deleted. This should be done by the person who merged the PR.
 
 ## 6. Deadlines for pull requests and reviews
 
