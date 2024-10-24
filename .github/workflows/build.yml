@@ -42,6 +42,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create cache directory
+        run: mkdir /cache
+
       - name: Test build
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v3
@@ -50,8 +53,8 @@ jobs:
           file: ./build/docker/agent/Dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:test
-          cache-from: type=local
-          cache-to: type=local,mode=max
+          cache-from: type=local,dest=/cache/
+          cache-to: type=local,src=/cache/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -67,8 +70,8 @@ jobs:
           push: true
           # tag 'latest' and version on push to main, otherwise use the commit hash
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=local
-          cache-to: type=local,mode=max
+          cache-from: type=local,dest=/cache/
+          cache-to: type=local,src=/cache/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000

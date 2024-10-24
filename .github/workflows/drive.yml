@@ -48,11 +48,16 @@ jobs:
       - name: 'Unzip artifact (PR ID)'
         run: |
           unzip pr_id.zip
-          let issue_number = fs.readFileSync('./pr_id');
-          if (!issue_number || isNaN(Number(issue_number))) {
-            core.setFailed(`Invalid PR ID: ${prIdContent}`);
-            return;
-          }
+
+      - name: Check PR ID
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let issue_number = fs.readFileSync('./pr_id');
+            if (!issue_number || isNaN(Number(issue_number))) {
+              core.setFailed(`Invalid PR ID: ${prIdContent}`);
+              return;
+            }
 
       - name: Run docker-compose
         run: |
