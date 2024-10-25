@@ -60,7 +60,7 @@ jobs:
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:test
           cache-from: type=local,src=./.buildx-cache/cache/test/
-          cache-to: type=local,dst=./.buildx-cache/cache-new/test/,mode=max
+          cache-to: type=local,dest=./.buildx-cache/cache-new/test/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -77,7 +77,7 @@ jobs:
           # tag 'latest' and version on push to main, otherwise use the commit hash
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=local,src=./.buildx-cache/cache/latest/
-          cache-to: type=local,dst=./.buildx-cache/cache-new/latest/,mode=max
+          cache-to: type=local,dest=./.buildx-cache/cache-new/latest/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
