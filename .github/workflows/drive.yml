@@ -32,6 +32,10 @@ jobs:
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr_id"
             })[0];
+            if (!matchArtifact) {
+              core.setFailed('No pr_id artifact found from the build workflow');
+              return;
+            }
             let download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
@@ -42,12 +46,23 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_id.zip`, Buffer.from(download.data));
 
       - name: 'Unzip artifact (PR ID)'
-        run: unzip pr_id.zip
+        run: |
+          unzip pr_id.zip
+
+      - name: Check PR ID
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let issue_number = fs.readFileSync('./pr_id');
+            if (!issue_number || isNaN(Number(issue_number))) {
+              core.setFailed(`Invalid PR ID: ${prIdContent}`);
+              return;
+            }
 
       - name: Run docker-compose
         run: |
           xhost +local:
-          USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) docker compose up --quiet-pull --exit-code-from agent
+          USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) RENDER_OFFSCREEN=-RenderOffScreen docker compose up --quiet-pull --exit-code-from agent
       - name: Copy results
         run: docker compose cp agent:/tmp/simulation_results.json .
       - name: Stop docker-compose
