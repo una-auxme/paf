@@ -99,5 +99,6 @@ jobs:
 
       - name: Clean up cache
         run: |
-          rm -rf ./.buildx-cache
-          mv ./.buildx-cache-new /tmp/.buildx-cache
+          rm -rf ./.buildx-cache/cache/test
+          rm -rf ./.buildx-cache/cache/latest
+          mv ./.buildx-cache/cache-new ./.buildx-cache/cache
