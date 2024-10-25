@@ -43,7 +43,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create cache directory
-        run: mkdir /cache
+        run: |
+          mkdir -p ./.buildx-cache/cache
+          mkdir ./.buildx-cache/cache-new
+          mkdir ./.buildx-cache/cache/test
+          mkdir ./.buildx-cache/cache/latest
+          mkdir ./.buildx-cache/cache-new/test
+          mkdir ./.buildx-cache/cache-new/latest
 
       - name: Test build
         if: github.event_name == 'pull_request'
@@ -53,8 +59,8 @@ jobs:
           file: ./build/docker/agent/Dockerfile
           load: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:test
-          cache-from: type=local,dest=/cache/
-          cache-to: type=local,src=/cache/,mode=max
+          cache-from: type=local,src=./.buildx-cache/cache/test/
+          cache-to: type=local,dst=./.buildx-cache/cache-new/test/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -70,8 +76,8 @@ jobs:
           push: true
           # tag 'latest' and version on push to main, otherwise use the commit hash
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=local,dest=/cache/
-          cache-to: type=local,src=/cache/,mode=max
+          cache-from: type=local,src=./.buildx-cache/cache/latest/
+          cache-to: type=local,dst=./.buildx-cache/cache-new/latest/,mode=max
           build-args: |
             USERNAME=paf
             USER_UID=1000
@@ -90,3 +96,8 @@ jobs:
           name: pr_id
           path: pr/
           retention-days: 1
+
+      - name: Clean up cache
+        run: |
+          rm -rf ./.buildx-cache
+          mv ./.buildx-cache-new /tmp/.buildx-cache
