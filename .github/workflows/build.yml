@@ -84,6 +84,7 @@ jobs:
             USER_GID=1000
 
       - name: Save PR ID
+        if: github.event_name == 'pull_request'
         env:
           PR_ID: ${{ github.event.number }}
         run: |
@@ -91,6 +92,7 @@ jobs:
           echo $PR_ID > ./pr/pr_id
 
       - name: Upload PR ID
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: pr_id
