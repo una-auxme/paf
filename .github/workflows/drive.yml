@@ -21,6 +21,7 @@ jobs:
           echo "AGENT_VERSION=${AGENT_VERSION}"
           echo "COMPOSE_FILE=${COMPOSE_FILE}"
       - name: 'Download artifact (PR ID)'
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           script: |
@@ -46,10 +47,12 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_id.zip`, Buffer.from(download.data));
 
       - name: 'Unzip artifact (PR ID)'
+        if: github.event_name == 'pull_request'
         run: |
           unzip pr_id.zip
 
       - name: Check PR ID
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           script: |
@@ -71,6 +74,7 @@ jobs:
         run: docker compose down -v
       # add rendered JSON as comment to the pull request
       - name: Add simulation results as comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
