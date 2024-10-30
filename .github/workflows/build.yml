@@ -83,20 +83,31 @@ jobs:
             USER_UID=1000
             USER_GID=1000
 
-      - name: Save PR ID
+      - name: Save merge artifact
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p ./artifact
+          printf '{
+            "is_pr": false,
+            "pr_id": -1
+          }' >> ./artifact/artifact.json
+
+      - name: Save pull request artifact
         if: github.event_name == 'pull_request'
         env:
           PR_ID: ${{ github.event.number }}
         run: |
-          mkdir -p ./pr
-          echo $PR_ID > ./pr/pr_id
+          mkdir -p ./artifact
+          printf '{
+            "is_pr": true,
+            "pr_id": $PR_ID
+          }' >> ./artifact/artifact.json
 
-      - name: Upload PR ID
-        if: github.event_name == 'pull_request'
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pr_id
-          path: pr/
+          name: artifact.json
+          path: ./artifact/
           retention-days: 1
 
       - name: Clean up cache
