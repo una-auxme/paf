@@ -13,8 +13,12 @@ camera.set_rotation(pitch=0, yaw=0, roll=0)
 
 carla_settings.add_sensor(camera)
 ```
+![Alt text](https://github.com/una-auxme/paf/blob/368-visionnode-and-segmentation/doc/assets/perception/Carla_Segmentation_Sensor.png))
 
-#Questions:
+
+# Questions:
 Is the already implemented solution using the "Sementic Sensor"?
+
 How to convert the Carla Sementic Sensor into our code? (https://github.com/una-auxme/paf/blob/main/code/agent/src/agent/agent.py)
+
 How the yolo8x-seg and deeplabv3_resnet101 was trained?
