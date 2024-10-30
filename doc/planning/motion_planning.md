@@ -1,15 +1,14 @@
 # Motion Planning
 
 **Summary:** [motion_planning.py](.../code/planning/local_planner/src/motion_planning.py):
-The motion planning is responsible for collecting all the speeds from the different components and choosing the optimal one to be fowarded into the acting. It also is capabale to change the trajectory for a overtaking maneuver.
+The motion planning is responsible for collecting all the speeds from the different components and choosing the optimal one to be fowarded into the acting. It also is capable to change the trajectory for an overtaking maneuver.
 
-- [Motion Planning](#motion-planning)
-  - [Overview](#overview)
-  - [Component](#component)
-  - [ROS Data Interface](#ros-data-interface)
-    - [Subscribed Topics](#subscribed-topics)
-    - [Published Topics](#published-topics)
-  - [Node Creation + Running Tests](#node-creation--running-tests)
+- [Overview](#overview)
+- [Component](#component)
+- [ROS Data Interface](#ros-data-interface)
+  - [Subscribed Topics](#subscribed-topics)
+  - [Published Topics](#published-topics)
+- [Node Creation + Running Tests](#node-creation--running-tests)
 
 ## Overview
 
@@ -21,7 +20,7 @@ since we only need it for the unstuck routine. It also creates an overtake traje
 
 ## Component
 
-The Motion Planning only consists of one node that contains all subscriper and publishers. It uses some utility functions from [utils.py](../../code/planning/src/local_planner/utils.py).
+The Motion Planning only consists of one node that contains all subscribers and publishers. It uses some utility functions from [utils.py](../../code/planning/src/local_planner/utils.py).
 
 ## ROS Data Interface
 
@@ -41,7 +40,7 @@ This node subscribes to the following topics:
 - `/paf/hero/waypoint_distance`: Subscribes to the Carla Waypoint to get the new road option.
 - `/paf/hero/lane_change_distance`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
 - `/paf/hero/collision`: Subscribes to the collision published by the Collision Check.
-- `/paf/hero//Center/traffic_light_y_distance`: Subscribes to the distance the traffic light has to the upper camera bound in pixels.
+- `/paf/hero/Center/traffic_light_y_distance`: Subscribes to the distance the traffic light has to the upper camera bound in pixels.
 - `/paf/hero/unstuck_distance`: Subscribes to the distance travelled by the unstuck maneuver.
 
 ### Published Topics
