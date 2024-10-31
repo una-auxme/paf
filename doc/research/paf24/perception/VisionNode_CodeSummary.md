@@ -3,6 +3,7 @@
 The `VisionNode` class is designed to perform object detection and segmentation tasks using both PyTorch and Ultralytics models. It is structured to publish detection and segmentation results in ROS.
 
 ## Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Class Initialization](#class-initialization)
 - [Setup Functions](#setup-functions)
@@ -19,6 +20,7 @@ The `VisionNode` class is designed to perform object detection and segmentation 
   - [Bounding Box and Segmentation Mask Creation](#bounding-box-and-segmentation-mask-creation)
 - [Utility Functions](#utility-functions)
   - [Minimum X and Y Calculations](#minimum-x-and-y-calculations)
+- [Models](#models)
 
 
 ## Overview
@@ -76,4 +78,27 @@ These functions subscribe to the camera topics, allowing the node to receive ima
 - **`min_x`**: Calculates the minimum x-distance for objects in LIDAR data, representing the closest object in the forward direction.
 - **`min_abs_y`**: Calculates the minimum y-distance  in absolute terms, representing the closest object sideways.
 
+
+## Models
+
+Following there will be a short overview of the used machine learning and computer vision models. 
+
+| Model                            | Techniques                        | Features                                                                                  | Description                                                                                        |
+| -------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| frcnn_resnet50_fpn_v2            | Faster R-CNN, ResNet, FPN         | High accuracy and computational power                                                     | Object detection with Region Proposal and Feature Pyramid Network (FPN) for multi-scale detection. |
+| frcnn_mobilenet_v3_large_320_fpn | Faster R-CNN, MobileNet, FPN      | For less computationally intensive tasks and mobile applications.                         | Compact model with Region Proposal and FPN for efficient object detection.                         |
+| deeplabv3_resnet101              | DeepLabV3, ResNet                 | Specializes in image segmentation, uses ResNet101 backbone for strong feature extraction. | Pixel-level segmentation with Atrous convolutions for contextual information.                      |
+| yolov8n                          | YOLOv8 Nano                       | Small, fast, low computational demand, lower accuracy.                                    | Real-time object detection, fast processing.                                                       |
+| yolov8s                          | YOLOv8 Small                      | Small, fast, low resource consumption.                                                    | Real-time object detection, fast processing.                                                       |
+| yolov8m                          | YOLOv8 Medium                     | Balanced performance and precision.                                                       | Real-time object detection, fast processing.                                                       |
+| yolov8l                          | YOLOv8 Large                      | Larger, requires more resources, higher accuracy.                                         | Real-time object detection, fast processing.                                                       |
+| yolov8x                          | YOLOv8 Extra-Large                | Largest variant, best precision, higher computational load.                               | Real-time object detection, fast processing.                                                       |
+| yolo_nas_l                       | YOLO, NAS Large                   | Automatically optimized architecture for larger hardware resources.                       | Optimized through automated architecture search for specific hardware requirements.                |
+| yolo_nas_m                       | YOLO, NAS Medium                  | Optimized architecture, medium hardware requirements.                                     | Optimized through automated architecture search for specific hardware requirements.                |
+| yolo_nas_s                       | YOLO, NAS Small                   | Most compact architecture for resource-saving applications.                               | Optimized through automated architecture search for specific hardware requirements.                |
+| rtdetr-l                         | RT-DETR (Transformer) Large       | Transformer model, real-time capability, medium accuracy.                                 | Transformer-based real-time object detection.                                                      |
+| rtdetr-x                         | RT-DETR (Transformer) Extra Large | Transformer model, higher accuracy, higher computational load.                            | Transformer-based real-time object detection.                                                      |
+| yolov8x-seg                      | YOLO (Segmentation)               | Only detection without segmentation.                                                      | Extension of YOLO for pixel-precise object detection.                                              |
+| sam_l                            | SAM                               | High accuracy in segmentation for universal applications.                                 | Universal segmentation using SAM technique.                                                        |
+| FastSAM-x                        | Fast SAM                          | Faster variant for real-time application requirements.                                    | Fast segmentation using an accelerated SAM model.                                                  |
 
