@@ -19,6 +19,7 @@ The topic `/paf/hero/trajectory` uses the message type `nav_msgs/Path`. This typ
 ![](nav_msgs_Path_type.png)
 
 Every message that is published consists of several parts of this structure. One concrete example of a part of such a message can be seen here:
+
 ![](trajectory_example.png)
 
 
@@ -26,6 +27,7 @@ The topic `/paf/hero/emergency` uses the message type `std_msgs/Bool`, so the em
 
 
 The topic `/paf/hero/curr_behavior` uses the message type `std_msgs/String`. Examples of these messages can be seen here:
+
 ![](curr_behavior_example.png)
 
 
