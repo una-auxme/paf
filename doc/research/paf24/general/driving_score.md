@@ -9,7 +9,7 @@
 - [Infractions](#infractions)
 - [Off-road driving](#off-road-driving)
 - [Additional Events](#additional-events)
-- [Sources:](#sources)
+- [Sources](#sources)
 
 ## A Starting Point for Metrics and Measurements
 
@@ -76,7 +76,7 @@ If no client-server communication can be established in $60$ seconds.
 - Route timeout
 This timeout is triggered if the simulation of a route takes more than the allowed time. This allowed time is computed by multiplying the route distance in meters by a factor of $0.8$.
 
-## Sources:
+## Sources
 
 - [Alpha Drive Carla Leaderboard Case Study](https://alphadrive.ai/industries/automotive/carla-leaderboard-case-study/)
 - [Carla Leaderboard](https://leaderboard.carla.org/)
