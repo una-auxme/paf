@@ -4,7 +4,7 @@ The **VisionNode** system processes camera images and LIDAR data to detect objec
 
 ## VisionNode System Diagram
 
-![VisionNode System Diagram](../../assets/VisionNode_Dataflow.PNG)
+![VisionNode System Diagram](../../../assets/VisionNode_Dataflow.PNG)
 (link to lucid chart: https://lucid.app/lucidchart/34e9aa95-5fb3-4d83-b53f-6d6a3f4748c2/edit?viewport_loc=5190%2C-3952%2C1690%2C703%2C0_0&invitationId=inv_83e27eed-e730-4607-836b-0e863cd2b511)
 ## Data Flow
 
