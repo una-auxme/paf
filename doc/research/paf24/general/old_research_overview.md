@@ -1,23 +1,23 @@
 # Research Summary
 
-**Summary:** The research of the previous groups is condensed into this file to make it an entry point for this years project.
+**Summary:** The research of the previous groups is condensed into this file to make it an entry point for this year's project.
 
-- [**Research and Resources**](#research-and-resources)
-- [**Acting and Control Modules**](#acting-and-control-modules)
-- [**Planning and Trajectory Generation**](#planning-and-trajectory-generation)
-- [**State Machine for Decision-Making**](#state-machine-for-decision-making)
-- [**OpenDrive Integration and Navigation Data**](#opendrive-integration-and-navigation-data)
+- [Research and Resources](#research-and-resources)
+- [Acting and Control Modules](#acting-and-control-modules)
+- [Planning and Trajectory Generation](#planning-and-trajectory-generation)
+- [State Machine for Decision-Making](#state-machine-for-decision-making)
+- [OpenDrive Integration and Navigation Data](#opendrive-integration-and-navigation-data)
 
-## **[Research and Resources](./README.md)**
+## Research and Resources
 
-- This section provides an extensive foundation for the autonomous vehicle project by consolidating previous research from **[PAF22](./paf22/)** and **[PAF23](./paf23/)**.  
+- This section provides an extensive foundation for the autonomous vehicle project by consolidating previous research from **PAF22** and **PAF23**.  
 - **PAF22**: Established core methods for autonomous vehicle control and perception, including traffic light detection and emergency braking features. It also set up the base components of the CARLA simulator integration, essential sensor configurations, and data processing pipelines.
 - **PAF23**: Enhanced lane-change algorithms and expanded intersection-handling strategies. This project introduced a more robust approach to decision-making at intersections, factoring in pedestrian presence, oncoming traffic, and improved signal detection. Additionally, **PAF23** refined vehicle
 - behavior for more fluid lane-change maneuvers, optimizing control responses to avoid obstacles and maintain lane positioning during highway merging and overtaking scenarios.
 - The resources also include CARLA-specific tools such as the CARLA Leaderboard and ROS Bridge integration, which link CARLA’s simulation environment to the Robot Operating System (ROS). Detailed references to CARLA’s sensor suite are provided, covering RGB cameras, LIDAR, radar, GNSS, and IMU
 sensors essential for perception and control.
 
-## **[Acting and Control Modules](./paf22/acting/implementation_acting.md)**
+## Acting and Control Modules
 
 - The **acting module** focuses on the vehicle’s control actions, including throttle, steering, and braking.
 - **Core Controllers**: Contains controllers like the **PID controller** for longitudinal (speed) control and **Pure Pursuit** and **Stanley controllers** for lateral (steering) control. These controllers work in unison to achieve precise vehicle handling, especially on turns and at varying speeds.
@@ -27,7 +27,7 @@ other controls in hazardous situations.
 improvements in lane-changing safety.
 - **Sensor Integration**: The acting module subscribes to **navigation and sensor data** topics to remain updated on vehicle position and velocity, integrating sensor feedback for real-time control adjustments.
 
-## **[Planning and Trajectory Generation](./paf22/planning/basics.md)**
+## Planning and Trajectory Generation
 
 - The **planning module** is critical for determining safe, efficient routes by combining **global and local path planning** techniques.
 - **Global Planning**: Uses the **CommonRoad route planner** from TUM, creating a high-level path based on predefined waypoints. **PAF22** initially set up this planner, while **PAF23** added finer adjustments for lane selection and obstacle navigation.
@@ -35,7 +35,7 @@ improvements in lane-changing safety.
 Local planning includes **trajectory tracking** using Pure Pursuit and Stanley controllers to maintain a steady path.
 - **PAF23 Enhancements**: Improved **collision avoidance** algorithms and added real-time updates to the trajectory based on sensor data. The local planner now adapts quickly to lane-change requests or route deviations due to traffic, creating a seamless flow between global and local path planning.
 
-## **[State Machine for Decision-Making](./paf22/planning/state_machine_design.md)**
+## State Machine for Decision-Making
 
 - This modular state machine handles various driving behaviors, including **lane changes**, **intersections**, and **traffic light responses**.
 - **Core State Machines**: The **driving state machine** manages normal vehicle navigation, controlling target speed and ensuring lane compliance. The **lane-change state machine** makes safe decisions based on lane availability and traffic,
@@ -46,7 +46,7 @@ while the **intersection state machine** manages vehicle approach, stop, and tur
 The **intersection state machine** now incorporates detailed behaviors for handling left turns, straight passes, and right turns, considering pedestrian zones and cross-traffic. **PAF23** also introduced an adaptive lane-change state,
 which calculates safety based on vehicle speed, distance to adjacent vehicles, and road type.
 
-## **[OpenDrive Integration and Navigation Data](./paf22/planning/OpenDrive.md)**
+## OpenDrive Integration and Navigation Data
 
 - **OpenDrive** files provide a structured road network description, detailing lanes, road segments, intersections, and traffic signals. The navigation data is published in CARLA as ROS topics containing GPS/world coordinates and route instructions.
 - **PAF22 Setup**: Established OpenDrive as the core format for map data, integrating it with the CARLA simulator. Initial work involved parsing road and lane data to create accurate trajectories.
