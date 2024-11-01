@@ -28,8 +28,9 @@ UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
 
 class MotionPlanning(CompatibleNode):
     """
-    This node selects speeds based on the current behaviour and ACC to forward to the acting components.
-    It also handles the generation of trajectories for overtaking maneuvers.
+    This node selects speeds based on the current behaviour and ACC to forward to the
+    acting components. It also handles the generation of trajectories for overtaking
+    maneuvers.
     """
 
     def __init__(self):
@@ -44,7 +45,7 @@ class MotionPlanning(CompatibleNode):
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
         self.__collision_point = None
-        # TODO: clarify what the overtake_status values mean (by using an enum or similar)
+        # TODO: clarify what the overtake_status values mean (by using an enum or ...)
         self.__overtake_status = -1
         self.published = False
         self.current_pos = None
@@ -244,14 +245,18 @@ class MotionPlanning(CompatibleNode):
         """
         Generates a trajectory for overtaking maneuvers.
 
-        This method creates a new trajectory for the vehicle to follow when an overtaking maneuver is required.
-        It adjusts the waypoints based on the current waypoint and distance, and applies an offset to the waypoints
-        to create a path that avoids obstacles or gets the vehicle unstuck.
+        This method creates a new trajectory for the vehicle to follow when an
+        overtaking maneuver is required. It adjusts the waypoints based on the current
+        waypoint and distance, and applies an offset to the waypoints to create a path
+        that avoids obstacles or gets the vehicle unstuck.
 
         Args:
-            distance (int): The distance over which the overtaking maneuver should be planned.
-            pose_list (list): A list of PoseStamped objects representing the current planned path.
-            unstuck (bool, optional): A flag indicating whether the vehicle is stuck and requires a larger offset to get unstuck. Defaults to False.
+            distance (int): The distance over which the overtaking maneuver should be
+                planned.
+            pose_list (list): A list of PoseStamped objects representing the current
+                planned path.
+            unstuck (bool, optional): A flag indicating whether the vehicle is stuck
+                and requires a larger offset to get unstuck. Defaults to False.
 
         Returns:
             None: The method updates the self.trajectory attribute with the new path.
@@ -334,7 +339,8 @@ class MotionPlanning(CompatibleNode):
         The corner points are then grouped by proximity and returned.
 
         Returns:
-            list: A list of lists, where each sublist contains 2D points that form a corner.
+            list: A list of lists, where each sublist contains 2D points that form a
+                corner.
         """
         coords = self.convert_pose_to_array(np.array(self.trajectory.poses))
 
@@ -361,11 +367,12 @@ class MotionPlanning(CompatibleNode):
 
         Args:
             points (list): A list of points to be grouped.
-            proximity (int, optional): The maximum distance between points in a sublist. Defaults to 5.
+            proximity (int, optional): The maximum distance between points in a sublist
 
         Returns:
-            list: A list of sublists, where each sublist contains points that are within the specified proximity of each other.
-                    Sublists with only one point are filtered out.
+            list: A list of sublists, where each sublist contains points that are within
+                the specified proximity of each other. Sublists with only one point are
+                filtered out.
         """
         sublists = []
         current_sublist = []
@@ -467,8 +474,8 @@ class MotionPlanning(CompatibleNode):
 
     def update_target_speed(self, acc_speed, behavior):
         """
-        Updates the target velocity based on the current behavior and ACC velocity and overtake status and publishes it.
-        The unit of the velocity is m/s.
+        Updates the target velocity based on the current behavior and ACC velocity and
+        overtake status and publishes it. The unit of the velocity is m/s.
         """
 
         be_speed = self.get_speed_by_behavior(behavior)
@@ -682,7 +689,8 @@ class MotionPlanning(CompatibleNode):
 
     def run(self):
         """
-        Control loop that updates the target speed and publishes the target trajectory and speed over ROS topics.
+        Control loop that updates the target speed and publishes the target trajectory
+        and speed over ROS topics.
         """
 
         def loop(timer_event=None):
