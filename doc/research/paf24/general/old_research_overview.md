@@ -34,6 +34,7 @@ improvements in lane-changing safety.
 - **Local Planning**: Tailored for dynamic obstacles, this component focuses on immediate adjustments to the vehicle’s path, particularly useful in urban environments with unpredictable elements.
 Local planning includes **trajectory tracking** using Pure Pursuit and Stanley controllers to maintain a steady path.
 - **PAF23 Enhancements**: Improved **collision avoidance** algorithms and added real-time updates to the trajectory based on sensor data. The local planner now adapts quickly to lane-change requests or route deviations due to traffic, creating a seamless flow between global and local path planning.
+Furthermore, the integration of **behavior trees** has been researched, offering some advantages in computing power and explainability. Its drawbacks in uncertain situations and complex environments have been presented.
 
 ## State Machine for Decision-Making
 
