@@ -2,17 +2,16 @@
 
 **Summary:** This document depicts general informations regarding the leaderboard as a quick overview in a more condensed form.
 
- - [General Information](#general-information)
- - [Traffic Scenarios](#traffic-scenarios)
-   - [Generic](#generic)
-   - [Control Loss](#control-loss)
-   - [Traffic negotiation](#traffic-negotiation)
-   - [Highway](#highway)
-   - [Obstacle avoidance](#obstacle-avoidance)
-   - [Braking and lane changing](#braking-and-lane-changing)
-   - [Parking](#parking)
- - [Available Sensors](#available-sensors)
-
+- [General Information](#general-information)
+- [Traffic Scenarios](#traffic-scenarios)
+  - [Generic](#generic)
+  - [Control Loss](#control-loss)
+  - [Traffic negotiation](#traffic-negotiation)
+  - [Highway](#highway)
+  - [Obstacle avoidance](#obstacle-avoidance)
+  - [Braking and lane changing](#braking-and-lane-changing)
+  - [Parking](#parking)
+- [Available Sensors](#available-sensors)
 
 ## General Information
 
