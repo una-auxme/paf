@@ -1,23 +1,21 @@
 #!/usr/bin/env python
 # import tf.transformations
+import math
+import os
+import sys
+
+import numpy as np
 import ros_compatibility as roscomp
 import rospy
-import sys
-import os
-
+from carla_msgs.msg import CarlaSpeedometer
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from nav_msgs.msg import Path
+from perception.msg import LaneChange, Waypoint
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-from std_msgs.msg import String, Float32, Bool, Float32MultiArray, Int16
-from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from carla_msgs.msg import CarlaSpeedometer
-import numpy as np
 from scipy.spatial.transform import Rotation
-import math
-
-from perception.msg import Waypoint, LaneChange
-
-from utils import convert_to_ms, spawn_car, NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP
+from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
+from utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms, spawn_car
 
 sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
 from behaviours import behavior_speed as bs  # type: ignore # noqa: E402
@@ -39,12 +37,14 @@ class MotionPlanning(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
 
+        # TODO: add type hints
         self.target_speed = 0.0
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
         self.__collision_point = None
+        # TODO: clarify what the overtake_status values mean (by using an enum or similar)
         self.__overtake_status = -1
         self.published = False
         self.current_pos = None
@@ -160,9 +160,11 @@ class MotionPlanning(CompatibleNode):
             Float32, f"/paf/{self.role_name}/target_velocity", qos_profile=1
         )
 
+        # TODO move up to subscribers
         self.wp_subs = self.new_subscription(
             Float32, f"/paf/{self.role_name}/current_wp", self.__set_wp, qos_profile=1
         )
+
         self.overtake_success_pub = self.new_publisher(
             Float32, f"/paf/{self.role_name}/overtake_success", qos_profile=1
         )
@@ -335,6 +337,8 @@ class MotionPlanning(CompatibleNode):
             list: A list of lists, where each sublist contains 2D points that form a corner.
         """
         coords = self.convert_pose_to_array(np.array(self.trajectory.poses))
+
+        # TODO: refactor by using numpy functions
         x_values = np.array([point[0] for point in coords])
         y_values = np.array([point[1] for point in coords])
 
@@ -381,6 +385,7 @@ class MotionPlanning(CompatibleNode):
         if current_sublist:
             sublists.append(current_sublist)
 
+        # TODO: Check if it is intended to filter out sublists with only one point
         filtered_list = [in_list for in_list in sublists if len(in_list) > 1]
 
         return filtered_list
@@ -390,6 +395,7 @@ class MotionPlanning(CompatibleNode):
         pos = self.current_pos[:2]
 
         def euclid_dist(vector1, vector2):
+            # TODO replace with numpy function
             point1 = np.array(vector1)
             point2 = np.array(vector2)
 
@@ -405,7 +411,7 @@ class MotionPlanning(CompatibleNode):
             elif dist < 50:
                 return 7
             else:
-                8
+                8  # TODO add return
 
         distance_corner = 0
         for i in range(len(corner) - 1):
@@ -525,6 +531,7 @@ class MotionPlanning(CompatibleNode):
         return speed
 
     def __get_speed_unstuck(self, behavior: str) -> float:
+        # TODO check if this 'global' is necessary
         global UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE
         speed = 0.0
         if behavior == bs.us_unstuck.name:
