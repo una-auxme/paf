@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-import rospy
-import tf.transformations
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
 from xml.etree import ElementTree as eTree
 
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+import ros_compatibility as roscomp
+import rospy
+import tf.transformations
 from carla_msgs.msg import CarlaRoute  # , CarlaWorldInfo
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from nav_msgs.msg import Path
-from std_msgs.msg import String
-from std_msgs.msg import Float32MultiArray
-
 from preplanning_trajectory import OpenDriveConverter
+from ros_compatibility.node import CompatibleNode
+from std_msgs.msg import Float32MultiArray, String
 
 RIGHT = 1
 LEFT = 2
@@ -29,7 +27,7 @@ class PrePlanner(CompatibleNode):
     - global Plan:            /carla/{role_name}/global_plan
     - current agent position: /paf/{role_name}/current_pos
     Published topics:
-    - preplanned trajectory:  /paf/{role_name}/trajectory
+    - preplanned trajectory:  /paf/{role_name}/trajectory_global
     - prevailing speed limits:/paf/{role_name}/speed_limits_OpenDrive
     """
 

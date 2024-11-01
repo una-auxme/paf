@@ -9,12 +9,11 @@ to the other components of this project (acting, decision making,...).
 
 This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
-- [Global Planner](#global-planner)
-  - [Getting started](#getting-started)
-  - [Description](#description)
-    - [Inputs](#inputs)
-    - [Outputs](#outputs)
-  - [Testing](#testing)
+- [Getting started](#getting-started)
+- [Description](#description)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+- [Testing](#testing)
 
 ## Getting started
 
@@ -25,8 +24,7 @@ No extra installation needed.
 
 ## Description
 
-First the global planner is responsible for collecting and preparing all data from the leaderboard and other intern
-components that is needed for the preplanning component.
+First the global planner is responsible for collecting and preparing all data from the leaderboard and other internal components that is needed for the preplanning component.
 
 To get an instance of the OpenDriveConverter (ODC) the received OpenDrive Map prevailing in String format
 has to be converted. In our case we use the
@@ -56,8 +54,8 @@ The received agent spawn position is valid if it´s closer to the first waypoint
 parameter expresses. This is necessary to prevent unwanted behaviour in the startup phase where the
 current agent position is faulty.
 
-When the ODC got initialised, the current agent position is received and the global plan is obtained from
-the leaderboard the trajectory can be calculated by iterating through the global route and passing it to the ODC.
+When the ODC is initialised, the current agent position is received and the global plan is obtained from
+the leaderboard. The trajectory can be calculated by iterating through the global route and passing it to the ODC.
 After smaller outliners are removed the x and y coordinates as well as the yaw-orientation and the prevailing
 speed limits can be acquired from the ODC in the following form:
 
