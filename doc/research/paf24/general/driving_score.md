@@ -18,19 +18,19 @@ The driving proficiency of an agent can be characterized by multiple metrics. Fo
 
 ## Driving score
 
-\[\frac{1}{N}\sum^i_N R_i P_i\]
+$\frac{1}{N}\sum^i_N R_i P_i$
 
 - The main metric of the leaderboard, serving as an aggregate of the average route completion and the number of traffic infractions. Here $N$ stands for the number of routes, $R_i$ is the percentage of completion of the $i$-th route, and $P_i$ is the infraction penalty of the $i$-th route.
 
 ## Route completion
 
-\[\frac{1}{N}\sum^i_N R_i\]
+$\frac{1}{N}\sum^i_N R_i$
 
 - Percentage of route distance completed by an agent, averaged across $N$ routes.
 
 ## Infraction penalty
 
-\[\prod_j^{ped, veh, ... stop} (p_j^i)^{n_{infractions}}\]
+$\prod_j^{ped, veh, ... stop} (p_j^i)^{n_{infractions}}$
 
 - Aggregates the number of infractions triggered by an agent as a geometric series. Agents start with an ideal 1.0 base score, which is reduced by a penalty coefficient for every instance of these.
 
