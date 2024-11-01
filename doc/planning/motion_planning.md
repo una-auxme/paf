@@ -35,7 +35,6 @@ This node subscribes to the following topics:
 - `/paf/hero/trajectory_global`: Subscribes to the global trajectory, which is calculated at the start of the simulation.
 - `/paf/hero/current_pos`: Subscribes to the filtered position of our car.
 - `/paf/hero/curr_behavior`: Subscribes to Current Behavior pubished by the Decision Making.
-- `/paf/hero/unchecked_emergency`: Subscribes to check if the emergency brake is not triggered.
 - `/paf/hero/acc_velocity`: Subscribes to the speed published by the acc.
 - `/paf/hero/waypoint_distance`: Subscribes to the Carla Waypoint to get the new road option.
 - `/paf/hero/lane_change_distance`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
