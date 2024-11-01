@@ -17,3 +17,15 @@ Global planning consits of the PrePlanner Node and the OpenDriveConverter.
 
 ## Local Planning
 
+Local planning consists of the ACC, CollisionCheck and MotionPlanning nodes. It uses information from the Global Planning to make decisions in the local environment of the ego vehicle. It creates a trajectory based on the global trajectory and the current position of the vehicle that is used by the acting component.
+
+- ACC: The Adaptive Cruise Control node is responsible for calculating the desired speed of the vehicle based on the current speed, trajectory, and speed limits.
+  - receives Speed from `/carla/hero/Speed`
+  - receives speed limits from `/paf/hero/speed_limits_OpenDrive`
+  - receives global trajectory from `/paf/hero/trajectory_global`
+- CollisionCheck: The Collision Check node is responsible for detecting collisions and reporting them.
+  - receives current speed from `/carla/hero/Speed`
+  - receives distances to objects detected by a LIDAR sensor from `/paf/hero/Center/object_distance`
+- MotionPlanning: The Motion Planning node is responsible for calculating the desired trajectory based on the current position of the vehicle and the global trajectory.
+  - receives speed information from ACC
+  - receives global trajectory from `/paf/hero/trajectory_global`

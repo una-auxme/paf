@@ -1,11 +1,10 @@
 # Global Planner
 
 **Summary:** [global_planner.py](.../code/planning/global_planner/src/global_planner.py):
-The global planner is responsible for collecting and preparing all data from the leaderboard and other intern
+The global planner is responsible for collecting and preparing all data from the leaderboard and other internal
 components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter
-from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published
-to the other components of this project (acting, decision making,...).
+from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published.
 
 This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
