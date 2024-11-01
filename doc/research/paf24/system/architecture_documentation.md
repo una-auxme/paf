@@ -8,7 +8,7 @@ up-to-date versions.
 
 ## Existing architecture documentation from the previous semester
 
-The main architecture documentation can be found [here](/ddoc/general/architecture.md).
+The main architecture documentation can be found [here](/doc/general/architecture.md).
 It contains information to most nodes and what they subscribe / publish.
 
 A miro board with the existing architecture (Perception, planning, acting) is existing.
