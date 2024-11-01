@@ -1,9 +1,10 @@
 # Leaderboard summary
 
-**Summary:** This document depicts general information regarding the leaderboard as a quick overview in a more condensed form.
+**Summary:** This document depicts general informations regarding the leaderboard as a quick overview in a more condensed form.
 
- - [General](#general)
+ - [General Information](#general-information)
  - [Traffic Scenarios](#traffic-scenarios)
+   - [Generic](#generic)
    - [Control Loss](#control-loss)
    - [Traffic negotiation](#traffic-negotiation)
    - [Highway](#highway)
@@ -13,12 +14,24 @@
  - [Available Sensors](#available-sensors)
 
 
-## General
+## General Information
 
 The CARLA Leaderboard includes a variety of scenarios to test autonomous driving models in realistic urban environments. This document provides a quick overview of all possible scenarios and available sensors.
+The leaderboard offers a driving score metric based on infractions happening during scenarios. 
+
+[#366](https://github.com/una-auxme/paf/issues/366) provides a more indepth look at how this score is calculated.
+
+Each time an infraction takes place several details are recorded and appended to a list specific to the infraction type in question. Besides scenario and score handling, the leaderboard also provides a plethora of sensors to get data from.
+
+The leaderboard provides predefined routes with a starting and destination point. The route description can contain GPS style coordinates, map coordinates or route instructions.
+
+Two participation modalities are offered, "Sensors" and "Map". "Sensors" only offers the sensors listed down below while "Map" offers HD map data in addition to all the sensors.
 
 ## Traffic Scenarios
 
+  - ### **Generic:**
+    - Traffic lights
+    - Signs (stop, speed limit, yield)
   - ### **Control Loss:**
     - The ego-vehicle loses control due to bad conditions on the road and it must recover, coming back to its original lane.
       ![image](https://leaderboard.carla.org/assets/images/TR01.png)
