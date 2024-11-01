@@ -24,7 +24,7 @@ To play the Joker card:
 
 1. **Notify the Team and Chair**: Inform both the team and chair staff by posting in the `#joker` channel on our Discord server.
 2. **Deadline**: Notify the team at least **7 days** before the sprint review.
-3. **Example Post**: 
+3. **Example Post**:
    - “I would like to play the Joker card for the sprint review on 2024-11-25.”
 4. Your name and intent will be confirmed by the team and chair.
 
@@ -52,7 +52,10 @@ To play the Joker card:
   - Goals for the next sprint.
 
 > [!CAUTION] Presentation Only Joker Card
-> We encourage all team members to only present your teammates work if absolutely necessary. The work completed by your colleagues is their responsibility, and they should be the ones to present it. Furthermore, you should only present their work if you are familiar with it and can answer questions about it. Additionally, you should be confident that your team member has completed the work to a satisfactory standard.
+> We encourage all team members to only present your teammates work if absolutely necessary.
+> The work completed by your colleagues is their responsibility, and they should be the ones to present it.
+> Furthermore, you should only present their work if you are familiar with it and can answer questions about it.
+> Additionally, you should be confident that your team member has completed the work to a satisfactory standard.
 
 ### 3.2. Illness or Emergency
 
