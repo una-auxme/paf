@@ -28,7 +28,7 @@ To play the Joker card:
    - “I would like to play the Joker card for the sprint review on 2024-11-25.”
 4. Your name and intent will be confirmed by the team and chair.
 
-> [!NOTE] 2 week sprints require two Joker cards to cover the entire sprint.
+> [!NOTE] 2-week sprints require two Joker cards to cover the entire sprint.
 
 ## 3. Special Circumstances
 
