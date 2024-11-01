@@ -19,12 +19,12 @@ found [here](https://miro.com/welcomeonboard/a1F0d1dya2FneWNtbVk4cTBDU1NiN3RiZUI
 This miro board does contain the main architecture details and flows of information but when comparing it to the
 rosgraph of the nodes and topics it seems like the diagram is not complete.
 
-### Current Rosgraph of the nodes and topics of the project:
+### Current Rosgraph of the nodes and topics of the project
 
 [//]: # "![Up to date ros graph](/doc/assets/research_assets/rosgraph.svg)"
 ![Up to date ros graph](/doc/assets/research_assets/rosgraph_leaf_topics.svg)
 
-### Rewritten rosgraph divided into perception, planning and acting:
+### Rewritten rosgraph divided into perception, planning and acting
 
 ![RosGraphDrawIO](/doc/assets/research_assets/node_path_ros.png)
 
