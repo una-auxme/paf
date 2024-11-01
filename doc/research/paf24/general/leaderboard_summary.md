@@ -29,13 +29,18 @@ Two participation modalities are offered, "Sensors" and "Map". "Sensors" only of
 
 ## Traffic Scenarios
 
-  - ### **Generic:**
+- ### **Generic:**
+    
     - Traffic lights
     - Signs (stop, speed limit, yield)
-  - ### **Control Loss:**
+      
+- ### **Control Loss:**
+    
     - The ego-vehicle loses control due to bad conditions on the road and it must recover, coming back to its original lane.
       ![image](https://leaderboard.carla.org/assets/images/TR01.png)
-  - ### **Traffic negotiation:**
+    
+- ### **Traffic negotiation:**
+    
     - The ego-vehicle is performing an unprotected left turn at an intersection, yielding to oncoming traffic.
       ![image](https://leaderboard.carla.org/assets/images/TR08.png)
     - The ego-vehicle is performing a right turn at an intersection, yielding to crossing traffic.
@@ -46,7 +51,9 @@ Two participation modalities are offered, "Sensors" and "Map". "Sensors" only of
       ![image](https://leaderboard.carla.org/assets/images/TR07.png)
     - The ego-vehicle needs to perform a turn at an intersection yielding to bicycles crossing from either the left or right.
       ![image](https://leaderboard.carla.org/assets/images/TR13.png)
-  - ### **Highway:**
+    
+- ### **Highway:**
+    
     - The ego-vehicle merges into moving highway traffic from a highway on-ramp.
       ![image](https://leaderboard.carla.org/assets/images/TR18.png)
     - The ego-vehicle encounters a vehicle merging into its lane from a highway on-ramp.
@@ -57,7 +64,9 @@ Two participation modalities are offered, "Sensors" and "Map". "Sensors" only of
       ![image](https://leaderboard.carla.org/assets/images/TR21.png)
     - The ego-vehicle is approached by an emergency vehicle coming from behind.
       ![image](https://leaderboard.carla.org/assets/images/TR23.png)
-  - ### **Obstacle avoidance:**
+    
+- ### **Obstacle avoidance:**
+    
     - The ego-vehicle encounters an obstacle blocking the lane and must perform a lane change into traffic moving in the same or opposite direction to avoid it. The obstacle may be a construction site, an accident or a parked vehicle.
       ![image](https://leaderboard.carla.org/assets/images/TR14.png)
     - The ego-vehicle encounters a parked vehicle opening a door into its lane and must maneuver to avoid it.
@@ -66,7 +75,9 @@ Two participation modalities are offered, "Sensors" and "Map". "Sensors" only of
       ![image](https://leaderboard.carla.org/assets/images/TR16.png)
     - The ego-vehicle encounters an oncoming vehicles invading its lane on a bend due to an obstacle.
       ![image](https://leaderboard.carla.org/assets/images/TR22.png)
-  - ### **Braking and lane changing:**
+    
+- ### **Braking and lane changing:**
+    
     - The leading vehicle decelerates suddenly due to an obstacle and the ego-vehicle must perform an emergency brake or an avoidance maneuver.
       ![image](https://leaderboard.carla.org/assets/images/TR02.png)
     - The ego-vehicle encounters an obstacle / unexpected entity on the road and must perform an emergency brake or an avoidance maneuver.
@@ -79,7 +90,9 @@ Two participation modalities are offered, "Sensors" and "Map". "Sensors" only of
       ![image](https://leaderboard.carla.org/assets/images/TR19a.png)
     - The ego-vehicle must slow down or brake to allow a parked vehicle exiting a parallel parking bay to cut in front.
       ![image](https://leaderboard.carla.org/assets/images/TR12.png)
-  - ### **Parking:**
+    
+- ### **Parking:**
+    
     - The ego-vehicle must exit a parallel parking bay into a flow of traffic.
       ![image](https://leaderboard.carla.org/assets/images/TR11.png)
 
