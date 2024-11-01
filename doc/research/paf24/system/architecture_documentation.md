@@ -20,4 +20,8 @@ This miro board does contain the main architecture details and flows of informat
 There you can see the nodes and the in- and outputs. In represents the subscribed topics and out the published topics.
 This should now be extended by what logic is happening in which node and how the nodes are connected.
 
-## TODO: Create or add additional information of the teams. This is split into other issues, which will extend this document.
+## Perception architecture
+  - TODO
+## Planning architecture
+  
+## Acting architecture
