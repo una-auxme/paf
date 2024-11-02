@@ -36,6 +36,9 @@ The "unstuck" behavior is designed to address situations where the vehicle becom
 ### How unstuck is triggered
 
 The method `__get_speed_unstuck` checks the current behavior (e.g., `us_unstuck`), adjusting speed accordingly and invoking `overtake_fallback` if an obstacle is detected and the vehicle is in an "unstuck" situation. 
+
+---
+
 `UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE` ensures that once an unstuck maneuver is initiated, it won't be repeated until a certain distance is cleared.
 
 ---
@@ -53,6 +56,9 @@ The overtake behavior allows the vehicle to safely overtake a slower-moving or s
 ### How overtake is triggered
 
 The method `__set_curr_behavior` monitors the vehicle’s behavior, triggering an overtake when `ot_enter_init` behavior is detected and if an obstacle or collision point is near. It then calls `change_trajectory` to modify the route. 
+
+---
+
 Speed adjustments specific to overtaking are handled in `__get_speed_overtake`, where the vehicle might slow down (e.g., `ot_enter_slow`) or proceed at normal speed after overtaking (e.g., `ot_leave`).
 
 ---
