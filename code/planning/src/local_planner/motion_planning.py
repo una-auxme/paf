@@ -232,15 +232,16 @@ class MotionPlanning(CompatibleNode):
         Args:
             distance_obj (float): distance to overtake object
         """
-        pose_list = self.trajectory.poses
+        pose_list = self.trajectory.poses #vehicle's planned path.
 
         # Only use fallback
-        self.overtake_fallback(distance_obj, pose_list)
-        self.__overtake_status = 1
+        self.overtake_fallback(distance_obj, pose_list) #likely implements a simpler, predefined maneuver for overtaking, which adjusts the trajectory if more sophisticated planning is unavailable or as a safety fallback option.
+        self.__overtake_status = 1 #overtake successfully planed
         self.overtake_success_pub.publish(self.__overtake_status)
         return
 
-    def overtake_fallback(self, distance, pose_list, unstuck=False):
+    def overtake_fallback(self, distance, pose_list, unstuck=False): #his method constructs a temporary path around an obstacle based on the current location, intended distance to overtake, and a choice between two different lateral offsets depending on whether the vehicle is in an “unstuck” situation.
+        #codepart for overtake behaviour
         currentwp = self.current_wp
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
@@ -280,6 +281,8 @@ class MotionPlanning(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose = pose
             result.append(pos)
+
+        #code part for returning back on the lane
         path = Path()
         path.header.stamp = rospy.Time.now()
         path.header.frame_id = "global"
@@ -440,10 +443,10 @@ class MotionPlanning(CompatibleNode):
 
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
-        if data.data == bs.ot_enter_init.name:
-            if np.isinf(self.__collision_point):
-                self.__overtake_status = -1
-                self.overtake_success_pub.publish(self.__overtake_status)
+        if data.data == bs.ot_enter_init.name: #is beggins overtake manuever
+            if np.isinf(self.__collision_point): # if no obsticle to overtake
+                self.__overtake_status = -1 #unsuccessfull or canceled overtake
+                self.overtake_success_pub.publish(self.__overtake_status) #abandonment of the overtake attempt.
                 return
             self.change_trajectory(self.__collision_point)
 
@@ -479,6 +482,7 @@ class MotionPlanning(CompatibleNode):
             speed = self.__get_speed_cruise()
         return speed
 
+    #manage the speed of the vehicle when it encounters situations where it becomes "stuck"
     def __get_speed_unstuck(self, behavior: str) -> float:
         global UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE
         speed = 0.0
@@ -488,7 +492,7 @@ class MotionPlanning(CompatibleNode):
             speed = bs.us_stop.speed
         elif behavior == bs.us_overtake.name:
             pose_list = self.trajectory.poses
-            if self.unstuck_distance is None:
+            if self.unstuck_distance is None: # Without knowing the distance to the obstacle, the vehicle cannot safely plan an overtake trajectory.
                 self.logfatal("Unstuck distance not set")
                 return speed
 
@@ -498,16 +502,16 @@ class MotionPlanning(CompatibleNode):
                 )
                 # self.logfatal(f"Unstuck Distance in mp: {distance}")
                 # clear distance to last unstuck -> avoid spamming overtake
-                if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE:
+                if distance > UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE: #The method checks if the vehicle has moved a significant distance (UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE) since the last overtake. This prevents repeated overtake attempts when they are unnecessary or unsafe.
                     self.unstuck_overtake_flag = False
                     self.logwarn("Unstuck Overtake Flag Cleared")
 
             # to avoid spamming the overtake_fallback
-            if self.unstuck_overtake_flag is False:
+            if self.unstuck_overtake_flag is False: 
                 # create overtake trajectory starting 6 meteres before
                 # the obstacle
                 # 6 worked well in tests, but can be adjusted
-                self.overtake_fallback(self.unstuck_distance, pose_list, unstuck=True)
+                self.overtake_fallback(self.unstuck_distance, pose_list, unstuck=True) #A fallback overtaking path is created to move around the obstacle when necessary.
                 self.logfatal("Overtake Trajectory while unstuck!")
                 self.unstuck_overtake_flag = True
                 self.init_overtake_pos = self.current_pos[:2]
@@ -661,3 +665,4 @@ if __name__ == "__main__":
         pass
     finally:
         roscomp.shutdown()
+
