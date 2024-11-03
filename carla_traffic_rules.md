@@ -14,6 +14,7 @@
 ## Introduction
 
 CARLA (Car Learning to Act) is an open-source simulator for testing and developing self-driving car systems.
+
 It includes essential traffic rules, creating a flexible environment to test driving behaviors and interactions without strictly adhering to the traffic laws of any specific country.
 
 ## Key Traffic Principles and Complex Interactions
