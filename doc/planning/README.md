@@ -1,14 +1,16 @@
 # Planning Wiki
 
+![Planning](../assets/planning/planning_structure.png)
+
 ## Overview
 
-### [Preplanning](./Preplanning.md)
+### [OpenDrive Converter (preplanning_trajectory.py)](./Preplanning.md)
 
-Preplanning is very close to the global plan. The challenge of the preplanning focuses on creating a trajectory out of
+This module focuses on creating a trajectory out of
 an OpenDrive map (ASAM OpenDrive). As input it receives an xodr file (OpenDrive format) and the target points
 from the leaderboard with the belonging actions. For example action number 3 means, drive through the intersection.
 
-### [Global plan](./Global_Planner.md)
+### [Global Planning (PrePlanner)](./Global_Planner.md)
 
 The global planner is responsible for collecting and preparing all data from the leaderboard and other internal
 components that is needed for the preplanning component.
@@ -27,7 +29,9 @@ decision tree, which is easy to adapt and to expand.
 
 ### [Local Planning](./Local_Planning.md)
 
-The Local Planning component is responsible for evaluating short term decisions in the local environment of the ego vehicle. It containes components responsible for detecting collisions and reacting e. g. lowering speed.
-The local planning also executes behaviors e. g. changes the trajectory for an overtake.
+This module includes the Nodes: ACC, CollisionCheck, MotionPlanner
+
+The Local Planning package is responsible for evaluating short term decisions in the local environment of the ego vehicle. It containes components responsible for detecting collisions and reacting e. g. lowering speed.
+The local planning also executes behaviors e.g. changes the trajectory for an overtake.
 
 ![Overtake](../assets/planning/Overtake_car_trajectory.png)
