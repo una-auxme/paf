@@ -23,7 +23,6 @@ The `VisionNode` class is designed to perform object detection and segmentation 
   - [Minimum X and Y Calculations](#minimum-x-and-y-calculations)
 - [Models](#models)
 
-
 ## Overview
 
 The `VisionNode` class leverages both PyTorch and Ultralytics pretrained models for object detection and segmentation, integrating features such as bounding boxes, segmentation masks, and distance calculations based on LIDAR data.
@@ -31,6 +30,7 @@ The `VisionNode` class leverages both PyTorch and Ultralytics pretrained models 
 ## Class Initialization
 
 Upon instantiation, `VisionNode` initializes various configurations, such as:
+
 - **Model Dictionary** (`self.model_dict`): Holds model configurations with different detection and segmentation models from PyTorch and Ultralytics.
 - **Camera Configurations**: Subscribes to topics for front, rear, left, and right camera views if specified.
 - **Device Selection**: Automatically selects `CUDA` if available.
@@ -92,10 +92,9 @@ These functions subscribe to the camera topics, allowing the node to receive ima
 - **`min_x`**: Calculates the minimum x-distance for objects in LIDAR data, representing the closest object in the forward direction.
 - **`min_abs_y`**: Calculates the minimum y-distance  in absolute terms, representing the closest object sideways.
 
-
 ## Models
 
-Following there will be a short overview of the used machine learning and computer vision models. 
+Following there will be a short overview of the used machine learning and computer vision models.
 
 | Model                            | Techniques                        | Features                                                                                  | Description                                                                                        |
 | -------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -115,4 +114,3 @@ Following there will be a short overview of the used machine learning and comput
 | yolov8x-seg                      | YOLO (Segmentation)               | Only detection without segmentation.                                                      | Extension of YOLO for pixel-precise object detection.                                              |
 | sam_l                            | SAM                               | High accuracy in segmentation for universal applications.                                 | Universal segmentation using SAM technique.                                                        |
 | FastSAM-x                        | Fast SAM                          | Faster variant for real-time application requirements.                                    | Fast segmentation using an accelerated SAM model.                                                  |
-
