@@ -2,88 +2,116 @@
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Key Traffic Principles and Complex Interactions](#key-traffic-principles-and-complex-interactions)
 - [CARLA Maps and Their Traffic Scenarios](#carla-maps-and-their-traffic-scenarios)
   - [Overview of CARLA Maps](#overview-of-carla-maps)
   - [Rural and Highway Scenarios](#rural-and-highway-scenarios)
-- [Road Network Creation with ASAM OpenDRIVE®](#road-network-creation-with-asam-opendrive)
+  - [Custom Maps with ASAM OpenDRIVE®](#custom-maps-with-asam-opendrive)
 - [Units of Measurement](#units-of-measurement)
 - [References](#references)
 
 ## Introduction
 
-CARLA (Car Learning to Act) is an open-source simulator specifically designed for testing and developing autonomous driving systems. It incorporates essential traffic rules to create a flexible environment. This flexibility allows users to modify traffic regulations and design custom maps, enabling
-the evaluation of driving behaviors and interactions without strictly adhering to the traffic laws of any specific country.
+CARLA (Car Learning to Act) is an open-source simulator for testing and developing autonomous driving systems. It integrates traffic rules to create a flexible environment, letting users adjust regulations and design custom maps to evaluate driving behaviors without following specific national laws.
 
 ## Key Traffic Principles and Complex Interactions
 
-- **Traffic Signals**: Vehicles must stop at red lights and proceed on green, facilitating the testing of traffic light detection and timing adjustments.
+- **Traffic Signals**: Vehicles must stop at red lights and go on green.
 
-- **Stop Signs**: Vehicles are required to halt at stop signs, yielding to pedestrians and other vehicles, which is essential for ensuring safety in traffic scenarios.
+- **Stop Signs**: Vehicles must stop at stop signs and yield to pedestrians 
+  and other cars.
 
-- **Lane Management**: Cars are expected to stay within designated lanes, aiding the development of lane-keeping and lane-following algorithms.
+- **Lane Management**: Cars should remain in their designated lanes.
 
-- **Speed Limits**: Varying speed limits across different map zones allow for the testing of speed regulation and adherence to traffic laws.
+- **Speed Limits**: Different speed limits in various areas of the map allow 
+  testing of speed control and adherence to traffic laws.
 
-- **Pedestrian Rights**: Vehicles must yield to pedestrians at crosswalks, which is crucial for pedestrian detection and ensuring safe braking.
+- **Pedestrian Rights**: Vehicles must yield to pedestrians at crosswalks, 
+  which is vital for pedestrian detection and ensuring safe stops.
 
-- **Intersection Management**: Vehicles must effectively navigate intersections, managing stop lights and stop signs while yielding as necessary to maintain traffic flow.
+- **Intersection Management**: Vehicles must navigate intersections 
+  effectively, managing stop lights and stop signs while yielding when 
+  necessary to keep traffic moving.
 
-- **Roundabout Navigation**: Vehicles are required to yield to cars already within the roundabout, supporting testing of circular navigation and merging strategies.
+- **Roundabout Navigation**: Vehicles should yield to cars already in the 
+  roundabout. This tests their ability to navigate circular roads and merge 
+  correctly.
 
-- **Crosswalk Behavior**: Vehicles must detect and stop for pedestrians at crosswalks, highlighting the importance of pedestrian safety.
+- **Crosswalk Behavior**: Vehicles need to detect and stop for pedestrians 
+  at crosswalks, highlighting the importance of pedestrian safety.
 
-- **Bicycle Lane Navigation**: Vehicles should be able to detect and navigate around cyclists, ensuring safe interactions in mixed traffic environments.
+- **Bicycle Lane Navigation**: Vehicles should be able to detect and safely 
+  navigate around cyclists in traffic.
 
-- **Parking Maneuvers**: Vehicles are tested on their ability to maneuver in tight parking spaces, simulating real-life parking constraints.
+- **Parking Maneuvers**: Vehicles are tested on their ability to park in 
+  tight spaces, simulating real-life parking challenges.
 
 ## CARLA Maps and Their Traffic Scenarios
 
-CARLA features 12 maps, each designed to test various aspects of autonomous driving, ranging from basic navigation to complex urban and rural settings.
+CARLA has 12 maps, each designed to test different aspects of self-driving, 
+from basic navigation to complex urban and rural situations. 
+Users can also create custom maps, allowing for additional testing scenarios 
+tailored to specific needs.
 
 ### Overview of CARLA Maps
 
-- **Town 1**: A small town with T-junctions and bridges, focusing on intersection management and lane discipline.
+- **Town 1**: A small town with T-junctions and bridges, focusing on managing 
+  intersections and staying in lanes.
 
-- **Town 2**: Similar to Town 1, it includes commercial and residential areas, testing navigation and environmental awareness.
+- **Town 2**: Similar to Town 1, this town includes shops and homes, testing 
+  navigation and awareness of the surroundings.
 
-- **Town 3**: A larger urban area with roundabouts and underpasses, assessing roundabout navigation and adaptive speed control.
+- **Town 3**: A larger city area with roundabouts and underpasses, assessing 
+  navigation in roundabouts and speed adjustments.
 
-- **Town 4**: A small town with a figure-eight ring road, testing multi-lane navigation and pedestrian interactions.
+- **Town 4**: A small town with a figure-eight road, testing navigation in 
+  multiple lanes and interactions with pedestrians.
 
-- **Town 5**: An urban environment featuring multilane roads and a highway, focusing on highway navigation and commercial driving strategies.
+- **Town 5**: An urban area with multilane roads and a highway, focusing on 
+  highway driving and commercial strategies.
 
-- **Town 6**: A low-density town with unique junctions, testing multi-lane navigation and slip road utilization.
+- **Town 6**: A less populated town with unique junctions, testing navigation 
+  in multiple lanes and the use of slip roads.
 
-- **Town 7**: A rural community with unmarked roads, challenging navigation and parking in residential areas.
+- **Town 7**: A rural community with no marked roads, which tests navigation 
+  and parking in residential areas.
 
-- **Town 8 & Town 9**: Secret maps used for the Leaderboard challenge.
+- **Town 8 & Town 9**: Hidden maps used for the Leaderboard challenge.
 
-- **Town 10**: An inner-city area with diverse junctions and pedestrian activity, testing negotiation skills in complex traffic.
+- **Town 10**: An inner-city area with various junctions and pedestrian 
+  activity, testing skills in complex traffic situations.
 
-- **Town 11**: A minimally decorated map for testing navigation over expansive areas with fewer visual cues.
+- **Town 11**: A basic map for testing navigation in open areas with fewer 
+  visual guides.
 
-- **Town 12**: A large map inspired by Amarillo, Texas, with urban, residential, and rural areas, testing navigation and visual perception across diverse environments.
+- **Town 12**: A large map based on Amarillo, Texas, featuring urban, 
+  residential, and rural areas to test navigation and visual skills across 
+  diverse environments.
 
 ### Rural and Highway Scenarios
 
-Maps like **Town 7** and **Town 12** emphasize rural and highway scenarios, simulating open and high-speed environments. They test long-distance driving, speed regulation, and safe overtaking, requiring adaptability to unmarked roads and agricultural structures in rural settings.
+Maps like **Town 7** and **Town 12** focus on rural and highway driving, 
+simulating open and high-speed areas. They test long-distance driving, 
+speed management, and safe overtaking, requiring drivers to adapt to 
+unmarked roads and agricultural settings.
 
 ## Road Network Creation with ASAM OpenDRIVE®
 
-Road networks in CARLA are created using **ASAM OpenDRIVE®**, which standardizes road descriptions:
+Road networks in CARLA are built using **ASAM OpenDRIVE®**, which standardizes 
+road descriptions:
 
-- **Hierarchical Structure**: Roads are organized in nodes for better application integration.
+- **Hierarchical Structure**: Roads are organized into nodes for better 
+  integration.
 
-- **Reference Line**: Each road has a reference line to define its shape.
+- **Reference Line**: Each road has a reference line that defines its shape.
 
-- **Interconnectivity**: Roads can connect for realistic traffic flow.
+- **Interconnectivity**: Roads can connect to each other for realistic 
+  traffic flow.
 
 ## Units of Measurement
 
-To ensure consistency across tests, CARLA employs standardized units:
+To keep tests consistent, CARLA uses standardized units:
 
 - **Speed**: Measured in meters per second (m/s).
 
