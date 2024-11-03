@@ -9,7 +9,7 @@ Communication between Global and Local Planning is done via ros topics. Here is 
 
 ## Global Planning
 
-Global planning consits of the PrePlanner Node and the OpenDriveConverter.
+Global planning consists of the PrePlanner Node and the OpenDriveConverter.
 
 - OpenDriveConverter: The class is primarily used to process OpenDrive maps and extract relevant information needed for trajectory planning.
 - PrePlanner Node: The PrePlanner node is responsible for creating a trajectory out of an OpenDrive Map with the belonging road options.
