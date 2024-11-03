@@ -13,11 +13,7 @@
 
 ## Introduction
 
-CARLA (Car Learning to Act) is an open-source simulator designed for testing 
-and developing self-driving car systems. It incorporates essential traffic 
-rules to create a flexible environment. Users can modify traffic regulations 
-and create custom maps, helping them test driving behaviors and interactions 
-without strictly following the traffic laws of any specific country.
+CARLA (Car Learning to Act) is an open-source simulator for testing and developing self-driving car systems. It includes essential traffic rules, creating a flexible environment to test driving behaviors and interactions without strictly adhering to the traffic laws of any specific country.
 
 ## Key Traffic Principles and Complex Interactions
 
@@ -53,8 +49,7 @@ without strictly following the traffic laws of any specific country.
 
 ## CARLA Maps and Their Traffic Scenarios
 
-CARLA has 12 maps, each designed to test different aspects of self-driving 
-technology, from basic navigation to complex urban and rural situations.
+CARLA has 12 maps, each designed to test different aspects of self-driving, from basic navigation to complex urban and rural situations. Users can also create custom maps, allowing for additional testing scenarios tailored to specific needs.
 
 ### Overview of CARLA Maps
 
@@ -62,7 +57,7 @@ technology, from basic navigation to complex urban and rural situations.
   intersections and staying in lanes.
 
 - **Town 2**: Similar to Town 1, this town includes shops and homes, testing 
-  navigation and environmental awareness.
+  navigation and awareness of the surroundings.
 
 - **Town 3**: A larger city area with roundabouts and underpasses, assessing 
   navigation in roundabouts and speed adjustments.
