@@ -19,7 +19,7 @@ FORWARD = 3
 class PrePlanner(CompatibleNode):
     """
     This node is responsible for collecting all data needed for the
-    preplanning and calculate a trajectory based on the OpenDriveConverter
+    preplanning and calculating a trajectory based on the OpenDriveConverter
     from preplanning_trajectory.py.
     Subscribed/needed topics:
     - OpenDrive Map:          /carla/{role_name}/OpenDRIVE
@@ -88,7 +88,7 @@ class PrePlanner(CompatibleNode):
         """
         when the global route gets updated a new trajectory is calculated with
         the help of OpenDriveConverter and published into
-        '/paf/ self.role_name /trajectory'
+        '/paf/ self.role_name /trajectory_global'
         :param data: global Route
         """
         if data is None:
@@ -211,7 +211,7 @@ class PrePlanner(CompatibleNode):
 
     def world_info_callback(self, opendrive: String) -> None:
         """
-        when the map gets updated a mew OpenDriveConverter instance is created
+        when the map gets updated a new OpenDriveConverter instance is created
         (needed for the trajectory preplanning)
         :param opendrive: updated CarlaWorldInformation
         """

@@ -8,11 +8,12 @@ from preplanning_trajectory.py. In the end the computed trajectory and prevailin
 
 This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
-- [Getting started](#getting-started)
-- [Description](#description)
-  - [Inputs](#inputs)
-  - [Outputs](#outputs)
-- [Testing](#testing)
+- [Global Planner](#global-planner)
+  - [Getting started](#getting-started)
+  - [Description](#description)
+    - [Inputs](#inputs)
+    - [Outputs](#outputs)
+  - [Testing](#testing)
 
 ## Getting started
 
