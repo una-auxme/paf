@@ -1,11 +1,11 @@
 # VisionNode System Overview
 
-The **VisionNode** system processes camera images and LIDAR data to detect objects and calculate their distances. 
+The **VisionNode** system processes camera images and LIDAR data to detect objects and calculate their distances.
 
 ## VisionNode System Diagram
 
 ![VisionNode System Diagram](../../../assets/VisionNode_Dataflow.PNG)
-(link to lucid chart: https://lucid.app/lucidchart/34e9aa95-5fb3-4d83-b53f-6d6a3f4748c2/edit?viewport_loc=5190%2C-3952%2C1690%2C703%2C0_0&invitationId=inv_83e27eed-e730-4607-836b-0e863cd2b511)
+(link to lucid chart: [lucid chart] https://lucid.app/lucidchart/34e9aa95-5fb3-4d83-b53f-6d6a3f4748c2/edit?viewport_loc=5190%2C-3952%2C1690%2C703%2C0_0&invitationId=inv_83e27eed-e730-4607-836b-0e863cd2b511)
 
 ## Data Flow
 
@@ -20,7 +20,7 @@ The **VisionNode** system processes camera images and LIDAR data to detect objec
 
 3. **Submodules and Data Processing**
    - **Traffic Light Processing**: This submodule within the Image Handler processes detected traffic lights. Using distance and image data from object detection, it identifies the position of traffic lights and publishes its image data.
-   
+
 4. **Outputs**
    - **Camera Publisher**: Publishes the segmented image data after processing by PyTorch, which includes identified objects and their segmentation masks.
    - **Traffic Light Publisher**: Publishes the state and position of traffic lights along with corresponding distance data.
