@@ -1,9 +1,9 @@
 import copy
-from xml.etree import ElementTree as eTree
-import help_functions
+from math import cos, degrees, sin
 from typing import Tuple
-from math import sin, cos, degrees
+from xml.etree import ElementTree as eTree
 
+import help_functions
 
 # Check small distance between two points
 SMALL_DIST = 0.001
@@ -220,7 +220,7 @@ class OpenDriveConverter:
     ):
         """
         The function assumes, that the current chosen road is not the only
-        one that is possible. The current raad is calculated based on all
+        one that is possible. The current road is calculated based on all
         possible scenarios not assuming that the succ and pred road are
         both junctions.
         :param agent: current position of the agent with x and y coordinate
@@ -287,7 +287,7 @@ class OpenDriveConverter:
 
     def get_special_case_id(self, road: int, current: int, agent: Tuple[float, float]):
         """When the function get_min_dist() returns two solutions with the
-        same distance, this function calculated the distance based on the
+        same distance, this function calculates the distance based on the
         interpolation of the two possible roads.
         :param road: id value of the successor or predecessor road
         :param current: id value of the current road
