@@ -2,18 +2,20 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Key Traffic Principles and Complex Interactions](#key-traffic-principles-and-complex-interactions)
 - [CARLA Maps and Their Traffic Scenarios](#carla-maps-and-their-traffic-scenarios)
   - [Overview of CARLA Maps](#overview-of-carla-maps)
   - [Rural and Highway Scenarios](#rural-and-highway-scenarios)
-  - [Custom Maps with ASAM OpenDRIVE®](#custom-maps-with-asam-opendrive)
+- [Road Network Creation with ASAM OpenDRIVE®](#road-network-creation-with-asam-opendrive)
 - [Units of Measurement](#units-of-measurement)
 - [References](#references)
 
 ## Introduction
 
-CARLA (Car Learning to Act) is an open-source simulator specifically designed for testing and developing autonomous driving systems. It incorporates essential traffic rules to create a flexible environment. This flexibility allows users to modify traffic regulations and design custom maps, enabling the evaluation of driving behaviors and interactions without strictly adhering to the traffic laws of any specific country.
+CARLA (Car Learning to Act) is an open-source simulator specifically designed for testing and developing autonomous driving systems. It incorporates essential traffic rules to create a flexible environment. This flexibility allows users to modify traffic regulations and design custom maps, enabling
+the evaluation of driving behaviors and interactions without strictly adhering to the traffic laws of any specific country.
 
 ## Key Traffic Principles and Complex Interactions
 
