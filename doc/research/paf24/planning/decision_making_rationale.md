@@ -1,4 +1,4 @@
-# Decision Makaing Approaches
+# Decision Making Approaches
 
 Responsible for making decisions based on information provided by other system components. It should account for all possible traffic scenarios to ensure comprehensive coverage and safe driving behavior
 
