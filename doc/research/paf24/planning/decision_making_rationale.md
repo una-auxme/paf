@@ -11,20 +11,14 @@ Responsible for making decisions based on information provided by other system c
 
 ### Pros and Cons
 
-<ul style="list-style-type: none;">
-    <li><strong>+</strong> are easy to understand and interpret</li>
-    <li><strong>+</strong> decision paths are tracable → suitable for debugging</li>
-    <li><strong>+</strong> deterministic outputs beneficial when predictability is essential</li>
-    <li><strong>+</strong> compared to NN low computational cost</li>
-    <li><strong>-</strong> Adding too many branches for every possible situation can make the tree unwieldy and hard to manage</li>
-    <ul>
-        <li> can easily overfit with too many conditions </li>
-    </ul>
-    <li><strong>-</strong> no reasoning and no probabilistic capabilities, trees tend to make not optimal decisions in new unclear situations</li>
-    <ul>
-        <li> hard to account for every situation </li>
-    </ul>
-</ul>
+- `+` are easy to understand and interpret
+- `+` decision paths are traceable → suitable for debugging
+- `+` deterministic outputs beneficial when predictability is essential
+- `+` compared to NN, low computational cost
+- `-` Adding too many branches for every possible situation can make the tree unwieldy and hard to manage
+  - can easily overfit with too many conditions
+- `-` no reasoning and no probabilistic capabilities; trees tend to make suboptimal decisions in new, unclear situations
+  - hard to account for every situation
 
 ### Changes in Previous Semesters
 
@@ -32,7 +26,7 @@ Responsible for making decisions based on information provided by other system c
 
   - reducing to `Intersection`, `Lane Switch` and `Cruise`
 
-![decision_tree](doc/assets/behaviour_tree.png)
+![decision_tree](/doc/assets/behaviour_tree.png)
 
 ## Finite State Machine - previous implementations
 
@@ -43,12 +37,10 @@ Responsible for making decisions based on information provided by other system c
 
 ### Pros and Cons
 
-<ul style="list-style-type: none;">
-    <li><strong>+</strong> each state and transition is explicitly defined → debugging and testing</li>
-    <li><strong>+</strong> easier implementations than a decision tree</li>
-    <li><strong>-</strong> scalability issues with increasing amount of states</li>
-    <li><strong>-</strong> less flexible than decision trees</li>
-</ul>
+- `+` each state and transition is explicitly defined → suitable for debugging and testing
+- `+` easier implementations than a decision tree
+- `-` scalability issues with increasing number of states
+- `-` less flexible than decision trees
 
 ## Combining Planning and Reinforcement Learning
 
@@ -60,11 +52,7 @@ Responsible for making decisions based on information provided by other system c
 
 ### Pros and Cons
 
-<ul style="list-style-type: none;">
-    <li><strong>+</strong> generalizes better to complex scenarios</li>
-    <ul>
-        <li> takes advantage of continous and high-dimensional state spaces </li>
-    </ul>
-    <li><strong>-</strong> computational complexity and real-time feasibility</li>
-    <li><strong>-</strong> extensive training data and tuning to handle a broad range of driving situations</li>
-</ul>
+- `+` generalizes better to complex scenarios
+  - takes advantage of continuous and high-dimensional state spaces
+- `-` computational complexity and real-time feasibility
+- `-` extensive training data and tuning required to handle a broad range of driving situations
