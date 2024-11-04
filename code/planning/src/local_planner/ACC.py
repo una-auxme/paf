@@ -1,19 +1,18 @@
 #!/usr/bin/env python
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
-from rospy import Subscriber, Publisher
-from geometry_msgs.msg import PoseStamped
-from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
-from nav_msgs.msg import Path
-from std_msgs.msg import Float32MultiArray, Float32, Bool
 import numpy as np
-from utils import interpolate_speed, calculate_rule_of_thumb
+import ros_compatibility as roscomp
+from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
+from ros_compatibility.node import CompatibleNode
+from rospy import Publisher, Subscriber
+from std_msgs.msg import Bool, Float32, Float32MultiArray
+from utils import calculate_rule_of_thumb, interpolate_speed
 
 
 class ACC(CompatibleNode):
-    """
-    This node recieves a possible collision and
-    """
+    """ACC (Adaptive Cruise Control) calculates and publishes the desired speed based on
+    possible collisions, the current speed, the trajectory, and the speed limits."""
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
