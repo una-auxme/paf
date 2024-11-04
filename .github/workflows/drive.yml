@@ -109,5 +109,5 @@ jobs:
               repo: context.repo.repo,
               body: "## Simulation results\n" + ${{ steps.simulation-results.outputs.result }}
             });
-      - name: Prune all images older than 30 days from self-hosted runner
-        run: docker image prune -a --force --filter "until=720h"
+      - name: Prune all images older than 1 days from self-hosted runner
+        run: docker image prune -a --filter "until=24h"
