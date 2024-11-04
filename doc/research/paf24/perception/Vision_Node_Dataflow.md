@@ -1,4 +1,4 @@
-# VisionNode System Overview
+# VisionNode Code Summary
 
 The **VisionNode** system processes camera images and LIDAR data to detect objects and calculate their distances. 
 
@@ -15,7 +15,7 @@ The **VisionNode** system processes camera images and LIDAR data to detect objec
 2. **Data Handling and Processing**
    - **Image Handler**: The core processing unit within VisionNode, handling the input data from the camera and the distance data given by the **Distance Handler**. The Image Handler utilizes two main frameworks depending on the given model:
      - **PyTorch**: Responsible for image segmentation or generating bounding boxes around detected objects. It creates segmentation masks or bounding boxes based on image data.
-     - **Ultralytics**: Focused on object detection, bounding boxes and distance calculations. This module generates bounding boxes for identified objects and calculates distances based on LIDAR input. It also passes data to the traffic light processing
+     - **Ultralytics**: Focused on object detection, bounding boxes and distance calculations. This module generates bounding boxes for identified objects and calculates distances based on LIDAR input. It also passes data to the traffic light processing function
 
 3. **Submodules and Data Processing**
    - **Traffic Light Processing**: This submodule within the Image Handler processes detected traffic lights. Using distance and image data from object detection, it identifies the position of traffic lights and publishes its image data.

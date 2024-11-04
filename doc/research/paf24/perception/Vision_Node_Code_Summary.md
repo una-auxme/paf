@@ -1,8 +1,9 @@
-# VisionNode Code Summary
+# Vision Node Code Summary
 
-The `VisionNode` class is designed to perform object detection and segmentation tasks using both PyTorch and Ultralytics models. It is structured to publish detection and segmentation results in ROS.
+The `VisionNode` class (vision_node.py) is designed to perform object detection and segmentation tasks using both PyTorch and Ultralytics models. It is structured to publish detection and segmentation results in ROS.
 
 ## Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Class Initialization](#class-initialization)
 - [Setup Functions](#setup-functions)
@@ -22,7 +23,7 @@ The `VisionNode` class is designed to perform object detection and segmentation 
 
 
 ## Overview
-The `VisionNode` class leverages both PyTorch and Ultralytics pretrained models for object detection and segmentation, integrating features such as bounding boxes, segmentation masks, and distance calculations based on LIDAR data.
+The `VisionNode` class handles the image analysis by leveraging both PyTorch and Ultralytics pretrained models for object detection and segmentation, integrating features such as bounding boxes, segmentation masks, and distance calculations based on LIDAR data.
 
 ## Class Initialization
 Upon instantiation, `VisionNode` initializes various configurations, such as:
@@ -35,7 +36,7 @@ Upon instantiation, `VisionNode` initializes various configurations, such as:
 ## Setup Functions
 
 ### Camera and Distance Array Subscriptions
-These functions subscribe to the camera topics, allowing the node to receive images from multiple camera angles and perform image processing tasks.
+These functions subscribe to the camera topics, allowing the node to receive images from multiple predefined camera angles and perform image processing tasks.
 
 - **`setup_camera_subscriptions`**: Subscribes to specified camera angles.
 - **`setup_dist_array_subscription`**: Subscribes to LIDAR depth data.
@@ -47,7 +48,7 @@ These functions subscribe to the camera topics, allowing the node to receive ima
 **`setup_object_distance_publishers`** creates a publisher that outputs a list of detected objects and their distances.
 
 ### Traffic Light Publishers
-**`setup_traffic_light_publishers`** sets up a publisher for detected traffic light images.
+**`setup_traffic_light_publishers`** sets up a publisher for detected traffic light data.
 
 ## Main Processing Functions
 
