@@ -3,20 +3,20 @@
 The `VisionNode` class (vision_node.py) is designed to perform object detection and segmentation tasks using both PyTorch and Ultralytics models. It is structured to publish detection and segmentation results in ROS.
 
 ## Table of Contents
+
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Class Initialization](#class-initialization)
 - [Setup Functions](#setup-functions)
-  - [Camera and Distance Array Subscriptions](#camera-and-distance-array-subscriptions)
-  - [Camera Publishers](#camera-publishers)
-  - [Object Distance Publishers](#object-distance-publishers)
-  - [Traffic Light Publishers](#traffic-light-publishers)
+  - [Subscriptions](#subscriptions)
+  - [Publishers](#publishers)
 - [Main Processing Functions](#main-processing-functions)
 - [Utility Functions](#utility-functions)
   - [Minimum X and Y Calculations](#minimum-x-and-y-calculations)
 - [Models](#models)
 
 ## Overview
+
 The `VisionNode` class handles the image analysis by leveraging both PyTorch and Ultralytics pretrained models for object detection and segmentation, integrating features such as bounding boxes, segmentation masks, and distance calculations based on LIDAR data.
 
 ## Class Initialization
@@ -31,21 +31,19 @@ Upon instantiation, `VisionNode` initializes various configurations, such as:
 
 ## Setup Functions
 
-### Camera and Distance Array Subscriptions
+### Subscriptions
+
 These functions subscribe to the camera topics, allowing the node to receive images from multiple predefined camera angles and perform image processing tasks.
 
 - **`setup_camera_subscriptions`**: Subscribes to specified camera angles.
 - **`setup_dist_array_subscription`**: Subscribes to LIDAR depth data.
 
-### Camera Publishers
+### Publishers
 
 **`setup_camera_publishers`** sets up publishers for each camera angle. Each angle has a unique topic to publish segmented images back to ROS.
 
-### Object Distance Publishers
-
 **`setup_object_distance_publishers`** creates a publisher that outputs a list of detected objects and their distances.
 
-### Traffic Light Publishers
 **`setup_traffic_light_publishers`** sets up a publisher for detected traffic light data.
 
 ## Main Processing Functions
