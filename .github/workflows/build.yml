@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: artifact
-          path: ./artifact/.artifact.json
+          path: ./artifact/artifact.json
           retention-days: 1
 
       - name: Clean up PR cache
