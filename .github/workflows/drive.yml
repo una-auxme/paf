@@ -48,6 +48,7 @@ jobs:
         run: unzip artifact.zip
       - name: Debug path
         run: |
+          pwd
           ls -a
       - name: Return artifact JSON
         id: return-artifact-json
@@ -55,7 +56,7 @@ jobs:
         with:
           script: |
             let fs = require('fs');
-            let data = JSON.parse(fs.readFileSync('${process.env.GITHUB_WORKSPACE}/artifacts/artifacts.json'));
+            let data = JSON.parse(fs.readFileSync('~/artifacts.json'));
             return data;
 
       - name: Run docker-compose
