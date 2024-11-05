@@ -20,6 +20,7 @@ jobs:
         run: |
           echo "AGENT_VERSION=${AGENT_VERSION}"
           echo "COMPOSE_FILE=${COMPOSE_FILE}"
+          echo "GITHUB_WORKSPACE=${process.env.GITHUB_WORKSPACE}"
       - name: Download artifact
         uses: actions/github-script@v6
         with:
@@ -43,11 +44,11 @@ jobs:
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.zip`, Buffer.from(download.data));
+            fs.writeFileSync('${process.env.GITHUB_WORKSPACE}/artifact.zip', Buffer.from(download.data));
 
       - name: Unzip artifact
         run: |
-          unzip artifact.zip
+          unzip ${process.env.GITHUB_WORKSPACE}/artifact.zip
 
       - name: Return artifact JSON
         id: return-artifact-json
@@ -55,7 +56,7 @@ jobs:
         with:
           script: |
             let fs = require('fs');
-            let data = JSON.parse(fs.readFileSync('./artifacts/artifacts.json'));
+            let data = JSON.parse(fs.readFileSync('${process.env.GITHUB_WORKSPACE}/artifacts.json'));
             return data;
 
       - name: Run docker-compose
