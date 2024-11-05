@@ -46,10 +46,10 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.zip`, Buffer.from(download.data));
       - name: Unzip artifact
         run: unzip artifact.zip
-      - name: Return artifact JSON
       - name: Debug path
         run: |
           ls -a
+      - name: Return artifact JSON
         id: return-artifact-json
         uses: actions/github-script@v6
         with:
