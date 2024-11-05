@@ -8,7 +8,7 @@ on:
 
 jobs:
   drive:
-    runs-on: self-hosted
+    runs-on: [self-hosted, drive]
     env:
       AGENT_VERSION: latest
       COMPOSE_FILE: ./build/docker-compose.cicd.yaml
@@ -20,47 +20,18 @@ jobs:
         run: |
           echo "AGENT_VERSION=${AGENT_VERSION}"
           echo "COMPOSE_FILE=${COMPOSE_FILE}"
-      - name: 'Download artifact (PR ID)'
-        if: github.event_name == 'pull_request'
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+      - name: Return artifact JSON
+        id: return-artifact-json
         uses: actions/github-script@v6
         with:
           script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "pr_id"
-            })[0];
-            if (!matchArtifact) {
-              core.setFailed('No pr_id artifact found from the build workflow');
-              return;
-            }
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
             let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_id.zip`, Buffer.from(download.data));
-
-      - name: 'Unzip artifact (PR ID)'
-        if: github.event_name == 'pull_request'
-        run: |
-          unzip pr_id.zip
-
-      - name: Check PR ID
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            let issue_number = fs.readFileSync('./pr_id');
-            if (!issue_number || isNaN(Number(issue_number))) {
-              core.setFailed(`Invalid PR ID: ${prIdContent}`);
-              return;
-            }
+            let data = JSON.parse(fs.readFileSync('${process.env.GITHUB_WORKSPACE}/artifacts.json'));
+            return data;
 
       - name: Run docker-compose
         run: |
@@ -73,12 +44,10 @@ jobs:
         if: always()
         run: docker compose down -v
       # add rendered JSON as comment to the pull request
-      - name: Add simulation results as comment
-        if: github.event_name == 'pull_request'
+      - name: Create simulation results table
+        id: simulation-results
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # this script reads the simulation_results.json and creates a comment on the pull request with the results.
           script: |
             const fs = require('fs');
             // read the simulation results
@@ -94,13 +63,26 @@ jobs:
             let resultsTableDivider = `| --- | --- |`;
             // add everything to the resultsTable
             resultsTable = resultsTableHeader + '\n' + resultsTableDivider + '\n' + resultsTable.join('\n');
+            return resultsTable;
+          result-encoding: string
+      - name: Print simulation results
+        run: |
+          echo "Simulation results\n"
+          echo "${{ steps.simulation-results.outputs.result }}"
+      - name: Add simulation results as comment
+        if: ${{ steps.return-artifact-json.outputs.result.is_pr }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # this script reads the simulation_results.json and creates a comment on the pull request with the results.
+          script: |
+            let issue_number = Number(${{ steps.return-artifact-json.outputs.pr_id }});
             // add the results as a comment to the pull request
-            let issue_number = Number(fs.readFileSync('./pr_id'));
             github.rest.issues.createComment({
               issue_number: issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "## Simulation results\n" + resultsTable
+              body: "## Simulation results\n" + ${{ steps.simulation-results.outputs.result }}
             });
-      - name: Prune all images older than 30 days from self-hosted runner
-        run: docker image prune -a --force --filter "until=720h"
+      - name: Prune all images older than 1 days from self-hosted runner
+        run: docker image prune -a --filter "until=24h"
