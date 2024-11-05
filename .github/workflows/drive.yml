@@ -43,7 +43,7 @@ jobs:
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync('${process.env.GITHUB_WORKSPACE}/artifact.zip', Buffer.from(download.data));
+            fs.writeFileSync('artifact.zip', Buffer.from(download.data));
 
       - name: Unzip artifact
         run: |
@@ -55,7 +55,7 @@ jobs:
         with:
           script: |
             let fs = require('fs');
-            let data = JSON.parse(fs.readFileSync('${process.env.GITHUB_WORKSPACE}/artifacts.json'));
+            let data = JSON.parse(fs.readFileSync('artifacts.json'));
             return data;
 
       - name: Run docker-compose
