@@ -15,7 +15,7 @@ env:
 jobs:
   build-and-push-image:
     name: Build and push image
-    runs-on: self-hosted
+    runs-on: [self-hosted, build]
     outputs:
       version: ${{ steps.build.version.outputs.version }}
     permissions:
@@ -126,4 +126,4 @@ jobs:
           mv /tmp/.buildx-cache/cache-new/latest /tmp/.buildx-cache/cache/latest
       
       - name: Prune all images older than 1 days from self-hosted runner
-        run: docker image prune -a --filter "until=24h"
+        run: docker image prune -a -f --filter "until=24h"

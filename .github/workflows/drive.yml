@@ -8,7 +8,7 @@ on:
 
 jobs:
   drive:
-    runs-on: self-hosted
+    runs-on: [self-hosted, drive]
     env:
       AGENT_VERSION: latest
       COMPOSE_FILE: ./build/docker-compose.cicd.yaml
