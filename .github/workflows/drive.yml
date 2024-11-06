@@ -46,17 +46,13 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.zip`, Buffer.from(download.data));
       - name: Unzip artifact
         run: unzip artifact.zip
-      - name: Debug path
-        run: |
-          pwd
-          ls -a
       - name: Return artifact JSON
         id: return-artifact-json
         uses: actions/github-script@v6
         with:
           script: |
             let fs = require('fs');
-            let data = JSON.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/artifacts.json`));
+            let data = JSON.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.json`));
             return data;
 
       - name: Run docker-compose
