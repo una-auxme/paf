@@ -56,7 +56,8 @@ jobs:
         with:
           script: |
             let fs = require('fs');
-            core.info('${{ GITHUB_WORKSPACE }}');
+            core.info('${GITHUB_WORKSPACE}');
+            core.info('${{ github.workspace }}');
             core.info('${process.env.GITHUB_WORKSPACE}');
             let data = JSON.parse(fs.readFileSync('/home/paf/actions-runners/drive_runner/_work/paf/paf/artifacts.json'));
             return data;
