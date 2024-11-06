@@ -43,7 +43,7 @@ jobs:
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync('${process.env.GITHUB_WORKSPACE}/artifact.zip', Buffer.from(download.data));
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.zip`, Buffer.from(download.data));
       - name: Unzip artifact
         run: unzip artifact.zip
       - name: Debug path
@@ -56,10 +56,7 @@ jobs:
         with:
           script: |
             let fs = require('fs');
-            core.info('${GITHUB_WORKSPACE}');
-            core.info('${{ github.workspace }}');
-            core.info('${process.env.GITHUB_WORKSPACE}');
-            let data = JSON.parse(fs.readFileSync('/home/paf/actions-runners/drive_runner/_work/paf/paf/artifacts.json'));
+            let data = JSON.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/artifacts.json`));
             return data;
 
       - name: Run docker-compose
