@@ -147,7 +147,7 @@
                 <mxCell id="12" value="Lösung" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;gradientDirection=radial;fillColor=#6a00ff;strokeColor=#3700CC;treeFolding=1;treeMoving=1;fontColor=#ffffff;fontFamily=Helvetica;fontSize=12;align=center;strokeWidth=1;" vertex="1" parent="1">
                     <mxGeometry x="2390" y="-3060" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="14" value="" style="whiteSpace=wrap;html=1;fillColor=#00ff00;rounded=1;arcSize=12;strokeWidth=1;spacing=4;gradientColor=none;" vertex="1" parent="1">
+                <mxCell id="14" value="fgdfksjdflkj" style="whiteSpace=wrap;html=1;fillColor=#00ff00;rounded=1;arcSize=12;strokeWidth=1;spacing=4;gradientColor=none;" vertex="1" parent="1">
                     <mxGeometry x="2190" y="-3200" width="120" height="60" as="geometry"/>
                 </mxCell>
             </root>
