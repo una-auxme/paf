@@ -2,18 +2,19 @@
 
 **Summary:** This page explains the GitHub build action we use to evaluate our agent.
 
-- [GitHub actions](#github-actions)
-  - [The drive job](#the-drive-job)
-    - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository-actionscheckoutv3)
-    - [2. Run agent with docker-compose](#2-run-agent-with-docker-compose)
-    - [3. Copy simulation results file out of container](#3-copy-simulation-results-file-out-of-container)
-    - [4. Stop docker-compose stack](#4-stop-docker-compose-stack)
-    - [5. Comment result in pull request `actions/github-script@v6`](#5-comment-result-in-pull-request-actionsgithub-scriptv6)
-  - [Simulation results](#simulation-results)
+- [The drive job](#the-drive-job)
+  - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository-actionscheckoutv3)
+  - [2. Run agent with docker-compose](#2-run-agent-with-docker-compose)
+  - [3. Copy simulation results file out of container](#3-copy-simulation-results-file-out-of-container)
+  - [4. Stop docker-compose stack](#4-stop-docker-compose-stack)
+  - [5. Comment result in pull request `actions/github-script@v6`](#5-comment-result-in-pull-request-actionsgithub-scriptv6)
+- [Simulation results](#simulation-results)
 
 ## The drive job
 
 The `drive` job is executed conditionally on `pull_request`, after the build successfully ran through.
+
+> Warning: Always start the GitHub runner that handles the `drive` action through direct access to the machine. Do not use remote access like `ssh` or `xrdp`.
 
 ### 1. Checkout repository ([`actions/checkout@v3`](https://github.com/actions/checkout))
 
