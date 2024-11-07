@@ -2,70 +2,89 @@
 
 import importlib.util
 import os
+import subprocess
+import runpy
 import sys
+import shutil
 import argparse
+from multiprocessing.connection import Client
 
 import rospy
 
-DEBUG_WRAPPER_MSG_PREFIX = "[debug_wrapper]:"
-TYPE_PARAM = "~debug_type"
-PORT_PARAM = "~debug_port"
-WAIT_PARAM = "~debug_wait"
+NODE_NAME = "NAMEERR"
+LOGGER_STARTED = False
 
 
-def printdebug(msg: str):
-    print(f"{DEBUG_WRAPPER_MSG_PREFIX} {msg}")
+def start_logger():
+    global LOGGER_STARTED
+    # read directory of this python file with resolved symlinks
+    real_dir = os.path.dirname(os.path.realpath(__file__))
+    logger_path = os.path.join(real_dir, "debug_logger_node.py")
+    eprint(f"Starting logger at {logger_path}")
+    try:
+        python_path: str = shutil.which("python3")
+        subprocess.Popen(
+            [python_path, logger_path],
+            start_new_session=True,
+        )
+        LOGGER_STARTED = True
+    except BaseException as error:
+        eprint(f"Failed to start logger: {error}")
 
 
-def printerror(msg: str):
-    """Print to stderr"""
-    print(f"{DEBUG_WRAPPER_MSG_PREFIX} {msg}", file=sys.stderr)
+def eprint(msg: str):
+    print(f"[debug_wrapper]: {msg}", file=sys.stderr)
+
+
+def log(msg: str, level: str):
+    if LOGGER_STARTED:
+        try:
+            address = ("localhost", 52999)
+            conn = Client(address, authkey=b"debug_logger")
+            conn.send({"name": NODE_NAME, "msg": msg, "level": level})
+            conn.close()
+        except BaseException as error:
+            eprint(msg)
+            eprint(f"Failed to send to logger: {error}")
+    else:
+        eprint(msg)
 
 
 def logfatal(msg: str):
-    """Only works after ros node has been initialized"""
-    rospy.logfatal(
-        f"""{DEBUG_WRAPPER_MSG_PREFIX} FAILED TO START NODE - NODE WILL NOT SHOW UP:
-        {msg}"""
-    )
+    log(f"FAILED TO START NODE - NODE WILL NOT SHOW UP: {msg}", "fatal")
 
 
 def logerr(msg: str):
-    """Only works after ros node has been initialized"""
-    rospy.logerr(f"{DEBUG_WRAPPER_MSG_PREFIX} {msg}")
+    log(msg, "error")
+
+
+def logwarn(msg: str):
+    log(msg, "warn")
 
 
 def loginfo(msg: str):
-    """Only works after ros node has been initialized"""
-    rospy.loginfo(f"{DEBUG_WRAPPER_MSG_PREFIX} {msg}")
+    log(msg, "info")
 
 
-def import_module_at(path: str):
+def run_module_at(path: str):
     basename = os.path.basename(path)
     module_dir = os.path.dirname(path)
     module_name = os.path.splitext(basename)[0]
-    # Based on https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-    """ spec = importlib.util.spec_from_file_location(
-        name=module_name, location=path, submodule_search_locations=[module_dir]
-    )
-    if spec is None:
-        raise Exception(f"Failed to load {path} as module {module_name}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module) """
     sys.path.append(module_dir)
-    module = importlib.import_module(module_name)
-    return module
+    runpy.run_module(module_name, run_name="__main__")
 
 
-def start_debugger(port: int, node_module_name: str, wait_for_client: bool = False):
+def start_debugger(
+    node_module_name: str, host: str, port: int, wait_for_client: bool = False
+):
     debugger_spec = importlib.util.find_spec("debugpy")
     if debugger_spec is not None:
         try:
             import debugpy
 
-            debugpy.listen(("localhost", port))
-            loginfo(f"Started debugger on port {port} for {node_module_name}")
+            debugpy.configure(subProcess=False)
+            debugpy.listen((host, port))
+            logwarn(f"Started debugger on {host}:{port} for {node_module_name}")
             if wait_for_client:
                 debugpy.wait_for_client()
         except BaseException as error:
@@ -81,31 +100,38 @@ class ArgumentParserError(Exception):
 
 class ThrowingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
+        logfatal(f"Wrong node arguments. Check launch config. : {message}")
         raise ArgumentParserError(message)
 
 
 def main(argv):
+    global NODE_NAME
+    start_logger()
+
+    default_host = "localhost"
+    if "DEBUG_WRAPPER_DEFAULT_HOST" in os.environ:
+        default_host = os.environ["DEBUG_WRAPPER_DEFAULT_HOST"]
+
     node_args = rospy.myargv(argv=argv)
     parser = ThrowingArgumentParser(
         prog="debug wrapper",
     )
-    parser.add_argument("--debug_node", required=True)
+    parser.add_argument("--debug_node", required=True, type=str)
     parser.add_argument("--debug_port", required=False, type=int)
+    parser.add_argument("--debug_host", default=default_host, type=str)
     parser.add_argument("--debug_wait", default=False, type=bool)
     args, unknown_args = parser.parse_known_args(node_args)
+
     debug_node = args.debug_node
-
+    NODE_NAME = debug_node
     base_dir = os.path.abspath(os.path.dirname(__file__))
-    printdebug(f"Node {args.debug_node} starting at {base_dir}")
-
-    target_type_path = os.path.join(base_dir, debug_node)
-    module = import_module_at(target_type_path)
-
-    module.init_ros()
 
     if args.debug_port is not None:
         start_debugger(
-            args.debug_port, args.debug_node, wait_for_client=args.debug_wait
+            args.debug_node,
+            args.debug_host,
+            args.debug_port,
+            wait_for_client=args.debug_wait,
         )
     else:
         logerr(
@@ -113,8 +139,10 @@ def main(argv):
                 Add it in the launch configuration"""
         )
 
+    target_type_path = os.path.join(base_dir, debug_node)
+    loginfo(f"Node {args.debug_node} starting at {base_dir}")
     try:
-        module.main(unknown_args)
+        run_module_at(target_type_path)
     except BaseException as error:
         logfatal(f"Failed to run node {debug_node}: {error}")
         raise error

@@ -5,19 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Remote Attach",
+            "name": "53000 leaderboard attach",
             "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "localhost",
-                "port": 5678
+                "port": 53000
             },
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}/code",
-                    "remoteRoot": "/internal_workspace/catkin_ws/src"
+                    "remoteRoot": "${env:PAF_CODE_ROOT}"
                 }
             ]
         }
-    ]
+    ],
 }

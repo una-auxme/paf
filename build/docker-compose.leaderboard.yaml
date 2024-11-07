@@ -8,6 +8,8 @@ services:
     extends:
       file: agent_service.yaml
       service: agent
+    ports:
+      - "53000-53100:53000-53100"
     command: |-
       bash -c "sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && \
       sudo chmod -R a+w ../ && sudo mkdir -p $${XDG_RUNTIME_DIR} && sudo chmod 0700 $${XDG_RUNTIME_DIR} && sudo chown -R ${USER_UID}:${USER_GID} $${XDG_RUNTIME_DIR} && \

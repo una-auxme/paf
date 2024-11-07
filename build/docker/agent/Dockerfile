@@ -171,7 +171,8 @@ RUN source /opt/ros/noetic/setup.bash && catkin_make
 ADD ./build/docker/agent/entrypoint.sh /entrypoint.sh
 
 # set the default working directory to the code
-WORKDIR /workspace/code
+ENV PAF_CODE_ROOT=/workspace/code
+WORKDIR ${PAF_CODE_ROOT}
 
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 RUN echo "source /catkin_ws/devel/setup.bash" >> ~/.bashrc
