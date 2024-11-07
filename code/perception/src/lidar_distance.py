@@ -245,7 +245,7 @@ class LidarDistance:
         return dist_array
 
 
-def ros_init():
+def init_ros():
     """Initializes the node for basic ROS functions.
 
     Must only be called ONCE and not as part of def main()
@@ -254,7 +254,7 @@ def ros_init():
     rospy.init_node("lidar_distance")
 
 
-def main():
+def main(argv=None):
     """Main entry point of this node
 
     Required for debugger entry"""
@@ -263,5 +263,5 @@ def main():
 
 
 if __name__ == "__main__":
-    rospy.init_node("lidar_distance")
+    init_ros()
     main()
