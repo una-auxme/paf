@@ -120,6 +120,7 @@ class LidarDistance:
         Initializes the node and it's publishers
         """
         # run simultaneously.
+        rospy.init_node("lidar_distance")
         self.bridge = CvBridge()
 
         self.pub_pointcloud = rospy.Publisher(
@@ -245,23 +246,6 @@ class LidarDistance:
         return dist_array
 
 
-def init_ros():
-    """Initializes the node for basic ROS functions.
-
-    Must only be called ONCE and not as part of def main()
-
-    Required for debugger entry"""
-    rospy.init_node("lidar_distance")
-
-
-def main(argv=None):
-    """Main entry point of this node
-
-    Required for debugger entry"""
+if __name__ == "__main__":
     lidar_distance = LidarDistance()
     lidar_distance.listener()
-
-
-if __name__ == "__main__":
-    init_ros()
-    main()
