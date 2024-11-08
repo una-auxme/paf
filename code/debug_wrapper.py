@@ -2,34 +2,15 @@
 
 import importlib.util
 import os
-import subprocess
 import runpy
 import sys
-import shutil
 import argparse
+import time
 from multiprocessing.connection import Client
 
 import rospy
 
 NODE_NAME = "NAMEERR"
-LOGGER_STARTED = False
-
-
-def start_logger():
-    global LOGGER_STARTED
-    # read directory of this python file with resolved symlinks
-    real_dir = os.path.dirname(os.path.realpath(__file__))
-    logger_path = os.path.join(real_dir, "debug_logger_node.py")
-    eprint(f"Starting logger at {logger_path}")
-    try:
-        python_path: str = shutil.which("python3")
-        subprocess.Popen(
-            [python_path, logger_path],
-            start_new_session=True,
-        )
-        LOGGER_STARTED = True
-    except BaseException as error:
-        eprint(f"Failed to start logger: {error}")
 
 
 def eprint(msg: str):
@@ -37,17 +18,22 @@ def eprint(msg: str):
 
 
 def log(msg: str, level: str):
-    if LOGGER_STARTED:
+    error = None
+    success = False
+    start_time = time.monotonic()
+    while not success and start_time + 5.0 > time.monotonic():
         try:
             address = ("localhost", 52999)
             conn = Client(address, authkey=b"debug_logger")
             conn.send({"name": NODE_NAME, "msg": msg, "level": level})
             conn.close()
-        except BaseException as error:
-            eprint(msg)
-            eprint(f"Failed to send to logger: {error}")
-    else:
+            success = True
+        except BaseException as e:
+            error = e
+    if not success:
         eprint(msg)
+        if error is not None:
+            eprint(f"Failed to send to logger: {error}")
 
 
 def logfatal(msg: str):
@@ -82,7 +68,6 @@ def start_debugger(
         try:
             import debugpy
 
-            debugpy.configure(subProcess=False)
             debugpy.listen((host, port))
             logwarn(f"Started debugger on {host}:{port} for {node_module_name}")
             if wait_for_client:
@@ -105,9 +90,6 @@ class ThrowingArgumentParser(argparse.ArgumentParser):
 
 
 def main(argv):
-    global NODE_NAME
-    start_logger()
-
     default_host = "localhost"
     if "DEBUG_WRAPPER_DEFAULT_HOST" in os.environ:
         default_host = os.environ["DEBUG_WRAPPER_DEFAULT_HOST"]
@@ -123,6 +105,7 @@ def main(argv):
     args, unknown_args = parser.parse_known_args(node_args)
 
     debug_node = args.debug_node
+    global NODE_NAME
     NODE_NAME = debug_node
     base_dir = os.path.abspath(os.path.dirname(__file__))
 
