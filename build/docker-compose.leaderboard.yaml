@@ -9,6 +9,7 @@ services:
       file: agent_service.yaml
       service: agent
     ports:
+      # Reserved ports for the debugger
       - "53000-53100:53000-53100"
     command: |-
       bash -c "sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && \
