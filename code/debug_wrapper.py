@@ -1,4 +1,39 @@
 #!/usr/bin/env python3
+"""Debug wrapper node
+
+Node that wraps a python ros node
+and is able to open a debugpy remote debugger instance.
+
+Logs any exceptions from the node and other information
+into the ros console via the debug_logger node.
+
+Always tries to at least start the node,
+even if dependencies like debugpy are missing.
+
+Usage:
+    Already done for existing ros packages: symlink this file into the package. Example:
+    `cd code/perception/src && ln -s ../../debug_wrapper.py debug_wrapper.py`
+
+    Adjust the launch configuration to use the debug_wrapper.py
+    instead of the node file and set the required args
+
+    More info in [debugging.md](doc/development/debugging.md)
+
+Arguments:
+    --debug_node: Required: The filename of the node to debug
+    --debug_port: The port the debugger listens on. If not set,
+    --debug_host: The host the debugger binds to.
+        Defaults to the environment variable `DEBUG_WRAPPER_DEFAULT_HOST` if set,
+        otherwise `localhost`
+    --debug_wait: If True, the wrapper waits until a client (VS Code) is connected
+        and only then starts node execution
+
+Raises:
+    ArgumentParserError: Missing required parameters
+    error: If the started debug_node raises an exception,
+        it is logged and then raised again
+"""
+
 
 import importlib.util
 import os
@@ -14,10 +49,24 @@ NODE_NAME = "NAMEERR"
 
 
 def eprint(msg: str):
+    """Log msg into stderr.
+
+    Used instead of print, because only stderr seems to reliably land in agent.log
+
+    Args:
+        msg (str): Log message
+    """
     print(f"[debug_wrapper]: {msg}", file=sys.stderr)
 
 
 def log(msg: str, level: str):
+    """Log msg via the debug_logger node
+
+    Args:
+        msg (str): Log message
+        level (str): Log level. One of (debug), info, warn, error, fatal.
+            debug level not recommended, because these are not published to /rosout
+    """
     error = None
     success = False
     start_time = time.monotonic()
@@ -53,6 +102,11 @@ def loginfo(msg: str):
 
 
 def run_module_at(path: str):
+    """Runs a python module based on its file path
+
+    Args:
+        path (str): python file path to run
+    """
     basename = os.path.basename(path)
     module_dir = os.path.dirname(path)
     module_name = os.path.splitext(basename)[0]
@@ -63,6 +117,15 @@ def run_module_at(path: str):
 def start_debugger(
     node_module_name: str, host: str, port: int, wait_for_client: bool = False
 ):
+    """_summary_
+
+    Args:
+        node_module_name (str): Name of the underlying node. Only used for logging
+        host (str): host the debugger binds to
+        port (int): debugger port
+        wait_for_client (bool, optional): If the debugger should wait
+            for a client to attach. Defaults to False.
+    """
     debugger_spec = importlib.util.find_spec("debugpy")
     if debugger_spec is not None:
         try:

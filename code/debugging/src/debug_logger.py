@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-"""
-This is a dedicated debug logger node
+"""Dedicated debug logger node.
 
-Without a fully initialized node, log messages only show up in the logfile.
-But not in the /rosout topic and thus not in the rqt_console
+It can receive messages via a multiprocessing ipc socket on localhost:52999.
+Message format is a python dict with keys {name, msg, level}.
+It will then send those messages into the ros console via rospy.log*()
+
+Main usecase: it enables not initialized python nodes to publish log messages
+to the /rosout topic.
+
+Without a fully initialized node,
+log messages from python files only show up in the ros logfile,
+but not in the /rosout topic and thus not in the rqt_console
 
 This is why this node is used by the debug_wrapper for logging
 before it has initialized its own node
@@ -28,10 +35,25 @@ MESSAGES = []
 
 
 def eprint(msg: str):
-    print(f"[debug_logger_node]: {msg}", file=sys.stderr)
+    """Log msg into stderr.
+
+    Used instead of print, because only stderr seems to reliably land in agent.log
+
+    Args:
+        msg (str): Log message
+    """
+    print(f"[debug_logger]: {msg}", file=sys.stderr)
 
 
 def log(name: str, msg: str, level: str):
+    """Log to the ros console
+
+    Args:
+        name (str): Node name this message should be associated with
+        msg (str): Log message
+        level (str): Log level. One of (debug), info, warn, error, fatal.
+            debug level not recommended, because these are not published to /rosout
+    """
     msg = f"[debug_logger for {name}]: {msg}"
 
     level = level.lower()
@@ -48,6 +70,13 @@ def log(name: str, msg: str, level: str):
 
 
 def run_listener(listener: Listener):
+    """Run the multiprocessing listener
+
+    The listener exits when it receives CLOSE_MSG
+
+    Args:
+        listener (Listener): Listener to run
+    """
     running = True
     while running:
         conn = listener.accept()
