@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run 'catkin_make' in Docker container. Write container name.",
+            "type": "shell",
+            "command": "docker exec -it ${input:container_name} bash -c 'cd ../../catkin_ws && source /opt/ros/noetic/setup.bash && bash devel/setup.bash && catkin_make'",
+            "problemMatcher": [],
+            "detail": "Executes 'catkin_make' in built-agent-dev-1 container. The container must be running.",
+            "dependsOn": [],
+        },
+        {
+            "label": "Run 'catkin_make' in docker container. Autochoose docker container.",
+            "type": "shell",
+            "command": "docker exec -it ${input:container_name_shell} bash -c 'cd ../../catkin_ws && source /opt/ros/noetic/setup.bash && bash devel/setup.bash && catkin_make'",
+            "problemMatcher": [],
+            "detail": "Executes 'catkin_make' selected container. Requires Tasks Shell Input Extension.",
+        }
+    ],
+    "inputs": [
+        {
+            "id": "container_name",
+            "description": "Name of docker container",
+            "default": "build-agent-dev-1",
+            "type": "promptString"
+        },
+        {
+            "id": "container_name_shell",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "docker ps --format '{{.Names}}'",
+            }
+        }
+    ]
+}
