@@ -165,14 +165,16 @@ COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 # Link code into catkin workspace
 RUN ln -s /workspace/code /catkin_ws/src
 
+# For debugger
+ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src
+
 # re-make the catkin workspace
 RUN source /opt/ros/noetic/setup.bash && catkin_make
 
 ADD ./build/docker/agent/entrypoint.sh /entrypoint.sh
 
 # set the default working directory to the code
-ENV PAF_CODE_ROOT=/workspace/code
-WORKDIR ${PAF_CODE_ROOT}
+WORKDIR /workspace/code
 
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 RUN echo "source /catkin_ws/devel/setup.bash" >> ~/.bashrc

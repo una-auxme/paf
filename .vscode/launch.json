@@ -15,7 +15,7 @@
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}/code",
-                    "remoteRoot": "${env:PAF_CODE_ROOT}"
+                    "remoteRoot": "${env:PAF_CATKIN_CODE_ROOT}"
                 }
             ]
         }
