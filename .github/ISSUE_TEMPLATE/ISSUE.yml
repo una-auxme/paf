@@ -29,8 +29,8 @@ body:
     id: effort_estimate
     attributes:
       label: Effort Estimate
-      description: Estimate the effort required.
-      placeholder: Enter effort estimate here.
+      description: Approximate effort required (e.g., hours).
+      placeholder: Enter effort estimate.
 
   - type: textarea
     id: testability
