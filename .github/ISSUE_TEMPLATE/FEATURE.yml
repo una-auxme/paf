@@ -38,7 +38,7 @@ body:
     attributes:
       label: Dependencies
       description: List any dependencies on other issues.
-      placeholder: Link dependencies here (e.g., #456).
+      placeholder: Link dependencies here (e.g., \#456).
 
   - type: markdown
     attributes:
