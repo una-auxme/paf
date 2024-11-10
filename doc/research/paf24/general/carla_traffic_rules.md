@@ -2,12 +2,13 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Key Traffic Principles and Complex Interactions](#key-traffic-principles-and-complex-interactions)
 - [CARLA Maps and Their Traffic Scenarios](#carla-maps-and-their-traffic-scenarios)
   - [Overview of CARLA Maps](#overview-of-carla-maps)
   - [Rural and Highway Scenarios](#rural-and-highway-scenarios)
-  - [Custom Maps with ASAM OpenDRIVE®](#custom-maps-with-asam-opendrive)
+- [Road Network Creation with ASAM OpenDRIVE®](#road-network-creation-with-asam-opendrive)
 - [Units of Measurement](#units-of-measurement)
 - [References](#references)
 
@@ -33,6 +34,7 @@ CARLA (Car Learning to Act) is an open-source simulator for testing and developi
 - **Intersection Management**: Vehicles must navigate intersections
   effectively, managing stop lights and stop signs while yielding when
   necessary to keep traffic moving.
+  *Note: According to the [CARLA documentation](https://carla.readthedocs.io/en/latest/adv_traffic_manager/) the Traffic Manager uses its own priority system at junctions. This is a known problem in the simulation.*
 
 - **Roundabout Navigation**: Vehicles should yield to cars already in the
   roundabout. This tests their ability to navigate circular roads and merge
