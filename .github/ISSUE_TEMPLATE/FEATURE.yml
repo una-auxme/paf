@@ -53,5 +53,6 @@ body:
         - perception: Related to sensor processing and scene understanding
         - planning: Related to path planning and decision making
         - acting: Related to vehicle control and actuation
+        - system: Related to the general behavior of the system
         - research: Related to research and experimentation
         - infrastructure: Related to system infrastructure and setup
