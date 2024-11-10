@@ -1,12 +1,11 @@
 # Drawio Board for planning future work
 
-**Summary:** This page gives an overview over the usage of the draw.io board and gives links to videos to give general tipps how to work with draw.io
+**Summary:** This page provides an overview of the draw.io board usage and provides links to videos with general tips on how to work with draw.io
 
 - [Drawio Board for planning future work](#drawio-board-for-planning-future-work)
-    -[Link](#link)
-    -[Legend](#legend)
-    -[Tips](#tips)
-
+    - [Link](#link)
+    - [Legend](#legend)
+    - [Tips](#tips)
 
 ## Link
 
