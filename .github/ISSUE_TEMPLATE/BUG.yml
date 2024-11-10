@@ -1,24 +1,74 @@
 name: 🐞 Bug
 title: "[Bug]: "
-description: Something doesn't behave as it should.
+description: A bug that requires attention.
 labels: ["bug"]
 body:
   - type: textarea
     id: current
     attributes:
       label: Current Behavior
-      placeholder: The car doesnt see a traffic light on Map1.
+      description: Describe the current, unexpected behavior.
+      placeholder: The car doesn’t detect the traffic light on Map1.
 
   - type: textarea
     id: expected
     attributes:
       label: Expected Behavior
-      placeholder: The car does see the traffic light on Map1.
+      description: Describe the expected, correct behavior.
+      placeholder: The car should detect the traffic light on Map1.
 
   - type: textarea
     id: reproduce
     attributes:
-      label: How to reproduce the issue
+      label: Steps to Reproduce
+      description: Provide steps to reproduce the issue.
       placeholder: |
-        * Start the simulation with Map1 
-        * after 600m the car won't stop at the traffic light.
+        * Start simulation on Map1.
+        * After 600m, the car should stop at the traffic light.
+
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of Done
+      description: Criteria to consider this issue resolved.
+      placeholder: |
+        - The car detects traffic lights on Map1 correctly.
+        - The issue no longer occurs in similar scenarios.
+
+  - type: input
+    id: effort_estimate
+    attributes:
+      label: Effort Estimate
+      description: Approximate effort required (e.g., hours).
+      placeholder: Enter effort estimate.
+
+  - type: textarea
+    id: testability
+    attributes:
+      label: Testability
+      description: Describe how to test the fix.
+      placeholder: Describe testing steps for verification.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any dependent tasks or issues.
+      placeholder: Link dependencies here (e.g., #123).
+
+  - type: markdown
+    attributes:
+      value: |
+        **Add Priority Label**:
+        - p1: Immediate attention
+        - p2: High priority
+        - p3: Standard priority
+        - p4: Low priority
+
+        **Add Group Label**:
+        - perception: Related to sensor processing and scene understanding
+        - planning: Related to path planning and decision making
+        - acting: Related to vehicle control and actuation
+        - system: Related to the general behavior of the system
+        - research: Related to research and experimentation
+        - infrastructure: Related to system infrastructure and setup

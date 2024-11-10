@@ -1,78 +1,55 @@
-name: "Issue Template"
-description: "Template for creating issues"
-labels: []
-assignees: []
+name: "General Issue"
+title: "[General]: "
+description: Template for general issues.
+labels: ["general"]
 
 body:
-  - type: markdown
-    attributes:
-      value: |
-        ## Please fill out all relevant fields:
-
   - type: textarea
     id: description
     attributes:
-      label: "Detailed Description"
-      description: "Describe the issue in detail"
+      label: Detailed Description
+      description: Describe the issue in detail.
       placeholder: |
-        Enter description here
+        Enter description here:
         - What is the problem?
-        - What is the expected behavior?
-        - What is the actual behavior?
+        - What is the expected outcome?
 
   - type: textarea
     id: definition_of_done
     attributes:
-      label: "Definition of Done"
-      description: "What needs to be completed for the task to be considered done?"
+      label: Definition of Done
+      description: Criteria for considering the task complete.
       placeholder: |
-        Example criteria:
-        - [ ] Implementation completed and tested
-        - [ ] Documentation updated
-        - [ ] Code review passed
-        - [ ] All tests passing
+        - Implementation completed and tested
+        - Documentation updated
+        - Code review passed
+        - All tests passing
 
   - type: input
     id: effort_estimate
     attributes:
-      label: "Effort Estimate"
-      description: "Estimate the effort required (e.g., in hours)"
-      placeholder: "Enter effort estimate here"
+      label: Effort Estimate
+      description: Approximate effort required (e.g., hours).
+      placeholder: Enter effort estimate.
 
   - type: textarea
     id: testability
     attributes:
-      label: "Testability"
-      description: "How can the implementation be tested?"
-      placeholder: "Enter testing methods here"
+      label: Testability
+      description: How to verify the issue's resolution.
+      placeholder: Enter test methods and validation criteria.
 
   - type: textarea
     id: dependencies
     attributes:
-      label: "Dependencies"
-      description: "Are there dependencies on other tasks or systems?"
-      placeholder: |
-        Enter dependencies here
-        - Task A must be completed before this task can start
-        - Link issues here with #<issue number>
+      label: Dependencies
+      description: List dependencies, if any.
+      placeholder: Link dependencies here (e.g., the issue #789).
 
   - type: markdown
-    id: prioritization
     attributes:
       value: |
-        Add a priority label to this issue (p1 to p4) based on the following criteria:
-        - p1: Critical issue that needs immediate attention
-        - p2: Important issue that should be addressed soon
-        - p3: Issue that should be addressed in the near future
-        - p4: Issue that can be addressed later
-
-  - type: markdown
-    id: labels
-    attributes:
-      value: |
-        Add any relevant labels to this issue:
-
-        standard labels:
+        **Add Standard Label**:
         - bug: Something isn't working
         - enhancement: New feature or request
         - help wanted: Extra attention is needed
@@ -81,9 +58,16 @@ body:
         - question: Further information is requested
         - wontfix: This will not be worked on
 
-        project-specific labels:
+        **Add Priority Label**:
+        - p1: Immediate attention
+        - p2: High priority
+        - p3: Standard priority
+        - p4: Low priority
+
+        **Add Group Label**:
         - perception: Related to sensor processing and scene understanding
         - planning: Related to path planning and decision making
         - acting: Related to vehicle control and actuation
+        - system: Related to the general behavior of the system
         - research: Related to research and experimentation
         - infrastructure: Related to system infrastructure and setup
