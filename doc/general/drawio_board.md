@@ -3,9 +3,9 @@
 **Summary:** This page provides an overview of the draw.io board usage and provides links to videos with general tips on how to work with draw.io
 
 - [Drawio Board for planning future work](#drawio-board-for-planning-future-work)
-    - [Link](#link)
-    - [Legend](#legend)
-    - [Tips](#tips)
+  - [Link](#link)
+  - [Legend](#legend)
+  - [Tips](#tips)
 
 ## Link
 
@@ -20,14 +20,14 @@ Explanation:
 
 This node is primarily for the software engineers who define the goals or sub-goals to be achieved for all teams. The goals should be defined as precisely as possible.These goals are added either in a separate graph or directly above the problems.
 
-
 ![Team](../assets/research_assets/drawio_legend/Team.jpg)
 
 This node is for assigning the respective teams or a person from a team. Each team is assigned its own color. Green for Perception, Red for Acting, and Blue for Planning.
 
 ![Uebergeordnetes Problem](../assets/research_assets/drawio_legend/Übergeordnetes_Problem.jpg)
 
-This node is used to describe a higher-level problem that cannot currently be defined in detail or can be broken down into smaller problems. As described in the previous node, each team has its own color. If there is a problem that affects two teams, the color is determined by adding the colors in hexadecimal notation.
+This node is used to describe a higher-level problem that cannot currently be defined in detail or can be broken down into smaller problems. As described in the previous node, each team has its own color.
+If there is a problem that affects two teams, the color is determined by adding the colors in hexadecimal notation.
 
 ![two teams prolbem](../assets/research_assets/drawio_legend/two_teams_problem.jpg)
 
