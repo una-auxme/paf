@@ -13,7 +13,7 @@ The work on the draw.io board please click [here](https://drive.google.com/drive
 
 ## Legend
 
-Please use the predefined nodes if you´re working with the board, if you thing there is missing something please contact Marcin Kuhnert (Discord: RoyaLxPole) for the PAF24.
+Please use the predefined nodes when working with the board. If you think something is missing, please contact Marcin Kuhnert (Discord: RoyaLxPole) for the PAF24.
 Explanation:
 
 ![Ziele](../assets/research_assets/drawio_legend/Ziel.jpg)
