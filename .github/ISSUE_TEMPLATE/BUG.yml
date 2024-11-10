@@ -54,7 +54,7 @@ body:
     attributes:
       label: Dependencies
       description: List any dependent tasks or issues.
-      placeholder: Link dependencies here (e.g., #123).
+      placeholder: Link dependencies here (e.g., \#123).
 
   - type: markdown
     attributes:
