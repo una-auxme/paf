@@ -44,7 +44,7 @@ body:
     attributes:
       label: Dependencies
       description: List dependencies, if any.
-      placeholder: Link dependencies here (e.g., #789).
+      placeholder: Link dependencies here (e.g., the issue #789).
 
   - type: markdown
     attributes:
