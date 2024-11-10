@@ -23,7 +23,7 @@ body:
     id: effort_estimate
     attributes:
       label: Effort Estimate
-      description: Estimated effort (e.g., in hours).
+      description: Approximate effort required (e.g., hours).
       placeholder: Enter effort estimate.
 
   - type: textarea
