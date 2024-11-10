@@ -42,7 +42,7 @@ This node is used to provide a description for an atomic problem that cannot be 
 This node is used to describe the approach to the problem. If an issue has already been created on GitHub, the issue number should be included here.
 
 ![generell](../assets/research_assets/drawio_legend/generell.jpg)
-This nodes are used to describe problems that have not yet been assigned to a team or to describe a problem that affects all teams equally.
+These nodes are used to describe problems that have not yet been assigned to a team or to describe problems that affect all teams equally.
 
 ## Tips
 
