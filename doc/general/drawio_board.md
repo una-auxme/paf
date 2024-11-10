@@ -9,7 +9,7 @@
 
 ## Link
 
-The work on the draw.io board please click [here](https://drive.google.com/drive/folders/1dNyrnDdsj0m7kymDQUUqu2WinR4lQJpe)
+To access the draw.io board, please click [here](https://drive.google.com/drive/folders/1dNyrnDdsj0m7kymDQUUqu2WinR4lQJpe)
 
 ## Legend
 
