@@ -19,9 +19,9 @@ The **VisionNode** system processes camera images and LIDAR data to detect objec
      - **Ultralytics**: Focused on object detection, bounding boxes and distance calculations. This module generates bounding boxes for identified objects and calculates distances based on LIDAR input. It also passes data to the traffic light processing function
 
 3. **Submodules and Data Processing**
-   - **Traffic Light Processing**: This submodule within the Image Handler processes detected traffic lights. Using distance and image data from object detection, it identifies the position of traffic lights and publishes its image data.
+   - **Traffic Light Processing**: This submodule processes detected traffic lights. Using distance and image data from object detection, it identifies the position of traffic lights and publishes its image data.
 
 4. **Outputs**
-   - **Camera Publisher**: Publishes the segmented image data after processing by PyTorch, which includes identified objects and their segmentation masks.
-   - **Traffic Light Publisher**: Publishes the state and position of traffic lights along with corresponding distance data.
-   - **Object Distance Publisher**: Publishes the calculated distances of detected objects based on LIDAR data and object detection results.
+   - **{side}/segmented_image**: Publishes the segmented image data corresponding to the camera angle after processing by PyTorch, which includes identified objects and their segmentation masks.
+   - **segmented_traffic_light**: Publishes the segmented image of a detected traffic light.
+   - **object_distance**: Publishes the calculated distances of detected objects based on LIDAR data and object detection results.
