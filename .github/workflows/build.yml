@@ -88,13 +88,11 @@ jobs:
 
       - name: Save pull request artifact
         if: github.event_name == 'pull_request'
-        env:
-          PR_ID: ${{ github.event.number }}
         run: |
           mkdir -p ./artifact
           printf '{
             "is_pr": true,
-            "pr_id": $PR_ID
+            "pr_id": ${{ github.event.number }}
           }' >> ./artifact/artifact.json
 
       - name: Save merge artifact

@@ -1,0 +1,40 @@
+<!--
+This launch file starts acting as well as the debug node.
+-->
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" /> 
+    <arg name="show_rqt_plots_automatically" default="true" />
+
+    <include file="$(find acting)/launch/acting.launch">
+        <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
+        <arg name="role_name" value="$(arg role_name)"/>
+    </include>
+    
+    <node pkg="acting" type="Acting_Debug_Node.py" name="Acting_Debug_Node" output="screen">
+        <param name="control_loop_rate" value="$(arg control_loop_rate)"  />
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+
+
+    <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="role_name" value="$(arg role_name)" />
+    </node>
+
+    <node pkg="perception" type="position_heading_publisher_node.py" name="position_heading_publisher_node" output="screen">
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="role_name" value="$(arg role_name)" />
+        <param name="pos_filter" value="Kalman" />
+        <param name="heading_filter" value="Kalman" />
+    </node>
+    
+    <group if="$(arg show_rqt_plots_automatically)">
+    <!-- If you want a live rqt_plots to show up automatically, 
+    include them like following example-plot for Velocity-Controller-Testing -->
+        <node pkg="rqt_plot" type="rqt_plot" output="screen" name="velocity_test" 
+            args="/carla/hero/Speed /paf/hero/target_velocity /paf/hero/throttle /paf/hero/brake"/>
+    </group>
+
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
+</launch>
