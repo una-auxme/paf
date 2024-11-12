@@ -136,7 +136,7 @@ def main():
     while NODE_RUNNING:
         with MESSAGES_MUTEX:
             while len(MESSAGES) > 0:
-                msg = MESSAGES.pop()
+                msg = MESSAGES.pop(0)
                 log_msg = "Wrong log message format"
                 log_name = "NAMERR"
                 log_level = "fatal"
