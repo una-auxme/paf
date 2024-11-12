@@ -1,20 +1,58 @@
 name: 💡 Feature
 title: "[Feature]: "
-description: Something we should implement.
+description: A new feature to be implemented.
 labels: ["feature"]
 body:
   - type: textarea
-    id: desc
+    id: description
     attributes:
-      label: Description
-      description: Short description about what to do.
-      placeholder: The vehicle should detect traffic lights and it's states.
+      label: Feature Description
+      description: Provide a summary of the feature.
+      placeholder: The vehicle should detect traffic lights and their states.
 
   - type: textarea
-    id: dod
+    id: definition_of_done
     attributes:
       label: Definition of Done
-      description: What is required to mark the issue as done?
+      description: Completion criteria for the feature.
       placeholder: |
-        - 90% of the traffic lights are detected
-        - 90% of the traffic light states are detected correctly"
+        - Detects 90% of traffic lights.
+        - Correctly identifies 90% of traffic light states.
+
+  - type: input
+    id: effort_estimate
+    attributes:
+      label: Effort Estimate
+      description: Approximate effort required (e.g., hours).
+      placeholder: Enter effort estimate.
+
+  - type: textarea
+    id: testability
+    attributes:
+      label: Testability
+      description: How will the feature be tested?
+      placeholder: Describe test cases and success criteria.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any dependencies on other issues.
+      placeholder: Link dependencies here (e.g., \#456).
+
+  - type: markdown
+    attributes:
+      value: |
+        **Add Priority Label**:
+        - p1: Immediate attention
+        - p2: High priority
+        - p3: Standard priority
+        - p4: Low priority
+
+        **Add Group Label**:
+        - perception: Related to sensor processing and scene understanding
+        - planning: Related to path planning and decision making
+        - acting: Related to vehicle control and actuation
+        - system: Related to the general behavior of the system
+        - research: Related to research and experimentation
+        - infrastructure: Related to system infrastructure and setup
