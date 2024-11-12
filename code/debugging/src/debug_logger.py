@@ -79,16 +79,21 @@ def run_listener(listener: Listener):
     """
     running = True
     while running:
-        conn = listener.accept()
-        print(f"[debug_logger]: connection accepted from {listener.last_accepted}")
-        msg = None
-        if conn.poll(timeout=2.0):
-            msg = conn.recv()
-            if isinstance(msg, str):
-                if msg.lower() == CLOSE_MSG:
-                    running = False
-                    msg = None
-        conn.close()
+        try:
+            conn = listener.accept()
+            print(f"[debug_logger]: connection accepted from {listener.last_accepted}")
+            msg = None
+            if conn.poll(timeout=2.0):
+                msg = conn.recv()
+                if isinstance(msg, str):
+                    if msg.lower() == CLOSE_MSG:
+                        running = False
+                        msg = None
+            conn.close()
+        except Exception as error:
+            eprint(f"Failed to receive message: {error}")
+            continue
+
         if msg is not None:
             with MESSAGES_MUTEX:
                 MESSAGES.append(msg)
