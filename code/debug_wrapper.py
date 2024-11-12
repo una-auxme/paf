@@ -77,7 +77,7 @@ def log(msg: str, level: str):
             conn.send({"name": NODE_NAME, "msg": msg, "level": level})
             conn.close()
             success = True
-        except BaseException as e:
+        except Exception as e:
             error = e
     if not success:
         eprint(msg)
@@ -135,7 +135,7 @@ def start_debugger(
             logwarn(f"Started debugger on {host}:{port} for {node_module_name}")
             if wait_for_client:
                 debugpy.wait_for_client()
-        except BaseException as error:
+        except Exception as error:
             # Yes, all exceptions should be catched and sent into rosconsole
             logerr(f"Failed to start debugger: {error}")
     else:
@@ -164,7 +164,7 @@ def main(argv):
     parser.add_argument("--debug_node", required=True, type=str)
     parser.add_argument("--debug_port", required=False, type=int)
     parser.add_argument("--debug_host", default=default_host, type=str)
-    parser.add_argument("--debug_wait", default=False, type=bool)
+    parser.add_argument("--debug_wait", action="store_true")
     args, unknown_args = parser.parse_known_args(node_args)
 
     debug_node = args.debug_node
@@ -190,6 +190,8 @@ def main(argv):
     try:
         run_module_at(target_type_path)
     except BaseException as error:
+        # Yes, all exceptions including SystemExit should be catched.
+        # We want to always know when a node exits
         logfatal(f"Failed to run node {debug_node}: {error}")
         raise error
 

@@ -100,7 +100,7 @@ def close_listener():
         conn = Client(ADDRESS, authkey=AUTHKEY)
         conn.send(CLOSE_MSG)
         conn.close()
-    except BaseException:
+    except Exception:
         pass
 
 

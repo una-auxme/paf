@@ -96,7 +96,7 @@ Configuration example for the [lidar_distance.py](../../code/perception/src/lida
   ```
 
 By default, the affected node will start up as usual. When you attach the debugger later, you are then only able to debug the callbacks the node receives.
-But if you set `--debug_wait=True`, it will block the node from starting until VS Code attaches and allow you to debug the initialization of the node.
+But if you set `--debug_wait`, it will block the node from starting until VS Code attaches and allow you to debug the initialization of the node.
 
 If the leaderboard hangs on `Setting up the agent` after the configuration has been adjusted, there most likely is a mistake in the launch configuration.
 
