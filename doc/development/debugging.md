@@ -11,6 +11,7 @@
     - [Required once for the node you want to debug](#required-once-for-the-node-you-want-to-debug)
     - [Debugging workflow after setup](#debugging-workflow-after-setup)
     - [Known problems of debugging with VS Code](#known-problems-of-debugging-with-vs-code)
+    - [Debug Components Architecture](#debug-components-architecture)
 - [Rebuild docker containers](#rebuild-docker-containers)
 - [Sources](#sources)
 
@@ -100,8 +101,6 @@ But if you set `--debug_wait`, it will block the node from starting until VS Cod
 
 If the leaderboard hangs on `Setting up the agent` after the configuration has been adjusted, there most likely is a mistake in the launch configuration.
 
-More usage information can be found in the [debug_wrapper](../../code/debug_wrapper.py) and the [debug_logger](../../code/debugging/src/debug_logger.py)
-
 #### Debugging workflow after setup
 
 1. Start/Restart the [leaderboard](../../build/docker-compose.leaderboard.yaml) as usual
@@ -116,6 +115,15 @@ With the **rqt_console** GUI you can filter by node *debug_logger* to see all me
 
 - Adjusting the launch configurations is a bit cumbersome
 - The side effects of just "stopping" a node with the debugger are unknown
+
+#### Debug Components Architecture
+
+More technical usage information can be found in the:
+
+- [debug_wrapper](../../code/debug_wrapper.py): Acts as a proxy that wraps the target node and enables remote debugging capabilities.
+- [debug_logger](../../code/debugging/src/debug_logger.py): Handles the logging of debugging-related events and exceptions, ensuring they are properly published to the ROS ecosystem.
+
+The wrapper uses the logger to ensure that any debugging-related issues (connection problems, initialization errors, etc.) are visible through the /rosout topic.
 
 ## Rebuild docker containers
 
