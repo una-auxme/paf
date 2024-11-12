@@ -134,6 +134,7 @@ def start_debugger(
             debugpy.listen((host, port))
             logwarn(f"Started debugger on {host}:{port} for {node_module_name}")
             if wait_for_client:
+                logwarn("Waiting until debugging client is attached...")
                 debugpy.wait_for_client()
         except Exception as error:
             # Yes, all exceptions should be catched and sent into rosconsole
