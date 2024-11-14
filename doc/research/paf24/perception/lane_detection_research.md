@@ -118,6 +118,11 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 
 It should be mentioned that the paper by Robin Karlsson et. al was also read, but it was not worth comparing it here as it was a selfsupervised learning model and was not trained on the above datasets but on a smaller dataset and used more sensors and cameras (6 cameras, 5 radars and 1 lidar) than allowed in the Qualify. But for interrested people you can find the paper [here](https://arxiv.org/pdf/2304.13242v2)
 
+## Decision
+
+We choosed to implement the CLRerNet-DLA34 and the CondLSTR(ResNet-101) because they have already implemented code bases to save time.
+
+
 [1]: https://paperswithcode.com/task/lane-detection#datasets
 [2]: https://paperswithcode.com/dataset/tusimple
 [3]: https://arxiv.org/pdf/2305.17271v2
