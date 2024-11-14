@@ -123,5 +123,5 @@ jobs:
           rm -rf /tmp/.buildx-cache/cache/latest
           mv /tmp/.buildx-cache/cache-new/latest /tmp/.buildx-cache/cache/latest
       
-      - name: Prune all images older than 1 days from self-hosted runner
+      - name: Prune all images older than 1 day from self-hosted runner
         run: docker image prune -a -f --filter "until=24h"
