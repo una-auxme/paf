@@ -52,7 +52,7 @@ which starts the simulation.
 
 ### Velocity controllers 
 > [!TIP]
-> Follow this link for the ([Documentation](./velocity_controller.md)) on velocity component.
+> Follow this link for the [Documentation](./velocity_controller.md) on velocity component.
 
 #### velocity_controller.py
 
