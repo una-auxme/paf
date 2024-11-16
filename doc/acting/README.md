@@ -2,9 +2,10 @@
 
 This folder contains the documentation of the acting component.
 
+The acting component receives information from the [planning component](./../planning/README.md) as well
+as the [perception component](./../perception/README.md). It processes this information in order to
+navigate on a local basis.
+
 1. [Architecture](./architecture_documentation.md)
-2. [Overview of the Velocity Controller](./velocity_controller.md)
-3. [Overview of the Steering Controllers](./steering_controllers.md)
-4. [Overview of the Vehicle Controller Component](./vehicle_controller.md)
-5. [How to test/tune acting components independedly](./acting_testing.md)
-6. [Main frame publisher](./mainframe_publisher.md)
+2. [Main frame publisher](./main_frame_publisher.md)
+3. [Passthrough](./passthrough.md)
