@@ -14,18 +14,19 @@ navigate on a local basis. This information is then processed in the [control_co
 
 ![MISSING: Acting-ARCHITECTURE](./../assets/acting/acting_architecture.png)
 
-> [!NOTE] 
+> [!NOTE]
 > [Click here to go to control architecture](./../control/architecture_documentation.md)
 
 ## Components of acting
 
 ### passthrough.py
 
-> [!TIP] 
+> [!TIP]
 > For documentation on passthrough component see: [passthrough](./passthrough.md)
 
 ### main_frame_publisher.py
-> [!TIP]  
+
+> [!TIP]
 > Follow this link for [Documentation](./main_frame_publisher.md) on this Node.
 
 - Inputs:
@@ -40,7 +41,6 @@ navigate on a local basis. This information is then processed in the [control_co
 - position z = - **current_pos**.z
 - rot_quat = rot as quaternion
 - **transform** = position x/y/z, rot_quat, Timestamp(now), “global”, “hero”
-
 
 ### helper_functions.py
 
