@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 
-import pickle
+# import pickle
 from ros_compatibility.node import CompatibleNode
 
 from rospy.numpy_msg import numpy_msg
-import rospy
 
-import numpy as np
+# import rospy
+
+# import numpy as np
 import ros_compatibility as roscomp
-import cv2
+
+# import cv2
 from sensor_msgs.msg import Image as ImageMsg
-import torch
+from std_msgs.msg import Header
+
+# import torch
+
 from cv_bridge import CvBridge
 
 
@@ -24,31 +29,17 @@ class CLRerNet(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        # general setup
         self.bridge = CvBridge()
+        self.image_msg_header = Header()
+        self.image_msg_header.frame_id = "segmented_image_frame"
+
         self.role_name = self.get_param("role_name", "hero")
-        self.side = self.get_param("side", "Center")
-        self.center = self.get_param("center")
-        self.back = self.get_param("back")
-        self.left = self.get_param("left")
-        self.right = self.get_param("right")
+        self.setup_camera_subscriptions("Center")
+        self.setup_lane_publisher()
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        self.model = None
-        self.weigths = None
-
-        # publish / subscribe setup
-        if self.center:
-            self.setup_camera_subscriptions("Center")
-        if self.back:
-            self.setup_camera_subscriptions("Back")
-        if self.left:
-            self.setup_camera_subscriptions("Left")
-        if self.right:
-            self.setup_camera_subscriptions("Right")
-
-        self.setup_mask_publisher()
+    def run(self):
+        self.spin()
+        pass
 
     def setup_camera_subscriptions(self, side):
         """
@@ -60,16 +51,27 @@ class CLRerNet(CompatibleNode):
 
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
-            callback=self.handle_camera_image,
+            callback=self.image_handler,
             topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1,
         )
 
+    def image_handler(self, ImageMsg):
+        self.lane_publisher.publish(ImageMsg)
+
+    def setup_lane_publisher(self):
+        self.lane_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/lane_img",
+            qos_profile=1,
+        )
+
+    """
     def setup_mask_publisher(self):
-        """
+
         sets up a publisher to the selected camera angle
         if multiple cameras are enabled, there are multiple publishers used
-        """
+
 
         if self.center:
             self.publisher_center = self.new_publisher(
@@ -95,3 +97,10 @@ class CLRerNet(CompatibleNode):
                 topic=f"/paf/{self.role_name}/Right/lane_mask",
                 qos_profile=1,
             )
+    """
+
+
+if __name__ == "__main__":
+    roscomp.init("CLRerNet")
+    node = CLRerNet("CLRerNet")
+    node.run()
