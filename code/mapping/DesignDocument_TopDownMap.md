@@ -2,6 +2,12 @@
 
 **Summary:** This page describes an experimental intermediate map layer after perception
 
+- [ROS Possibilities](#ros-possibilities)
+  - [OccupancyGrid](#occupancygrid)
+  - [tf2](#tf2)
+    - [Message interface](#message-interface)
+    - [Message types](#message-types)
+  - [ethzasl\_sensor\_fusion](#ethzasl_sensor_fusion)
 - [Overall map representation](#overall-map-representation)
 - [Data flow](#data-flow)
 - [Perception data integration](#perception-data-integration)
@@ -20,6 +26,43 @@
   - [Path simulation](#path-simulation)
 - [Sources](#sources)
 
+## ROS Possibilities
+
+Overview over existing ROS systems that might be used in the mapping (not complete, please extend).
+
+### [OccupancyGrid](https://docs.ros.org/en/lunar/api/nav_msgs/html/msg/OccupancyGrid.html)
+
+Defines a map via 2-dimensional grid cells. Only shows if a grid cell is occupied or not. Too limited for our approach.
+
+### [tf2](http://wiki.ros.org/tf2)
+
+ROS transform library.
+
+#### Message interface
+
+tf2 provides an ROS-independent message-only interface for transmitting timestamped data.
+
+#### Message types
+
+tf2 provides several message types related to transformations, most notably [Transform](http://docs.ros.org/en/jade/api/geometry_msgs/html/msg/Transform.html)
+This transform is defined by a vector for translation and a quaternion for rotation.
+
+Problems with the transform:
+
+- Using a transformation matrix might be more suitable/intuitive for our approach, because we often have to transform points between multiple coordinate systems.
+- A 2-dimensional transform might be preferred to reduce complexity and bugs
+
+The message types are also available in a stamped version that include a timestamp and data frame id
+
+Since the entity definition found below is much more complex, a custom datatype has to be implemented if we want to use tf2. TODO: possibilities?
+
+### [ethzasl_sensor_fusion](http://wiki.ros.org/ethzasl_sensor_fusion)
+
+Making sure all sensor inputs are properly aligned is required for the map's function.
+
+- The library provides a way to estimate the transformations between sensors that might be used for alignment
+- The library can estimate the vehicle velocity
+
 ## Overall map representation
 
 - The map is based on the local car position and is only built using sensor data. No global positioning via radar or similar is used.
@@ -29,13 +72,27 @@
 - 2D top down map. The height(z) dimension is mostly useless for collision detection and path planning
 - A map dataframe includes the car's speeds at the time the map was created. The heading/direction are the same as the y-axis
   The entity datatype might be reused for this
+
+  Alternative: Add the hero car as the first entity of the map
+- A map dataframe should have a timestamp when it was created. Entities also have timestamps of their own
+- TODO: How should the map dataframes be transmitted between nodes? Possible approaches:
+  - tf2???
+  - ROS topics: Every node basically gets their own map dataframe → might be a performance problem and node might have outdated data
+  - ROS services: Global service provides current dataframe for [Data usage](#data-usage) → More investigation needed
 - The map consists out of entities. Entities have the following attributes:
   - Shape:
-    - Rectangle: x_size and y_size
+    - Rectangle: possibly defined by:
+      - x_size and y_size | middle and rotation defined by the entity's transform
+      - points in the local coordinates of the entity
     - Circle?: diameter
+    - Line?: Rectangles might be used as lines
+  - timestamp of the associated sensor data (might slightly differ to the timestamp of the map dataframe)
   - Confidence: [0.0; 1.0] The sensor's confidence that this entity is correct and actually exists.
+    - [ObjectHypothesis](https://github.com/ros-perception/vision_msgs/blob/ros2/vision_msgs/msg/ObjectHypothesis.msg) might be used for this and Priority, but it includes a class_id which would be redundant
   - Priority: [0.0; 1.0] This entity's priority over others
-  - Transform2d: Vector2 translation and rotation in radians
+  - Transform2d: Vector2 translation and rotation in radians.
+    - This might be modelled as a 2-dimensional transformation matrix
+    - TODO: tf2?
   - Motion (relative to the car??? todo: properly define coordinate systems and transformations). Optional. When unset algorithms will use some default to make it globally static (without the flag):
     - linear speed
     - angular speed: Rotation around the middle of the entity. Might be necessary at interceptions because the car might otherwise think entities will drive into its lane
@@ -47,6 +104,7 @@
     - collider
     - tracked: If the entity should be tracked across individual dataframes. See [Previous dataframe integration](#previous-dataframe-integration)
     - stopmark: If the car should not drive over or around the entity
+    - lanemark: entity is a lane marking
     - global_static: If the entity is globally static (NOT relative to the car). The flag can be unset when adding the entity and later calculated in [Data processing and filtering](#data-processing-and-filtering)
       If set, the speed and direction of the entity should roughly match the inverse speed and direction of the car. The map should emit a warning if this is not the case.
     - ignore: The entity should be ignored in [Data usage](#data-usage). Usually unset when adding the entity and calculated in [Entity ignoring](#entity-ignoring)
