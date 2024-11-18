@@ -80,3 +80,12 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 </launch>
+
+<node pkg="perception" type="CLRerNet.py" name="Lane_detection_CLR" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="side" value="Center" />
+    <param name="center" value="True" />
+    <param name="back" value="False" />
+    <param name="left" value="False" />
+    <param name="right" value="False" />
+  </node>

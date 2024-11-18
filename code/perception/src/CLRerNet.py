@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pickle
 from ros_compatibility.node import CompatibleNode
 
