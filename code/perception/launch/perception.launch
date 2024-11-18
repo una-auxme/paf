@@ -75,7 +75,7 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
- <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
+  <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>

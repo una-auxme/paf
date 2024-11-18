@@ -12,6 +12,7 @@
         "richardkotze.git-mob",
         "ms-vscode-remote.remote-containers",
         "valentjn.vscode-ltex",
-        "ms-python.black-formatter"
+        "ms-python.black-formatter",
+        "augustocdias.tasks-shell-input"
     ]
 }
