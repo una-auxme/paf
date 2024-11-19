@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "53000 leaderboard attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 53000
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/code",
+                    "remoteRoot": "${env:PAF_CATKIN_CODE_ROOT}"
+                }
+            ]
+        }
+    ],
+}
