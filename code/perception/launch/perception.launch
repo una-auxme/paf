@@ -81,8 +81,7 @@
   </node>
 
 
-  <node pkg="perception" type="CLRerNet.py" name="CLRerNet" output="screen">
-    <param name="role_name" value="$(arg role_name)" />
+  <node pkg="perception" type="debug_wrapper.py" name="CLRerNet" output="screen" args="--debug_node=Lanedetection_node.py --debug_port=53000 --debug_wait">
   </node>
 
 </launch>
