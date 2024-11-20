@@ -17,7 +17,7 @@
 ### 1.1. Pre-Meeting Agenda
 
 - **Summary Submission**: By **Monday at 11:30 AM** (before the meeting), submit a summary of your work on Digicampus.
-  - TODO A template will be provided.
+  - A template can be found here: [Summary of Work Template](./sprint_summary_template.md).
   - Upload your document to DigiCampus at [this link](https://digicampus.uni-augsburg.de/dispatch.php/course/files?cid=5b0c38206c78cc03880bc2e71997220f).
   - Inform us of your group composition and presentation order for our note-taking.
 - **12:00 - 13:30**: Sample Review

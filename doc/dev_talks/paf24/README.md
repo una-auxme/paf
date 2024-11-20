@@ -11,6 +11,7 @@
 - [Student Roles](./student_roles.md)
 - [Joker Rules](./joker_rules_paf24.md)
 - [Sprint Review Meeting Guidelines](./sprint_review_meeting_guidelines.md)
+  - [Sprint Summary Template](./sprint_summary_template.md)
 
 ## Notes for Sprints
 
