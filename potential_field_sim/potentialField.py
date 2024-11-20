@@ -1,3 +1,4 @@
+import time
 from scipy.ndimage import distance_transform_edt
 from skimage.draw import polygon
 import numpy as np
@@ -21,14 +22,16 @@ class PotentialField:
         dimensions: tuple[float] = (20, 15),
     ) -> None:
 
+        self.next_waypoint: tuple[float] = next_waypoint
         self.slope_angle: float = slope_angle
         self.obstructions: list[Obstruction] = obstructions
-        self.DIMENSIONS = [dimension * 100 for dimension in dimensions]
+        self.dimensions = [dimension * 100 for dimension in dimensions]
         self.field = None
         self.obstruction_map = None
         self.gradient = None
-        self.car_position = (self.DIMENSIONS[1] // 2, self.DIMENSIONS[0] // 2)
+        self.car_position = (self.dimensions[1] // 2, self.dimensions[0] // 2)
         self.force_vector = None
+        self.last_update = None
 
         self.generate_field()
 
@@ -53,6 +56,8 @@ class PotentialField:
             tuple[float]: The "Force" acting at this position
         """
 
+        self.next_waypoint = waypoint
+
         # Obstacle Heatmap
         distances = distance_transform_edt(self.field == 0)
 
@@ -61,9 +66,11 @@ class PotentialField:
         self.field[self.field == 0] = smoothed_values[self.field == 0]
 
         # Waypoint Following
-        x, y = np.meshgrid(range(self.DIMENSIONS[1]), range(self.DIMENSIONS[0]))
+        x, y = np.meshgrid(range(self.dimensions[1]), range(self.dimensions[0]))
 
-        distances = np.sqrt((x - waypoint[0]) ** 2 + (y - waypoint[1]) ** 2)
+        distances = np.sqrt(
+            (x - self.next_waypoint[0]) ** 2 + (y - self.next_waypoint[1]) ** 2
+        )
         slope = distances / distances.max()
         self.field += slope
 
@@ -87,10 +94,10 @@ class PotentialField:
         """
         if self.field is None:
             # generate the field with a resolution of 1 cm.
-            self.field = np.zeros(self.DIMENSIONS, dtype=np.float32)
+            self.field = np.zeros(self.dimensions, dtype=np.float32)
 
         if self.obstruction_map is None:
-            self.obstruction_map = np.zeros(self.DIMENSIONS, dtype=np.float32)
+            self.obstruction_map = np.zeros(self.dimensions, dtype=np.float32)
 
         # place obstructions
         for obstruction in self.obstructions:
@@ -99,9 +106,9 @@ class PotentialField:
     def plot(self, save=False, show=True, plot_car=True, plot_vector=True) -> None:
         """shows the field"""
 
-        VECTORSCALE = 1e6
+        vectorscale = 1e6
 
-        fig, axes = plt.subplots(1, 2)
+        _, axes = plt.subplots(1, 2)
         axes[0].imshow(self.field, cmap="RdYlGn_r")
         axes[1].imshow(self.obstruction_map, cmap="grey")
         if plot_car:
@@ -123,8 +130,8 @@ class PotentialField:
             axes[0].quiver(
                 self.car_position[0],
                 self.car_position[1],
-                self.force_vector[0] * VECTORSCALE,
-                self.force_vector[1] * VECTORSCALE,
+                self.force_vector[0] * vectorscale,
+                self.force_vector[1] * vectorscale,
                 color="blue",
                 scale_units="xy",
                 scale=1,
@@ -132,8 +139,8 @@ class PotentialField:
             axes[1].quiver(
                 self.car_position[0],
                 self.car_position[1],
-                self.force_vector[0] * VECTORSCALE,
-                self.force_vector[1] * VECTORSCALE,
+                self.force_vector[0] * vectorscale,
+                self.force_vector[1] * vectorscale,
                 color="blue",
                 scale_units="xy",
                 scale=1,
@@ -187,6 +194,42 @@ class PotentialField:
         self.field[rr, cc] = 1
         self.obstruction_map[rr, cc] = 1
 
+    # TODO
+    def move_car(self, velocity: float, angular_velocity: float) -> None:
+        """moves the field under the car, making the car move
+        relative to the field, and deletest the obstacles
+        dropping out of the field
+
+        Args:
+            velocity (float): the velocity of the car along the
+            cars axis
+            angular_velocity (float): the rotational velocity of the
+            car
+        """
+
+        # since the velocity will be in m/s the and one cell is 1 cm²
+        # a velocity of 1 m/s over a time of 1 sec results in 100 rows
+        # to be dropped in the back and placed in the front
+        # therefore the number of rows can be computed by the following
+        # formula: n = v*100*t
+
+        if self.last_update is not None:
+            dt = time.perf_counter() - self.last_update
+            self.last_update = time.perf_counter()
+        else:
+            self.last_update = time.perf_counter()
+            dt = 0
+            return
+
+        n_rows = velocity * 100 * dt
+        n_rows = round(n_rows)
+        print(dt, n_rows)
+
+        self.obstruction_map = self.obstruction_map[:, :-n_rows]
+        self.obstruction_map = np.concatenate(
+            np.zeros((self.dimensions[0], n_rows)), self.obstruction_map
+        )
+
 
 if __name__ == "__main__":
     obs = []
@@ -197,15 +240,20 @@ if __name__ == "__main__":
     # lines
     field.add_obstruction(
         Obstruction(
-            position=(field.DIMENSIONS[1] - 20, field.DIMENSIONS[0] // 2),
-            dimensions=(20, field.DIMENSIONS[0]),
+            position=(field.dimensions[1] - 20, field.dimensions[0] // 2),
+            dimensions=(20, field.dimensions[0]),
         )
     )
     field.add_obstruction(
         Obstruction(
-            position=(field.DIMENSIONS[1] // 3, field.DIMENSIONS[0] // 2),
-            dimensions=(20, field.DIMENSIONS[0]),
+            position=(field.dimensions[1] // 3, field.dimensions[0] // 2),
+            dimensions=(20, field.dimensions[0]),
         )
     )
-    field.get_vector(waypoint=(field.DIMENSIONS[0] // 2, 0))
+
+    field.get_vector(waypoint=(field.dimensions[0] // 2, 0))
     field.plot(save=True, show=False)
+    field.move_car(1, 0)
+    time.sleep(1)
+    field.move_car(1, 0)
+    field.plot(save=False, show=True)
