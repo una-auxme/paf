@@ -4,14 +4,15 @@ import ros_numpy
 import numpy as np
 import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2
-
+from sklearn.cluster import DBSCAN
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
-
-from std_msgs.msg import Float32
-
+import json
+# from std_msgs.msg import Float32
+from std_msgs.msg import String
+from rospy.numpy_msg import numpy_msg
 # from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -30,29 +31,10 @@ class RadarNode:
 
         :param data: a PointCloud2
         """
-
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        # x_values = coordinates['x']
-        # rospy.loginfo("Erste 5 x Werte: {x_values[:5]}")
-
-        # depth_values = coordinates['depth']
-        # rospy.loginfo("Erste 5 Depth Werte: {depth_values[:5]}")
-
-        # dtype_info = "\n".join([f"Feld '{name}': {coordinates.dtype[name]}" for name in coordinates.dtype.names])
-        # rospy.loginfo("DatentypenNeu: " + dtype_info) # funktioniert
-
-        #msg = np.min(coordinates['Velocity'])
-        # rospy.loginfo("DatentypenMsg: " + str(msg.dtype))
-        # rospy.loginfo("WertMsg: " + str(msg))
-
-        #self.dist_array_radar_publisher.publish(msg)
-
-        for coordinate in coordinates:
-
-            if coordinate['y'] == 0:
-                if coordinate['x'] <= 15:
-                    msg = coordinate['Velocity']*3.6
-                    self.dist_array_radar_publisher.publish(msg)
+        
+        clustered_points = cluster_radar_data_from_pointcloud(data, 10)
+        clustered_points_json = json.dumps(clustered_points)
+        self.dist_array_radar_publisher.publish(clustered_points_json)
 
     def listener(self):
         """
@@ -64,9 +46,9 @@ class RadarNode:
 
         # publisher for radar dist_array
         self.dist_array_radar_publisher = rospy.Publisher(
-            rospy.get_param("~image_distance_topic", "/paf/hero/Radar/array"),
+            rospy.get_param("~image_distance_topic", "/paf/hero/Radar/dist_array_unsegmented"),
             # PointCloud2,
-            Float32,
+            String,
             queue_size=10,
         )
 
@@ -79,6 +61,38 @@ class RadarNode:
         rospy.spin()
 
 
+def pointcloud2_to_array(pointcloud_msg):
+    cloud_array = ros_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
+    distances = np.sqrt(
+        cloud_array["x"] ** 2 + cloud_array["y"] ** 2 + cloud_array["z"] ** 2
+    )
+    return np.column_stack(
+        (cloud_array["x"], cloud_array["y"], cloud_array["z"], distances)
+    )
+    
+
+def cluster_radar_data_from_pointcloud(
+    pointcloud_msg, max_distance, eps=1.0, min_samples=2
+):
+
+    data = pointcloud2_to_array(pointcloud_msg)
+
+    filtered_data = data[data[:, 3] < max_distance]
+    filtered_data = filtered_data[(filtered_data[:, 1] >= -1) & (filtered_data[:, 1] <= 1) & (filtered_data[:, 2] <= 1.3) & (filtered_data[:, 2] >= -0.7)]
+
+    if len(filtered_data) == 0:
+        return {}
+
+    coordinates = filtered_data[:, :2]
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
+
+    labels = clustering.labels_
+    clustered_points = {label: list(labels).count(label) for label in set(labels)}
+    clustered_points = {int(label): count for label, count in clustered_points.items()}
+
+    return clustered_points
+
+    
 if __name__ == "__main__":
     lidar_distance = RadarNode()
     lidar_distance.listener()
