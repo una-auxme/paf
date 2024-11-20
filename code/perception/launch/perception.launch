@@ -79,4 +79,8 @@
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
+
+
+  <node pkg="perception" type="condl_resnet_101.py" name="LaneDetection" output="screen">
+  </node>
 </launch>
