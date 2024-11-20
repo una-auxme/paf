@@ -1,19 +1,30 @@
 #!/usr/bin/env python
 
-import pickle
 import os
 from ros_compatibility.node import CompatibleNode
 
-# from rospy.numpy_msg import numpy_msg
+from rospy.numpy_msg import numpy_msg
+
 # import rospy
 
 # import numpy as np
 import ros_compatibility as roscomp
 
 # import cv2
-# from sensor_msgs.msg import Image as ImageMsg
-# import torch
-# from cv_bridge import CvBridge
+from sensor_msgs.msg import Image as ImageMsg
+from std_msgs.msg import Header
+
+from cv_bridge import CvBridge
+
+# for the lane detection model
+import torch
+from CLRerNet_model.CLRerNet.configs.clrernet import base_clrernet as base_cfg
+from mmcv import Config
+from CLRerNet_model.CLRerNet.libs.models.detectors import clrernet as build_detector
+
+# for image preprocessing
+from torchvision import transforms
+from PIL import Image
 
 
 class Lanedetection_node(CompatibleNode):
@@ -26,42 +37,30 @@ class Lanedetection_node(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        model_path = os.path.join("CLRerNet_model", "data.pkl")
+        # Config und Model laden
+        cfg = Config.fromfile(base_cfg)
+        self.model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test)
+
+        # Gewichte laden
+        weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34.pth")
         ws_path = os.path.dirname(os.path.realpath(__file__))
-        model_path2 = os.path.join(ws_path, model_path)
-        # model_path = "/home/paf/git/paf/code/perception/src/CLRerNet_model/data.pkl"
+        ws_weight_path = os.path.join(ws_path, weight_path)
 
-        with open(model_path2, "rb") as file:
-            model = pickle.load(file)
+        with open(ws_weight_path, "rb") as file:
+            self.state_dict = torch.load(file)
 
-        print("Model erforgreich geladen:", model, model_path)
+        self.model.load_state_dict(self.state_dict)
 
-        # general setup
-        """self.bridge = CvBridge()
+        # self.model.eval()
+        # print("Model erforgreich geladen:", self.model, model_path)
+
+        self.bridge = CvBridge()
+        self.image_msg_header = Header()
+        self.image_msg_header.frame_id = "segmented_image_frame"
+
         self.role_name = self.get_param("role_name", "hero")
-        self.side = self.get_param("side", "Center")
-        self.center = self.get_param("center")
-        self.back = self.get_param("back")
-        self.left = self.get_param("left")
-        self.right = self.get_param("right")
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        self.model = None
-        self.weigths = None
-
-        # publish / subscribe setup
-        if self.center:
-            self.setup_camera_subscriptions("Center")
-        if self.back:
-            self.setup_camera_subscriptions("Back")
-        if self.left:
-            self.setup_camera_subscriptions("Left")
-        if self.right:
-            self.setup_camera_subscriptions("Right")
-
-        self.setup_mask_publisher()
-        """
+        self.setup_camera_subscriptions("Center")
+        self.setup_lane_publisher()
 
     def run(self):
         self.spin()
@@ -74,47 +73,75 @@ class Lanedetection_node(CompatibleNode):
         Args:
             side (String): Camera angle specified in launch file
         """
-        """
+
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
-            callback=self.handle_camera_image,
+            callback=self.image_handler,
             topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1,
-        )"""
+        )
 
-    def setup_mask_publisher(self):
+    def setup_lane_publisher(self):
+        self.lane_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/lane_img",
+            qos_profile=1,
+        )
+
+    def image_handler(self, ImageMsg):
         """
-        sets up a publisher to the selected camera angle
-        if multiple cameras are enabled, there are multiple publishers used
+        Callback function for image subscriber
         """
+
+        image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
+        image = self.preprocess_image(image)
+
+        # lane_mask = self.detect_lanes(image, self.model)
+
+        self.lane_publisher.publish(ImageMsg)
+
+    def preprocess_image(self, image):
         """
-        if self.center:
-            self.publisher_center = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Center/lane_mask",
-                qos_profile=1,
-            )
-        if self.back:
-            self.publisher_back = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Back/lane_mask",
-                qos_profile=1,
-            )
-        if self.left:
-            self.publisher_left = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Left/lane_mask",
-                qos_profile=1,
-            )
-        if self.right:
-            self.publisher_right = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Right/lane_mask",
-                qos_profile=1,
-            )"""
+        Preprocesses the image to be fed into the model
+
+        Args:
+            image (np.array): Image from camera
+
+        Returns:
+            np.array: Preprocessed image
+        """
+        pil_image = Image.fromarray(image)
+
+        preprocess = transforms.Compose(
+            [
+                transforms.Resize((288, 800)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+        return preprocess(pil_image).unsqueeze(0).cuda()
+
+    def detect_lanes(self, image, model):
+        """
+        Detects lanes in the image
+
+        Args:
+            image (np.array): Image from camera
+
+        Returns:
+            np.array: Lane mask
+        """
+        with torch.no_grad():
+            output = model(image)
+
+        return output
 
 
 if __name__ == "__main__":
     roscomp.init("Lanedetection_node")
     node = Lanedetection_node("Lanedetection_node")
     node.run()
+    print("Lanedetection_node started")
