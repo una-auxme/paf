@@ -9,16 +9,18 @@
     - [Message types](#message-types)
   - [ethzasl\_sensor\_fusion](#ethzasl_sensor_fusion)
   - [Custom 2d transformation matrices](#custom-2d-transformation-matrices)
+  - [*Shapely*](#shapely)
 - [Overall map representation](#overall-map-representation)
 - [Data transmission](#data-transmission)
-  - [tf2???](#tf2-1)
+  - [~~tf2???~~](#tf2-1)
   - [ROS topics](#ros-topics)
-  - [ROS services](#ros-services)
+  - [~~ROS services~~](#ros-services)
 - [Global parameters](#global-parameters)
 - [Data flow](#data-flow)
 - [Perception data integration](#perception-data-integration)
   - [Point handling](#point-handling)
 - [Data processing and filtering](#data-processing-and-filtering)
+  - [Time synchronization](#time-synchronization)
   - [Deduplication](#deduplication)
     - [Deduplication parameters](#deduplication-parameters)
   - [Previous dataframe integration](#previous-dataframe-integration)
@@ -87,27 +89,36 @@ Negative:
 
 - Custom implementation necessary, is there a library for python providing this data structure? None found yet.
 
+### [*Shapely*](https://shapely.readthedocs.io/en/stable/index.html)
+
 ## Overall map representation
 
 - The map is based on the local car position and is only built using sensor data. No global positioning via GPS or similar is used.
   - The map (0/0) should be the turning axis of the car. (Above rear axle?)
-  - All transformations are relative to the car's position/heading
-  - the map's y-axis is aligned with the heading of the car
-  - All speeds (linear and angular) are global speeds
+  - All transformations to entities are relative to the car's coordinate system (position/heading)
+  - the map's x-axis is aligned with the heading of the car
+  - Coordinate system is a right-hand system like tf2 (can be visualized in RViz)
+  - The linear motion direction is relative to their own coordinate system. The direction vector length is equal to the entity's tachometer. Globally static entities have zero velocity (wall)
 - 2D top-down map. The height(z) dimension is mostly useless for collision detection and path planning
-- A map dataframe includes the car's speeds at the time the map was created. The heading/direction are the same as the y-axis
+- A map dataframe includes the car's speeds at the time the map was created. The heading/direction are the same as the x-axis
 
-  Solution: Add the hero car as the first entity of the map
-- A map dataframe should have a timestamp when it was created. Entities also have timestamps of their own
+  Solution: Add the hero car as the first entity of the map: Todo: debate
+- A map dataframe should have a timestamp when it was created. The creation time is the time when all data for the map of the current step has been collected
+  Entities also have timestamps of their own → see attributes
 - The map consists out of entities. Entities have the following attributes:
-  - Shape:
+  - One shape:
     - Rectangle: possibly defined by:
       - x_size and y_size | middle and rotation defined by the entity's transform
       - points in the local coordinates of the entity
     - Circle?: diameter
     - Line?: Rectangles might be used as lines
-  - Optional: height and distance to ground
-  - Timestamp of the associated sensor data (might slightly differ to the timestamp of the map dataframe)
+  - ~~Optional: height and distance to ground, only for visualization~~
+  - Timestamp:
+
+    When adding the entity its timestamp is the timestamp of the associated sensor data (might slightly differ to the timestamp of the map dataframe)
+
+    In the filtering steps the entity will be predicted to the map creation timestamp. All entities of the output map have the same timestamp as the map.
+    See [Time synchronization](#time-synchronization).
   - Confidence: [0.0; 1.0] The sensor's confidence that this entity is correct and actually exists.
     - [ObjectHypothesis](https://github.com/ros-perception/vision_msgs/blob/ros2/vision_msgs/msg/ObjectHypothesis.msg) might be used for this and Priority, but it includes a class_id which would be redundant
   - Priority: [0.0; 1.0] This entity's priority over others
@@ -115,29 +126,30 @@ Negative:
     - This might be modelled as a 2-dimensional transformation matrix
     - TODO: tf2?
   - Motion: Optional. When unset algorithms will use some default to make it standing still:
-    - linear speed: The direction is the y-axis/heading of the entity based on its local transform. This direction can be offset with the *linear direction offset*.
-    - linear direction offset: Angular offset to the y-Axis(heading) of the entity. Necessary if the direction does not match the y-axis/heading.
+    - linear speed: vector2 based on the direction is the x-axis/heading of the entity based on its local transform.
     - angular speed: Rotation around the middle of the entity. Might be necessary at interceptions because the car might otherwise think entities will drive into its lane
     - speeds are global (not relative to hero car)
-  - Unique id: Optional, if set will be used for [Previous dataframe integration](#previous-dataframe-integration)
+  - Map unique id: unique id of the entity in the map, set by the map
+  - Sensor Unique id: Optional, set from the sensor. Prefixed with the sensor node name to make sure ids stay unique between sensors.
+    Used for [Previous dataframe integration](#previous-dataframe-integration)
     - An array of several unique ids associated with the entity might also make sense, because we have different camera angles that produce different tracked detections
       ([yolov11](https://docs.ultralytics.com/guides/instance-segmentation-and-tracking/#what-is-the-difference-between-instance-segmentation-and-object-tracking-in-ultralytics-yolo11))
       that refer to the same entity.
-  - Class: for example Car, Pedestrian, Background, Lanemark, (TrafficLight), (StopSign) etc...
+  - EntityType (evtl. Class): for example Car, Pedestrian, Background, Lanemark, (TrafficLight), (StopSign) etc...
 
-    Classes should not be used to filter entities in the algorithms
+    Should not be used to filter entities in the data usage algorithms
 
     TrafficLight and StopSign add only their stop line to the map. They set the *stopmark* flag only if the car has to stop there.
-  - Flags can be used to filter entities in the algorithms:
+  - Flags (evtl. attribute) can be used to filter entities in the algorithms:
     - collider
     - tracked: If the entity should be tracked across individual dataframes. See [Previous dataframe integration](#previous-dataframe-integration)
     - stopmark: If the car should not drive over or around the entity
     - lanemark: entity is a lane marking
-    - global_static (is this necessary?, time might make more sense): If the entity is globally static (NOT relative to the car). The flag can be unset when adding the entity and later calculated in [Data processing and filtering](#data-processing-and-filtering)
-      If set, the speed and direction of the entity should roughly match the inverse speed and direction of the car. The map should emit a warning if this is not the case.
+    - ~~global_static (is this necessary?, time might make more sense): If the entity is globally static (NOT relative to the car). The flag can be unset when adding the entity and later calculated in [Data processing and filtering](#data-processing-and-filtering)~~
+      ~~If set, the speed and direction of the entity should roughly match the inverse speed and direction of the car. The map should emit a warning if this is not the case.~~
     - ignore: The entity should be ignored in [Data usage](#data-usage). Usually unset when adding the entity and calculated in [Entity ignoring](#entity-ignoring)
-    - hero: Only set for the hero car
-  - Only relevant for tracked entities:
+    - (hero: Only set for the hero car)
+  - Only relevant for tracked entities (member attributes of the tracked flag):
     - Visibility time: How long the entity has been visible for. Never gets reset
     - Invisibility time: How long the entity has been uninterruptedly not visible. Reset when the entity is visible again
     - Visibility frame count: In how many dataframes the entity was visible. Never gets reset
@@ -146,7 +158,7 @@ Negative:
     - (Moving time sum / Standing time sum): Sums of all the time the entity was moving/stood still.
     - Min_linear_speed
     - Max_linear_speed
-  - Class specific flags:
+  - EntityType specific attributes:
     - Car: indicator and brake lights
     - TrafficLight: State red, yellow, green
     - Lanemark:
@@ -158,13 +170,23 @@ Negative:
 
 How should the map dataframes be transmitted between nodes? Possible approaches below:
 
-### tf2???
+### ~~tf2???~~
+
+Reason for not using:
+
+- 2d transformations are easier
+- Custom data is difficult to transmit
 
 ### ROS topics
 
 Every node basically gets their own map dataframe → might be a performance problem and node might have outdated data
 
-### ROS services
+Usage reasons:
+
+- A lot of clients require the map data
+- Importable python module will be provided for map functions
+
+### ~~ROS services~~
 
 A single service node provides the algorithms defined in [Data usage](#data-usage).
 
@@ -179,6 +201,11 @@ Positive:
 
 Between filter nodes, the dataframes might still be transmitted via topics. The service node then subscribes to one of the filter nodes to receive its dataframe. All other nodes only get access to the service but not to the underlying dataframe.
 
+Reason for not using:
+
+- For every api call there needs to be a separate service
+- Too many clients that need regular updates
+
 ## Global parameters
 
 - Max dataframe age: Time after which a dataframe is considered too old to be used. Nodes that have no newer dataframe should switch into an emergency state until they have fresh data.
@@ -188,9 +215,10 @@ Between filter nodes, the dataframes might still be transmitted via topics. The 
 
 ```mermaid
 flowchart TD
-    NF{New dataframe} --> A[Data integration]
+    NF{New emtpy dataframe} --> A[Data integration buffer]
     S{Sensors} --> A
-    A -->|filter| C(Deduplication)
+    A -->|filter| Ti(Time synchronization)
+    Ti -->|filter| C(Deduplication)
     C -->|filter| D(Previous dataframe integration)
     PF{Previous dataframe} --> P(Prediction)
     P --> D
@@ -237,6 +265,10 @@ Optional Upgrade: Group points into bigger cube entities via the point density. 
 The system uses several filtering steps to bring the map into a usable state for the algorithms in [Data usage](#data-usage)
 All filters should be separate nodes that subscribe to and republish the map.
 
+### Time synchronization
+
+Entities will be predicted to the map creation timestamp based on their own (older) timestamp
+
 ### Deduplication
 
 Overlapping entities are identified via their transforms and bounds.
@@ -276,6 +308,7 @@ Sets the *ignore* flag based on:
 
 - the confidence of the entity
 - if *tracked*: based on the amount of visibility/invisibility time/count
+- invisibility time based
 
 ## Data usage
 
@@ -285,6 +318,8 @@ Generate [Marker](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/
 These messages can then be observed with RViz. Possible DisplayTypes [here](http://wiki.ros.org/rviz/DisplayTypes).
 
 ### Collisions
+
+Uses entity shapes
 
 If there currently are collisions between the car and other entities.
 Collisions should contain the involved entities, their positions and the collision point.
