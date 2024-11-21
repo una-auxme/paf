@@ -13,7 +13,7 @@ from typing import Type, Dict
 
 
 @dataclass
-class passthrough:
+class TopicMapping:
     pub_name: str
     sub_name: str
     topic_type: Type
@@ -28,34 +28,34 @@ class Passthrough(CompatibleNode):
     role_name = "hero"  # Legacy will change soon
 
     # Topics for velocity controller.
-    target_velocity = passthrough(
+    target_velocity = TopicMapping(
         pub_name="/paf/acting/target_velocity",
         sub_name=f"/paf/{role_name}/target_velocity",
         topic_type=Float32,
     )
     # Topics for steering controllers
-    trajectory = passthrough(
+    trajectory = TopicMapping(
         pub_name="/paf/acting/trajectory",
         sub_name=f"/paf/{role_name}/trajectory",
         topic_type=Path,
     )
-    position = passthrough(
+    position = TopicMapping(
         pub_name="/paf/acting/current_pos",
         sub_name=f"/paf/{role_name}/current_pos",
         topic_type=PoseStamped,
     )
-    heading = passthrough(
+    heading = TopicMapping(
         pub_name="/paf/acting/current_heading",
         sub_name=f"/paf/{role_name}/current_heading",
         topic_type=Float32,
     )
 
-    passthrough_topics = [target_velocity, trajectory, position, heading]
+    mapped_topics = [target_velocity, trajectory, position, heading]
 
     def __init__(self):
         self.publishers: Dict[str, Publisher] = {}
         self.subscribers: Dict[str, Subscriber] = {}
-        for topic in self.passthrough_topics:
+        for topic in self.mapped_topics:
             self.publishers[topic.pub_name] = self.new_publisher(
                 topic.topic_type, topic.pub_name, qos_profile=1
             )
