@@ -9,7 +9,7 @@ Creating a good presentation for a **Sprint Review** in PAF is important for com
 
 ## 1. Group Presentations
 
-These technical presentations meant to present project progress from the sprint.
+These are technical presentations meant to present project progress from the sprint.
 Not every PR has to be presented, but **each students contribution should be presented**.
 
 **Structure of Presentation**:
@@ -34,7 +34,8 @@ Not every PR has to be presented, but **each students contribution should be pre
 - **Testing and Validation**: Explain how the changes were tested.
   - **Automated tests**: Unit, integration, or end-to-end tests that were added or updated.
   - **Manual tests**: If manual validation was done, explain the scenarios tested.
-- **Demo**: Provide a quick live demo or walkthrough of the feature or bug fix that the PR addresses.
+- **Demo**: Provide a quick demo or walkthrough of the feature or bug fix that the PR addresses.
+  - Prepare screenshots or recordings.
 - **Next Steps**: If the changes impacts other work or needs further iterations, describe those next steps.
 
 **Duration**: **5 minutes** per person.
