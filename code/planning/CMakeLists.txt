@@ -113,8 +113,7 @@ catkin_package(
 #  LIBRARIES planning
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
-#  CATKIN_DEPENDS perception rospy
- CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS perception rospy message_runtime
 )
 
 ###########
