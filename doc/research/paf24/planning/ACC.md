@@ -1,6 +1,7 @@
 # ACC
 
 ## General
+
 The main goal of an ACC (Adaptive Cruise Control) is to follow a car driving in front while keeping a safe distance to it. This can be achieved by adjusting the speed to the speed of the car in front.
 In general, classic ACC systems are designed for higher velocity (e.g. > 40 km/h). Apart from that, there are Stop & Go systems that support lower velocites (e.g. < 40 km/h). In our case, both systems might be needed and it might be reasonable to develop two different systems for ACC and Stop & Go.
 There are basically three different techniques that can be used to implement an ACC: PID Control, Model Predictive Control and Fuzzy Logic Control. Another option is CACC (Cooperative Adaptive Cruise Control) but this is not relevant for our project since it requires communication between the vehicles.
@@ -8,8 +9,10 @@ There are basically three different techniques that can be used to implement an 
 ### PID Control
 
 ### Model Predictive Control (MPC)
+
 It calculates the current control action by solving an online, iterative and finite-horizon optimization of the model.
 Procedure:
+
 1. Prediction of future system states based on current states
 2. Computation of the cost function for a finite time horizon in the future
 3. Implementation of the first step of the solved control sequence
@@ -17,8 +20,8 @@ Procedure:
 5. Sampling of new current states and repitition of the process
 
 ### Fuzzy Logic Control (FLC)
-Provides a unified control framework to offer both functions: ACC and Stop & Go.
 
+Provides a unified control framework to offer both functions: ACC and Stop & Go.
 
 ![Example of a FLC control algorithm](../../../assets/research_assets/ACC_FLC_Example_1.png)
 
@@ -67,6 +70,7 @@ For a general speed target we need to take the speed and the speed of the car in
 With the general speed target and the current distance to the car in front we can calculate the target velocity for each point in the trajectory up to the car in front for example by interpolation. Points further that that will be inititalized with the speed limit at that position.
 
 ### Possible next steps
+
 A seperate file for the new ACC should be created to not disturb the system.
 
 The parts that might get cut from ACC like current waypoint and unstuck routine need to be evaluated for necessity and if need be moved to somewhere more fitting.
@@ -75,11 +79,11 @@ Implement publisher for new message type.
 
 Start implementing safety distance and general target speed logic. Subscriber logic could be taken from old implementation.
 
-### Requirements:
+### Requirements
+
 - obstacle speed
 - obstacle distance
 
-
-
 ## Sources
-https://www.researchgate.net/publication/335934496_Adaptive_Cruise_Control_Strategies_Implemented_on_Experimental_Vehicles_A_Review
+
+[ACC](https://www.researchgate.net/publication/335934496_Adaptive_Cruise_Control_Strategies_Implemented_on_Experimental_Vehicles_A_Review)
