@@ -97,4 +97,5 @@ Start implementing safety distance and general target speed logic. Subscriber lo
 
 ## Sources
 
-[He, Yinglong et al. (2019). Adaptive Cruise Control Strategies Implemented on Experimental Vehicles: A Review. IFAC-PapersOnLine. 52. 21-27. 10.1016/j.ifacol.2019.09.004. ](https://www.researchgate.net/publication/335934496_Adaptive_Cruise_Control_Strategies_Implemented_on_Experimental_Vehicles_A_Review)
+He, Yinglong et al. (2019). Adaptive Cruise Control Strategies Implemented on Experimental Vehicles: A Review. IFAC-PapersOnLine. 52. 21-27. 10.1016/j.ifacol.2019.09.004.
+[Link](https://www.researchgate.net/publication/335934496_Adaptive_Cruise_Control_Strategies_Implemented_on_Experimental_Vehicles_A_Review)
