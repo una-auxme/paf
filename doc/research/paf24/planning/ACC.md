@@ -31,6 +31,53 @@ Provides a unified control framework to offer both functions: ACC and Stop & Go.
 
 ## ACC Algorithm
 
+### Current implementation
+
+- General behaviour:
+    checks for obstacle distance < safety distance
+  
+    calculates new speed based on obstacle distance
+  
+    else keep current speed
+  
+- publishes speed to acc_velocity
+- safe distance calculation is currently not correct, uses speed +  (speed * 0.36)² which results in wrong distances
+- if car in front of us ignores speed limits we ignore them as well
+- some parts of unstuck routine are in ACC and need to be refactored
+- same goes for publishing of current waypoint, this should not be in ACC
+
+In summary, the current implementation is not sufficient and needs major refactoring.
+
+### Concept for new implementation
+
+The new concept for the ACC is to take the trajectory, look at all or a limited subset of the next points and add a target velocity and the current behaviour to each point.
+This way the Acting has more knowledge about what the car is doing and can adjust accordingly in a local manner.
+For this a new trajectory message type was implemented in #511.
+
+![trajectoryMsg](https://github.com/user-attachments/assets/0b452f1a-4c60-45b2-882f-3a50118c9cb9)
+
+Since behaviour is passed as an ID a new enum for behaviours was implemented in utils.py as well.
+
+The general idea for speeds above the 40 km/h mark is to calculate a proper safety distance and a general target velocity. For speeds lower than that a stop and go system needs to be discussed.
+
+For safety distance the old approach can simply be modified. For example, (speed / 10)*3 + (speed / 10)² is a well known formula for calculating the braking distance.
+
+For a general speed target we need to take the speed and the speed of the car in front into account. In cases where the car in front is substantially slower than the speed limit ACC could inititate overtaking.
+
+With the general speed target and the current distance to the car in front we can calculate the target velocity for each point in the trajectory up to the car in front for example by interpolation. Points further that that will be inititalized with the speed limit at that position.
+
+### Possible next steps
+A seperate file for the new ACC should be created to not disturb the system.
+
+The parts that might get cut from ACC like current waypoint and unstuck routine need to be evaluated for necessity and if need be moved to somewhere more fitting.
+
+Implement publisher for new message type.
+
+Start implementing safety distance and general target speed logic. Subscriber logic could be taken from old implementation.
+
+### Requirements:
+- obstacle speed
+- obstacle distance
 
 
 
