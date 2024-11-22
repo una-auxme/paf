@@ -23,7 +23,7 @@ class VelocityController(CompatibleNode):
 
         self.target_velocity_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/target_velocity",
+            "/paf/acting/target_velocity",
             self.__get_target_velocity,
             qos_profile=1,
         )
