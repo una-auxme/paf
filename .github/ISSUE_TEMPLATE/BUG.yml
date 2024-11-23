@@ -35,13 +35,6 @@ body:
         - The car detects traffic lights on Map1 correctly.
         - The issue no longer occurs in similar scenarios.
 
-  - type: input
-    id: effort_estimate
-    attributes:
-      label: Effort Estimate
-      description: Approximate effort required (e.g., hours).
-      placeholder: Enter effort estimate.
-
   - type: textarea
     id: testability
     attributes:
@@ -59,12 +52,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Add Priority Label**:
-        - p1: Immediate attention
-        - p2: High priority
-        - p3: Standard priority
-        - p4: Low priority
-
         **Add Group Label**:
         - perception: Related to sensor processing and scene understanding
         - planning: Related to path planning and decision making

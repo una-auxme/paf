@@ -19,13 +19,6 @@ body:
         - Detects 90% of traffic lights.
         - Correctly identifies 90% of traffic light states.
 
-  - type: input
-    id: effort_estimate
-    attributes:
-      label: Effort Estimate
-      description: Approximate effort required (e.g., hours).
-      placeholder: Enter effort estimate.
-
   - type: textarea
     id: testability
     attributes:
@@ -43,11 +36,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Add Priority Label**:
-        - p1: Immediate attention
-        - p2: High priority
-        - p3: Standard priority
-        - p4: Low priority
 
         **Add Group Label**:
         - perception: Related to sensor processing and scene understanding

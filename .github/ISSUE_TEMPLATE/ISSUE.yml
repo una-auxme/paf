@@ -25,13 +25,6 @@ body:
         - Code review passed
         - All tests passing
 
-  - type: input
-    id: effort_estimate
-    attributes:
-      label: Effort Estimate
-      description: Approximate effort required (e.g., hours).
-      placeholder: Enter effort estimate.
-
   - type: textarea
     id: testability
     attributes:
@@ -57,12 +50,6 @@ body:
         - documentation: Improvements or additions to documentation
         - question: Further information is requested
         - wontfix: This will not be worked on
-
-        **Add Priority Label**:
-        - p1: Immediate attention
-        - p2: High priority
-        - p3: Standard priority
-        - p4: Low priority
 
         **Add Group Label**:
         - perception: Related to sensor processing and scene understanding
