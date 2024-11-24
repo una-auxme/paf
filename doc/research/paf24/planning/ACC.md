@@ -72,13 +72,19 @@ For this a new trajectory message type was implemented in #511.
 
 Since behaviour is passed as an ID a new enum for behaviours was implemented in utils.py as well.
 
-The general idea for speeds above the 40 km/h mark is to calculate a proper safety distance and a general target velocity. For speeds lower than that a stop and go system needs to be discussed.
+The general idea for speeds above the 40 km/h mark is to calculate a proper safety distance, a general target velocity and velocity targets based on PID. For speeds lower than that a stop and go system can be discussed if it is really needed.
 
-For safety distance the old approach can simply be modified. For example, (speed / 10)*3 + (speed / 10)² is a well known formula for calculating the braking distance.
+For safety distance we will use the concept from the FLC graphic.
 
-For a general speed target we need to take the speed and the speed of the car in front into account. In cases where the car in front is substantially slower than the speed limit ACC could inititate overtaking.
+For a general speed target we either take the speed of the car in front or the speed limit, whichever is lower. In cases where the car in front is substantially slower than the speed limit ACC could inititate overtaking.
 
-With the general speed target and the current distance to the car in front we can calculate the target velocity for each point in the trajectory up to the car in front for example by interpolation. Points further that that will be inititalized with the speed limit at that position.
+Since we want to calculate the desired speed at each point of the trajectory, the way PID calculates velocity seems reasonable since we can treat the trajectory points as different points in time for the sampling time. For example let's say we sample every fifth point and calculate the velocity for that, then we can just interpolate every other point inbetween. 
+
+$v_f(t - t_s)$ would then simply be the velocity of the fifth point before the current one. Theoretically this allows us to dynamically adjust the sampling time as well if needed.
+
+For the distance error we can use the safety distance as the desired distance. The distance at time t needs to be predicted based on the (predicted) distance at the prior sample point and the calculated speed at the prior sample point. 
+
+We calculate velocities like that up to the point where the velocity reaches the desired general speed target. For points further than that we simply use the desired general speed.
 
 ### Possible next steps
 
@@ -89,6 +95,8 @@ The parts that might get cut from ACC like current waypoint and unstuck routine 
 Implement publisher for new message type.
 
 Start implementing safety distance and general target speed logic. Subscriber logic could be taken from old implementation.
+
+Implement PID logic
 
 ### Requirements
 
