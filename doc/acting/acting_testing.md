@@ -8,15 +8,15 @@
 
 ## Acting_Debug_Node
 
-The [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) allows you to tune/test/verify all acting components independently of Planning-Inputs and also lets you easily output the data needed to plot/verify the tuning/testing you have done.
+The [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) allows you to tune/test/verify all acting and control components independently of Planning-Inputs and also lets you easily output the data needed to plot/verify the tuning/testing you have done.
 
 There is a dedicated [acting_debug.launch](../../code/acting/launch/acting_debug.launch) file which starts the acting component **as well as the necesarry perception components** automatically. It is recommended to first test the [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py)
 with an empty road scenario. The following guide provides instructions on how to launch this setup.
 
 ### Setup for Testing with the Debug-Node
 
-To use the [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) you first have to edit a few files in your current branch: \\
-**! Make sure to revert these changes when pushing your branch!**
+To use the [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) you first have to edit a few files in your current branch:
+>[!WARNING]! Make sure to revert these changes when pushing your branch!
 
 - In [dev.launch](../../code/agent/launch/dev.launch) the [agent.launch](../../code/agent/launch/agent.launch) file is included. Change this to include [acting_debug.launch](../../code/acting/launch/acting_debug.launch) from the **acting** package.
 As mentioned above this includes everything we need.

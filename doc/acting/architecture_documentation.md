@@ -1,68 +1,46 @@
-# Architecture
+# Acting: Overview and Architecture
 
-**Summary**: This documentation shows the current Acting Architecture.
+**Summary**: The acting component receives information from the [planning component](./../planning/README.md) as well
+as the [perception component](./../perception/README.md). It processes this information in order to
+navigate on a local basis. This information is then processed in the [control_component](./../control/README.md).
 
-- [Architecture](#architecture)
-  - [Acting Architecture](#acting-architecture)
-  - [Summary of Acting Components](#summary-of-acting-components)
-    - [pure\_pursuit\_controller.py](#pure_pursuit_controllerpy)
-    - [stanley\_controller.py](#stanley_controllerpy)
-    - [velocity\_controller.py](#velocity_controllerpy)
-    - [vehicle\_controller.py](#vehicle_controllerpy)
-    - [helper\_functions.py](#helper_functionspy)
-    - [MainFramePublisher.py](#mainframepublisherpy)
+- [Acting Architecture](#acting-architecture)
+- [Components of acting](#components-of-acting)
+  - [passthrough.py](#passthroughpy)
+  - [main\_frame\_publisher.py](#main_frame_publisherpy)
+  - [helper\_functions.py](#helper_functionspy)
 
 ## Acting Architecture
 
-![MISSING: Acting-ARCHITECTURE](../assets/acting/Architecture_Acting.png)
+![MISSING: Acting-ARCHITECTURE](./../assets/acting/acting_architecture.png)
 
-## Summary of Acting Components
+> [!NOTE]
+> [Click here to go to control architecture](./../control/architecture_documentation.md)
 
-### pure_pursuit_controller.py
+## Components of acting
+
+### passthrough.py
+
+> [!TIP]
+> For documentation on passthrough component see: [passthrough](./passthrough.md)
+
+### main_frame_publisher.py
+
+> [!TIP]
+> Follow this link for [Documentation](./main_frame_publisher.md) on this Node.
 
 - Inputs:
-  - **trajectory**: Path
-  - **current_pos**: PoseStamped
-  - **Speed**: CarlaSpeedometer
+  - **current_pos**: PoseStampled
   - **current_heading**: Float32
 - Outputs:
-  - **pure_pursuit_steer**: Float32
-  - **pure_p_debug**: Debug
-
-### stanley_controller.py
-
-- Inputs:
-  - **trajectory**: Path
-  - **current_pos**: PoseStamped
-  - **Speed**: CarlaSpeedometer
-  - **current_heading**: Float32
-- Outputs:
-  - **stanley_steer**: Float32
-  - **stanley_debug**: StanleyDebug
-
-### velocity_controller.py
-
-- Inputs:
-  - **target_velocity**: Float32
-  - **Speed**: CarlaSpeedometer
-- Outputs:
-  - **throttle**: Float32
-  - **brake**: Float32
-
-### vehicle_controller.py
-
-- Inputs:
-  - **emergency**: Bool
-  - **curr_behavior**: String
-  - **Speed**: CarlaSpeedometer
-  - **throttle**: Float32
-  - **brake**: Float32
-  - **pure_pursuit_steer**: Float32
-  - **stanley_steer**: Float32
-- Outputs:
-  - **vehicle_control_cmd**: [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg)
-  - **status**: Bool
-  - **emergency**: Bool
+  - **transform**: broadcasts heroframe-transform via TransformBroadcaster
+- This node handles the translation from the static main frame to the moving hero frame. The hero frame always moves and rotates as the ego vehicle does. The hero frame is used by sensors like the lidar. Rviz also uses the hero frame. The main frame is used for planning
+- rotation = - **current_heading**
+- position x = cos(rotation) \* **current_pos**.x + sin(rotation) \* **current_pos**.y
+- position y = sin(rotation) \* **current_pos**.x + cos(rotation) \* **current_pos**.y
+- position z = - **current_pos**.z
+- rot_quat = rot as quaternion
+- **transform** = position x/y/z, rot_quat, Timestamp(now), “global”, “hero”
 
 ### helper_functions.py
 
@@ -96,18 +74,3 @@ Interpolate linearly between start and end, with a minimal distance of interval_
 Remove duplicates in the given List of tuples, if the distance between them is less than min_dist.
 - **interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5)**:\
 Interpolate the given route with points inbetween,holding the specified distance interval threshold.
-
-### MainFramePublisher.py
-
-- Inputs:
-  - **current_pos**: PoseStampled
-  - **current_heading**: Float32
-- Outputs:
-  - **transform**: broadcasts heroframe-transform via TransformBroadcaster
-- This node handles the translation from the static main frame to the moving hero frame. The hero frame always moves and rotates as the ego vehicle does. The hero frame is used by sensors like the lidar. Rviz also uses the hero frame. The main frame is used for planning
-- rotation = - **current_heading**
-- position x = cos(rotation) \* **current_pos**.x + sin(rotation) \* **current_pos**.y
-- position y = sin(rotation) \* **current_pos**.x + cos(rotation) \* **current_pos**.y
-- position z = - **current_pos**.z
-- rot_quat = rot as quaternion
-- **transform** = position x/y/z, rot_quat, Timestamp(now), “global”, “hero”
