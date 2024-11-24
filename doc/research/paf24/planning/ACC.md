@@ -78,11 +78,12 @@ For safety distance we will use the concept from the FLC graphic.
 
 For a general speed target we either take the speed of the car in front or the speed limit, whichever is lower. In cases where the car in front is substantially slower than the speed limit ACC could inititate overtaking.
 
-Since we want to calculate the desired speed at each point of the trajectory, the way PID calculates velocity seems reasonable since we can treat the trajectory points as different points in time for the sampling time. For example let's say we sample every fifth point and calculate the velocity for that, then we can just interpolate every other point inbetween. 
+Since we want to calculate the desired speed at each point of the trajectory, the way PID calculates velocity seems reasonable since we can treat the trajectory points as different points in time for the sampling time.
+For example let's say we sample every fifth point and calculate the velocity for that, then we can just interpolate every other point inbetween.
 
 $v_f(t - t_s)$ would then simply be the velocity of the fifth point before the current one. Theoretically this allows us to dynamically adjust the sampling time as well if needed.
 
-For the distance error we can use the safety distance as the desired distance. The distance at time t needs to be predicted based on the (predicted) distance at the prior sample point and the calculated speed at the prior sample point. 
+For the distance error we can use the safety distance as the desired distance. The distance at time t needs to be predicted based on the (predicted) distance at the prior sample point and the calculated speed at the prior sample point.
 
 We calculate velocities like that up to the point where the velocity reaches the desired general speed target. For points further than that we simply use the desired general speed.
 
