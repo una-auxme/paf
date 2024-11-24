@@ -3,7 +3,6 @@ import numpy as np
 import math
 import carla
 import os
-from enum import IntEnum
 
 # import rospy
 
@@ -22,12 +21,6 @@ NUM_WAYPOINTS = 7
 LERP_FACTOR = 0.5
 # Earth radius in meters for location_to_GPS
 EARTH_RADIUS_EQUA = 6378137.0
-
-
-# getattr(Behaviour, "name").value returns the ID
-# Behaviour(id) returns Behaviour.NAME
-class Behaviour(IntEnum):
-    CRUISING = 0
 
 
 def get_distance(pos_1, pos_2):
