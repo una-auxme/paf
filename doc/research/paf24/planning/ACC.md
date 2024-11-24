@@ -74,7 +74,8 @@ Since behaviour is passed as an ID a new enum for behaviours was implemented in 
 
 The general idea for speeds above the 40 km/h mark is to calculate a proper safety distance, a general target velocity and velocity targets based on PID. For speeds lower than that a stop and go system can be discussed if it is really needed.
 
-For safety distance we will use the concept from the FLC graphic.
+For safety distance we would like to calculate it like FLC but that most likely needs some adjustments as setting the distance to 100m when there is no vehicle ahead seems unreasonable.
+We can just directly set the velocity to the speed limit in that case.
 
 For a general speed target we either take the speed of the car in front or the speed limit, whichever is lower. In cases where the car in front is substantially slower than the speed limit ACC could inititate overtaking.
 
