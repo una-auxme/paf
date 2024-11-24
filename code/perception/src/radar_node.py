@@ -2,33 +2,24 @@
 import rospy
 import ros_numpy
 import numpy as np
-import lidar_filter_utility
 from sensor_msgs.msg import PointCloud2
-
-# from mpl_toolkits.mplot3d import Axes3D
-# from itertools import combinations
-from sensor_msgs.msg import Image as ImageMsg
-from cv_bridge import CvBridge
-
 from std_msgs.msg import Float32
-
-# from matplotlib.colors import LinearSegmentedColormap
 
 
 class RadarNode:
-    """See doc/perception/lidar_distance_utility.md on
-    how to configute this node
+    """See doc/perception/radar_node.md on
+    how to configure this node
     """
 
     def callback(self, data):
-        """Callback function, filters a PontCloud2 message
-            by restrictions defined in the launchfile.
+        """Process radar Point2Cloud data and publish minimum velocity.
 
-            Publishes a Depth image for the specified camera angle.
-            Each angle has do be delt with differently since the signs of the
-            coordinate system change with the view angle.
+        Extracts velocity information from radar data
+        and publishes the minimum velocity as a
+        Float32 message
 
-        :param data: a PointCloud2
+        Args:
+            data: Point2Cloud message containing radar data with velocity field
         """
 
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
@@ -40,8 +31,7 @@ class RadarNode:
         Initializes the node and it's publishers
         """
         # run simultaneously.
-        rospy.init_node("lidar_distance")
-        self.bridge = CvBridge()
+        rospy.init_node("radar_node")
 
         # publisher for radar dist_array
         self.dist_array_radar_publisher = rospy.Publisher(
@@ -60,5 +50,5 @@ class RadarNode:
 
 
 if __name__ == "__main__":
-    lidar_distance = RadarNode()
-    lidar_distance.listener()
+    radar_node = RadarNode()
+    radar_node.listener()
