@@ -36,7 +36,9 @@ backpropagation mechanism.
 ### SCNN_UNet_Attention_PL Advantages
 
 - Robustness: The model is robust against difficult scenarios such as glare, shadows or obscured lines, which is ideal for simulating realistic road conditions.
+  
 - Training efficiency: Due to its fast convergence, it can be trained and implemented with moderate resource requirements.
+  
 - Continuous lane tracking: By processing multiple image sequences, the model provides reliable recognition results in dynamic driving scenarios.
 
 ### SCNN_UNet_Attention_PL Disadvantages
