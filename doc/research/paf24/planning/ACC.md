@@ -86,7 +86,9 @@ $v_f(t - t_s)$ would then simply be the velocity of the fifth point before the c
 
 For the distance error we can use the safety distance as the desired distance. The distance at time t needs to be predicted based on the (predicted) distance at the prior sample point and the calculated speed at the prior sample point.
 
-We calculate velocities like that up to the point where the velocity reaches the desired general speed target. For points further than that we simply use the desired general speed.
+We calculate velocities like that up to the point where the actual distance is within 5% of the optimal safety distance. For points further than that we simply use the desired general speed.
+
+![accDiagram](https://github.com/user-attachments/assets/9a7b4572-f041-4da0-900c-51ab20d1904b)
 
 ### Possible next steps
 
