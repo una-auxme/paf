@@ -13,7 +13,7 @@ Lane Detection is a computer vision task that involves identifying the boundarie
 The website PapersWithCode [1] gives several benchmarks for different lane detection models. In the following the best perfoming model of the three most common Datasets are presented. The models evaluation is based on the calculation of accuracy, precision, Recall, and F1-measure.
 The formulas are presented in the image below. [3]
 
-![Image-of-formulas](../../../assets/perception/Formula_for_Modelevaluation_lane_detection.png)
+![Evaluation metric formulas for lane detection models](/assets/perception/Formula_for_Modelevaluation_lane_detection.png)
 
 ## Lane Detection on TuSimple
 
@@ -95,6 +95,7 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 ![Comparison of CondLSTR model performance](/assets/perception/Comparison_of_models_CondLSTR(RESNet101).jpg)
 
 **advantages:**
+
 - Dynamic Kernel Generation: The key strength of this model is its ability to generate dynamic convolutional kernels through transformers. This makes the model highly adaptable to varying lane structures, such as curves, occlusions, and intersections, compared to traditional static kernels​
 
 - Handling Complex Lane Topologies: The transformer-based dynamic kernels capture global lane structure across the image, which is crucial for detecting lanes with complex patterns (e.g., forks, dense lanes) that static methods struggle with​
@@ -109,11 +110,12 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 
 ## Summary
 
-| Model                    | Test_Acc (%) | Precision | Recall | F1-Measure | Realase | Dataset  |
+| Model|Test_Acc(%)|Precision|Recall|F1-Measure|Realase|Dataset|
 |--------------------------|--------------|-----------|--------|------------|---------|----------|
-| SCNN_UNet_ Attention _PL | 98.36        | 0.937     | 0.911  | 0.924      | 2022    | TuSimple |
-| CLRerNet-DLA34           | ---          | 0.917     | 0.818  | 0.814     | 2023    | CULane   |
-|CondLSTR(ResNet-101)| --- | 0.9132 | 0.8580 | 0.8847 | 2023 | CurveLanes | 
+|SCNN_UNet_ Attention _PL|98.36|0.937|0.911|0.924|2022|TuSimple|
+|CLRerNet-DLA34|---| 0.917|0.818|0.814|2023|CULane|
+|CondLSTR(ResNet-101)|---|0.9132|0.8580|0.8847|2023|CurveLanes| 
+
 
 ![Comparison_on_dataset](/doc/assets/perception/Comparison_of_CurveLane_Dataset.jpg)
 
