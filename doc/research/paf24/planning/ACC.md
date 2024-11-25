@@ -37,7 +37,7 @@ Procedure:
 
 Provides a unified control framework to offer both functions: ACC and Stop & Go.
 
-![Example of a FLC control algorithm showing input variables (relative distance, host vehicle speed), fuzzy rules processing, and output variable](../../../assets/research_assets/ACC_FLC_Example_1.png)
+![Example of a FLC control algorithm showing input variables (relative distance, host vehicle speed), fuzzy rules processing, and output variable](../../../assets/research_assets/ACC_FLC_Example_1.PNG)
 
 ## ACC in our project
 
