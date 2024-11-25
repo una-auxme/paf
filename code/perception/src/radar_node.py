@@ -128,7 +128,7 @@ def cluster_radar_data_from_pointcloud(
 
     # Zählen der Punktanzahl in jedem Cluster
     clustered_points = {label: list(labels).count(label) for label in set(labels)}
-    
+
     # Konvertiere die Labels in Integer und gebe das Dictionary zurück
     clustered_points = {int(label): count for label, count in clustered_points.items()}
     return clustered_points
