@@ -1,9 +1,9 @@
 # Summary of Research for lane detection models
 
-- [Overall](#Overall)
-- [Lane Detection on TuSimple](#Lane-Detection-on-TuSimple)
-- [Lane Detection on CULanes](#lane-detection-on-culane)
-- [LaneDetection on CurveLanes](#lane-detection-on-curvelanes)
+- [Overall](#overall)
+- [Lane Detection on TuSimple](#lane-detection-on-tusimple)
+- [Lane Detection on CULane](#lane-detection-on-culane)
+- [Lane Detection on CurveLanes](#lane-detection-on-curvelanes)
 
 ## Overall
 
