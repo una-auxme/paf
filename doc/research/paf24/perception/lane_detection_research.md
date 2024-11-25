@@ -76,8 +76,6 @@ The paper "Generating Dynamic Kernels via Transformers for Lane Detection" prese
 
 ![Image-CondLSTR](../../../assets/perception/CondLSTR(RESNet101)_Model_Overview.jpg)
 
-
-
 For more details, view the paper [here](https://openaccess.thecvf.com//content/ICCV2023/papers/Chen_Generating_Dynamic_Kernels_via_Transformers_for_Lane_Detection_ICCV_2023_paper.pdf).
 
 **model explanation:**
@@ -95,7 +93,6 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 **advantages:**
 - Dynamic Kernel Generation: The key strength of this model is its ability to generate dynamic convolutional kernels through transformers. This makes the model highly adaptable to varying lane structures, such as curves, occlusions, and intersections, compared to traditional static kernels​
 
-
 - Handling Complex Lane Topologies: The transformer-based dynamic kernels capture global lane structure across the image, which is crucial for detecting lanes with complex patterns (e.g., forks, dense lanes) that static methods struggle with​
 
 - Improved Robustness: Due to the dynamic nature of the kernels, the model performs better under challenging conditions like occlusions and varying lane configurations, which often confuse traditional methods​
@@ -104,7 +101,6 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 - Computational Complexity: While the model offers significant performance improvements, the use of transformers and dynamic kernel generation may result in higher computational cost and slower inference times, especially in real-time applications​
 
 - Dependence on High-Quality Data: Like many deep learning models, this approach relies on large, well-labeled datasets for training. In environments where high-quality lane annotation is difficult or expensive to acquire, the model may struggle​
-
 
 ## Summary
 
@@ -116,7 +112,8 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 
 ![Comparison_on_dataset](/doc/assets/perception/Comparison_of_CurveLane_Dataset.jpg)
 
-It should be mentioned that the paper by Robin Karlsson et. al was also read, but it was not worth comparing it here as it was a selfsupervised learning model and was not trained on the above datasets but on a smaller dataset and used more sensors and cameras (6 cameras, 5 radars and 1 lidar) than allowed in the Qualify. But for interrested people you can find the paper [here](https://arxiv.org/pdf/2304.13242v2)
+It should be mentioned that the paper by Robin Karlsson et. al was also read, but it was not worth comparing it here as it was a selfsupervised learning model and was not trained on the above datasets but on a smaller dataset and used more sensors and cameras (6 cameras, 5 radars and 1 lidar) than allowed in the Qualify.
+But for interrested people you can find the paper [here](https://arxiv.org/pdf/2304.13242v2)
 
 ## Decision
 
