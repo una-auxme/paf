@@ -6,18 +6,21 @@ This file gives a general overview on possible ACC implementations and reflects 
 
 The main goal of an ACC (Adaptive Cruise Control) is to follow a car driving in front while keeping a safe distance to it. This can be achieved by adjusting the speed to the speed of the car in front.
 In general, classic ACC systems are designed for higher velocity (e.g. > 40 km/h). Apart from that, there are Stop & Go systems that support lower velocites (e.g. < 40 km/h). In our case, both systems might be needed and it might be reasonable to develop two different systems for ACC and Stop & Go.
+The threshold to distinguish between the two systems has to be chosen reasonably.
 There are basically three different techniques that can be used to implement an ACC: PID Control, Model Predictive Control and Fuzzy Logic Control. Another option is CACC (Cooperative Adaptive Cruise Control) but this is not relevant for our project since it requires communication between the vehicles.
 
 ### PID Control
 
 The PID Controller consists of three terms: the proportional term, the integral term and the derivative term. One possible simple controller model looks as follows:
 
-$$ v_f(t) = v_f(t - t_s) + k_p e (t-t_s) + k_d \dot{e}(t - t_s) $$
+$$ v_f(t) = v_f(t - t_s) + k_p e(t-t_s) + k_i \int_{0}^{t} e(\tau) d\tau + k_d \dot{e}(t - t_s) $$
 $$ e(t-t_s) = \Delta x(t - t_s) - t_{hw,d} v_f (t - t_s) $$
 
+- $v_f$: follower vehicle velocity (transmitted to the acting component)
 - $t_s$: sampling time
-- $k_p$ and $k_d$: coefficients for proportional and derivative terms
+- $k_p$ and $k_i$ and $k_d$: coefficients for proportional, integral and derivative terms
 - $e$: distance error (difference between actual distance $\Delta x$ and desired distance $\Delta x_d$)
+- $t_{hw,d}$: desired time headway (duration between the arrival of the first car at a certain waypoint and the arrival of the following car at the same waypoint)  
 
 ### Model Predictive Control (MPC)
 
@@ -34,14 +37,7 @@ Procedure:
 
 Provides a unified control framework to offer both functions: ACC and Stop & Go.
 
-![Example of a FLC control algorithm](../../../assets/research_assets/ACC_FLC_Example_1.png)
-
-## Discussion
-
-- When should the ACC be used? Only when driving straight forward?
-- How to test adaptations of the ACC? Create test scenarios?
-- Which output should be transfered to the Acting component? Only the desired speed?
-- Which input do we get from the Perception component? The distance and velocity of the car in front?
+![Example of a FLC control algorithm showing input variables (relative distance, host vehicle speed), fuzzy rules processing, and output variable](../../../assets/research_assets/ACC_FLC_Example_1.png)
 
 ## ACC in our project
 
@@ -106,6 +102,12 @@ Implement PID logic
 
 - obstacle speed
 - obstacle distance
+
+## Discussion
+
+- How to test adaptations of the ACC? (Suggestion: Create test scenarios which represent different situations like driving straight forward behing a leading vehicle, no leading vehicle, sudden breaking, etc.)
+- Which output should be transfered to the Acting component? (Suggestion: The desired speed is published in the new trajectory. No acceleration data is needed, the acceleration is handled by the acting component.)
+- Which input do we get from the Perception component? (Suggestion: The distance and velocity of the car in front would be really helpful.)
 
 ## Sources
 
