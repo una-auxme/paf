@@ -110,11 +110,11 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 
 ## Summary
 
-| Model|Test_Acc(%)|Precision|Recall|F1-Measure|Realase|Dataset|
-|--------------------------|--------------|-----------|--------|------------|---------|----------|
-|SCNN_UNet_ Attention _PL|98.36|0.937|0.911|0.924|2022|TuSimple|
-|CLRerNet-DLA34|---| 0.917|0.818|0.814|2023|CULane|
-|CondLSTR(ResNet-101)|---|0.9132|0.8580|0.8847|2023|CurveLanes| 
+| Model | Test Acc (%) | Precision | Recall | F1-Measure | Release | Dataset |
+|--------|-------------|-----------|---------|------------|---------|----------|
+| SCNN_UNet_Attention_PL | 98.36 | 0.937 | 0.911 | 0.924 | 2022 | TuSimple |
+| CLRerNet-DLA34 | N/A | 0.917 | 0.818 | 0.814 | 2023 | CULane |
+| CondLSTR(ResNet-101) | N/A | 0.913 | 0.858 | 0.885 | 2023 | CurveLanes |
 
 
 ![Comparison_on_dataset](/doc/assets/perception/Comparison_of_CurveLane_Dataset.jpg)
