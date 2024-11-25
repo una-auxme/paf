@@ -44,7 +44,7 @@ environment representation that can be used by the [Planning](#Planning) for fur
 It provides localization of the agent, filtering noise from sensor data, preconditions images for further usage in other nodes and detects certain points of interest (at the moment only traffic lights).
 
 Further information regarding the perception can be found [here](../perception/README.md).
-Research for the perception can be found [here](../research/perception/README.md).
+Research for the perception can be found [here](../research/paf24/perception/).
 
 In the following, all subscribed and published topics and their corresponding nodes are listed with the format:
 
@@ -228,7 +228,7 @@ It consists of three components:
 
 - [Collision Check](../planning//Collision_Check.md): Checks for collisions based on objects recieved from [Perception](#perception)
 - [ACC](../planning/ACC.md): Generates a new speed based on a possible collision recieved from Collision Check and speedlimits recieved from [Global Planner](#global-planning)
-- [Motion Planning](../planning/motion_planning.md): Decides the target speed and modifies trajectory if signal recieved from [Decision Making](#decision-making)
+- [Motion Planning](../planning/motion_planning.md): Decides the target speed and modifies trajectory if signal recieved from [Behavior Agent](#behavior-agent-behavior_agent)
 
 Subscriptions:
 
@@ -267,7 +267,7 @@ Subscriptions:
 
 Publishes:
 
-[ACC.py](/../paf/code/planning/src/behavior_agent/local_planner/ACC.py)
+[ACC.py](/../paf/code/planning/src/local_planner/ACC.py)
 
 - ```/paf/hero/acc_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_wp``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
