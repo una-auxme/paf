@@ -90,7 +90,7 @@ For more details, view the paper [here](https://openaccess.thecvf.com//content/I
 
 **output:**
 
-![Comparison_models](/doc/assets/perception/Comparison_of_models_CondLSTR(RESNet101).jpg)
+![Comparison of CondLSTR model performance](/assets/perception/Comparison_of_models_CondLSTR(RESNet101).jpg)
 
 **advantages:**
 - Dynamic Kernel Generation: The key strength of this model is its ability to generate dynamic convolutional kernels through transformers. This makes the model highly adaptable to varying lane structures, such as curves, occlusions, and intersections, compared to traditional static kernels​
