@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-from math import pi, cos, sin
 import ros_compatibility as roscomp
 import rospy
 from geometry_msgs.msg import PoseStamped
@@ -8,6 +6,8 @@ from ros_compatibility.node import CompatibleNode
 import tf
 from scipy.spatial.transform import Rotation as R
 from std_msgs.msg import Float32
+
+import numpy as np
 
 
 class MainFramePublisher(CompatibleNode):
@@ -49,27 +49,28 @@ class MainFramePublisher(CompatibleNode):
             if self.current_pos is None:
                 # conversion only works if pos is known
                 return
-            rot = -self.current_heading
-            pos = [0, 0, 0]
-            pos[0] = (
-                cos(rot) * self.current_pos.pose.position.x
-                - sin(rot) * self.current_pos.pose.position.y
-            )
-            pos[1] = (
-                sin(rot) * self.current_pos.pose.position.x
-                + cos(rot) * self.current_pos.pose.position.y
-            )
-            pos[2] = -self.current_pos.pose.position.z
-            rot_quat = R.from_euler(
-                "xyz", [0, 0, -self.current_heading + pi], degrees=False
-            ).as_quat()
 
+            # The following converts the current_pos as well as the current_heading
+            # messages we receive into tf transforms.
+
+            position = np.array(
+                [
+                    self.current_pos.pose.position.x,
+                    self.current_pos.pose.position.y,
+                    self.current_pos.pose.position.z,
+                ]
+            )
+
+            rotation = R.from_euler("z", self.current_heading, degrees=False).as_quat()
+
+            # The position and rotation are "the hero frame in global coordinates"
+            # Therefore we publish the child hero with respect to the parent global
             br.sendTransform(
-                pos,
-                rot_quat,
-                rospy.Time.now(),
-                "global",
-                "hero",
+                translation=position,
+                rotation=rotation,
+                time=rospy.Time.now(),
+                child="hero",
+                parent="global",
             )
 
         self.new_timer(self.control_loop_rate, loop)

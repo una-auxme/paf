@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="debugging" type="debug_logger.py" name="debug_logger" output="screen">
+  </node>
+</launch>
