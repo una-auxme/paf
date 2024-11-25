@@ -18,7 +18,7 @@ class RadarNode:
 
         Extracts information from radar data
         and publishes the clustered radar data
-        points as a String message
+        points as a String message.
 
         Args:
             data: Point2Cloud message containing radar data
@@ -38,7 +38,8 @@ class RadarNode:
         # publisher for radar dist_array
         self.dist_array_radar_publisher = rospy.Publisher(
             rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/dist_array_unsegmented"
+                "~image_distance_topic",
+                "/paf/hero/Radar/dist_array_unsegmented",
             ),
             String,
             queue_size=10,
@@ -55,8 +56,8 @@ class RadarNode:
 
 def pointcloud2_to_array(pointcloud_msg):
     """
-    Konvertiert eine ROS-PointCloud2-Nachricht in ein NumPy-Array und berechnet die euklidischen Entfernungen
-    jedes Punkts vom Ursprung.
+    Konvertiert eine ROS-PointCloud2-Nachricht in ein NumPy-Array und berechnet
+    die euklidischen Entfernungen jedes Punkts vom Ursprung.
 
     Parameter:
     - pointcloud_msg: sensor_msgs/PointCloud2
@@ -81,27 +82,35 @@ def cluster_radar_data_from_pointcloud(
     pointcloud_msg, max_distance, eps=1.0, min_samples=2
 ):
     """
-    Filtert und gruppiert Punkte aus einer ROS-PointCloud2-Nachricht basierend auf DBSCAN-Clustering.
+    Filtert und gruppiert Punkte aus einer ROS-PointCloud2-Nachricht
+    basierend auf DBSCAN-Clustering.
 
     Parameter:
     - pointcloud_msg: sensor_msgs/PointCloud2
         Die ROS-PointCloud2-Nachricht mit den 3D-Punkten.
     - max_distance: float
-        Maximale Entfernung, um Punkte zu berücksichtigen. Punkte außerhalb dieser Entfernung werden verworfen.
+        Maximale Entfernung, um Punkte zu berücksichtigen. Punkte außerhalb dieser
+        Entfernung werden verworfen.
     - eps: float, optional (default: 1.0)
-        Der maximale Abstand zwischen zwei Punkten, damit diese im selben Cluster sein können.
+        Der maximale Abstand zwischen zwei Punkten, damit diese im selben Cluster
+        sein können.
     - min_samples: int, optional (default: 2)
-        Die minimale Anzahl von Punkten, die erforderlich sind, um einen Cluster zu bilden.
+        Die minimale Anzahl von Punkten, die erforderlich sind, um einen Cluster
+        zu bilden.
 
     Rückgabewert:
     - dict
-        Ein Dictionary, in dem die Schlüssel die Cluster-Labels (int) sind und die Werte die Anzahl der Punkte
-        in jedem Cluster. Wenn keine Punkte vorhanden sind, wird ein leeres Dictionary zurückgegeben.
+        Ein Dictionary, in dem die Schlüssel die Cluster-Labels (int) sind und die
+        Werte die Anzahl der Punkte in jedem Cluster. Wenn keine Punkte vorhanden
+        sind, wird ein leeres Dictionary zurückgegeben.
 
     Funktionalität:
-    - Die Funktion konvertiert die Punktwolke in ein Array mit Punktkoordinaten und berechneten Entfernungen.
-    - Punkte außerhalb eines spezifizierten Entfernungsbereichs und räumlichen Filtergrenzen werden verworfen.
-    - Anschließend wird DBSCAN-Clustering auf die 2D-Koordinaten (x, y) der Punkte angewendet.
+    - Die Funktion konvertiert die Punktwolke in ein Array mit Punktkoordinaten
+      und berechneten Entfernungen.
+    - Punkte außerhalb eines spezifizierten Entfernungsbereichs und räumlichen
+      Filtergrenzen werden verworfen.
+    - Anschließend wird DBSCAN-Clustering auf die 2D-Koordinaten (x, y) der Punkte
+      angewendet.
     - Die Cluster-Labels und ihre Häufigkeiten werden als Dictionary zurückgegeben.
     """
     data = pointcloud2_to_array(pointcloud_msg)
@@ -127,10 +136,16 @@ def cluster_radar_data_from_pointcloud(
     labels = clustering.labels_
 
     # Zählen der Punktanzahl in jedem Cluster
-    clustered_points = {label: list(labels).count(label) for label in set(labels)}
+    clustered_points = {
+        label: list(labels).count(label)
+        for label in set(labels)
+    }
 
     # Konvertiere die Labels in Integer und gebe das Dictionary zurück
-    clustered_points = {int(label): count for label, count in clustered_points.items()}
+    clustered_points = {
+        int(label): count
+        for label, count in clustered_points.items()
+    }
     return clustered_points
 
 
