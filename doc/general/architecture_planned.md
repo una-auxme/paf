@@ -53,6 +53,7 @@ The node classifies objects into static and dynamic objects.
 In the case of dynamic objects, an attempt is made to recognize the direction and speed of movement.
 
 Subscriptions:
+
 - ```lidar``` ([sensor_msgs/PointCloud2](https://docs.ros.org/en/api/sensor_msgs/html/msg/PointCloud2.html))
 - ```rgb_camera``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ````gnss```` ([sensor_msgs/NavSatFix](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sensors/))
@@ -64,17 +65,17 @@ Publishes:
 - ```obstacles``` (Custom msg:
   obstacle ([vision_msgs/Detection3DArray Message](http://docs.ros.org/en/api/vision_msgs/html/msg/Detection3DArray.html))
   and its classification ([std_msgs/String Message](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html)))
--  ```segmented_image``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
-   -  /paf/hero/Center/segmented_image
-   -  /paf/hero/Back/segmented_image
-   -  /paf/hero/Left/segmented_image
-   -  /paf/hero/Right/segmented_image
--  ```segmented_traffic_light``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
--  ```object_distance``` ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
-   -  /paf/hero/Center/object_distance
-   -  /paf/hero/Back/object_distance
-   -  /paf/hero/Left/object_distance
-   -  /paf/hero/Right/object_distance
+- ```segmented_image``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+  - /paf/hero/Center/segmented_image
+  - /paf/hero/Back/segmented_image
+  - /paf/hero/Left/segmented_image
+  - /paf/hero/Right/segmented_image
+- ```segmented_traffic_light``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+- ```object_distance``` ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
+  - /paf/hero/Center/object_distance
+  - /paf/hero/Back/object_distance
+  - /paf/hero/Left/object_distance
+  - /paf/hero/Right/object_distance
 
 ### Traffic Light Detection
 
@@ -96,10 +97,13 @@ Publishes:
   position ([geometry_msgs/Pose Message](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Pose.html)),
   distance_to_stop_line ([std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html)))
 
-
 ### Position Heading Node
 
+There are currently no planned improvements of the Position Heading Node.
+
 ### Distance to Objects
+
+There are currently no planned improvements for Distance to Objects.
 
 ### Localization
 
