@@ -47,7 +47,8 @@ Further information regarding the perception can be found [here](../perception/R
 Research for the perception can be found [here](../research/perception/README.md).
 
 In the following, all subscribed and published topics and their corresponding nodes are listed with the format:
-- ```name of topic``` \(origin/destination node\) (typo of message) (<span style="color:dodgerblue">link to ROS documentation of the message type</span>)
+
+- ```name of topic``` \(origin/destination node\) (typo of message) (link to ROS documentation of the message type)
 
 ### Vision Node ([vision_node.py](/../paf/code/perception/src/vision_node.py))
 
@@ -56,6 +57,7 @@ Other road users and objects blocking the vehicle's path are recognized (most of
 Recognized traffic lights get cut out from the image and made available for further processing.
 
 Subscriptions:
+
 - ```/paf/hero/Center/dist_array``` \(/lidar_distance\) ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ```/carla/hero/Center/image``` \(/carla_ros_bridge\) ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ```/carla/hero/Back/image``` \(/carla_ros_bridge\) ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
@@ -92,7 +94,6 @@ Publishes:
 - ```/paf/hero/Center/traffic_light_state``` \(/behavior_agent\) ([perception/TrafficLightState](/../paf/code/perception/msg/TrafficLightState.msg))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/behavior_agent\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 
-
 ### Position Heading Node ([position_heading_publisher_node.py](/../paf/code/perception/src/position_heading_publisher_node.py))
 
 Calculates the current_pos (Location of the car) and current_heading (Orientation of the car around the Z- axis).
@@ -107,11 +108,10 @@ Subscriptions:
 
 Publishes:
 
-- ```/paf/hero/unfiltered_heading``` \(no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/unfiltered_heading``` \(no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/unfiltered_pos``` \(/kalman_filter_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/paf/hero/current_pos``` \(/pure_pursuit_controller, /stanley_controller, /MotionPlanning, /ACC, /MainFramePublisher, /GlobalPlanDistance, /position_heading_publisher_node, /curr_behavior \) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/stanley_controller, /behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-
+- ```/paf/hero/current_heading``` \(/stanley_controller, /behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 ### Global distances ([global_plan_distance_publisher.py](/../paf/code/perception/src/global_plan_distance_publisher.py))
 
@@ -122,8 +122,8 @@ Subscriptions:
 
 Publishes:
 
-- ```/paf/hero/waypoint_distance``` \(/MotionPlanning, /behavior_agent\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html)) 
-- ```/paf/hero/lane_change_distance``` \(/MotionPlanning, /behavior_agent\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg)) 
+- ```/paf/hero/waypoint_distance``` \(/MotionPlanning, /behavior_agent\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
+- ```/paf/hero/lane_change_distance``` \(/MotionPlanning, /behavior_agent\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 
 ### Kalman filtering ([kalman_filter.py](/../paf/code/perception/src/kalman_filter.py))
 
@@ -138,11 +138,17 @@ Subscriptions:
 Publishes:
 
 - ```/paf/hero/kalman_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/kalman_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/kalman_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 ### Localization
 
-Provides corrected accurate position, direction and speed of the ego vehicle. For this to be achived the [Position Heading Node](#position-heading-node-position_heading_publisher_nodepy), [Kalman filtering](#kalman-filtering) and the [Coordinate Transformation](/../paf/code/perception/src/coordinate_transformation.py) help class are used. 
+Provides corrected accurate position, direction and speed of the ego vehicle. For this to be achived the
+
+- [Position Heading Node](#position-heading-node-position_heading_publisher_nodepy)
+- [Kalman filtering](#kalman-filtering) and
+- [Coordinate Transformation](/../paf/code/perception/src/coordinate_transformation.py)
+
+classes are used.
 
 ## Planning
 
@@ -175,41 +181,46 @@ Everything is based on the data from the Perception [Perception](#Perception). M
 Subscriptions:
 
 [topics2blackboard.py](/../paf/code/planning/src/behavior_agent/behaviours/topics2blackboard.py)
+
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/slowed_by_car_in_front``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html)) 
-- ```/paf/hero/stop_sign``` \(/\) ([mock/Stop_sign](/../paf/code/mock/msg/Stop_sign.msg)) 
+- ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
+- ```/paf/hero/stop_sign``` \(/\) ([mock/Stop_sign](/../paf/code/mock/msg/Stop_sign.msg))
 - ```/paf/hero/Center/traffic_light_state``` \(/TrafficLightNode\) ([perception/TrafficLightState](/../paf/code/perception/msg/TrafficLightState.msg))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
-- ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg)) 
+- ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 - ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/overtake_success``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/oncoming``` \(/CollisionCheck\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/target_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/overtake_success``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/oncoming``` \(/CollisionCheck\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/target_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
 
 [maneuvers.py](/../paf/code/planning/src/behavior_agent/behaviours/maneuvers.py)
+
 - ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
-- ```/paf/hero/unstuck_distance``` \(/ACC, /MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/unstuck_distance``` \(/ACC, /MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/unstuck_flag``` \(/ACC\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 
 [intersection.py](/../paf/code/planning/src/behavior_agent/behaviours/intersection.py)
+
 - ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
   
 [lane_change.py](/../paf/code/planning/src/behavior_agent/behaviours/lane_change.py)
+
 - ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 
 [meta.py](/../paf/code/planning/src/behavior_agent/behaviours/meta.py)
-- ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+
+- ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 [overtake.py](/../paf/code/planning/src/behavior_agent/behaviours/overtake.py)
-- ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 
+- ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 
 ### [Local Planning](../planning/Local_Planning.md)
 
@@ -222,8 +233,9 @@ It consists of three components:
 Subscriptions:
 
 [ACC.py](/../paf/code/planning/src/local_planner/ACC.py)
+
 - ```/paf/hero/unstuck_flag``` \(/behavior_agent\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/speed_limits_OpenDrive``` \(/PrePlanner\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
@@ -231,45 +243,47 @@ Subscriptions:
 - ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 
 [collision_check.py](/../paf/code/planning/src/local_planner/collision_check.py)
+
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/Center/object_distance``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 
 [motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py)
-- ```/paf/hero/spawn_car``` \(/\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+
+- ```/paf/hero/spawn_car``` \(/\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/paf/hero/curr_behavior``` \(/behavior_agent\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 - ```/paf/hero/unchecked_emergency``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html)) 
-- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg)) 
+- ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
+- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 - ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
-- ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_wp``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
+
 [ACC.py](/../paf/code/planning/src/behavior_agent/local_planner/ACC.py)
-- ```/paf/hero/acc_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+
+- ```/paf/hero/acc_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_wp``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/speed_limit``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/speed_limit``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 [collision_check.py](/../paf/code/planning/src/local_planner/collision_check.py)
+
 - ```/paf/hero/emergency``` \(/vehicle_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/collision``` \(/ACC, /MotionPlanning\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
-- ```/paf/hero/oncoming``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/oncoming``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 [motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py)
+
 - ```/paf/hero/trajectory``` \(/pure_pursuit_controller\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
-- ```/paf/hero/target_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/overtake_success``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-
-
-
-
+- ```/paf/hero/target_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/overtake_success``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 ## Acting
 
@@ -282,8 +296,9 @@ Indepth information about the currently implemented acting Components can be fou
 ### [MainFramePublisher](/../paf/code/acting/src/acting/MainFramePublisher.py)
 
 Subscription:
+
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 ### [pure_pursuit_controller](/../paf/code/acting/src/acting/pure_pursuit_controller.py)
 
@@ -291,13 +306,15 @@ Calculates steering angles that keep the ego vehicle on the path given by
 the [Local path planning](#Local-path-planning).
 
 Subscription:
+
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
-- ```/paf/hero/pure_pursuit_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/pure_p_debug``` \(/\) ([acting/msg/Debug](/../paf/code/acting/msg/Debug.msg)) 
+
+- ```/paf/hero/pure_pursuit_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/pure_p_debug``` \(/\) ([acting/msg/Debug](/../paf/code/acting/msg/Debug.msg))
   
 ### [stanley_controller](/../paf/code/acting/src/acting/stanley_controller.py)
 
@@ -305,31 +322,35 @@ Calculates steering angles that keep the ego vehicle on the path given by
 the [Local path planning](#Local-path-planning).
 
 Subscription:
+
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
-- ```/paf/hero/stanley_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/stanley_debug``` \(/\) ([acting/msg/StanleyDebug](/../paf/code/acting/msg/StanleyDebug.msg)) 
+
+- ```/paf/hero/stanley_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/stanley_debug``` \(/\) ([acting/msg/StanleyDebug](/../paf/code/acting/msg/StanleyDebug.msg))
 
 ### [vehicle_controller](/../paf/code/acting/src/acting/vehicle_controller.py)
 
 Subscription:
+
 - ```/paf/hero/curr_behavior``` \(/behavior_agent\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 - ```/paf/hero/emergency``` \(/vehicle_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/throttle``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/brake``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/throttle``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/brake``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/reverse``` \(/velocity_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/pure_pursuit_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/stanley_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/pure_pursuit_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/stanley_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
+
 - ```/carla/hero/vehicle_control_cmd``` \(/\) ([ros_carla_msgs/msg/CarlaEgoVehicleControl](https://github.com/carla-simulator/ros-carla-msgs/blob/master/msg/CarlaEgoVehicleControl.msg))
 - ```/carla/hero/status``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/controller``` \(/\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+- ```/paf/hero/controller``` \(/\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/emergency``` \(/vehicle_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 
 ### [velocity_controller](/../paf/code/acting/src/acting/velocity_controller.py)
@@ -339,10 +360,12 @@ Calculates acceleration values to drive the target-velocity given by the [Local 
 For further indepth information about the currently implemented Vehicle Controller click [here](../acting/vehicle_controller.md)
 
 Subscription:
-- ```/paf/hero/target_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+
+- ```/paf/hero/target_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 
 Publishes:
-- ```/paf/hero/throttle``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
-- ```/paf/hero/brake``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html)) 
+
+- ```/paf/hero/throttle``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/brake``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/reverse``` \(/vehicle_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
