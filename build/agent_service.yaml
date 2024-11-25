@@ -30,6 +30,7 @@ services:
       - ROS_HOSTNAME=agent
       - XDG_RUNTIME_DIR=/tmp/runtime-carla
       - ROUTE=/opt/leaderboard/data/routes_devtest.xml
+      - DEBUG_WRAPPER_DEFAULT_HOST=0.0.0.0
       # Simple route without special scenarios
       # - ROUTE=/workspace/code/routes/routes_simple.xml
     volumes:
