@@ -35,13 +35,6 @@ body:
         - The car detects traffic lights on Map1 correctly.
         - The issue no longer occurs in similar scenarios.
 
-  - type: input
-    id: effort_estimate
-    attributes:
-      label: Effort Estimate
-      description: Approximate effort required (e.g., hours).
-      placeholder: Enter effort estimate.
-
   - type: textarea
     id: testability
     attributes:
@@ -59,12 +52,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Add Priority Label**:
-        - p1: Immediate attention
-        - p2: High priority
-        - p3: Standard priority
-        - p4: Low priority
-
         **Add Group Label**:
         - perception: Related to sensor processing and scene understanding
         - planning: Related to path planning and decision making
@@ -72,3 +59,18 @@ body:
         - system: Related to the general behavior of the system
         - research: Related to research and experimentation
         - infrastructure: Related to system infrastructure and setup
+
+        **Add Labels on the Project Board**:
+        **Priority:**
+        - `Urgent`: Critical bug causing system crash, needs immediate fix.
+        - `High`: Major feature request or significant bug affecting many users.
+        - `Medium`: Minor feature request or bug with a workaround.
+        - `Low`: Cosmetic changes or minor improvements.
+
+        **Size:**
+        - `Tiny`: Small typo fix or minor code refactor. Estimated time: 30 minutes.
+        - `Small`: Simple bug fix or small feature addition. Estimated time: 1-2 hours.
+        - `Medium`: Moderate feature addition or multiple bug fixes. Estimated time: 1-2 days.
+        - `Large`: Major feature implementation or significant refactor. Estimated time: 1-2 weeks.
+        - `X-Large`: Large-scale feature or complete module overhaul. Estimated time: 2-4 weeks. Especially `EPIC` issues should
+          be tagged with this size.
