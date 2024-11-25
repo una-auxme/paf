@@ -120,7 +120,7 @@ It should be mentioned that the paper by Robin Karlsson et. al was also read, bu
 
 ## Decision
 
-We choosed to implement the CLRerNet-DLA34 and the CondLSTR(ResNet-101) because they have already implemented code bases to save time.
+We chose to implement the CLRerNet-DLA34 and the CondLSTR(ResNet-101) because they have already implemented code bases to save time.
 
 
 [1]: https://paperswithcode.com/task/lane-detection#datasets
