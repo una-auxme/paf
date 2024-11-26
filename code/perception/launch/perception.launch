@@ -32,8 +32,7 @@
       -->
   </node>
 
-  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
-    <param name="role_name" value="$(arg role_name)" />
+  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53000">    <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
     <param name="back" value="False" />
@@ -58,10 +57,14 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg 
+      - yolov8x-seg
+      - yolo11n-seg
+      - yolo11s-seg
+      - yolo11m-seg
+      - yolo11l-seg
       -->
 
-    <param name="model" value="rtdetr-l" />
+    <param name="model" value="yolo11n-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
