@@ -23,18 +23,12 @@ def region_of_interest(img, vertices):
 def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     img = np.copy(img)
-    rospy.loginfo(img)
-    rospy.loginfo(len(lines))
-    rospy.loginfo(type(img))
 
     if lines is None:
-        return
+        return img
     for line in lines:
         for x1, y1, x2, y2 in line:
             cv2.line(line_img, (x1, y1), (x2, y2), color, thickness)
-    rospy.loginfo(type(line_img))
-    rospy.loginfo(img.shape)
-    rospy.loginfo(line_img.shape)
     img = cv2.addWeighted(img, 0.8, line_img, 1.0, 0.0)
     return img, line_img
 
@@ -72,11 +66,11 @@ class LaneDetection(CompatibleNode):
         image = self.bridge.imgmsg_to_cv2(img_msg=msg_image, desired_encoding="rgb8")
         prediction = self.detection(image)
 
-        img_msg_mask = self.bridge.cv2_to_imgmsg(prediction[0], encoding="rgb8")
+        img_msg_mask = self.bridge.cv2_to_imgmsg(prediction[1], encoding="rgb8")
         img_msg_mask.header = msg_image.header
         self.publisher_mask.publish(img_msg_mask)
 
-        img_msg_image = self.bridge.cv2_to_imgmsg(prediction[1], encoding="mono8")
+        img_msg_image = self.bridge.cv2_to_imgmsg(prediction[0], encoding="rgb8")
         img_msg_image.header = msg_image.header
         self.publisher_image.publish(img_msg_image)
 

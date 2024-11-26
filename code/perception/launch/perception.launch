@@ -81,6 +81,6 @@
   </node>
 
 
-  <node pkg="perception" type="condl_resnet_101.py" name="LaneDetection" output="screen">
+  <node pkg="perception" type="opencv_lane_detection.py" name="LaneDetection" output="screen">
   </node>
 </launch>
