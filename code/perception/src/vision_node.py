@@ -359,9 +359,9 @@ class VisionNode(CompatibleNode):
         masks = output[0].masks.data
 
         boxes = output[0].boxes
-        for box_image in boxes:
-            cls = box_image.cls.item()  # class index of object
-            pixels = box_image.xyxy[0]  # upper left and lower right pixel coords
+        for box in boxes:
+            cls = box.cls.item()  # class index of object
+            pixels = box.xyxy[0]  # upper left and lower right pixel coords
 
             # only run distance calc when dist_array is available
             # this if is needed because the lidar starts
@@ -429,7 +429,7 @@ class VisionNode(CompatibleNode):
             c_labels.append(
                 f"Class: {get_carla_class_name(cls)}, "
                 f"Meters: {round(abs_distance, 2)}, "
-                f"TrackingId: {int(box_image.id)}, "
+                f"TrackingId: {int(box.id)}, "
                 f"({round(float(obj_dist_min_x[0]), 2)}, "
                 f"{round(float(obj_dist_min_abs_y[1]), 2)})",
             )
@@ -448,7 +448,7 @@ class VisionNode(CompatibleNode):
 
         # draw bounding boxes and distance values on image
         c_boxes = torch.stack(c_boxes)
-        box_image = draw_bounding_boxes(
+        bounding_box_images = draw_bounding_boxes(
             image_np_with_detections,
             c_boxes,
             c_labels,
@@ -456,19 +456,21 @@ class VisionNode(CompatibleNode):
             width=3,
             font_size=12,
         )
-        np_box_img = np.transpose(box_image.detach().numpy(), (1, 2, 0))
+        np_box_img = np.transpose(bounding_box_images.detach().numpy(), (1, 2, 0))
 
         scaled_masks = np.squeeze(
             scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(), 1
         )
 
-        mask_image = draw_segmentation_masks(
-            box_image, torch.from_numpy(scaled_masks > 0), alpha=0.6, colors=c_colors
+        mask_images = draw_segmentation_masks(
+            bounding_box_images,
+            torch.from_numpy(scaled_masks > 0),
+            alpha=0.6,
+            colors=c_colors,
         )
-        np_box_img = np.transpose(mask_image.detach().numpy(), (1, 2, 0))
+        np_box_img = np.transpose(mask_images.detach().numpy(), (1, 2, 0))
 
-        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
-        return box_img
+        return cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
 
     def min_x(self, dist_array):
         """
