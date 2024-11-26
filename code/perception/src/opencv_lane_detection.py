@@ -4,7 +4,6 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-import rospy
 import torch
 import numpy as np
 import cv2
