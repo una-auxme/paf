@@ -111,6 +111,7 @@ Publishes:
 
 - ```lane_detection_mask``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ```lane_detection_image``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+  
 ## Planning
 
 The planning uses the data from the [Perception](#Perception) to find a path on which the ego vehicle can safely reach
