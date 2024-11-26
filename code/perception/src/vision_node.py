@@ -359,7 +359,7 @@ class VisionNode(CompatibleNode):
         masks = output[0].masks.data
 
         boxes = output[0].boxes
-        for i, box_image in enumerate(boxes):
+        for box_image in boxes:
             cls = box_image.cls.item()  # class index of object
             pixels = box_image.xyxy[0]  # upper left and lower right pixel coords
 
