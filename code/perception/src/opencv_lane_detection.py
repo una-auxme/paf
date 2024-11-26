@@ -62,7 +62,8 @@ class LaneDetection(CompatibleNode):
 
     def handle_camera_image(self, msg_image):
         if self.device == "cuda":
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         image = self.bridge.imgmsg_to_cv2(img_msg=msg_image, desired_encoding="rgb8")
         prediction = self.detection(image)
 
