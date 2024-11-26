@@ -36,7 +36,7 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=3):
     rospy.loginfo(img.shape)
     rospy.loginfo(line_img.shape)
     img = cv2.addWeighted(img, 0.8, line_img, 1.0, 0.0)
-    return img
+    return img, line_img
 
 
 class LaneDetection(CompatibleNode):
@@ -48,13 +48,18 @@ class LaneDetection(CompatibleNode):
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_camera_image,
-            topic="/carla/hero/Front/image",
+            topic="/carla/hero/Center/image",
             qos_profile=1,
         )
 
-        self.publisher = self.new_publisher(
+        self.publisher_mask = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic="/paf/hero/Lane_Detection_Mask",
+            qos_profile=1,
+        )
+        self.publisher_image = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic="/paf/hero/Lane_Detection_Image",
             qos_profile=1,
         )
 
@@ -67,18 +72,22 @@ class LaneDetection(CompatibleNode):
         image = self.bridge.imgmsg_to_cv2(img_msg=msg_image, desired_encoding="rgb8")
         prediction = self.detection(image)
 
-        img_msg = self.bridge.cv2_to_imgmsg(prediction, encoding="rgb8")
-        img_msg.header = msg_image.header
+        img_msg_mask = self.bridge.cv2_to_imgmsg(prediction[0], encoding="rgb8")
+        img_msg_mask.header = msg_image.header
+        self.publisher_mask.publish(img_msg_mask)
 
-        self.publisher.publish(img_msg)
+        img_msg_image = self.bridge.cv2_to_imgmsg(prediction[1], encoding="mono8")
+        img_msg_image.header = msg_image.header
+        self.publisher_image.publish(img_msg_image)
 
     def detection(self, image):
         height = image.shape[0]
         width = image.shape[1]
         region_of_interest_vertices = [
-            (0, height),
-            (width / 2, height / 2),
-            (width, height),
+            (300, height - 150),
+            (width / 2 - 200, height / 2),
+            (width / 2 + 200, height / 2),
+            (width - 300, height - 150),
         ]
 
         gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -127,7 +136,7 @@ class LaneDetection(CompatibleNode):
 
         right_x_start = int(poly_right(max_y))
         right_x_end = int(poly_right(min_y))
-        line_image = draw_lines(
+        image, line_image = draw_lines(
             image,
             [
                 [
@@ -137,7 +146,7 @@ class LaneDetection(CompatibleNode):
             ],
             thickness=5,
         )
-        return line_image
+        return image, line_image
 
 
 if __name__ == "__main__":
