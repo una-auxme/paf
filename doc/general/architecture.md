@@ -3,24 +3,24 @@
 **Summary:** This page gives an overview over the planned general architecture of the vehicle agent.
 The document contains an overview over all [nodes](#overview) and [topics](#topics).
 
-- [Planned architecture of vehicle agent](#planned-architecture-of-vehicle-agent)
-  - [Overview](#overview)
-  - [Perception](#perception)
-    - [Obstacle Detection and Classification](#obstacle-detection-and-classification)
-    - [Traffic Light Detection](#traffic-light-detection)
-    - [Localization](#localization)
-  - [Planning](#planning)
-    - [Global Planning](#global-planning)
-    - [Decision Making](#decision-making)
-    - [Local Planning](#local-planning)
-      - [Collision Check](#collision-check)
-      - [ACC](#acc)
-      - [Motion Planning](#motion-planning)
-  - [Acting](#acting)
-    - [Path following with Steering Controllers](#path-following-with-steering-controllers)
-    - [Velocity control](#velocity-control)
-    - [Vehicle controller](#vehicle-controller)
-  - [Visualization](#visualization)
+- [Overview](#overview)
+- [Perception](#perception)
+  - [Obstacle Detection and Classification](#obstacle-detection-and-classification)
+  - [Traffic Light Detection](#traffic-light-detection)
+  - [Localization](#localization)
+  - [Lane Detection](#lane-detection)
+- [Planning](#planning)
+  - [Global Planning](#global-planning)
+  - [Decision Making](#decision-making)
+  - [Local Planning](#local-planning)
+    - [Collision Check](#collision-check)
+    - [ACC](#acc)
+    - [Motion Planning](#motion-planning)
+- [Acting](#acting)
+  - [Path following with Steering Controllers](#path-following-with-steering-controllers)
+  - [Velocity control](#velocity-control)
+  - [Vehicle controller](#vehicle-controller)
+- [Visualization](#visualization)
 
 ## Overview
 
@@ -99,6 +99,18 @@ Publishes:
 
 - ```ego_position``` ([nav_msgs/Odometry Message](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
 
+### Lane Detection
+
+Provides a mask and an image where the lane is drawn in.
+
+Subscriptions:
+
+- ```rgb_camera``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+
+Publishes:
+
+- ```lane_detection_mask``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+- ```lane_detection_image``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 ## Planning
 
 The planning uses the data from the [Perception](#Perception) to find a path on which the ego vehicle can safely reach
