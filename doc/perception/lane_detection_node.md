@@ -8,7 +8,6 @@
     - [Model](#model)
     - [Outputs](#outputs)
 
-
 ## Input
 
 The input is the image of the "center" camera, which is used to detect the lanes.
