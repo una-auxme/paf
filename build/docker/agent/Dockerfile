@@ -9,7 +9,6 @@
 
 # supply the base image with an environment supporting ROS UI via x11
 FROM osrf/ros:noetic-desktop-full-focal
-
 # COPY --from=carla /home/carla/PythonAPI /opt/carla/PythonAPI
 
 ARG USERNAME
@@ -17,15 +16,36 @@ ARG USER_UID
 ARG USER_GID
 ARG DEBIAN_FRONTEND=noninteractive
 
-# install rendering dependencies for rviz / rqt
-RUN apt-get update \
-    && apt-get install -y -qq --no-install-recommends \
-    libxext6 libx11-6 libglvnd0 libgl1 \
-    libglx0 libegl1 freeglut3-dev apt-utils \
-    fprintd libfprint-2-2 libpam-fprintd
+# Install all dependencies, including wget and unzip, in one step
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    fprintd libfprint-2-2 libpam-fprintd \
+    build-essential libssl-dev libbz2-dev libreadline-dev
+
+
+# CUDA installieren
+RUN apt-get update && apt-get install -y --no-install-recommends wget && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin --quiet && \
+    mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
+    wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb --quiet && \
+    dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb && \
+    cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y cuda && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb
+
+
+# Umgebungsvariablen setzen
+ENV PATH=/usr/local/cuda-11.8/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
+ENV CUDA_HOME=/usr/local/cuda-11.8
+
+
+
 
 # install dependencies for libgit2 and Carla PythonAPI
-RUN apt-get install wget unzip
+# RUN apt-get install wget unzip
 
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
@@ -43,21 +63,21 @@ RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
     && dpkg --configure -a
 
 # CUDA installation
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin --quiet \
-    && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb --quiet \
-    && dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
-    && cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
-    && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
-    && rm cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
-    && apt-get -y remove cuda-repo-ubuntu2004-11-8-local \
-    && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && rm -rf /var/cuda-repo-ubuntu1804-11-8-local/ \
-    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-11-8-local.list \
-    && apt-get clean
+# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin --quiet \
+#    && mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
+#    && wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb --quiet \
+#    && dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+#    && cp /var/cuda-repo-ubuntu2004-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/ \
+#    && apt-get update \
+#    && DEBIAN_FRONTEND=noninteractive apt-get -y install cuda \
+#    && rm cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb \
+#    && apt-get -y remove cuda-repo-ubuntu2004-11-8-local \
+#    && rm /etc/apt/preferences.d/cuda-repository-pin-600 \
+#    && rm -rf /var/cuda-repo-ubuntu1804-11-8-local/ \
+#    && rm /etc/apt/sources.list.d/cuda-ubuntu2004-11-8-local.list \
+#    && apt-get clean
 
-ENV CUDA_HOME=/usr/local/cuda-11.8
+# ENV CUDA_HOME=/usr/local/cuda-11.8
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
@@ -73,6 +93,41 @@ RUN apt-get update && apt-get install -y \
     ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure
 
 SHELL ["/bin/bash", "-c"]
+
+
+# torch
+#RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html
+#RUN pip install torchvision==0.13.1
+
+# mmcv
+# RUN pip install -U openmim==0.3.3
+# RUN mim install mmcv-full==1.7.0
+
+
+# Installiere PyTorch und MMCV
+RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html 
+RUN pip install torchvision==0.13.1
+RUN pip install -U openmim==0.3.3
+RUN mim install mmcv-full==1.7.0
+
+# Restliche Abhängigkeiten für ROS und Carla
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libxext6 libx11-6 libglvnd0 libgl1 libglx0 libegl1 freeglut3-dev apt-utils \
+    sudo git zip curl libopencv-dev libffi-dev liblapack-dev libsqlite3-dev \
+    build-essential libssl-dev libbz2-dev libreadline-dev ssh-client wget vim python3-opencv unzip && \
+    rm -rf /var/lib/apt/lists/*
+
+# mmdet
+ARG MMDET_VERSION
+WORKDIR /home/docker/
+RUN pip install Cython
+RUN git clone https://github.com/open-mmlab/mmdetection.git mmdetection -b v2.28.0 --depth 1
+WORKDIR /home/docker/mmdetection
+ENV FORCE_CUDA="1"
+RUN pip install --no-cache-dir -e .    
+
+
 
 # Create and apply the non-root user
 # -f parameter to work in macos (https://unix.stackexchange.com/a/465014), since gid is already in use there

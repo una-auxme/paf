@@ -18,9 +18,13 @@ from cv_bridge import CvBridge
 
 # for the lane detection model
 import torch
-from CLRerNet_model.CLRerNet.configs.clrernet import base_clrernet as base_cfg
-from mmcv import Config
-from CLRerNet_model.CLRerNet.libs.models.detectors import clrernet as build_detector
+from CLRerNet_model.configs.clrernet.culane import clrernet_culane_dla34_ema
+
+# from CLRerNet_model import clrernet_culane_dla34
+
+# from mmcv import Config
+# from CLRerNet_model.libs.models.detectors import clrernet as build_detector
+from mmdet.apis import init_detector
 
 # for image preprocessing
 from torchvision import transforms
@@ -38,13 +42,23 @@ class Lanedetection_node(CompatibleNode):
         super().__init__(name, **kwargs)
 
         # Config und Model laden
-        cfg = Config.fromfile(base_cfg)
-        self.model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test)
+        # cfg = Config.fromfile(base_cfg)
+        # self.model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test)
 
         # Gewichte laden
         weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34.pth")
         ws_path = os.path.dirname(os.path.realpath(__file__))
         ws_weight_path = os.path.join(ws_path, weight_path)
+
+        # build the model from a config file and a checkpoint file
+        model = init_detector(
+            clrernet_culane_dla34_ema, ws_weight_path, device="cuda:0"
+        )
+        print(model)
+        # test a single image
+        # src, preds = inference_one_image(model, args.img)
+        # show the results
+        # dst = visualize_lanes(src, preds, save_path=args.out_file)
 
         with open(ws_weight_path, "rb") as file:
             self.state_dict = torch.load(file)
