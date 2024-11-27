@@ -2,10 +2,12 @@
 import rospy
 import ros_numpy
 import numpy as np
-from std_msgs.msg import String
-from sensor_msgs.msg import PointCloud2
+from std_msgs.msg import String, Header
+from sensor_msgs.msg import PointCloud2, PointField
 from sklearn.cluster import DBSCAN
 import json
+from sensor_msgs import point_cloud2
+import struct
 
 
 class RadarNode:
@@ -25,12 +27,43 @@ class RadarNode:
         clustered_points_json = json.dumps(clustered_points)
         self.dist_array_radar_publisher.publish(clustered_points_json)
 
+        # output array [x, y, z, distance]
+        dataarray = pointcloud2_to_array(data)
+
+        # input array [x, y, z, distance], max_distance, output: filtered data
+        # dataarray = filter_data(dataarray, 10)
+
+        # input array [x, y, z, distance], output: dict clustered
+        clustered_data = cluster_data(dataarray)
+
+        # input array [x, y, z, distance], clustered labels
+        cloud = create_pointcloud2(dataarray, clustered_data.labels_)
+
+        self.visualization_radar_publisher.publish(cloud)
+
+        cluster_info = generate_cluster_labels_and_colors(clustered_data, dataarray)
+        self.cluster_info_radar_publisher.publish(cluster_info)
+
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
         self.dist_array_radar_publisher = rospy.Publisher(
             rospy.get_param(
                 "~image_distance_topic", "/paf/hero/Radar/dist_array_unsegmented"
+            ),
+            String,
+            queue_size=10,
+        )
+        self.visualization_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~image_distance_topic", "/paf/hero/Radar/Visualization"
+            ),
+            PointCloud2,
+            queue_size=10,
+        )
+        self.cluster_info_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~image_distance_topic", "/paf/hero/Radar/ClusterInfo"
             ),
             String,
             queue_size=10,
@@ -107,6 +140,84 @@ def cluster_radar_data_from_pointcloud(
     clustered_points = {label: list(labels).count(label) for label in set(labels)}
     clustered_points = {int(label): count for label, count in clustered_points.items()}
     return clustered_points
+
+
+# filters radar data in distance, y, z direction
+def filter_data(data, max_distance):
+
+    filtered_data = data[data[:, 3] < max_distance]
+    filtered_data = filtered_data[
+        (filtered_data[:, 1] >= -1)
+        & (filtered_data[:, 1] <= 1)
+        & (filtered_data[:, 2] <= 1.3)
+        & (filtered_data[:, 2] >= -0.7)
+    ]
+    return filtered_data
+
+
+# clusters data with DBSCAN
+def cluster_data(filtered_data, eps=0.2, min_samples=1):
+
+    if len(filtered_data) == 0:
+        return {}
+    coordinates = filtered_data[:, :2]
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
+    return clustering
+
+
+# generates random color for cluster
+def generate_color_map(num_clusters):
+    np.random.seed(42)
+    colors = np.random.randint(0, 255, size=(num_clusters, 3))
+    return colors
+
+
+# creates pointcloud2 for publishing clustered radar data
+def create_pointcloud2(clustered_points, cluster_labels):
+    header = Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = "hero/RADAR"
+
+    points = []
+    unique_labels = np.unique(cluster_labels)
+    colors = generate_color_map(len(unique_labels))
+
+    for i, point in enumerate(clustered_points):
+        x, y, z, _ = point
+        label = cluster_labels[i]
+
+        if label == -1:
+            r, g, b = 128, 128, 128
+        else:
+            r, g, b = colors[label]
+
+        rgb = struct.unpack('f', struct.pack('I', (r << 16) | (g << 8) | b))[0]
+        points.append([x, y, z, rgb])
+
+    fields = [
+        PointField('x', 0, PointField.FLOAT32, 1),
+        PointField('y', 4, PointField.FLOAT32, 1),
+        PointField('z', 8, PointField.FLOAT32, 1),
+        PointField('rgb', 12, PointField.FLOAT32, 1),
+    ]
+
+    return point_cloud2.create_cloud(header, fields, points)
+
+
+# generates string with label-id and cluster size
+def generate_cluster_labels_and_colors(clusters, data):
+    cluster_info = []
+
+    for label in set(clusters.labels_):
+        cluster_points = data[clusters.labels_ == label]
+        cluster_size = len(cluster_points)
+        if label != -1:
+            cluster_info.append({
+                "label": int(label),
+                "points_count": cluster_size
+            })
+
+    return json.dumps(cluster_info)
 
 
 if __name__ == "__main__":
