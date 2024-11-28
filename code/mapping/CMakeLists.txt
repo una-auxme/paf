@@ -58,6 +58,9 @@ add_message_files(
   Shape2D.msg
   TrackingInfo.msg
   Transform2D.msg
+  TypeCar.msg
+  TypeLanemarking.msg
+  TypeTrafficLight.msg
 )
 
 ## Generate services in the 'srv' folder
