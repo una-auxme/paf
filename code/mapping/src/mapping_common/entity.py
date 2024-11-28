@@ -3,52 +3,92 @@ from enum import Enum
 from dataclasses import dataclass
 
 from uuid import UUID, uuid4
-from rospy import Time, Duration
+from genpy.rostime import Time, Duration
+import rospy
 
-from . import ROSMessageConvertible
 from transform import Vector2, Transform2D
 from shapes import Shape2D
 
+from mapping import msg
+
 
 @dataclass
-class Motion2D(ROSMessageConvertible):
+class Motion2D:
     linear_motion: Vector2
     angular_velocity: float
 
 
 @dataclass
-class Flags(ROSMessageConvertible):
-    is_collider: bool
-    is_tracked: bool
-    is_stopmark: bool
-    is_lanemark: bool
-    is_ignored: bool
+class Flags:
+    is_collider: bool = False
+    is_stopmark: bool = False
+    is_lanemark: bool = False
+    is_ignored: bool = False
 
 
 @dataclass
-class TrackingInfo(ROSMessageConvertible):
-    visibility_time: Duration
-    invisibility_time: Duration
-    visibility_frame_count: int
-    invisibility_frame_count: int
-    moving_time: Duration
-    standing_time: Duration
-    moving_time_sum: Duration
-    standing_time_sum: Duration
-    min_linear_speed: float
-    max_linear_speed: float
+class FlagFilter:
+    has_motion: Optional[bool] = None
+    is_collider: Optional[bool] = None
+    is_tracked: Optional[bool] = None
+    is_stopmark: Optional[bool] = None
+    is_lanemark: Optional[bool] = None
+    is_ignored: Optional[bool] = None
 
 
 @dataclass
-class Entity(ROSMessageConvertible):
-    uuid: UUID = uuid4()
+class TrackingInfo:
+    visibility_time: Duration = Duration()
+    invisibility_time: Duration = Duration()
+    visibility_frame_count: int = 0
+    invisibility_frame_count: int = 0
+    moving_time: Duration = Duration()
+    standing_time: Duration = Duration()
+    moving_time_sum: Duration = Duration()
+    standing_time_sum: Duration = Duration()
+    min_linear_speed: float = 0.0
+    max_linear_speed: float = 0.0
+
+    @staticmethod
+    def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
+        return TrackingInfo(
+            visibility_time=m.visibility_time,
+            invisibility_time=m.invisibility_time,
+            visibility_frame_count=m.visibility_frame_count,
+            invisibility_frame_count=m.invisibility_frame_count,
+            moving_time=m.moving_time,
+            standing_time=m.standing_time,
+            moving_time_sum=m.moving_time_sum,
+            standing_time_sum=m.standing_time_sum,
+            min_linear_speed=m.min_linear_speed,
+            max_linear_speed=m.max_linear_speed,
+        )
+
+    def to_ros_msg(self) -> msg.TrackingInfo:
+        return msg.TrackingInfo(
+            visibility_time=self.visibility_time,
+            invisibility_time=self.invisibility_time,
+            visibility_frame_count=self.visibility_frame_count,
+            invisibility_frame_count=self.invisibility_frame_count,
+            moving_time=self.moving_time,
+            standing_time=self.standing_time,
+            moving_time_sum=self.moving_time_sum,
+            standing_time_sum=self.standing_time_sum,
+            min_linear_speed=self.min_linear_speed,
+            max_linear_speed=self.max_linear_speed,
+        )
+
+
+@dataclass
+class Entity:
     timestamp: Time
     confidence: float
     priority: float
-    sensor_id: List[str] = []
     flags: Flags
     shape: Shape2D
     transform: Transform2D
+    uuid: UUID = uuid4()
+    sensor_id: List[str] = []
     motion: Optional[Motion2D] = None
     tracking_info: Optional[TrackingInfo] = None
 
@@ -100,7 +140,7 @@ class Pedestrian(Entity):
         super().__init__(**kwargs)
 
 
-class Map(ROSMessageConvertible):
+class Map:
     timestamp: Time
     entities: List[Entity]
 

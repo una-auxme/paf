@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from . import ROSMessageConvertible
-
 
 @dataclass
-class Shape2D(ROSMessageConvertible, ABC):
+class Shape2D(ABC):
     @abstractmethod
     def check_collision(self, other) -> bool:
         raise NotImplementedError
