@@ -5,6 +5,7 @@ import numpy as np
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import PointCloud2, PointField
 from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
 import struct
@@ -23,9 +24,9 @@ class RadarNode:
         Args:
             data: Point2Cloud message containing radar data
         """
-        clustered_points = cluster_radar_data_from_pointcloud(data, 10)
-        clustered_points_json = json.dumps(clustered_points)
-        self.dist_array_radar_publisher.publish(clustered_points_json)
+        # clustered_points = cluster_radar_data_from_pointcloud(data, 10)
+        # clustered_points_json = json.dumps(clustered_points)
+        # self.dist_array_radar_publisher.publish(clustered_points_json)
 
         # output array [x, y, z, distance]
         dataarray = pointcloud2_to_array(data)
@@ -91,11 +92,14 @@ def pointcloud2_to_array(pointcloud_msg):
         [x, y, z, distance], where "distance" is the distance from the origin.
     """
     cloud_array = ros_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
-    distances = np.sqrt(
-        cloud_array["x"] ** 2 + cloud_array["y"] ** 2 + cloud_array["z"] ** 2
-    )
+    # distances = np.sqrt(
+    #     cloud_array["x"] ** 2 + cloud_array["y"] ** 2 + cloud_array["z"] ** 2
+    # )
+    # return np.column_stack(
+    #     (cloud_array["x"], cloud_array["y"], cloud_array["z"], distances)
+    # )
     return np.column_stack(
-        (cloud_array["x"], cloud_array["y"], cloud_array["z"], distances)
+        (cloud_array["x"], cloud_array["y"], cloud_array["z"], cloud_array["Velocity"])
     )
 
 
@@ -160,8 +164,15 @@ def cluster_data(filtered_data, eps=0.2, min_samples=1):
 
     if len(filtered_data) == 0:
         return {}
-    coordinates = filtered_data[:, :2]
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
+    # coordinates = filtered_data[:, :2]
+    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
+
+    # worse than without scaling
+    # scaler = StandardScaler()
+    # data_scaled = scaler.fit_transform(filtered_data)
+    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(filtered_data)
     return clustering
 
 
@@ -183,7 +194,8 @@ def create_pointcloud2(clustered_points, cluster_labels):
     colors = generate_color_map(len(unique_labels))
 
     for i, point in enumerate(clustered_points):
-        x, y, z, _ = point
+        # x, y, z, _ = point
+        x, y, z, v = point
         label = cluster_labels[i]
 
         if label == -1:
