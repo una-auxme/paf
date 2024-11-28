@@ -17,3 +17,13 @@ ultralytics==8.1.11
 scikit-learn>=0.18
 pandas==2.0.3
 debugpy==1.8.7
+tqdm
+yacs
+Cython
+matplotlib>=3.2.2
+Pillow
+PyYAML>=5.3
+tensorboardX
+seaborn
+prefetch_generator
+imageio
