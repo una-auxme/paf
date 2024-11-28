@@ -341,7 +341,8 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-        output = self.model(cv_image, half=True, verbose=False)
+        # output = self.model(cv_image, half=True, verbose=False)
+        output = self.model(cv_image)
 
         # handle distance of objects
 

@@ -7,11 +7,11 @@ _base_ = [
 # custom imports
 custom_imports = dict(
     imports=[
-        "libs.models",
-        "libs.datasets",
-        "libs.core.bbox",
-        "libs.core.anchor",
-        "libs.core.hook",
+        "perception.src.CLRerNet_model.libs.models",
+        "perception.src.CLRerNet_model.libs.datasets",
+        "perception.src.CLRerNet_model.libs.core.bbox",
+        "perception.src.CLRerNet_model.libs.core.anchor",
+        "perception.src.CLRerNet_model.libs.core.hook",
     ],
     allow_failed_imports=False,
 )

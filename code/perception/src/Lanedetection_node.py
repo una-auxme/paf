@@ -18,7 +18,8 @@ from cv_bridge import CvBridge
 
 # for the lane detection model
 import torch
-from CLRerNet_model.configs.clrernet.culane import clrernet_culane_dla34_ema
+
+# from CLRerNet_model.configs.clrernet.culane import clrernet_culane_dla34_ema
 
 # from CLRerNet_model import clrernet_culane_dla34
 
@@ -41,19 +42,22 @@ class Lanedetection_node(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        # Config und Model laden
-        # cfg = Config.fromfile(base_cfg)
-        # self.model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test)
-
-        # Gewichte laden
-        weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34.pth")
+        # WS path
         ws_path = os.path.dirname(os.path.realpath(__file__))
+        print(ws_path)
+
+        # Weights path
+        weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34.pth")
         ws_weight_path = os.path.join(ws_path, weight_path)
 
+        # Config path
+        config_path = os.path.join(
+            "CLRerNet_model/configs/clrernet/culane", "clrernet_culane_dla34_ema.py"
+        )  # CLRerNet_model.configs.clrernet.culane
+        ws_config_path = os.path.join(ws_path, config_path)
+
         # build the model from a config file and a checkpoint file
-        model = init_detector(
-            clrernet_culane_dla34_ema, ws_weight_path, device="cuda:0"
-        )
+        model = init_detector(ws_config_path, ws_weight_path, device="cuda:0")
         print(model)
         # test a single image
         # src, preds = inference_one_image(model, args.img)
@@ -107,12 +111,12 @@ class Lanedetection_node(CompatibleNode):
         Callback function for image subscriber
         """
 
-        image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
-        image = self.preprocess_image(image)
+        # image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
+        # image = self.preprocess_image(image)
 
         # lane_mask = self.detect_lanes(image, self.model)
 
-        self.lane_publisher.publish(ImageMsg)
+        # self.lane_publisher.publish(ImageMsg)
 
     def preprocess_image(self, image):
         """
@@ -148,10 +152,11 @@ class Lanedetection_node(CompatibleNode):
         Returns:
             np.array: Lane mask
         """
-        with torch.no_grad():
-            output = model(image)
 
-        return output
+    #    with torch.no_grad():
+    #        output = model(image)
+
+    #    return output
 
 
 if __name__ == "__main__":

@@ -105,10 +105,12 @@ SHELL ["/bin/bash", "-c"]
 
 
 # Installiere PyTorch und MMCV
+ENV TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6"
 RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html 
 RUN pip install torchvision==0.13.1
 RUN pip install -U openmim==0.3.3
 RUN mim install mmcv-full==1.7.0
+
 
 # Restliche Abhängigkeiten für ROS und Carla
 RUN apt-get update && \
@@ -126,6 +128,18 @@ RUN git clone https://github.com/open-mmlab/mmdetection.git mmdetection -b v2.28
 WORKDIR /home/docker/mmdetection
 ENV FORCE_CUDA="1"
 RUN pip install --no-cache-dir -e .    
+
+# install ninja for nms build
+RUN apt-get update && apt-get install -y ninja-build
+
+RUN pip install -U pip setuptools
+
+# lane NMS
+COPY --chown=docker /code/perception/src/CLRerNet_model/libs/models/layers/nms /tmp/nms
+WORKDIR /tmp/nms
+RUN python /tmp/nms/setup.py install
+
+RUN pip uninstall -y pip setuptools
 
 
 
