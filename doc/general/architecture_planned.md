@@ -3,24 +3,25 @@
 **Summary:** This page gives an overview over the planned general architecture of the vehicle agent.
 The document contains an overview over all [nodes](#overview) and [topics](#topics).
 
-- [Planned architecture of vehicle agent](#planned-architecture-of-vehicle-agent)
-  - [Overview](#overview)
-  - [Perception](#perception)
-    - [Obstacle Detection and Classification](#obstacle-detection-and-classification)
-    - [Traffic Light Detection](#traffic-light-detection)
-    - [Localization](#localization)
-  - [Planning](#planning)
-    - [Global Planning](#global-planning)
-    - [Decision Making](#decision-making)
-    - [Local Planning](#local-planning)
-      - [Collision Check](#collision-check)
-      - [ACC](#acc)
-      - [Motion Planning](#motion-planning)
-  - [Acting](#acting)
-    - [Path following with Steering Controllers](#path-following-with-steering-controllers)
-    - [Velocity control](#velocity-control)
-    - [Vehicle controller](#vehicle-controller)
-  - [Visualization](#visualization)
+- [Overview](#overview)
+- [Perception](#perception)
+  - [Vision Node](#vision-node)
+  - [Traffic Light Detection](#traffic-light-detection)
+  - [Position Heading Node](#position-heading-node)
+  - [Distance to Objects](#distance-to-objects)
+  - [Localization](#localization)
+- [Planning](#planning)
+  - [Global Planning](#global-planning)
+  - [Decision Making](#decision-making)
+  - [Local Planning](#local-planning)
+    - [Collision Check](#collision-check)
+    - [ACC](#acc)
+    - [Motion Planning](#motion-planning)
+- [Acting](#acting)
+  - [Path following with Steering Controllers](#path-following-with-steering-controllers)
+  - [Velocity control](#velocity-control)
+  - [Vehicle controller](#vehicle-controller)
+- [Visualization](#visualization)
 
 ## Overview
 
@@ -28,12 +29,13 @@ The vehicle agent is split into three major components: [Perception](#Perception
 and [Acting](#Acting).
 A separate node is responsible for the [visualization](#Visualization).
 The topics published by the Carla bridge can be
-found [here](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sensors/).
-The msgs necessary to control the vehicle via the Carla bridge can be
-found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg)
+found [here](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sensors/).\
+The messages necessary to control the vehicle via the Carla bridge can be
+found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg).\
 
-![Architecture overview](../assets/overview.jpg)
 The miro-board can be found [here](https://miro.com/welcomeonboard/a1F0d1dya2FneWNtbVk4cTBDU1NiN3RiZUIxdGhHNzJBdk5aS3N4VmdBM0R5c2Z1VXZIUUN4SkkwNHpuWlk2ZXwzNDU4NzY0NTMwNjYwNzAyODIzfDI=?share_link_id=785020837509).
+![Architecture overview](../assets/overview.jpg "Connections between nodes visualized")
+![Department node overview](../assets/research_assets/node_path_ros.png "In- and outgoing topics for every node of the departments")
 
 ## Perception
 
@@ -43,7 +45,7 @@ environment representation that can be used by the [Planning](#Planning) for fur
 Further information regarding the perception can be found [here](../perception/README.md).
 Research for the perception can be found [here](../research/perception/README.md).
 
-### Obstacle Detection and Classification
+### Vision Node
 
 Evaluates sensor data to detect and classify objects around the ego vehicle.
 Other road users and objects blocking the vehicle's path are recognized.
@@ -52,17 +54,28 @@ In the case of dynamic objects, an attempt is made to recognize the direction an
 
 Subscriptions:
 
-- ```radar``` ([sensor_msgs/PointCloud2](https://docs.ros.org/en/api/sensor_msgs/html/msg/PointCloud2.html))
 - ```lidar``` ([sensor_msgs/PointCloud2](https://docs.ros.org/en/api/sensor_msgs/html/msg/PointCloud2.html))
 - ```rgb_camera``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ````gnss```` ([sensor_msgs/NavSatFix](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sensors/))
 - ```map``` ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
+- ```radar``` ([sensor_msgs/PointCloud2](https://docs.ros.org/en/api/sensor_msgs/html/msg/PointCloud2.html)) SOON TO COME
 
 Publishes:
 
 - ```obstacles``` (Custom msg:
   obstacle ([vision_msgs/Detection3DArray Message](http://docs.ros.org/en/api/vision_msgs/html/msg/Detection3DArray.html))
   and its classification ([std_msgs/String Message](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html)))
+- ```segmented_image``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+  - /paf/hero/Center/segmented_image
+  - /paf/hero/Back/segmented_image
+  - /paf/hero/Left/segmented_image
+  - /paf/hero/Right/segmented_image
+- ```segmented_traffic_light``` ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
+- ```object_distance``` ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
+  - /paf/hero/Center/object_distance
+  - /paf/hero/Back/object_distance
+  - /paf/hero/Left/object_distance
+  - /paf/hero/Right/object_distance
 
 ### Traffic Light Detection
 
@@ -83,6 +96,14 @@ Publishes:
   state ([std_msgs/UInt8 Message](https://docs.ros.org/en/api/std_msgs/html/msg/UInt8.html])),
   position ([geometry_msgs/Pose Message](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/Pose.html)),
   distance_to_stop_line ([std_msgs/Float64 Message](http://docs.ros.org/en/api/std_msgs/html/msg/Float64.html)))
+
+### Position Heading Node
+
+There are currently no planned improvements of the Position Heading Node.
+
+### Distance to Objects
+
+There are currently no planned improvements for Distance to Objects.
 
 ### Localization
 
