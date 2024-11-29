@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Union
 
 
 # Carla-Farben
@@ -135,7 +135,7 @@ def get_carla_color(coco_class: Union[int, float]) -> List[int]:
     coco_idx = int(coco_class)
     if not 0 <= coco_idx < COCO_CLASS_COUNT:
         raise ValueError(f"Invalid COCO class index: {coco_idx}")
-    carla_class = coco_to_carla[coco_class]
+    carla_class = coco_to_carla[coco_idx]
     return carla_colors[carla_class]
 
 
