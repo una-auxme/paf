@@ -2,20 +2,20 @@ from abc import ABC
 from dataclasses import dataclass
 
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 from geometry_msgs import msg as geometry_msgs
 from mapping import msg
 
 
-@dataclass(init=False)
+@dataclass(init=False, eq=False)
 class _Coord2(ABC):
     """Homogenous 2 dimensional coordinate"""
 
     # Matrix with shape (3)
-    _matrix: NDArray[np.float64]
+    _matrix: npt.NDArray[np.float64]
 
-    def __init__(self, matrix: NDArray[np.float64]) -> None:
+    def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
         assert matrix.shape == (
             3,
         ), f"{type(self).__name__} matrix must have shape (3,)"
@@ -27,8 +27,13 @@ class _Coord2(ABC):
     def y(self) -> float:
         return self._matrix[1]
 
+    def __eq__(self, value) -> bool:
+        if type(self) is type(value):
+            return (self._matrix == value._matrix).all()
+        return False
 
-@dataclass(init=False)
+
+@dataclass(init=False, eq=False)
 class Point2(_Coord2):
     """2 dimensional point.
 
@@ -55,7 +60,7 @@ class Point2(_Coord2):
         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
 
 
-@dataclass(init=False)
+@dataclass(init=False, eq=False)
 class Vector2(_Coord2):
     """2 dimensional direction vector.
 
@@ -88,7 +93,7 @@ class Vector2(_Coord2):
         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
 
 
-@dataclass(init=False)
+@dataclass(init=False, eq=False)
 class Transform2D:
     """Homogeneous 2 dimensional transformation matrix
 
@@ -96,9 +101,9 @@ class Transform2D:
     """
 
     # Matrix with shape (3, 3)
-    _matrix: NDArray[np.float64]
+    _matrix: npt.NDArray[np.float64]
 
-    def __init__(self, matrix: NDArray[np.float64]) -> None:
+    def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
         assert matrix.shape == (
             3,
             3,
@@ -169,3 +174,8 @@ class Transform2D:
         raise TypeError(
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
         )
+
+    def __eq__(self, value) -> bool:
+        if type(self) is type(value):
+            return (self._matrix == value._matrix).all()
+        return False

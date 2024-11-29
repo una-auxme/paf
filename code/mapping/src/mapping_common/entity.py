@@ -207,8 +207,8 @@ class Car(Entity):
 
     def __init__(
         self,
-        brake_light: "Car.BrakeLightState",
-        indicator: "Car.IndicatorState",
+        brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
+        indicator: "Car.IndicatorState" = IndicatorState.OFF,
         **kwargs,
     ):
         super().__init__(**kwargs)
