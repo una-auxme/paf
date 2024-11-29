@@ -356,7 +356,10 @@ class VisionNode(CompatibleNode):
         c_boxes = []
         c_labels = []
         c_colors = []
-        masks = output[0].masks.data
+        if hasattr(output[0], "masks") and output[0].masks is not None:
+            masks = output[0].masks.data
+        else:
+            masks = None
 
         boxes = output[0].boxes
         for box in boxes:
@@ -390,7 +393,6 @@ class VisionNode(CompatibleNode):
             # only proceed if there is more than one lidar
             # point in the bounding box
             if len(non_zero_filter) > 0:
-
                 """
                 !Watch out:
                 The calculation of min x and min abs y is currently
@@ -448,7 +450,7 @@ class VisionNode(CompatibleNode):
 
         # draw bounding boxes and distance values on image
         c_boxes = torch.stack(c_boxes)
-        bounding_box_images = draw_bounding_boxes(
+        drawn_images = draw_bounding_boxes(
             image_np_with_detections,
             c_boxes,
             c_labels,
@@ -456,21 +458,21 @@ class VisionNode(CompatibleNode):
             width=3,
             font_size=12,
         )
-        np_box_img = np.transpose(bounding_box_images.detach().numpy(), (1, 2, 0))
+        if masks is not None:
+            scaled_masks = np.squeeze(
+                scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(),
+                1,
+            )
 
-        scaled_masks = np.squeeze(
-            scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(), 1
-        )
+            drawn_images = draw_segmentation_masks(
+                drawn_images,
+                torch.from_numpy(scaled_masks > 0),
+                alpha=0.6,
+                colors=c_colors,
+            )
 
-        mask_images = draw_segmentation_masks(
-            bounding_box_images,
-            torch.from_numpy(scaled_masks > 0),
-            alpha=0.6,
-            colors=c_colors,
-        )
-        np_box_img = np.transpose(mask_images.detach().numpy(), (1, 2, 0))
-
-        return cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
+        np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
+        return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
     def min_x(self, dist_array):
         """

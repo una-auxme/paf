@@ -1,3 +1,6 @@
+from typing import List, Tuple, Union
+
+
 # Carla-Farben
 carla_colors = [
     [0, 0, 0],  # 0: None
@@ -115,12 +118,41 @@ coco_to_carla = [
     3,  # 79: Toothbrush -> Other
 ]
 
+COCO_CLASS_COUNT = 80
 
-def get_carla_color(coco_class):
+
+def get_carla_color(coco_class: Union[int, float]) -> List[int]:
+    """Get the Carla color for a given COCO class.
+    Args:
+    coco_class: COCO class index (0-79)
+
+    Returns:
+    RGB color values for the corresponding Carla class
+
+    Raises:
+    ValueError: If coco_class is out of valid range
+    """
+    coco_idx = int(coco_class)
+    if not 0 <= coco_idx < COCO_CLASS_COUNT:
+        raise ValueError(f"Invalid COCO class index: {coco_idx}")
     carla_class = coco_to_carla[coco_class]
     return carla_colors[carla_class]
 
 
-def get_carla_class_name(coco_class):
-    carla_class = coco_to_carla[int(coco_class)]
+def get_carla_class_name(coco_class: Union[int, float]) -> str:
+    """Get the Carla class name for a given COCO class.
+    Args:
+        coco_class: COCO class index (0-79)
+
+    Returns:
+        Name of the corresponding Carla class
+
+    Raises:
+        ValueError: If coco_class is out of valid range
+    """
+    coco_idx = int(coco_class)
+
+    if not 0 <= coco_idx < COCO_CLASS_COUNT:
+        raise ValueError(f"Invalid COCO class index: {coco_idx}")
+    carla_class = coco_to_carla[coco_idx]
     return carla_class_names[carla_class]
