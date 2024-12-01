@@ -1,0 +1,25 @@
+# Srunner
+Shapely==1.7.1
+psutil
+xmlschema==1.0.18
+ephem
+tabulate
+matplotlib
+six
+simple-watchdog-timer
+
+# Leaderboard
+dictor
+requests
+pygame
+pexpect
+transforms3d
+
+# Other from Dockerfile
+roslibpy
+tornado
+simple_pid
+transformations
+lxml
+# Leaderboard requires bson, but specifically the pymongo bson version, see https://github.com/RobotWebTools/rosbridge_suite/issues/198
+# pymongo
