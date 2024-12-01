@@ -43,7 +43,8 @@
   - Example: A team of three has a total of 15 minutes and may allocate time as they see fit.
   - A unified grade will be given unless individual assessment is warranted.
 - Timeboxing will be strictly enforced: only content shared within the allotted time will be evaluated. Presentations will be stopped at the time limit.
-- TODO The sprint review presentation guideline will be updated.
+- The sprint review presentation guideline was updated in [#452](https://github.com/una-auxme/paf/issues/452).
+  - The [sprint_review_presentation.md](../../development/sprint_review_presentation.md) is updated.
 
 ## 3. Sprint Review Schedule
 
