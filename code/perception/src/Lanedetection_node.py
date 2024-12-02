@@ -42,6 +42,7 @@ class Lanedetection_node(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.setup_camera_subscriptions("Center")
         self.setup_lane_publisher()
+        self.setup_overlay_publisher()
 
     def run(self):
         self.spin()
@@ -66,9 +67,19 @@ class Lanedetection_node(CompatibleNode):
         """sets up a publisher for the lane mask
         topic: /Center/lane_img
         """
-        self.lane_publisher = self.new_publisher(
+        self.lane_mask_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
-            topic=f"/paf/{self.role_name}/Center/lane_img",
+            topic=f"/paf/{self.role_name}/Center/lane_mask",
+            qos_profile=1,
+        )
+
+    def setup_overlay_publisher(self):
+        """sets up a publisher for the lane mask
+        topic: /Center/lane_img
+        """
+        self.lane_overlay_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/Lane_detect_Overlay",
             qos_profile=1,
         )
 
@@ -80,47 +91,75 @@ class Lanedetection_node(CompatibleNode):
         if self.device == "cuda":
             torch.cuda.empty_cache()
 
-        image = self.preprocess_image(ImageMsg)
+        image, original_image = self.preprocess_image(ImageMsg)
+        original_h, original_w, _ = original_image.shape
+        with torch.no_grad():
+            det_out, da_seg_out, ll_seg_out = self.detect_lanes(image)
 
-        det_out, da_seg_out, ll_seg_out = self.detect_lanes(image)
+        # convert probabilities to numpy array
+        da_seg_out = da_seg_out.sigmoid().squeeze().cpu().numpy()  # (288, 800)
+        ll_seg_out = ll_seg_out.sigmoid().squeeze().cpu().numpy()  # (2, 288, 800)
 
-        ll_seg_out = ll_seg_out.detach().cpu().numpy()  # Detach and move to CPU
-        # Ensure the tensor has the correct shape before transposing
-        if ll_seg_out.ndim == 4:  # Batch x Channels x H x W
-            ll_seg_out = ll_seg_out[0]  # Remove batch dimension
-        np_ll_img = np.transpose(ll_seg_out, (2, 0, 1))
-        ll_img = cv2.cvtColor(np_ll_img, cv2.COLOR_BGR2RGB)
-        # publish vision result to rviz
-        img_msg = self.bridge.cv2_to_imgmsg(ll_img, encoding="rgb8")
-        img_msg.header = image.header
+        # scale output to original image
+        da_seg_resized = cv2.resize(
+            da_seg_out[1, :, :],
+            (original_w, original_h),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        ll_seg_resized = cv2.resize(
+            ll_seg_out[1, :, :],
+            (original_w, original_h),
+            interpolation=cv2.INTER_LINEAR,
+        )
+
+        # extrace chanel
+        ll_seg_out_lane = ll_seg_out[1, :, :]  
+
+        # dynamic scaling of the array
+        ll_seg_scaled = (
+            (ll_seg_resized - np.min(ll_seg_resized))
+            / (np.max(ll_seg_resized) - np.min(ll_seg_resized))
+            * 255
+        ).astype(np.uint8)
+
+        # dynamic scaling of the array
+        da_seg_scaled = (
+            (da_seg_resized - np.min(da_seg_resized))
+            / (np.max(da_seg_resized) - np.min(da_seg_resized))
+            * 255
+        ).astype(np.uint8)
+
+        # convert original image to numpy
+        overlay = np.array(original_image)
+
+        # lane mask = blue
+        overlay[:, :, 0] = cv2.addWeighted(overlay[:, :, 0], 1.0, ll_seg_scaled, 1, 0)
+
+        # driveable area = green
+        overlay[:, :, 1] = cv2.addWeighted(overlay[:, :, 1], 1.0, da_seg_scaled, 0.5, 0)
+
+        ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_out_lane)
+        ros_lane_overlay = self.bridge.cv2_to_imgmsg(overlay, encoding="bgr8")
+
+        # ros_image.header = image.header
         # publish
-        self.lane_publisher.publish(img_msg)
+        self.lane_mask_publisher.publish(ros_lane_mask)
+        self.lane_overlay_publisher.publish(ros_lane_overlay)
 
     def preprocess_image(self, image):
         """
         Preprocesses the image to be fed into the model
 
         Args:
-            image (np.array): Image from camera
+            image (ImgMsg): Image from camera
 
         Returns:
             np.array: Preprocessed image
         """
-        """pil_image = Image.fromarray(image)
 
-        preprocess = transforms.Compose(
-            [
-                transforms.Resize((288, 800)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-        return preprocess(pil_image).unsqueeze(0)
-        """
         cv_image = self.bridge.imgmsg_to_cv2(img_msg=image, desired_encoding="rgb8")
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+
         pil_image = Image.fromarray(cv_image)
         preprocess = t.Compose(
             [
@@ -130,7 +169,7 @@ class Lanedetection_node(CompatibleNode):
             ]
         )
         input_image = preprocess(pil_image).unsqueeze(dim=0)
-        return input_image
+        return input_image, cv_image
 
     def detect_lanes(self, image):
         """
@@ -144,14 +183,6 @@ class Lanedetection_node(CompatibleNode):
         """
         det_out, da_seg_out, ll_seg_out = self.model(image)
         return det_out, da_seg_out, ll_seg_out
-
-    def apply_mask(self, input_image, model_output):
-        """function to draw the lane mask into the original image
-
-        Args:
-            input_image (np.array): original input image
-            model_output (np.array): lane prediction
-        """
 
 
 if __name__ == "__main__":
