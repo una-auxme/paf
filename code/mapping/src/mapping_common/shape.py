@@ -5,6 +5,8 @@ import rospy
 
 from mapping import msg
 
+from visualization_msgs.msg import Marker
+
 
 @dataclass
 class Shape2D(ABC):
@@ -38,6 +40,13 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
         type_name = type(self).__name__
         return msg.Shape2D(type_name=type_name)
 
+    @abstractmethod
+    def to_marker(self) -> Marker:
+        m = Marker()
+        m.pose.position.z = 0.0
+        m.scale.z = 1.0
+        return m
+
 
 @dataclass
 class Rectangle(Shape2D):
@@ -59,6 +68,12 @@ class Rectangle(Shape2D):
         m.dimensions = [self.length, self.width]
         return m
 
+    def to_marker(self) -> Marker:
+        m = super().to_marker()
+        m.type = Marker.CUBE
+        m.scale.x = self.length
+        m.scale.y = self.width
+
 
 @dataclass
 class Circle(Shape2D):
@@ -76,6 +91,12 @@ class Circle(Shape2D):
         m = super().to_ros_msg()
         m.dimensions = [self.radius]
         return m
+
+    def to_marker(self) -> Marker:
+        m = super().to_marker()
+        m.type = Marker.CYLINDER
+        m.scale.x = self.radius * 2.0
+        m.scale.y = self.radius * 2.0
 
 
 _shape_supported_classes = [Rectangle, Circle]

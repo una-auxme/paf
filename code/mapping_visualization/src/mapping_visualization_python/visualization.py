@@ -10,83 +10,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from rospy import Publisher
 from rospy import Duration
 
-from entity import (
-    Rectangle,
-    Circle,
-    Vector2D,
-    Filterable,
-    EntityInfo,
-    Car,
-    Pedestrian,
-    Entity,
-    Map,
-)
-
-from marker_entities import entity_to_marker
-
-c_shaped_object = Rectangle(
-    translation=Vector2D(10, 2),
-    rotation=0.0,
-    linear_motion=Vector2D(0, 0),
-    angular_velocity=0.2,
-    motion_set=True,
-    length=2.0,
-    width=4.0,
-)
-
-c_filterable = Filterable(
-    is_collider=True,
-    is_tracked=True,
-    is_stopmark=True,
-    is_lanemark=False,
-    is_ignored=False,
-)
-c_entity_info = EntityInfo(
-    map_id=1,
-    timestamp=1.0,
-    confidence=0.2,
-    priority=0.3,
-    sensor_id=[0],
-    has_tracking_info=False,
-)
-
-car = Car(
-    entity_info=c_entity_info,
-    filterable=c_filterable,
-    shaped_object=c_shaped_object,
-    brake_light=Car.BrakeLightState.ON,
-    indicator=Car.IndicatorState.LEFT,
-)
-
-p_shaped_object = Circle(
-    translation=Vector2D(7, -3),
-    rotation=0.0,
-    linear_motion=Vector2D(0, 0),
-    angular_velocity=0.0,
-    motion_set=False,
-    radius=0.5,
-)
-
-p_filterable = Filterable(
-    is_collider=False,
-    is_tracked=False,
-    is_stopmark=False,
-    is_lanemark=False,
-    is_ignored=False,
-)
-
-p_entity_info = EntityInfo(
-    map_id=2,
-    timestamp=1.0,
-    confidence=0.2,
-    priority=0.2,
-    sensor_id=[1],
-    has_tracking_info=False,
-)
-
-pedestrian = Pedestrian(p_entity_info, p_filterable, p_shaped_object)
-
-map = Map(1.0, [car, pedestrian])
+from mapping_common.entity import Entity
 
 
 class Visualization(CompatibleNode):
@@ -129,20 +53,13 @@ class Visualization(CompatibleNode):
         self.marker_publisher.publish(marker_array)
 
     def create_marker_from_entity(self, entity: Entity):
-        marker = Marker()
+        marker = entity.to_marker()
         marker.header.frame_id = "hero"
         marker.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
         marker.ns = "m"
         marker.id = entity.map_id
         marker.lifetime = Duration(1)
 
-        if self.filter_is_collider:
-            if entity.is_collider:
-                marker.action = Marker.ADD
-            else:
-                marker.action = Marker.DELETE
-
-        entity_to_marker(entity, marker)
         return marker
 
     def set_is_collider_filter(self, request: SetBoolRequest):

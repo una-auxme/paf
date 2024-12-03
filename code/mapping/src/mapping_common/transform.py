@@ -110,6 +110,11 @@ class Transform2D:
         ), "Transformation matrix must be a homogenous 3x3 matrix"
         self._matrix = matrix
 
+    def translation(self) -> Vector2:
+        m = self.matrix[:2, 2]
+        m = m / m[2]
+        return Vector2(m)
+
     @staticmethod
     def identity() -> "Transform2D":
         return Transform2D(matrix=np.eye(3, dtype=np.float64))
@@ -166,11 +171,15 @@ class Transform2D:
         if isinstance(other, Transform2D):
             return Transform2D(np.matmul(self._matrix, other._matrix))
         if isinstance(other, Point2):
-            return Point2(np.matmul(self._matrix, other._matrix))
+            m = np.matmul(self._matrix, other._matrix)
+            m = m / m[2]
+            return Point2(m)
         if isinstance(other, Vector2):
             matrix = self._matrix.copy()
             matrix[:2, 2] = 0.0
-            return Vector2(np.matmul(matrix, other._matrix))
+            m = np.matmul(matrix, other._matrix)
+            m = m / m[2]
+            return Vector2(m)
         raise TypeError(
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
         )

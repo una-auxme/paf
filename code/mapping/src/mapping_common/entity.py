@@ -6,7 +6,9 @@ from uuid import UUID, uuid4
 from genpy.rostime import Time, Duration
 from std_msgs.msg import Header
 import uuid_msgs.msg as uuid_msgs
+from visualization_msgs.msg import Marker
 import rospy
+from tf.transformations import quaternion_from_euler
 
 from .transform import Vector2, Transform2D
 from .shape import Shape2D
@@ -189,6 +191,26 @@ The type must be one of {_entity_supported_classes_dict.keys()}"""
             tracking_info=tracking_info,
             type_name=type_name,
         )
+
+    def to_marker(self) -> Marker:
+        m = self.shape.to_marker()
+
+        m.color.a = 0.5
+        m.color.r = 128
+        m.color.g = 128
+        m.color.b = 128
+
+        transl = self.transform.translation()
+
+        m.pose.position.x = transl.x()
+        m.pose.position.y = transl.y()
+        m.pose.position.z = m.scale.z / 2.0
+        (
+            m.pose.orientation.x,
+            m.pose.orientation.y,
+            m.pose.orientation.z,
+            m.pose.orientation.w,
+        ) = quaternion_from_euler(0, 0, 0)
 
 
 @dataclass(init=False)

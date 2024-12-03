@@ -32,7 +32,7 @@
       -->
   </node>
 
-  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53000">
+  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53001">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
