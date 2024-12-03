@@ -15,10 +15,20 @@ from torchvision.models.detection.faster_rcnn import (
 )
 import torchvision.transforms as t
 import cv2
-from perception.src.vision_node_helper import get_carla_class_name, get_carla_color
+from perception.src.vision_node_helper import (
+    get_carla_class_name,
+    get_carla_color,
+    coco_to_carla,
+)
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from std_msgs.msg import Header, Float32MultiArray
+from std_msgs.msg import (
+    Header,
+    Float32MultiArray,
+    Int8MultiArray,
+    MultiArrayLayout,
+    MultiArrayDimension,
+)
 from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
@@ -113,6 +123,7 @@ class VisionNode(CompatibleNode):
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
+        self.setup_segmentation_mask_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -222,6 +233,17 @@ class VisionNode(CompatibleNode):
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
+            qos_profile=1,
+        )
+
+    def setup_segmentation_mask_publishers(self):
+        """
+        sets up a publisher for segmentation masks found in the image
+        """
+
+        self.segmentation_mask_publisher = self.new_publisher(
+            msg_type=numpy_msg(Int8MultiArray),
+            topic=f"/paf/{self.role_name}/Center/segmentation_masks",
             qos_profile=1,
         )
 
@@ -356,6 +378,7 @@ class VisionNode(CompatibleNode):
         c_boxes = []
         c_labels = []
         c_colors = []
+        carla_classes = []
         if hasattr(output[0], "masks") and output[0].masks is not None:
             masks = output[0].masks.data
         else:
@@ -364,6 +387,7 @@ class VisionNode(CompatibleNode):
         boxes = output[0].boxes
         for box in boxes:
             cls = box.cls.item()  # class index of object
+            carla_classes.append(coco_to_carla[int(cls)])
             pixels = box.xyxy[0]  # upper left and lower right pixel coords
 
             # only run distance calc when dist_array is available
@@ -464,6 +488,8 @@ class VisionNode(CompatibleNode):
                 1,
             )
 
+            self.publish_segmentation_mask(scaled_masks, carla_classes)
+
             drawn_images = draw_segmentation_masks(
                 drawn_images,
                 torch.from_numpy(scaled_masks > 0),
@@ -473,6 +499,46 @@ class VisionNode(CompatibleNode):
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
+
+    def publish_segmentation_mask(self, scaled_masks, carla_classes):
+        segmentation_array = (
+            torch.from_numpy(scaled_masks > 0)
+            * torch.tensor(carla_classes).view(-1, 1, 1)
+        ).numpy()
+
+        # Konvertiere zu int8
+        segmentation_array = segmentation_array.astype("int8")
+
+        # Flaches Array und Layout erstellen
+        flat_data = segmentation_array.flatten()
+        layout = MultiArrayLayout()
+        layout.dim = [
+            MultiArrayDimension(
+                label="height",
+                size=segmentation_array.shape[1],
+                stride=segmentation_array.shape[1] * segmentation_array.shape[2],
+            ),
+            MultiArrayDimension(
+                label="width",
+                size=segmentation_array.shape[2],
+                stride=segmentation_array.shape[2],
+            ),
+            MultiArrayDimension(
+                label="classes", size=segmentation_array.shape[0], stride=1
+            ),
+        ]
+        layout.data_offset = 0
+
+        # ROS-Nachricht erstellen
+        msg = Int8MultiArray()
+        msg.layout = layout
+        msg.data = flat_data.tolist()  # Umwandeln in Liste für ROS
+
+        # Nachricht veröffentlichen
+        try:
+            self.segmentation_mask_publisher.publish(msg)
+        except Exception as e:
+            rospy.logerr(f"Error publishing segmentation mask: {e}")
 
     def min_x(self, dist_array):
         """
