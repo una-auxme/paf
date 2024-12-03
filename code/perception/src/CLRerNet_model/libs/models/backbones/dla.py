@@ -21,8 +21,8 @@ BN_MOMENTUM = 0.1
 logger = logging.getLogger(__name__)
 
 
-def get_model_url(data='imagenet', name='dla34', hash='ba72cf86'):
-    return join('http://dl.yf.io/dla/models', data, '{}-{}.pth'.format(name, hash))
+def get_model_url(data="imagenet", name="dla34", hash="ba72cf86"):
+    return join("http://dl.yf.io/dla/models", data, "{}-{}.pth".format(name, hash))
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -382,14 +382,14 @@ class DLA(nn.Module):
         y = []
         x = self.base_layer(x)
         for i in range(6):
-            x = getattr(self, 'level{}'.format(i))(x)
+            x = getattr(self, "level{}".format(i))(x)
             if i in self.out_indices:
                 y.append(x)
         return y
 
-    def load_pretrained_model(self, data='imagenet', name='dla34', hash='ba72cf86'):
+    def load_pretrained_model(self, data="imagenet", name="dla34", hash="ba72cf86"):
         # fc = self.fc
-        if name.endswith('.pth'):
+        if name.endswith(".pth"):
             model_weights = torch.load(data + name)
         else:
             model_url = get_model_url(data, name, hash)
@@ -401,31 +401,33 @@ class DLA(nn.Module):
 def dla34(pretrained=True, levels=None, in_channels=None, **kwargs):  # DLA-34
     model = DLA(levels=levels, channels=in_channels, block=BasicBlock, **kwargs)
     if pretrained:
-        model.load_pretrained_model(data='imagenet', name='dla34', hash='ba72cf86')
+        model.load_pretrained_model(data="imagenet", name="dla34", hash="ba72cf86")
     return model
 
 
-@BACKBONES.register_module
-class DLANet(nn.Module):
-    def __init__(
-        self,
-        dla='dla34',
-        pretrained=True,
-        levels=[1, 1, 1, 2, 2, 1],
-        in_channels=[16, 32, 64, 128, 256, 512],
-        cfg=None,
-    ):
-        super(DLANet, self).__init__()
-        self.cfg = cfg
-        self.in_channels = in_channels
+if "DLANet" not in BACKBONES.module_dict:
 
-        self.model = eval(dla)(
-            pretrained=pretrained, levels=levels, in_channels=in_channels
-        )
+    @BACKBONES.register_module
+    class DLANet(nn.Module):
+        def __init__(
+            self,
+            dla="dla34",
+            pretrained=True,
+            levels=[1, 1, 1, 2, 2, 1],
+            in_channels=[16, 32, 64, 128, 256, 512],
+            cfg=None,
+        ):
+            super(DLANet, self).__init__()
+            self.cfg = cfg
+            self.in_channels = in_channels
 
-    def forward(self, x):
-        x = self.model(x)
-        return x
+            self.model = eval(dla)(
+                pretrained=pretrained, levels=levels, in_channels=in_channels
+            )
+
+        def forward(self, x):
+            x = self.model(x)
+            return x
 
 
 class Identity(nn.Module):

@@ -80,8 +80,10 @@ RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
 # ENV CUDA_HOME=/usr/local/cuda-11.8
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
-ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
-ENV PYTHONPATH=$PYTHONPATH:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
+ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla:/code/perception/src/CLRerNet_model
+# :/usr/lib/python3.8/site-packages
+
+
 
 # install mlocate, pip, wget, git and some ROS dependencies for building the CARLA ROS bridge
 RUN apt-get update && apt-get install -y \
@@ -93,7 +95,11 @@ RUN apt-get update && apt-get install -y \
     ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure
 
 SHELL ["/bin/bash", "-c"]
-
+# --------------- TEST ----------------------
+RUN python --version
+RUN python -c "import sys; print(sys.executable)"
+RUN python -c "import sys; print(sys.path)"
+# --------------- TESTende ----------------------
 
 # torch
 #RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html
@@ -110,6 +116,10 @@ RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_st
 RUN pip install torchvision==0.13.1
 RUN pip install -U openmim==0.3.3
 RUN mim install mmcv-full==1.7.0
+
+# Lade die dynamischen Bibliotheken neu
+# RUN ldconfig
+
 
 
 # Restliche Abhängigkeiten für ROS und Carla
@@ -129,15 +139,61 @@ WORKDIR /home/docker/mmdetection
 ENV FORCE_CUDA="1"
 RUN pip install --no-cache-dir -e .    
 
+
 # install ninja for nms build
 RUN apt-get update && apt-get install -y ninja-build
 
 RUN pip install -U pip setuptools
 
 # lane NMS
+# COPY --chown=docker /code/perception/src/CLRerNet_model/libs /code/perception/src/CLRerNet_model/libs
 COPY --chown=docker /code/perception/src/CLRerNet_model/libs/models/layers/nms /tmp/nms
+#WORKDIR /code/perception/src/CLRerNet_model/libs/models/layers/nms
 WORKDIR /tmp/nms
-RUN python /tmp/nms/setup.py install
+#RUN python setup.py install
+
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.8/dist-packages/torch/lib:$LD_LIBRARY_PATH
+RUN python setup.py install 
+
+RUN pip install .
+RUN ls /usr/lib/python3.8/site-packages | grep nms
+
+ENV PYTHONPATH=/usr/lib/python3.8/site-packages:$PYTHONPATH
+RUN find /usr/lib/python3.8/site-packages -name "*nms*"
+#RUN ldconfig && python -c "import nms"
+RUN python -c "import nms"
+#RUN python setup.py install
+#RUN pip install /code/perception/src/CLRerNet_model/libs/models/layers/nms
+#RUN pip install /code/perception/src/CLRerNet_model/libs/models/layers/nms
+#RUN pip install .
+
+
+
+#RUN ls /usr/lib/python3.8/site-packages
+#RUN chmod -R 755 /usr/lib/python3.8/site-packages
+
+# Überprüfe, ob nms importierbar ist (Debugging-Zweck)
+ENV PYTHONPATH=/usr/lib/python3.8/site-packages:$PYTHONPATH
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.8/dist-packages/torch/lib:$LD_LIBRARY_PATH
+RUN python -c "import nms"
+
+
+
+# Umgebungsvariablen setzen
+
+#RUN ldconfig
+
+#RUN ldconfig && python -c "import nms"
+
+
+#COPY -chown=docker /lokaler/pfad/zu/CLRerNet_model /workspace/code/perception/src/CLRerNet_model
+#COPY --chown=docker /code/perception/src/CLRerNet_model/libs /code/perception/src/CLRerNet_model/libs
+#ENV PYTHONPATH=/code/perception/src/CLRerNet_model:$PYTHONPATH
+
+# Debugging: Überprüfe Pfad und Import
+#RUN echo "PYTHONPATH: $PYTHONPATH" && \
+#    ls /code/perception/src/CLRerNet_model/libs && \
+#    python -c "import libs"
 
 RUN pip uninstall -y pip setuptools
 

@@ -1,4 +1,4 @@
-from libs.datasets import CulaneDataset
+from ...libs.datasets import CulaneDataset
 
 
 def test_culane_dataset():

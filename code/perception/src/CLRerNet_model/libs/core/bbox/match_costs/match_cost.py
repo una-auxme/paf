@@ -1,7 +1,7 @@
 import torch
 from mmdet.core.bbox.match_costs.builder import MATCH_COST
 
-from libs.models.losses import LaneIoULoss
+from .....libs.models.losses import LaneIoULoss
 
 
 @MATCH_COST.register_module()

@@ -4,8 +4,8 @@ from argparse import ArgumentParser
 
 from mmdet.apis import init_detector
 
-from libs.api.inference import inference_one_image
-from libs.utils.visualizer import visualize_lanes
+from ..libs.api.inference import inference_one_image
+from ..libs.utils.visualizer import visualize_lanes
 
 
 def parse_args():

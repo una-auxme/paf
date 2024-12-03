@@ -15,8 +15,8 @@ from scipy.optimize import linear_sum_assignment
 
 from mmcv.utils import print_log
 
-from libs.utils.visualizer import draw_lane
-from libs.utils.lane_utils import interp
+from ...utils.visualizer import draw_lane
+from ...utils.lane_utils import interp
 
 
 def discrete_cross_iou(xs, ys, width=30, img_shape=(590, 1640, 3)):
@@ -66,12 +66,8 @@ def culane_metric(
             cat (str): category name
             hits (List[np.ndarray]): bool array (TP or not)
     """
-    interp_pred = np.array(
-        [interp(pred_lane, n=5) for pred_lane in pred], dtype=object
-    )
-    interp_anno = np.array(
-        [interp(anno_lane, n=5) for anno_lane in anno], dtype=object
-    )
+    interp_pred = np.array([interp(pred_lane, n=5) for pred_lane in pred], dtype=object)
+    interp_anno = np.array([interp(anno_lane, n=5) for anno_lane in anno], dtype=object)
 
     ious = discrete_cross_iou(
         interp_pred, interp_anno, width=width, img_shape=img_shape
@@ -83,9 +79,9 @@ def culane_metric(
     hits = [pred_ious > thr for thr in iou_thresholds]
 
     results = {
-        'n_gt': len(anno),
-        'cat': cat,
-        'hits': hits,
+        "n_gt": len(anno),
+        "cat": cat,
+        "hits": hits,
     }
 
     return results
@@ -102,7 +98,7 @@ def load_culane_img_data(path):
                          [(x_10, y_10), (x_11, y_11),....],
                      ]
     """
-    with open(path, 'r') as data_file:
+    with open(path, "r") as data_file:
         img_data = data_file.readlines()
     img_data = [line.split() for line in img_data]
     img_data = [list(map(float, lane)) for lane in img_data]
@@ -126,17 +122,17 @@ def load_culane_data(data_dir, file_list_path, data_cats):
         data (List[List[List[tuple]]]): Lists of list(s) of lane coordinates for all the images.
         cats (List[str]): List of category names.
     """
-    with open(file_list_path, 'r') as file_list:
+    with open(file_list_path, "r") as file_list:
         data_paths = [
-            line[1 if line[0] == '/' else 0 :].rstrip()
+            line[1 if line[0] == "/" else 0 :].rstrip()
             for line in file_list.readlines()
         ]
         cats = [
-            data_cats[p] if p in data_cats.keys() else 'test0_normal'
+            data_cats[p] if p in data_cats.keys() else "test0_normal"
             for p in data_paths
         ]
         file_paths = [
-            os.path.join(data_dir, line.replace('.jpg', '.lines.txt'))
+            os.path.join(data_dir, line.replace(".jpg", ".lines.txt"))
             for line in data_paths
         ]
 
@@ -159,19 +155,19 @@ def load_categories(categories_path):
     """
     data_cats = {}
     categories = [
-        'test0_normal',
-        'test1_crowd',
-        'test2_hlight',
-        'test3_shadow',
-        'test4_noline',
-        'test5_arrow',
-        'test6_curve',
-        'test7_cross',
-        'test8_night',
+        "test0_normal",
+        "test1_crowd",
+        "test2_hlight",
+        "test3_shadow",
+        "test4_noline",
+        "test5_arrow",
+        "test6_curve",
+        "test7_cross",
+        "test8_night",
     ]
     for category in categories:
         with open(
-            Path(categories_path).joinpath(category).with_suffix('.txt'), 'r'
+            Path(categories_path).joinpath(category).with_suffix(".txt"), "r"
         ) as file_list:
             data_cats.update({k.rstrip(): category for k in file_list.readlines()})
     return data_cats, categories
@@ -202,15 +198,15 @@ def eval_predictions(
         result_dict (dict): Evaluation result dict containing
             F1, precision, recall, etc. on the specified IoU thresholds.
     """
-    print_log('List: {}'.format(list_path), logger=logger)
+    print_log("List: {}".format(list_path), logger=logger)
     data_cats, categories = load_categories(categories_dir)
-    print_log('Loading prediction data...', logger=logger)
+    print_log("Loading prediction data...", logger=logger)
     predictions, _ = load_culane_data(pred_dir, list_path, data_cats)  # (34680,)
-    print_log('Loading annotation data...', logger=logger)
+    print_log("Loading annotation data...", logger=logger)
     annotations, cats = load_culane_data(anno_dir, list_path, data_cats)  # (34680,)
     print_log(
-        'Calculating metric {}...'.format(
-            'sequentially' if sequential else 'in parallel'
+        "Calculating metric {}...".format(
+            "sequentially" if sequential else "in parallel"
         ),
         logger=logger,
     )
@@ -247,13 +243,13 @@ def eval_predictions(
         print_log(f"Evaluation results for IoU threshold = {iou_thr}", logger=logger)
         for i in range(len(categories) + 1):
             category = categories if i == 0 else [categories[i - 1]]
-            n_gt_list = [r['n_gt'] for r in results if r['cat'] in category]
-            n_category = len([r for r in results if r['cat'] in category])
+            n_gt_list = [r["n_gt"] for r in results if r["cat"] in category]
+            n_category = len([r for r in results if r["cat"] in category])
             if n_category == 0:
                 continue
             n_gts = sum(n_gt_list)
             hits = np.concatenate(
-                [r['hits'][k] for r in results if r['cat'] in category]
+                [r["hits"][k] for r in results if r["cat"] in category]
             )
             tp = np.sum(hits)
             fp = len(hits) - np.sum(hits)

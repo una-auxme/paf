@@ -3,7 +3,6 @@ Adapted from:
 https://github.com/aliyun/conditional-lane-detection/blob/master/mmdet/datasets/culane_dataset.py
 """
 
-
 import shutil
 from pathlib import Path
 
@@ -14,8 +13,8 @@ from mmdet.datasets.custom import CustomDataset
 from mmdet.utils import get_root_logger
 from tqdm import tqdm
 
-from libs.datasets.metrics.culane_metric import eval_predictions
-from libs.datasets.pipelines import Compose
+from ..datasets.metrics.culane_metric import eval_predictions
+from ..datasets.pipelines import Compose
 
 
 @DATASETS.register_module

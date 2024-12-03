@@ -12,8 +12,8 @@ from mmdet.core import build_assigner, build_prior_generator
 from mmdet.models.builder import HEADS, build_loss
 from nms import nms
 
-from libs.models.dense_heads.seg_decoder import SegDecoder
-from libs.utils.lane_utils import Lane
+from .seg_decoder import SegDecoder
+from ...utils.lane_utils import Lane
 
 
 @HEADS.register_module

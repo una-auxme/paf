@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from libs.models.losses import CLRNetIoULoss, LaneIoULoss
+from ...libs.models.losses import CLRNetIoULoss, LaneIoULoss
 
 
 def test_laneiou_loss():

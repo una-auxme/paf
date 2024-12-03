@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from libs.core.bbox.match_costs import CLRNetIoUCost, LaneIoUCost
+from ...libs.core.bbox.match_costs import CLRNetIoUCost, LaneIoUCost
 
 
 def test_laneiou_cost():

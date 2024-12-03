@@ -5,7 +5,7 @@ from mmcv.parallel import DataContainer as DC
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines.formatting import Collect, to_tensor
 
-from libs.utils.lane_utils import sample_lane
+from ...utils.lane_utils import sample_lane
 
 
 @PIPELINES.register_module
