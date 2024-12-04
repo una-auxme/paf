@@ -35,7 +35,7 @@ class LidarDistance:
             coordinates,
             max_x=np.inf,
             min_x=0.0,
-            min_z=-1.6,
+            min_z=-np.inf
         )
         reconstruct_coordinates_center = coordinates[reconstruct_bit_mask_center]
         reconstruct_coordinates_xyz_center = np.array(
