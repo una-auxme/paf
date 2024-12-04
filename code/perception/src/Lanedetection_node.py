@@ -17,7 +17,7 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge
 
 # for the lane detection model
-import torch
+# import torch
 
 # from CLRerNet_model.configs.clrernet.culane import clrernet_culane_dla34_ema
 
@@ -26,6 +26,9 @@ import torch
 # from mmcv import Config
 # from CLRerNet_model.libs.models.detectors import clrernet as build_detector
 from mmdet.apis import init_detector
+
+# from CLRerNet_model.libs.api.inference import inference_one_image
+# from CLRerNet_model.libs.utils.visualizer import visualize_lanes
 
 # for image preprocessing
 from torchvision import transforms
@@ -59,19 +62,25 @@ class Lanedetection_node(CompatibleNode):
         # build the model from a config file and a checkpoint file
         model = init_detector(ws_config_path, ws_weight_path, device="cuda:0")
         print(model)
+
         # test a single image
-        # src, preds = inference_one_image(model, args.img)
+        image_path = os.path.join("CLRerNet_model", "demo.jpg")
+        image2_path = os.path.join("CLRerNet_model", "result.jpg")
+        ws_image_path = os.path.join(ws_path, image_path)
+        ws_image2_path = os.path.join(ws_path, image2_path)
+        # src, preds = inference_one_image(model, ws_image_path)
         # show the results
-        # dst = visualize_lanes(src, preds, save_path=args.out_file)
+        # dst = visualize_lanes(src, preds, save_path=ws_image2_path)
 
-        with open(ws_weight_path, "rb") as file:
-            self.state_dict = torch.load(file)
+        # ---------- OLD ------------
+        # with open(ws_weight_path, "rb") as file:
+        #    self.state_dict = torch.load(file)
 
-        self.model.load_state_dict(self.state_dict)
+        # self.model.load_state_dict(self.state_dict)
 
         # self.model.eval()
         # print("Model erforgreich geladen:", self.model, model_path)
-
+        # ----------  ------------
         self.bridge = CvBridge()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
@@ -127,7 +136,7 @@ class Lanedetection_node(CompatibleNode):
 
         Returns:
             np.array: Preprocessed image
-        """
+        ""
         pil_image = Image.fromarray(image)
 
         preprocess = transforms.Compose(
@@ -140,7 +149,7 @@ class Lanedetection_node(CompatibleNode):
             ]
         )
 
-        return preprocess(pil_image).unsqueeze(0).cuda()
+        return preprocess(pil_image).unsqueeze(0).cuda()"""
 
     def detect_lanes(self, image, model):
         """

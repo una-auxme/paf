@@ -110,6 +110,9 @@ RUN python -c "import sys; print(sys.path)"
 # RUN mim install mmcv-full==1.7.0
 
 
+
+
+
 # Installiere PyTorch und MMCV
 ENV TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6"
 RUN pip install torch==1.12.1+cu116 -f https://download.pytorch.org/whl/torch_stable.html 
@@ -119,8 +122,6 @@ RUN mim install mmcv-full==1.7.0
 
 # Lade die dynamischen Bibliotheken neu
 # RUN ldconfig
-
-
 
 # Restliche Abhängigkeiten für ROS und Carla
 RUN apt-get update && \
@@ -138,19 +139,58 @@ RUN git clone https://github.com/open-mmlab/mmdetection.git mmdetection -b v2.28
 WORKDIR /home/docker/mmdetection
 ENV FORCE_CUDA="1"
 RUN pip install --no-cache-dir -e .    
-
-
 # install ninja for nms build
 RUN apt-get update && apt-get install -y ninja-build
 
+
+# CLRerNet Repository einfügen
+# Definiere den Branch oder die Version, die du klonen möchtest (falls erforderlich)
+ARG CLRERNET_REPO_URL=https://github.com/hirotomusiker/CLRerNet.git
+ARG CLRERNET_BRANCH=main 
+
+# Klone das CLRerNet-Repository und wechsle zum entsprechenden Verzeichnis
+#WORKDIR /home/docker/
+#RUN git clone --branch ${CLRERNET_BRANCH} ${CLRERNET_REPO_URL} CLRerNet_model
+#RUN sudo mkdir /clrernet
+#WORKDIR /clrernet
+RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /code/perception/src/CLRerNet_model && \
+    echo "Clone erfolgreich!" && \
+    ls -l /code/perception/src/CLRerNet_model
+
+# Lade die Modellgewichte in den entsprechenden Ordner
+WORKDIR /code/perception/src/CLRerNet_model
+RUN wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O clrernet_culane_dla34_ema.pth
+
+# Installiere die Abhängigkeiten von CLRerNet (falls vorhanden)
+#WORKDIR /code/perception/src/CLRerNet_model
+RUN pip install -r requirements.txt || echo "Keine requirements.txt gefunden, überspringe Abhängigkeiten"
+
+# Falls ein spezifischer Setup-Schritt erforderlich ist, führe ihn hier aus
+# RUN python setup.py install || echo "setup.py nicht gefunden, Installation übersprungen"
+
+# Stelle sicher, dass der PYTHONPATH das Modell korrekt enthält
+ENV PYTHONPATH=/code/perception/src/CLRerNet_model:$PYTHONPATH
+
+# Debugging: Überprüfe, ob das Modell erfolgreich importiert werden kann
+#RUN python -c "from libs.models.dense_heads.seg_decoder import SegDecoder" || echo "Fehler beim Importieren von SegDecoder"
+#RUN python -c "from libs.utils.lane_utils import Lane" || echo "Fehler beim Importieren von Lane"
+WORKDIR /code/perception/src/CLRerNet_model/libs/models/layers/nms
+
+#RUN ls 
 RUN pip install -U pip setuptools
+
+
 
 # lane NMS
 # COPY --chown=docker /code/perception/src/CLRerNet_model/libs /code/perception/src/CLRerNet_model/libs
-COPY --chown=docker /code/perception/src/CLRerNet_model/libs/models/layers/nms /tmp/nms
+#COPY --chown=docker /code/perception/src/CLRerNet_model/libs/models/layers/nms /tmp/nms
 #WORKDIR /code/perception/src/CLRerNet_model/libs/models/layers/nms
-WORKDIR /tmp/nms
+#WORKDIR /tmp/nms
+#WORKDIR /code/perception/src/CLRerNet_model/libs/models/layers/nms
 #RUN python setup.py install
+
+
+# Installiere das nms-Modul
 
 ENV LD_LIBRARY_PATH=/usr/local/lib/python3.8/dist-packages/torch/lib:$LD_LIBRARY_PATH
 RUN python setup.py install 
@@ -173,9 +213,9 @@ RUN python -c "import nms"
 #RUN chmod -R 755 /usr/lib/python3.8/site-packages
 
 # Überprüfe, ob nms importierbar ist (Debugging-Zweck)
-ENV PYTHONPATH=/usr/lib/python3.8/site-packages:$PYTHONPATH
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.8/dist-packages/torch/lib:$LD_LIBRARY_PATH
-RUN python -c "import nms"
+#ENV PYTHONPATH=/usr/lib/python3.8/site-packages:$PYTHONPATH
+#ENV LD_LIBRARY_PATH=/usr/local/lib/python3.8/dist-packages/torch/lib:$LD_LIBRARY_PATH
+#RUN python -c "import nms"
 
 
 
@@ -193,7 +233,7 @@ RUN python -c "import nms"
 # Debugging: Überprüfe Pfad und Import
 #RUN echo "PYTHONPATH: $PYTHONPATH" && \
 #    ls /code/perception/src/CLRerNet_model/libs && \
-#    python -c "import libs"
+#    python -c "import libs".
 
 RUN pip uninstall -y pip setuptools
 
@@ -211,9 +251,8 @@ USER $USERNAME
 
 # create a catkin workspace
 WORKDIR /catkin_ws
-# make sure the catkin workspace belongs to the user
-RUN sudo chown $USERNAME:$USERNAME /catkin_ws && mkdir src
 
+# make sure the catkin wo/code
 # install the CARLA ROS bridge
 ARG ROS_BRIDGE_GITHUB_URL=https://github.com/carla-simulator/ros-bridge
 RUN git clone -b leaderboard-2.0 --recurse-submodules --single-branch $ROS_BRIDGE_GITHUB_URL src/ros-bridge
@@ -225,6 +264,8 @@ RUN source /opt/ros/noetic/setup.bash && \
     catkin_make install
 
 ENV CARLA_ROS_BRIDGE_ROOT=/catkin_ws/src/ros-bridge
+
+
 
 # avoid python warnings about missing bin directory in PATH
 # (as we're not running as root, pip installs into ~/.local/bin)
@@ -286,6 +327,7 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
+#COPY /code/perception/src/CLRerNet_model /workspace/code/perception/src/CLRerNet_model/
 
 # For debugger
 ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src/code
