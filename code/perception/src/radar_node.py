@@ -8,6 +8,9 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Point
+
 import struct
 
 
@@ -37,13 +40,25 @@ class RadarNode:
         # input array [x, y, z, distance], output: dict clustered
         clustered_data = cluster_data(dataarray)
 
+        # transformed_data = transform_data_to_2d(dataarray)
+
         # input array [x, y, z, distance], clustered labels
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
-
         self.visualization_radar_publisher.publish(cloud)
 
         cluster_info = generate_cluster_labels_and_colors(clustered_data, dataarray)
         self.cluster_info_radar_publisher.publish(cluster_info)
+
+        points_with_labels = np.hstack((dataarray, clustered_data.labels_.reshape(-1, 1)))
+        bounding_boxes = generate_bounding_boxes(points_with_labels)
+
+        marker_array = MarkerArray()
+        for label, bbox in bounding_boxes:
+            if label != -1:
+                marker = create_bounding_box_marker(label, bbox)
+                marker_array.markers.append(marker)
+
+        self.marker_visualization_radar_publisher.publish(marker_array)
 
     def listener(self):
         """Initializes the node and its publishers."""
@@ -60,6 +75,13 @@ class RadarNode:
                 "~image_distance_topic", "/paf/hero/Radar/Visualization"
             ),
             PointCloud2,
+            queue_size=10,
+        )
+        self.marker_visualization_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~image_distance_topic", "/paf/hero/Radar/Marker"
+            ),
+            MarkerArray,
             queue_size=10,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(
@@ -149,18 +171,20 @@ def cluster_radar_data_from_pointcloud(
 # filters radar data in distance, y, z direction
 def filter_data(data, max_distance):
 
-    filtered_data = data[data[:, 3] < max_distance]
+    # filtered_data = data[data[:, 3] < max_distance]
+    filtered_data = data
     filtered_data = filtered_data[
-        (filtered_data[:, 1] >= -1)
-        & (filtered_data[:, 1] <= 1)
-        & (filtered_data[:, 2] <= 1.3)
-        & (filtered_data[:, 2] >= -0.7)
+        # (filtered_data[:, 1] >= -1)
+        # & (filtered_data[:, 1] <= 1)
+        # & (filtered_data[:, 2] <= 1.3)
+        (filtered_data[:, 2] <= 1.3)
+        & (filtered_data[:, 2] >= -0.6)  # -0.7
     ]
     return filtered_data
 
 
 # clusters data with DBSCAN
-def cluster_data(filtered_data, eps=0.2, min_samples=1):
+def cluster_data(filtered_data, eps=0.8, min_samples=5):
 
     if len(filtered_data) == 0:
         return {}
@@ -168,11 +192,11 @@ def cluster_data(filtered_data, eps=0.2, min_samples=1):
     # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
 
     # worse than without scaling
-    # scaler = StandardScaler()
-    # data_scaled = scaler.fit_transform(filtered_data)
-    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(filtered_data)
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
 
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(filtered_data)
+    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(filtered_data)
     return clustering
 
 
@@ -214,6 +238,136 @@ def create_pointcloud2(clustered_points, cluster_labels):
     ]
 
     return point_cloud2.create_cloud(header, fields, points)
+
+
+def transform_data_to_2d(clustered_data):
+
+    transformed_points = clustered_data
+    transformed_points[:, 0] = clustered_data[:, 0]
+    transformed_points[:, 1] = clustered_data[:, 1]
+    transformed_points[:, 2] = 0
+    transformed_points[:, 3] = clustered_data[:, 3]
+
+    return transformed_points
+
+
+def calculate_aabb(cluster_points):
+    """_summary_
+
+    Args:
+        cluster_points (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    # for 2d (top-down) boxes
+    # x_min = np.min(cluster_points[:, 0])
+    # x_max = np.max(cluster_points[:, 0])
+    # y_min = np.min(cluster_points[:, 1])
+    # y_max = np.max(cluster_points[:, 1])
+
+    # return x_min, x_max, y_min, y_max
+
+    # for 3d boxes
+    x_min = np.min(cluster_points[:, 0])
+    x_max = np.max(cluster_points[:, 0])
+    y_min = np.min(cluster_points[:, 1])
+    y_max = np.max(cluster_points[:, 1])
+    z_min = np.min(cluster_points[:, 2])
+    z_max = np.max(cluster_points[:, 2])
+    rospy.loginfo(f"Bounding box for label: X({x_min}, {x_max}), Y({y_min}, {y_max}), Z({z_min}, {z_max})")
+    return x_min, x_max, y_min, y_max, z_min, z_max
+
+
+def generate_bounding_boxes(points_with_labels):
+    """_summary_
+
+    Args:
+        points_with_labels (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    bounding_boxes = []
+    unique_labels = np.unique(points_with_labels[:, -1])
+    for label in unique_labels:
+        if label == -1:
+            continue
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+        bbox = calculate_aabb(cluster_points)
+        bounding_boxes.append((label, bbox))
+    return bounding_boxes
+
+
+def create_bounding_box_marker(label, bbox):
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
+    # for 2d (top-down) boxes
+    # x_min, x_max, y_min, y_max = bbox
+
+    # for 3d boxes
+    x_min, x_max, y_min, y_max, z_min, z_max = bbox
+
+    marker = Marker()
+    marker.header.frame_id = "hero/RADAR"
+    marker.id = int(label)
+    # marker.type = Marker.LINE_STRIP
+    marker.type = Marker.LINE_LIST
+    marker.action = Marker.ADD
+    marker.scale.x = 0.1
+    marker.color.r = 1.0
+    marker.color.g = 1.0
+    marker.color.b = 0.0
+    marker.color.a = 1.0
+
+    # for 2d (top-down) boxes
+    # points = [
+    #     Point(x_min, y_min, 0),
+    #     Point(x_max, y_min, 0),
+    #     Point(x_max, y_max, 0),
+    #     Point(x_min, y_max, 0),
+    #     Point(x_min, y_min, 0),
+    # ]
+    # marker.points = points
+
+    # for 3d boxes
+    points = [
+        Point(x_min, y_min, z_min),  # Ecke 0
+        Point(x_max, y_min, z_min),  # Ecke 1
+        Point(x_max, y_max, z_min),  # Ecke 2
+        Point(x_min, y_max, z_min),  # Ecke 3
+        Point(x_min, y_min, z_max),  # Ecke 4
+        Point(x_max, y_min, z_max),  # Ecke 5
+        Point(x_max, y_max, z_max),  # Ecke 6
+        Point(x_min, y_max, z_max),  # Ecke 7
+
+        # Point(x_min, y_min, z_min),  # Verbinde z_min zu z_max
+        # Point(x_min, y_min, z_max),
+
+        # Point(x_max, y_min, z_min),
+        # Point(x_max, y_min, z_max),
+
+        # Point(x_max, y_max, z_min),
+        # Point(x_max, y_max, z_max),
+
+        # Point(x_min, y_max, z_min),
+        # Point(x_min, y_max, z_max),
+    ]
+    # marker.points = points
+    lines = [
+        (0, 1), (1, 2), (2, 3), (3, 0),  # Boden
+        (4, 5), (5, 6), (6, 7), (7, 4),  # Deckel
+        (0, 4), (1, 5), (2, 6), (3, 7),  # Vertikale Kanten
+    ]
+    for start, end in lines:
+        marker.points.append(points[start])
+        marker.points.append(points[end])
+    
+    return marker
 
 
 # generates string with label-id and cluster size
