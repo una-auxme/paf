@@ -158,8 +158,8 @@ RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /code/
     ls -l /code/perception/src/CLRerNet_model
 
 # Lade die Modellgewichte in den entsprechenden Ordner
-WORKDIR /code/perception/src/CLRerNet_model
-RUN wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O clrernet_culane_dla34_ema.pth
+#WORKDIR /code/perception/src/CLRerNet_model
+#RUN wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O clrernet_culane_dla34_ema.pth
 
 # Installiere die Abhängigkeiten von CLRerNet (falls vorhanden)
 #WORKDIR /code/perception/src/CLRerNet_model
@@ -329,6 +329,11 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 #COPY /code/perception/src/CLRerNet_model /workspace/code/perception/src/CLRerNet_model/
 
+RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /workspace/code/perception/src/CLRerNet_model && \
+    echo "Clone erfolgreich!"
+
+
+RUN sudo wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O /code/perception/src/CLRerNet_model/clrernet_culane_dla34_ema.pth
 # For debugger
 ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src/code
 # Link code into catkin workspace
