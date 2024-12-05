@@ -80,7 +80,7 @@ RUN rm -f /var/lib/dpkg/info/fprintd.postinst \
 # ENV CUDA_HOME=/usr/local/cuda-11.8
 
 # override python path, carla pip package path didn't exist and was using Python 3.7 instead of 2.7
-ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla:/code/perception/src/CLRerNet_model
+ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages:/opt/carla/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg:/opt/carla/PythonAPI/carla
 # :/usr/lib/python3.8/site-packages
 
 
@@ -153,28 +153,29 @@ ARG CLRERNET_BRANCH=main
 #RUN git clone --branch ${CLRERNET_BRANCH} ${CLRERNET_REPO_URL} CLRerNet_model
 #RUN sudo mkdir /clrernet
 #WORKDIR /clrernet
-RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /code/perception/src/CLRerNet_model && \
+# /code/perception/src/CLRerNet_model && \
+RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /opt/CLRerNet_model && \
     echo "Clone erfolgreich!" && \
-    ls -l /code/perception/src/CLRerNet_model
+    ls -l /opt/CLRerNet_model
 
 # Lade die Modellgewichte in den entsprechenden Ordner
-#WORKDIR /code/perception/src/CLRerNet_model
-#RUN wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O clrernet_culane_dla34_ema.pth
+WORKDIR /opt/CLRerNet_model
+RUN wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O clrernet_culane_dla34_ema.pth
 
 # Installiere die Abhängigkeiten von CLRerNet (falls vorhanden)
 #WORKDIR /code/perception/src/CLRerNet_model
 RUN pip install -r requirements.txt || echo "Keine requirements.txt gefunden, überspringe Abhängigkeiten"
 
 # Falls ein spezifischer Setup-Schritt erforderlich ist, führe ihn hier aus
-# RUN python setup.py install || echo "setup.py nicht gefunden, Installation übersprungen"
+# RUN python setup.py install || echo "se   tup.py nicht gefunden, Installation übersprungen"
 
 # Stelle sicher, dass der PYTHONPATH das Modell korrekt enthält
-ENV PYTHONPATH=/code/perception/src/CLRerNet_model:$PYTHONPATH
+ENV PYTHONPATH=/opt/CLRerNet_model:$PYTHONPATH
 
 # Debugging: Überprüfe, ob das Modell erfolgreich importiert werden kann
 #RUN python -c "from libs.models.dense_heads.seg_decoder import SegDecoder" || echo "Fehler beim Importieren von SegDecoder"
 #RUN python -c "from libs.utils.lane_utils import Lane" || echo "Fehler beim Importieren von Lane"
-WORKDIR /code/perception/src/CLRerNet_model/libs/models/layers/nms
+WORKDIR /opt/CLRerNet_model/libs/models/layers/nms
 
 #RUN ls 
 RUN pip install -U pip setuptools
@@ -325,15 +326,21 @@ ENV IABN_FORCE_CUDA=1
 
 RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 
+#RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /opt/CLRerNet_model && \
+#    chown -R $USERNAME:$USERNAME ./code/perception/src/CLRerNet_model && \
+#    echo "Clone erfolgreich!"
+
+#RUN sudo wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O ./code/perception/src/CLRerNet_model/clrernet_culane_dla34_ema.pth
+
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 #COPY /code/perception/src/CLRerNet_model /workspace/code/perception/src/CLRerNet_model/
 
-RUN git clone --branch main https://github.com/hirotomusiker/CLRerNet.git /workspace/code/perception/src/CLRerNet_model && \
-    echo "Clone erfolgreich!"
 
 
-RUN sudo wget https://github.com/hirotomusiker/CLRerNet/releases/download/v0.1.0/clrernet_culane_dla34_ema.pth -O /code/perception/src/CLRerNet_model/clrernet_culane_dla34_ema.pth
+
+
+
 # For debugger
 ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src/code
 # Link code into catkin workspace

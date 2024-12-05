@@ -27,8 +27,8 @@ from cv_bridge import CvBridge
 # from CLRerNet_model.libs.models.detectors import clrernet as build_detector
 from mmdet.apis import init_detector
 
-# from CLRerNet_model.libs.api.inference import inference_one_image
-# from CLRerNet_model.libs.utils.visualizer import visualize_lanes
+from libs.api.inference import inference_one_image
+from libs.utils.visualizer import visualize_lanes
 
 # for image preprocessing
 from torchvision import transforms
@@ -47,10 +47,11 @@ class Lanedetection_node(CompatibleNode):
 
         # WS path
         ws_path = os.path.dirname(os.path.realpath(__file__))
+        ws_path = "/opt"
         print(ws_path)
 
         # Weights path
-        weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34.pth")
+        weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34_ema.pth")
         ws_weight_path = os.path.join(ws_path, weight_path)
 
         # Config path
@@ -65,10 +66,12 @@ class Lanedetection_node(CompatibleNode):
 
         # test a single image
         image_path = os.path.join("CLRerNet_model", "demo.jpg")
+        image_path = "/opt/CLRerNet_model/demo/demo.jpg"
+        image2_path = "/opt/CLRerNet_model/demo/result.jpg"
         image2_path = os.path.join("CLRerNet_model", "result.jpg")
-        ws_image_path = os.path.join(ws_path, image_path)
-        ws_image2_path = os.path.join(ws_path, image2_path)
-        # src, preds = inference_one_image(model, ws_image_path)
+        # ws_image_path = os.path.join(ws_path, image_path)
+        # ws_image2_path = os.path.join(ws_path, image2_path)
+        src, preds = inference_one_image(model, ws_image_path)
         # show the results
         # dst = visualize_lanes(src, preds, save_path=ws_image2_path)
 

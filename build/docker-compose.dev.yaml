@@ -6,7 +6,7 @@ include:
 services:
   agent-dev:
     build:
-      dockerfile: build/docker/agent-dev/Dockerfile
+      dockerfile: build/docker/agent/Dockerfile
       context: ../
       args:
         USERNAME: ${USERNAME}
