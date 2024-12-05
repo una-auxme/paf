@@ -42,7 +42,6 @@ class RequestBehaviourChangeService(CompatibleNode):
     def __set_curr_behavior(self, data: String):
         """
         Sets the received current behavior of the vehicle.
-        If the behavior is an overtake behavior, a trajectory change is triggered.
         """
         self.__curr_behavior = data.data
 
