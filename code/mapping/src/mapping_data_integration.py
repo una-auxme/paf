@@ -28,7 +28,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
-            topic=self.get_param("~map_init_topic", "/carla/hero/mapping_init_data"),
+            topic=self.get_param("~map_init_topic", "/paf/hero/mapping_init_data"),
             qos_profile=1,
         )
         self.rate = 1.0 / 20.0
@@ -40,6 +40,9 @@ class MappingDataIntegrationNode(CompatibleNode):
         shape = Circle(0.15)
         self.lidar_entities = []
         for x, y, z, intensity in coordinates:
+            if z < -1.5 or z > 1.0:
+                # Ignore street level lidar points and stuff above
+                continue
             v = Vector2.new(x, y)
             transform = Transform2D.new_translation(v)
             flags = Flags(is_collider=True)

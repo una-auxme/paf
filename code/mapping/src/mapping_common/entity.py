@@ -212,6 +212,8 @@ The type must be one of {_entity_supported_classes_dict.keys()}"""
             m.pose.orientation.w,
         ) = quaternion_from_euler(0, 0, 0)
 
+        return m
+
 
 @dataclass(init=False)
 class Car(Entity):

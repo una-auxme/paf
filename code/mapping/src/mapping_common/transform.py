@@ -111,7 +111,7 @@ class Transform2D:
         self._matrix = matrix
 
     def translation(self) -> Vector2:
-        m = self.matrix[:2, 2]
+        m = self._matrix[:, 2]
         m = m / m[2]
         return Vector2(m)
 

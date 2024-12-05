@@ -5,12 +5,13 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 from visualization_msgs.msg import Marker, MarkerArray
-
+from mapping.msg import Map as MapMsg
 
 from rospy import Publisher
 from rospy import Duration
 
-from mapping_common.entity import Entity
+# from mapping_common_c.entity import Entity
+from mapping_common.map import Map
 
 
 class Visualization(CompatibleNode):
@@ -20,7 +21,7 @@ class Visualization(CompatibleNode):
     """
 
     def __init__(self, args):
-        super().__init__("intermediate_layer_visualization")
+        super().__init__("mapping_visualization")
 
         self.marker_publisher: Publisher = self.new_publisher(
             MarkerArray, "/marker_array", qos_profile=10
@@ -38,27 +39,30 @@ class Visualization(CompatibleNode):
         self.new_service(SetBool, "vis/set_is_lanemark", self.set_is_lanemark_filter)
         self.new_service(SetBool, "vis/set_is_ignored", self.set_is_ignored_filter)
 
-        self.rate = 1.0 / 20.0
-        self.new_timer(self.rate, self.loop)
+        self.new_subscription(
+            topic=self.get_param("~map_topic", "/paf/hero/mapping_init_data"),
+            msg_type=MapMsg,
+            callback=self.map_callback,
+            qos_profile=1,
+        )
 
-    def loop(self, timer_event=None):
-        """This loop will run with self.rate hz.
-        Its purpose is to process data and publish as marker array.
-        """
+    def map_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
         marker_array = MarkerArray()
 
-        for entity in map.entities:
-            marker_array.markers.append(self.create_marker_from_entity(entity))
+        for id, entity in enumerate(map.entities):
+            # TODO: filtering based on flags
+            marker_array.markers.append(self.create_marker_from_entity(id, entity))
 
         self.marker_publisher.publish(marker_array)
 
-    def create_marker_from_entity(self, entity: Entity):
+    def create_marker_from_entity(self, id, entity: Entity) -> Marker:
         marker = entity.to_marker()
         marker.header.frame_id = "hero"
         marker.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
         marker.ns = "m"
-        marker.id = entity.map_id
-        marker.lifetime = Duration(1)
+        marker.id = id
+        marker.lifetime = Duration.from_sec(0.25)
 
         return marker
 
@@ -109,7 +113,7 @@ def main(args=None):
         args (_type_, optional): Runtime args, do not get processed. Defaults to None.
     """
 
-    roscomp.init("intermediate_layer_visualization")
+    roscomp.init("mapping_visualization")
 
     try:
         node = Visualization(args)

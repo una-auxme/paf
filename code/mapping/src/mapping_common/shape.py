@@ -74,6 +74,8 @@ class Rectangle(Shape2D):
         m.scale.x = self.length
         m.scale.y = self.width
 
+        return m
+
 
 @dataclass
 class Circle(Shape2D):
@@ -97,6 +99,8 @@ class Circle(Shape2D):
         m.type = Marker.CYLINDER
         m.scale.x = self.radius * 2.0
         m.scale.y = self.radius * 2.0
+
+        return m
 
 
 _shape_supported_classes = [Rectangle, Circle]

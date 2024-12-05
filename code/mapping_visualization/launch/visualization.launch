@@ -1,3 +1,6 @@
 <launch>
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
+
+  <node pkg="mapping_visualization" type="debug_wrapper.py" name="mapping_visualization" output="screen" args="--debug_node=visualization.py --debug_port=53002">
+  </node>
+
 </launch>
