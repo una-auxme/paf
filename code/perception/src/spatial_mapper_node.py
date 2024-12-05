@@ -50,6 +50,7 @@ class SpatialMapperNode(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
+        self.bridge = CvBridge()
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
         self.center = self.get_param("center")
@@ -111,6 +112,7 @@ class SpatialMapperNode(CompatibleNode):
             img_msg=dist_array, desired_encoding="passthrough"
         )
         self.dist_arrays = dist_array
+        rospy.loginfo("Received new depth image")
 
     def segmentation_mask_callback(self, msg):
         """

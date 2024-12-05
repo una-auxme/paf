@@ -537,6 +537,7 @@ class VisionNode(CompatibleNode):
         # Nachricht veröffentlichen
         try:
             self.segmentation_mask_publisher.publish(msg)
+            rospy.loginfo("Published segmentation mask.")
         except Exception as e:
             rospy.logerr(f"Error publishing segmentation mask: {e}")
 
