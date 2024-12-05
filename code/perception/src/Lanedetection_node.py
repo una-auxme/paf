@@ -17,14 +17,11 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge
 
 # for the lane detection model
-# import torch
+import torch
+import cv2
 
-# from CLRerNet_model.configs.clrernet.culane import clrernet_culane_dla34_ema
 
-# from CLRerNet_model import clrernet_culane_dla34
-
-# from mmcv import Config
-# from CLRerNet_model.libs.models.detectors import clrernet as build_detector
+import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
 
 from libs.api.inference import inference_one_image
@@ -61,29 +58,51 @@ class Lanedetection_node(CompatibleNode):
         ws_config_path = os.path.join(ws_path, config_path)
 
         # build the model from a config file and a checkpoint file
-        model = init_detector(ws_config_path, ws_weight_path, device="cuda:0")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = init_detector(
+            ws_config_path, ws_weight_path, device=self.device
+        )  # "cuda:0")
         print(model)
 
         # test a single image
-        image_path = os.path.join("CLRerNet_model", "demo.jpg")
-        image_path = "/opt/CLRerNet_model/demo/demo.jpg"
-        image2_path = "/opt/CLRerNet_model/demo/result.jpg"
-        image2_path = os.path.join("CLRerNet_model", "result.jpg")
-        # ws_image_path = os.path.join(ws_path, image_path)
-        # ws_image2_path = os.path.join(ws_path, image2_path)
-        src, preds = inference_one_image(model, ws_image_path)
+        # image_path = "/opt/CLRerNet_model/demo/demo.jpg"
+
+        image_path = "/workspace/code/perception/src/ld_test4.jpg"
+        image2_path = "/workspace/code/perception/src/result4.jpg"
+
+        # Bildgröße ermitteln
+        image = cv2.imread(image_path)
+        eight, width = image.shape[:2]
+
+        # Zielgröße definieren
+        target_width = 1640
+        target_height = 590
+
+        # Berechne die Cropping-Koordinaten
+        x_min = (width - target_width) // 2
+        x_max = x_min + target_width
+        y_min = (height - target_height) // 2
+        y_max = y_min + target_height
+
+        # Zuschneiden
+        cropped_image = image[y_min:y_max, x_min:x_max]
+
+        cv2.imshow("Cropped Image", cropped_image)
+        cv2.imwrite("/workspace/code/perception/src/ld_test4.jpg", cropped_image)
+
+        croppedimage_path = "/workspace/code/perception/src/ld_test4.jpg"
+
+        src, preds = inference_one_image(model, croppedimage_path)
         # show the results
-        # dst = visualize_lanes(src, preds, save_path=ws_image2_path)
+        dst = visualize_lanes(src, preds, save_path=image2_path)
 
-        # ---------- OLD ------------
-        # with open(ws_weight_path, "rb") as file:
-        #    self.state_dict = torch.load(file)
+        # Display the result using Matplotlib
+        plt.figure(figsize=(10, 10))  # Optional: set the figure size
+        plt.imshow(dst[..., ::-1])  # Convert BGR (OpenCV default) to RGB for Matplotlib
+        plt.axis("off")  # Optional: turn off axis labels
+        plt.title("Lane Detection Result")  # Optional: add a title
+        plt.show()
 
-        # self.model.load_state_dict(self.state_dict)
-
-        # self.model.eval()
-        # print("Model erforgreich geladen:", self.model, model_path)
-        # ----------  ------------
         self.bridge = CvBridge()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
