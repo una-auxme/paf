@@ -7,10 +7,6 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 import numpy as np
 
-setup_args = generate_distutils_setup(
-    packages=["mapping_common"], package_dir={"": "src"}
-)
-
 mapping_common_files = []
 for root, dirs, files in os.walk("src/mapping_common"):
     for file in files:
@@ -19,7 +15,7 @@ for root, dirs, files in os.walk("src/mapping_common"):
 
 extensions = [
     Extension(
-        name="mapping_common_c",
+        name="mapping_common",
         sources=mapping_common_files,
         # https://cython.readthedocs.io/en/latest/src/userguide/numpy_tutorial.html
         include_dirs=[np.get_include()],
@@ -27,4 +23,12 @@ extensions = [
     ),
 ]
 
-setup(ext_modules=cythonize(extensions), **setup_args)
+setup_args = generate_distutils_setup(
+    packages=["mapping_common"],
+    package_dir={"": "src", "mapping_common": "src/mapping_common"},
+    package_data={"src/mapping_common": ["*.pxd", "*.py"]},
+    ext_modules=cythonize(extensions, language_level="3"),
+)
+
+
+setup(**setup_args)

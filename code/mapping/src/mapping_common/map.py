@@ -4,7 +4,7 @@ from typing import List
 from genpy.rostime import Time
 from std_msgs.msg import Header
 
-from .entity import Entity
+from mapping_common.entity import Entity
 
 from mapping import msg
 

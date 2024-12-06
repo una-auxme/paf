@@ -10,7 +10,7 @@ from mapping.msg import Map as MapMsg
 from rospy import Publisher
 from rospy import Duration
 
-# from mapping_common_c.entity import Entity
+from mapping_common.entity import Entity
 from mapping_common.map import Map
 
 

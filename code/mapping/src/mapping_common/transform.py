@@ -1,4 +1,3 @@
-from abc import ABC
 from dataclasses import dataclass
 
 import numpy as np
@@ -9,7 +8,7 @@ from mapping import msg
 
 
 @dataclass(init=False, eq=False)
-class _Coord2(ABC):
+class _Coord2:
     """Homogenous 2 dimensional coordinate"""
 
     # Matrix with shape (3)
@@ -24,8 +23,14 @@ class _Coord2(ABC):
     def x(self) -> float:
         return self._matrix[0]
 
+    def set_x(self, value: float):
+        self._matrix[0] = value
+
     def y(self) -> float:
         return self._matrix[1]
+
+    def set_y(self, value: float):
+        self._matrix[1] = value
 
     def __eq__(self, value) -> bool:
         if type(self) is type(value):

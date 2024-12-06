@@ -10,8 +10,8 @@ from visualization_msgs.msg import Marker
 import rospy
 from tf.transformations import quaternion_from_euler
 
-from .transform import Vector2, Transform2D
-from .shape import Shape2D
+from mapping_common.shape import Shape2D
+from mapping_common.transform import Vector2, Transform2D
 
 from mapping import msg
 
