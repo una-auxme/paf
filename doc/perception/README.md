@@ -1,15 +1,16 @@
-# Documentation of perception component
+# Documentation of Perception
 
 This folder contains documentation of the perception components.
 
-In the following diagram you can see all the nodes and topics used in the perception to show how they work together.
+In the following diagram you can see all the nodes and topics used in the perception, to show how they work together.
 
 ![Perception Overview](../../doc/assets/perception/perception_overview.png)
 
 ## Object Detection / Distance and Segmentation
 
 - [Vision Node](./vision_node.md)
-  - The Vision Node provides an adaptive interface that is able to perform object detection and/or image segmentation on multiple cameras at the same time.
+  - The Vision Node provides an adaptive interface that is able to perform object detection and image segmentation on multiple cameras at the same time
+  (even though only one camera perceiving the front of the car is active at the moment).
 - [Distance to Objects](./distance_to_objects.md)
 - [Traffic Light Detection](./traffic_light_detection.md)
 - [Dataset Generator](./dataset_generator.md)
