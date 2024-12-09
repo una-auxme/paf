@@ -86,8 +86,7 @@ class SpatialMapperNode(CompatibleNode):
         dist_array = self.bridge.imgmsg_to_cv2(
             img_msg=dist_array, desired_encoding="passthrough"
         )
-        self.dist_arrays = dist_array
-        rospy.loginfo("Received new depth image")
+        self.dist_array = dist_array
 
     def segmentation_mask_callback(self, msg):
         """
@@ -99,16 +98,11 @@ class SpatialMapperNode(CompatibleNode):
             dimensions = [dim.size for dim in msg.layout.dim]
 
             # Daten zurück in die ursprüngliche Form bringen
-            if len(dimensions) == 3:  # Beispiel für (Klassen, Höhe, Breite)
+            if len(dimensions) == 3:
                 segmentation_array = flat_data.reshape(dimensions)
             else:
                 rospy.logwarn("Unexpected dimensions in segmentation mask")
 
-            rospy.loginfo(
-                f"Received segmentation mask with shape: {segmentation_array.shape}"
-            )
-
-            # Hier können Sie weitere Verarbeitung durchführen
             self.process_segmentation_mask(segmentation_array)
 
         except Exception as e:
@@ -120,25 +114,32 @@ class SpatialMapperNode(CompatibleNode):
         - Identifiziert Klassen in der Maske
         - Erstellt Marker für jede Klasse
         """
-        rospy.loginfo("Processing segmentation mask...")
-
         # MarkerArray zum Sammeln aller Marker
         marker_array = MarkerArray()
 
-        # Klassen identifizieren (non-zero values in der Maske)
-        unique_classes = np.unique(segmentation_array)
-        rospy.loginfo(f"Unique classes in segmentation mask: {unique_classes}")
-
         marker_id = 0
-        for obj_class in unique_classes:
-            if obj_class == 0:  # Klasse 0 ist der Hintergrund, überspringen
-                continue
+        for segmentation_mask in segmentation_array:
+            # Calculate depth values from self.dist_array
+            depth_array = self.calculate_depth_values(segmentation_mask)
 
-            # Dummy-Punkt für den Marker (Testzwecke)
-            point = np.random.uniform(-5, 5, size=3)  # Zufällige Position im Raum
+            non_zero_values = depth_array[depth_array > 0]
+            if len(non_zero_values) == 0:
+                continue
+            min_value = np.min(non_zero_values)
+            closest_point_index = np.where(depth_array == min_value)
+            closest_point = self.dist_array[closest_point_index][0]
+
+            # Linken, Rechten und Nähsten Punkt bekommen
+            # left_depth, right_depth, near_depth = self.extract_percentile_points(
+            #    segmentation_mask, self.dist_array
+            # )
 
             # Marker für diese Klasse erstellen
-            marker = self.get_marker(point=point, id=marker_id, obj_class=obj_class)
+            # point = np.random.uniform(-5, 5, size=3)  # Zufällige Position im Raum
+            obj_class = 2
+            marker = self.get_marker(
+                point=closest_point, id=marker_id, obj_class=obj_class
+            )
             marker_array.markers.append(marker)
             marker_id += 1
 
@@ -177,6 +178,47 @@ class SpatialMapperNode(CompatibleNode):
 
     def run(self):
         self.spin()
+
+    def calculate_depth_values(self, mask):
+        """
+        Berechnet die Tiefenwerte basierend auf der Maske und den Lidar-Daten
+        """
+        obj_dist = np.abs(self.dist_array.copy())  # Kopie der Distanzwerte
+        output = np.zeros_like(mask, dtype=np.float32)  # Leeres Array in Maskenform
+        mask = mask.astype(bool)  # Konvertiere Maske in boolesches Format
+        abs_distance = np.sqrt(
+            obj_dist[..., 0] ** 2 + obj_dist[..., 1] ** 2 + obj_dist[..., 2] ** 2
+        )
+        output[mask] = abs_distance[mask]  # Werte nur an Maskenpositionen setzen
+        return output
+
+    def extract_percentile_points(mask, depth, percent=20):
+        # Extrahiere Spalten-Indices basierend auf der Maske
+        cols = np.any(mask > 0, axis=0)
+        col_indices = np.where(cols)[0]
+        if len(col_indices) == 0:
+            return [], [], []
+
+        # Teile in linkeste, rechteste und finde die nähesten Punkte
+        num_cols = len(col_indices)
+        left_20_indices = col_indices[: max(1, num_cols * percent // 100)]
+        right_20_indices = col_indices[-max(1, num_cols * percent // 100) :]
+
+        # Maskiere relevante Punkte
+        left_20_mask = np.zeros_like(mask, dtype=bool)
+        left_20_mask[:, left_20_indices] = mask[:, left_20_indices] > 0
+
+        right_20_mask = np.zeros_like(mask, dtype=bool)
+        right_20_mask[:, right_20_indices] = mask[:, right_20_indices] > 0
+
+        # Näheste 20 % basierend auf Depth-Werten
+        depth_values = depth[mask > 0]
+        if len(depth_values) == 0:
+            return [], [], []
+        depth_threshold = np.percentile(depth_values, percent)
+        near_20_mask = (depth <= depth_threshold) & (mask > 0)
+
+        return (depth[left_20_mask], depth[right_20_mask], depth[near_20_mask])
 
 
 if __name__ == "__main__":

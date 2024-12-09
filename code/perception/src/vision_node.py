@@ -514,6 +514,9 @@ class VisionNode(CompatibleNode):
         layout = MultiArrayLayout()
         layout.dim = [
             MultiArrayDimension(
+                label="classes", size=segmentation_array.shape[0], stride=1
+            ),
+            MultiArrayDimension(
                 label="height",
                 size=segmentation_array.shape[1],
                 stride=segmentation_array.shape[1] * segmentation_array.shape[2],
@@ -522,9 +525,6 @@ class VisionNode(CompatibleNode):
                 label="width",
                 size=segmentation_array.shape[2],
                 stride=segmentation_array.shape[2],
-            ),
-            MultiArrayDimension(
-                label="classes", size=segmentation_array.shape[0], stride=1
             ),
         ]
         layout.data_offset = 0
