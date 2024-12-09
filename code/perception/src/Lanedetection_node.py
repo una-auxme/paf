@@ -21,15 +21,18 @@ import torch
 import cv2
 
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
 
-from libs.api.inference import inference_one_image
+# from libs.api.inference import inference_one_image
 from libs.utils.visualizer import visualize_lanes
+from libs.datasets.pipelines import Compose
+from libs.datasets.metrics.culane_metric import interp
+from mmcv.parallel import collate, scatter
 
 # for image preprocessing
-from torchvision import transforms
-from PIL import Image
+# from torchvision import transforms
+# from PIL import Image
 
 
 class Lanedetection_node(CompatibleNode):
@@ -41,6 +44,10 @@ class Lanedetection_node(CompatibleNode):
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
+
+        #
+        self.img_freq = 20
+        self.img_cnt = 0
 
         # WS path
         ws_path = os.path.dirname(os.path.realpath(__file__))
@@ -59,49 +66,51 @@ class Lanedetection_node(CompatibleNode):
 
         # build the model from a config file and a checkpoint file
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = init_detector(
+        self.model = init_detector(
             ws_config_path, ws_weight_path, device=self.device
         )  # "cuda:0")
-        print(model)
+        # print(self.model)
 
         # test a single image
         # image_path = "/opt/CLRerNet_model/demo/demo.jpg"
 
-        image_path = "/workspace/code/perception/src/ld_test4.jpg"
-        image2_path = "/workspace/code/perception/src/result4.jpg"
+        # image_path = "/workspace/code/perception/src/ld_test4.jpg"
+        # image2_path = "/workspace/code/perception/src/result6.jpg"
 
         # Bildgröße ermitteln
-        image = cv2.imread(image_path)
-        eight, width = image.shape[:2]
+        # image = cv2.imread(image_path)
+        # height, width = image.shape[:2]
 
         # Zielgröße definieren
-        target_width = 1640
-        target_height = 590
+        # target_width = 1640
+        # target_height = 590
 
         # Berechne die Cropping-Koordinaten
-        x_min = (width - target_width) // 2
-        x_max = x_min + target_width
-        y_min = (height - target_height) // 2
-        y_max = y_min + target_height
+        # x_min = (width - target_width) // 2
+        # x_max = x_min + target_width
+        # y_min = (height - target_height) // 2
+        # y_max = y_min + target_height
 
         # Zuschneiden
-        cropped_image = image[y_min:y_max, x_min:x_max]
+        # cropped_image = image[y_min:y_max, x_min:x_max]
 
-        cv2.imshow("Cropped Image", cropped_image)
-        cv2.imwrite("/workspace/code/perception/src/ld_test4.jpg", cropped_image)
+        # cv2.imshow("Cropped Image", cropped_image)
+        # cv2.imwrite("/workspace/code/perception/src/cropped_image5.jpg", cropped_image)
 
-        croppedimage_path = "/workspace/code/perception/src/ld_test4.jpg"
+        # croppedimage_path = "/workspace/code/perception/src/cropped_image5.jpg"
 
-        src, preds = inference_one_image(model, croppedimage_path)
+        # GPU-Speicher freigeben
+        # torch.cuda.empty_cache()
+        # src, preds = self.inference_one_image(self.model, croppedimage_path)
         # show the results
-        dst = visualize_lanes(src, preds, save_path=image2_path)
+        # dst = visualize_lanes(src, preds, save_path=image2_path)
 
         # Display the result using Matplotlib
-        plt.figure(figsize=(10, 10))  # Optional: set the figure size
-        plt.imshow(dst[..., ::-1])  # Convert BGR (OpenCV default) to RGB for Matplotlib
-        plt.axis("off")  # Optional: turn off axis labels
-        plt.title("Lane Detection Result")  # Optional: add a title
-        plt.show()
+        # plt.figure(figsize=(10, 10))  # Optional: set the figure size
+        # plt.imshow(dst[..., ::-1])  # Convert BGR (OpenCV default) to RGB for Matplotlib
+        # plt.axis("off")  # Optional: turn off axis labels
+        # plt.title("Lane Detection Result")  # Optional: add a title
+        # plt.show()
 
         self.bridge = CvBridge()
         self.image_msg_header = Header()
@@ -141,11 +150,23 @@ class Lanedetection_node(CompatibleNode):
         """
         Callback function for image subscriber
         """
+        self.img_cnt += 1
+        if self.img_cnt == self.img_freq:
+            self.image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
+            # self.image = self.preprocess_image(self.image)
 
-        # image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
-        # image = self.preprocess_image(image)
+            lane_mask = self.detect_lanes(self.image, self.model)
 
-        # lane_mask = self.detect_lanes(image, self.model)
+            # plt.figure(figsize=(10, 10))  # Optional: set the figure size
+            # plt.imshow(
+            #    lane_mask[..., ::-1]
+            # )  # Convert BGR (OpenCV default) to RGB for Matplotlib
+            # plt.axis("off")  # Optional: turn off axis labels
+            # plt.title("Lane Detection Result")  # Optional: add a title
+            # plt.show()
+            lanedetection_image = self.bridge.cv2_to_imgmsg(lane_mask, "bgr8")
+            self.lane_publisher.publish(lanedetection_image)
+            self.img_cnt = 0
 
         # self.lane_publisher.publish(ImageMsg)
 
@@ -173,6 +194,30 @@ class Lanedetection_node(CompatibleNode):
 
         return preprocess(pil_image).unsqueeze(0).cuda()"""
 
+        height, width = image.shape[:2]
+
+        # Zielgröße definieren
+        target_width = 1640
+        target_height = 590
+
+        # Berechne die Cropping-Koordinaten
+        if width > target_width:
+            x_min = (width - target_width) // 2
+            x_max = x_min + target_width
+        else:
+            x_min = (target_width - width) // 2
+            x_max = x_min + width
+        if height > target_height:
+            y_min = (height - target_height) // 2
+            y_max = y_min + target_height
+        else:
+            y_min = (target_height - height) // 2
+            y_max = y_min + height
+        # Zuschneiden
+        cropped_image = image[y_min:y_max, x_min:x_max]
+
+        return cropped_image
+
     def detect_lanes(self, image, model):
         """
         Detects lanes in the image
@@ -183,11 +228,95 @@ class Lanedetection_node(CompatibleNode):
         Returns:
             np.array: Lane mask
         """
+        #    with torch.no_grad():
+        #        output = model(image)
 
-    #    with torch.no_grad():
-    #        output = model(image)
+        #    return output
+        # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        height, width, channels = image.shape
+        print(f"Breite: {width}px")
+        print(f"Höhe: {height}px")
+        image_resized = self.resize_image(image, 1640, 590)
+        # image = cv2.resize(image, (180, 590))
 
-    #    return output
+        # plt.figure(figsize=(10, 10))  # Optional: set the figure size
+        # plt.imshow(image_resized)  # Convert BGR (OpenCV default) to RGB for Matplotlib
+        # plt.axis("off")  # Optional: turn off axis labels
+        # plt.title("Lane Detection Result")  # Optional: add a title
+        # plt.show()
+
+        torch.cuda.empty_cache()
+        src, preds = self.inference_one_image(model, image_resized)
+        # show the results
+        dst = visualize_lanes(src, preds)
+
+        return dst
+
+    def inference_one_image(self, model, image):
+        """Inference on an image with the detector.
+        Args:
+            model (nn.Module): The loaded detector.
+            img_path (str): Image path.
+        Returns:
+            img (np.ndarray): Image data with shape (width, height, channel).
+            preds (List[np.ndarray]): Detected lanes.
+        """
+        # img = cv2.imread(image)
+        ori_shape = image.shape
+        data = dict(
+            filename="img",
+            sub_img_name=None,
+            img=image,
+            gt_points=[],
+            id_classes=[],
+            id_instances=[],
+            img_shape=ori_shape,
+            ori_shape=ori_shape,
+        )
+
+        cfg = model.cfg
+        model.bbox_head.test_cfg.as_lanes = False
+        device = next(model.parameters()).device  # model device
+
+        test_pipeline = Compose(cfg.data.test.pipeline)
+
+        data = test_pipeline(data)
+        data = collate([data], samples_per_gpu=1)
+
+        data["img_metas"] = data["img_metas"].data[0]
+        data["img"] = data["img"].data[0]
+
+        if next(model.parameters()).is_cuda:
+            # scatter to specified GPU
+            data = scatter(data, [device])[0]
+
+        # forward the model
+        with torch.no_grad():
+            results = model(return_loss=False, rescale=True, **data)
+
+        lanes = results[0]["result"]["lanes"]
+        preds = self.get_prediction(lanes, ori_shape[0], ori_shape[1])
+
+        return image, preds
+
+    def get_prediction(self, lanes, ori_h, ori_w):
+        preds = []
+        for lane in lanes:
+            lane = lane.cpu().numpy()
+            xs = lane[:, 0]
+            ys = lane[:, 1]
+            valid_mask = (xs >= 0) & (xs < 1)
+            xs = xs * ori_w
+            lane_xs = xs[valid_mask]
+            lane_ys = ys[valid_mask] * ori_h
+            lane_xs, lane_ys = lane_xs[::-1], lane_ys[::-1]
+            pred = [(x, y) for x, y in zip(lane_xs, lane_ys)]
+            interp_pred = interp(pred, n=5)
+            preds.append(interp_pred)
+        return preds
+
+    def resize_image(self, image, target_width, target_height):
+        return cv2.resize(image, (target_width, target_height))
 
 
 if __name__ == "__main__":
