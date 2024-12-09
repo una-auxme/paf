@@ -15,7 +15,7 @@ from torchvision.models.detection.faster_rcnn import (
 )
 import torchvision.transforms as t
 import cv2
-from perception.src.vision_node_helper import get_carla_class_name, get_carla_color
+from vision_node_helper import get_carla_class_name, get_carla_color
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header, Float32MultiArray
@@ -356,9 +356,12 @@ class VisionNode(CompatibleNode):
         c_boxes = []
         c_labels = []
         c_colors = []
+        if hasattr(output[0], "masks") and output[0].masks is not None:
+            masks = output[0].masks.data
+        else:
+            masks = None
 
         boxes = output[0].boxes
-        masks = output[0].masks.data
         for box in boxes:
             cls = box.cls.item()  # class index of object
             pixels = box.xyxy[0]  # upper left and lower right pixel coords
@@ -366,16 +369,17 @@ class VisionNode(CompatibleNode):
             # only run distance calc when dist_array is available
             # this if is needed because the lidar starts
             # publishing with a delay
-            if self.dist_arrays is not None:
+            if self.dist_arrays is None:
+                continue
 
-                # crop bounding box area out of depth image
-                distances = np.asarray(
-                    self.dist_arrays[
-                        int(pixels[1]) : int(pixels[3]) : 1,
-                        int(pixels[0]) : int(pixels[2]) : 1,
-                        ::,
-                    ]
-                )
+            # crop bounding box area out of depth image
+            distances = np.asarray(
+                self.dist_arrays[
+                    int(pixels[1]) : int(pixels[3]) : 1,
+                    int(pixels[0]) : int(pixels[2]) : 1,
+                    ::,
+                ]
+            )
 
             # set all 0 (black) values to np.inf (necessary if
             # you want to search for minimum)
@@ -454,18 +458,18 @@ class VisionNode(CompatibleNode):
             width=3,
             font_size=12,
         )
+        if masks is not None:
+            scaled_masks = np.squeeze(
+                scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(),
+                1,
+            )
 
-        scaled_masks = np.squeeze(
-            scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(),
-            1,
-        )
-
-        drawn_images = draw_segmentation_masks(
-            drawn_images,
-            torch.from_numpy(scaled_masks > 0),
-            alpha=0.6,
-            colors=c_colors,
-        )
+            drawn_images = draw_segmentation_masks(
+                drawn_images,
+                torch.from_numpy(scaled_masks > 0),
+                alpha=0.6,
+                colors=c_colors,
+            )
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
