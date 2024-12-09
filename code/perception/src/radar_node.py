@@ -46,19 +46,25 @@ class RadarNode:
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
         self.visualization_radar_publisher.publish(cloud)
 
-        cluster_info = generate_cluster_labels_and_colors(clustered_data, dataarray)
-        self.cluster_info_radar_publisher.publish(cluster_info)
-
         points_with_labels = np.hstack((dataarray, clustered_data.labels_.reshape(-1, 1)))
         bounding_boxes = generate_bounding_boxes(points_with_labels)
 
         marker_array = MarkerArray()
+        # marker_array = clear_old_markers(marker_array)
         for label, bbox in bounding_boxes:
             if label != -1:
                 marker = create_bounding_box_marker(label, bbox)
                 marker_array.markers.append(marker)
+                # min_marker, max_marker = create_min_max_markers(label, bbox)
+                # marker_array.markers.append(min_marker)
+                # marker_array.markers.append(max_marker)
+
+        marker_array = clear_old_markers(marker_array, max_id=len(bounding_boxes) - 1)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
+
+        cluster_info = generate_cluster_labels_and_colors(clustered_data, dataarray, marker_array, bounding_boxes)
+        self.cluster_info_radar_publisher.publish(cluster_info)
 
     def listener(self):
         """Initializes the node and its publishers."""
@@ -366,12 +372,85 @@ def create_bounding_box_marker(label, bbox):
     for start, end in lines:
         marker.points.append(points[start])
         marker.points.append(points[end])
-    
+
     return marker
 
 
+def create_min_max_markers(label, bbox, frame_id="hero/RADAR", min_color=(0.0, 1.0, 0.0, 1.0), max_color=(1.0, 0.0, 0.0, 1.0)):
+    """
+    Erstellt RViz-Marker für die Min- und Max-Punkte einer Bounding Box.
+
+    Args:
+        label (int): Die ID des Clusters (wird als Marker-ID genutzt).
+        bbox (tuple): Min- und Max-Werte der Bounding Box (x_min, x_max, y_min, y_max, z_min, z_max).
+        frame_id (str): Frame ID, in dem die Marker gezeichnet werden.
+        min_color (tuple): RGBA-Farbwerte für den Min-Punkt-Marker.
+        max_color (tuple): RGBA-Farbwerte für den Max-Punkt-Marker.
+
+    Returns:
+        tuple: Ein Paar von Markern (min_marker, max_marker).
+    """
+    x_min, x_max, y_min, y_max, z_min, z_max = bbox
+
+    # marker = Marker()
+    # marker.header.frame_id = "hero/RADAR"
+    # marker.id = int(label)
+    # # marker.type = Marker.LINE_STRIP
+    # marker.type = Marker.LINE_LIST
+    # marker.action = Marker.ADD
+    # marker.scale.x = 0.1
+    # marker.color.r = 1.0
+    # marker.color.g = 1.0
+    # marker.color.b = 0.0
+    # marker.color.a = 1.0
+
+    # Min-Punkt-Marker
+    min_marker = Marker()
+    min_marker.header.frame_id = frame_id
+    min_marker.id = int(label * 10)  # ID für Min-Punkt
+    min_marker.type = Marker.SPHERE
+    min_marker.action = Marker.ADD
+    min_marker.scale.x = 0.2  # Größe des Punktes
+    min_marker.scale.y = 0.2
+    min_marker.scale.z = 0.2
+    min_marker.color.r = min_color[0]
+    min_marker.color.g = min_color[1]
+    min_marker.color.b = min_color[2]
+    min_marker.color.a = min_color[3]
+    min_marker.pose.position.x = x_min
+    min_marker.pose.position.y = y_min
+    min_marker.pose.position.z = z_min
+
+    # Max-Punkt-Marker
+    max_marker = Marker()
+    max_marker.header.frame_id = frame_id
+    max_marker.id = int(label * 10 + 1)  # ID für Max-Punkt
+    max_marker.type = Marker.SPHERE
+    max_marker.action = Marker.ADD
+    max_marker.scale.x = 0.2
+    max_marker.scale.y = 0.2
+    max_marker.scale.z = 0.2
+    max_marker.color.r = max_color[0]
+    max_marker.color.g = max_color[1]
+    max_marker.color.b = max_color[2]
+    max_marker.color.a = max_color[3]
+    max_marker.pose.position.x = x_max
+    max_marker.pose.position.y = y_max
+    max_marker.pose.position.z = z_max
+
+    return min_marker, max_marker
+
+
+def clear_old_markers(marker_array, max_id):
+    """Löscht alte Marker aus dem MarkerArray."""
+    for marker in marker_array.markers:
+        if marker.id >= max_id:
+            marker.action = Marker.DELETE
+    return marker_array
+
+
 # generates string with label-id and cluster size
-def generate_cluster_labels_and_colors(clusters, data):
+def generate_cluster_labels_and_colors(clusters, data, marker_array, bounding_boxes):
     cluster_info = []
 
     for label in set(clusters.labels_):
@@ -380,7 +459,9 @@ def generate_cluster_labels_and_colors(clusters, data):
         if label != -1:
             cluster_info.append({
                 "label": int(label),
-                "points_count": cluster_size
+                "points_count": cluster_size,
+                "Anzahl marker": len(marker_array.markers),
+                "Anzahl Boundingboxen": len(bounding_boxes)
             })
 
     return json.dumps(cluster_info)
