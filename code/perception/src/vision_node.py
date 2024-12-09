@@ -15,7 +15,7 @@ from torchvision.models.detection.faster_rcnn import (
 )
 import torchvision.transforms as t
 import cv2
-from perception.src.vision_node_helper import (
+from vision_node_helper import (
     get_carla_class_name,
     get_carla_color,
     coco_to_carla,
