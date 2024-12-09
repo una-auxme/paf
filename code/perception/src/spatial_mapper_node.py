@@ -2,41 +2,16 @@
 
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
-import torch
-from torchvision.models.segmentation import (
-    DeepLabV3_ResNet101_Weights,
-    deeplabv3_resnet101,
-)
-from torchvision.models.detection.faster_rcnn import (
-    FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
-    FasterRCNN_ResNet50_FPN_V2_Weights,
-    fasterrcnn_resnet50_fpn_v2,
-    fasterrcnn_mobilenet_v3_large_320_fpn,
-)
-import torchvision.transforms as t
-import cv2
-from perception.src.vision_node_helper import (
-    get_carla_class_name,
-    get_carla_color,
-    coco_to_carla,
-    carla_colors,
-)
+from vision_node_helper import carla_colors
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import (
-    Header,
-    Float32MultiArray,
     Int8MultiArray,
-    MultiArrayLayout,
-    MultiArrayDimension,
 )
 from cv_bridge import CvBridge
-from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
-from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
-import asyncio
 import rospy
-from ultralytics.utils.ops import scale_masks
+
 from visualization_msgs.msg import Marker, MarkerArray
 
 
