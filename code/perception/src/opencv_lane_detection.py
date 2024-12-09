@@ -102,7 +102,7 @@ class LaneDetection(CompatibleNode):
         marker.pose.position.x = point[0]
         marker.pose.position.y = point[1]
         marker.pose.position.z = 1.7 + point[2]
-        marker.lifetime = rospy.Duration(0.5)
+        marker.lifetime = rospy.Duration(0.1)
         return marker
 
     def handle_camera_image(self, msg_image):
@@ -121,11 +121,21 @@ class LaneDetection(CompatibleNode):
             )
             dist = dist_mask * self.dist_arrays
             points = dist[np.repeat(disk_mask, 3, axis=2)].reshape(-1, 3)
+            total_points_counter = 0
+            wrong_points_counter = 0
             for i, point in enumerate(points):
                 if point[0] > 2:
-                    markers.markers.append(self.get_marker(point, i))
+                    if point[2] < -1.5:
+                        total_points_counter += 1
+                        markers.markers.append(self.get_marker(point, i))
+                    else:
+                        total_points_counter += 1
+                        wrong_points_counter += 1
 
-        self.marker_publisher.publish(markers)
+        if wrong_points_counter / total_points_counter < 0.2:
+            self.marker_publisher.publish(markers)
+        else:
+            rospy.loginfo("no lane detection available")
         img_msg_mask = self.bridge.cv2_to_imgmsg(prediction[1], encoding="rgb8")
         img_msg_mask.header = msg_image.header
         self.publisher_mask.publish(img_msg_mask)
@@ -154,7 +164,7 @@ class LaneDetection(CompatibleNode):
         Args:
             dist_array (image msg): Depth image frim Lidar Distance Node
         """
-        # callback function for lidar depth image
+        # callback function for lidar depth imagemask
         # since frequency is lower than image frequency
         # the latest lidar image is saved
         dist_array = self.bridge.imgmsg_to_cv2(
