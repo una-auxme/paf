@@ -20,6 +20,8 @@ from cv_bridge import CvBridge
 import torch
 import cv2
 
+import time
+import subprocess
 
 # import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
@@ -46,7 +48,7 @@ class Lanedetection_node(CompatibleNode):
         super().__init__(name, **kwargs)
 
         #
-        self.img_freq = 20
+        self.img_freq = 10
         self.img_cnt = 0
 
         # WS path
@@ -64,12 +66,24 @@ class Lanedetection_node(CompatibleNode):
         )  # CLRerNet_model.configs.clrernet.culane
         ws_config_path = os.path.join(ws_path, config_path)
 
+        torch.cuda.empty_cache()
+        torch.zeros(1).to("cuda")
+
+        # Beispiel: Warte, bis mindestens 500 MB verfügbar sind
+        self.wait_for_gpu(min_free_memory_mb=1000)
+        # time.sleep(20)
         # build the model from a config file and a checkpoint file
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = init_detector(
-            ws_config_path, ws_weight_path, device=self.device
-        )  # "cuda:0")
+            ws_config_path, ws_weight_path, device="cuda:0"
+        )  # self.device
+        # )  # "cuda:0")
         # print(self.model)
+
+        self.wait_for_gpu(min_free_memory_mb=1000)
+
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
 
         # test a single image
         # image_path = "/opt/CLRerNet_model/demo/demo.jpg"
@@ -124,6 +138,66 @@ class Lanedetection_node(CompatibleNode):
         self.spin()
         pass
 
+    def wait_for_gpu(self, min_free_memory_mb=500, check_interval=1):
+        """
+        Wartet, bis mindestens `min_free_memory_mb` verfügbarer Speicher auf der GPU frei ist.
+        :param min_free_memory_mb: Mindestfreier Speicher in MB
+        :param check_interval: Wartezeit zwischen den Überprüfungen (in Sekunden)
+        """
+        if not torch.cuda.is_available():
+            print("No GPU available. Exiting wait function.")
+            return
+
+        while True:
+            # allocated = torch.cuda.memory_allocated() / (1024**2)  # In MB
+            # reserved = torch.cuda.memory_reserved() / (1024**2)  # In MB
+            # total = torch.cuda.get_device_properties(0).total_memory / (
+            #    1024**2
+            # )  # In MB
+            # free_memory = total - reserved
+            used_memory, free_memory, total_memory = self.get_gpu_memory_nvidia_smi()
+            if used_memory is None or free_memory is None or total_memory is None:
+                print("Unable to retrieve GPU memory information. Exiting.")
+                return
+
+            print(
+                f"GPU Memory Check - Used: {used_memory} MB, Free: {free_memory} MB, Total: {total_memory} MB"
+            )
+
+            if free_memory >= min_free_memory_mb:
+                print(f"Enough free memory available ({free_memory} MB). Proceeding...")
+                break
+            else:
+                print("Waiting for GPU to free up memory...")
+                time.sleep(check_interval)
+
+    def get_gpu_memory_nvidia_smi(self):
+        """
+        Ruft die GPU-Speicherinformationen mit `nvidia-smi` ab.
+        Gibt (used_memory, free_memory, total_memory) in MB zurück.
+        """
+        try:
+            # Führe nvidia-smi aus und parse die Ausgabe
+            result = subprocess.run(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=memory.used,memory.free,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            # Verarbeite die Ausgabe von nvidia-smi
+            output = result.stdout.strip()
+            used_memory, free_memory, total_memory = map(
+                int, output.split("\n")[0].split(", ")
+            )
+            return used_memory, free_memory, total_memory
+        except Exception as e:
+            print(f"Error retrieving GPU memory info: {e}")
+            return None, None, None
+
     def setup_camera_subscriptions(self, side):
         """
         sets up a subscriber to the selected camera angle
@@ -151,7 +225,7 @@ class Lanedetection_node(CompatibleNode):
         Callback function for image subscriber
         """
         self.img_cnt += 1
-        if self.img_cnt == self.img_freq:
+        if self.img_cnt >= self.img_freq:
             self.image = self.bridge.imgmsg_to_cv2(ImageMsg, "bgr8")
             # self.image = self.preprocess_image(self.image)
 
@@ -164,8 +238,15 @@ class Lanedetection_node(CompatibleNode):
             # plt.axis("off")  # Optional: turn off axis labels
             # plt.title("Lane Detection Result")  # Optional: add a title
             # plt.show()
-            lanedetection_image = self.bridge.cv2_to_imgmsg(lane_mask, "bgr8")
-            self.lane_publisher.publish(lanedetection_image)
+
+            if lane_mask is not None:
+                lanedetection_image = self.bridge.cv2_to_imgmsg(lane_mask, "bgr8")
+                self.lane_publisher.publish(lanedetection_image)
+            else:
+                no_img = cv2.imread("/workspace/code/perception/src/cropped_image5.jpg")
+                lanedetection_image = self.bridge.cv2_to_imgmsg(no_img, "bgr8")
+                self.lane_publisher.publish(lanedetection_image)
+
             self.img_cnt = 0
 
         # self.lane_publisher.publish(ImageMsg)
@@ -228,14 +309,15 @@ class Lanedetection_node(CompatibleNode):
         Returns:
             np.array: Lane mask
         """
+
         #    with torch.no_grad():
         #        output = model(image)
 
         #    return output
         # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
         height, width, channels = image.shape
-        print(f"Breite: {width}px")
-        print(f"Höhe: {height}px")
+        # print(f"Breite: {width}px")
+        # print(f"Höhe: {height}px")
         image_resized = self.resize_image(image, 1640, 590)
         # image = cv2.resize(image, (180, 590))
 
@@ -245,12 +327,23 @@ class Lanedetection_node(CompatibleNode):
         # plt.title("Lane Detection Result")  # Optional: add a title
         # plt.show()
 
-        torch.cuda.empty_cache()
-        src, preds = self.inference_one_image(model, image_resized)
-        # show the results
-        dst = visualize_lanes(src, preds)
+        # torch.cuda.empty_cache()
+        try:
+            src, preds = self.inference_one_image(model, image_resized)
+            dst = visualize_lanes(src, preds)
+            self.img_freq = 0
+            print("Detect Lanes successfull")
+            return dst
+        except Exception as e:
+            self.img_freq += 5
+            print("Detect Lanes UNsuccessfull")
+            print(f"An exception occurred: {e}")
+            torch.cuda.empty_cache()
+            return None
 
-        return dst
+        # show the results
+
+        # return dst
 
     def inference_one_image(self, model, image):
         """Inference on an image with the detector.
@@ -321,6 +414,12 @@ class Lanedetection_node(CompatibleNode):
 
 if __name__ == "__main__":
     roscomp.init("Lanedetection_node")
-    node = Lanedetection_node("Lanedetection_node")
-    node.run()
     print("Lanedetection_node started")
+
+    try:
+        node = Lanedetection_node("Lanedetection_node")
+        node.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        roscomp.shutdown()

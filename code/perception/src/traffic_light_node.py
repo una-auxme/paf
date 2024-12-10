@@ -146,5 +146,11 @@ def is_front(image):
 
 if __name__ == "__main__":
     roscomp.init("TrafficLightNode")
-    node = TrafficLightNode("TrafficLightNode")
-    node.run()
+
+    try:
+        node = TrafficLightNode("TrafficLightNode")
+        node.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        roscomp.shutdown()
