@@ -101,7 +101,7 @@ class ACC(CompatibleNode):
         # Distance and speed from possible collsion object
         self.obstacle_speed: tuple = None
         # Obstacle distance
-        self.obstacle_distance = None
+        self.obstacle_distance: float = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
 
