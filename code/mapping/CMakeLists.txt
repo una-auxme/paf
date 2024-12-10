@@ -24,6 +24,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 catkin_python_setup()
 
+# get_cmake_property(_variableNames VARIABLES)
+# list (SORT _variableNames)
+# foreach (_variableName ${_variableNames})
+#     message(STATUS "${_variableName}=${${_variableName}}")
+# endforeach()
+
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
@@ -116,7 +122,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mapping
+LIBRARIES mapping mapping_common
 CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
@@ -124,6 +130,22 @@ CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 ###########
 ## Build ##
 ###########
+
+# Cython build for mapping_common
+# based on 
+# https://answers.ros.org/question/9731/how-to-use-python-setuptools-to-build-a-python-extension/
+# http://wiki.ros.org/catkin/CMakeLists.txt#catkin_package.28.29
+# Build directory??? --build ${CMAKE_CURRENT_BINARY_DIR}/mapping_common_setup
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/pip-install.stamp
+  COMMAND ${PYTHON_EXECUTABLE} -m pip install -U --target ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../ --no-deps .
+  COMMAND ${CMAKE_COMMAND} -E touch pip-install.stamp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.py ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.pxd ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/setup.py
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules
+)
+
+add_custom_target(mapping_common ALL
+DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/pip-install.stamp
+)
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
