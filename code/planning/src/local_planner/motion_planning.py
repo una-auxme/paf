@@ -162,6 +162,10 @@ class MotionPlanning(CompatibleNode):
             Float32, f"/paf/{self.role_name}/target_velocity", qos_profile=1
         )
 
+        self.velocity_selector_pub: Publisher = self.new_publisher(
+            String, f"/paf/{self.role_name}/target_velocity_selector", qos_profile=1
+        )
+
         # TODO move up to subscribers
         self.wp_subs = self.new_subscription(
             Float32, f"/paf/{self.role_name}/current_wp", self.__set_wp, qos_profile=1
@@ -478,15 +482,21 @@ class MotionPlanning(CompatibleNode):
         Updates the target velocity based on the current behavior and ACC velocity and
         overtake status and publishes it. The unit of the velocity is m/s.
         """
-
         be_speed = self.get_speed_by_behavior(behavior)
         if behavior == bs.parking.name or self.__overtake_status == 1:
             self.target_speed = be_speed
         else:
             corner_speed = self.get_cornering_speed()
             self.target_speed = min(be_speed, acc_speed, corner_speed)
+            if (self.target_speed == be_speed):
+                target_velocity_selector = "be_speed"
+            elif (self.target_speed == acc_speed):
+                target_velocity_selector = "acc_speed"
+            elif (self.target_speed == corner_speed):
+                target_velocity_selector = "corner_speed"        
         # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
+        self.velocity_selector_pub.publish(target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
 
@@ -705,6 +715,7 @@ class MotionPlanning(CompatibleNode):
                 self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
+                self.velocity_selector_pub.publish("0")
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
