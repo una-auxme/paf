@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from obstruction import Obstruction
+from mapping.src.mapping_common.entity import Entity
 
 
 class PotentialField:
