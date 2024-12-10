@@ -122,26 +122,20 @@ class SpatialMapperNode(CompatibleNode):
             # Calculate depth values from self.dist_array
             depth_array = self.calculate_depth_values(segmentation_mask)
 
-            non_zero_values = depth_array[depth_array > 0]
-            if len(non_zero_values) == 0:
-                continue
-            min_value = np.min(non_zero_values)
-            closest_point_index = np.where(depth_array == min_value)
-            closest_point = self.dist_array[closest_point_index][0]
-
             # Linken, Rechten und Nähsten Punkt bekommen
-            # left_depth, right_depth, near_depth = self.extract_percentile_points(
-            #    segmentation_mask, self.dist_array
-            # )
+            left_point, right_point, nearest_point = self.extract_percentile_points(
+                segmentation_mask, depth_array
+            )
 
             # Marker für diese Klasse erstellen
             # point = np.random.uniform(-5, 5, size=3)  # Zufällige Position im Raum
-            obj_class = 2
-            marker = self.get_marker(
-                point=closest_point, id=marker_id, obj_class=obj_class
-            )
+            marker = self.get_marker(point=left_point, id=marker_id, obj_class=1)
             marker_array.markers.append(marker)
-            marker_id += 1
+            marker = self.get_marker(point=right_point, id=marker_id + 1, obj_class=2)
+            marker_array.markers.append(marker)
+            marker = self.get_marker(point=nearest_point, id=marker_id + 2, obj_class=4)
+            marker_array.markers.append(marker)
+            marker_id += 3
 
         # MarkerArray veröffentlichen
         try:
@@ -159,9 +153,9 @@ class SpatialMapperNode(CompatibleNode):
         marker.id = id
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
-        marker.scale.x = 0.5
-        marker.scale.y = 0.5
-        marker.scale.z = 0.5
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
         marker.color.a = 1.0
         marker.color.r = c_color[0]
         marker.color.g = c_color[1]
@@ -173,7 +167,7 @@ class SpatialMapperNode(CompatibleNode):
         marker.pose.position.x = point[0]
         marker.pose.position.y = point[1]
         marker.pose.position.z = -point[2]
-        marker.lifetime = rospy.Duration(0.5)
+        marker.lifetime = rospy.Duration(0.2)
         return marker
 
     def run(self):
@@ -192,33 +186,57 @@ class SpatialMapperNode(CompatibleNode):
         output[mask] = abs_distance[mask]  # Werte nur an Maskenpositionen setzen
         return output
 
-    def extract_percentile_points(mask, depth, percent=20):
-        # Extrahiere Spalten-Indices basierend auf der Maske
-        cols = np.any(mask > 0, axis=0)
-        col_indices = np.where(cols)[0]
-        if len(col_indices) == 0:
+    def extract_percentile_points(
+        self, mask_array, depth_array, percent=0.2, depth_threshold=1
+    ):
+        # Get closest point
+        non_zero_values = depth_array[depth_array > 0]
+        if len(non_zero_values) == 0:
             return [], [], []
+        min_value = np.min(non_zero_values)
+        closest_point_index = np.where(depth_array == min_value)
+        closest_point = self.dist_array[closest_point_index][0]
 
-        # Teile in linkeste, rechteste und finde die nähesten Punkte
-        num_cols = len(col_indices)
-        left_20_indices = col_indices[: max(1, num_cols * percent // 100)]
-        right_20_indices = col_indices[-max(1, num_cols * percent // 100) :]
+        # Get left and right points
+        valid_mask = depth_array > 0
+        non_zero_mask = ~np.all(
+            self.dist_array == [0.0, 0.0, 0.0], axis=2
+        )  # Prüfe entlang der dritten Dimension
+        combined_mask = valid_mask & non_zero_mask
+        valid_points = self.dist_array[combined_mask]
+        valid_depths = depth_array[combined_mask]
+        sorted_indices = np.argsort(valid_points[:, 1])  # y-Wert ist die zweite Spalte
+        sorted_points = valid_points[sorted_indices]
+        sorted_depths = valid_depths[sorted_indices]
+        n = int(np.ceil(len(sorted_points) * percent))
+        right_n_points = sorted_points[:n]
+        right_n_depths = sorted_depths[:n]
+        right_depth_diffs = np.diff(right_n_depths)
+        right_significant_change_idx = np.where(right_depth_diffs < -depth_threshold)[0]
+        if len(right_significant_change_idx) > 0:
+            right_boundary_idx = (
+                right_significant_change_idx[-1] + 1
+            )  # +1, da Differenz sich auf den nächsten Punkt bezieht
+        else:
+            right_boundary_idx = 0
 
-        # Maskiere relevante Punkte
-        left_20_mask = np.zeros_like(mask, dtype=bool)
-        left_20_mask[:, left_20_indices] = mask[:, left_20_indices] > 0
+        left_n_points = sorted_points[-n:]
+        left_n_depths = sorted_depths[-n:]
+        left_depth_diffs = np.diff(left_n_depths)
 
-        right_20_mask = np.zeros_like(mask, dtype=bool)
-        right_20_mask[:, right_20_indices] = mask[:, right_20_indices] > 0
+        left_significant_change_idx = np.where(left_depth_diffs > depth_threshold)[0]
+        if len(left_significant_change_idx) > 0:
+            left_boundary_idx = (
+                left_significant_change_idx[0] - 1
+            )  # +1, da Differenz sich auf den nächsten Punkt bezieht
+        else:
+            left_boundary_idx = n - 1
 
-        # Näheste 20 % basierend auf Depth-Werten
-        depth_values = depth[mask > 0]
-        if len(depth_values) == 0:
-            return [], [], []
-        depth_threshold = np.percentile(depth_values, percent)
-        near_20_mask = (depth <= depth_threshold) & (mask > 0)
-
-        return (depth[left_20_mask], depth[right_20_mask], depth[near_20_mask])
+        return (
+            left_n_points[left_boundary_idx],
+            right_n_points[right_boundary_idx],
+            closest_point,
+        )
 
 
 if __name__ == "__main__":
