@@ -27,34 +27,29 @@ class RadarNode:
         Args:
             data: Point2Cloud message containing radar data
         """
-        # clustered_points = cluster_radar_data_from_pointcloud(data, 10)
-        # clustered_points_json = json.dumps(clustered_points)
-        # self.dist_array_radar_publisher.publish(clustered_points_json)
 
-        # output array [x, y, z, distance]
         dataarray = pointcloud2_to_array(data)
 
-        # input array [x, y, z, distance], max_distance, output: filtered data
-        # dataarray = filter_data(dataarray, 10)
+        # radar position z=0.7
+        dataarray = filter_data(dataarray, min_z=-0.6)
 
-        # input array [x, y, z, distance], output: dict clustered
         clustered_data = cluster_data(dataarray)
 
         # transformed_data = transform_data_to_2d(dataarray)
 
-        # input array [x, y, z, distance], clustered labels
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
         self.visualization_radar_publisher.publish(cloud)
 
-        points_with_labels = np.hstack((dataarray, clustered_data.labels_.reshape(-1, 1)))
+        points_with_labels = np.hstack((dataarray,
+                                        clustered_data.labels_.reshape(-1, 1)))
         bounding_boxes = generate_bounding_boxes(points_with_labels)
 
         marker_array = MarkerArray()
-        # marker_array = clear_old_markers(marker_array)
         for label, bbox in bounding_boxes:
             if label != -1:
                 marker = create_bounding_box_marker(label, bbox)
                 marker_array.markers.append(marker)
+                # can be used for extra debugging
                 # min_marker, max_marker = create_min_max_markers(label, bbox)
                 # marker_array.markers.append(min_marker)
                 # marker_array.markers.append(max_marker)
@@ -63,7 +58,8 @@ class RadarNode:
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        cluster_info = generate_cluster_labels_and_colors(clustered_data, dataarray, marker_array, bounding_boxes)
+        cluster_info = generate_cluster_info(clustered_data, dataarray, marker_array,
+                                             bounding_boxes)
         self.cluster_info_radar_publisher.publish(cluster_info)
 
     def listener(self):
@@ -117,93 +113,73 @@ def pointcloud2_to_array(pointcloud_msg):
     Returns:
     - np.ndarray
         A 2D array where each row corresponds to a point in the point cloud:
-        [x, y, z, distance], where "distance" is the distance from the origin.
+        [x, y, z, Velocity]
     """
     cloud_array = ros_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
-    # distances = np.sqrt(
-    #     cloud_array["x"] ** 2 + cloud_array["y"] ** 2 + cloud_array["z"] ** 2
-    # )
-    # return np.column_stack(
-    #     (cloud_array["x"], cloud_array["y"], cloud_array["z"], distances)
-    # )
     return np.column_stack(
         (cloud_array["x"], cloud_array["y"], cloud_array["z"], cloud_array["Velocity"])
     )
 
 
-def cluster_radar_data_from_pointcloud(
-    pointcloud_msg, max_distance, eps=1.0, min_samples=2
-):
+def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, max_z=100,
+                max_distance=100):
     """
-    Filters and clusters points from a ROS PointCloud2 message based on DBSCAN
-    clustering.
+    Filters radar data based on specified spatial and distance constraints.
 
-    Parameters:
-    - pointcloud_msg: sensor_msgs/PointCloud2
-        The ROS PointCloud2 message containing the 3D points.
-    - max_distance: float
-        Maximum distance to consider points. Points beyond this distance are
-        discarded.
-    - eps: float, optional (default: 1.0)
-        The maximum distance between two points for them to be considered in
-        the same cluster.
-    - min_samples: int, optional (default: 2)
-        The minimum number of points required to form a cluster.
+    This function applies multiple filtering criteria to the input radar data.
+    Points outside these bounds are excluded from the output.
+
+    Args:
+        data (np.ndarray): A 2D numpy array containing radar data, where each row 
+        represents a data point with the format [x, y, z, distance]. The array 
+        shape is (N, 4), where N is the number of points.
+        min_x (float, optional): Minimum value for the x-coordinate. Default is -1.
+        max_x (float, optional): Maximum value for the x-coordinate. Default is 1.
+        min_y (float, optional): Minimum value for the y-coordinate. Default is 1.
+        max_y (float, optional): Maximum value for the y-coordinate. Default is 1.
+        min_z (float, optional): Minimum value for the z-coordinate. Default is -0.7.
+        max_z (float, optional): Maximum value for the z-coordinate. Default is 1.3.
+        max_distance (float, optional): Maximum allowable distance of the point from
+        the sensor. Default is 100.
 
     Returns:
-    - dict
-        A dictionary where the keys are cluster labels (int) and the values
-        are the number of points in each cluster. Returns an empty dictionary
-        if no points are available.
+        np.ndarray: A numpy array containing only the filtered data points that meet 
+        the specified criteria.
     """
-    data = pointcloud2_to_array(pointcloud_msg)
+
     filtered_data = data[data[:, 3] < max_distance]
     filtered_data = filtered_data[
-        (filtered_data[:, 1] >= -1)
-        & (filtered_data[:, 1] <= 1)
-        & (filtered_data[:, 2] <= 1.3)
-        & (filtered_data[:, 2] >= -0.7)
-    ]
-    if len(filtered_data) == 0:
-        return {}
-    coordinates = filtered_data[:, :2]
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
-    labels = clustering.labels_
-    clustered_points = {label: list(labels).count(label) for label in set(labels)}
-    clustered_points = {int(label): count for label, count in clustered_points.items()}
-    return clustered_points
-
-
-# filters radar data in distance, y, z direction
-def filter_data(data, max_distance):
-
-    # filtered_data = data[data[:, 3] < max_distance]
-    filtered_data = data
-    filtered_data = filtered_data[
-        # (filtered_data[:, 1] >= -1)
-        # & (filtered_data[:, 1] <= 1)
-        # & (filtered_data[:, 2] <= 1.3)
-        (filtered_data[:, 2] <= 1.3)
-        & (filtered_data[:, 2] >= -0.6)  # -0.7
+        (filtered_data[:, 0] >= min_x)
+        & (filtered_data[:, 0] <= max_x)
+        & (filtered_data[:, 1] >= min_y)
+        & (filtered_data[:, 1] <= max_y)
+        & (filtered_data[:, 2] <= max_z)
+        & (filtered_data[:, 2] >= min_z)
     ]
     return filtered_data
 
 
-# clusters data with DBSCAN
-def cluster_data(filtered_data, eps=0.8, min_samples=5):
+def cluster_data(data, eps=0.8, min_samples=3):
+    """_summary_
 
-    if len(filtered_data) == 0:
+    Args:
+        data (np.ndarray): data array which should be clustered
+        eps (float, optional): maximum distance of points. Defaults to 0.8.
+        min_samples (int, optional): min samples for 1 cluster. Defaults to 3.
+
+    Returns:
+        dict: A dictionary where the keys are cluster labels (int) and the values
+              are the number of points in each cluster. Returns an empty dictionary
+              if no points are available.
+    """
+
+    if len(data) == 0:
         return {}
-    # coordinates = filtered_data[:, :2]
-    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
-
-    # worse than without scaling
     scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(filtered_data)
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    data_scaled = scaler.fit_transform(data)
+    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
 
-    # clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(filtered_data)
-    return clustering
+    return clustered_points
 
 
 # generates random color for cluster
@@ -213,8 +189,16 @@ def generate_color_map(num_clusters):
     return colors
 
 
-# creates pointcloud2 for publishing clustered radar data
 def create_pointcloud2(clustered_points, cluster_labels):
+    """_summary_
+
+    Args:
+        clustered_points (dict): clustered points after dbscan
+        cluster_labels (_type_): _description_
+
+    Returns:
+        PointCloud2: pointcloud which can be published
+    """
     header = Header()
     header.stamp = rospy.Time.now()
     header.frame_id = "hero/RADAR"
@@ -224,7 +208,6 @@ def create_pointcloud2(clustered_points, cluster_labels):
     colors = generate_color_map(len(unique_labels))
 
     for i, point in enumerate(clustered_points):
-        # x, y, z, _ = point
         x, y, z, v = point
         label = cluster_labels[i]
 
@@ -247,6 +230,14 @@ def create_pointcloud2(clustered_points, cluster_labels):
 
 
 def transform_data_to_2d(clustered_data):
+    """_summary_
+
+    Args:
+        clustered_data (np.ndarray): clustered 3d data points
+
+    Returns:
+        _np.ndarray: clustered points, every z value is set to 0
+    """
 
     transformed_points = clustered_data
     transformed_points[:, 0] = clustered_data[:, 0]
@@ -258,13 +249,23 @@ def transform_data_to_2d(clustered_data):
 
 
 def calculate_aabb(cluster_points):
-    """_summary_
+    """
+    Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
+
+    This function computes the minimum and maximum values along each axis (x, y, z)
+    for a given set of 3D points, which defines the bounding box that contains
+    all points in the cluster.
 
     Args:
-        cluster_points (_type_): _description_
+        cluster_points (numpy.ndarray): 
+        A 2D array where each row represents a 3D point (x, y, z).
+        The array should have shape (N, 3) where N is the number of points.
 
     Returns:
-        _type_: _description_
+        tuple: A tuple of the form (x_min, x_max, y_min, y_max, z_min, z_max),
+        which represents the axis-aligned bounding box (AABB) for the given
+        set of points. The values are the minimum and maximum coordinates
+        along the x, y, and z axes.
     """
 
     # for 2d (top-down) boxes
@@ -272,7 +273,7 @@ def calculate_aabb(cluster_points):
     # x_max = np.max(cluster_points[:, 0])
     # y_min = np.min(cluster_points[:, 1])
     # y_max = np.max(cluster_points[:, 1])
-
+    # rospy.loginfo(f"Bounding box: X({x_min}, {x_max}), Y({y_min}, {y_max})")
     # return x_min, x_max, y_min, y_max
 
     # for 3d boxes
@@ -282,18 +283,27 @@ def calculate_aabb(cluster_points):
     y_max = np.max(cluster_points[:, 1])
     z_min = np.min(cluster_points[:, 2])
     z_max = np.max(cluster_points[:, 2])
-    rospy.loginfo(f"Bounding box for label: X({x_min}, {x_max}), Y({y_min}, {y_max}), Z({z_min}, {z_max})")
     return x_min, x_max, y_min, y_max, z_min, z_max
 
 
 def generate_bounding_boxes(points_with_labels):
-    """_summary_
+    """
+    Generates bounding boxes for clustered points.
+
+    This function processes a set of points, each associated with a cluster label,
+    and generates an axis-aligned bounding box (AABB) for each unique cluster label.
 
     Args:
-        points_with_labels (_type_): _description_
+        points_with_labels (numpy.ndarray):
+        A 2D array of shape (N, 4) where each row contains
+        the coordinates (x, y, z) of a point along with its
+        corresponding cluster label in the last column.
+        The array should have the structure [x, y, z, label].
 
     Returns:
-        _type_: _description_
+        list: A list of tuples, where each tuple contains a cluster label and the
+              corresponding bounding box (bbox). The bbox is represented by a tuple
+              of the form (x_min, x_max, y_min, y_max, z_min, z_max).
     """
     bounding_boxes = []
     unique_labels = np.unique(points_with_labels[:, -1])
@@ -307,10 +317,23 @@ def generate_bounding_boxes(points_with_labels):
 
 
 def create_bounding_box_marker(label, bbox):
-    """_summary_
+    """
+    Creates an RViz Marker for visualizing a 3D bounding box.
+
+    This function generates a Marker object for RViz to visualize a 3D bounding box
+    based on the provided label and bounding box dimensions. The marker is
+    represented as a series of lines connecting the corners of the box.
+
+    Args:
+        label (int): The unique identifier for the cluster or object to which the
+        bounding box belongs. This label is used as the Marker ID.
+        bbox (tuple): A tuple containing the min and max coordinates of the bounding box
+                      in the format (x_min, x_max, y_min, y_max, z_min, z_max).
 
     Returns:
-        _type_: _description_
+        Marker: A Marker object that can be published to RViz to display the
+        3D bounding box. The marker is of type LINE_LIST,
+        representing the edges of the bounding box.
     """
     # for 2d (top-down) boxes
     # x_min, x_max, y_min, y_max = bbox
@@ -321,8 +344,8 @@ def create_bounding_box_marker(label, bbox):
     marker = Marker()
     marker.header.frame_id = "hero/RADAR"
     marker.id = int(label)
-    # marker.type = Marker.LINE_STRIP
-    marker.type = Marker.LINE_LIST
+    # marker.type = Marker.LINE_STRIP  # 2d boxes
+    marker.type = Marker.LINE_LIST  # 3d boxes
     marker.action = Marker.ADD
     marker.scale.x = 0.1
     marker.color.r = 1.0
@@ -342,32 +365,20 @@ def create_bounding_box_marker(label, bbox):
 
     # for 3d boxes
     points = [
-        Point(x_min, y_min, z_min),  # Ecke 0
-        Point(x_max, y_min, z_min),  # Ecke 1
-        Point(x_max, y_max, z_min),  # Ecke 2
-        Point(x_min, y_max, z_min),  # Ecke 3
-        Point(x_min, y_min, z_max),  # Ecke 4
-        Point(x_max, y_min, z_max),  # Ecke 5
-        Point(x_max, y_max, z_max),  # Ecke 6
-        Point(x_min, y_max, z_max),  # Ecke 7
-
-        # Point(x_min, y_min, z_min),  # Verbinde z_min zu z_max
-        # Point(x_min, y_min, z_max),
-
-        # Point(x_max, y_min, z_min),
-        # Point(x_max, y_min, z_max),
-
-        # Point(x_max, y_max, z_min),
-        # Point(x_max, y_max, z_max),
-
-        # Point(x_min, y_max, z_min),
-        # Point(x_min, y_max, z_max),
+        Point(x_min, y_min, z_min),
+        Point(x_max, y_min, z_min),
+        Point(x_max, y_max, z_min),
+        Point(x_min, y_max, z_min),
+        Point(x_min, y_min, z_max),
+        Point(x_max, y_min, z_max),
+        Point(x_max, y_max, z_max),
+        Point(x_min, y_max, z_max),
     ]
-    # marker.points = points
+
     lines = [
-        (0, 1), (1, 2), (2, 3), (3, 0),  # Boden
-        (4, 5), (5, 6), (6, 7), (7, 4),  # Deckel
-        (0, 4), (1, 5), (2, 6), (3, 7),  # Vertikale Kanten
+        (0, 1), (1, 2), (2, 3), (3, 0),  # Bottom
+        (4, 5), (5, 6), (6, 7), (7, 4),  # Top
+        (0, 4), (1, 5), (2, 6), (3, 7),  # Vertical Edges
     ]
     for start, end in lines:
         marker.points.append(points[start])
@@ -376,41 +387,33 @@ def create_bounding_box_marker(label, bbox):
     return marker
 
 
-def create_min_max_markers(label, bbox, frame_id="hero/RADAR", min_color=(0.0, 1.0, 0.0, 1.0), max_color=(1.0, 0.0, 0.0, 1.0)):
+# can be used for extra debugging
+def create_min_max_markers(label, bbox, frame_id="hero/RADAR",
+                           min_color=(0.0, 1.0, 0.0, 1.0),
+                           max_color=(1.0, 0.0, 0.0, 1.0)):
     """
-    Erstellt RViz-Marker für die Min- und Max-Punkte einer Bounding Box.
+    creates RViz-Markers for min- and max-points of a bounding box.
 
     Args:
-        label (int): Die ID des Clusters (wird als Marker-ID genutzt).
-        bbox (tuple): Min- und Max-Werte der Bounding Box (x_min, x_max, y_min, y_max, z_min, z_max).
-        frame_id (str): Frame ID, in dem die Marker gezeichnet werden.
-        min_color (tuple): RGBA-Farbwerte für den Min-Punkt-Marker.
-        max_color (tuple): RGBA-Farbwerte für den Max-Punkt-Marker.
+        label (int): cluster-id (used as marker-ID in rviz).
+        bbox (tuple): min- and max-values of bounding box 
+        (x_min, x_max, y_min, y_max, z_min, z_max).
+        frame_id (str): frame ID for markers
+        min_color (tuple): RGBA-value for min-point-marker
+        max_color (tuple): RGBA-value for max-point-marker
 
     Returns:
-        tuple: Ein Paar von Markern (min_marker, max_marker).
+        tuple: pair of markers (min_marker, max_marker).
     """
     x_min, x_max, y_min, y_max, z_min, z_max = bbox
 
-    # marker = Marker()
-    # marker.header.frame_id = "hero/RADAR"
-    # marker.id = int(label)
-    # # marker.type = Marker.LINE_STRIP
-    # marker.type = Marker.LINE_LIST
-    # marker.action = Marker.ADD
-    # marker.scale.x = 0.1
-    # marker.color.r = 1.0
-    # marker.color.g = 1.0
-    # marker.color.b = 0.0
-    # marker.color.a = 1.0
-
-    # Min-Punkt-Marker
+    # min-point-marker
     min_marker = Marker()
     min_marker.header.frame_id = frame_id
-    min_marker.id = int(label * 10)  # ID für Min-Punkt
+    min_marker.id = int(label * 10) 
     min_marker.type = Marker.SPHERE
     min_marker.action = Marker.ADD
-    min_marker.scale.x = 0.2  # Größe des Punktes
+    min_marker.scale.x = 0.2 
     min_marker.scale.y = 0.2
     min_marker.scale.z = 0.2
     min_marker.color.r = min_color[0]
@@ -421,10 +424,10 @@ def create_min_max_markers(label, bbox, frame_id="hero/RADAR", min_color=(0.0, 1
     min_marker.pose.position.y = y_min
     min_marker.pose.position.z = z_min
 
-    # Max-Punkt-Marker
+    # max-point-marker
     max_marker = Marker()
     max_marker.header.frame_id = frame_id
-    max_marker.id = int(label * 10 + 1)  # ID für Max-Punkt
+    max_marker.id = int(label * 10 + 1)
     max_marker.type = Marker.SPHERE
     max_marker.action = Marker.ADD
     max_marker.scale.x = 0.2
@@ -442,15 +445,45 @@ def create_min_max_markers(label, bbox, frame_id="hero/RADAR", min_color=(0.0, 1
 
 
 def clear_old_markers(marker_array, max_id):
-    """Löscht alte Marker aus dem MarkerArray."""
+    """
+    Removes old markers from the given MarkerArray by setting the action 
+    to DELETE for markers with an ID greater than or equal to max_id.
+
+    Args:
+        marker_array (MarkerArray): The current MarkerArray containing all markers.
+        max_id (int): The highest ID of the new markers. Markers with an ID 
+                      greater than or equal to this value will be marked for deletion.
+
+    Returns:
+        MarkerArray: The updated MarkerArray with old markers removed.
+    """
     for marker in marker_array.markers:
         if marker.id >= max_id:
             marker.action = Marker.DELETE
     return marker_array
 
 
-# generates string with label-id and cluster size
-def generate_cluster_labels_and_colors(clusters, data, marker_array, bounding_boxes):
+# generates string with label-id and cluster size, can be used for extra debugging
+def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
+    """
+    Generates information about clusters, including the label, number of points,
+    markers, and bounding boxes.
+
+    Args:
+        clusters (DBSCAN): The clustered data, containing the labels for each point.
+        data (numpy.ndarray):
+        The point cloud data, typically with columns [x, y, z, distance].
+        marker_array (MarkerArray):
+        The array of RViz markers associated with the clusters.
+        bounding_boxes (list): The list of bounding boxes for each detected object.
+
+    Returns:
+        str: A JSON string containing the information about each cluster, including:
+             - "label": The cluster label.
+             - "points_count": The number of points in the cluster.
+             - "Anzahl marker": The number of markers in the MarkerArray.
+             - "Anzahl Boundingboxen": The number of bounding boxes.
+    """
     cluster_info = []
 
     for label in set(clusters.labels_):
