@@ -84,9 +84,24 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 
+
+
+
+  <node pkg="perception" type="debug_wrapper.py" name="Lanedetection" output="screen" args="--debug_node=Lanedetection_node.py --debug_port=53000 --debug_wait">
+    <param name="role_name" value="$(arg role_name)" />
+  </node> 
+  <!--
+    <node pkg="perception" type="Lanedetection_node.py" name="Lanedetection" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+  </node> 
+  -->
+
+</launch>
+
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
   </node>
 
 </launch>
+
