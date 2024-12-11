@@ -130,8 +130,8 @@ def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, ma
     Points outside these bounds are excluded from the output.
 
     Args:
-        data (np.ndarray): A 2D numpy array containing radar data, where each row 
-        represents a data point with the format [x, y, z, distance]. The array 
+        data (np.ndarray): A 2D numpy array containing radar data, where each row
+        represents a data point with the format [x, y, z, distance]. The array
         shape is (N, 4), where N is the number of points.
         min_x (float, optional): Minimum value for the x-coordinate. Default is -1.
         max_x (float, optional): Maximum value for the x-coordinate. Default is 1.
@@ -143,7 +143,7 @@ def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, ma
         the sensor. Default is 100.
 
     Returns:
-        np.ndarray: A numpy array containing only the filtered data points that meet 
+        np.ndarray: A numpy array containing only the filtered data points that meet
         the specified criteria.
     """
 
@@ -257,7 +257,7 @@ def calculate_aabb(cluster_points):
     all points in the cluster.
 
     Args:
-        cluster_points (numpy.ndarray): 
+        cluster_points (numpy.ndarray):
         A 2D array where each row represents a 3D point (x, y, z).
         The array should have shape (N, 3) where N is the number of points.
 
@@ -396,7 +396,7 @@ def create_min_max_markers(label, bbox, frame_id="hero/RADAR",
 
     Args:
         label (int): cluster-id (used as marker-ID in rviz).
-        bbox (tuple): min- and max-values of bounding box 
+        bbox (tuple): min- and max-values of bounding box
         (x_min, x_max, y_min, y_max, z_min, z_max).
         frame_id (str): frame ID for markers
         min_color (tuple): RGBA-value for min-point-marker
@@ -410,10 +410,10 @@ def create_min_max_markers(label, bbox, frame_id="hero/RADAR",
     # min-point-marker
     min_marker = Marker()
     min_marker.header.frame_id = frame_id
-    min_marker.id = int(label * 10) 
+    min_marker.id = int(label * 10)
     min_marker.type = Marker.SPHERE
     min_marker.action = Marker.ADD
-    min_marker.scale.x = 0.2 
+    min_marker.scale.x = 0.2
     min_marker.scale.y = 0.2
     min_marker.scale.z = 0.2
     min_marker.color.r = min_color[0]
@@ -446,12 +446,12 @@ def create_min_max_markers(label, bbox, frame_id="hero/RADAR",
 
 def clear_old_markers(marker_array, max_id):
     """
-    Removes old markers from the given MarkerArray by setting the action 
+    Removes old markers from the given MarkerArray by setting the action
     to DELETE for markers with an ID greater than or equal to max_id.
 
     Args:
         marker_array (MarkerArray): The current MarkerArray containing all markers.
-        max_id (int): The highest ID of the new markers. Markers with an ID 
+        max_id (int): The highest ID of the new markers. Markers with an ID
                       greater than or equal to this value will be marked for deletion.
 
     Returns:
