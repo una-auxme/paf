@@ -19,7 +19,7 @@
             "root": "code",
             // Extra paths can be added here for autocompletion to work when importing packages defined in the setup.py files
             "extraPaths": [
-                "code/mapping/src"
+                "code/mapping/ext_modules"
             ]
         }
     ]
