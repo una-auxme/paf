@@ -58,10 +58,14 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg 
+      - yolov8x-seg
+      - yolo11n-seg
+      - yolo11s-seg
+      - yolo11m-seg
+      - yolo11l-seg
       -->
 
-    <param name="model" value="rtdetr-l" />
+    <param name="model" value="yolo11n-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
@@ -82,6 +86,7 @@
 
 
 
+
   <node pkg="perception" type="debug_wrapper.py" name="Lanedetection" output="screen" args="--debug_node=Lanedetection_node.py --debug_port=53000 --debug_wait">
     <param name="role_name" value="$(arg role_name)" />
   </node> 
@@ -92,3 +97,11 @@
   -->
 
 </launch>
+
+  <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
+    <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
+    <param name="range_topic" value="/carla/hero/RADAR_range"/>
+  </node>
+
+</launch>
+

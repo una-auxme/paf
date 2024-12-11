@@ -52,3 +52,4 @@ In addition to the research of the previous years, the following resources can b
 - [Awesome 3D Object Detection for Autonomous Driving](https://github.com/PointsCoder/Awesome-3D-Object-Detection-for-Autonomous-Driving)
 - [Microsoft Autonomous Driving Cookbook](https://github.com/microsoft/AutonomousDrivingCookbook)
 - [End-to-End Autonomous Driving](https://github.com/OpenDriveLab/End-to-end-Autonomous-Driving)
+- [UT-ADL/autoware_mini](https://github.com/UT-ADL/autoware_mini)

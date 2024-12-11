@@ -95,7 +95,7 @@ If a comment of a review was resolved by either, a new commit or a discussion be
 If a new commit took place it is encouraged to comment the commit SHA to have a connection between comment and resolving commit
 ![img.png](../assets/Resolve_conversation.png)
 
-> [!INFO] All conversations should be resolved before merging the pull request.
+> [!TIP] All conversations should be resolved before merging the pull request.
 
 ## 5. Merging a Pull Request
 
@@ -120,7 +120,7 @@ Long story short, the reviewer who approves the PR should merge. Only approve if
 
 Before merging a pull request, the request checks by the CI/CD pipeline should be successful. If the checks fail, the pull request should not be merged.
 
-> [!INFO] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.
+> [!TIP] An exception can be made for a PR that only addresses the documentation and the `driving` check is not yet completed.
 
 ### 5.3. Deleting the branch
 

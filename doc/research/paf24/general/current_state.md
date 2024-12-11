@@ -128,6 +128,8 @@ Here are the raw notes in case misunderstandings have been made when grouping th
 
 ### Run 1
 
+[Link to Video of the Run](https://drive.google.com/file/d/1Hb4arEC5ocfUD2KZh1bNVwRG2hoML8E9/view?usp=drive_link)
+
 - Scared to get out of parking spot
 - lane not held causing problems when avoiding open car door
 - stopping for no apparent reason
@@ -153,6 +155,8 @@ Here are the raw notes in case misunderstandings have been made when grouping th
 
 ### Run 2
 
+[Link to Video of the Run](https://drive.google.com/file/d/1xot90LTNcSYOkLa1sXJJeMFBkXKmFO2x/view?usp=drive_link)
+
 - merges without giving way to traffic
 - does not respect open car door
 - crashes into car in front when going after stop at red light
@@ -167,6 +171,8 @@ Here are the raw notes in case misunderstandings have been made when grouping th
 - tree trunk has bounding box (are trees detected as cars?)
 
 ### Run 3
+
+[Link to Video of the Run](https://drive.google.com/file/d/1ERvN3nGddzuvtRqtIF2PKlFrcMzH2MrA/view?usp=drive_link)
 
 - does not give way when exiting a parking spot
 - LIDAR detects floor
