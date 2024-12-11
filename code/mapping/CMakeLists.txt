@@ -129,9 +129,13 @@ CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 # based on 
 # https://answers.ros.org/question/9731/how-to-use-python-setuptools-to-build-a-python-extension/
 # http://wiki.ros.org/catkin/CMakeLists.txt#catkin_package.28.29
+#
+# This is a hack and should probably not be done this way. 
+# Unfortunately using catkin_python_setup() does not work, because it does not install external modules -> cython.
+# Using --install-lib ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../ for the setup might make sense, but for some reason it does not lead to a working installation when building in docker (works when manually running catkin_make)
 set(PAF_MAPPING_COMMON_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mapping_common_setup)
 add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
-  COMMAND ${PYTHON_EXECUTABLE} setup.py install --install-lib ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../
+  COMMAND ${PYTHON_EXECUTABLE} setup.py install --user
   COMMAND mkdir -p ${PAF_MAPPING_COMMON_BUILD_DIR} && ${CMAKE_COMMAND} -E touch ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.py ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.pxd ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/*.py
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules

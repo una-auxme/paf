@@ -24,7 +24,7 @@ class Visualization(CompatibleNode):
         super().__init__("mapping_visualization")
 
         self.marker_publisher: Publisher = self.new_publisher(
-            MarkerArray, "/marker_array", qos_profile=10
+            MarkerArray, "/marker_array", qos_profile=1
         )
 
         self.filter_is_collider = False

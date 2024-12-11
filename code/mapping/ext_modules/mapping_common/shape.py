@@ -9,7 +9,6 @@ from visualization_msgs.msg import Marker
 
 @dataclass
 class Shape2D:
-    # @abstractmethod
     def check_collision(self, other) -> bool:
         raise NotImplementedError
 
@@ -29,17 +28,14 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
 
         return shape_type._from_ros_msg(m)
 
-    # @abstractmethod
     @staticmethod
     def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
         raise NotImplementedError
 
-    # @abstractmethod
     def to_ros_msg(self) -> msg.Shape2D:
         type_name = type(self).__name__
         return msg.Shape2D(type_name=type_name)
 
-    # @abstractmethod
     def to_marker(self) -> Marker:
         m = Marker()
         m.pose.position.z = 0.0

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import cython
 
 import numpy as np
 import numpy.typing as npt
@@ -20,16 +21,16 @@ class _Coord2:
         ), f"{type(self).__name__} matrix must have shape (3,)"
         self._matrix = matrix
 
-    def x(self) -> float:
+    def x(self) -> cython.double:
         return self._matrix[0]
 
-    def set_x(self, value: float):
+    def set_x(self, value: cython.double):
         self._matrix[0] = value
 
-    def y(self) -> float:
+    def y(self) -> cython.double:
         return self._matrix[1]
 
-    def set_y(self, value: float):
+    def set_y(self, value: cython.double):
         self._matrix[1] = value
 
     def __eq__(self, value) -> bool:

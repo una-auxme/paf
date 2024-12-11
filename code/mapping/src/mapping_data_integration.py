@@ -3,6 +3,8 @@ import ros_compatibility as roscomp
 import ros_numpy
 import rospy
 
+import random
+
 from typing import List, Optional
 
 from mapping_common.entity import Entity, Flags
@@ -15,7 +17,7 @@ from sensor_msgs.msg import PointCloud2
 
 
 class MappingDataIntegrationNode(CompatibleNode):
-    lidar_entities: Optional[List[Entity]] = None
+    lidar_data: Optional[PointCloud2] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -35,14 +37,23 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.new_timer(self.rate, self.publish_new_map)
 
     def lidar_callback(self, data: PointCloud2):
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        self.lidar_data = data
 
+    def entities_from_lidar(self) -> List[Entity]:
+        if self.lidar_data is None:
+            return []
+
+        data = self.lidar_data
+        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
         shape = Circle(0.15)
-        self.lidar_entities = []
+        lidar_entities = []
         for x, y, z, intensity in coordinates:
             if z < -1.5 or z > 1.0:
                 # Ignore street level lidar points and stuff above
                 continue
+            # if random.random() < 0.9:
+            #     # Get rid of points because performance
+            #     continue
             v = Vector2.new(x, y)
             transform = Transform2D.new_translation(v)
             flags = Flags(is_collider=True)
@@ -54,15 +65,17 @@ class MappingDataIntegrationNode(CompatibleNode):
                 timestamp=data.header.stamp,
                 flags=flags,
             )
-            self.lidar_entities.append(e)
+            lidar_entities.append(e)
+
+        return lidar_entities
 
     def publish_new_map(self, timer_event=None):
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_entities is None:
+        if self.lidar_data is None:
             return
 
         stamp = rospy.get_rostime()
-        map = Map(timestamp=stamp, entities=self.lidar_entities)
+        map = Map(timestamp=stamp, entities=self.entities_from_lidar())
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 

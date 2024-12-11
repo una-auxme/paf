@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Build import cythonize
