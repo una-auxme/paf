@@ -74,21 +74,21 @@ class RadarNode:
         )
         self.visualization_radar_publisher = rospy.Publisher(
             rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/Visualization"
+                "~visualisation_topic", "/paf/hero/Radar/Visualization"
             ),
             PointCloud2,
             queue_size=10,
         )
         self.marker_visualization_radar_publisher = rospy.Publisher(
             rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/Marker"
+                "~marker_topic", "/paf/hero/Radar/Marker"
             ),
             MarkerArray,
             queue_size=10,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/ClusterInfo"
+                "~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"
             ),
             String,
             queue_size=10,
@@ -133,12 +133,12 @@ def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, ma
         data (np.ndarray): A 2D numpy array containing radar data, where each row
         represents a data point with the format [x, y, z, distance]. The array
         shape is (N, 4), where N is the number of points.
-        min_x (float, optional): Minimum value for the x-coordinate. Default is -1.
-        max_x (float, optional): Maximum value for the x-coordinate. Default is 1.
-        min_y (float, optional): Minimum value for the y-coordinate. Default is 1.
-        max_y (float, optional): Maximum value for the y-coordinate. Default is 1.
-        min_z (float, optional): Minimum value for the z-coordinate. Default is -0.7.
-        max_z (float, optional): Maximum value for the z-coordinate. Default is 1.3.
+        min_x (float, optional): Minimum value for the x-coordinate. Default is -100.
+        max_x (float, optional): Maximum value for the x-coordinate. Default is 100.
+        min_y (float, optional): Minimum value for the y-coordinate. Default is -100.
+        max_y (float, optional): Maximum value for the y-coordinate. Default is 100.
+        min_z (float, optional): Minimum value for the z-coordinate. Default is -1.
+        max_z (float, optional): Maximum value for the z-coordinate. Default is 100.
         max_distance (float, optional): Maximum allowable distance of the point from
         the sensor. Default is 100.
 
@@ -160,7 +160,8 @@ def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, ma
 
 
 def cluster_data(data, eps=0.8, min_samples=3):
-    """_summary_
+    """
+    Clusters the radar data using the DBSCAN algorithm
 
     Args:
         data (np.ndarray): data array which should be clustered
@@ -171,6 +172,7 @@ def cluster_data(data, eps=0.8, min_samples=3):
         dict: A dictionary where the keys are cluster labels (int) and the values
               are the number of points in each cluster. Returns an empty dictionary
               if no points are available.
+        DBSCAN: A DBSCAN clustering object containing labels and core sample indices
     """
 
     if len(data) == 0:
@@ -458,7 +460,7 @@ def clear_old_markers(marker_array, max_id):
         MarkerArray: The updated MarkerArray with old markers removed.
     """
     for marker in marker_array.markers:
-        if marker.id >= max_id:
+        if marker.id > max_id:
             marker.action = Marker.DELETE
     return marker_array
 
@@ -493,8 +495,8 @@ def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
             cluster_info.append({
                 "label": int(label),
                 "points_count": cluster_size,
-                "Anzahl marker": len(marker_array.markers),
-                "Anzahl Boundingboxen": len(bounding_boxes)
+                "num_marker": len(marker_array.markers),
+                "num_bounding_boxes": len(bounding_boxes)
             })
 
     return json.dumps(cluster_info)
