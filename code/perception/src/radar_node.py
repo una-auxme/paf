@@ -40,8 +40,9 @@ class RadarNode:
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
         self.visualization_radar_publisher.publish(cloud)
 
-        points_with_labels = np.hstack((dataarray,
-                                        clustered_data.labels_.reshape(-1, 1)))
+        points_with_labels = np.hstack(
+            (dataarray, clustered_data.labels_.reshape(-1, 1))
+        )
         bounding_boxes = generate_bounding_boxes(points_with_labels)
 
         marker_array = MarkerArray()
@@ -58,8 +59,9 @@ class RadarNode:
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        cluster_info = generate_cluster_info(clustered_data, dataarray, marker_array,
-                                             bounding_boxes)
+        cluster_info = generate_cluster_info(
+            clustered_data, dataarray, marker_array, bounding_boxes
+        )
         self.cluster_info_radar_publisher.publish(cluster_info)
 
     def listener(self):
@@ -73,23 +75,17 @@ class RadarNode:
             queue_size=10,
         )
         self.visualization_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~visualisation_topic", "/paf/hero/Radar/Visualization"
-            ),
+            rospy.get_param("~visualisation_topic", "/paf/hero/Radar/Visualization"),
             PointCloud2,
             queue_size=10,
         )
         self.marker_visualization_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~marker_topic", "/paf/hero/Radar/Marker"
-            ),
+            rospy.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
             MarkerArray,
             queue_size=10,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"
-            ),
+            rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
             queue_size=10,
         )
@@ -121,8 +117,16 @@ def pointcloud2_to_array(pointcloud_msg):
     )
 
 
-def filter_data(data, min_x=-100, max_x=100, min_y=-100, max_y=100, min_z=-1, max_z=100,
-                max_distance=100):
+def filter_data(
+    data,
+    min_x=-100,
+    max_x=100,
+    min_y=-100,
+    max_y=100,
+    min_z=-1,
+    max_z=100,
+    max_distance=100,
+):
     """
     Filters radar data based on specified spatial and distance constraints.
 
@@ -218,14 +222,14 @@ def create_pointcloud2(clustered_points, cluster_labels):
         else:
             r, g, b = colors[label]
 
-        rgb = struct.unpack('f', struct.pack('I', (r << 16) | (g << 8) | b))[0]
+        rgb = struct.unpack("f", struct.pack("I", (r << 16) | (g << 8) | b))[0]
         points.append([x, y, z, rgb])
 
     fields = [
-        PointField('x', 0, PointField.FLOAT32, 1),
-        PointField('y', 4, PointField.FLOAT32, 1),
-        PointField('z', 8, PointField.FLOAT32, 1),
-        PointField('rgb', 12, PointField.FLOAT32, 1),
+        PointField("x", 0, PointField.FLOAT32, 1),
+        PointField("y", 4, PointField.FLOAT32, 1),
+        PointField("z", 8, PointField.FLOAT32, 1),
+        PointField("rgb", 12, PointField.FLOAT32, 1),
     ]
 
     return point_cloud2.create_cloud(header, fields, points)
@@ -378,9 +382,18 @@ def create_bounding_box_marker(label, bbox):
     ]
 
     lines = [
-        (0, 1), (1, 2), (2, 3), (3, 0),  # Bottom
-        (4, 5), (5, 6), (6, 7), (7, 4),  # Top
-        (0, 4), (1, 5), (2, 6), (3, 7),  # Vertical Edges
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 0),  # Bottom
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 4),  # Top
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7),  # Vertical Edges
     ]
     for start, end in lines:
         marker.points.append(points[start])
@@ -390,9 +403,13 @@ def create_bounding_box_marker(label, bbox):
 
 
 # can be used for extra debugging
-def create_min_max_markers(label, bbox, frame_id="hero/RADAR",
-                           min_color=(0.0, 1.0, 0.0, 1.0),
-                           max_color=(1.0, 0.0, 0.0, 1.0)):
+def create_min_max_markers(
+    label,
+    bbox,
+    frame_id="hero/RADAR",
+    min_color=(0.0, 1.0, 0.0, 1.0),
+    max_color=(1.0, 0.0, 0.0, 1.0),
+):
     """
     creates RViz-Markers for min- and max-points of a bounding box.
 
@@ -492,12 +509,14 @@ def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
         cluster_points = data[clusters.labels_ == label]
         cluster_size = len(cluster_points)
         if label != -1:
-            cluster_info.append({
-                "label": int(label),
-                "points_count": cluster_size,
-                "num_marker": len(marker_array.markers),
-                "num_bounding_boxes": len(bounding_boxes)
-            })
+            cluster_info.append(
+                {
+                    "label": int(label),
+                    "points_count": cluster_size,
+                    "num_marker": len(marker_array.markers),
+                    "num_bounding_boxes": len(bounding_boxes),
+                }
+            )
 
     return json.dumps(cluster_info)
 
