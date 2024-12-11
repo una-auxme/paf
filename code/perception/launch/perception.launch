@@ -40,8 +40,8 @@
     <param name="left" value="False" />
     <param name="right" value="False" />
 
-      <!--Object-Detection:
-      - frcnn_resnet50_fpn_v2
+      <!--Object-Detection: 
+      - frcnn_resnet50_fpn_v2 
       - frcnn_mobilenet_v3_large_320_fpn
       - yolov8n
       - yolov8s
@@ -59,9 +59,13 @@
       Image-Segmentation:
       - deeplabv3_resnet101
       - yolov8x-seg
+      - yolo11n-seg
+      - yolo11s-seg
+      - yolo11m-seg
+      - yolo11l-seg
       -->
 
-    <param name="model" value="rtdetr-l" />
+    <param name="model" value="yolo11n-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
