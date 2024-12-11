@@ -91,7 +91,8 @@ class LidarDistance:
 
     def start_clustering(self, data):
         """
-        Filters LiDAR point clouds, performs clustering, and publishes the combined clusters.
+        Filters LiDAR point clouds, performs clustering,
+        and publishes the combined clusters.
 
         :param data: LiDAR point clouds in ROS PointCloud2 format.
         """
@@ -133,7 +134,8 @@ class LidarDistance:
         """
         Publishes combined clusters as a ROS PointCloud2 message.
 
-        :param combined_clusters: Combined point clouds of the clusters as a structured NumPy array.
+        :param combined_clusters: Combined point clouds of the clusters as a structured
+         NumPy array.
         :param data_header: Header information for the ROS message.
         """
         # Convert to a PointCloud2 message
@@ -165,7 +167,8 @@ class LidarDistance:
 
     def calculate_image(self, coordinates, focus):
         """
-        Calculates a distance image for a specific focus (view direction) from LiDAR coordinates.
+        Calculates a distance image for a specific focus (view direction) from
+        LiDAR coordinates.
 
         :param coordinates: Filtered LiDAR coordinates as a NumPy array.
         :param focus: The focus direction ("Center", "Back", "Left", "Right").
@@ -201,17 +204,18 @@ class LidarDistance:
 
     def publish_images(self, processed_images, data_header):
         """
-        Veröffentlicht Distanzbilder für verschiedene Richtungen als ROS-Bildnachrichten.
+        Publishes distance images for various directions as ROS image messages.
 
-        :param processed_images: Dictionary mit Richtungen ("Center", "Back", etc.) als Schlüssel und Bildarrays als Werte.
-        :param data_header: Header der ROS-Bildnachrichten.
+        :param processed_images: Dictionary with directions ("Center", "Back", etc.)
+         as keys and image arrays as values.
+        :param data_header: Header for the ROS image messages.
         """
-        # Nur gültige NumPy-Arrays weiterverarbeiten
+        # Process only valid NumPy arrays
         for direction, image_array in processed_images.items():
             if not isinstance(image_array, np.ndarray):
                 continue
 
-            # Konvertiere das Bild in eine ROS-Image-Nachricht
+            # Convert the image into a ROS image message
             dist_array_msg = self.bridge.cv2_to_imgmsg(
                 image_array, encoding="passthrough"
             )
@@ -399,8 +403,12 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps=0.3, min_samples=10):
 
     # Create a dictionary with cluster IDs and their corresponding points
     clusters = Parallel(n_jobs=-1)(
-        delayed(lambda l: (l, xyz[labels == l]))(label) for label in valid_labels
+        delayed(lambda cluster_label: (cluster_label, xyz[labels == cluster_label]))(
+            label
+        )
+        for label in valid_labels
     )
+
     clusters = dict(clusters)
 
     return clusters
