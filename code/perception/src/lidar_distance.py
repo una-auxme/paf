@@ -3,13 +3,13 @@ import rospy
 import ros_numpy
 import numpy as np
 import lidar_filter_utility
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image as ImageMsg
+from sklearn.cluster import DBSCAN
+from cv_bridge import CvBridge
+import json
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
-from sensor_msgs.msg import Image as ImageMsg
-from cv_bridge import CvBridge
-
 # from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -29,6 +29,22 @@ class LidarDistance:
         :param data: a PointCloud2
         """
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+
+        # clustered_points = cluster_lidar_data_from_pointcloud(coordinates.copy())
+        try:
+            filtered_coordinates = coordinates[coordinates["z"] > 0]
+
+            # Konvertiere in JSON
+            clustered_points_json = json.dumps(filtered_coordinates.tolist())
+
+            # Veröffentliche JSON-Daten
+            # self.dist_array_lidar_publisher.publish(clustered_points_json)
+            rospy.loginfo(
+                f"JSON mit {len(clustered_points_json)} Punkten veröffentlicht."
+            )
+            rospy.loginfo(clustered_points_json)
+        except Exception as e:
+            rospy.logerr(f"Fehler im Callback: {e}")
 
         # Center
         reconstruct_bit_mask_center = lidar_filter_utility.bounding_box(
@@ -146,6 +162,20 @@ class LidarDistance:
             queue_size=10,
         )
 
+        """
+        try:
+            self.dist_array_lidar_publisher = rospy.Publisher(
+                rospy.get_param(
+                    "~image_distance_topic_cluster", "/paf/hero/Lidar/dist_clustered"
+                ),
+                String,
+                queue_size=10,
+            )
+            rospy.loginfo("dist_array_lidar_publisher erfolgreich erstellt.")
+        except Exception as e:
+            rospy.logerr(f"Fehler beim Erstellen von dist_array_lidar_publisher: {e}")
+        """
+
         # publisher for dist_array
         self.dist_array_left_publisher = rospy.Publisher(
             rospy.get_param("~image_distance_topic", "/paf/hero/Left/dist_array"),
@@ -166,6 +196,7 @@ class LidarDistance:
             self.callback,
         )
 
+        rospy.loginfo("Lidar Processor Node gestartet.")
         rospy.spin()
 
     def reconstruct_img_from_lidar(self, coordinates_xyz, focus):
@@ -244,6 +275,15 @@ class LidarDistance:
                     )
 
         return dist_array
+
+
+def cluster_lidar_data_from_pointcloud(coordinates, eps=1.0, min_samples=2):
+
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(coordinates)
+    labels = clustering.labels_
+    clustered_points = {label: list(labels).count(label) for label in set(labels)}
+    clustered_points = {int(label): count for label, count in clustered_points.items()}
+    return clustered_points
 
 
 if __name__ == "__main__":
