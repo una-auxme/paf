@@ -255,7 +255,7 @@ class LidarDistance:
         dist_array = np.zeros(shape=(720, 1280, 3), dtype=np.float32)
 
         # Prepare points based on focus
-        if focus == "Center":
+        if focus in ["Center", "Back"]:
             points = np.column_stack(
                 (
                     coordinates_xyz[:, 1],
@@ -264,25 +264,7 @@ class LidarDistance:
                     np.ones(coordinates_xyz.shape[0]),
                 )
             )
-        elif focus == "Back":
-            points = np.column_stack(
-                (
-                    coordinates_xyz[:, 1],
-                    coordinates_xyz[:, 2],
-                    coordinates_xyz[:, 0],
-                    np.ones(coordinates_xyz.shape[0]),
-                )
-            )
-        elif focus == "Left":
-            points = np.column_stack(
-                (
-                    coordinates_xyz[:, 0],
-                    coordinates_xyz[:, 2],
-                    coordinates_xyz[:, 1],
-                    np.ones(coordinates_xyz.shape[0]),
-                )
-            )
-        elif focus == "Right":
+        elif focus in ["Left", "Right"]:
             points = np.column_stack(
                 (
                     coordinates_xyz[:, 0],
