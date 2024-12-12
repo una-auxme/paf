@@ -1,18 +1,13 @@
 #!/usr/bin/env python
 
 from ros_compatibility.node import CompatibleNode
-
 from rospy.numpy_msg import numpy_msg
-
-# import rospy
-
+import rospy
 import numpy as np
 import ros_compatibility as roscomp
-
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header
-
 from cv_bridge import CvBridge
 
 # for the lane detection model
@@ -21,6 +16,7 @@ from PIL import Image
 import torchvision.transforms as t
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class Lanedetection_node(CompatibleNode):
@@ -36,7 +32,8 @@ class Lanedetection_node(CompatibleNode):
         # load model
         self.model = torch.hub.load("hustvl/yolop", "yolop", pretrained=True)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda")
+        self.model.to(self.device)
         self.bridge = CvBridge()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
@@ -46,6 +43,14 @@ class Lanedetection_node(CompatibleNode):
         self.setup_lane_publisher()
         self.setup_dist_array_subscription()
         self.setup_overlay_publisher()
+        self.setup_driveable_area_publisher()
+        self.setup_mask_publisher()
+
+        self.marker_publisher = self.new_publisher(
+            msg_type=MarkerArray,
+            topic="/paf/hero/visualization_marker_array_lane",
+            qos_profile=1,
+        )
 
     def run(self):
         self.spin()
@@ -89,6 +94,16 @@ class Lanedetection_node(CompatibleNode):
             qos_profile=1,
         )
 
+    def setup_driveable_area_publisher(self):
+        """sets up a publisher for the lane mask
+        topic: /Center/lane_mask
+        """
+        self.driveable_area_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/driveable_area",
+            qos_profile=1,
+        )
+
     def setup_overlay_publisher(self):
         """sets up a publisher for an graphical output with original image, highlighted lane mask
         and Driveable Area
@@ -97,6 +112,17 @@ class Lanedetection_node(CompatibleNode):
         self.lane_overlay_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/Center/Lane_detect_Overlay",
+            qos_profile=1,
+        )
+
+    def setup_mask_publisher(self):
+        """sets up a publisher for an graphical output with original image, highlighted lane mask
+        and Driveable Area
+        topic: /Center/Lane_detect_Overlay
+        """
+        self.Lane_detection_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/Lane_detection_mask",
             qos_profile=1,
         )
 
@@ -112,6 +138,7 @@ class Lanedetection_node(CompatibleNode):
         image, original_image = self.preprocess_image(ImageMsg)
         original_h, original_w, _ = original_image.shape
         with torch.no_grad():
+            image = image.to(self.device)
             det_out, da_seg_out, ll_seg_out = self.detect_lanes(image)
 
         # convert probabilities to numpy array
@@ -129,24 +156,10 @@ class Lanedetection_node(CompatibleNode):
             (original_w, original_h),
             interpolation=cv2.INTER_LINEAR,
         )
-        """
-        # dynamic scaling of the array
-        ll_seg_scaled = (
-            (ll_seg_resized - np.min(ll_seg_resized))
-            / (np.max(ll_seg_resized) - np.min(ll_seg_resized))
-            * 255
-        ).astype(np.uint8)
 
-        # dynamic scaling of the array
-        da_seg_scaled = (
-            (da_seg_resized - np.min(da_seg_resized))
-            / (np.max(da_seg_resized) - np.min(da_seg_resized))
-            * 255
-        ).astype(np.uint8)
-        """
         # Dynamic threshold for binarization
         lane_threshold = np.mean(ll_seg_resized) + 0.07
-        driveable_area_threshold = np.mean(da_seg_resized)
+        driveable_area_threshold = np.mean(da_seg_resized) + 0.07
 
         # Apply dynamic binarization
         ll_seg_binary = (ll_seg_resized > lane_threshold).astype(
@@ -158,24 +171,47 @@ class Lanedetection_node(CompatibleNode):
 
         # Scale binary mask to match the visualization range [0, 255] for the overlay
         ll_seg_scaled = (ll_seg_binary * 255).astype(np.uint8)
-        # da_seg_scaled = (da_seg_binary * 255).astype(np.uint8)
+        da_seg_scaled = (da_seg_binary * 255).astype(np.uint8)
 
-        """# convert original image to numpy
-        overlay = np.array(original_image)
+        mask = np.expand_dims(ll_seg_scaled, axis=-1)
+        markers = MarkerArray()
+        if self.dist_arrays is not None:
+            disk_mask = np.any(self.dist_arrays, axis=2, keepdims=True)
+            mask = mask & disk_mask
+            dist_mask = np.logical_and(
+                np.any(mask, axis=2, keepdims=True), self.dist_arrays
+            )
+            dist = dist_mask * self.dist_arrays
+            points = dist[np.repeat(disk_mask, 3, axis=2)].reshape(-1, 3)
+            total_points_counter = 0
+            wrong_points_counter = 0
+            for i, point in enumerate(points):
+                if point[0] > 2:
+                    if point[2] < 2:
+                        total_points_counter += 1
+                        markers.markers.append(self.get_marker(point, i))
+                    else:
+                        total_points_counter += 1
+                        wrong_points_counter += 1
 
-        # lane mask = blue
-        overlay[:, :, 0] = cv2.addWeighted(overlay[:, :, 0], 1.0, ll_seg_scaled, 1, 0)
+        if wrong_points_counter / total_points_counter < 1:
+            self.marker_publisher.publish(markers)
+        """else:
+            rospy.loginfo("no lane detection available")"""
+        img_msg_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled, encoding="mono8")
+        img_msg_mask.header = ImageMsg.header
+        self.Lane_detection_publisher.publish(img_msg_mask)
 
-        # driveable area = green
-        overlay[:, :, 1] = cv2.addWeighted(overlay[:, :, 1], 1.0, da_seg_scaled, 0.5, 0)
-        """
         overlay = self.create_top_down_bounding_boxes(ll_seg_scaled, self.dist_arrays)
+
+        ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
         ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
         ros_lane_overlay = self.bridge.cv2_to_imgmsg(overlay)
 
         # publish
         self.lane_mask_publisher.publish(ros_lane_mask)
         self.lane_overlay_publisher.publish(ros_lane_overlay)
+        self.driveable_area_publisher.publish(ros_driveable_area)
 
     def handle_dist_array(self, dist_array):
         """
@@ -318,6 +354,32 @@ class Lanedetection_node(CompatibleNode):
             cv2.rectangle(top_down_image, (x_min, y_min), (x_max, y_max), 255, 5)
 
         return top_down_image
+
+    def get_marker(self, point, id):
+        c_color = [0, 255, 0]
+        marker = Marker()
+        marker.header.frame_id = "hero"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "min_values"
+        marker.id = id
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.color.r = c_color[0]
+        marker.color.g = c_color[1]
+        marker.color.b = c_color[2]
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = point[0]
+        marker.pose.position.y = point[1]
+        marker.pose.position.z = 1.7 + point[2]
+        marker.lifetime = rospy.Duration(0.5)
+        return marker
 
 
 if __name__ == "__main__":

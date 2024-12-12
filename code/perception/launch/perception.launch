@@ -96,7 +96,7 @@
   </node> 
   -->
 
-</launch>
+
 
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
