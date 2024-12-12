@@ -3,7 +3,7 @@ from joblib import Parallel, delayed
 import rospy
 import ros_numpy
 import numpy as np
-import lidar_filter_utility
+from lidar_filter_utility import bounding_box, remove_field_name
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
@@ -189,14 +189,12 @@ class LidarDistance:
             return None
 
         # Apply bounding box filter
-        reconstruct_bit_mask = lidar_filter_utility.bounding_box(coordinates, **params)
+        reconstruct_bit_mask = bounding_box(coordinates, **params)
         reconstruct_coordinates = coordinates[reconstruct_bit_mask]
 
         # Remove the "intensity" field and convert to a NumPy array
         reconstruct_coordinates_xyz = np.array(
-            lidar_filter_utility.remove_field_name(
-                reconstruct_coordinates, "intensity"
-            ).tolist()
+            remove_field_name(reconstruct_coordinates, "intensity").tolist()
         )
 
         # Reconstruct the image based on the focus
@@ -256,51 +254,64 @@ class LidarDistance:
         img = np.zeros(shape=(720, 1280), dtype=np.float32)
         dist_array = np.zeros(shape=(720, 1280, 3), dtype=np.float32)
 
-        # Process each point in the point cloud
-        for c in coordinates_xyz:
-            if focus == "Center":  # Compute image for the center view
-                point = np.array([c[1], c[2], c[0], 1])
-                pixel = np.matmul(m, point)  # Project 3D point to 2D image coordinates
-                x, y = int(pixel[0] / pixel[2]), int(
-                    pixel[1] / pixel[2]
-                )  # Normalize coordinates
-                if (
-                    0 <= x <= 1280 and 0 <= y <= 720
-                ):  # Check if coordinates are within image bounds
-                    img[719 - y][1279 - x] = c[0]  # Set depth value
-                    dist_array[719 - y][1279 - x] = np.array(
-                        [c[0], c[1], c[2]], dtype=np.float32
-                    )
+        # Prepare points based on focus
+        if focus in ["Center", "Back"]:
+            points = np.column_stack(
+                (
+                    coordinates_xyz[:, 1],
+                    coordinates_xyz[:, 2],
+                    coordinates_xyz[:, 0],
+                    np.ones(coordinates_xyz.shape[0]),
+                )
+            )
+        elif focus in ["Left", "Right"]:
+            points = np.column_stack(
+                (
+                    coordinates_xyz[:, 0],
+                    coordinates_xyz[:, 2],
+                    coordinates_xyz[:, 1],
+                    np.ones(coordinates_xyz.shape[0]),
+                )
+            )
+        else:
+            rospy.logwarn(f"Unknown focus: {focus}. Skipping image calculation.")
+            return None
 
-            if focus == "Back":  # Compute image for the rear view
-                point = np.array([c[1], c[2], c[0], 1])
-                pixel = np.matmul(m, point)
-                x, y = int(pixel[0] / pixel[2]), int(pixel[1] / pixel[2])
-                if 0 <= x <= 1280 and 0 <= y < 720:
-                    img[y][1279 - x] = -c[0]
-                    dist_array[y][1279 - x] = np.array(
-                        [-c[0], c[1], c[2]], dtype=np.float32
-                    )
+        # Project 3D points to 2D image coordinates
+        pixels = np.dot(m, points.T).T
+        x = (pixels[:, 0] / pixels[:, 2]).astype(int)
+        y = (pixels[:, 1] / pixels[:, 2]).astype(int)
 
-            if focus == "Left":  # Compute image for the left view
-                point = np.array([c[0], c[2], c[1], 1])
-                pixel = np.matmul(m, point)
-                x, y = int(pixel[0] / pixel[2]), int(pixel[1] / pixel[2])
-                if 0 <= x <= 1280 and 0 <= y <= 720:
-                    img[719 - y][1279 - x] = c[1]
-                    dist_array[y][1279 - x] = np.array(
-                        [c[0], c[1], c[2]], dtype=np.float32
-                    )
+        # Filter valid coordinates
+        valid_indices = (x >= 0) & (x < 1280) & (y >= 0) & (y < 720)
+        x = x[valid_indices]
+        y = y[valid_indices]
+        valid_coordinates = coordinates_xyz[valid_indices]
 
-            if focus == "Right":  # Compute image for the right view
-                point = np.array([c[0], c[2], c[1], 1])
-                pixel = np.matmul(m, point)
-                x, y = int(pixel[0] / pixel[2]), int(pixel[1] / pixel[2])
-                if 0 <= x < 1280 and 0 <= y < 720:
-                    img[y][1279 - x] = -c[1]
-                    dist_array[y][1279 - x] = np.array(
-                        [c[0], c[1], c[2]], dtype=np.float32
-                    )
+        if focus == "Center":
+            img[719 - y, 1279 - x] = valid_coordinates[:, 0]
+            dist_array[719 - y, 1279 - x] = valid_coordinates
+        elif focus == "Back":
+            img[y, 1279 - x] = -valid_coordinates[:, 0]
+            dist_array[y, 1279 - x] = np.column_stack(
+                (
+                    -valid_coordinates[:, 0],
+                    valid_coordinates[:, 1],
+                    valid_coordinates[:, 2],
+                )
+            )
+        elif focus == "Left":
+            img[719 - y, 1279 - x] = valid_coordinates[:, 1]
+            dist_array[719 - y, 1279 - x] = valid_coordinates
+        elif focus == "Right":
+            img[y, 1279 - x] = -valid_coordinates[:, 1]
+            dist_array[y, 1279 - x] = np.column_stack(
+                (
+                    valid_coordinates[:, 0],
+                    -valid_coordinates[:, 1],
+                    valid_coordinates[:, 2],
+                )
+            )
 
         return dist_array
 
