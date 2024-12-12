@@ -4,6 +4,11 @@
 
 - [Intersection Behavior](#intersection-behavior)
   - [General](#general)
+  - [Intersection Ahead](#intersection-ahead)
+  - [Approach](#approach)
+  - [Wait](#wait)
+  - [Enter](#enter)
+  - [Leave](#leave)
  
 ## General
 
