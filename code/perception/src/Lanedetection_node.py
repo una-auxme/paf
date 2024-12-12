@@ -23,7 +23,7 @@ import cv2
 import time
 import subprocess
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
 
 # from libs.api.inference import inference_one_image
@@ -47,7 +47,7 @@ class Lanedetection_node(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        #
+        # Frequence of using Lanedetection model on incoming Images
         self.img_freq = 10
         self.img_cnt = 0
 
@@ -59,6 +59,7 @@ class Lanedetection_node(CompatibleNode):
         # Weights path
         weight_path = os.path.join("CLRerNet_model", "clrernet_culane_dla34_ema.pth")
         ws_weight_path = os.path.join(ws_path, weight_path)
+        # weight_path = '/workspace/opt'
 
         # Config path
         config_path = os.path.join(
@@ -69,62 +70,18 @@ class Lanedetection_node(CompatibleNode):
         torch.cuda.empty_cache()
         torch.zeros(1).to("cuda")
 
-        # Beispiel: Warte, bis mindestens 500 MB verfügbar sind
         self.wait_for_gpu(min_free_memory_mb=1000)
-        # time.sleep(20)
+
         # build the model from a config file and a checkpoint file
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") -> Model cannot use cpu
         self.model = init_detector(
             ws_config_path, ws_weight_path, device="cuda:0"
         )  # self.device
-        # )  # "cuda:0")
-        # print(self.model)
 
         self.wait_for_gpu(min_free_memory_mb=1000)
 
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
-
-        # test a single image
-        # image_path = "/opt/CLRerNet_model/demo/demo.jpg"
-
-        # image_path = "/workspace/code/perception/src/ld_test4.jpg"
-        # image2_path = "/workspace/code/perception/src/result6.jpg"
-
-        # Bildgröße ermitteln
-        # image = cv2.imread(image_path)
-        # height, width = image.shape[:2]
-
-        # Zielgröße definieren
-        # target_width = 1640
-        # target_height = 590
-
-        # Berechne die Cropping-Koordinaten
-        # x_min = (width - target_width) // 2
-        # x_max = x_min + target_width
-        # y_min = (height - target_height) // 2
-        # y_max = y_min + target_height
-
-        # Zuschneiden
-        # cropped_image = image[y_min:y_max, x_min:x_max]
-
-        # cv2.imshow("Cropped Image", cropped_image)
-        # cv2.imwrite("/workspace/code/perception/src/cropped_image5.jpg", cropped_image)
-
-        # croppedimage_path = "/workspace/code/perception/src/cropped_image5.jpg"
-
-        # GPU-Speicher freigeben
-        # torch.cuda.empty_cache()
-        # src, preds = self.inference_one_image(self.model, croppedimage_path)
-        # show the results
-        # dst = visualize_lanes(src, preds, save_path=image2_path)
-
-        # Display the result using Matplotlib
-        # plt.figure(figsize=(10, 10))  # Optional: set the figure size
-        # plt.imshow(dst[..., ::-1])  # Convert BGR (OpenCV default) to RGB for Matplotlib
-        # plt.axis("off")  # Optional: turn off axis labels
-        # plt.title("Lane Detection Result")  # Optional: add a title
-        # plt.show()
 
         self.bridge = CvBridge()
         self.image_msg_header = Header()
@@ -138,23 +95,65 @@ class Lanedetection_node(CompatibleNode):
         self.spin()
         pass
 
+    def test_single_img(self, image_path):
+        """
+        Function to test with a single dummy picture
+
+        Reads Image from path
+        Resizes Image
+        Uses Lanedetection
+        Saves and plots finished image
+        """
+
+        # image_path = "/workspace/code/perception/src/ld_test4.jpg"
+        image2_path = "/workspace/code/perception/src/result.jpg"
+
+        # Bildgröße ermitteln
+        image = cv2.imread(image_path)
+        height, width = image.shape[:2]
+
+        # Zielgröße definieren
+        target_width = 1640
+        target_height = 590
+
+        # Berechne die Cropping-Koordinaten
+        x_min = (width - target_width) // 2
+        x_max = x_min + target_width
+        y_min = (height - target_height) // 2
+        y_max = y_min + target_height
+
+        # Zuschneiden
+        cropped_image = image[y_min:y_max, x_min:x_max]
+
+        cv2.imshow("Cropped Image", cropped_image)
+        cv2.imwrite("/workspace/code/perception/src/cropped_image5.jpg", cropped_image)
+
+        croppedimage_path = "/workspace/code/perception/src/cropped_image5.jpg"
+
+        # GPU-Speicher freigeben
+        torch.cuda.empty_cache()
+        src, preds = self.inference_one_image(self.model, croppedimage_path)
+        # show the results
+        dst = visualize_lanes(src, preds, save_path=image2_path)
+
+        # Display the result using Matplotlib
+        plt.figure(figsize=(10, 10))  # Optional: set the figure size
+        plt.imshow(dst[..., ::-1])  # Convert BGR (OpenCV default) to RGB for Matplotlib
+        plt.axis("off")  # Optional: turn off axis labels
+        plt.title("Lane Detection Result")  # Optional: add a title
+        plt.show()
+
     def wait_for_gpu(self, min_free_memory_mb=500, check_interval=1):
         """
-        Wartet, bis mindestens `min_free_memory_mb` verfügbarer Speicher auf der GPU frei ist.
-        :param min_free_memory_mb: Mindestfreier Speicher in MB
-        :param check_interval: Wartezeit zwischen den Überprüfungen (in Sekunden)
+        Waits until `min_free_memory_mb` is available on GPU
+        :param min_free_memory_mb: Minimum space in MB
+        :param check_interval: Waiting interval for space-check (in sec)
         """
         if not torch.cuda.is_available():
             print("No GPU available. Exiting wait function.")
             return
 
         while True:
-            # allocated = torch.cuda.memory_allocated() / (1024**2)  # In MB
-            # reserved = torch.cuda.memory_reserved() / (1024**2)  # In MB
-            # total = torch.cuda.get_device_properties(0).total_memory / (
-            #    1024**2
-            # )  # In MB
-            # free_memory = total - reserved
             used_memory, free_memory, total_memory = self.get_gpu_memory_nvidia_smi()
             if used_memory is None or free_memory is None or total_memory is None:
                 print("Unable to retrieve GPU memory information. Exiting.")
@@ -173,11 +172,11 @@ class Lanedetection_node(CompatibleNode):
 
     def get_gpu_memory_nvidia_smi(self):
         """
-        Ruft die GPU-Speicherinformationen mit `nvidia-smi` ab.
-        Gibt (used_memory, free_memory, total_memory) in MB zurück.
+        Calls GPU Space-information `nvidia-smi`
+        Returns (used_memory, free_memory, total_memory) in MB
         """
         try:
-            # Führe nvidia-smi aus und parse die Ausgabe
+            # Use nvidia-smi and parse the output
             result = subprocess.run(
                 [
                     "nvidia-smi",
@@ -188,7 +187,7 @@ class Lanedetection_node(CompatibleNode):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            # Verarbeite die Ausgabe von nvidia-smi
+            # Processes the output of nvidia-smi
             output = result.stdout.strip()
             used_memory, free_memory, total_memory = map(
                 int, output.split("\n")[0].split(", ")
@@ -223,6 +222,8 @@ class Lanedetection_node(CompatibleNode):
     def image_handler(self, ImageMsg):
         """
         Callback function for image subscriber
+        Uses counter `img_cnt` and `img_freq` to only use a certain percentage
+        of images for lanedetction to minimize gpu-usage
         """
         self.img_cnt += 1
         if self.img_cnt >= self.img_freq:
@@ -231,49 +232,24 @@ class Lanedetection_node(CompatibleNode):
 
             lane_mask = self.detect_lanes(self.image, self.model)
 
-            # plt.figure(figsize=(10, 10))  # Optional: set the figure size
-            # plt.imshow(
-            #    lane_mask[..., ::-1]
-            # )  # Convert BGR (OpenCV default) to RGB for Matplotlib
-            # plt.axis("off")  # Optional: turn off axis labels
-            # plt.title("Lane Detection Result")  # Optional: add a title
-            # plt.show()
-
             if lane_mask is not None:
                 lanedetection_image = self.bridge.cv2_to_imgmsg(lane_mask, "bgr8")
                 self.lane_publisher.publish(lanedetection_image)
             else:
+                # Only there to see if node is running, if lane_mask returns null -> model not working yet
                 no_img = cv2.imread("/workspace/code/perception/src/cropped_image5.jpg")
                 lanedetection_image = self.bridge.cv2_to_imgmsg(no_img, "bgr8")
                 self.lane_publisher.publish(lanedetection_image)
 
             self.img_cnt = 0
 
-        # self.lane_publisher.publish(ImageMsg)
-
     def preprocess_image(self, image):
         """
+        -- Not needed anymore --
+
         Preprocesses the image to be fed into the model
 
-        Args:
-            image (np.array): Image from camera
-
-        Returns:
-            np.array: Preprocessed image
-        ""
-        pil_image = Image.fromarray(image)
-
-        preprocess = transforms.Compose(
-            [
-                transforms.Resize((288, 800)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-
-        return preprocess(pil_image).unsqueeze(0).cuda()"""
+        """
 
         height, width = image.shape[:2]
 
@@ -302,6 +278,8 @@ class Lanedetection_node(CompatibleNode):
     def detect_lanes(self, image, model):
         """
         Detects lanes in the image
+        Resizes image for model
+        Tries to use CLRerNet Model, if it fails the img_freq becomes bigger to give it more time
 
         Args:
             image (np.array): Image from camera
@@ -309,23 +287,13 @@ class Lanedetection_node(CompatibleNode):
         Returns:
             np.array: Lane mask
         """
-
-        #    with torch.no_grad():
-        #        output = model(image)
-
-        #    return output
-        # image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        height, width, channels = image.shape
+        # For debugging --
+        # height, width, channels = image.shape
         # print(f"Breite: {width}px")
         # print(f"Höhe: {height}px")
-        image_resized = self.resize_image(image, 1640, 590)
-        # image = cv2.resize(image, (180, 590))
 
-        # plt.figure(figsize=(10, 10))  # Optional: set the figure size
-        # plt.imshow(image_resized)  # Convert BGR (OpenCV default) to RGB for Matplotlib
-        # plt.axis("off")  # Optional: turn off axis labels
-        # plt.title("Lane Detection Result")  # Optional: add a title
-        # plt.show()
+        # Resize Image to needed size
+        image_resized = cv2.resize(image, (1640, 590))
 
         # torch.cuda.empty_cache()
         try:
@@ -341,10 +309,6 @@ class Lanedetection_node(CompatibleNode):
             torch.cuda.empty_cache()
             return None
 
-        # show the results
-
-        # return dst
-
     def inference_one_image(self, model, image):
         """Inference on an image with the detector.
         Args:
@@ -354,6 +318,7 @@ class Lanedetection_node(CompatibleNode):
             img (np.ndarray): Image data with shape (width, height, channel).
             preds (List[np.ndarray]): Detected lanes.
         """
+        # Uses image instead of image_path
         # img = cv2.imread(image)
         ori_shape = image.shape
         data = dict(
@@ -407,9 +372,6 @@ class Lanedetection_node(CompatibleNode):
             interp_pred = interp(pred, n=5)
             preds.append(interp_pred)
         return preds
-
-    def resize_image(self, image, target_width, target_height):
-        return cv2.resize(image, (target_width, target_height))
 
 
 if __name__ == "__main__":

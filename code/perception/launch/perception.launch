@@ -44,7 +44,7 @@
     <param name="model" value="rtdetr-l" />
   </node> -->
 
-  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+  <!--<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
@@ -74,7 +74,7 @@
       - ->
 
     <param name="model" value="rtdetr-l" />
-  </node>
+  </node>-->
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
@@ -96,11 +96,11 @@
 
   <!--<node pkg="perception" type="debug_wrapper.py" name="Lanedetection" output="screen" args="- -debug_node=Lanedetection_node.py - -debug_port=53000 - -debug_wait">
     <param name="role_name" value="$(arg role_name)" />
-  </node> -->
+  </node> --> 
   
-  <node pkg="perception" type="Lanedetection_node.py" name="Lanedetection" output="screen">
+  <!--<node pkg="perception" type="Lanedetection_node.py" name="Lanedetection" output="screen">
     <param name="role_name" value="$(arg role_name)" />
-  </node> 
+  </node> -->
   
 
 </launch>
