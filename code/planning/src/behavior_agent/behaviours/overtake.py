@@ -76,7 +76,8 @@ class Approach(py_trees.behaviour.Behaviour):
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
 
         Gets the current distance to overtake, the current oncoming lane status and the
-        distance to collsion object. Slows down while oncoming blocked until stopped or oncoming clear.
+        distance to collsion object. Slows down while oncoming blocked until stopped
+        or oncoming clear.
         :return: py_trees.common.Status.RUNNING, if too far from overtaking
                  py_trees.common.Status.SUCCESS, if stopped behind the blocking
                  object or entered the process.
@@ -123,7 +124,10 @@ class Approach(py_trees.behaviour.Behaviour):
 
         if self.ot_distance > 20.0:
             # too far
-            rospy.loginfo("Overtake Approach: still approaching obstacle, distance: {self.ot_distance}")
+            rospy.loginfo(
+                "Overtake Approach: still approaching obstacle, "
+                "distance: {self.ot_distance}"
+            )
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and self.ot_distance < TARGET_DISTANCE_TO_STOP:
             # stopped
@@ -231,7 +235,9 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                rospy.loginfo(f"Overtake still blocked, distance to oncoming: {distance_oncoming}")
+                rospy.loginfo(
+                    f"Overtake still blocked, distance to oncoming: {distance_oncoming}"
+                )
                 self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
                 return py_trees.common.Status.RUNNING
         elif obstacle_msg.data[0] == np.inf:

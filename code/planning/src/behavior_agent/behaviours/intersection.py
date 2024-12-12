@@ -147,8 +147,10 @@ class Approach(py_trees.behaviour.Behaviour):
             or (self.stop_sign_detected and not self.traffic_light_detected)
         ):
 
-            rospy.loginfo("Intersection Approach: slowing down! Stop sign:
-            {self.stop_sign_detected}, Light: {self.traffic_light_status}")
+            rospy.loginfo(
+                "Intersection Approach: slowing down! Stop sign: "
+                "{self.stop_sign_detected}, Light: {self.traffic_light_status}"
+            )
             self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
 
         # approach slowly when traffic light is green as traffic lights are
@@ -174,7 +176,7 @@ class Approach(py_trees.behaviour.Behaviour):
             or (self.traffic_light_distance < 150)
         ):
             # stopped
-            print("Intersection Approach: stopped")
+            rospy.loginfo("Intersection Approach: stopped")
             return py_trees.common.Status.SUCCESS
         elif (
             speed > convert_to_ms(5.0)
@@ -314,7 +316,9 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.get_rostime() - self.green_light_time > rospy.Duration(1)
                 and traffic_light_status == "green"
             ):
-                rospy.loginfo(f"Driving through Intersection Light Status: {traffic_light_status}")
+                rospy.loginfo(
+                    f"Driving through Intersection Light Status: {traffic_light_status}"
+                )
                 # Drive through intersection
                 return py_trees.common.Status.SUCCESS
             else:
