@@ -18,6 +18,21 @@
                     "remoteRoot": "${env:PAF_CATKIN_CODE_ROOT}"
                 }
             ]
+        },
+        {
+            "name": "53001 leaderboard attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 53001
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/code",
+                    "remoteRoot": "${env:PAF_CATKIN_CODE_ROOT}"
+                }
+            ]
         }
     ],
 }
