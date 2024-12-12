@@ -468,10 +468,6 @@ class VisionNode(CompatibleNode):
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
 
-        # proceed with traffic light detection
-        if 9 in output[0].boxes.cls:
-            asyncio.run(self.process_traffic_lights(output[0], cv_image, image.header))
-
         # draw bounding boxes and distance values on image
         c_boxes = torch.stack(c_boxes)
         drawn_images = draw_bounding_boxes(
@@ -498,6 +494,11 @@ class VisionNode(CompatibleNode):
             )
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
+
+        # proceed with traffic light detection
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
+
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
     def publish_segmentation_mask(self, scaled_masks, carla_classes):

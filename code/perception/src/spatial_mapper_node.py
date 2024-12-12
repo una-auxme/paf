@@ -12,6 +12,10 @@ from std_msgs.msg import (
 from cv_bridge import CvBridge
 import numpy as np
 import rospy
+from sklearn.decomposition import PCA
+from shapely.geometry import Polygon
+from scipy.spatial import ConvexHull
+from sklearn.cluster import DBSCAN
 
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -117,53 +121,105 @@ class SpatialMapperNode(CompatibleNode):
         """
         # MarkerArray zum Sammeln aller Marker
         marker_array = MarkerArray()
+        # valid_points_counter = len(segmentation_array) + 1
 
         for i, segmentation_mask in enumerate(segmentation_array):
-            if i == 0:
-                # Calculate depth values from self.dist_array
-                class_value = np.unique(segmentation_mask)
-                class_value = class_value[class_value != 0]
-                assert class_value.size == 1
-                class_value = class_value[0]
-                depth_array = self.calculate_depth_values(segmentation_mask)
+            # Calculate depth values from self.dist_array
+            class_value = np.unique(segmentation_mask)
+            class_value = class_value[class_value != 0]
+            assert class_value.size == 1
+            class_value = class_value[0]
+            depth_array = self.calculate_depth_values(segmentation_mask)
+            width, length, rotation_angle, center = self.extract_car_bbox(depth_array)
+            if (
+                width == None
+                or length == None
+                or rotation_angle == None
+                or center == None
+            ):
+                continue
+            # # Linken, Rechten und Nähsten Punkt bekommen
+            # left_point, right_point, nearest_point, valid_points = (
+            #     self.extract_percentile_points(
+            #         depth_array, percent=0.1, depth_threshold=2
+            #     )
+            # )
+            # if left_point is None or right_point is None or nearest_point is None:
+            #     continue
 
-                # Linken, Rechten und Nähsten Punkt bekommen
-                left_point, right_point, nearest_point = self.extract_percentile_points(
-                    segmentation_mask, depth_array
-                )
+            #           # # Marker für Objekt erstellen
+            # left_marker = self.get_marker(
+            #     point=left_point,
+            #     depth=0.1,
+            #     width=0.1,
+            #     rotation=0,
+            #     id=(3 * i),
+            #     obj_class=1,
+            #     marker_color=(255, 0, 0),
+            # )
+            # right_marker = self.get_marker(
+            #     point=right_point,
+            #     depth=0.1,
+            #     width=0.1,
+            #     rotation=0,
+            #     id=(3 * i) + 1,
+            #     obj_class=1,
+            #     marker_color=(0, 255, 0),
+            # )
+            # nearest_marker = self.get_marker(
+            #     point=nearest_point,
+            #     depth=0.1,
+            #     width=0.1,
+            #     rotation=0,
+            #     id=(3 * i) + 2,
+            #     obj_class=1,
+            #     marker_color=(0, 0, 255),
+            # )
 
-                # Marker für Objekt erstellen
-                left_marker = self.get_marker(left_point, 0.1, 0.1, 0, 0, 1)
-                right_marker = self.get_marker(right_point, 0.1, 0.1, 0, 1, 1)
-                nearest_marker = self.get_marker(nearest_point, 0.1, 0.1, 0, 2, 1)
+            #           # marker_array.markers.append(left_marker)
+            # marker_array.markers.append(right_marker)
+            # marker_array.markers.append(nearest_marker)
 
-                marker_array.markers.append(left_marker)
-                marker_array.markers.append(right_marker)
-                marker_array.markers.append(nearest_marker)
+            #           # for point in valid_points:
+            #     valid_points_counter += 1
+            #     marker_array.markers.append(
+            #         self.get_marker(
+            #             point=point,
+            #             depth=0.1,
+            #             width=0.1,
+            #             rotation=0,
+            #             id=valid_points_counter,
+            #             obj_class=1,
+            #             marker_color=(255, 255, 255),
+            #         )
+            #     )
 
-                object_point, depth, width, rotation = self.calculate_object_marker(
-                    left_point, right_point, nearest_point
-                )
+            # object_point, depth, width, rotation = self.calculate_object_marker(
+            #    left_point, right_point, nearest_point
+            # )
 
-                marker = self.get_marker(
-                    point=object_point,
-                    depth=depth,
-                    width=width,
-                    rotation=rotation,
-                    id=i,
-                    obj_class=class_value,
-                )
-                marker_array.markers.append(marker)
+            marker = self.get_marker(
+                point=center,
+                depth=length,
+                width=width,
+                rotation=rotation_angle,
+                id=i,
+                obj_class=class_value,
+            )
+            marker_array.markers.append(marker)
 
-        # MarkerArray veröffentlichen
+            # MarkerArray veröffentlichen
         try:
             self.marker_publisher.publish(marker_array)
             rospy.loginfo(f"Published {len(marker_array.markers)} markers.")
         except Exception as e:
             rospy.logerr(f"Error publishing markers: {e}")
 
-    def get_marker(self, point, depth, width, rotation, id, obj_class):
-        c_color = carla_colors[obj_class]
+    def get_marker(
+        self, point, depth, width, rotation, id, obj_class, marker_color=None
+    ):
+        if marker_color is None:
+            marker_color = carla_colors[obj_class]
         marker = Marker()
         marker.header.frame_id = "hero"
         marker.header.stamp = rospy.Time.now()
@@ -175,15 +231,15 @@ class SpatialMapperNode(CompatibleNode):
         marker.scale.y = width
         marker.scale.z = 1
         marker.color.a = 1.0
-        marker.color.r = c_color[0]
-        marker.color.g = c_color[1]
-        marker.color.b = c_color[2]
+        marker.color.r = marker_color[0]
+        marker.color.g = marker_color[1]
+        marker.color.b = marker_color[2]
         marker.pose.orientation.z = math.sin(rotation / 2)
         marker.pose.orientation.w = math.cos(rotation / 2)
         marker.pose.position.x = point[0]
         marker.pose.position.y = point[1]
         marker.pose.position.z = 0
-        marker.lifetime = rospy.Duration(0.2)
+        marker.lifetime = rospy.Duration(4 / 20)
         return marker
 
     def run(self):
@@ -202,9 +258,7 @@ class SpatialMapperNode(CompatibleNode):
         output[mask] = abs_distance[mask]  # Werte nur an Maskenpositionen setzen
         return output
 
-    def extract_percentile_points(
-        self, mask_array, depth_array, percent=0.2, depth_threshold=1
-    ):
+    def extract_percentile_points(self, depth_array, percent=0.2, depth_threshold=1):
         valid_mask = depth_array > 0
         non_zero_mask = (
             ~(self.dist_array[:, :, 0] == 0.0)
@@ -214,6 +268,8 @@ class SpatialMapperNode(CompatibleNode):
         combined_mask = valid_mask & non_zero_mask
         valid_points = self.dist_array[combined_mask]
         valid_depths = depth_array[combined_mask]
+        if len(valid_points) == 0:
+            return None, None, None
         min_index = np.argmin(valid_depths)
         closest_point = valid_points[min_index]
 
@@ -221,7 +277,10 @@ class SpatialMapperNode(CompatibleNode):
         sorted_indices = np.argsort(valid_points[:, 1])  # y-Wert ist die zweite Spalte
         sorted_points = valid_points[sorted_indices]
         sorted_depths = valid_depths[sorted_indices]
-        n = int(np.ceil(len(sorted_points) * percent))
+        if (percent == 0) or (percent == 1):
+            n = 1
+        else:
+            n = int(np.ceil(len(sorted_points) * percent))
         right_n_points = sorted_points[:n]
         right_n_depths = sorted_depths[:n]
         right_depth_diffs = np.diff(right_n_depths)
@@ -250,7 +309,88 @@ class SpatialMapperNode(CompatibleNode):
             left_n_points[left_boundary_idx],
             right_n_points[right_boundary_idx],
             closest_point,
+            valid_points,
         )
+
+    def extract_car_bbox(self, depth_array):
+        valid_mask = depth_array > 0
+        non_zero_mask = (
+            ~(self.dist_array[:, :, 0] == 0.0)
+            & ~(self.dist_array[:, :, 1] == 0.0)
+            & ~(self.dist_array[:, :, 2] == 0.0)
+        )  # Prüfe entlang der dritten Dimension
+        combined_mask = valid_mask & non_zero_mask
+        valid_points = self.dist_array[combined_mask]
+        # Step 0: filter point cloud
+        valid_points = self.cluster_filter(valid_points)
+        if valid_points is None:
+            rospy.logwarn("No valid points found. Returning None.")
+            return None, None, None, None
+
+        # Step 1: Project points to 2D (XY plane)
+        points_2d = valid_points[:, :2]
+
+        # Step 2: Compute the minimum bounding rectangle
+        hull_points = ConvexHull(points_2d).vertices
+        polygon = Polygon(points_2d[hull_points])
+        min_rectangle = polygon.minimum_rotated_rectangle
+
+        # Extract rectangle corner points
+        rect_coords = np.array(min_rectangle.exterior.coords)[
+            :-1
+        ]  # Remove duplicate endpoint
+
+        # Calculate width and length
+        edges = np.linalg.norm(rect_coords - np.roll(rect_coords, -1, axis=0), axis=1)
+        width, _, length, _ = sorted(
+            edges
+        )  # Width is shorter side, length is longer side
+
+        # Calculate rectangle orientation
+        vector = rect_coords[1] - rect_coords[0]
+        rectangle_angle = np.degrees(np.arctan2(vector[1], vector[0]))
+
+        # Step 3: Use PCA to refine orientation
+        pca = PCA(n_components=2)
+        pca.fit(points_2d)
+        pca_angle = np.degrees(np.arctan2(pca.components_[0, 1], pca.components_[0, 0]))
+
+        # Average the bounding box and PCA angles for stability
+        rotation_angle = (rectangle_angle + pca_angle) / 2
+
+        # Step 4: Calculate center of the bounding box
+        center_2d = rect_coords.mean(axis=0)
+        center = (
+            center_2d[0],
+            center_2d[1],
+            valid_points[:, 2].mean(),
+        )  # Add average Z for 3D center
+
+        return width, length, rotation_angle, center
+
+    def cluster_filter(self, point_cloud, eps=1, min_samples=10):
+        """
+        Filter point cloud using DBSCAN clustering.
+
+        Parameters:
+        - point_cloud (numpy.ndarray): Nx3 array of LiDAR points.
+        - eps (float): Maximum distance between points in a cluster.
+        - min_samples (int): Minimum number of points in a cluster.
+
+        Returns:
+        - filtered_points (numpy.ndarray): Points belonging to the largest cluster.
+        """
+        db = DBSCAN(eps=eps, min_samples=min_samples).fit(point_cloud)
+        labels = db.labels_
+        unique_labels = np.unique(labels)
+        if len(unique_labels) <= 1 and unique_labels[0] == -1:  # Only noise found
+            rospy.logwarn("DBSCAN found no valid clusters. Returning empty array.")
+            return None
+        valid_labels = labels[labels != -1]
+        largest_cluster_label = valid_labels.max()
+        filtered_points = point_cloud[labels == largest_cluster_label]
+
+        return filtered_points
 
     def calculate_object_marker(self, left, right, nearest):
         x_l, y_l, _ = left
