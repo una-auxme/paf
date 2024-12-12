@@ -121,7 +121,7 @@ class SpatialMapperNode(CompatibleNode):
         """
         # MarkerArray zum Sammeln aller Marker
         marker_array = MarkerArray()
-        # valid_points_counter = len(segmentation_array) + 1
+        valid_points_counter = len(segmentation_array) + 1
 
         for i, segmentation_mask in enumerate(segmentation_array):
             # Calculate depth values from self.dist_array
@@ -130,12 +130,14 @@ class SpatialMapperNode(CompatibleNode):
             assert class_value.size == 1
             class_value = class_value[0]
             depth_array = self.calculate_depth_values(segmentation_mask)
-            width, length, rotation_angle, center = self.extract_car_bbox(depth_array)
+            width, length, rotation_angle, center, valid_points = self.extract_car_bbox(
+                depth_array
+            )
             if (
-                width == None
-                or length == None
-                or rotation_angle == None
-                or center == None
+                width is None
+                or length is None
+                or rotation_angle is None
+                or center is None
             ):
                 continue
             # # Linken, Rechten und Nähsten Punkt bekommen
@@ -180,19 +182,20 @@ class SpatialMapperNode(CompatibleNode):
             # marker_array.markers.append(right_marker)
             # marker_array.markers.append(nearest_marker)
 
-            #           # for point in valid_points:
-            #     valid_points_counter += 1
-            #     marker_array.markers.append(
-            #         self.get_marker(
-            #             point=point,
-            #             depth=0.1,
-            #             width=0.1,
-            #             rotation=0,
-            #             id=valid_points_counter,
-            #             obj_class=1,
-            #             marker_color=(255, 255, 255),
-            #         )
-            #     )
+            for point in valid_points:
+                valid_points_counter += 1
+                marker_array.markers.append(
+                    self.get_marker(
+                        point=point,
+                        depth=0.05,
+                        width=0.05,
+                        rotation=0,
+                        id=valid_points_counter,
+                        obj_class=1,
+                        marker_color=(255, 255, 255),
+                        height=0.05,
+                    )
+                )
 
             # object_point, depth, width, rotation = self.calculate_object_marker(
             #    left_point, right_point, nearest_point
@@ -216,7 +219,7 @@ class SpatialMapperNode(CompatibleNode):
             rospy.logerr(f"Error publishing markers: {e}")
 
     def get_marker(
-        self, point, depth, width, rotation, id, obj_class, marker_color=None
+        self, point, depth, width, rotation, id, obj_class, marker_color=None, height=1
     ):
         if marker_color is None:
             marker_color = carla_colors[obj_class]
@@ -229,16 +232,16 @@ class SpatialMapperNode(CompatibleNode):
         marker.action = Marker.ADD
         marker.scale.x = depth
         marker.scale.y = width
-        marker.scale.z = 1
+        marker.scale.z = height
         marker.color.a = 1.0
         marker.color.r = marker_color[0]
         marker.color.g = marker_color[1]
         marker.color.b = marker_color[2]
-        marker.pose.orientation.z = math.sin(rotation / 2)
-        marker.pose.orientation.w = math.cos(rotation / 2)
+        marker.pose.orientation.z = rotation
+        marker.pose.orientation.w = rotation
         marker.pose.position.x = point[0]
         marker.pose.position.y = point[1]
-        marker.pose.position.z = 0
+        marker.pose.position.z = 1.70 + point[2]
         marker.lifetime = rospy.Duration(4 / 20)
         return marker
 
@@ -325,7 +328,7 @@ class SpatialMapperNode(CompatibleNode):
         valid_points = self.cluster_filter(valid_points)
         if valid_points is None:
             rospy.logwarn("No valid points found. Returning None.")
-            return None, None, None, None
+            return None, None, None, None, None
 
         # Step 1: Project points to 2D (XY plane)
         points_2d = valid_points[:, :2]
@@ -347,16 +350,13 @@ class SpatialMapperNode(CompatibleNode):
         )  # Width is shorter side, length is longer side
 
         # Calculate rectangle orientation
-        vector = rect_coords[1] - rect_coords[0]
-        rectangle_angle = np.degrees(np.arctan2(vector[1], vector[0]))
+        # vector = rect_coords[1] - rect_coords[0]
+        # rectangle_angle = np.arctan2(vector[1], vector[0])
 
         # Step 3: Use PCA to refine orientation
         pca = PCA(n_components=2)
         pca.fit(points_2d)
-        pca_angle = np.degrees(np.arctan2(pca.components_[0, 1], pca.components_[0, 0]))
-
-        # Average the bounding box and PCA angles for stability
-        rotation_angle = (rectangle_angle + pca_angle) / 2
+        rotation_angle = np.arctan2(pca.components_[0, 1], pca.components_[0, 0])
 
         # Step 4: Calculate center of the bounding box
         center_2d = rect_coords.mean(axis=0)
@@ -366,9 +366,9 @@ class SpatialMapperNode(CompatibleNode):
             valid_points[:, 2].mean(),
         )  # Add average Z for 3D center
 
-        return width, length, rotation_angle, center
+        return width, length, rotation_angle, center, valid_points
 
-    def cluster_filter(self, point_cloud, eps=1, min_samples=10):
+    def cluster_filter(self, point_cloud, eps=0.4, min_samples=5):
         """
         Filter point cloud using DBSCAN clustering.
 
@@ -405,7 +405,8 @@ class SpatialMapperNode(CompatibleNode):
         ) / math.sqrt((y_r - y_l) ** 2 + (x_r - x_l) ** 2)
 
         # Rotation
-        rotation = math.atan2(y_r - y_l, x_r - x_l)
+        # rotation = math.atan2(y_r - y_l, x_r - x_l)
+        rotation = 0
 
         # Mittelpunkt
         midpoint_x = (x_l + x_r) / 2

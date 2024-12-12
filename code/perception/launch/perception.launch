@@ -32,7 +32,7 @@
       -->
   </node>
 
-  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53001">
+  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
@@ -89,7 +89,7 @@
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
   </node>
 
-  <node pkg="perception" type="debug_wrapper.py" name="spatial_mapper_node" output="screen" args="--debug_node=spatial_mapper_node.py --debug_port=53000">
+  <node pkg="perception" type="spatial_mapper_node.py" name="spatial_mapper_node" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="side" value="Center" />
     <param name="center" value="True" />
