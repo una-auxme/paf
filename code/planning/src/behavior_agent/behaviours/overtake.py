@@ -125,8 +125,8 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.ot_distance > 20.0:
             # too far
             rospy.loginfo(
-                "Overtake Approach: still approaching obstacle, "
-                "distance: {self.ot_distance}"
+                f"Overtake Approach: still approaching obstacle, "
+                f"distance: {self.ot_distance}"
             )
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and self.ot_distance < TARGET_DISTANCE_TO_STOP:

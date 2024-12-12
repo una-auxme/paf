@@ -148,8 +148,8 @@ class Approach(py_trees.behaviour.Behaviour):
         ):
 
             rospy.loginfo(
-                "Intersection Approach: slowing down! Stop sign: "
-                "{self.stop_sign_detected}, Light: {self.traffic_light_status}"
+                f"Intersection Approach: slowing down! Stop sign: "
+                f"{self.stop_sign_detected}, Light: {self.traffic_light_status}"
             )
             self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
 
@@ -185,7 +185,10 @@ class Approach(py_trees.behaviour.Behaviour):
         ):
 
             # drive through intersection even if traffic light turns yellow
-            rospy.loginfo("Intersection Approach Light is green")
+            rospy.loginfo(
+                f"Intersection Approach Light is green, light:"
+                f"{self.traffic_light_status}"
+            )
             return py_trees.common.Status.SUCCESS
         elif speed > convert_to_ms(5.0) and self.virtual_stopline_distance < 3.5:
             # running over line
