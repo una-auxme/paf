@@ -210,8 +210,8 @@ class ACC(CompatibleNode):
             publishes the desired speed to motion planning
             """
             if (
-                self.obstacle_distance is not None
-                and self.obstacle_speed is not None
+                self.obstacle_distance is not None # often none
+                and self.obstacle_speed is not None # often none -> often does elif even if if-case would be necessary
                 and self.__current_velocity is not None
             ):
                 # If we have obstalce information,
