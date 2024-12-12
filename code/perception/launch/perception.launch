@@ -1,6 +1,6 @@
 <launch>
   <arg name="role_name" default="hero" />
-  <arg name="control_loop_rate" default="0.05" /> 
+  <arg name="control_loop_rate" default="0.05" />
 
   <!-- just for Debugging/ Optimizing purposes -> Uncomment to use and see plots -->
   <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
