@@ -28,7 +28,7 @@ Handles approaching the intersection by slowing down the vehicle. Returns RUNNIN
 Calculates a virtual stopline based on whether a stopline or only a stop sign has been detected and publishes a distance to it. While the vehicle is not stopped at the virtual stopline nor has entered the intersection, int_app_to_stop is published as the current behaviour.
 This is used inside motion_planning to calculate a stopping velocity.
 
-A green light is approached with 8 m/s.
+A green light is approached with 30 km/h.
 
 ## Wait
 
@@ -38,7 +38,7 @@ If the light is green or when there isn't a traffic light returns SUCCESS otherw
 
 ## Enter
 
-Handles driving through the intersection.
+Handles driving through the intersection. Uses 50 km/h as target speed.
 
 Returns SUCCESS once the next waypoint is not this intersection anymore.
 
