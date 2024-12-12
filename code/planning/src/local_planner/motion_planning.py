@@ -41,6 +41,7 @@ class MotionPlanning(CompatibleNode):
 
         # TODO: add type hints
         self.target_speed = 0.0
+        self.target_velocity_selector = "not selected"
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
@@ -488,15 +489,15 @@ class MotionPlanning(CompatibleNode):
         else:
             corner_speed = self.get_cornering_speed()
             self.target_speed = min(be_speed, acc_speed, corner_speed)
-            if (self.target_speed == be_speed):
-                target_velocity_selector = "be_speed"
-            elif (self.target_speed == acc_speed):
-                target_velocity_selector = "acc_speed"
-            elif (self.target_speed == corner_speed):
-                target_velocity_selector = "corner_speed"        
+            if self.target_speed == acc_speed:
+                self.target_velocity_selector = "acc_speed"
+            elif self.target_speed == be_speed:
+                self.target_velocity_selector = "be_speed" # be speed is sometimes equals acc speed (in case of cruise behaviour)
+            elif self.target_speed == corner_speed:
+                self.target_velocity_selector = "corner_speed"
         # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
-        self.velocity_selector_pub.publish(target_velocity_selector)
+        self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
 
