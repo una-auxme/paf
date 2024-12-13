@@ -99,9 +99,9 @@ class ACC(CompatibleNode):
         # Current speed
         self.__current_velocity: float = None
         # Distance and speed from possible collsion object
-        self.obstacle_speed: tuple = None
+        self.obstacle_speed: float = 10
         # Obstacle distance
-        self.obstacle_distance: float = None
+        self.obstacle_distance: float = 50
         # Current speed limit
         self.speed_limit: float = None  # m/s
 
@@ -210,12 +210,15 @@ class ACC(CompatibleNode):
             publishes the desired speed to motion planning
             """
             if (
-                self.obstacle_distance is not None # often none
-                and self.obstacle_speed is not None # often none -> often does elif even if if-case would be necessary
+                # often none
+                self.obstacle_distance is not None
+                # often none -> often does elif even if if-case is necessary
+                and self.obstacle_speed is not None
                 and self.__current_velocity is not None
             ):
                 # If we have obstalce information,
                 # we can calculate the safe speed
+                safety_distance: float
                 safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity
                 )
