@@ -9,7 +9,7 @@
   - [Wait](#wait)
   - [Enter](#enter)
   - [Leave](#leave)
- 
+
 ## General
 
 The Intersection behaviour is used to control the vehicle when it encounters a intersection. It handles stop signs as well as traffic lights.

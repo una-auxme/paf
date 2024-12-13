@@ -2,21 +2,20 @@
 
 **Summary:** This file explains the Overtake behavior.
 
-- [Overtake Behavior](#overtake-behavior)
-  - [General](#general)
-  - [Overtake Ahead](#overtake-ahead)
-  - [Approach](#approach)
-  - [Wait](#wait)
-  - [Enter](#enter)
-  - [Leave](#leave)
- 
+- [General](#general)
+- [Overtake ahead](#overtake-ahead)
+- [Approach](#approach)
+- [Wait](#wait)
+- [Enter](#enter)
+- [Leave](#leave)
+
 ## General
 
 This behaviour is used to overtake an object in close proximity. This behaviour is currently not working and more like a initial prototype.
 
 ## Overtake ahead
 
-Checks whether there is a object in front of the car that needs overtaking. 
+Checks whether there is a object in front of the car that needs overtaking.
 
 Estimates whether the car would collide with the object soon. If that is the case a counter gets incremented. When that counter reaches 4 SUCCESS is returned. If the object is not blocking the trajectory, FAILURE is returned.
 

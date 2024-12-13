@@ -9,7 +9,7 @@
   - [Wait](#wait)
   - [Enter](#enter)
   - [Leave](#leave)
- 
+
 ## General
 
 This behaviour executes a lane change. It slows the vehicle down until the lane change point is reached and then proceeds to switch lanes.

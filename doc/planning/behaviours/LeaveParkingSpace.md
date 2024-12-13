@@ -4,7 +4,7 @@
 
 - [Leave Parking Space Behavior](#leaveparkingspace-behavior)
   - [General](#general)
- 
+
 ## General
 
 The leave parking space behaviour is only executed at the beginning of the simulation to leave the parking space.
