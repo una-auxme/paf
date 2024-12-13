@@ -179,8 +179,6 @@ class PurePursuitController(CompatibleNode):
             if min_dist > dist2ld > 0:
                 min_dist = dist2ld
                 min_dist_idx = i
-
-        self.loginfo(str(min_dist_idx))
         return min_dist_idx
 
     def rotate_vector_2d(self, vector, angle_rad):
