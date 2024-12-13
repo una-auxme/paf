@@ -116,7 +116,8 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.virtual_change_distance > target_dis and self.blocked:
             # too far
             rospy.loginfo(
-                f"Lane Change: still approaching, distance:{self.virtual_change_distance}"
+                f"Lane Change: still approaching, "
+                f"distance:{self.virtual_change_distance}"
             )
             self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
             return py_trees.common.Status.RUNNING
