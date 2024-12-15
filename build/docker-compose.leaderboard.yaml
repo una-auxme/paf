@@ -8,4 +8,11 @@ services:
     extends:
       file: agent_service.yaml
       service: agent
-    command: bash -c "sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && sudo chmod -R a+w ../ && python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"
+    ports:
+      # Reserved ports for the debugger
+      - "53000-53100:53000-53100"
+    command: |-
+      bash -c "sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && \
+      sudo chmod -R a+w ../ && sudo mkdir -p $${XDG_RUNTIME_DIR} && sudo chmod 0700 $${XDG_RUNTIME_DIR} && sudo chown -R ${USER_UID}:${USER_GID} $${XDG_RUNTIME_DIR} && \
+      (rqt_console &) && disown -a && \
+      python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/workspace/code/agent/src/agent/agent.py --host=$${CARLA_SIM_HOST} --track=MAP"

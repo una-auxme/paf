@@ -162,8 +162,10 @@ RUN source ~/.bashrc && pip install -r /workspace/requirements.txt
 # Add agent code
 COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 
+# For debugger
+ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src/code
 # Link code into catkin workspace
-RUN ln -s /workspace/code /catkin_ws/src
+RUN ln -s -T /workspace/code ${PAF_CATKIN_CODE_ROOT}
 
 # re-make the catkin workspace
 RUN source /opt/ros/noetic/setup.bash && catkin_make

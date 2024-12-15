@@ -1,6 +1,6 @@
 <launch>
   <arg name="role_name" default="hero" />
-  <arg name="control_loop_rate" default="0.05" /> 
+  <arg name="control_loop_rate" default="0.05" />
 
   <!-- just for Debugging/ Optimizing purposes -> Uncomment to use and see plots -->
   <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
@@ -58,10 +58,14 @@
 
       Image-Segmentation:
       - deeplabv3_resnet101
-      - yolov8x-seg 
+      - yolov8x-seg
+      - yolo11n-seg
+      - yolo11s-seg
+      - yolo11m-seg
+      - yolo11l-seg
       -->
 
-    <param name="model" value="rtdetr-l" />
+    <param name="model" value="yolo11n-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">
@@ -75,8 +79,14 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
- <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
+  <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
+
+  <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
+    <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
+    <param name="range_topic" value="/carla/hero/RADAR_range"/>
+  </node>
+
 </launch>
