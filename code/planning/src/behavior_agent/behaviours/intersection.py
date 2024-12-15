@@ -97,7 +97,9 @@ class Approach(py_trees.behaviour.Behaviour):
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         Gets the current traffic light status, stop sign status
-        and the stop line distance
+        and the stop line distance. Calcualtes a virtual stop line and
+        publishes a distance to it. Slows down car until virtual stop line
+        is reached when there is a red traffic light or a stop sign.
         :return: py_trees.common.Status.RUNNING, if too far from intersection
                  py_trees.common.Status.SUCCESS, if stopped in front of inter-
                  section or entered the intersection
@@ -145,7 +147,10 @@ class Approach(py_trees.behaviour.Behaviour):
             or (self.stop_sign_detected and not self.traffic_light_detected)
         ):
 
-            rospy.loginfo("slowing down!")
+            rospy.loginfo(
+                f"Intersection Approach: slowing down! Stop sign: "
+                f"{self.stop_sign_detected}, Light: {self.traffic_light_status}"
+            )
             self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
 
         # approach slowly when traffic light is green as traffic lights are
@@ -164,14 +169,14 @@ class Approach(py_trees.behaviour.Behaviour):
             self.traffic_light_distance > 150
         ):
             # too far
-            print("still approaching")
+            rospy.loginfo("Intersection still approaching")
             return py_trees.common.Status.RUNNING
         elif speed < convert_to_ms(2.0) and (
             (self.virtual_stopline_distance < target_distance)
             or (self.traffic_light_distance < 150)
         ):
             # stopped
-            print("stopped")
+            rospy.loginfo("Intersection Approach: stopped")
             return py_trees.common.Status.SUCCESS
         elif (
             speed > convert_to_ms(5.0)
@@ -180,6 +185,10 @@ class Approach(py_trees.behaviour.Behaviour):
         ):
 
             # drive through intersection even if traffic light turns yellow
+            rospy.loginfo(
+                f"Intersection Approach Light is green, light:"
+                f"{self.traffic_light_status}"
+            )
             return py_trees.common.Status.SUCCESS
         elif speed > convert_to_ms(5.0) and self.virtual_stopline_distance < 3.5:
             # running over line
@@ -189,7 +198,7 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_stopline_distance < target_distance
             and not self.stopline_detected
         ):
-            rospy.loginfo("Leave intersection!")
+            rospy.loginfo("Intersection Approach: Leave intersection!")
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.RUNNING
@@ -276,7 +285,7 @@ class Wait(py_trees.behaviour.Behaviour):
         """
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
 
-        # ADD FEATURE: Check if intersection is clear
+        # TODO: ADD FEATURE Check if intersection is clear
         lidar_data = None
         intersection_clear = True
         if lidar_data is not None:
@@ -292,7 +301,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 # Wait at traffic light
                 self.red_light_flag = True
                 self.green_light_time = rospy.get_rostime()
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
+                rospy.loginfo(f"Intersection Wait Light Status: {traffic_light_status}")
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return py_trees.common.Status.RUNNING
             elif (
@@ -300,7 +309,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 and traffic_light_status == "green"
             ):
                 # Wait approx 1s for confirmation
-                rospy.loginfo("Confirm green light!")
+                rospy.loginfo("Intersection Wait Confirm green light!")
                 return py_trees.common.Status.RUNNING
             elif self.red_light_flag and traffic_light_status != "green":
                 rospy.loginfo(f"Light Status: {traffic_light_status}" "-> prev was red")
@@ -310,7 +319,9 @@ class Wait(py_trees.behaviour.Behaviour):
                 rospy.get_rostime() - self.green_light_time > rospy.Duration(1)
                 and traffic_light_status == "green"
             ):
-                rospy.loginfo(f"Light Status: {traffic_light_status}")
+                rospy.loginfo(
+                    f"Driving through Intersection Light Status: {traffic_light_status}"
+                )
                 # Drive through intersection
                 return py_trees.common.Status.SUCCESS
             else:
