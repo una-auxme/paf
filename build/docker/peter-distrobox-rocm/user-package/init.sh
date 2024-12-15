@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-INIT_SETUP_DONE_FILE=${USER_PACKAGE_DIR}/.init_setup_done
-if [ -e ${INIT_SETUP_DONE_FILE} ]; then
+INIT_SETUP_DONE_FILE=${INTERNAL_WORKSPACE_DIR}/.init_setup_done
+if [ -e "${INIT_SETUP_DONE_FILE}" ]; then
   exit 0
 fi
 
@@ -14,47 +14,32 @@ if [ -f ~/.bashrc ]; then
 fi
 
 # Setup python venv
-USER_VENV_DIR=${INTERNAL_WORKSPACE_DIR}/venv
-${USER_PACKAGE_DIR}/create_venv.sh ${USER_VENV_DIR}
-source ${USER_VENV_DIR}/bin/activate
+echo "source ${INTERNAL_VENV_DIR}/bin/activate" >>~/.bashrc
+source "${INTERNAL_VENV_DIR}"/bin/activate
 
 # Setup additional dependencies
-echo ${CARLA_ROOT}/PythonAPI/carla >> ${USER_VENV_DIR}/lib/python3.8/site-packages/carla.pth
-echo ${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg >> ${USER_VENV_DIR}/lib/python3.8/site-packages/carla.pth
-echo ${SCENARIO_RUNNER_ROOT} >> ${USER_VENV_DIR}/lib/python3.8/site-packages/leaderboard.pth
-echo ${LEADERBOARD_ROOT} >> ${USER_VENV_DIR}/lib/python3.8/site-packages/leaderboard.pth
+echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV_DIR}"/lib/python3.8/site-packages/carla.pth
+echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV_DIR}"/lib/python3.8/site-packages/carla.pth
+echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV_DIR}"/lib/python3.8/site-packages/leaderboard.pth
+echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV_DIR}"/lib/python3.8/site-packages/leaderboard.pth
 
 # ROS setup
-echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+echo "source /opt/ros/noetic/setup.bash" >>~/.bashrc
 source /opt/ros/noetic/setup.bash
 
-cd ${ROOT_CATKIN_WS}
+cd "${ROOT_CATKIN_WS}"
 catkin_make
-echo "source ${ROOT_CATKIN_WS}/devel/setup.bash" >> ~/.bashrc
-source ${ROOT_CATKIN_WS}/devel/setup.bash
+echo "source ${ROOT_CATKIN_WS}/devel/setup.bash" >>~/.bashrc
+source "${ROOT_CATKIN_WS}/devel/setup.bash"
 
 # Workspace setup
-ln -s -T ${WORKSPACE_DIR} ${INTERNAL_WORKSPACE_DIR}/workspace
 USER_CATKIN_WS=${INTERNAL_WORKSPACE_DIR}/catkin_ws
-mkdir -p ${USER_CATKIN_WS}
-ln -s -T ${WORKSPACE_DIR}/code ${USER_CATKIN_WS}/src
-cd ${USER_CATKIN_WS}
-catkin_make
-echo "source ${USER_CATKIN_WS}/devel/setup.bash" >> ~/.bashrc
-echo "export PAF_CATKIN_CODE_ROOT=${USER_CATKIN_WS}/src" >> ~/.bashrc
-source ${USER_CATKIN_WS}/devel/setup.bash
+mkdir -p "${USER_CATKIN_WS}"
+ln -s -T "${WORKSPACE_DIR}"/code "${USER_CATKIN_WS}"/src
+cd "${USER_CATKIN_WS}"
+echo "source ${USER_CATKIN_WS}/devel/setup.bash" >>~/.bashrc
+echo "export PAF_CATKIN_CODE_ROOT=${USER_CATKIN_WS}/src" >>~/.bashrc
 
-# Enable services
-if [ -n "${XDG_CONFIG_HOME}" ]; then
-  if [ -d "${XDG_CONFIG_HOME}/services" ]; then
-    rm -r "${XDG_CONFIG_HOME}/services"
-  elif [ -h "${XDG_CONFIG_HOME}/services" ]; then
-    rm "${XDG_CONFIG_HOME}/services"
-  fi
+touch "${INIT_SETUP_DONE_FILE}"
 
-  ln -s -T ${USER_PACKAGE_DIR}/services "${XDG_CONFIG_HOME}/services"
-fi
-
-touch ${INIT_SETUP_DONE_FILE}
-
-echo "alias leaderboard=${USER_PACKAGE_DIR}/run_leaderboard.sh" >> ~/.bashrc
+echo "alias leaderboard=${USER_PACKAGE_DIR}/run_leaderboard.sh" >>~/.bashrc

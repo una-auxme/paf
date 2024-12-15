@@ -6,6 +6,7 @@ kill_leaderboard() {
   pkill -f -SIGKILL /opt/leaderboard/leaderboard/leaderboard_evaluator.py
   pkill -f -SIGKILL CarlaUE4-Linux-Shipping
   rosnode kill -a
+  pkill -f -SIGTERM run_roscore
   sleep 2
   pkill -f -SIGKILL run_roscore
   exit 0
@@ -16,11 +17,14 @@ trap kill_leaderboard EXIT INT TERM
 cd ~
 rm -rf ~/log/ros
 
-${USER_PACKAGE_DIR}/run_roscore.sh &
+cd "/${INTERNAL_WORKSPACE_DIR}/catkin_ws"
+catkin_make
 
-${USER_PACKAGE_DIR}/run_carla.sh &
+"${USER_PACKAGE_DIR}/run_roscore.sh" &
 
-python3 ${USER_PACKAGE_DIR}/wait_for_carla.py
+"${USER_PACKAGE_DIR}/run_carla.sh" &
+
+python3 "${USER_PACKAGE_DIR}/wait_for_carla.py"
 
 rqt_console &
 
@@ -45,5 +49,5 @@ python3 ${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator.py \
 trap kill_leaderboard EXIT INT TERM
 
 while [ True ]; do
-sleep 5
+  sleep 1
 done

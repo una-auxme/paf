@@ -1,19 +1,19 @@
 #!/bin/bash
-chmod +x ${USER_PACKAGE_DIR}/init.sh
-username=$(id -u peter -n)
-groupname=$(id -g peter -n)
+chmod +x "${USER_PACKAGE_DIR}"/init.sh
 
-CHECK_CHOWN = ${USER_PACKAGE_DIR}/check_chown_path.sh
-chown ${username}:${groupname} ${CHECK_CHOWN}
+if [ -z "${DISTROBOX_USERNAME}" ] || [ -z "${USER_PACKAGE_DIR}" ]; then
+  echo DISTROBOX_USERNAME and USER_PACKAGE_DIR have to be set for this container to initialize.
+  exit 1
+fi
 
-${CHECK_CHOWN} ${USER_PACKAGE_DIR}
-chown -R ${username}:${groupname} ${USER_PACKAGE_DIR}
-${CHECK_CHOWN} ${INTERNAL_WORKSPACE_DIR}
-mkdir -p ${INTERNAL_WORKSPACE_DIR}
-chown ${username}:${groupname} ${INTERNAL_WORKSPACE_DIR}
-${CHECK_CHOWN} ${PIP_CACHE_DIR}
-chown -R ${username}:${groupname} ${PIP_CACHE_DIR}
-${CHECK_CHOWN} ${ROOT_CATKIN_WS}
-chown -R ${username}:${groupname} ${ROOT_CATKIN_WS}
+username=$(id -u "${DISTROBOX_USERNAME}" -n)
+groupname=$(id -g "${DISTROBOX_USERNAME}" -n)
 
-runuser -u ${username} -g ${groupname} /${USER_PACKAGE_DIR}/init.sh
+CHECK_CHOWN=${USER_PACKAGE_DIR}/check_chown_path.sh
+
+${CHECK_CHOWN} "${INTERNAL_WORKSPACE_DIR}"
+chown -R "${username}":"${groupname}" "${INTERNAL_WORKSPACE_DIR}"
+${CHECK_CHOWN} "${ROOT_CATKIN_WS}"
+chown -R "${username}":"${groupname}" "${ROOT_CATKIN_WS}"
+
+runuser -u "${username}" -g "${groupname}" "${USER_PACKAGE_DIR}"/init.sh
