@@ -1,7 +1,7 @@
 # Overview of the Lanedetection Node
 
 This Document gives a briev overview over the Lanedetection Node.
-The Lanedetection Node is responsible for detecting the Lane markings and dirveable Area in a given Image and publish the results.
+The Lanedetection Node is responsible for detecting the Lane markings and driveable Area in a given Image and publish the results.
 
 ---
 
