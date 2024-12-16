@@ -145,7 +145,7 @@ class VehicleController(CompatibleNode):
                 return
 
             # Velocities over 5 m/s = use Stanley, else use PurePuresuit
-            if self.__velocity > 5:
+            if False:  # self.__velocity > 5:
                 steer = self._s_steer
             else:
                 # while doing the unstuck routine we don't want to steer
