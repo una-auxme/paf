@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import ros_numpy

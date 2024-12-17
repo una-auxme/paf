@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="mapping_visualization" type="debug_wrapper.py" name="mapping_visualization" output="screen" args="--debug_node=visualization.py --debug_port=53002">
+  <node pkg="mapping_visualization" type="visualization.py" name="mapping_visualization" output="screen">
   </node>
 
 </launch>

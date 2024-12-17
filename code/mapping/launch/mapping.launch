@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="mapping" type="debug_wrapper.py" name="mapping_data_integration" output="screen" args="--debug_node=mapping_data_integration.py --debug_port=53000">
+  <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration" output="screen">
   </node>
 
 </launch>

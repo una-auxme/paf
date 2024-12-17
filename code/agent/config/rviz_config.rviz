@@ -62,9 +62,9 @@ Visualization Manager:
       Visibility:
         Grid: false
         Imu: false
+        Intermediate layer: true
         Lidar: false
         Lidar_filtered: false
-        MarkerArray: true
         Path: false
         Radar: false
         Value: true
@@ -110,7 +110,7 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Name: Lidar
       Position Transformer: XYZ
-      Queue Size: 10
+      Queue Size: 2
       Selectable: true
       Size (Pixels): 2
       Size (m): 0.009999999776482582
@@ -138,7 +138,7 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Name: Radar
       Position Transformer: XYZ
-      Queue Size: 10
+      Queue Size: 2
       Selectable: true
       Size (Pixels): 5
       Size (m): 0.009999999776482582
@@ -202,11 +202,11 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /marker_array
-      Name: MarkerArray
+      Marker Topic: /paf/hero/mapping/marker_array
+      Name: Intermediate layer
       Namespaces:
-        {}
-      Queue Size: 100
+        m: true
+      Queue Size: 2
       Value: true
   Enabled: true
   Global Options:
@@ -236,7 +236,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 125.36181640625
+      Distance: 22.39063835144043
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -252,9 +252,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6353983879089355
+      Pitch: 0.8247969746589661
       Target Frame: <Fixed Frame>
-      Yaw: 2.847320318222046
+      Yaw: 2.7423195838928223
     Saved: ~
 Window Geometry:
   Camera:
