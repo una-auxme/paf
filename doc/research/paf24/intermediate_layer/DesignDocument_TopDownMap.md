@@ -102,7 +102,7 @@ Negative:
 - 2D top-down map. The height(z) dimension is mostly useless for collision detection and path planning
 - A map dataframe includes the car's speeds at the time the map was created. The heading/direction are the same as the x-axis
 
-  Solution: Add the hero car as the first entity of the map: Todo: debate
+  Solution: Add the hero car as the first entity of the map
 - A map dataframe should have a timestamp when it was created. The creation time is the time when all data for the map of the current step has been collected
   Entities also have timestamps of their own → see attributes
 - The map consists out of entities. Entities have the following attributes:
@@ -112,6 +112,7 @@ Negative:
       - points in the local coordinates of the entity
     - Circle?: diameter
     - Line?: Rectangles might be used as lines
+    - Shape offset to the center of the entity
   - ~~Optional: height and distance to ground, only for visualization~~
   - Timestamp:
 

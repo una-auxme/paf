@@ -11,7 +11,11 @@ from mapping import msg
 
 @dataclass(init=False, eq=False)
 class _Coord2:
-    """Homogenous 2 dimensional coordinate"""
+    """Homogenous 2 dimensional coordinate
+
+    This base class should be abstract,
+    but cython does not support the ABC superclass and decorators
+    """
 
     # Matrix with shape (3)
     _matrix: npt.NDArray[np.float64]
@@ -85,13 +89,13 @@ class Vector2(_Coord2):
         return Vector2(self._matrix / self.length())
 
     def angle_to(self, other: "Vector2") -> float:
-        """Calculates that angle to *other*
+        """Calculates the angle to *other*
 
         Args:
             other (Vector2): _description_
 
         Returns:
-            float: angle in radians. Lies in interval [-pi,pi].
+            float: angle in radians. Always in interval [-pi,pi].
             TODO: define if angle is cw or ccw depending on sign
         """
         div = self._matrix.dot(other._matrix) / self.length() * other.length()

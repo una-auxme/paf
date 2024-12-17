@@ -24,7 +24,7 @@ class Visualization(CompatibleNode):
         super().__init__("mapping_visualization")
 
         self.marker_publisher: Publisher = self.new_publisher(
-            MarkerArray, "/marker_array", qos_profile=1
+            MarkerArray, "/paf/hero/mapping/marker_array", qos_profile=1
         )
 
         self.filter_is_collider = False
@@ -40,7 +40,7 @@ class Visualization(CompatibleNode):
         self.new_service(SetBool, "vis/set_is_ignored", self.set_is_ignored_filter)
 
         self.new_subscription(
-            topic=self.get_param("~map_topic", "/paf/hero/mapping_init_data"),
+            topic=self.get_param("~map_topic", "/paf/hero/mapping/init_data"),
             msg_type=MapMsg,
             callback=self.map_callback,
             qos_profile=1,
@@ -62,7 +62,7 @@ class Visualization(CompatibleNode):
         marker.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
         marker.ns = "m"
         marker.id = id
-        marker.lifetime = Duration.from_sec(0.25)
+        marker.lifetime = Duration.from_sec(1.25 / 20.0)
 
         return marker
 

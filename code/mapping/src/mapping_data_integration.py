@@ -17,6 +17,14 @@ from sensor_msgs.msg import PointCloud2
 
 
 class MappingDataIntegrationNode(CompatibleNode):
+    """Creates the initial map data frame based on all kinds of sensor data
+
+    Sends this map off to Filtering and other consumers (planning, acting)
+
+    This node sends the maps off at a fixed rate.
+    (-> It buffers incoming sensor data slightly)
+    """
+
     lidar_data: Optional[PointCloud2] = None
 
     def __init__(self, name, **kwargs):
@@ -30,7 +38,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
-            topic=self.get_param("~map_init_topic", "/paf/hero/mapping_init_data"),
+            topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
         self.rate = 1.0 / 20.0
