@@ -10,7 +10,7 @@ import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
-
+from std_msgs.msg import Float32MultiArray
 import struct
 
 
@@ -29,6 +29,9 @@ class RadarNode:
         """
 
         dataarray = pointcloud2_to_array(data)
+
+        result = get_lead_vehicle_info(dataarray)
+        self.range_velocity_radar_publisher.publish(result)
 
         # radar position z=0.7
         dataarray = filter_data(dataarray, min_z=-0.6)
@@ -87,6 +90,21 @@ class RadarNode:
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
+            queue_size=10,
+        )
+        self.range_velocity_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~range_velocity_topic",
+                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
+            ),
+            Float32MultiArray,
+            queue_size=10,
+        )
+        self.lead_vehicel_marker_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
+            ),
+            Marker,
             queue_size=10,
         )
         rospy.Subscriber(
@@ -477,7 +495,7 @@ def clear_old_markers(marker_array, max_id):
         MarkerArray: The updated MarkerArray with old markers removed.
     """
     for marker in marker_array.markers:
-        if marker.id > max_id:
+        if marker.id >= max_id:
             marker.action = Marker.DELETE
     return marker_array
 
@@ -519,6 +537,65 @@ def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
             )
 
     return json.dumps(cluster_info)
+
+
+def get_lead_vehicle_info(radar_data, lane_width=3.5):
+    """_summary_
+
+    Args:
+        radar_data (_type_): _description_
+        lane_width (float, optional): _description_. Defaults to 3.5.
+
+    Returns:
+        _type_: _description_
+    """
+    # forward_points = radar_data[
+    #     (radar_data[:, 0] > 0)  # Vor dem Sensor (positive x-Werte)
+    #     & (np.abs(radar_data[:, 1]) < lane_width / 2)  # Innerhalb der Spurbreite
+    # ]
+
+    radar_data = filter_data(
+        radar_data, min_x=3, min_y=-1, max_y=1, min_z=-0.6, max_z=3
+    )
+
+    lead_vehicle_info = Float32MultiArray()
+
+    # Falls keine Punkte gefunden wurden
+    if len(radar_data) == 0:
+        lead_vehicle_info.data = [None, None]
+        return lead_vehicle_info
+        # return {"distance": None, "velocity": None}
+
+    # Punkt mit der kleinsten Reichweite (range) auswählen
+    closest_point = radar_data[np.argmin(radar_data[:, 0])]
+
+    # Gib Distanz (range) und Geschwindigkeit (velocity) zurück
+    lead_vehicle_info.data = [closest_point[0], closest_point[3]]
+
+    # Marker erstellen, um den Punkt in RViz anzuzeigen
+    marker = Marker()
+    marker.header.frame_id = "hero/RADAR"  # Setze das Koordinatensystem (Frame)
+    marker.header.stamp = rospy.Time.now()
+    marker.ns = "lead_vehicle_marker"
+    marker.id = 500  # Jede Instanz des Markers braucht eine eindeutige ID
+    marker.type = Marker.SPHERE  # Marker-Typ: SPHERE
+    marker.action = Marker.ADD
+    marker.pose.position.x = closest_point[0]  # x-Position des Punkts
+    marker.pose.position.y = closest_point[1]  # y-Position des Punkts
+    marker.pose.position.z = closest_point[2]  # z-Position des Punkts
+    marker.scale.x = 1.0  # Größe der Kugel
+    marker.scale.y = 1.0
+    marker.scale.z = 1.0
+    marker.color.r = 1.0  # Rot-Farbe
+    marker.color.g = 0.0
+    marker.color.b = 0.0
+    marker.color.a = 1.0  # Sichtbarkeit
+
+    # Publisher für den Marker erstellen (wird einmalig erstellt)
+    radar_node.lead_vehicel_marker_publisher.publish(marker)
+
+    return lead_vehicle_info
+    # return {"distance": closest_point[3], "velocity": closest_point[4]}
 
 
 if __name__ == "__main__":
