@@ -9,11 +9,18 @@ from visualization_msgs.msg import Marker
 
 @dataclass
 class Shape2D:
-    def check_collision(self, other) -> bool:
-        raise NotImplementedError
+    """A 2 dimensional shape
+
+    This base class should be abstract,
+    but cython does not support the ABC superclass and decorators
+    """
 
     @staticmethod
     def from_ros_msg(m: msg.Shape2D) -> "Shape2D":
+        """Creates a shape from m
+
+        Note that the returned shape will be a subclass of Shape2D
+        """
         shape_type = None
         msg_type_lower = m.type_name.lower()
         if msg_type_lower in _shape_supported_classes_dict:
@@ -37,6 +44,11 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
         return msg.Shape2D(type_name=type_name)
 
     def to_marker(self) -> Marker:
+        """Creates an ROS marker based on this shape
+
+        Returns:
+            Marker: ROS marker message
+        """
         m = Marker()
         m.pose.position.z = 0.0
         m.scale.z = 1.0
@@ -45,11 +57,13 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
 
 @dataclass
 class Rectangle(Shape2D):
+    """Rectangle with width and height in meters
+
+    It's center is based on the entity's transform this shape is attached to
+    """
+
     length: float
     width: float
-
-    def check_collision(self, other) -> bool:
-        return super().check_collision(other)
 
     @staticmethod
     def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
@@ -74,10 +88,12 @@ class Rectangle(Shape2D):
 
 @dataclass
 class Circle(Shape2D):
-    radius: float
+    """Circle with radius in meters
 
-    def check_collision(self, other) -> bool:
-        return super().check_collision(other)
+    It's center is based on the entity's transform this shape is attached to
+    """
+
+    radius: float
 
     @staticmethod
     def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":

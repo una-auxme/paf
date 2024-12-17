@@ -11,6 +11,8 @@ from mapping import msg
 
 @dataclass
 class Map:
+    """2 dimensional map for the intermediate layer"""
+
     timestamp: Time = Time()
     entities: List[Entity] = field(default_factory=list)
 

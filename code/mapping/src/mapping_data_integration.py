@@ -51,9 +51,9 @@ class MappingDataIntegrationNode(CompatibleNode):
             if z < -1.5 or z > 1.0:
                 # Ignore street level lidar points and stuff above
                 continue
-            # if random.random() < 0.9:
-            #     # Get rid of points because performance
-            #     continue
+            if random.random() < 0.9:
+                # Get rid of points because performance
+                continue
             v = Vector2.new(x, y)
             transform = Transform2D.new_translation(v)
             flags = Flags(is_collider=True)

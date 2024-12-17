@@ -3,6 +3,7 @@ import cython
 
 import numpy as np
 import numpy.typing as npt
+import math
 
 from geometry_msgs import msg as geometry_msgs
 from mapping import msg
@@ -73,10 +74,28 @@ class Vector2(_Coord2):
     Receives only the rotation when transformed with a Transform2D"""
 
     def length(self) -> float:
-        raise NotImplementedError
+        return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+
+    def normalized(self) -> "Vector2":
+        """Returns this direction Vector with length 1.0
+
+        Returns:
+            Vector2: Vector with length 1.0
+        """
+        return Vector2(self._matrix / self.length())
 
     def angle_to(self, other: "Vector2") -> float:
-        raise NotImplementedError
+        """Calculates that angle to *other*
+
+        Args:
+            other (Vector2): _description_
+
+        Returns:
+            float: angle in radians. Lies in interval [-pi,pi].
+            TODO: define if angle is cw or ccw depending on sign
+        """
+        div = self._matrix.dot(other._matrix) / self.length() * other.length()
+        return math.acos(div)
 
     @staticmethod
     def new(x: float, y: float) -> "Vector2":
@@ -117,12 +136,30 @@ class Transform2D:
         self._matrix = matrix
 
     def translation(self) -> Vector2:
+        """Returns only the translation that this Transform applies
+
+        Returns:
+            Vector2: translation
+        """
         m = self._matrix[:, 2]
         m = m / m[2]
         return Vector2(m)
 
+    def inverse(self) -> "Transform2D":
+        """Returns an inverted Transformation matrix
+
+        Returns:
+            Transform2D: Inverted Transformation matrix
+        """
+        return Transform2D(np.linalg.inv(self._matrix))
+
     @staticmethod
     def identity() -> "Transform2D":
+        """Returns the identity transform (no transformation)
+
+        Returns:
+            Transform2D: Identity transform
+        """
         return Transform2D(matrix=np.eye(3, dtype=np.float64))
 
     @staticmethod
@@ -130,7 +167,8 @@ class Transform2D:
         """Returns a transformation matrix consisting of a rotation around `angle`
 
         Args:
-            angle (float): Rotation angle in radians TODO: define if angle is cw or ccw
+            angle (float): Rotation angle in radians
+            TODO: define if angle is cw or ccw depending on sign
         """
         c = np.cos(angle)
         s = np.sin(angle)
@@ -158,6 +196,7 @@ class Transform2D:
 
         Args:
             angle (float): Rotation angle in radians
+            TODO: define if angle is cw or ccw depending on sign
             v (Vector2): Translation vector
         """
         transform = Transform2D.new_rotation(angle)
