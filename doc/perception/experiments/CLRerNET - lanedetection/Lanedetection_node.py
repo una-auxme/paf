@@ -4,25 +4,18 @@ import os
 from ros_compatibility.node import CompatibleNode
 
 from rospy.numpy_msg import numpy_msg
-
-# import rospy
-
-# import numpy as np
 import ros_compatibility as roscomp
 
 # import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header
-
 from cv_bridge import CvBridge
 
 # for the lane detection model
 import torch
 import cv2
-
 import time
 import subprocess
-
 import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
 
@@ -31,10 +24,6 @@ from libs.utils.visualizer import visualize_lanes
 from libs.datasets.pipelines import Compose
 from libs.datasets.metrics.culane_metric import interp
 from mmcv.parallel import collate, scatter
-
-# for image preprocessing
-# from torchvision import transforms
-# from PIL import Image
 
 
 class Lanedetection_node(CompatibleNode):

@@ -2,15 +2,14 @@
 
 **Summary:** This page provides an overview of the current status of the Vehicle Controller Component.
 
-- [Overview of the Vehicle Controller Component](#overview-of-the-vehicle-controller-component)
-  - [General Introduction to the Vehicle Controller Component](#general-introduction-to-the-vehicle-controller-component)
-  - [Vehicle Controller Output](#vehicle-controller-output)
-  - [Emergency Brake](#emergency-brake)
-  - [Unstuck Routine](#unstuck-routine)
+- [General Introduction to the Vehicle Controller Component](#general-introduction-to-the-vehicle-controller-component)
+- [Vehicle Controller Output](#vehicle-controller-output)
+- [Emergency Brake](#emergency-brake)
+- [Unstuck Routine](#unstuck-routine)
 
 ## General Introduction to the Vehicle Controller Component
 
-The [Vehicle Controller](../../code/acting/src/acting/vehicle_controller.py) collects all information from the other controllers in Acting ```throttle```, ```brake```, ```pure_puresuit_steer``` and ```stanley_steer```
+The [Vehicle Controller](../../code/control/src/vehicle_controller.py) collects all information from the other controllers in Control ```throttle```, ```brake```, ```pure_puresuit_steer``` and ```stanley_steer```
 to fill them into the CARLA-Vehicle Command Message ```vehicle_control_cmd``` and send this to the CARLA simulator.
 
 It also reacts to some special case - Messages from Planning, such as emergency-braking or executing the unstuck-routine.
@@ -50,7 +49,7 @@ This is done to prevent firing the emergency brake each time the main loop is re
 
 Comparison between normal braking and emergency braking:
 
-![Braking Comparison](/doc/assets/acting/emergency_brake_stats_graph.png)
+![Braking Comparison](/doc/assets/control/emergency_brake_stats_graph.png)
 
 _Please be aware, that this bug abuse might not work in newer updates!_
 
@@ -65,5 +64,5 @@ Inside the Unstuck Behavior we want drive backwards without steering, which is w
 It's also important to note, that we always receive a target_speed of -3 when in the unstuck routine. Also the __reverse attribute is True in this case.
 
 This is the only case we can drive backwards for now. When implementing an exhausting backwards driving approach this has to be kept in mind, because we DO NOT try to drive at the speed of -3 m/s. We only use the -3 as a keyword for driving backwards at full throttle for a specefic amount of time!
-(see [velocity_controller.py](/code/acting/src/acting/velocity_controller.py)
+(see [velocity_controller.py](/code/control/src/velocity_controller.py)
 and [maneuvers.py](/code/planning/src/behavior_agent/behaviours/maneuvers.py))
