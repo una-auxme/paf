@@ -24,10 +24,10 @@ class Motion2D:
 
     linear_motion: Vector2 = field(default_factory=lambda: Vector2.zero())
     """Linear motion
-    
+
     Direction vector based on the x-axis/heading of the entity
     (which is furthermore based on the entity's transform)
-    
+
     The length of the vector is the velocity in TODO: Speed unit? km/h?
     """
     angular_velocity: float = 0.0
@@ -194,12 +194,12 @@ class Entity:
     """
     flags: Flags = field(default_factory=Flags)
     """Flags (Categories) this entity is in
-    
+
     Filter for them with the matches_filter(f) function and a FlagFilter
     """
     uuid: UUID = uuid4()
     """Unique id of the entity in the map, set by the map
-    
+
     If the entity is tracked, this id is persistent across map data frames
     """
     sensor_id: List[str] = field(default_factory=list)
@@ -220,7 +220,7 @@ class Entity:
     """
     tracking_info: Optional[TrackingInfo] = None
     """Hold the tracking information for this entity
-    
+
     If this entity is supposed to be tracked, tracking_info must not be None"""
 
     def matches_filter(self, f: FlagFilter) -> bool:
