@@ -603,11 +603,5 @@ class VisionNode(CompatibleNode):
 
 if __name__ == "__main__":
     roscomp.init("VisionNode")
-
-    try:
-        node = VisionNode("VisionNode")
-        node.run()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        roscomp.shutdown()
+    node = VisionNode("VisionNode")
+    node.run()
