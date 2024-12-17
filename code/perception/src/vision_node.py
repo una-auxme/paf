@@ -3,7 +3,6 @@
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import torch
-import torchvision
 from torchvision.models.segmentation import (
     DeepLabV3_ResNet101_Weights,
     deeplabv3_resnet101,
@@ -340,20 +339,9 @@ class VisionNode(CompatibleNode):
             img_msg=image, desired_encoding="passthrough"
         )
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        image_y, image_x, ch_num = cv_image.shape
 
         # run model prediction
         output = self.model(cv_image, half=True, verbose=False)
-
-        masks = output[0].masks.data
-        num_classes, pred_y, pred_x = masks.shape
-        resized_masks = t.functional.resize(
-            img=masks,
-            size=(image_y, image_x),
-            interpolation=t.InterpolationMode.NEAREST,
-        )
-
-        resized_masks = torch.where(resized_masks > 0.5, True, False)
 
         # handle distance of objects
 
@@ -457,7 +445,6 @@ class VisionNode(CompatibleNode):
             width=3,
             font_size=12,
         )
-        box = draw_segmentation_masks(box, resized_masks, alpha=0.5)
         np_box_img = np.transpose(box.detach().numpy(), (1, 2, 0))
         box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
         return box_img
