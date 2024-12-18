@@ -100,7 +100,7 @@ class Lanedetection_node(CompatibleNode):
         applies lane detection and Driveable area detection to given ImageMsg
         """
         # free up cuda memory
-        if self.device== "cuda":
+        if self.device == "cuda":
             torch.cuda.empty_cache()
 
         image, original_image = self.preprocess_image(ImageMsg)
