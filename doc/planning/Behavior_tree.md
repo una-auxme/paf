@@ -36,9 +36,9 @@ For visualization at runtime you might want to also install this [rqt-Plugin](ht
 ## Our behaviour tree
 
 The following section describes the behaviour tree we use for normal driving using all functionality provided by the agent. In the actual implementation this is part of a bigger tree, that handles things like writing topics to the blackboard, starting and finishing the decision tree.
-The following tree is a simplification.
+The following tree is a simplification. The draw.io xml file to update this diagram can be found inside /assets/planning/.
 
-![Simple Tree](../assets/planning/simple_final_tree.png)
+![Simple Tree](../assets/planning/behaviour_tree.PNG)
 
 ### Behavior
 
