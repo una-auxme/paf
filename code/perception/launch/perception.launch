@@ -104,6 +104,15 @@
   </node>
 
   <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
+    <param name="camera_x" value="0.0"/>
+    <param name="camera_y" value="0.0"/>
+    <param name="camera_z" value="1.7"/>
+    <param name="camera_roll" value="0.0"/>
+    <param name="camera_pitch" value="0.0"/>
+    <param name="camera_yaw" value="0.0"/>
+    <param name="camera_width" value="1280"/>
+    <param name="camera_height" value="720"/>
+    <param name="camera_fov" value="100"/>
   </node>
 
 
