@@ -258,6 +258,7 @@ class VisionNode(CompatibleNode):
         ):
             side = header_id.split("/")[2]
             if side == "Center":
+                print("publish")
                 self.publisher_center.publish(img_msg)
             if side == "Back":
                 self.publisher_back.publish(img_msg)
@@ -445,9 +446,12 @@ class VisionNode(CompatibleNode):
         image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
 
         # proceed with traffic light detection
+        print("before")
         if 9 in output[0].boxes.cls:
+            print("in")
             asyncio.run(self.process_traffic_lights(output[0], cv_image, image.header))
 
+        print("after")
         # draw bounding boxes and distance values on image
         c_boxes = torch.stack(c_boxes)
         drawn_images = draw_bounding_boxes(
