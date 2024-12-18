@@ -66,7 +66,7 @@ class Lanedetection_node(CompatibleNode):
 
     def setup_dist_array_subscription(self):
         """
-        sets up a subscription to the lidar
+        sets up a subscription to the lidar distance array
         depth image of the selected camera angle
         """
 
@@ -88,7 +88,7 @@ class Lanedetection_node(CompatibleNode):
         )
 
     def setup_driveable_area_publisher(self):
-        """sets up a publisher for the lane mask
+        """sets up a publisher for the driveable area mask
         topic: /Center/lane_mask
         """
         self.driveable_area_publisher = self.new_publisher(
@@ -127,7 +127,7 @@ class Lanedetection_node(CompatibleNode):
         the lidar distance node with the latest depth image.
 
         Args:
-            dist_array (image msg): Depth image frim Lidar Distance Node
+            dist_array (image msg): Depth image from Lidar Distance Node
         """
         # callback function for lidar depth image
         # since frequency is lower than image frequency
