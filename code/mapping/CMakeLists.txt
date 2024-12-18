@@ -135,14 +135,28 @@ CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 # Using --install-lib ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../ for the setup might make sense, but for some reason it does not lead to a working installation when building in docker (works when manually running catkin_make)
 set(PAF_MAPPING_COMMON_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mapping_common_setup)
 add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
-  COMMAND ${PYTHON_EXECUTABLE} setup.py install --user
+  COMMAND ${PYTHON_EXECUTABLE} cmake_setup.py
   COMMAND mkdir -p ${PAF_MAPPING_COMMON_BUILD_DIR} && ${CMAKE_COMMAND} -E touch ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.py ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.pxd ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/*.py
+  DEPENDS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/*.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.pxd
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/.debug_enabled
+  BYPRODUCTS
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/__init__.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/shape.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/transform.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/build 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/dist 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common.egg-info
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mapping_common.egg-info
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules
 )
 
 add_custom_target(mapping_common ALL
-DEPENDS ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
+  DEPENDS ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
 )
 
 ## Specify additional locations of header files

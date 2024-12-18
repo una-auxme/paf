@@ -27,6 +27,12 @@ flowchart TD
 
 This information is kept up-to-date with the package
 
+## Debugging
+
+The debugger is unable to debug the mapping_common package when it is compiled.
+
+To disable the compilation, you can replace the `False` in [./ext_modules/.debug_enabled](./ext_modules/.debug_enabled) with `True`. Rerun catkin_make after that.
+
 ## Tests
 
 This package contains pytest based unit tests at [./tests/mapping_common](./tests/mapping_common/)
