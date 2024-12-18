@@ -30,11 +30,10 @@ class RadarNode:
 
         dataarray = pointcloud2_to_array(data)
 
-        result = get_lead_vehicle_info(dataarray)
-        self.range_velocity_radar_publisher.publish(result)
+        get_lead_vehicle_info(dataarray)
 
         # radar position z=0.7
-        dataarray = filter_data(dataarray, min_z=-0.6)
+        dataarray = filter_data(dataarray, min_z=-0.45)
 
         clustered_data = cluster_data(dataarray)
 
@@ -181,7 +180,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.8, min_samples=3):
+def cluster_data(data, eps=0.3, min_samples=3):
     """
     Clusters the radar data using the DBSCAN algorithm
 
@@ -539,63 +538,65 @@ def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
     return json.dumps(cluster_info)
 
 
-def get_lead_vehicle_info(radar_data, lane_width=3.5):
-    """_summary_
+def get_lead_vehicle_info(radar_data):
+    """
+    Processes radar data to identify and publish information about the lead vehicle.
+
+    This function filters radar points to identify the closest point within a specified
+    region, representing the lead vehicle. It publishes the distance and velocity of the
+    lead vehicle as a `Float32MultiArray` message and also visualizes the lead vehicle
+    using a marker in RViz.
 
     Args:
-        radar_data (_type_): _description_
-        lane_width (float, optional): _description_. Defaults to 3.5.
+        radar_data (np.ndarray): Radar data represented as a 2D NumPy array where each
+                                 row corresponds to a radar point with the format
+                                 [x, y, z, velocity].
 
     Returns:
-        _type_: _description_
+        None: The function publishes data to relevant ROS topics and does not return
+        any value.
     """
-    # forward_points = radar_data[
-    #     (radar_data[:, 0] > 0)  # Vor dem Sensor (positive x-Werte)
-    #     & (np.abs(radar_data[:, 1]) < lane_width / 2)  # Innerhalb der Spurbreite
-    # ]
 
+    # radar is positioned at z = 0.7
     radar_data = filter_data(
-        radar_data, min_x=3, min_y=-1, max_y=1, min_z=-0.6, max_z=3
+        radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
     )
 
     lead_vehicle_info = Float32MultiArray()
 
-    # Falls keine Punkte gefunden wurden
+    # Handle the case where no valid radar points are found
     if len(radar_data) == 0:
-        lead_vehicle_info.data = [None, None]
-        return lead_vehicle_info
-        # return {"distance": None, "velocity": None}
+        lead_vehicle_info.data = []
+        radar_node.range_velocity_radar_publisher.publish(lead_vehicle_info)
+        return
 
-    # Punkt mit der kleinsten Reichweite (range) auswählen
+    # Identify the closest point (lead vehicle candidate) based on the x-coordinate
     closest_point = radar_data[np.argmin(radar_data[:, 0])]
 
-    # Gib Distanz (range) und Geschwindigkeit (velocity) zurück
     lead_vehicle_info.data = [closest_point[0], closest_point[3]]
 
-    # Marker erstellen, um den Punkt in RViz anzuzeigen
+    # Create a marker for visualizing the lead vehicle in RViz
     marker = Marker()
-    marker.header.frame_id = "hero/RADAR"  # Setze das Koordinatensystem (Frame)
+    marker.header.frame_id = "hero/RADAR"
     marker.header.stamp = rospy.Time.now()
     marker.ns = "lead_vehicle_marker"
-    marker.id = 500  # Jede Instanz des Markers braucht eine eindeutige ID
-    marker.type = Marker.SPHERE  # Marker-Typ: SPHERE
+    marker.id = 500
+    marker.type = Marker.SPHERE
     marker.action = Marker.ADD
-    marker.pose.position.x = closest_point[0]  # x-Position des Punkts
-    marker.pose.position.y = closest_point[1]  # y-Position des Punkts
-    marker.pose.position.z = closest_point[2]  # z-Position des Punkts
-    marker.scale.x = 1.0  # Größe der Kugel
+    marker.pose.position.x = closest_point[0]
+    marker.pose.position.y = closest_point[1]
+    marker.pose.position.z = closest_point[2]
+    marker.scale.x = 1.0
     marker.scale.y = 1.0
     marker.scale.z = 1.0
-    marker.color.r = 1.0  # Rot-Farbe
+    marker.color.r = 1.0
     marker.color.g = 0.0
     marker.color.b = 0.0
-    marker.color.a = 1.0  # Sichtbarkeit
+    marker.color.a = 1.0
 
-    # Publisher für den Marker erstellen (wird einmalig erstellt)
     radar_node.lead_vehicel_marker_publisher.publish(marker)
-
-    return lead_vehicle_info
-    # return {"distance": closest_point[3], "velocity": closest_point[4]}
+    radar_node.range_velocity_radar_publisher.publish(lead_vehicle_info)
+    return
 
 
 if __name__ == "__main__":
