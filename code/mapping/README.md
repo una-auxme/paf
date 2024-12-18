@@ -40,3 +40,7 @@ Execute `catkin_make run_tests` in the catkin_ws to run them. A summary should a
 The original draft and class diagram for the intermediate layer can be found [here](../../doc/research/paf24/intermediate_layer/). Note that these documents are not kept up-to-date with this package.
 
 Most of the information of the draft has been inserted into the python class documentation. Look there for up-to-date information.
+
+## Troubleshooting
+
+Cython compile errors or import errors *related to the @dataclass decorators* are likely caused by an outdated docker image. Make sure the docker images are up-to-date.
