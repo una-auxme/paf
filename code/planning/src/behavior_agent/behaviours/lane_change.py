@@ -27,7 +27,7 @@ class Approach(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Approach, self).__init__(name)
-        rospy.loginfo("Approach started")
+        rospy.loginfo("Lane Change Approach started")
 
     def setup(self, timeout):
         """
@@ -72,7 +72,8 @@ class Approach(py_trees.behaviour.Behaviour):
             - Triggering, checking, monitoring. Anything...but do not block!
             - Set a feedback message
             - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-        Gets the current lane change distance.
+        Calculates a virtual stop line and slows down while approaching unless
+        lane change is not blocked.
         :return: py_trees.common.Status.RUNNING, if too far from lane change
                  py_trees.common.Status.SUCCESS, if stopped in front of lane
                  change or entered the lane change
@@ -91,15 +92,15 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.change_distance != np.inf and self.change_detected:
             self.virtual_change_distance = self.change_distance
 
-            # ADD FEATURE: Check for Traffic
+            # TODO: ADD FEATURE Check for Traffic
             distance_lidar = 20
 
             if distance_lidar is not None and distance_lidar > 15.0:
-                rospy.loginfo("Change is free not slowing down!")
+                rospy.loginfo("Lane Change is free not slowing down!")
                 self.curr_behavior_pub.publish(bs.lc_app_free.name)
                 self.blocked = False
             else:
-                rospy.loginfo("Change blocked slowing down")
+                rospy.loginfo("Lane Change blocked slowing down")
                 self.blocked = True
 
         # get speed
@@ -110,11 +111,14 @@ class Approach(py_trees.behaviour.Behaviour):
         if speedometer is not None:
             speed = speedometer.speed
         else:
-            rospy.logwarn("no speedometer connected")
+            rospy.logwarn("Lane Change: no speedometer connected")
             return py_trees.common.Status.RUNNING
         if self.virtual_change_distance > target_dis and self.blocked:
             # too far
-            rospy.loginfo("still approaching")
+            rospy.loginfo(
+                f"Lane Change: still approaching, "
+                f"distance:{self.virtual_change_distance}"
+            )
             self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
             return py_trees.common.Status.RUNNING
         elif (
@@ -123,7 +127,7 @@ class Approach(py_trees.behaviour.Behaviour):
             and self.blocked
         ):
             # stopped
-            rospy.loginfo("stopped")
+            rospy.loginfo("Lane Change: stopped at virtual stop line")
             return py_trees.common.Status.SUCCESS
         elif (
             speed > convert_to_ms(5.0)
@@ -191,7 +195,7 @@ class Wait(py_trees.behaviour.Behaviour):
             Any initialisation you need before putting your behaviour to work.
         This just prints a state status message.
         """
-        rospy.loginfo("Wait Change")
+        rospy.loginfo("Lane Change Wait")
         return True
 
     def update(self):
@@ -213,14 +217,14 @@ class Wait(py_trees.behaviour.Behaviour):
         if speedometer is not None:
             speed = speedometer.speed
         else:
-            rospy.logwarn("no speedometer connected")
+            rospy.logwarn("Lane change wait: no speedometer connected")
             return py_trees.common.Status.RUNNING
 
         if speed > convert_to_ms(10):
-            rospy.loginfo("Forward to enter")
+            rospy.loginfo("Lane change wait: Was not blocked, proceed to drive forward")
             return py_trees.common.Status.SUCCESS
 
-        # ADD FEATURE: Check for Traffic
+        # TODO: ADD FEATURE Check for Traffic
         distance_lidar = 20
 
         change_clear = False
@@ -231,11 +235,11 @@ class Wait(py_trees.behaviour.Behaviour):
             else:
                 change_clear = True
         if not change_clear:
-            rospy.loginfo("Change blocked")
+            rospy.loginfo("Lane Change Wait: blocked")
             self.curr_behavior_pub.publish(bs.lc_wait.name)
             return py_trees.common.Status.RUNNING
         else:
-            rospy.loginfo("Change clear")
+            rospy.loginfo("Lane Change Wait: Change clear")
             return py_trees.common.Status.SUCCESS
 
     def terminate(self, new_status):
@@ -256,9 +260,8 @@ class Wait(py_trees.behaviour.Behaviour):
 
 class Enter(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the driving through an intersection, it initially
-    sets a speed and finishes if the ego vehicle is close to the end of the
-    intersection.
+    This behavior inititates the lane change and waits until the
+    lane change is finished.
     """
 
     def __init__(self, name):
@@ -297,7 +300,7 @@ class Enter(py_trees.behaviour.Behaviour):
         This prints a state status message and changes the driving speed for
         the lane change.
         """
-        rospy.loginfo("Enter next Lane")
+        rospy.loginfo("Lane Change: Enter next Lane")
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
     def update(self):
@@ -321,7 +324,7 @@ class Enter(py_trees.behaviour.Behaviour):
         if next_waypoint_msg is None:
             return py_trees.common.Status.FAILURE
         if next_waypoint_msg.distance < 5:
-            rospy.loginfo("Drive on the next lane!")
+            rospy.loginfo("Lane Change Enter: Drive on the next lane!")
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
@@ -345,7 +348,7 @@ class Enter(py_trees.behaviour.Behaviour):
 class Leave(py_trees.behaviour.Behaviour):
     """
     This behaviour defines the leaf of this subtree, if this behavior is
-    reached, the vehicle left the intersection.
+    reached, the vehicle has finished the lane change.
     """
 
     def __init__(self, name):
@@ -384,7 +387,7 @@ class Leave(py_trees.behaviour.Behaviour):
         This prints a state status message and changes the driving speed to
         the street speed limit.
         """
-        rospy.loginfo("Leave Change")
+        rospy.loginfo("Lane Change Finished")
 
         self.curr_behavior_pub.publish(bs.lc_exit.name)
         return True
