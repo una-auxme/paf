@@ -103,6 +103,9 @@
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
   </node>
 
+  <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
+  </node>
+
 
 </launch>
 
