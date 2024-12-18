@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>filter_panel</class>
+    <widget class="QWidget" name="main_panel">
+        <widget class="QWidget" name="layoutWidget">
+            <property name="contentsMargins">
+                <set>10,10,10,10</set>
+            </property>
+            <layout class="QGridLayout" name="grid_layout">
+                <property name="rowStretch">
+                    <set>60, 4</set>
+                </property>
+                <property name="rowStretch">
+                    <set>1, 1</set>
+                </property>
+                <property name="columnStretch">
+                    <set>60, 10</set>
+                </property>
+
+
+                <!-- First ros - select mode-->
+
+                <item row="1" column="3" colspan="2">
+                    <widget class="QCheckBox" name="checkbox_collider">
+                        <property name="text">
+                            <string>is collider</string>
+                        </property>
+                    </widget>
+                </item>
+                <item row="2" column="3" colspan="3">
+                    <widget class="QCheckBox" name="checkbox_tracked">
+                        <property name="text">
+                            <string>is tracked</string>
+                        </property>
+                    </widget>
+                </item>
+
+                <item row="3" column="3" colspan="3">
+                    <widget class="QCheckBox" name="checkbox_stopmark">
+                        <property name="text">
+                            <string>is stopmark</string>
+                        </property>
+                    </widget>
+                </item>
+
+                <item row="4" column="3" colspan="3">
+                    <widget class="QCheckBox" name="checkbox_lanemark">
+                        <property name="text">
+                            <string>is lanemark</string>
+                        </property>
+                    </widget>
+                </item>
+
+                <item row="5" column="3" colspan="3">
+                    <widget class="QCheckBox" name="checkbox_ignored">
+                        <property name="text">
+                            <string>is ignored</string>
+                        </property>
+                    </widget>
+                </item>
+
+
+            </layout>
+        </widget>
+    </widget>
+    <resources />
+    <connections />
+</ui>

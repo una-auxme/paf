@@ -18,3 +18,4 @@ scikit-learn>=0.18
 pandas==2.0.3
 debugpy==1.8.7
 pyopenssl==24.3.0
+cython==3.0.11

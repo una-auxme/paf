@@ -25,5 +25,13 @@
     <include file="$(find debugging)/launch/debugging.launch">
     </include>
 
+    <!-- mapping -->
+    <include file="$(find mapping)/launch/mapping.launch">
+    </include>
+
+    <!-- mapping visualization -->
+    <include file="$(find mapping_visualization)/launch/visualization.launch">
+    </include>
+
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
 </launch>

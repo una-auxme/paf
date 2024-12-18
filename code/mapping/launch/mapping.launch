@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration" output="screen">
+  </node>
+
+</launch>
