@@ -103,5 +103,10 @@
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
   </node>
 
+  <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+  </node>
+
+
 </launch>
 

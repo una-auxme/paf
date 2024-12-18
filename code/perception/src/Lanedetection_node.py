@@ -136,44 +136,14 @@ class Lanedetection_node(CompatibleNode):
             torch.cuda.empty_cache()
 
         image, original_image = self.preprocess_image(ImageMsg)
-        original_h, original_w, _ = original_image.shape
+        self.original_h, self.original_w, _ = original_image.shape
         with torch.no_grad():
             image = image.to(self.device)
-            det_out, da_seg_out, ll_seg_out = self.detect_lanes(image)
+            _, da_seg_out, ll_seg_out = self.detect_lanes(image)
 
-        # convert probabilities to numpy array
-        da_seg_out = da_seg_out.sigmoid().squeeze().cpu().numpy()  # (2, 288, 800)
-        ll_seg_out = ll_seg_out.sigmoid().squeeze().cpu().numpy()  # (2, 288, 800)
+        ll_seg_scaled, da_seg_scaled = self.postprocess_image(da_seg_out, ll_seg_out)
 
-        # scale output to original image
-        da_seg_resized = cv2.resize(
-            da_seg_out[1, :, :],
-            (original_w, original_h),
-            interpolation=cv2.INTER_LINEAR,
-        )
-        ll_seg_resized = cv2.resize(
-            ll_seg_out[1, :, :],
-            (original_w, original_h),
-            interpolation=cv2.INTER_LINEAR,
-        )
-
-        # Dynamic threshold for binarization
-        lane_threshold = np.mean(ll_seg_resized) + 0.07
-        driveable_area_threshold = np.mean(da_seg_resized) + 0.07
-
-        # Apply dynamic binarization
-        ll_seg_binary = (ll_seg_resized > lane_threshold).astype(
-            np.uint8
-        )  # 1 for lane, 0 otherwise
-        da_seg_binary = (da_seg_resized > driveable_area_threshold).astype(
-            np.uint8
-        )  # 1 for drivable area, 0 otherwise
-
-        # Scale binary mask to match the visualization range [0, 255] for the overlay
-        ll_seg_scaled = (ll_seg_binary * 255).astype(np.uint8)
-        da_seg_scaled = (da_seg_binary * 255).astype(np.uint8)
-
-        mask = np.expand_dims(ll_seg_scaled, axis=-1)
+        """mask = np.expand_dims(ll_seg_scaled, axis=-1)
         markers = MarkerArray()
         if self.dist_arrays is not None:
             disk_mask = np.any(self.dist_arrays, axis=2, keepdims=True)
@@ -195,22 +165,21 @@ class Lanedetection_node(CompatibleNode):
                         wrong_points_counter += 1
 
         if wrong_points_counter / total_points_counter < 1:
-            self.marker_publisher.publish(markers)
-        """else:
-            rospy.loginfo("no lane detection available")"""
+            self.marker_publisher.publish(markers)"""
+
         img_msg_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled, encoding="mono8")
         img_msg_mask.header = ImageMsg.header
         self.Lane_detection_publisher.publish(img_msg_mask)
 
-        overlay = self.create_top_down_bounding_boxes(ll_seg_scaled, self.dist_arrays)
+        # overlay = self.create_top_down_bounding_boxes(ll_seg_scaled, self.dist_arrays)
 
         ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
         ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
-        ros_lane_overlay = self.bridge.cv2_to_imgmsg(overlay)
+        # ros_lane_overlay = self.bridge.cv2_to_imgmsg(overlay)
 
         # publish
         self.lane_mask_publisher.publish(ros_lane_mask)
-        self.lane_overlay_publisher.publish(ros_lane_overlay)
+        # self.lane_overlay_publisher.publish(ros_lane_overlay)
         self.driveable_area_publisher.publish(ros_driveable_area)
 
     def handle_dist_array(self, dist_array):
@@ -267,14 +236,58 @@ class Lanedetection_node(CompatibleNode):
         det_out, da_seg_out, ll_seg_out = self.model(image)
         return det_out, da_seg_out, ll_seg_out
 
-    def create_top_down_bounding_boxes(self, lane_mask, distance_array):
+    def postprocess_image(self, da_seg_out, ll_seg_out):
+        """resizes and binarizes the output of the model
+
+        Args:
+            da_seg_out (_type_): driveablearea
+            ll_seg_out (_type_): lanemask
+
+        Returns:
+            postprocessed driveable area mask and lane mask
+        """
+        # convert probabilities to numpy array
+        da_seg_out = da_seg_out.sigmoid().squeeze().cpu().numpy()  # (2, 288, 800)
+        ll_seg_out = ll_seg_out.sigmoid().squeeze().cpu().numpy()  # (2, 288, 800)
+
+        # scale output to original image
+        da_seg_resized = cv2.resize(
+            da_seg_out[1, :, :],
+            (self.original_w, self.original_h),
+            interpolation=cv2.INTER_LINEAR,
+        )
+        ll_seg_resized = cv2.resize(
+            ll_seg_out[1, :, :],
+            (self.original_w, self.original_h),
+            interpolation=cv2.INTER_LINEAR,
+        )
+
+        # Dynamic threshold for binarization
+        lane_threshold = np.mean(ll_seg_resized) + 0.07
+        driveable_area_threshold = np.mean(da_seg_resized) + 0.07
+
+        # Apply dynamic binarization
+        ll_seg_binary = (ll_seg_resized > lane_threshold).astype(
+            np.uint8
+        )  # 1 for lane, 0 otherwise
+        da_seg_binary = (da_seg_resized > driveable_area_threshold).astype(
+            np.uint8
+        )  # 1 for drivable area, 0 otherwise
+
+        # Scale binary mask to match the visualization range [0, 255] for the overlay
+        ll_seg_scaled = (ll_seg_binary * 255).astype(np.uint8)
+        da_seg_scaled = (da_seg_binary * 255).astype(np.uint8)
+
+        return ll_seg_scaled, da_seg_scaled
+
+    """    def create_top_down_bounding_boxes(self, lane_mask, distance_array):
         lidar_points = self.filter_lidar_by_lane_mask(lane_mask, distance_array)
         clusters = self.cluster_lidar_points(lidar_points)
         image = self.create_bounding_box_top_down(clusters)
-        return image
+        return image"""
 
-    def filter_lidar_by_lane_mask(self, lane_mask, distance_array):
-        """Filter the lidar points by lane mask and remove non-lane points."""
+    """def filter_lidar_by_lane_mask(self, lane_mask, distance_array):
+       """ """Filter the lidar points by lane mask and remove non-lane points.""" """
         # Step 1: Create a boolean mask for the points that lie inside the lane mask
         lane_mask_bool = lane_mask.astype(
             bool
@@ -296,10 +309,10 @@ class Lanedetection_node(CompatibleNode):
         # valid_lidar_points_xy = valid_lidar_points[:, :, :2]  # Only take x and y
         valid_lidar_points = valid_lidar_points[:, :2]
         return valid_lidar_points
-
-    def cluster_lidar_points(self, lidar_points):
-        """Cluster lidar points using DBSCAN and create a 2D bounding box."""
-        # 1. Extract the 2D coordinates (x, y) from the lidar points
+    """
+    """def cluster_lidar_points(self, lidar_points):
+    """ """Cluster lidar points using DBSCAN and create a 2D bounding box."""
+    """        # 1. Extract the 2D coordinates (x, y) from the lidar points
 
         if lidar_points.shape[0] == 0:
             return []
@@ -330,10 +343,10 @@ class Lanedetection_node(CompatibleNode):
             # Store the cluster bounding box
             clusters.append((min_x, min_y, max_x, max_y))
         return clusters
-
-    def create_bounding_box_top_down(self, clusters):
-        """Create a top-down view with bounding boxes
-        drawn around the detected lane clusters."""
+        """
+    """def create_bounding_box_top_down(self, clusters):
+        """ """Create a top-down view with bounding boxes
+        drawn around the detected lane clusters.""" """
         # Initialize a blank image for the top-down view
         length_image = 30  # meters
         width_image = 5  # meters
@@ -353,9 +366,9 @@ class Lanedetection_node(CompatibleNode):
             # Draw the bounding box (white rectangle)
             cv2.rectangle(top_down_image, (x_min, y_min), (x_max, y_max), 255, 5)
 
-        return top_down_image
+        return top_down_image"""
 
-    def get_marker(self, point, id):
+    """def get_marker(self, point, id):
         c_color = [0, 255, 0]
         marker = Marker()
         marker.header.frame_id = "hero"
@@ -379,7 +392,7 @@ class Lanedetection_node(CompatibleNode):
         marker.pose.position.y = point[1]
         marker.pose.position.z = 1.7 + point[2]
         marker.lifetime = rospy.Duration(0.5)
-        return marker
+        return marker"""
 
 
 if __name__ == "__main__":
