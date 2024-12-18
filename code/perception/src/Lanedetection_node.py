@@ -7,6 +7,7 @@ import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header
 from cv_bridge import CvBridge
+import numpy as np
 
 # for the lane detection model
 import torch
