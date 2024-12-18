@@ -2,8 +2,6 @@
 
 from ros_compatibility.node import CompatibleNode
 from rospy.numpy_msg import numpy_msg
-import rospy
-import numpy as np
 import ros_compatibility as roscomp
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
@@ -14,16 +12,14 @@ from cv_bridge import CvBridge
 import torch
 from PIL import Image
 import torchvision.transforms as t
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
-from visualization_msgs.msg import Marker, MarkerArray
 
 
 class Lanedetection_node(CompatibleNode):
     """YOLOP:
     Model for Lanedetection and Driveable Area Detection
 
-    subscribes to camera image and publishes lane masks and driveable area for further planning
+    subscribes to camera image and publishes lane masks and driveable area for further
+    planning
     """
 
     def __init__(self, name, **kwargs):
