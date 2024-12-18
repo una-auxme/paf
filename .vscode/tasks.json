@@ -4,7 +4,7 @@
         {
             "label": "Run 'catkin_make' in docker container. Choose container from list of running containers.",
             "type": "shell",
-            "command": "docker exec -it ${input:container_name} bash -c 'cd ../../catkin_ws && source /opt/ros/noetic/setup.bash && bash devel/setup.bash && catkin_make'",
+            "command": "docker exec -it ${input:container_name} bash -c 'cd /catkin_ws && source /opt/ros/noetic/setup.bash && source devel/setup.bash && catkin_make'",
             "problemMatcher": [],
             "detail": "Executes 'catkin_make' selected container. Requires Tasks Shell Input Extension, in order to generate the list of containers.",
         }

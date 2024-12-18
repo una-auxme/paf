@@ -13,6 +13,7 @@
         "ms-vscode-remote.remote-containers",
         "valentjn.vscode-ltex",
         "ms-python.black-formatter",
-        "augustocdias.tasks-shell-input"
+        "augustocdias.tasks-shell-input",
+        "ktnrg45.vscode-cython"
     ]
 }

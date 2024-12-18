@@ -70,7 +70,8 @@ RUN apt-get update && apt-get install -y \
     ros-noetic-carla-msgs ros-noetic-pcl-conversions \
     ros-noetic-rviz ros-noetic-rqt ros-noetic-pcl-ros ros-noetic-rosbridge-suite ros-noetic-rosbridge-server \
     ros-noetic-robot-pose-ekf ros-noetic-ros-numpy \
-    ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure
+    ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure \
+    ros-noetic-ros-pytest
 
 SHELL ["/bin/bash", "-c"]
 
@@ -164,8 +165,9 @@ COPY --chown=$USERNAME:$USERNAME ./code /workspace/code/
 
 # For debugger
 ENV PAF_CATKIN_CODE_ROOT=/catkin_ws/src/code
+ENV PAF_WORKSPACE_CODE_ROOT=/workspace/code
 # Link code into catkin workspace
-RUN ln -s -T /workspace/code ${PAF_CATKIN_CODE_ROOT}
+RUN ln -s -T ${PAF_WORKSPACE_CODE_ROOT} ${PAF_CATKIN_CODE_ROOT}
 
 # re-make the catkin workspace
 RUN source /opt/ros/noetic/setup.bash && catkin_make
@@ -173,7 +175,7 @@ RUN source /opt/ros/noetic/setup.bash && catkin_make
 ADD ./build/docker/agent/entrypoint.sh /entrypoint.sh
 
 # set the default working directory to the code
-WORKDIR /workspace/code
+WORKDIR ${PAF_WORKSPACE_CODE_ROOT}
 
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 RUN echo "source /catkin_ws/devel/setup.bash" >> ~/.bashrc
