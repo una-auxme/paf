@@ -28,8 +28,9 @@ class lane_position(CompatibleNode):
 
         self.lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg)
 
-    def transform_camera2world(self,mask):
-        
+    def transform_camera2world(self, mask):
+        pass
+
 
 if __name__ == "__main__":
     roscomp.init("Lanedetection_node")
