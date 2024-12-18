@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import cython
 
 import numpy as np
 import numpy.typing as npt
@@ -26,16 +25,16 @@ class _Coord2:
         ), f"{type(self).__name__} matrix must have shape (3,)"
         self._matrix = matrix
 
-    def x(self) -> cython.double:
+    def x(self) -> float:
         return self._matrix[0]
 
-    def set_x(self, value: cython.double):
+    def set_x(self, value: float):
         self._matrix[0] = value
 
-    def y(self) -> cython.double:
+    def y(self) -> float:
         return self._matrix[1]
 
-    def set_y(self, value: cython.double):
+    def set_y(self, value: float):
         self._matrix[1] = value
 
     def __eq__(self, value) -> bool:
@@ -49,6 +48,9 @@ class Point2(_Coord2):
     """2 dimensional point.
 
     Receives both rotation and translation when transformed with a Transform2D"""
+
+    def vector(self) -> "Vector2":
+        return Vector2(self._matrix)
 
     @staticmethod
     def new(x: float, y: float) -> "Point2":
@@ -69,6 +71,15 @@ class Point2(_Coord2):
 
     def to_ros_msg(self) -> geometry_msgs.Point:
         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
+
+    def __add__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix + other._matrix
+            matrix[2] = 1.0
+            return Point2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
 
 
 @dataclass(init=False, eq=False)
@@ -95,11 +106,19 @@ class Vector2(_Coord2):
             other (Vector2): _description_
 
         Returns:
-            float: angle in radians. Always in interval [-pi,pi].
-            TODO: define if angle is cw or ccw depending on sign
+            float: signed angle in radians. Always in interval [-pi,pi].
+
+            - angle > 0: CCW
+            - angle < 0: CW
         """
-        div = self._matrix.dot(other._matrix) / self.length() * other.length()
-        return math.acos(div)
+        # Based on https://stackoverflow.com/questions/21483999/
+        # using-atan2-to-find-angle-between-two-vectors/21486462#21486462
+        cross = np.cross(self._matrix[:2], other._matrix[:2])
+        dot = np.dot(self._matrix[:2], other._matrix[:2])
+        return math.atan2(cross, dot)
+
+    def point(self) -> Point2:
+        return Point2(self._matrix)
 
     @staticmethod
     def new(x: float, y: float) -> "Vector2":
@@ -121,12 +140,41 @@ class Vector2(_Coord2):
     def to_ros_msg(self) -> geometry_msgs.Vector3:
         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
 
+    def __mul__(self, other):
+        if isinstance(other, float):
+            matrix = self._matrix * other
+            matrix[2] = 1.0
+            return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __add__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix + other._matrix
+            matrix[2] = 1.0
+            return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
+
 
 @dataclass(init=False, eq=False)
 class Transform2D:
     """Homogeneous 2 dimensional transformation matrix
 
     Based on https://alexsm.com/homogeneous-transforms/
+
+    ## Examples:
+    ### Transform a Vector2
+    ```python
+    v = Vector2.new(1.0, 0.0)
+    t = Transform2D.new_rotation(math.pi/2.0)
+    v_transformed = t * v
+    ```
+    v_transformed is (0.0, 1.0)
+
+    Note that Vectors are only directions/offsets and ignore translations.
     """
 
     # Matrix with shape (3, 3)
@@ -148,6 +196,20 @@ class Transform2D:
         m = self._matrix[:, 2]
         m = m / m[2]
         return Vector2(m)
+
+    def rotation(self) -> float:
+        """Returns only the rotation that this Transform applies
+
+        Returns:
+            float: rotation angle in radians
+
+            - angle > 0: CCW
+            - angle < 0: CW
+        """
+        # Not the most efficient solution
+        v = Vector2.new(1.0, 0.0)
+        v_rot: Vector2 = self * v
+        return v.angle_to(v_rot)
 
     def inverse(self) -> "Transform2D":
         """Returns an inverted Transformation matrix
@@ -172,7 +234,9 @@ class Transform2D:
 
         Args:
             angle (float): Rotation angle in radians
-            TODO: define if angle is cw or ccw depending on sign
+
+            - angle > 0: CCW
+            - angle < 0: CW
         """
         c = np.cos(angle)
         s = np.sin(angle)
@@ -200,7 +264,9 @@ class Transform2D:
 
         Args:
             angle (float): Rotation angle in radians
-            TODO: define if angle is cw or ccw depending on sign
+            - angle > 0: CCW
+            - angle < 0: CW
+
             v (Vector2): Translation vector
         """
         transform = Transform2D.new_rotation(angle)

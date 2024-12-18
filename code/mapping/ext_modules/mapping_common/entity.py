@@ -33,7 +33,8 @@ class Motion2D:
     angular_velocity: float = 0.0
     """Angular velocity in radians/s
 
-    TODO: define if is cw or ccw depending on sign
+    - angle > 0: CCW
+    - angle < 0: CW
     """
 
     @staticmethod

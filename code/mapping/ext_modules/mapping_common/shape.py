@@ -65,13 +65,12 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
         m.pose.position.x = transl.x()
         m.pose.position.y = transl.y()
         m.pose.position.z = 0.0
-        # TODO: apply rotation to marker
         (
             m.pose.orientation.x,
             m.pose.orientation.y,
             m.pose.orientation.z,
             m.pose.orientation.w,
-        ) = quaternion_from_euler(0, 0, 0)
+        ) = quaternion_from_euler(0, 0, shape_transform.rotation())
 
         m.scale.z = 1.0
         return m
