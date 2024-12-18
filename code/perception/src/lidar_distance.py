@@ -7,6 +7,8 @@ from lidar_filter_utility import bounding_box, remove_field_name
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Point
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
@@ -68,6 +70,12 @@ class LidarDistance:
             queue_size=10,
         )
         rospy.loginfo("dist_array_lidar_publisher successfully created.")
+
+        self.marker_visualization_lidar_publisher = rospy.Publisher(
+            rospy.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
+            MarkerArray,
+            queue_size=10,
+        )
         self.dist_array_left_publisher = rospy.Publisher(
             rospy.get_param("~image_distance_topic", "/paf/hero/Left/dist_array"),
             ImageMsg,
@@ -107,14 +115,44 @@ class LidarDistance:
                 & (coordinates["y"] <= 1)
             )  # Exclude points related to the ego vehicle
             & (
-                coordinates["z"] > -1.7 + 0.05
+                coordinates["z"] > -1.7 + 0.25
             )  # Minimum height in z to exclude the road
         ]
 
         # Compute cluster data from the filtered coordinates
-        clustered_points = cluster_lidar_data_from_pointcloud(
+        clustered_points, labels = cluster_lidar_data_from_pointcloud(
             coordinates=filtered_coordinates
         )
+
+        filtered_x_y_z = np.column_stack(
+            (
+                filtered_coordinates["x"],
+                filtered_coordinates["y"],
+                filtered_coordinates["z"],
+            )
+        )
+
+        # Labels reshapen
+        labels = labels.reshape(-1, 1)
+
+        # Kombinieren der Arrays
+        points_with_labels = np.hstack((filtered_x_y_z, labels))
+
+        bounding_boxes = generate_bounding_boxes(points_with_labels)
+
+        marker_array = MarkerArray()
+        for label, bbox in bounding_boxes:
+            if label != -1:
+                marker = create_bounding_box_marker(label, bbox)
+                marker_array.markers.append(marker)
+                # can be used for extra debugging
+                # min_marker, max_marker = create_min_max_markers(label, bbox)
+                # marker_array.markers.append(min_marker)
+                # marker_array.markers.append(max_marker)
+
+        marker_array = clear_old_markers(marker_array, max_id=len(bounding_boxes) - 1)
+
+        self.marker_visualization_lidar_publisher.publish(marker_array)
 
         # Only store valid cluster data
         if clustered_points:
@@ -316,6 +354,173 @@ class LidarDistance:
         return dist_array
 
 
+def generate_bounding_boxes(points_with_labels):
+    """
+    Generates bounding boxes for clustered points.
+
+    This function processes a set of points, each associated with a cluster label,
+    and generates an axis-aligned bounding box (AABB) for each unique cluster label.
+
+    Args:
+        points_with_labels (numpy.ndarray):
+        A 2D array of shape (N, 4) where each row contains
+        the coordinates (x, y, z) of a point along with its
+        corresponding cluster label in the last column.
+        The array should have the structure [x, y, z, label].
+
+    Returns:
+        list: A list of tuples, where each tuple contains a cluster label and the
+              corresponding bounding box (bbox). The bbox is represented by a tuple
+              of the form (x_min, x_max, y_min, y_max, z_min, z_max).
+    """
+    bounding_boxes = []
+    unique_labels = np.unique(points_with_labels[:, -1])
+    for label in unique_labels:
+        if label == -1:
+            continue
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+        bbox = calculate_aabb(cluster_points)
+        bounding_boxes.append((label, bbox))
+    return bounding_boxes
+
+
+def create_bounding_box_marker(label, bbox):
+    """
+    Creates an RViz Marker for visualizing a 3D bounding box.
+
+    This function generates a Marker object for RViz to visualize a 3D bounding box
+    based on the provided label and bounding box dimensions. The marker is
+    represented as a series of lines connecting the corners of the box.
+
+    Args:
+        label (int): The unique identifier for the cluster or object to which the
+        bounding box belongs. This label is used as the Marker ID.
+        bbox (tuple): A tuple containing the min and max coordinates of the bounding box
+                      in the format (x_min, x_max, y_min, y_max, z_min, z_max).
+
+    Returns:
+        Marker: A Marker object that can be published to RViz to display the
+        3D bounding box. The marker is of type LINE_LIST,
+        representing the edges of the bounding box.
+    """
+    # for 2d (top-down) boxes
+    # x_min, x_max, y_min, y_max = bbox
+
+    # for 3d boxes
+    x_min, x_max, y_min, y_max, z_min, z_max = bbox
+
+    marker = Marker()
+    marker.header.frame_id = "hero/LIDAR"
+    marker.id = int(label)
+    # marker.type = Marker.LINE_STRIP  # 2d boxes
+    marker.type = Marker.LINE_LIST  # 3d boxes
+    marker.action = Marker.ADD
+    marker.scale.x = 0.1
+    marker.color.r = 1.0
+    marker.color.g = 0.5
+    marker.color.b = 0.5
+    marker.color.a = 1.0
+
+    # for 2d (top-down) boxes
+    # points = [
+    #     Point(x_min, y_min, 0),
+    #     Point(x_max, y_min, 0),
+    #     Point(x_max, y_max, 0),
+    #     Point(x_min, y_max, 0),
+    #     Point(x_min, y_min, 0),
+    # ]
+    # marker.points = points
+
+    # for 3d boxes
+    points = [
+        Point(x_min, y_min, z_min),
+        Point(x_max, y_min, z_min),
+        Point(x_max, y_max, z_min),
+        Point(x_min, y_max, z_min),
+        Point(x_min, y_min, z_max),
+        Point(x_max, y_min, z_max),
+        Point(x_max, y_max, z_max),
+        Point(x_min, y_max, z_max),
+    ]
+
+    lines = [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 0),  # Bottom
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 4),  # Top
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7),  # Vertical Edges
+    ]
+    for start, end in lines:
+        marker.points.append(points[start])
+        marker.points.append(points[end])
+
+    return marker
+
+
+def clear_old_markers(marker_array, max_id):
+    """
+    Removes old markers from the given MarkerArray by setting the action
+    to DELETE for markers with an ID greater than or equal to max_id.
+
+    Args:
+        marker_array (MarkerArray): The current MarkerArray containing all markers.
+        max_id (int): The highest ID of the new markers. Markers with an ID
+                      greater than or equal to this value will be marked for deletion.
+
+    Returns:
+        MarkerArray: The updated MarkerArray with old markers removed.
+    """
+    for marker in marker_array.markers:
+        if marker.id > max_id:
+            marker.action = Marker.DELETE
+    return marker_array
+
+
+def calculate_aabb(cluster_points):
+    """
+    Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
+
+    This function computes the minimum and maximum values along each axis (x, y, z)
+    for a given set of 3D points, which defines the bounding box that contains
+    all points in the cluster.
+
+    Args:
+        cluster_points (numpy.ndarray):
+        A 2D array where each row represents a 3D point (x, y, z).
+        The array should have shape (N, 3) where N is the number of points.
+
+    Returns:
+        tuple: A tuple of the form (x_min, x_max, y_min, y_max, z_min, z_max),
+        which represents the axis-aligned bounding box (AABB) for the given
+        set of points. The values are the minimum and maximum coordinates
+        along the x, y, and z axes.
+    """
+
+    # for 2d (top-down) boxes
+    # x_min = np.min(cluster_points[:, 0])
+    # x_max = np.max(cluster_points[:, 0])
+    # y_min = np.min(cluster_points[:, 1])
+    # y_max = np.max(cluster_points[:, 1])
+    # rospy.loginfo(f"Bounding box: X({x_min}, {x_max}), Y({y_min}, {y_max})")
+    # return x_min, x_max, y_min, y_max
+
+    # for 3d boxes
+    x_min = np.min(cluster_points[:, 0])
+    x_max = np.max(cluster_points[:, 0])
+    y_min = np.min(cluster_points[:, 1])
+    y_max = np.max(cluster_points[:, 1])
+    z_min = np.min(cluster_points[:, 2])
+    z_max = np.max(cluster_points[:, 2])
+    return x_min, x_max, y_min, y_max, z_min, z_max
+
+
 def array_to_pointcloud2(points, header="hero/Lidar"):
     """
     Converts an array of points into a ROS PointCloud2 message.
@@ -422,7 +627,7 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps=0.3, min_samples=10):
 
     clusters = dict(clusters)
 
-    return clusters
+    return clusters, labels
 
 
 if __name__ == "__main__":
