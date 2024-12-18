@@ -139,7 +139,8 @@ def calculate_marker_center_2d(points):
     Calculates the center (x, y) of a 2D bounding box based on marker points.
 
     Args:
-        points (list or numpy.ndarray): List of geometry_msgs/Point objects or NumPy array.
+        points (list or numpy.ndarray): List of geometry_msgs/Point objects
+        or NumPy array.
 
     Returns:
         tuple: Center coordinates (x_center, y_center).

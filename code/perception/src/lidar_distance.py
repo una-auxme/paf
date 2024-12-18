@@ -351,7 +351,8 @@ def generate_bounding_boxes(points_with_labels):
     """
     Generates axis-aligned bounding boxes (AABB) for clustered points.
 
-    This function calculates bounding boxes for each unique cluster label in the input array.
+    This function calculates bounding boxes for each unique
+    cluster label in the input array.
 
     Args:
         points_with_labels (numpy.ndarray):
