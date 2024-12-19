@@ -17,4 +17,11 @@ ultralytics==8.3.32
 scikit-learn>=0.18
 pandas==2.0.3
 debugpy==1.8.7
+yacs==0.1.8
+matplotlib==3.2.2
+Pillow==10.4.0
+PyYAML>=5.3
+prefetch_generator==1.0.3
+
 pyopenssl==24.3.0
+
