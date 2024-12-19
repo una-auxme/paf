@@ -73,6 +73,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get distance to vehicle in front and velocity of the vehicle in front from radar sensor
+        self.lead_vehicle_sub = self.new_subscription(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
+            self.__update_radar_data,
+            qos_profile=1,
+        )
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
@@ -105,7 +113,19 @@ class ACC(CompatibleNode):
         # Current speed limit
         self.speed_limit: float = None  # m/s
 
+        # Radar data
+        self.leading_vehicle_distance = None
+        self.leading_vehicle_speed = None
+
         self.logdebug("ACC initialized")
+
+    def __update_radar_data(self, data: Float32MultiArray):
+        if data.data[0] is not None:
+            self.leading_vehicle_distance = data.data[0]
+            self.leading_vehicle_speed = data.data[1]
+        else:
+            self.leading_vehicle_distance = None
+            self.leading_vehicle_speed = None
 
     def __collision_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
@@ -210,6 +230,25 @@ class ACC(CompatibleNode):
             publishes the desired speed to motion planning
             """
             if (
+                self.leading_vehicle_distance is not None
+                and self.leading_vehicle_speed is not None
+            ):
+                if self.leading_vehicle_distance < 5:
+                    acc_velocity = 0.0
+                elif self.leading_vehicle_distance < 10:
+                    acc_velocity = 2.0
+                elif self.leading_vehicle_distance < 15:
+                    acc_velocity = 5.0
+                else:
+                    acc_velocity = self.speed_limit
+            elif self.speed_limit is not None:
+                acc_velocity = self.speed_limit
+            else:
+                acc_velocity = 0.0
+
+            self.velocity_pub.publish(acc_velocity)
+
+            """  if (
                 # often none
                 self.obstacle_distance is not None
                 # often none -> often does elif even if if-case is necessary
@@ -249,7 +288,7 @@ class ACC(CompatibleNode):
             else:
                 # If we don't have speed limits do not drive
                 # probably a problem accured in the global planner
-                self.velocity_pub.publish(0)
+                self.velocity_pub.publish(0) """
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
