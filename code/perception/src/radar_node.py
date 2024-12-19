@@ -31,7 +31,7 @@ class RadarNode:
         dataarray = pointcloud2_to_array(data)
 
         # radar position z=0.7
-        dataarray = filter_data(dataarray, min_z=-0.6)
+        dataarray = filter_data(dataarray, min_z=-0.40, max_z=2)
 
         clustered_data = cluster_data(dataarray)
 
@@ -54,8 +54,6 @@ class RadarNode:
                 # min_marker, max_marker = create_min_max_markers(label, bbox)
                 # marker_array.markers.append(min_marker)
                 # marker_array.markers.append(max_marker)
-
-        marker_array = clear_old_markers(marker_array, max_id=len(bounding_boxes) - 1)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
@@ -163,7 +161,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.8, min_samples=3):
+def cluster_data(data, eps=0.4, min_samples=3):
     """
     Clusters the radar data using the DBSCAN algorithm
 
@@ -349,7 +347,9 @@ def create_bounding_box_marker(label, bbox):
 
     marker = Marker()
     marker.header.frame_id = "hero/RADAR"
+    marker.ns = "marker_radar"
     marker.id = int(label)
+    marker.lifetime = rospy.Duration(1)
     # marker.type = Marker.LINE_STRIP  # 2d boxes
     marker.type = Marker.LINE_LIST  # 3d boxes
     marker.action = Marker.ADD
@@ -461,25 +461,6 @@ def create_min_max_markers(
     max_marker.pose.position.z = z_max
 
     return min_marker, max_marker
-
-
-def clear_old_markers(marker_array, max_id):
-    """
-    Removes old markers from the given MarkerArray by setting the action
-    to DELETE for markers with an ID greater than or equal to max_id.
-
-    Args:
-        marker_array (MarkerArray): The current MarkerArray containing all markers.
-        max_id (int): The highest ID of the new markers. Markers with an ID
-                      greater than or equal to this value will be marked for deletion.
-
-    Returns:
-        MarkerArray: The updated MarkerArray with old markers removed.
-    """
-    for marker in marker_array.markers:
-        if marker.id > max_id:
-            marker.action = Marker.DELETE
-    return marker_array
 
 
 # generates string with label-id and cluster size, can be used for extra debugging
