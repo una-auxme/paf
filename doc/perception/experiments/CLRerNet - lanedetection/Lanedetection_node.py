@@ -226,7 +226,7 @@ class Lanedetection_node(CompatibleNode):
                 self.lane_publisher.publish(lanedetection_image)
             else:
                 # Only there to see if node is running, if lane_mask returns null -> model not working yet
-                no_img = cv2.imread("/workspace/code/perception/src/cropped_image5.jpg")
+                no_img = np.zeros_like(self.image)  # Creates an empty image with the same dimensions
                 lanedetection_image = self.bridge.cv2_to_imgmsg(no_img, "bgr8")
                 self.lane_publisher.publish(lanedetection_image)
 
@@ -291,12 +291,13 @@ class Lanedetection_node(CompatibleNode):
             self.img_freq = 0
             print("Detect Lanes successfull")
             return dst
-        except Exception as e:
+        except RuntimeError as e:
             self.img_freq += 5
-            print("Detect Lanes UNsuccessfull")
+            print("Detect Lanes unsuccessful")
             print(f"An exception occurred: {e}")
             torch.cuda.empty_cache()
             return None
+
 
     def inference_one_image(self, model, image):
         """Inference on an image with the detector.
