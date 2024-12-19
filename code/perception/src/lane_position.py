@@ -23,9 +23,10 @@ class lane_position(CompatibleNode):
         self.camera_width = self.get_param("camera_width")
         self.camera_height = self.get_param("camera_height")
         self.camera_fov = self.get_param("camera_fov")
-        self.create_Matrices()
+        self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_lanemask_subscriptions()
+        self.setup_coordinate_image_publisher()
 
     def run(self):
         self.spin()
@@ -43,26 +44,111 @@ class lane_position(CompatibleNode):
             qos_profile=1,
         )
 
+    def setup_coordinate_image_publisher(self):
+        self.coordinate_image_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic="/paf/hero/Center/coordinate_image",
+            qos_profile=1,
+        )
+
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        world_coordinates = self.transform_camera2worldcoordinates(lanemask)
+        x_coords, y_coords = self.get_point_by_angle(lanemask)
+        image = self.create_coordinate_image(x_coords, y_coords)
+        image = image.astype(np.int32)
+        ros_image = self.bridge.cv2_to_imgmsg(image)
+        self.coordinate_image_publisher.publish(ros_image)
+        # world_coordinates = self.transform_camera2worldcoordinates(lanemask)
+
         pass
 
+    def get_point_by_angle(self, lanemask):
+        w = self.camera_width
+        h = self.camera_height
+        theta_h = np.deg2rad(self.camera_fov)  # Horizontaler FOV in Radiant
+        theta_v = theta_h * (h / w)  # Vertikaler FOV in Radiant
+        # Schritt 1: Pixelgitter erstellen
+        u, v = np.meshgrid(np.arange(w), np.arange(h))
+
+        # Schritt 2: Richtungsvektoren berechnen
+        d_x = np.ones_like(u, dtype=float)  # x-Richtung bleibt konstant = 1
+        d_y = (u - w / 2) / (w / 2) * np.tan(theta_h / 2)
+        d_z = (h / 2 - v) / (h / 2) * np.tan(theta_v / 2)
+        d_x = np.where(lanemask, d_x, np.nan)
+        d_y = np.where(lanemask, d_y, np.nan)
+        d_z = np.where(lanemask, d_z, np.nan)
+        # Schritt 3: Parameter t berechnen (z = 0)
+        t = -self.camera_z / d_z
+        # Schritt 4: Bodenpunkte berechnen
+        x_ground = t * d_x
+        y_ground = t * d_y
+        # Schritt 5: Maske anwenden
+        x_ground = x_ground[~np.isnan(x_ground)]
+        y_ground = y_ground[~np.isnan(y_ground)]
+        return x_ground, y_ground
+
+    def create_coordinate_image(self, x_coords, y_coords):
+        # 1. Schritt: Bildgröße bestimmen (maximale Werte aus x und y)
+        x_coords = x_coords * 10
+        y_coords = y_coords * 10
+        image_size = (
+            int(np.max(x_coords)) + 10,
+            int(np.max(y_coords)) + 10,
+        )  # 10 Pixel extra für Rand
+
+        # 2. Schritt: Leeres Bild erstellen
+        image = np.zeros(image_size)
+
+        # 3. Schritt: Vektorisierte Berechnung der Pixelkoordinaten
+        # Stelle sicher, dass x und y innerhalb der Bildgröße liegen
+        x_pixel = np.clip(x_coords.astype(int), 0, image_size[1] - 1)
+        y_pixel = np.clip(y_coords.astype(int), 0, image_size[0] - 1)
+
+        # 4. Schritt: Setze alle relevanten Pixel auf 1 (oder eine andere Farbe)
+        image[y_pixel, x_pixel] = (
+            255  # Setzt die Pixel, die den Koordinaten entsprechen, auf 1 (weiß)
+        )
+        return image
+
     def create_Matrices(self):
-        f_x = f_y = self.camera_width / (2 * np.tan(np.radians(self.camera_fov) / 2))
-        c_x = self.camera_width / 2
-        c_y = self.camera_height / 2
+        f = self.camera_width / (2.0 * np.tan(self.camera_fov * np.pi / 360))
+        cx = self.camera_width / 2.0
+        cy = self.camera_height / 2.0
         # Interne Kameramatrix
-        self.K = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0, 0, 1]])
-        self.R = self.create_rotation_matrix(
+        K = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]], dtype=np.float64)
+        R = self.create_rotation_matrix(
             self.camera_roll, self.camera_pitch, self.camera_yaw
         )
-        self.T = np.array([self.camera_x, self.camera_y, self.camera_z])
-        self.K_inv = np.linalg.inv(self.K)
+        T = -R @ [self.camera_x, self.camera_y, self.camera_z]
         # Create a grid of pixel coordinates (u, v)
         self.u, self.v = np.meshgrid(
             np.arange(self.camera_width), np.arange(self.camera_height)
         )
+        flip = np.array([[0, 1, 0], [0, 0, -1], [1, 0, 0]], dtype=np.float32)
+
+        c_y = np.cos(np.radians(self.camera_yaw))
+        s_y = np.sin(np.radians(self.camera_yaw))
+        c_r = np.cos(np.radians(self.camera_roll))
+        s_r = np.sin(np.radians(self.camera_roll))
+        c_p = np.cos(np.radians(self.camera_pitch))
+        s_p = np.sin(np.radians(self.camera_pitch))
+        matrix = np.identity(4)
+        matrix[0, 3] = self.camera_x
+        matrix[1, 3] = self.camera_y
+        matrix[2, 3] = self.camera_z
+        matrix[0, 0] = c_p * c_y
+        matrix[0, 1] = c_y * s_p * s_r - s_y * c_r
+        matrix[0, 2] = -c_y * s_p * c_r - s_y * s_r
+        matrix[1, 0] = s_y * c_p
+        matrix[1, 1] = s_y * s_p * s_r + c_y * c_r
+        matrix[1, 2] = -s_y * s_p * c_r + c_y * s_r
+        matrix[2, 0] = s_p
+        matrix[2, 1] = -c_p * s_r
+        matrix[2, 2] = c_p * c_r
+        matrix = np.linalg.inv(matrix)
+        P = K @ flip @ matrix[:3, :]
+
+        return P, K, R, T
 
     def transform_camera2worldcoordinates(self, lanemask):
 
@@ -76,7 +162,13 @@ class lane_position(CompatibleNode):
         v_selected = v_flat[masked_indices]
         # Construct pixel coordinates in homogeneous form
         pixel_coords = np.stack(
-            [u_selected, v_selected, np.ones_like(u_selected)], axis=0
+            [
+                u_selected,
+                v_selected,
+                np.zeros_like(u_selected),
+                np.ones_like(u_selected),
+            ],
+            axis=0,
         )
         # Transform pixel coordinates to normalized camera coordinates
         norm_camera_coords = self.K_inv @ pixel_coords
