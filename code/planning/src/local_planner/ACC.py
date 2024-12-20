@@ -115,17 +115,21 @@ class ACC(CompatibleNode):
 
         # Radar data
         self.leading_vehicle_distance = None
+        self.leading_vehicle_relative_speed = None
         self.leading_vehicle_speed = None
 
         self.logdebug("ACC initialized")
 
     def __update_radar_data(self, data: Float32MultiArray):
-        if data.data[0] is not None:
-            self.leading_vehicle_distance = data.data[0]
-            self.leading_vehicle_speed = data.data[1]
-        else:
+        if not data.data: # no distance and speed data of the leading vehicle is transferred (leading vehicle is very far away)
             self.leading_vehicle_distance = None
+            self.leading_vehicle_relative_speed = None
             self.leading_vehicle_speed = None
+        else:
+            self.leading_vehicle_distance = data.data[0]
+            self.leading_vehicle_relative_speed = data.data[1]
+            self.leading_vehicle_speed = self.__current_velocity + self.leading_vehicle_relative_speed
+
 
     def __collision_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
@@ -229,6 +233,10 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
+
+            """
+            # Simple ACC
+            
             if (
                 self.leading_vehicle_distance is not None
                 and self.leading_vehicle_speed is not None
@@ -247,26 +255,31 @@ class ACC(CompatibleNode):
                 acc_velocity = 0.0
 
             self.velocity_pub.publish(acc_velocity)
+            """
 
-            """  if (
+            if (
                 # often none
-                self.obstacle_distance is not None
+                self.leading_vehicle_distance is not None
                 # often none -> often does elif even if if-case is necessary
-                and self.obstacle_speed is not None
+                and self.leading_vehicle_speed is not None
                 and self.__current_velocity is not None
             ):
+                if (self.leading_vehicle_speed < 0.0):
+                    acc_speed = 0.0
+                    self.velocity_pub.publish(acc_speed)
+                    
                 # If we have obstalce information,
                 # we can calculate the safe speed
                 safety_distance: float
                 safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity
                 )
-                if self.obstacle_distance < safety_distance:
+                if self.leading_vehicle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
-                    safe_speed = self.obstacle_speed * (
-                        self.obstacle_distance / safety_distance
+                    safe_speed = self.leading_vehicle_speed * (
+                        self.leading_vehicle_distance / safety_distance
                     )
                     # Interpolate speed for smoother braking
                     safe_speed = interpolate_speed(safe_speed, self.__current_velocity)
@@ -288,7 +301,7 @@ class ACC(CompatibleNode):
             else:
                 # If we don't have speed limits do not drive
                 # probably a problem accured in the global planner
-                self.velocity_pub.publish(0) """
+                self.velocity_pub.publish(0)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
