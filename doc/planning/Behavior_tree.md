@@ -4,29 +4,28 @@
 
 **Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
-- [Behavior Tree](#behavior-tree)
-  - [About](#about)
-  - [Our behaviour tree](#our-behaviour-tree)
-    - [Behavior](#behavior)
-      - [Selector](#selector)
-      - [Sequence](#sequence)
-      - [Condition](#condition)
-      - [Subtree](#subtree)
-    - [Intersection](#intersection)
-      - [Legend](#legend)
-    - [Other Behaviors](#other-behaviors)
-  - [Developing guide](#developing-guide)
-    - [Tree Definition](#tree-definition)
-    - [Behaviours](#behaviours)
-      - [Blackboard](#blackboard)
-    - [Guidelines](#guidelines)
-      - [Non-Blocking](#non-blocking)
-      - [Functions](#functions)
-        - [`__init__()`](#__init__)
-        - [`setup()`](#setup)
-        - [`initialise()`](#initialise)
-        - [`update()`](#update)
-        - [`terminate()`](#terminate)
+- [About](#about)
+- [Our behaviour tree](#our-behaviour-tree)
+  - [Behavior](#behavior)
+    - [Selector](#selector)
+    - [Sequence](#sequence)
+    - [Condition](#condition)
+    - [Subtree](#subtree)
+  - [Intersection](#intersection)
+    - [Legend](#legend)
+  - [Other Behaviors](#other-behaviors)
+- [Developing guide](#developing-guide)
+  - [Tree Definition](#tree-definition)
+  - [Behaviours](#behaviours)
+    - [Blackboard](#blackboard)
+  - [Guidelines](#guidelines)
+    - [Non-Blocking](#non-blocking)
+    - [Functions](#functions)
+      - [`__init__()`](#__init__)
+      - [`setup()`](#setup)
+      - [`initialise()`](#initialise)
+      - [`update()`](#update)
+      - [`terminate()`](#terminate)
 
 ## About
 
@@ -46,7 +45,7 @@ Represent an action the decision tree should execute. It has three return values
 
 - `SUCCESS`: The action has been performed successfully.
 - `RUNNING`: The action is still being executed.
-- `Failure`: The action couldn't be executed.
+- `FAILURE`: The action couldn't be executed.
 
 #### Selector
 
@@ -98,7 +97,7 @@ Lane Change and Overtake are built just like Intersection. So there is always an
 
 ### Tree Definition
 
-The tree is defined in the `grow_a_tree()`-function inside `code/planning/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees). This is also the place to change the execution rate of the tree:
+The tree is defined in the `grow_a_tree()`-function inside `code/planning/src/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees). This is also the place to change the execution rate of the tree:
 
 ``` python
 ...
@@ -108,11 +107,11 @@ behaviour_tree.tick_tock(500)
 
 ### Behaviours
 
-`Behaviours` are implemented in the `code/planning/behavior_agent/behaviours/` directory. All the behaviours used in the current version of the tree are contained as skeletons.
+`Behaviours` are implemented in the `code/planning/src/behavior_agent/behaviours/` directory. All the behaviors used in the current version of the tree are contained as skeletons.
 
 #### Blackboard
 
-To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `src/behavior_agent/behaviours/topics2blackboard.py`:
+To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `code/planning/src/behavior_agent/behaviours/topics2blackboard.py`:
 
 ``` python
 ...
