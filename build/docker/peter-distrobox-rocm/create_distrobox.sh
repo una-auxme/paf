@@ -25,6 +25,5 @@ distrobox create \
   --home ~/Distrobox/${DISTROBOX_NAME} \
   --init-hooks '/init_hook.sh' \
   --volume "${HOST_WORKSPACE_DIR}":${WORKSPACE_MOUNT} \
-  --volume "${HOST_USER_PACKAGE_DIR}":${USER_PACKAGE_DIR} \
   -a '--env ZDOTDIR=' -a '--env USER_ZDOTDIR=' -a '--env SHELL=/bin/bash' \
-  -a "--env USER_PACKAGE_DIR=${USER_PACKAGE_DIR}" -a "--env DISTROBOX_USERNAME=${USER}"
+  -a "--env DISTROBOX_USERNAME=${USER}"

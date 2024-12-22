@@ -116,6 +116,8 @@ RUN mkdir ${WORKSPACE_DIR}
 ADD ./init_hook.sh /
 RUN chmod +x /init_hook.sh
 RUN chmod +x ${CARLA_ROOT}/CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping
-
+ENV USER_PACKAGE_DIR=/user-package
+ADD ./user-package ${USER_PACKAGE_DIR}
+RUN chmod -R +x ${USER_PACKAGE_DIR}
 
 
