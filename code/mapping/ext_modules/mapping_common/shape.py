@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import rospy
 
@@ -87,8 +88,10 @@ class Rectangle(Shape2D):
         self,
         length: float,
         width: float,
-        offset: Transform2D = Transform2D.identity(),
+        offset: Optional[Transform2D] = None,
     ):
+        if offset is None:
+            offset = Transform2D.identity()
         super().__init__(offset=offset)
         self.length = length
         self.width = width
@@ -124,7 +127,9 @@ class Circle(Shape2D):
 
     radius: float
 
-    def __init__(self, radius: float, offset: Transform2D = Transform2D.identity()):
+    def __init__(self, radius: float, offset: Optional[Transform2D] = None):
+        if offset is None:
+            offset = Transform2D.identity()
         super().__init__(offset=offset)
         self.radius = radius
 
