@@ -161,6 +161,13 @@ class Vector2(_Coord2):
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
         )
 
+    def __rmul__(self, other):
+        if isinstance(other, (float, int)):
+            return self.__mul__(other)
+        raise TypeError(
+            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
+
     def __add__(self, other):
         if isinstance(other, Vector2):
             matrix = self._matrix + other._matrix

@@ -116,6 +116,14 @@ def test_vector_scalar_mul_int():
     assert math.isclose(v_long.length(), 5.0)
 
 
+def test_vector_scalar_rmul():
+    v = Vector2.new(2.0, 2.0)
+    v_norm = v.normalized()
+    v_long = 5.0 * v_norm
+
+    assert math.isclose(v_long.length(), 5.0)
+
+
 def test_zero_vector_normalization():
     v = Vector2.zero()
     assert v.length() == 0.0
