@@ -1,6 +1,16 @@
 # Intermediate layer
 
-The intermediate layer is a 2D top-down map for sensor fusion and entity tracking. The map can be visualized with the visualization node in the mapping_visualization package
+**Summary:** The intermediate layer is a 2D top-down map for sensor fusion and entity tracking. The map can be visualized with the visualization node in the mapping_visualization package
+
+**Important: The mapping_common module is compiled with Cython. If changes have been made to mapping_common, catkin_make needs to be executed to apply them!**
+Cmake executes pip to compile and install the mapping_common module to the user's python packages.
+
+- [Package structure](#package-structure)
+- [Data flow overview](#data-flow-overview)
+- [Debugging](#debugging)
+- [Tests](#tests)
+- [Research](#research)
+- [Troubleshooting](#troubleshooting)
 
 ## Package structure
 
