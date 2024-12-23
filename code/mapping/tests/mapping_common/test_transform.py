@@ -18,13 +18,6 @@ def test_vector_conversion():
     assert v == v_conv
 
 
-def test_zero_vector_normalization():
-    v = Vector2.zero()
-    assert v.length() == 0.0
-
-    assert v.normalized() == v
-
-
 def test_transform_conversion():
     p = Point2.new(1.0, 25.0)
     msg = p.to_ros_msg()
@@ -113,6 +106,21 @@ def test_vector_scalar_mul():
     v_long = v_norm * 5.0
 
     assert math.isclose(v_long.length(), 5.0)
+
+
+def test_vector_scalar_mul_int():
+    v = Vector2.new(2.0, 2.0)
+    v_norm = v.normalized()
+    v_long = v_norm * 5
+
+    assert math.isclose(v_long.length(), 5.0)
+
+
+def test_zero_vector_normalization():
+    v = Vector2.zero()
+    assert v.length() == 0.0
+
+    assert v.normalized() == v
 
 
 def test_vector_add():

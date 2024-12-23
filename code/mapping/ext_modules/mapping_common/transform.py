@@ -89,6 +89,13 @@ class Vector2(_Coord2):
     Receives only the rotation when transformed with a Transform2D"""
 
     def length(self) -> float:
+        """Calculates the length of this vector
+
+        Returns:
+            float: length of this vector
+        """
+        # This implementation was chosen because (at the time of writing this) it was
+        # about 2 times faster than `np.linalg.norm(self._matrix[:2])`
         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
 
     def normalized(self) -> "Vector2":
@@ -146,7 +153,7 @@ class Vector2(_Coord2):
         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
 
     def __mul__(self, other):
-        if isinstance(other, float):
+        if isinstance(other, (float, int)):
             matrix = self._matrix * other
             matrix[2] = 1.0
             return Vector2(matrix)
