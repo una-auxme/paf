@@ -94,9 +94,14 @@ class Vector2(_Coord2):
     def normalized(self) -> "Vector2":
         """Returns this direction Vector with length 1.0
 
+        If the vector is the zero vector, the result will be zero as well
+
         Returns:
             Vector2: Vector with length 1.0
         """
+        zero = Vector2.zero()
+        if self == zero:
+            return zero
         return Vector2(self._matrix / self.length())
 
     def angle_to(self, other: "Vector2") -> float:

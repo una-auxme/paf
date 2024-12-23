@@ -18,6 +18,13 @@ def test_vector_conversion():
     assert v == v_conv
 
 
+def test_zero_vector_normalization():
+    v = Vector2.zero()
+    assert v.length() == 0.0
+
+    assert v.normalized() == v
+
+
 def test_transform_conversion():
     p = Point2.new(1.0, 25.0)
     msg = p.to_ros_msg()
