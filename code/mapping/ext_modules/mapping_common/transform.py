@@ -28,14 +28,8 @@ class _Coord2:
     def x(self) -> float:
         return self._matrix[0]
 
-    def set_x(self, value: float):
-        self._matrix[0] = value
-
     def y(self) -> float:
         return self._matrix[1]
-
-    def set_y(self, value: float):
-        self._matrix[1] = value
 
     def __eq__(self, value) -> bool:
         if type(self) is type(value):
@@ -115,7 +109,7 @@ class Vector2(_Coord2):
         """Calculates the angle to *other*
 
         Args:
-            other (Vector2): _description_
+            other (Vector2): Vector to calculate the angle to
 
         Returns:
             float: signed angle in radians. Always in interval [-pi,pi].
