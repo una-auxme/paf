@@ -187,4 +187,5 @@ CMD ["bash", "-c", "sleep 10 && \
     --track=${CHALLENGE_TRACK} \
     --agent=${TEAM_AGENT} \
     --routes=${ROUTES} \
-    --host=${CARLA_SIM_HOST}"]
+    --host=${CARLA_SIM_HOST} \
+    --timeout=100"]
