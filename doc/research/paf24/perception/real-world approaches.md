@@ -10,7 +10,7 @@ This research explores the types of sensors used in real-world autonomous vehicl
 - *"designed with high dynamic range and thermal stability, to see in both daylight and low-light conditions"* [waymo.com]
 - The newest (6th) generation of the waymo driver has *"13 cameras, 4 lidar, 6 radar, and an array of external audio receivers (EARs)"* [[waymo.com](https://waymo.com/blog/2024/08/meet-the-6th-generation-waymo-driver/)]
   
-## Tesla 
+## Tesla
 
 - Tesla Cars use no Liadr nor Radar [[teslawissen](https://teslawissen.ch/tesla-autopilot-unterschiede-der-hardware-generationen/)]
 - *"12 sensors and 8 cameras, for a total of 20 sensors"* [[Ohio state University news](https://u.osu.edu/engr2367selfdrivingcars/how-does-a-self-driving-car-work-1-false/)]
@@ -31,7 +31,7 @@ Overall it was surprising, that:
 1. cars are equiped with way more sensors than might be expected
 2. it seems as if the leading car developers are focusing now on decreasing the amount of sensors to benefit from lower cost, rather than increasing the number to improve their driving and safety. [[the verge](https://www.theverge.com/2018/3/28/17172666/uber-self-driving-crash-sensor-lidar-email-ducey)]
 
-Also, it seems that there is a trend of using computer vision instead of regular sensors, which is probably caused by the rising improvement in this sector in recent years.
+Also, it seems that thereassets is a trend of using computer vision instead of regular sensors, which is probably caused by the rising improvement in this sector in recent years.
 
 ## Future research
 
