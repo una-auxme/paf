@@ -2,16 +2,15 @@
 
 This document provides an overview of the structure of the documentation.
 
-- [PAF Documentation](#paf-documentation)
-  - [`general`](#general)
-  - [`development`](#development)
-  - [`research`](#research)
-  - [`examples`](#examples)
-  - [`perception`](#perception)
-  - [`planning`](#planning)
-  - [`acting`](#acting)
-  - [`assets`](#assets)
-  - [`dev_talks`](#dev_talks)
+- [`general`](#general)
+- [`development`](#development)
+- [`research`](#research)
+- [`examples`](#examples)
+- [`perception`](#perception)
+- [`planning`](#planning)
+- [`acting`](#acting)
+- [`assets`](#assets)
+- [`dev_talks`](#dev_talks)
 
 ## `general`
 
@@ -47,4 +46,4 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 
 ## `dev_talks`
 
-The [`dev_talks`](./dev_talks/) folder contains the protocols of each sprint review and roles that the students fill during the project.
+The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.

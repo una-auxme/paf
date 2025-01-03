@@ -12,11 +12,10 @@ from the leaderboard with the belonging actions. For example action number 3 mea
 
 ### [Global Planning (PrePlanner)](./Global_Planner.md)
 
-The global planner is responsible for collecting and preparing all data from the leaderboard and other intern
+The global planner is responsible for collecting and preparing all data from the leaderboard and other internal
 components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter
-from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published
-to the other components of this project (acting, decision making,...).
+from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published.
 
 ![img.png](../assets/Global_Plan.png)
 
@@ -26,7 +25,7 @@ The decision making collects most of the available information of the other comp
 the information. All possible traffic scenarios are covered in this component. The decision making uses a so called
 decision tree, which is easy to adapt and to expand.
 
-![Simple Tree](../assets/planning/simple_final_tree.png)
+![Simple Tree](../assets/planning/behaviour_tree.PNG)
 
 ### [Local Planning](./Local_Planning.md)
 

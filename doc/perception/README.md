@@ -17,6 +17,10 @@ This folder contains further documentation of the perception components.
 11. [Efficient PS](./efficientps.md)
     1. not used scince paf22 and never successfully tested
 
+## Overview Localization
+
+An overview over the different nodes working together to localize the vehicle is provided in the [localization](./localization.md) file.
+
 ## Experiments
 
 - The overview of performance evaluations is located in the [experiments](./experiments/README.md) folder.

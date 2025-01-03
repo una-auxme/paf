@@ -3,6 +3,7 @@
 import math
 import os
 import sys
+from typing import List
 
 import numpy as np
 import ros_compatibility as roscomp
@@ -329,7 +330,7 @@ class MotionPlanning(CompatibleNode):
 
         self.__corners = self.__calc_corner_points()
 
-    def __calc_corner_points(self) -> list[list[np.ndarray]]:
+    def __calc_corner_points(self) -> List[List[np.ndarray]]:
         """
         Calculate the corner points of the trajectory.
 

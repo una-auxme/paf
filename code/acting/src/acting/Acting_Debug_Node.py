@@ -178,6 +178,17 @@ class Acting_Debug_Node(CompatibleNode):
         self.__vehicle_steers = []
         self.positions = []
 
+        # Initialize agent position
+        self.x = 0
+        self.y = 0
+        self.z = 0
+
+        # For visual purposes we set the trajectory height to vehicle heigt.
+        # The trajectory z coordinated do not affect steering or else.
+        # There is quite some confusion about visual height an actual height
+        # This parameter might needs adustment
+        self.z_visual = 0
+
         # Generate Trajectory as selected in TRAJECTORY_TYPE
         self.path_msg = Path()
         self.path_msg.header.stamp = rospy.Time.now()
@@ -286,7 +297,7 @@ class Acting_Debug_Node(CompatibleNode):
             pos.header.frame_id = "global"
             pos.pose.position.x = wp[0]
             pos.pose.position.y = wp[1]
-            pos.pose.position.z = 704  # needed for visuals
+            pos.pose.position.z = self.z_visual
             # currently not used therefore zeros
             pos.pose.orientation.x = 0
             pos.pose.orientation.y = 0
