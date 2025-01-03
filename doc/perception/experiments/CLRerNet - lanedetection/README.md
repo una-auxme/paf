@@ -9,13 +9,13 @@
 ## Overview  
 
 ![image](./images/result9.png)
-CLRerNet is a highly effective lane detection model that reliably identifies lanes even when they are partially visible or obstructed by vehicles. The model implemented in this project demonstrates strong performance and accuracy.  
+CLRerNet is a highly effective lane detection model which reliably identifies lanes even when they are partially visible or obstructed by vehicles. The model implemented in this project demonstrates strong performance and accuracy.  
 
 A key feature of CLRerNet is the use of **LaneIoU** for target assignment cost calculation and loss functions, which improves the quality of confidence scores.  
 
 ---
 
-## Challenges  
+## Challenges
 
 Despite its strong performance, the model comes with certain limitations:  
 
