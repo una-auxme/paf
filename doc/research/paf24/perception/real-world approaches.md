@@ -15,7 +15,7 @@ This research explores the types of sensors used in real-world autonomous vehicl
 - Tesla Cars use no Liadr nor Radar [[teslawissen](https://teslawissen.ch/tesla-autopilot-unterschiede-der-hardware-generationen/)]
 - *"12 sensors and 8 cameras, for a total of 20 sensors"* [[Ohio state University news](https://u.osu.edu/engr2367selfdrivingcars/how-does-a-self-driving-car-work-1-false/)]
 - *"Tesla Vision Update: Replacing Ultrasonic Sensors with Tesla Vision"* [[Tesla Website](https://www.tesla.com/support/transitioning-tesla-vision)]
-  - it is speculated that they do that, to safe cost and because their self driving philosophy is heavily computer vision and deep learning guided. 
+  - it is speculated that they do that, to safe cost and because their self driving philosophy is heavily computer vision and deep learning guided.
 - For the newest Hardware of the highest level of autonomy for their car HW4, it was found out that it will have 11 cameras instead of previously 8, some places on the rear bumper, some in the front. [[Tesla magazin](https://teslamag.de/news/neue-autopilot-hardware-tesla-anschluesse-radar-mehr-kameras-56719)]
 
 ## Cruise
@@ -23,7 +23,6 @@ This research explores the types of sensors used in real-world autonomous vehicl
 *"Cruise vehicles are equipped with 40+ sensors, 360° vision, and tested for millions of miles."*[[Cruise](https://www.getcruise.com/)]
 
 ## Key Observations
-
 
 The developers of self driving cars are mostly not sharing too much about their technology and how they use it. Information was mostly found in articles, which made assumptions on the cars.
 Overall it was surprising, that:
