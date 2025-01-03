@@ -63,7 +63,8 @@ class Lanedetection_node(CompatibleNode):
         self.wait_for_gpu(min_free_memory_mb=1000)
 
         # build the model from a config file and a checkpoint file
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") -> Model cannot use cpu
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # -> Model cannot use cpu
         self.model = init_detector(
             ws_config_path, ws_weight_path, device="cuda:0"
         )  # self.device
@@ -85,7 +86,7 @@ class Lanedetection_node(CompatibleNode):
         self.spin()
         pass
 
-    def test_single_img(self, image_path):
+    def test_single_img(self, image_path, result_image_path):
         """
         Function to test with a single dummy picture
 
@@ -96,7 +97,7 @@ class Lanedetection_node(CompatibleNode):
         """
 
         # image_path = "/workspace/code/perception/src/ld_test4.jpg"
-        image2_path = "/workspace/code/perception/src/result.jpg"
+        # image2_path = "/workspace/code/perception/src/result.jpg"
 
         # Bildgröße ermitteln
         image = cv2.imread(image_path)
@@ -124,7 +125,7 @@ class Lanedetection_node(CompatibleNode):
         torch.cuda.empty_cache()
         src, preds = self.inference_one_image(self.model, croppedimage_path)
         # show the results
-        dst = visualize_lanes(src, preds, save_path=image2_path)
+        dst = visualize_lanes(src, preds, save_path=result_image_path)
 
         # Display the result using Matplotlib
         plt.figure(figsize=(10, 10))  # Optional: set the figure size
@@ -150,7 +151,9 @@ class Lanedetection_node(CompatibleNode):
                 return
 
             print(
-                f"GPU Memory Check - Used: {used_memory} MB, Free: {free_memory} MB, Total: {total_memory} MB"
+                f"GPU Memory Check - Used: {used_memory} MB"
+                f"GPU Memory Check - Used: Free: {free_memory} MB"
+                f"GPU Memory Check - Used: Total: {total_memory} MB"
             )
 
             if free_memory >= min_free_memory_mb:
@@ -226,7 +229,8 @@ class Lanedetection_node(CompatibleNode):
                 lanedetection_image = self.bridge.cv2_to_imgmsg(lane_mask, "bgr8")
                 self.lane_publisher.publish(lanedetection_image)
             else:
-                # Only there to see if node is running, if lane_mask returns null -> model not working yet
+                # Only there to see if node is running, if lane_mask returns null
+                # -> model not working yet
                 no_img = np.zeros_like(
                     self.image
                 )  # Creates an empty image with the same dimensions
@@ -271,7 +275,8 @@ class Lanedetection_node(CompatibleNode):
         """
         Detects lanes in the image
         Resizes image for model
-        Tries to use CLRerNet Model, if it fails the img_freq becomes bigger to give it more time
+        Tries to use CLRerNet Model, if it fails the img_freq becomes bigger
+        to give it more time
 
         Args:
             image (np.array): Image from camera
