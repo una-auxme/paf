@@ -4,7 +4,7 @@ This research explores the types of sensors used in real-world autonomous vehicl
 
 ## Waymo
 
-![alt text](image.png)
+![alt text](../../../assets/TheWaymoDriverSensors.png)
 
 - *"There are 29 cameras on our Jaguar I-PACEs."* [[waymo.com](https://waymo.com/waymo-driver/)]
 - *"designed with high dynamic range and thermal stability, to see in both daylight and low-light conditions"* [waymo.com]
