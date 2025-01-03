@@ -18,6 +18,7 @@ import time
 import subprocess
 import matplotlib.pyplot as plt
 from mmdet.apis import init_detector
+import numpy as np
 
 # from libs.api.inference import inference_one_image
 from libs.utils.visualizer import visualize_lanes
@@ -226,7 +227,9 @@ class Lanedetection_node(CompatibleNode):
                 self.lane_publisher.publish(lanedetection_image)
             else:
                 # Only there to see if node is running, if lane_mask returns null -> model not working yet
-                no_img = np.zeros_like(self.image)  # Creates an empty image with the same dimensions
+                no_img = np.zeros_like(
+                    self.image
+                )  # Creates an empty image with the same dimensions
                 lanedetection_image = self.bridge.cv2_to_imgmsg(no_img, "bgr8")
                 self.lane_publisher.publish(lanedetection_image)
 
@@ -297,7 +300,6 @@ class Lanedetection_node(CompatibleNode):
             print(f"An exception occurred: {e}")
             torch.cuda.empty_cache()
             return None
-
 
     def inference_one_image(self, model, image):
         """Inference on an image with the detector.
