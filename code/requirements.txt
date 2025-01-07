@@ -30,4 +30,4 @@ prefetch_generator
 imageio
 
 pyopenssl==24.3.0
-
+cython==3.0.11
