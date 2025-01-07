@@ -28,14 +28,8 @@ class _Coord2:
     def x(self) -> float:
         return self._matrix[0]
 
-    def set_x(self, value: float):
-        self._matrix[0] = value
-
     def y(self) -> float:
         return self._matrix[1]
-
-    def set_y(self, value: float):
-        self._matrix[1] = value
 
     def __eq__(self, value) -> bool:
         if type(self) is type(value):
@@ -89,21 +83,33 @@ class Vector2(_Coord2):
     Receives only the rotation when transformed with a Transform2D"""
 
     def length(self) -> float:
+        """Calculates the length of this vector
+
+        Returns:
+            float: length of this vector
+        """
+        # This implementation was chosen because (at the time of writing this) it was
+        # about 2 times faster than `np.linalg.norm(self._matrix[:2])`
         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
 
     def normalized(self) -> "Vector2":
         """Returns this direction Vector with length 1.0
 
+        If the vector is the zero vector, the result will be zero as well
+
         Returns:
             Vector2: Vector with length 1.0
         """
+        zero = Vector2.zero()
+        if self == zero:
+            return zero
         return Vector2(self._matrix / self.length())
 
     def angle_to(self, other: "Vector2") -> float:
         """Calculates the angle to *other*
 
         Args:
-            other (Vector2): _description_
+            other (Vector2): Vector to calculate the angle to
 
         Returns:
             float: signed angle in radians. Always in interval [-pi,pi].
@@ -113,6 +119,12 @@ class Vector2(_Coord2):
         """
         # Based on https://stackoverflow.com/questions/21483999/
         # using-atan2-to-find-angle-between-two-vectors/21486462#21486462
+        # A·B = |A| |B| COS(θ) = x
+        # A×B = |A| |B| SIN(θ) = y (in 2 dimensional space only)
+        # Where θ is the (unsigned) angle between A and B
+        # => The implementation is very similar Transform2D.rotation(self)
+        # => |A| |B| can be ignored because it is just a scalar multiplication
+        #  of the vector (does not change direction)
         cross = np.cross(self._matrix[:2], other._matrix[:2])
         dot = np.dot(self._matrix[:2], other._matrix[:2])
         return math.atan2(cross, dot)
@@ -141,10 +153,17 @@ class Vector2(_Coord2):
         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
 
     def __mul__(self, other):
-        if isinstance(other, float):
+        if isinstance(other, (float, int)):
             matrix = self._matrix * other
             matrix[2] = 1.0
             return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __rmul__(self, other):
+        if isinstance(other, (float, int)):
+            return self.__mul__(other)
         raise TypeError(
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
         )
@@ -206,10 +225,9 @@ class Transform2D:
             - angle > 0: CCW
             - angle < 0: CW
         """
-        # Not the most efficient solution
-        v = Vector2.new(1.0, 0.0)
-        v_rot: Vector2 = self * v
-        return v.angle_to(v_rot)
+        # Atan2(y, x) is angle to Vector(x, y)
+        # => matrix[1, 0] = sin(a) = y; self._matrix[0, 0] = cos(a) = x
+        return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
 
     def inverse(self) -> "Transform2D":
         """Returns an inverted Transformation matrix
