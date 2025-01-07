@@ -33,7 +33,9 @@ def main():
         package_setup = {"packages": ["mapping_common"]}
         print("Installing mapping_common in debug (pure python) mode")
     else:
-        package_setup = {"ext_modules": cythonize(extensions, language_level="3")}
+        package_setup = {
+            "ext_modules": cythonize(extensions, language_level="3", annotate=True)
+        }
         print("Installing mapping_common in compiled cython mode")
 
     setup(name="mapping_common", version="0.0.1", **package_setup)

@@ -132,10 +132,10 @@ CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 #
 # This is a hack and should probably not be done this way. 
 # Unfortunately using catkin_python_setup() does not work, because it does not install external modules -> cython.
-# Using --install-lib ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../ for the setup might make sense, but for some reason it does not lead to a working installation when building in docker (works when manually running catkin_make)
 set(PAF_MAPPING_COMMON_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mapping_common_setup)
+set(PAF_DEVEL_PYTHON_PACKAGES_DIR ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../)
 add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
-  COMMAND ${PYTHON_EXECUTABLE} cmake_setup.py
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${PAF_DEVEL_PYTHON_PACKAGES_DIR}:$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} cmake_setup.py --base_dir "${CATKIN_DEVEL_PREFIX}" --packages_dir "${PAF_DEVEL_PYTHON_PACKAGES_DIR}"
   COMMAND mkdir -p ${PAF_MAPPING_COMMON_BUILD_DIR} && ${CMAKE_COMMAND} -E touch ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   DEPENDS 
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/*.py
