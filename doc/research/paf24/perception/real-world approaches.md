@@ -1,6 +1,6 @@
 # Real-World Sensor Applications in Autonomous Driving
 
-This research explores the types of sensors used in real-world autonomous vehicles by leading companies, specifically Waymo, Tesla, and Cruise. Understanding their sensor configurations can offer insights beneficial for developing simulations of autonomous vehicles.
+This research explores the types of sensors which are used in real-world autonomous vehicles by leading companies, specifically Waymo, Tesla, and Cruise. Understanding their sensor configurations can offer insights beneficial for developing simulations of autonomous vehicles.
 
 ## Waymo
 
