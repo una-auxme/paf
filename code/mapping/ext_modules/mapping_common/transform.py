@@ -119,6 +119,12 @@ class Vector2(_Coord2):
         """
         # Based on https://stackoverflow.com/questions/21483999/
         # using-atan2-to-find-angle-between-two-vectors/21486462#21486462
+        # A·B = |A| |B| COS(θ) = x
+        # A×B = |A| |B| SIN(θ) = y (in 2 dimensional space only)
+        # Where θ is the (unsigned) angle between A and B
+        # => The implementation is very similar Transform2D.rotation(self)
+        # => |A| |B| can be ignored because it is just a scalar multiplication
+        #  of the vector (does not change direction)
         cross = np.cross(self._matrix[:2], other._matrix[:2])
         dot = np.dot(self._matrix[:2], other._matrix[:2])
         return math.atan2(cross, dot)
@@ -219,10 +225,9 @@ class Transform2D:
             - angle > 0: CCW
             - angle < 0: CW
         """
-        # Not the most efficient solution
-        v = Vector2.new(1.0, 0.0)
-        v_rot: Vector2 = self * v
-        return v.angle_to(v_rot)
+        # Atan2(y, x) is angle to Vector(x, y)
+        # => matrix[1, 0] = sin(a) = y; self._matrix[0, 0] = cos(a) = x
+        return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
 
     def inverse(self) -> "Transform2D":
         """Returns an inverted Transformation matrix
