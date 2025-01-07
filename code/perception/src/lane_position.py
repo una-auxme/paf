@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # ROS imports
+import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Image as ImageMsg
@@ -8,6 +9,8 @@ from cv_bridge import CvBridge
 from mapping_common.shape import Rectangle, Circle
 from mapping_common.entity import Entity, Lanemarking
 from mapping_common.transform import Transform2D, Vector2
+from visualization_msgs.msg import Marker, MarkerArray
+from geometry_msgs.msg import Point
 
 # from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -67,15 +70,137 @@ class lane_position(CompatibleNode):
             topic="/paf/hero/Center/coordinate_image",
             qos_profile=1,
         )
+        self.marker_visualization_lidar_publisher = rospy.Publisher(
+            rospy.get_param("~marker_topic", "/paf/hero/Lane/Marker"),
+            MarkerArray,
+            queue_size=10,
+        )
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(lanemask)
         bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
 
-        Transform2D.new_translation(Vector2.new())
-        Lanemarking(Lanemarking.Style.SOLID, )
+        # Create a MarkerArray for visualization
+        marker_array = MarkerArray()
+        for label, bounding_box in enumerate(bounding_boxes):
+            marker = self.create_bounding_box_marker(label, bounding_box)
+            marker_array.markers.append(marker)
+
+        # Publish the MarkerArray for visualization
+        self.marker_visualization_lidar_publisher.publish(marker_array)
+
+        """transform = Transform2D.new_translation(Vector2.new())
+        Lanemarking(
+            Lanemarking.Style.SOLID,
+        )
+
+        def entities_from_lidar(self) -> List[Entity]:
+        if self.lidar_data is None:
+            return []
+
+        data = self.lidar_data
+        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        shape = Circle(0.15)
+        lidar_entities = []
+        for x, y, z, intensity in coordinates:
+            if z < -1.5 or z > 1.0:
+                # Ignore street level lidar points and stuff above
+                continue
+            if random.random() < 0.9:
+                # Get rid of points because performance
+                continue
+            v = Vector2.new(x, y)
+            transform = Transform2D.new_translation(v)
+            flags = Flags(is_collider=True)
+            e = Entity(
+                confidence=0.5 * intensity,
+                priority=0.25,
+                shape=shape,
+                transform=transform,
+                timestamp=data.header.stamp,
+                flags=flags,
+            )
+            lidar_entities.append(e)
+
+        return lidar_entities
         pass
+"""
+
+    def create_bounding_box_marker(self, label, bounding_boxes):
+        """
+        Creates an RViz Marker for visualizing a 3D bounding box.
+
+        This function generates a Marker object for RViz to visualize a 3D bounding box
+        as a series of connected lines representing the edges of the box.
+
+        Args:
+            label (int): Unique identifier for the cluster or object.
+                        Used as the Marker ID.
+            bbox (tuple): Bounding box dimensions in the format:
+                        (x_min, x_max, y_min, y_max, z_min, z_max).
+
+        Returns:
+            Marker: A LINE_LIST Marker object that can be published to RViz.
+        """
+        x_min = bounding_boxes[0]
+        y_min = bounding_boxes[1]
+        x_max = bounding_boxes[2]
+        y_max = bounding_boxes[3]
+
+        z_min = -1.7
+        z_max = -1.2
+
+        # Initialize the Marker object
+        marker = Marker()
+        marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
+        marker.ns = "marker_lidar"  # Namespace to group related markers
+        marker.id = int(label)  # Use the label as the unique marker ID
+        marker.lifetime = rospy.Duration(1)  # Marker visibility duration in seconds
+        marker.type = Marker.LINE_LIST  # Marker type to represent bounding box edges
+        marker.action = Marker.ADD  # Action to add or modify the marker
+
+        # Set marker properties
+        marker.scale.x = 0.1  # Line thickness
+        marker.color.r = 1.0  # Red color component
+        marker.color.g = 0.5  # Green color component
+        marker.color.b = 0.5  # Blue color component
+        marker.color.a = 1.0  # Opacity (1.0 = fully visible)
+
+        # Define the 8 corners of the 3D bounding box
+        points = [
+            Point(x_min, y_min, z_min),  # Bottom face
+            Point(x_max, y_min, z_min),
+            Point(x_max, y_max, z_min),
+            Point(x_min, y_max, z_min),
+            Point(x_min, y_min, z_max),  # Top face
+            Point(x_max, y_min, z_max),
+            Point(x_max, y_max, z_max),
+            Point(x_min, y_max, z_max),
+        ]
+
+        # Define lines connecting the corners of the bounding box
+        lines = [
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),  # Bottom face
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4),  # Top face
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),  # Vertical edges
+        ]
+
+        # Add points for each line segment to the marker
+        for start, end in lines:
+            marker.points.append(points[start])
+            marker.points.append(points[end])
+
+        return marker
 
     def driveable_area_handler(self, ImageMsg):
         mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
