@@ -102,18 +102,21 @@ class Lanedetection_node(CompatibleNode):
         # free up cuda memory
         if self.device == "cuda":
             torch.cuda.empty_cache()
+        try:
+            image, original_image = self.preprocess_image(ImageMsg)
+            self.original_h, self.original_w, _ = original_image.shape
+            with torch.no_grad():
+                image = image.to(self.device)
+                _, da_seg_out, ll_seg_out = self.detect_lanes(image)
 
-        image, original_image = self.preprocess_image(ImageMsg)
-        self.original_h, self.original_w, _ = original_image.shape
-        with torch.no_grad():
-            image = image.to(self.device)
-            _, da_seg_out, ll_seg_out = self.detect_lanes(image)
+            ll_seg_scaled, da_seg_scaled = self.postprocess_image(
+                da_seg_out, ll_seg_out
+            )
 
-        ll_seg_scaled, da_seg_scaled = self.postprocess_image(da_seg_out, ll_seg_out)
-
-        ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
-        ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
-
+            ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
+            ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
+        except Exception as e:
+            self.get_logger().error(f"Failed to process image: {str(e)}")
         # publish
         self.lane_mask_publisher.publish(ros_lane_mask)
         self.driveable_area_publisher.publish(ros_driveable_area)
