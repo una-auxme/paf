@@ -232,4 +232,5 @@ def filter_vision_objects(float_array, oncoming):
     #    # no car in front
     #    return None
     # Return nearest car
+    print(cars_in_front[np.argmin(cars_in_front[:, 1])])
     return cars_in_front[np.argmin(cars_in_front[:, 1])]
