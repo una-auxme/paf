@@ -9,13 +9,14 @@ import rospy
 import numpy as np
 from typing import List, Optional
 
-from mapping_common.entity import Entity, Flags
+from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
-from mapping_common.shape import Circle
+from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 
 from sensor_msgs.msg import PointCloud2
+from carla_msgs.msg import CarlaSpeedometer
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -38,6 +39,15 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
+        self.lidar_data = None
+        self.new_subscription(
+            topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
+            msg_type=CarlaSpeedometer,
+            callback=self.hero_speed_callback,
+            qos_profile=1,
+        )
+        self.hero_speed = None
+
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
@@ -45,6 +55,9 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
+
+    def hero_speed_callback(self, data: CarlaSpeedometer):
+        self.hero_speed = data
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
@@ -97,13 +110,41 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
+    def create_hero_entity(self) -> Optional[Car]:
+        if self.hero_speed is None:
+            return None
+
+        motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
+        timestamp = self.hero_speed.header.stamp
+        # Shape based on https://www.motortrend.com/cars/
+        # lincoln/mkz/2020/specs/?trim=Base+Sedan
+        shape = Rectangle(
+            length=4.92506,
+            width=1.86436,
+            offset=Transform2D.new_translation(Vector2.new(0.0, 0.0)),
+        )
+        transform = Transform2D.identity()
+        flags = Flags(is_collider=True, is_hero=True)
+        hero = Car(
+            confidence=1.0,
+            priority=1.0,
+            shape=shape,
+            transform=transform,
+            timestamp=timestamp,
+            flags=flags,
+            motion=motion,
+        )
+        return hero
+
     def publish_new_map(self, timer_event=None):
+        hero_car = self.create_hero_entity()
+
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_data is None:
+        if self.lidar_data is None or hero_car is None:
             return
 
         stamp = rospy.get_rostime()
-        map = Map(timestamp=stamp, entities=self.entities_from_lidar())
+        map = Map(timestamp=stamp, entities=[hero_car] + self.entities_from_lidar())
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 

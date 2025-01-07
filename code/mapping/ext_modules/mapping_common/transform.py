@@ -142,6 +142,22 @@ class Vector2(_Coord2):
         return Vector2.new(0.0, 0.0)
 
     @staticmethod
+    def forward() -> "Vector2":
+        return Vector2.new(1.0, 0.0)
+
+    @staticmethod
+    def backward() -> "Vector2":
+        return Vector2.new(-1.0, 0.0)
+
+    @staticmethod
+    def left() -> "Vector2":
+        return Vector2.new(0.0, 1.0)
+
+    @staticmethod
+    def right() -> "Vector2":
+        return Vector2.new(0.0, -1.0)
+
+    @staticmethod
     def from_point(p: Point2) -> "Vector2":
         return Vector2(p._matrix)
 
