@@ -5,6 +5,9 @@ from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Image as ImageMsg
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
+from mapping_common.shape import Rectangle, Circle
+from mapping_common.entity import Entity, Lanemarking
+from mapping_common.transform import Transform2D, Vector2
 
 # from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -69,6 +72,9 @@ class lane_position(CompatibleNode):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(lanemask)
         bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
+
+        Transform2D.new_translation(Vector2.new())
+        Lanemarking(Lanemarking.Style.SOLID, )
         pass
 
     def driveable_area_handler(self, ImageMsg):
