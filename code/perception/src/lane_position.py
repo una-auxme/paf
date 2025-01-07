@@ -5,8 +5,10 @@ from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Image as ImageMsg
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
-from scipy.spatial.transform import Rotation as R
+
+# from scipy.spatial.transform import Rotation as R
 import numpy as np
+from sklearn.cluster import DBSCAN
 
 
 class lane_position(CompatibleNode):
@@ -44,6 +46,18 @@ class lane_position(CompatibleNode):
             qos_profile=1,
         )
 
+    def setup_driveable_area_subscriptions(self):
+        """
+        sets up a subscriber to the driveable area
+        """
+
+        self.new_subscription(
+            msg_type=numpy_msg(ImageMsg),
+            callback=self.driveable_area_handler,
+            topic="/paf/hero/Center/driveable_area",
+            qos_profile=1,
+        )
+
     def setup_coordinate_image_publisher(self):
         self.coordinate_image_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
@@ -54,15 +68,46 @@ class lane_position(CompatibleNode):
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(lanemask)
-        image = self.create_coordinate_image(x_coords, y_coords)
-        image = image.astype(np.int32)
-        ros_image = self.bridge.cv2_to_imgmsg(image)
-        self.coordinate_image_publisher.publish(ros_image)
-        # world_coordinates = self.transform_camera2worldcoordinates(lanemask)
-
+        bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
         pass
 
-    def get_point_by_angle(self, lanemask):
+    def driveable_area_handler(self, ImageMsg):
+        mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
+        x_coords, y_coords = self.get_point_by_angle(mask)
+        bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
+        pass
+
+    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.5, min_samples=100):
+        """
+        Berechnet die Bounding Boxes für geclusterte Punkte.
+
+        :param x_coords: x-Koordinaten der Punkte
+        :param y_coords: y-Koordinaten der Punkte
+        :param epsilon: Maximaler Abstand für DBSCAN-Clustering
+        :param min_samples: Minimale Punktanzahl pro Cluster
+        :return: Liste von Bounding Boxes [(x_min, y_min, x_max, y_max), ...]
+        """
+        # Stack x und y in ein Array für Clustering
+        points = np.stack((x_coords, y_coords), axis=1)
+
+        # DBSCAN-Clustering
+        clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+        labels = clustering.labels_
+
+        # Berechnung der Bounding Boxes für jeden Cluster
+        bounding_boxes = []
+        unique_labels = set(labels)
+        for label in unique_labels:
+            if label == -1:  # Rauschen ignorieren
+                continue
+            cluster_points = points[labels == label]
+            x_min, y_min = cluster_points.min(axis=0)
+            x_max, y_max = cluster_points.max(axis=0)
+            bounding_boxes.append((x_min, y_min, x_max, y_max))
+
+        return bounding_boxes
+
+    def get_point_by_angle(self, lanemask):  # nur einmal berrechen
         w = self.camera_width
         h = self.camera_height
         theta_h = np.deg2rad(self.camera_fov)  # Horizontaler FOV in Radiant
@@ -87,7 +132,7 @@ class lane_position(CompatibleNode):
         y_ground = y_ground[~np.isnan(y_ground)]
         return x_ground, y_ground
 
-    def create_coordinate_image(self, x_coords, y_coords):
+    """    def create_coordinate_image(self, x_coords, y_coords):
         # 1. Schritt: Bildgröße bestimmen (maximale Werte aus x und y)
         x_coords = x_coords * 10
         y_coords = y_coords * 10
@@ -108,7 +153,7 @@ class lane_position(CompatibleNode):
         image[y_pixel, x_pixel] = (
             255  # Setzt die Pixel, die den Koordinaten entsprechen, auf 1 (weiß)
         )
-        return image
+        return image"""
 
     def create_Matrices(self):
         f = self.camera_width / (2.0 * np.tan(self.camera_fov * np.pi / 360))
