@@ -103,6 +103,7 @@ class CollisionCheck(CompatibleNode):
         """
         # Filter onjects in front
         nearest_object = filter_vision_objects(data.data, False)
+        rospy.loginfo(nearest_object)
         if (
             nearest_object is None
             and self.__object_last_position is not None

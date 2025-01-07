@@ -15,11 +15,7 @@ from torchvision.models.detection.faster_rcnn import (
 )
 import torchvision.transforms as t
 import cv2
-from vision_node_helper import (
-    get_carla_class_name,
-    get_carla_color,
-    coco_to_carla,
-)
+from vision_node_helper import coco_to_carla, get_carla_color
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import (
@@ -33,7 +29,6 @@ from cv_bridge import CvBridge
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
-import asyncio
 import rospy
 from ultralytics.utils.ops import scale_masks
 
@@ -369,125 +364,32 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-        output = self.model.track(cv_image, half=True, verbose=False, imgsz=640)
+        output = self.model(cv_image, half=True, verbose=False, imgsz=640)
 
         # handle distance of objects
 
         # set up lists for visualization of distance outputs
-        distance_output = []
-        c_boxes = []
-        c_labels = []
         c_colors = []
-        carla_classes = []
+        boxes = output[0].boxes
+        carla_classes = [coco_to_carla[int(cls)] for cls in boxes.cls]
+        c_colors = [get_carla_color(int(cls)) for cls in boxes.cls]
         if hasattr(output[0], "masks") and output[0].masks is not None:
             masks = output[0].masks.data
-        else:
-            masks = None
-
-        boxes = output[0].boxes
-        for box in boxes:
-            cls = box.cls.item()  # class index of object
-            carla_classes.append(coco_to_carla[int(cls)])
-            pixels = box.xyxy[0]  # upper left and lower right pixel coords
-
-            # only run distance calc when dist_array is available
-            # this if is needed because the lidar starts
-            # publishing with a delay
-            if self.dist_arrays is None:
-                continue
-
-            # crop bounding box area out of depth image
-            distances = np.asarray(
-                self.dist_arrays[
-                    int(pixels[1]) : int(pixels[3]) : 1,
-                    int(pixels[0]) : int(pixels[2]) : 1,
-                    ::,
-                ]
-            )
-
-            # set all 0 (black) values to np.inf (necessary if
-            # you want to search for minimum)
-            # these are all pixels where there is no
-            # corresponding lidar point in the depth image
-            condition = distances[:, :, 0] != 0
-            non_zero_filter = distances[condition]
-            distances_copy = distances.copy()
-            distances_copy[distances_copy == 0] = np.inf
-
-            # only proceed if there is more than one lidar
-            # point in the bounding box
-            if len(non_zero_filter) > 0:
-                """
-                !Watch out:
-                The calculation of min x and min abs y is currently
-                only for center angle
-                For back, left and right the values are different in the
-                coordinate system of the lidar.
-                (Example: the closedt distance on the back view should the
-                max x since the back view is on the -x axis)
-                """
-
-                # copy actual lidar points
-                obj_dist_min_x = self.min_x(dist_array=distances_copy)
-                obj_dist_min_abs_y = self.min_abs_y(dist_array=distances_copy)
-
-                # absolut distance to object for visualization
-                abs_distance = np.sqrt(
-                    obj_dist_min_x[0] ** 2
-                    + obj_dist_min_x[1] ** 2
-                    + obj_dist_min_x[2] ** 2
-                )
-
-                # append class index, min x and min abs y to output array
-                distance_output.append(float(cls))
-                distance_output.append(float(obj_dist_min_x[0]))
-                distance_output.append(float(obj_dist_min_abs_y[1]))
-
-            else:
-                # fallback values for bounding box if
-                # no lidar points where found
-                obj_dist_min_x = (np.inf, np.inf, np.inf)
-                obj_dist_min_abs_y = (np.inf, np.inf, np.inf)
-                abs_distance = np.inf
-
-            # add values for visualization
-            c_boxes.append(torch.tensor(pixels))
-            c_labels.append(
-                f"Class: {get_carla_class_name(cls)}, "
-                f"Meters: {round(abs_distance, 2)}, "
-                f"TrackingId: {int(box.id)}, "
-                f"({round(float(obj_dist_min_x[0]), 2)}, "
-                f"{round(float(obj_dist_min_abs_y[1]), 2)})",
-            )
-            c_colors.append(get_carla_color(int(cls)))
-
-        # publish list of distances of objects for planning
-        self.distance_publisher.publish(Float32MultiArray(data=distance_output))
-
-        # transform image
-        transposed_image = np.transpose(cv_image, (2, 0, 1))
-        image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
-
-        # draw bounding boxes and distance values on image
-        c_boxes = torch.stack(c_boxes)
-        drawn_images = draw_bounding_boxes(
-            image_np_with_detections,
-            c_boxes,
-            c_labels,
-            colors="blue",
-            width=3,
-            font_size=12,
-        )
-        if masks is not None:
             scaled_masks = np.squeeze(
                 scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(),
                 1,
             )
 
             self.publish_segmentation_mask(scaled_masks, carla_classes)
+        else:
+            masks = None
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
+
+        if masks is not None:
 
             drawn_images = draw_segmentation_masks(
-                drawn_images,
+                image_np_with_detections,
                 torch.from_numpy(scaled_masks > 0),
                 alpha=0.6,
                 colors=c_colors,
@@ -538,7 +440,6 @@ class VisionNode(CompatibleNode):
         # Nachricht veröffentlichen
         try:
             self.segmentation_mask_publisher.publish(msg)
-            rospy.loginfo("Published segmentation mask.")
         except Exception as e:
             rospy.logerr(f"Error publishing segmentation mask: {e}")
 

@@ -201,7 +201,7 @@ def filter_vision_objects(float_array, oncoming):
     of the bounding box
 
     Array shape: [classID, EuclidDistance,
-                    UpperLeft(x,y,z), LowerRight(x,y,z)]
+                    UpperLeft(x,y,z), LowerRight(x,y,z)] --> TODO: Incorrect. class, x distance, y distance which does not make sense
 
     Args:
         data (ndarray): numpy array with vision objects
@@ -216,26 +216,20 @@ def filter_vision_objects(float_array, oncoming):
         return None
     # Filter out all objects that are not cars, Persons, Bycicles,
     # Motorbikes, Busses or Trucks
-    all_cars = float_array[np.where(float_array[:, 0] <= 7)]
-    all_cars = all_cars[np.where(all_cars[:, 0] != 6)]
-    all_cars = all_cars[np.where(all_cars[:, 0] != 4)]
+    all_cars = float_array[(float_array[:, 0] != 0) & (float_array[:, 0] != 3)]
 
     # Get cars that are on our lane
     if oncoming:
-        cars_in_front = all_cars[np.where(all_cars[:, 2] > 0.3)]
-        if cars_in_front.size != 0:
-            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] < 1.3)]
+        cars_in_front = all_cars[(all_cars[:, 2] > 0.75) & (all_cars[:, 2] < 2.5)]
     else:
-        cars_in_front = all_cars[np.where(all_cars[:, 2] < 0.1)]
-        if cars_in_front.size != 0:
-            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] > -0.2)]
+        cars_in_front = all_cars[(all_cars[:, 2] < 0.75) & (all_cars[:, 2] > -0.75)]
     if cars_in_front.size == 0:
         # no car in front
         return None
     # Filter for potential recognition of ega vehicle front hood
-    filtered_cars_in_front = cars_in_front[np.where(cars_in_front[:, 1] > 0.7)]
-    if filtered_cars_in_front.size == 0:
-        # no car in front
-        return None
+    # filtered_cars_in_front = cars_in_front[np.where(cars_in_front[:, 1] > 0.7)]
+    # if cars_in_front.size == 0:
+    #    # no car in front
+    #    return None
     # Return nearest car
-    return filtered_cars_in_front[np.argmin(filtered_cars_in_front[:, 1])]
+    return cars_in_front[np.argmin(cars_in_front[:, 1])]
