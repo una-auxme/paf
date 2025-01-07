@@ -72,7 +72,7 @@ class Point2(_Coord2):
             matrix[2] = 1.0
             return Point2(matrix)
         raise TypeError(
-            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+            f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
         )
 
 
@@ -190,7 +190,7 @@ class Vector2(_Coord2):
             matrix[2] = 1.0
             return Vector2(matrix)
         raise TypeError(
-            f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+            f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
         )
 
 

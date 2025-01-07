@@ -2,6 +2,7 @@
 import subprocess
 import os
 import argparse
+import sys
 
 from setup import is_debug_enabled
 
@@ -24,7 +25,7 @@ def main():
     workingdir = os.path.dirname(os.path.abspath(__file__))
     subprocess.run(
         [
-            "python",
+            sys.executable,
             "setup.py",
             install_instruction,
             "--install-base",
