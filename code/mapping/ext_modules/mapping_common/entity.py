@@ -287,9 +287,9 @@ class Entity:
             entity_type = _entity_supported_classes_dict[msg_type_lower]
         if entity_type is None:
             rospy.logerr(
-                f"""Received entity type '{m.type_name}' is not supported.
-Base class 'Entity' will be used instead.
-The type must be one of {_entity_supported_classes_dict.keys()}"""
+                f"Received entity type '{m.type_name}' is not supported."
+                f"Base class 'Entity' will be used instead."
+                f"The type must be one of {_entity_supported_classes_dict.keys()}"
             )
             entity_type = Entity
 
