@@ -5,13 +5,13 @@ from py_trees.behaviours import Running
 import py_trees_ros
 import rospy
 import sys
-from behaviours import (
+from behaviors import (
     intersection,
     lane_change,
     overtake,
     maneuvers,
     meta,
-    road_features,
+    # road_features,
     topics2blackboard,
 )
 from py_trees.composites import Parallel, Selector, Sequence
@@ -37,9 +37,7 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Intersection",
                                 children=[
-                                    road_features.IntersectionAhead(
-                                        "Intersection Ahead?"
-                                    ),
+                                    intersection.Ahead("Intersection Ahead?"),
                                     Sequence(
                                         "Intersection Actions",
                                         children=[
@@ -61,7 +59,7 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Laneswitch",
                                 children=[
-                                    road_features.LaneChangeAhead("Lane Change Ahead?"),
+                                    lane_change.Ahead("Lane Change Ahead?"),
                                     Sequence(
                                         "Lane Change Actions",
                                         children=[
@@ -76,7 +74,7 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Overtaking",
                                 children=[
-                                    road_features.OvertakeAhead("Overtake Ahead?"),
+                                    overtake.Ahead("Overtake Ahead?"),
                                     Sequence(
                                         "Overtake Actions",
                                         children=[
