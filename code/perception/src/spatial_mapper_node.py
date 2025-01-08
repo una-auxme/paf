@@ -135,10 +135,10 @@ class SpatialMapperNode(CompatibleNode):
         ]
 
         # Stack depth values for all segmentation masks
-        adjusted_dist_array = self.dist_array.copy()
         tiled_dist_array = np.tile(
             self.dist_array, (segmentation_array.shape[0], 1, 1, 1)
         )
+        tiled_dist_array[..., 2] += 1.7
 
         stacked_depth_values = self.calculate_depth_values(
             segmentation_array, tiled_dist_array
@@ -147,16 +147,25 @@ class SpatialMapperNode(CompatibleNode):
         non_zero_mask = (
             ~(tiled_dist_array[..., 0] == 0.0)
             & ~(tiled_dist_array[..., 1] == 0.0)
-            & ~(tiled_dist_array[..., 2] == 0.0)
+            & ~(tiled_dist_array[..., 2] == 1.7)
         )
-        z_filter_mask = tiled_dist_array[..., 2] >= 2.2
-        combined_mask = valid_mask & non_zero_mask & z_filter_mask
-        combined_mask = valid_mask & non_zero_mask
+        z_filter_mask = tiled_dist_array[..., 2] >= 0.3
+        car_length = 4.9
+        car_width = 1.86436
+        filter_hero_car_mask = (
+            (tiled_dist_array[..., 0] >= -car_length / 2)
+            & (tiled_dist_array[..., 0] <= car_length / 2)
+            & (tiled_dist_array[..., 1] >= -car_width / 2)
+            & (tiled_dist_array[..., 1] <= car_width / 2)
+        )
+
+        combined_mask = (
+            valid_mask & non_zero_mask & z_filter_mask & ~filter_hero_car_mask
+        )
 
         # Combine all valid points from the segmentation masks
         valid_points = tiled_dist_array[combined_mask]
-        # add car height to z value
-        valid_points[..., 2] += 1.7
+
         if valid_points.size > 0:
             combined_points = np.zeros(
                 valid_points.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
@@ -170,27 +179,14 @@ class SpatialMapperNode(CompatibleNode):
             # get minimum x and y point distance for each segmentation_mask
             mask_indices = np.argwhere(combined_mask)
             distance_output = []
-            for i in range(segmentation_array.shape[0]):
-                # get all points of the valid_points where mask_indices == i
-                mask_points = valid_points[mask_indices[:, 0] == i]
-                if mask_points.size == 0:
-                    continue
-                min_x_point = np.min(mask_points[:, 0])
-                min_y_point = np.min(np.abs(mask_points[:, 1]))
-                # combine class, min_x and min_abs_y distance by class1, x1, y1, class2, x2, y2, ...
-                # car has size 4.92506 x 1.86436 so filter all distance_output values where x < length/2 and y < width/2
-                # and where x > -length/2 and y > -width/2
-                car_length = 4.92506
-                car_width = 1.86436
-                if (
-                    min_x_point > car_length / 2
-                    and min_y_point > car_width / 2
-                    and min_x_point < -car_length / 2
-                    and min_y_point < -car_width / 2
-                ):
-                    distance_output.append(unique_classes[i])
-                    distance_output.append(min_x_point)
-                    distance_output.append(min_y_point)
+            classes_array = unique_classes[mask_indices[:, 0]]
+            x_coords = valid_points[:, 0]
+            y_coords = valid_points[:, 1]
+
+            distance_output = np.column_stack(
+                (classes_array, x_coords, y_coords)
+            ).flatten()
+
             if len(distance_output) > 0:
                 self.distance_publisher.publish(
                     Float32MultiArray(data=np.array(distance_output))

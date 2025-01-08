@@ -259,7 +259,10 @@ class VisionNode(CompatibleNode):
             vision_result = self.predict_torch(image)
 
         if self.framework == "ultralytics":
-            vision_result = self.predict_ultralytics(image)
+            vision_result = self.predict_ultralytics(image, return_image=False)
+
+        if vision_result is None:
+            return
 
         # publish vision result to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result, encoding="bgr8")
@@ -341,7 +344,7 @@ class VisionNode(CompatibleNode):
 
         return vision_result
 
-    def predict_ultralytics(self, image):
+    def predict_ultralytics(self, image, return_image=True):
         """
         This function takes in an image from a camera, predicts
         an ultralytics model on the image and looks for lidar points
@@ -364,7 +367,7 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-        output = self.model(cv_image, half=True, verbose=False, imgsz=640)
+        output = self.model(cv_image, half=True, verbose=False, imgsz=320)
 
         # handle distance of objects
 
@@ -386,6 +389,13 @@ class VisionNode(CompatibleNode):
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
 
+        # proceed with traffic light detection
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
+
+        if return_image is False:
+            return None
+
         if masks is not None:
 
             drawn_images = draw_segmentation_masks(
@@ -396,10 +406,6 @@ class VisionNode(CompatibleNode):
             )
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
-
-        # proceed with traffic light detection
-        if 9 in output[0].boxes.cls:
-            self.process_traffic_lights(output[0], cv_image, image.header)
 
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 

@@ -4,6 +4,8 @@ import math
 import carla
 import os
 
+import rospy
+
 # import rospy
 
 
@@ -201,7 +203,9 @@ def filter_vision_objects(float_array, oncoming):
     of the bounding box
 
     Array shape: [classID, EuclidDistance,
-                    UpperLeft(x,y,z), LowerRight(x,y,z)] --> TODO: Incorrect. class, x distance, y distance which does not make sense
+                    UpperLeft(x,y,z), LowerRight(x,y,z)]
+                    --> TODO: Incorrect. class, x distance, y distance which does not
+                    make sense
 
     Args:
         data (ndarray): numpy array with vision objects
@@ -220,17 +224,17 @@ def filter_vision_objects(float_array, oncoming):
 
     # Get cars that are on our lane
     if oncoming:
-        cars_in_front = all_cars[(all_cars[:, 2] > 0.75) & (all_cars[:, 2] < 2.5)]
+        cars_in_front = all_cars[
+            np.where(np.logical_and(all_cars[:, 2] >= 0.95, all_cars[:, 2] < 1.75))
+        ]
+
     else:
-        cars_in_front = all_cars[(all_cars[:, 2] < 0.75) & (all_cars[:, 2] > -0.75)]
+        cars_in_front = all_cars[
+            np.where(np.logical_and(all_cars[:, 2] < 0.95, all_cars[:, 2] > -0.95))
+        ]
+
     if cars_in_front.size == 0:
         # no car in front
         return None
-    # Filter for potential recognition of ega vehicle front hood
-    # filtered_cars_in_front = cars_in_front[np.where(cars_in_front[:, 1] > 0.7)]
-    # if cars_in_front.size == 0:
-    #    # no car in front
-    #    return None
     # Return nearest car
-    print(cars_in_front[np.argmin(cars_in_front[:, 1])])
     return cars_in_front[np.argmin(cars_in_front[:, 1])]
