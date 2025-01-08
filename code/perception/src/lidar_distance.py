@@ -9,6 +9,7 @@ from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
+from scipy.spatial.transform import Rotation as R
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
@@ -102,7 +103,7 @@ class LidarDistance:
 
         :param data: LiDAR point clouds in ROS PointCloud2 format.
         """
-
+        bbox_type = "aabb"
         # Convert PointCloud2 data to a NumPy structured array
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
@@ -137,13 +138,17 @@ class LidarDistance:
         cluster_labels = cluster_labels.reshape(-1, 1)
         points_with_labels = np.hstack((filtered_xyz, cluster_labels))
 
-        bounding_boxes = generate_bounding_boxes(points_with_labels)
+        bounding_boxes = generate_bounding_boxes(
+            points_with_labels, bbox_type=bbox_type
+        )
 
         # Create a MarkerArray for visualization
+        if bounding_boxes is None:
+            return
         marker_array = MarkerArray()
         for label, bbox in bounding_boxes:
             if label != -1:  # Ignore noise points (label = -1)
-                marker = create_bounding_box_marker(label, bbox)
+                marker = create_bounding_box_marker(label, bbox, bbox_type=bbox_type)
                 marker_array.markers.append(marker)
 
         # Publish the MarkerArray for visualization
@@ -347,7 +352,7 @@ class LidarDistance:
         return dist_array
 
 
-def generate_bounding_boxes(points_with_labels):
+def generate_bounding_boxes(points_with_labels, bbox_type="aabb"):
     """
     Generates axis-aligned bounding boxes (AABB) for clustered points.
 
@@ -381,13 +386,18 @@ def generate_bounding_boxes(points_with_labels):
         cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
 
         # Calculate the bounding box for the cluster
-        bbox = calculate_aabb(cluster_points)
+        if bbox_type == "aabb":
+            bbox = calculate_aabb(cluster_points)
+        elif bbox_type == "obb":
+            bbox = calculate_obb(cluster_points)
+        else:
+            return
         bounding_boxes.append((label, bbox))
 
     return bounding_boxes
 
 
-def create_bounding_box_marker(label, bbox):
+def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     """
     Creates an RViz Marker for visualizing a 3D bounding box.
 
@@ -397,14 +407,14 @@ def create_bounding_box_marker(label, bbox):
     Args:
         label (int): Unique identifier for the cluster or object.
                      Used as the Marker ID.
-        bbox (tuple): Bounding box dimensions in the format:
-                      (x_min, x_max, y_min, y_max, z_min, z_max).
+        bbox (tuple): Bounding box dimensions.
+                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): The type of bounding box ("aabb" or "obb").
 
     Returns:
         Marker: A LINE_LIST Marker object that can be published to RViz.
     """
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
     # Initialize the Marker object
     marker = Marker()
     marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
@@ -421,17 +431,44 @@ def create_bounding_box_marker(label, bbox):
     marker.color.b = 0.5  # Blue color component
     marker.color.a = 1.0  # Opacity (1.0 = fully visible)
 
-    # Define the 8 corners of the 3D bounding box
-    points = [
-        Point(x_min, y_min, z_min),  # Bottom face
-        Point(x_max, y_min, z_min),
-        Point(x_max, y_max, z_min),
-        Point(x_min, y_max, z_min),
-        Point(x_min, y_min, z_max),  # Top face
-        Point(x_max, y_min, z_max),
-        Point(x_max, y_max, z_max),
-        Point(x_min, y_max, z_max),
-    ]
+    if bbox_type == "aabb":
+        x_min, x_max, y_min, y_max, z_min, z_max = bbox
+
+        # Define the 8 corners of the AABB
+        points = [
+            Point(x_min, y_min, z_min),  # Bottom face
+            Point(x_max, y_min, z_min),
+            Point(x_max, y_max, z_min),
+            Point(x_min, y_max, z_min),
+            Point(x_min, y_min, z_max),  # Top face
+            Point(x_max, y_min, z_max),
+            Point(x_max, y_max, z_max),
+            Point(x_min, y_max, z_max),
+        ]
+
+    elif bbox_type == "obb":
+        center, dimensions, eigenvectors = bbox
+        width, length, height = dimensions
+
+        # Calculate the 8 corners of the OBB
+        offsets = [
+            [-width / 2, -length / 2, -height / 2],
+            [width / 2, -length / 2, -height / 2],
+            [width / 2, length / 2, -height / 2],
+            [-width / 2, length / 2, -height / 2],
+            [-width / 2, -length / 2, height / 2],
+            [width / 2, -length / 2, height / 2],
+            [width / 2, length / 2, height / 2],
+            [-width / 2, length / 2, height / 2],
+        ]
+
+        points = [
+            Point(*((np.dot(offset, eigenvectors.T) + center).tolist()))
+            for offset in offsets
+        ]
+
+    else:
+        raise ValueError(f"Unsupported bbox_type: {bbox_type}")
 
     # Define lines connecting the corners of the bounding box
     lines = [
@@ -455,6 +492,71 @@ def create_bounding_box_marker(label, bbox):
         marker.points.append(points[end])
 
     return marker
+
+
+def calculate_obb(cluster_points):
+    """
+    Calculates the oriented bounding box (OBB) for a set of 3D points, restricting rotation to the x-y plane.
+
+    This function computes the minimum and maximum values along the principal axes
+    (derived from PCA) of the given set of 3D points, defining an oriented bounding
+    box that aligns with the shape of the point cluster in the x-y plane.
+
+    Args:
+        cluster_points (numpy.ndarray):
+        A 2D array where each row represents a 3D point (x, y, z).
+        The array should have shape (N, 3) where N is the number of points.
+
+    Returns:
+        tuple: A tuple containing:
+            - center (numpy.ndarray): Center of the OBB as a 1D array (x, y, z).
+            - dimensions (tuple): Width, length, and height of the OBB (along principal axes).
+            - rotation_matrix (numpy.ndarray): 3x3 matrix representing the orientation of the OBB, restricted to the x-y plane.
+    """
+
+    # Ensure cluster_points is a NumPy array
+    cluster_points = np.array(cluster_points)
+
+    # Ignore the z-axis for orientation by projecting points onto the x-y plane
+    points_xy = cluster_points[:, :2]
+
+    # Center the points (subtract the mean)
+    mean_xy = np.mean(points_xy, axis=0)
+    centered_points_xy = points_xy - mean_xy
+
+    # Perform PCA to find the principal axes in the x-y plane
+    covariance_matrix = np.cov(centered_points_xy, rowvar=False)
+    eigenvalues, eigenvectors_xy = np.linalg.eigh(covariance_matrix)
+
+    # Sort eigenvalues and eigenvectors in descending order of eigenvalues
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvectors_xy = eigenvectors_xy[:, sorted_indices]
+
+    # Rotate points to align with the principal axes in the x-y plane
+    rotated_points_xy = np.dot(centered_points_xy, eigenvectors_xy)
+
+    # Calculate axis-aligned bounding box in the rotated space
+    min_vals = np.min(rotated_points_xy, axis=0)
+    max_vals = np.max(rotated_points_xy, axis=0)
+
+    # Calculate dimensions in the x-y plane
+    dimensions_xy = max_vals - min_vals  # Width, length
+
+    # Include z-dimensions directly from the original points
+    z_min = np.min(cluster_points[:, 2])
+    z_max = np.max(cluster_points[:, 2])
+    height = z_max - z_min
+
+    # Calculate the center of the bounding box in the original space
+    rotated_center_xy = (min_vals + max_vals) / 2
+    center_xy = np.dot(rotated_center_xy, eigenvectors_xy.T) + mean_xy
+    center = np.array([center_xy[0], center_xy[1], (z_min + z_max) / 2])
+
+    # Extend the 2D rotation matrix to 3D
+    rotation_matrix = np.eye(3)
+    rotation_matrix[:2, :2] = eigenvectors_xy
+
+    return center, (dimensions_xy[0], dimensions_xy[1], height), rotation_matrix
 
 
 def calculate_aabb(cluster_points):

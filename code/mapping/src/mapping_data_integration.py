@@ -33,6 +33,8 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
+        self.radar_marker_data = []
+        self.lidar_marker_data = []
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
