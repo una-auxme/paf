@@ -116,7 +116,13 @@ class MappingDataIntegrationNode(CompatibleNode):
             if not marker.points:
                 rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
                 continue
-
+            
+            # Transformation in das Koordinatensystem des Hero cars
+            points_array = np.array([[p.x, p.y, p.z] for p in marker.points])
+            points_array[:, 0] += 2
+            for i, p in enumerate(marker.points):
+                p.x, p.y, p.z = points_array[i]
+                
             width, length = calculate_marker_width_length_2d(marker.points)
             x_center, y_center = calculate_marker_center_2d(marker.points)
 
