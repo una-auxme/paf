@@ -103,7 +103,11 @@ class LidarDistance:
 
         :param data: LiDAR point clouds in ROS PointCloud2 format.
         """
-        bbox_type = "aabb"
+        # Defines which approach of creating bounding boxes should be used:
+        # aabb := Axis-Aligned Bounding Box
+        # obb := Oriented Bounding Box
+        bbox_type = "obb"
+
         # Convert PointCloud2 data to a NumPy structured array
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
