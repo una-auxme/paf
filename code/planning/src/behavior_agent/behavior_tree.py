@@ -6,13 +6,14 @@ import py_trees_ros
 import rospy
 import sys
 from behaviors import (
+    cruise,
     intersection,
     lane_change,
-    overtake,
-    maneuvers,
+    leave_parking_space,
     meta,
-    # road_features,
+    overtake,
     topics2blackboard,
+    unstuck_routine,
 )
 from py_trees.composites import Parallel, Selector, Sequence
 
@@ -29,11 +30,13 @@ def grow_a_tree(role_name):
             Selector(
                 "Priorities",
                 children=[
-                    maneuvers.UnstuckRoutine("Unstuck Routine"),
+                    unstuck_routine.UnstuckRoutine("Unstuck Routine"),
                     Selector(
                         "Road Features",
                         children=[
-                            maneuvers.LeaveParkingSpace("Leave Parking Space"),
+                            leave_parking_space.LeaveParkingSpace(
+                                "Leave Parking Space"
+                            ),
                             Sequence(
                                 "Intersection",
                                 children=[
@@ -88,7 +91,7 @@ def grow_a_tree(role_name):
                             ),
                         ],
                     ),
-                    maneuvers.Cruise("Cruise"),
+                    cruise.Cruise("Cruise"),
                 ],
             )
         ],
