@@ -11,7 +11,7 @@ from std_msgs.msg import Float32
 from acting.msg import Debug
 import numpy as np
 
-from helper_functions import vector_angle, points_to_vector
+from acting.helper_functions import vector_angle, points_to_vector
 
 # Tuneable Values for PurePursuit-Algorithm
 K_LAD = 0.85  # optimal in dev-launch
@@ -33,12 +33,12 @@ class PurePursuitController(CompatibleNode):
         self.role_name = self.get_param("role_name", "ego_vehicle")
 
         self.position_sub: Subscriber = self.new_subscription(
-            Path, f"/paf/{self.role_name}/trajectory", self.__set_path, qos_profile=1
+            Path, "/paf/acting/trajectory", self.__set_path, qos_profile=1
         )
 
         self.path_sub: Subscriber = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
+            "/paf/acting/current_pos",
             self.__set_position,
             qos_profile=1,
         )
@@ -52,7 +52,7 @@ class PurePursuitController(CompatibleNode):
 
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
+            "/paf/acting/current_heading",
             self.__set_heading,
             qos_profile=1,
         )

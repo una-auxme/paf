@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(mapping)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -15,38 +12,16 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
-
-## Uncomment this if the package has a setup.py. This macro ensures
+## This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+## Note that the mapping common_package is install separately below
 catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
-
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
-##     * add a exec_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 # Generate messages in the 'msg' folder
 add_message_files(
@@ -89,22 +64,6 @@ generate_messages(
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -116,7 +75,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mapping
+LIBRARIES mapping mapping_common
 CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
@@ -125,6 +84,40 @@ CATKIN_DEPENDS message_runtime uuid_msgs std_msgs geometry_msgs
 ## Build ##
 ###########
 
+# Cython build for mapping_common
+# based on 
+# https://answers.ros.org/question/9731/how-to-use-python-setuptools-to-build-a-python-extension/
+# http://wiki.ros.org/catkin/CMakeLists.txt#catkin_package.28.29
+#
+# This is a hack and should probably not be done this way. 
+# Unfortunately using catkin_python_setup() does not work, because it does not install external modules -> cython.
+set(PAF_MAPPING_COMMON_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/mapping_common_setup)
+set(PAF_DEVEL_PYTHON_PACKAGES_DIR ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../)
+add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${PAF_DEVEL_PYTHON_PACKAGES_DIR}:$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} cmake_setup.py --base_dir "${CATKIN_DEVEL_PREFIX}" --packages_dir "${PAF_DEVEL_PYTHON_PACKAGES_DIR}"
+  COMMAND mkdir -p ${PAF_MAPPING_COMMON_BUILD_DIR} && ${CMAKE_COMMAND} -E touch ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
+  DEPENDS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/*.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/*.pxd
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/.debug_enabled
+  BYPRODUCTS
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/__init__.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/shape.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/transform.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/build 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/dist 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common.egg-info
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mapping_common.egg-info
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules
+)
+
+add_custom_target(mapping_common ALL
+  DEPENDS ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
+)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
@@ -132,90 +125,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/mapping.cpp
-# )
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/mapping_node.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
 #############
 ## Install ##
 #############
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+# Install currently not supported
 
 #############
 ## Testing ##
 #############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mapping.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test/mapping_common)
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
