@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # ROS imports
 import rospy
+import cv2
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Image as ImageMsg
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
+
+# intermediate Layer imports
 from mapping_common.shape import Rectangle, Circle
 from mapping_common.entity import Entity, Lanemarking
 from mapping_common.transform import Transform2D, Vector2
@@ -13,6 +16,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 
 # from scipy.spatial.transform import Rotation as R
+# clustering imports
 import numpy as np
 from sklearn.cluster import DBSCAN
 
@@ -31,16 +35,16 @@ class lane_position(CompatibleNode):
         self.camera_width = self.get_param("camera_width")
         self.camera_height = self.get_param("camera_height")
         self.camera_fov = self.get_param("camera_fov")
-        self.P, self.K, self.R, self.T = self.create_Matrices()
+        # self.P, self.K, self.R, self.T = self.create_Matrices()
 
-        self.setup_lanemask_subscriptions()
-        self.setup_coordinate_image_publisher()
+        self.setup_subscriptions()
+        self.setup_publishers()
 
     def run(self):
         self.spin()
         pass
 
-    def setup_lanemask_subscriptions(self):
+    def setup_subscriptions(self):
         """
         sets up a subscriber to the lanemask
         """
@@ -52,7 +56,6 @@ class lane_position(CompatibleNode):
             qos_profile=1,
         )
 
-    def setup_driveable_area_subscriptions(self):
         """
         sets up a subscriber to the driveable area
         """
@@ -64,14 +67,31 @@ class lane_position(CompatibleNode):
             qos_profile=1,
         )
 
-    def setup_coordinate_image_publisher(self):
+        """
+        sets up a subscription to the lidar
+        depth image of the selected camera angle
+        """
+
+        self.new_subscription(
+            msg_type=numpy_msg(ImageMsg),
+            callback=self.distance_array_handler,
+            topic="/paf/hero/Center/dist_array",
+            qos_profile=1,
+        )
+
+    def setup_publishers(self):
         self.coordinate_image_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic="/paf/hero/Center/coordinate_image",
             qos_profile=1,
         )
+        self.marker_visualization_camera_publisher = rospy.Publisher(
+            rospy.get_param("~marker_topic", "/paf/hero/Lane/Marker_camera"),
+            MarkerArray,
+            queue_size=10,
+        )
         self.marker_visualization_lidar_publisher = rospy.Publisher(
-            rospy.get_param("~marker_topic", "/paf/hero/Lane/Marker"),
+            rospy.get_param("~marker_topic", "/paf/hero/Lane/Marker_lidar"),
             MarkerArray,
             queue_size=10,
         )
@@ -79,16 +99,27 @@ class lane_position(CompatibleNode):
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(lanemask)
-        bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
+        bounding_boxes_camera = self.get_bounding_boxes(x_coords, y_coords)
+        bounding_boxes_lidar = self.get_boundingbox_by_lidar(lanemask)
 
         # Create a MarkerArray for visualization
-        marker_array = MarkerArray()
-        for label, bounding_box in enumerate(bounding_boxes):
-            marker = self.create_bounding_box_marker(label, bounding_box)
-            marker_array.markers.append(marker)
-
+        marker_array_camera = MarkerArray()
+        for label, bounding_box in enumerate(bounding_boxes_camera):
+            marker = self.create_bounding_box_marker(
+                label, bounding_box, "marker_camera", 0.5, 1.0, 0.5
+            )
+            marker_array_camera.markers.append(marker)
+        # Create a MarkerArray for visualization
+        """marker_array_lidar = MarkerArray()
+        for label, bounding_box in enumerate(bounding_boxes_lidar):
+            marker = self.create_bounding_box_marker(
+                label, bounding_box, "marker_lidar"
+            )
+            marker_array_camera.markers.append(marker)
+        """
         # Publish the MarkerArray for visualization
-        self.marker_visualization_lidar_publisher.publish(marker_array)
+        self.marker_visualization_camera_publisher.publish(marker_array_camera)
+        # self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
 
         """transform = Transform2D.new_translation(Vector2.new())
         Lanemarking(
@@ -127,7 +158,9 @@ class lane_position(CompatibleNode):
         pass
 """
 
-    def create_bounding_box_marker(self, label, bounding_boxes):
+    def create_bounding_box_marker(
+        self, label, bounding_boxes, namespace, red=1.0, green=0.5, blue=0.5
+    ):
         """
         Creates an RViz Marker for visualizing a 3D bounding box.
 
@@ -162,9 +195,9 @@ class lane_position(CompatibleNode):
 
         # Set marker properties
         marker.scale.x = 0.1  # Line thickness
-        marker.color.r = 1.0  # Red color component
-        marker.color.g = 0.5  # Green color component
-        marker.color.b = 0.5  # Blue color component
+        marker.color.r = red  # Red color component
+        marker.color.g = green  # Green color component
+        marker.color.b = blue  # Blue color component
         marker.color.a = 1.0  # Opacity (1.0 = fully visible)
 
         # Define the 8 corners of the 3D bounding box
@@ -206,9 +239,14 @@ class lane_position(CompatibleNode):
         mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(mask)
         bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
-        pass
 
-    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.5, min_samples=100):
+    def distance_array_handler(self, ImageMsg):
+        dist_array = self.bridge.imgmsg_to_cv2(
+            img_msg=ImageMsg, desired_encoding="passthrough"
+        )
+        self.dist_arrays = dist_array
+
+    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.3, min_samples=100):
         """
         Berechnet die Bounding Boxes für geclusterte Punkte.
 
@@ -220,9 +258,70 @@ class lane_position(CompatibleNode):
         """
         # Stack x und y in ein Array für Clustering
         points = np.stack((x_coords, y_coords), axis=1)
+        labels = []
+        try:
+            # DBSCAN-Clustering
+            clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+            labels = clustering.labels_
 
+        except Exception as e:
+            self.get_logger().error(f"could not cluster given points: {str(e)}")
+        # Berechnung der Bounding Boxes für jeden Cluster
+        bounding_boxes = []
+        unique_labels = set(labels)
+        poly_list = []
+        for label in unique_labels:
+            if label == -1:  # Rauschen ignorieren
+                continue
+            cluster_points = points[labels == label]
+
+            y = cluster_points[:][1]
+            x = cluster_points[:][0]
+            poly_list.append(np.poly1d(np.polyfit(y, x, deg=1)))
+
+            x_min, y_min = cluster_points.min(axis=0)
+            x_max, y_max = cluster_points.max(axis=0)
+            bounding_boxes.append((x_min, y_min, x_max, y_max))
+        image = np.zeros((1280, 720))
+        line_image = self.draw_lines(image, poly_list)
+        return bounding_boxes, line_image
+
+    def get_point_by_angle(self, lanemask):  # nur einmal berrechen
+        x_ground = []
+        y_ground = []
+        try:
+            w = self.camera_width
+            h = self.camera_height
+            theta_h = np.deg2rad(self.camera_fov)  # Horizontaler FOV in Radiant
+            theta_v = theta_h * (h / w)  # Vertikaler FOV in Radiant
+            # Schritt 1: Pixelgitter erstellen
+            u, v = np.meshgrid(np.arange(w), np.arange(h))
+
+            # Schritt 2: Richtungsvektoren berechnen
+            d_x = np.ones_like(u, dtype=float)  # x-Richtung bleibt konstant = 1
+            d_y = -(u - w / 2) / (w / 2) * np.tan(theta_h / 2)
+            d_z = (h / 2 - v) / (h / 2) * np.tan(theta_v / 2)
+            d_x = np.where(lanemask, d_x, np.nan)
+            d_y = np.where(lanemask, d_y, np.nan)
+            d_z = np.where(lanemask, d_z, np.nan)
+            # Schritt 3: Parameter t berechnen (z = 0)
+            t = -self.camera_z / d_z
+            # Schritt 4: Bodenpunkte berechnen
+            x_ground = t * d_x
+            y_ground = t * d_y
+            # Schritt 5: Maske anwenden
+            x_ground = x_ground[~np.isnan(x_ground)]
+            y_ground = y_ground[~np.isnan(y_ground)]
+        except Exception as e:
+            self.get_logger().error(f"Failed to calculate distance of Pixel: {str(e)}")
+        return x_ground, y_ground
+
+    def get_boundingbox_by_lidar(self, lanemask):
+        mask = lanemask != 0
+        points = self.dist_arrays[mask]
+        points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
         # DBSCAN-Clustering
-        clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+        clustering = DBSCAN(eps=1.0, min_samples=5).fit(points)
         labels = clustering.labels_
 
         # Berechnung der Bounding Boxes für jeden Cluster
@@ -232,36 +331,23 @@ class lane_position(CompatibleNode):
             if label == -1:  # Rauschen ignorieren
                 continue
             cluster_points = points[labels == label]
-            x_min, y_min = cluster_points.min(axis=0)
-            x_max, y_max = cluster_points.max(axis=0)
+            x_min, y_min, z_min = cluster_points.min(axis=0)
+            x_max, y_max, z_max = cluster_points.max(axis=0)
             bounding_boxes.append((x_min, y_min, x_max, y_max))
 
         return bounding_boxes
 
-    def get_point_by_angle(self, lanemask):  # nur einmal berrechen
-        w = self.camera_width
-        h = self.camera_height
-        theta_h = np.deg2rad(self.camera_fov)  # Horizontaler FOV in Radiant
-        theta_v = theta_h * (h / w)  # Vertikaler FOV in Radiant
-        # Schritt 1: Pixelgitter erstellen
-        u, v = np.meshgrid(np.arange(w), np.arange(h))
+    def draw_lines(self, img, lines, color=[255, 0, 0], thickness=3):
+        line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+        img = np.copy(img)
 
-        # Schritt 2: Richtungsvektoren berechnen
-        d_x = np.ones_like(u, dtype=float)  # x-Richtung bleibt konstant = 1
-        d_y = (u - w / 2) / (w / 2) * np.tan(theta_h / 2)
-        d_z = (h / 2 - v) / (h / 2) * np.tan(theta_v / 2)
-        d_x = np.where(lanemask, d_x, np.nan)
-        d_y = np.where(lanemask, d_y, np.nan)
-        d_z = np.where(lanemask, d_z, np.nan)
-        # Schritt 3: Parameter t berechnen (z = 0)
-        t = -self.camera_z / d_z
-        # Schritt 4: Bodenpunkte berechnen
-        x_ground = t * d_x
-        y_ground = t * d_y
-        # Schritt 5: Maske anwenden
-        x_ground = x_ground[~np.isnan(x_ground)]
-        y_ground = y_ground[~np.isnan(y_ground)]
-        return x_ground, y_ground
+        if lines is None:
+            return img
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                cv2.line(line_img, (x1, y1), (x2, y2), color, thickness)
+        img = cv2.addWeighted(img, 0.8, line_img, 1.0, 0.0)
+        return img, line_img
 
     """    def create_coordinate_image(self, x_coords, y_coords):
         # 1. Schritt: Bildgröße bestimmen (maximale Werte aus x und y)
@@ -286,7 +372,7 @@ class lane_position(CompatibleNode):
         )
         return image"""
 
-    def create_Matrices(self):
+    """def create_Matrices(self):
         f = self.camera_width / (2.0 * np.tan(self.camera_fov * np.pi / 360))
         cx = self.camera_width / 2.0
         cy = self.camera_height / 2.0
@@ -362,13 +448,13 @@ class lane_position(CompatibleNode):
         return world_coords
 
     def create_rotation_matrix(self, roll, pitch, yaw):
-        """
+        """ """
         Computes the rotation matrix from roll, pitch, and yaw angles.
         :param roll: Rotation around the x-axis (in degrees)
         :param pitch: Rotation around the y-axis (in degrees)
         :param yaw: Rotation around the z-axis (in degrees)
         :return: 3x3 rotation matrix
-        """
+        """ """
         # Convert angles from degrees to radians
         roll = np.radians(roll)
         pitch = np.radians(pitch)
@@ -403,7 +489,7 @@ class lane_position(CompatibleNode):
 
         # Combined rotation matrix (R = Rz * Ry * Rx)
         R = R_z @ R_y @ R_x
-        return R
+        return R"""
 
 
 if __name__ == "__main__":
