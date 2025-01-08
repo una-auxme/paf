@@ -47,6 +47,14 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_marker_callback,
             qos_profile=1,
         )
+
+        self.new_subscription(
+            topic=self.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
+            msg_type=MarkerArray,
+            callback=self.radar_marker_callback,
+            qos_profile=1,
+        )
+
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
@@ -58,13 +66,15 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_marker_callback(self, data: MarkerArray):
         self.lidar_marker_data = data
 
+    def radar_marker_callback(self, data: MarkerArray):
+        self.radar_marker_data = data
+
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
         if data is None or not hasattr(data, "markers") or data.markers is None:
-            # Handle cases where data or markers are invalid
             rospy.logwarn("No valid marker data received.")
             return []
 
@@ -73,6 +83,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             if not marker.points:
                 rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
                 continue
+
             width, length = calculate_marker_width_length_2d(marker.points)
             x_center, y_center = calculate_marker_center_2d(marker.points)
 
@@ -92,6 +103,39 @@ class MappingDataIntegrationNode(CompatibleNode):
             lidar_entities.append(e)
 
         return lidar_entities
+
+    def entities_from_radar_marker(self) -> List[Entity]:
+        data = self.radar_marker_data
+        if data is None or not hasattr(data, "markers") or data.markers is None:
+            # Handle cases where data or markers are invalid
+            rospy.logwarn("No valid marker data received.")
+            return []
+
+        radar_entities = []
+        for marker in data.markers:
+            if not marker.points:
+                rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
+                continue
+
+            width, length = calculate_marker_width_length_2d(marker.points)
+            x_center, y_center = calculate_marker_center_2d(marker.points)
+
+            shape = Rectangle(width, length)
+            v = Vector2.new(x_center, y_center)
+            transform = Transform2D.new_translation(v)
+
+            flags = Flags(is_collider=True)
+            e = Entity(
+                confidence=1,
+                priority=0.25,
+                shape=shape,
+                transform=transform,
+                timestamp=marker.header.stamp,
+                flags=flags,
+            )
+            radar_entities.append(e)
+
+        return radar_entities
 
     def entities_from_lidar(self) -> List[Entity]:
         if self.lidar_data is None:
@@ -129,7 +173,10 @@ class MappingDataIntegrationNode(CompatibleNode):
             return
 
         stamp = rospy.get_rostime()
-        map = Map(timestamp=stamp, entities=self.entities_from_lidar_marker())
+        lidar_entities = self.entities_from_lidar_marker()
+        radar_entities = self.entities_from_radar_marker()
+        entities = lidar_entities + radar_entities
+        map = Map(timestamp=stamp, entities=entities)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
