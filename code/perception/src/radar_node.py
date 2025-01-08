@@ -12,10 +12,51 @@ from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 
 import struct
+import numpy as np
+from math import radians, cos, sin
+
+import sensor_msgs.point_cloud2 as pc2
+
+import struct
 
 
 class RadarNode:
     """See doc/perception/radar_node.md on how to configure this node."""
+
+    def transform_point_cloud(self, raw_data, point_step, translation, rotation_angle):
+        # Winkel in Radianten umwandeln
+        yaw = radians(translation[5])  # rotation_angle)
+        cos_yaw, sin_yaw = cos(yaw), sin(yaw)
+
+        # Transformation: Translation und Rotation
+        def transform_point(x, y, z):
+            # Rotation um die Z-Achse (Yaw)
+            x_rot = x * cos_yaw - y * sin_yaw
+            y_rot = x * sin_yaw + y * cos_yaw
+            # Translation
+            x_trans = x_rot + translation[0]
+            y_trans = y_rot + translation[1]
+            z_trans = z + translation[2]
+            return x_trans, y_trans, z_trans
+
+        # Dekodieren der Rohdaten
+        points = []
+        for i in range(0, len(raw_data), point_step):
+            point = struct.unpack("ffffffff", raw_data[i : i + point_step])
+            x, y, z = point[0], point[1], point[2]
+            # Transformiere den Punkt
+            x_t, y_t, z_t = transform_point(x, y, z)
+            # Ersetze die Werte und füge weitere Felder hinzu
+            transformed_point = (x_t, y_t, z_t, *point[3:])
+            points.append(transformed_point)
+
+        # Rekodieren der transformierten Punkte
+        transformed_raw_data = b"".join(
+            struct.pack("ffffffff", *point) for point in points
+        )
+        return transformed_raw_data
+
+
 
     def callback(self, data):
         """Process radar Point2Cloud data and publish clustered data points.
@@ -27,6 +68,61 @@ class RadarNode:
         Args:
             data: Point2Cloud message containing radar data
         """
+
+        # Sensorpositionen und -orientierungen (Beispielwerte)
+        sensor_config = {
+            "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
+            "RADAR2": [2.0, 1.0, 0.7, 0.0, 0.0, 10.0],  # yaw in degrees
+            "RADAR3": [2.0, -1.0, 0.7, 0.0, 0.0, 355.0],
+        }
+
+        # Get sensor name from topic
+        sensor_name = rospy.get_param("~point_cloud_topic").split("/")[-1]
+
+        if sensor_name not in sensor_config:
+            rospy.logwarn(f"Unknown sensor: {sensor_name}")
+            return
+
+        # Beispielwerte
+        point_step = 32  # Punktgröße in Bytes
+        translation = sensor_config[sensor_name]  # [-1.0, 0.0, 0.0]  # Translation (Beispielwerte)
+        rotation_angle = -5  # Drehwinkel (Yaw)
+
+        # Rohdaten des PointCloud2-Objekts (z. B. data.data)
+        transformed_data = self.transform_point_cloud(
+            bytearray(data.data), point_step, translation, rotation_angle
+        )
+
+        # Ersetzen der Daten
+        # data.data = transformed_data
+
+        # Extract transformation parameters for this sensorda
+        # x, y, z, roll, pitch, yaw = sensor_config[sensor_name]
+        # transformation_matrix = self.get_transformation_matrix(
+        #    x, y, z, roll, pitch, yaw
+        # )
+
+        # Transform the point cloud
+        # coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+
+        # Create an array of points with x, y, z
+        # points = np.array([coordinates["x"], coordinates["y"], coordinates["z"]]).T
+
+        # Apply transformation to each point
+        # transformed_points = np.array(
+        #    [self.transform_point(point, transformation_matrix) for point in points]
+        # )
+
+        # header = data.header
+
+        # dataarray = pointcloud2_to_array(create_pointcloud2_message(data.header, transformed_points))
+
+        # Optional: Extract velocity after transformation
+        # velocities = coordinates["Velocity"]
+
+        # Calculate minimum velocity
+        # min_velocity = np.min(velocities)
+        # self.dist_array_radar_publisher.publish(Float32(min_velocity))
 
         dataarray = pointcloud2_to_array(data)
 
@@ -62,6 +158,51 @@ class RadarNode:
         )
         self.cluster_info_radar_publisher.publish(cluster_info)
 
+    def get_transformation_matrix(self, x, y, z, roll, pitch, yaw):
+        # Convert angles to radians
+        roll = np.deg2rad(roll)
+        pitch = np.deg2rad(pitch)
+        yaw = np.deg2rad(yaw)
+
+        # Rotation matrices
+        R_x = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(roll), -np.sin(roll)],
+                [0, np.sin(roll), np.cos(roll)],
+            ]
+        )
+
+        R_y = np.array(
+            [
+                [np.cos(pitch), 0, np.sin(pitch)],
+                [0, 1, 0],
+                [-np.sin(pitch), 0, np.cos(pitch)],
+            ]
+        )
+
+        R_z = np.array(
+            [[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]]
+        )
+
+        R = np.dot(R_z, np.dot(R_y, R_x))
+
+        # Translation vector
+        T = np.array([x, y, z])
+
+        # Homogeneous transformation matrix
+        transformation_matrix = np.eye(4)
+        transformation_matrix[:3, :3] = R
+        transformation_matrix[:3, 3] = T
+
+        return transformation_matrix
+
+    def transform_point(self, point, transformation_matrix):
+        # Add 1 to the point for homogeneous transformation
+        homogeneous_point = np.append(point, 1)
+        transformed_point = np.dot(transformation_matrix, homogeneous_point)
+        return transformed_point[:3]
+
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
@@ -89,6 +230,16 @@ class RadarNode:
         )
         rospy.Subscriber(
             rospy.get_param("~source_topic", "/carla/hero/RADAR"),
+            PointCloud2,
+            self.callback,
+        )
+        rospy.Subscriber(
+            rospy.get_param("~source_topic", "/carla/hero/RADAR2"),
+            PointCloud2,
+            self.callback,
+        )
+        rospy.Subscriber(
+            rospy.get_param("~source_topic", "/carla/hero/RADAR3"),
             PointCloud2,
             self.callback,
         )

@@ -84,9 +84,16 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>
 
-  <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
+  <!--<node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
-  </node>
+  </node>-->
 
+  <node pkg="perception" type="debug_wrapper.py" name="radar_node" output="screen" args="--debug_node=radar_node.py --debug_port=53000">
+    <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR2"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR3"/>
+    <param name="range_topic" value="/carla/hero/RADAR_range"/>
+  </node>
 </launch>
