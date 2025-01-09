@@ -35,6 +35,9 @@ class lane_position(CompatibleNode):
         self.camera_width = self.get_param("camera_width")
         self.camera_height = self.get_param("camera_height")
         self.camera_fov = self.get_param("camera_fov")
+        self.center_x = 5
+        self.line_length = 15
+        self.line_width = 0.5
         # self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_subscriptions()
@@ -100,23 +103,23 @@ class lane_position(CompatibleNode):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(lanemask)
         bounding_boxes_camera = self.get_bounding_boxes(x_coords, y_coords)
-        bounding_boxes_lidar = self.get_boundingbox_by_lidar(lanemask)
+        bounding_boxes_lidar = self.get_bounding_boxes(lanemask)
 
         # Create a MarkerArray for visualization
         marker_array_camera = MarkerArray()
         for label, bounding_box in enumerate(bounding_boxes_camera):
-            marker = self.create_bounding_box_marker(
+            marker = self.create_rectangle_marker(
                 label, bounding_box, "marker_camera", 0.5, 1.0, 0.5
             )
             marker_array_camera.markers.append(marker)
         # Create a MarkerArray for visualization
-        """marker_array_lidar = MarkerArray()
+        marker_array_lidar = MarkerArray()
         for label, bounding_box in enumerate(bounding_boxes_lidar):
             marker = self.create_bounding_box_marker(
                 label, bounding_box, "marker_lidar"
             )
             marker_array_camera.markers.append(marker)
-        """
+
         # Publish the MarkerArray for visualization
         self.marker_visualization_camera_publisher.publish(marker_array_camera)
         # self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
@@ -189,7 +192,7 @@ class lane_position(CompatibleNode):
         marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
         marker.ns = "marker_lidar"  # Namespace to group related markers
         marker.id = int(label)  # Use the label as the unique marker ID
-        marker.lifetime = rospy.Duration(1)  # Marker visibility duration in seconds
+        marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
         marker.type = Marker.LINE_LIST  # Marker type to represent bounding box edges
         marker.action = Marker.ADD  # Action to add or modify the marker
 
@@ -235,6 +238,79 @@ class lane_position(CompatibleNode):
 
         return marker
 
+    def create_rectangle_marker(
+        self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
+    ):
+        """
+        Creates an RViz Marker for visualizing a 3D bounding box.
+
+        This function generates a Marker object for RViz to visualize a 3D bounding box
+        as a series of connected lines representing the edges of the box.
+
+        Args:
+            label (int): Unique identifier for the cluster or object.
+                        Used as the Marker ID.
+            bbox (tuple): Bounding box dimensions in the format:
+                        (x_min, x_max, y_min, y_max, z_min, z_max).
+
+        Returns:
+            Marker: A LINE_LIST Marker object that can be published to RViz.
+        """
+
+        z_min = -1.7
+        z_max = -1.2
+
+        # Initialize the Marker object
+        marker = Marker()
+        marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
+        marker.ns = "marker_lidar"  # Namespace to group related markers
+        marker.id = int(label)  # Use the label as the unique marker ID
+        marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
+        marker.type = Marker.LINE_LIST  # Marker type to represent bounding box edges
+        marker.action = Marker.ADD  # Action to add or modify the marker
+
+        # Set marker properties
+        marker.scale.x = 0.1  # Line thickness
+        marker.color.r = red  # Red color component
+        marker.color.g = green  # Green color component
+        marker.color.b = blue  # Blue color component
+        marker.color.a = 1.0  # Opacity (1.0 = fully visible)
+
+        # Define the 8 corners of the 3D bounding box
+        points = [
+            Point(rectangle[0][0], rectangle[0][1], z_min),  # Bottom face
+            Point(rectangle[1][0], rectangle[1][1], z_min),
+            Point(rectangle[2][0], rectangle[2][1], z_min),
+            Point(rectangle[3][0], rectangle[3][1], z_min),
+            Point(rectangle[0][0], rectangle[0][1], z_max),  # Bottom face
+            Point(rectangle[1][0], rectangle[1][1], z_max),
+            Point(rectangle[2][0], rectangle[2][1], z_max),
+            Point(rectangle[3][0], rectangle[3][1], z_max),
+        ]
+
+        # Define lines connecting the corners of the bounding box
+        lines = [
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),  # Bottom face
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4),  # Top face
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),  # Vertical edges
+        ]
+
+        # Add points for each line segment to the marker
+        for start, end in lines:
+            marker.points.append(points[start])
+            marker.points.append(points[end])
+
+        return marker
+
     def driveable_area_handler(self, ImageMsg):
         mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         x_coords, y_coords = self.get_point_by_angle(mask)
@@ -246,7 +322,7 @@ class lane_position(CompatibleNode):
         )
         self.dist_arrays = dist_array
 
-    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.3, min_samples=100):
+    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.5, min_samples=180):
         """
         Berechnet die Bounding Boxes für geclusterte Punkte.
 
@@ -275,16 +351,38 @@ class lane_position(CompatibleNode):
                 continue
             cluster_points = points[labels == label]
 
-            y = cluster_points[:][1]
-            x = cluster_points[:][0]
-            poly_list.append(np.poly1d(np.polyfit(y, x, deg=1)))
+            y = cluster_points[:, 1]
+            x = cluster_points[:, 0]
+            poly = np.poly1d(np.polyfit(x, y, deg=1))
+            poly_list.append(poly)
 
-            x_min, y_min = cluster_points.min(axis=0)
-            x_max, y_max = cluster_points.max(axis=0)
-            bounding_boxes.append((x_min, y_min, x_max, y_max))
-        image = np.zeros((1280, 720))
-        line_image = self.draw_lines(image, poly_list)
-        return bounding_boxes, line_image
+            # Steigung und Achsenabschnitt der Geraden
+            m = poly.coefficients[0]  # Steigung
+            c = poly.coefficients[1]  # Achsenabschnitt
+            center_y = np.mean(y)
+            theta = np.arctan(m)
+            dx = (self.line_length / 2) * np.cos(theta)
+            dy = (self.line_length / 2) * np.sin(theta)
+            x1, y1 = self.center_x - dx, center_y - dy
+            x2, y2 = self.center_x + dx, center_y + dy
+
+            # Punkte des Rechtecks basierend auf der Breite
+            dx_perp = (self.line_width / 2) * np.sin(theta)
+            dy_perp = (self.line_width / 2) * np.cos(theta)
+
+            rect_points = [
+                (x1 - dx_perp, y1 + dy_perp),
+                (x1 + dx_perp, y1 - dy_perp),
+                (x2 + dx_perp, y2 - dy_perp),
+                (x2 - dx_perp, y2 + dy_perp),
+            ]
+
+            """x_min, y_min = cluster_points.min(axis=0)
+            x_max, y_max = cluster_points.max(axis=0)"""
+            bounding_boxes.append(rect_points)
+        """image = np.zeros((1280, 720))
+        line_image = self.draw_lines(image, poly_list)"""
+        return bounding_boxes
 
     def get_point_by_angle(self, lanemask):  # nur einmal berrechen
         x_ground = []
