@@ -112,7 +112,6 @@ class ACC(CompatibleNode):
         self.obstacle_distance: float = 50
         # Current speed limit
         self.speed_limit: float = None  # m/s
-
         # Radar data
         self.leading_vehicle_distance = None
         self.leading_vehicle_relative_speed = None
@@ -121,15 +120,18 @@ class ACC(CompatibleNode):
         self.logdebug("ACC initialized")
 
     def __update_radar_data(self, data: Float32MultiArray):
-        if not data.data: # no distance and speed data of the leading vehicle is transferred (leading vehicle is very far away)
+        if (
+            not data.data
+        ):  # no distance and speed data of the leading vehicle is transferred (leading vehicle is very far away)
             self.leading_vehicle_distance = None
             self.leading_vehicle_relative_speed = None
             self.leading_vehicle_speed = None
         else:
             self.leading_vehicle_distance = data.data[0]
             self.leading_vehicle_relative_speed = data.data[1]
-            self.leading_vehicle_speed = self.__current_velocity + self.leading_vehicle_relative_speed
-
+            self.leading_vehicle_speed = (
+                self.__current_velocity + self.leading_vehicle_relative_speed
+            )
 
     def __collision_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
@@ -234,29 +236,6 @@ class ACC(CompatibleNode):
             publishes the desired speed to motion planning
             """
 
-            """
-            # Simple ACC
-            
-            if (
-                self.leading_vehicle_distance is not None
-                and self.leading_vehicle_speed is not None
-            ):
-                if self.leading_vehicle_distance < 5:
-                    acc_velocity = 0.0
-                elif self.leading_vehicle_distance < 10:
-                    acc_velocity = 2.0
-                elif self.leading_vehicle_distance < 15:
-                    acc_velocity = 5.0
-                else:
-                    acc_velocity = self.speed_limit
-            elif self.speed_limit is not None:
-                acc_velocity = self.speed_limit
-            else:
-                acc_velocity = 0.0
-
-            self.velocity_pub.publish(acc_velocity)
-            """
-
             if (
                 # often none
                 self.leading_vehicle_distance is not None
@@ -264,10 +243,10 @@ class ACC(CompatibleNode):
                 and self.leading_vehicle_speed is not None
                 and self.__current_velocity is not None
             ):
-                if (self.leading_vehicle_speed < 0.0):
+                if self.leading_vehicle_speed < 0.0:
                     acc_speed = 0.0
                     self.velocity_pub.publish(acc_speed)
-                    
+
                 # If we have obstalce information,
                 # we can calculate the safe speed
                 safety_distance: float
