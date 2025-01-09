@@ -4,8 +4,8 @@
 
 build/config.local.yml
 
-bags/
 
+code/bags
 code/build
 code/log
 code/simulation_results.json

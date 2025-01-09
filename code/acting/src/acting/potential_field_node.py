@@ -5,33 +5,63 @@
 # from matplotlib import pyplot
 # import numpy as np
 
+from ros_compatibility.node import CompatibleNode
 
-class TestClass:
+# from acting.src.acting.potentialField import PotentialField
+from mapping.msg import Entity as EntityMsg
+from mapping.msg import Map as MapMsg
 
-    MAX_VELOCITY = 40.0
+from acting.entity import Entity
+from acting.map import Map
+
+# from mapping.ext_modules.mapping_common.entity import Entity
+# from mapping.ext_modules.mapping_common.map import Map
+from rospy import Publisher, Subscriber
+import ros_compatibility as roscomp
+import rospy
+import rosgraph
+
+
+class Potential_field_node(CompatibleNode):
 
     def __init__(self):
-        self.x = 0.0
-        self._name = "Max"
-        self.if_ = False
+        # self.potentialField = PotentialField(1, [], (0,0))
+        self.entities: list[Entity] = []
+        self.role_name = self.get_param("role_name", "ego_vehicle")
 
-    def test_function(self, param1: int, param2: float) -> str:
-        """_summary_
+        self.entities_sub: Subscriber = self.new_subscription(
+            msg_type=MapMsg,
+            topic="/paf/hero/mapping/init_data",
+            callback=self.__get_entities,
+            qos_profile=1,
+        )
 
-        Args:
-            param1 (int): _description_
-            param2 (float): _description_
+    def __get_entities(self, data: MapMsg):
+        self.map = Map.from_ros_msg(data)
+        self.loginfo(len(self.map.entities))
 
-        Returns:
-            str: _description_
-        """
+    def run(self):
+        self.loginfo("Potential Field Node Running")
+
+        def loop(timerevent=None):
+            pass
+
+        self.new_timer(1, loop)
+        self.spin()
+
+
+def main(args=None):
+    """_summary_"""
+    roscomp.init("potential_field_node", args=args)
+
+    try:
+        node = Potential_field_node()
+        node.run()
+    except KeyboardInterrupt:
         pass
-
-    def main(self):
-        """_summary_"""
-        print("Hello World")
+    finally:
+        roscomp.shutdown()
 
 
 if __name__ == "__main__":
-    runner = TestClass()
-    runner.main()
+    main()
