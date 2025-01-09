@@ -108,7 +108,7 @@ class lane_position(CompatibleNode):
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        points_camera = self.get_point_by_angle(lanemask)
+        points_camera = self.project_2d_into_3d(lanemask)
         points_lidar = self.get_points_by_lidar(lanemask)
 
         marker_array_camera, boundingboxes_camera = self.process_lanemask(
@@ -385,8 +385,8 @@ class lane_position(CompatibleNode):
 
         K = self.create_K()
         R = self.create_rotation_matrix()
-        x = (coordinates[0] - K[0][2]) / K[0][0]
-        y = (coordinates[1] - K[1][2]) / K[1][1]
+        x = (coordinates[:][0] - K[0][2]) / K[0][0]
+        y = (coordinates[:][1] - K[1][2]) / K[1][1]
 
         X_c = x * z
         Y_c = y * z
@@ -394,6 +394,7 @@ class lane_position(CompatibleNode):
         C = np.array([[X_c], [Y_c], [Z_c]])
         T = np.array([[self.camera_x], [self.camera_y], [self.camera_z]])
         W = R @ C + T
+        return W
 
     def create_K(self):
         fov_horizontal = np.deg2rad(self.camera_fov)
@@ -442,7 +443,8 @@ class lane_position(CompatibleNode):
     def filter_image(self, lanemask):
         y_coords, x_coords = np.where(lanemask != 0)
         # Combine the x and y coordinates into pairs
-        coordinates = list(zip(x_coords, y_coords))
+        coordinates = np.stack((x_coords, y_coords))
+        # coordinates = list(zip(x_coords, y_coords))
 
         return coordinates
 
