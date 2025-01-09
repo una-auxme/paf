@@ -43,8 +43,8 @@ class lane_position(CompatibleNode):
         self.z_max = -1.6
         self.epsilon_camera = 0.4
         self.min_samples_camera = 180
-        self.epsilon_lidar = 0.7
-        self.min_samples_lidar = 4
+        self.epsilon_lidar = 2
+        self.min_samples_lidar = 1
         # self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_subscriptions()
@@ -108,10 +108,10 @@ class lane_position(CompatibleNode):
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        points_camera = self.project_2d_into_3d(lanemask)
-        points_lidar = self.get_points_by_lidar(lanemask)
-
-        marker_array_camera, boundingboxes_camera = self.process_lanemask(
+        # points_camera = self.project_2d_into_3d(lanemask)
+        # points_lidar = self.get_points_by_lidar(lanemask)
+        points_lidar = []
+        """ marker_array_camera, boundingboxes_camera = self.process_lanemask(
             lanemask,
             points_camera,
             red=1.0,
@@ -119,7 +119,7 @@ class lane_position(CompatibleNode):
             blue=0.5,
             epsilon=self.epsilon_camera,
             min_samples=self.min_samples_camera,
-        )
+        )"""
         marker_array_lidar, boundingboxes_lidar = self.process_lanemask(
             lanemask,
             points_lidar,
@@ -131,7 +131,7 @@ class lane_position(CompatibleNode):
         )
 
         # Publish the MarkerArray for visualization
-        self.marker_visualization_camera_publisher.publish(marker_array_camera)
+        # self.marker_visualization_camera_publisher.publish(marker_array_camera)
         self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
 
         """transform = Transform2D.new_translation(Vector2.new())
@@ -169,14 +169,14 @@ class lane_position(CompatibleNode):
 
         return lidar_entities
         pass
-"""
+        """
 
     def process_lanemask(
         self, lanemask, points, red, green, blue, epsilon, min_samples
     ):
-        clusters, labels = self.cluster_points(lanemask, epsilon, min_samples)
-        lidar_clusters = self.map_lidar2cluster(lanemask, labels)
-        bounding_boxes = self.get_bounding_boxes(labels, points)
+        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
+        lidar_clusters = self.mask_lidarpoints(clustered_mask, labels)
+        bounding_boxes = self.get_bounding_boxes(lidar_clusters)
         marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
         return marker_array, bounding_boxes
 
@@ -189,6 +189,20 @@ class lane_position(CompatibleNode):
             )
             marker_array.markers.append(marker)
         return marker_array
+
+    def mask_lidarpoints(self, clustered_mask, labels):
+        lidar_clusters = []
+        unique_labels = set(labels)
+        for label in unique_labels:
+            if label == -1:
+                continue
+            points_with_label = self.dist_arrays[clustered_mask == label]
+            points = points_with_label[
+                ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
+            ]
+            if len(points) != 0:
+                lidar_clusters.append(points)
+        return lidar_clusters
 
     def create_rectangle_marker(
         self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
@@ -275,7 +289,7 @@ class lane_position(CompatibleNode):
         )
         self.dist_arrays = dist_array
 
-    def get_bounding_boxes(self, labels, points):
+    def get_bounding_boxes(self, clusters):
         """
         Berechnet die Bounding Boxes für geclusterte Punkte.
 
@@ -287,16 +301,13 @@ class lane_position(CompatibleNode):
         """
         # Berechnung der Bounding Boxes für jeden Cluster
         bounding_boxes = []
-        unique_labels = set(labels)
         poly_list = []
 
-        for label in unique_labels:
-            if label == -1:  # Rauschen ignorieren
+        for cluster in clusters:
+            if len(cluster) < 3:
                 continue
-            cluster_points = points[labels == label]
-
-            y = cluster_points[:, 1]
-            x = cluster_points[:, 0]
+            y = cluster[:, 1]
+            x = cluster[:, 0]
             poly = np.poly1d(np.polyfit(x, y, deg=1))
             poly_list.append(poly)
 
@@ -328,16 +339,18 @@ class lane_position(CompatibleNode):
         labels = []
         clustering = []
         points = np.argwhere(lanemask == 255)
+        clustered_mask = np.zeros_like(lanemask, dtype=int)
         try:
             # DBSCAN-Clustering
-            clustering = DBSCAN(eps=2, min_samples=1).fit(points)
-            labels = clustering.labels_
-            mask = np.zeros_like(lanemask)
-            labels = labels.reshape(720, 1280)
+            clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+            labels = clustering.labels_ + 1
+            clustered_mask[points[:, 0], points[:, 1]] = (
+                labels  # +1, um Cluster-ID von 0 anzuheben
+            )
 
         except Exception as e:
             self.get_logger().error(f"could not cluster given points: {str(e)}")
-        return clustering, labels
+        return clustered_mask, labels
 
     def get_point_by_angle(self, lanemask):  # nur einmal berrechen
         x_ground = []
@@ -376,8 +389,6 @@ class lane_position(CompatibleNode):
         points = self.dist_arrays[mask]
         points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
         return points
-
-        return x_ground, y_ground
 
     def project_2d_into_3d(self, lanemask):
         z = self.filter_lanemask(lanemask)
