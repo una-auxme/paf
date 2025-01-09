@@ -25,6 +25,7 @@ class lane_position(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
         self.bridge = CvBridge()
+        self.dist_arrays = []
         # get camera parameters
         self.camera_x = self.get_param("camera_x")
         self.camera_y = self.get_param("camera_y")
@@ -40,7 +41,10 @@ class lane_position(CompatibleNode):
         self.line_width = 0.5
         self.zmin = -1.7
         self.z_max = -1.6
-
+        self.epsilon_camera = 0.4
+        self.min_samples_camera = 180
+        self.epsilon_lidar = 0.7
+        self.min_samples_lidar = 4
         # self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_subscriptions()
@@ -104,20 +108,26 @@ class lane_position(CompatibleNode):
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-
         points_camera = self.get_point_by_angle(lanemask)
         points_lidar = self.get_points_by_lidar(lanemask)
 
-        clusters, labels_camera = self.cluster_points(points_camera, 0.4, 180)
-        clusters, labels_lidar = self.cluster_points(points_lidar, 1.0, 3)
-        bounding_boxes_camera = self.get_bounding_boxes(labels_camera, points_camera)
-        bounding_boxes_lidar = self.get_bounding_boxes(labels_lidar, points_lidar)
-
-        marker_array_camera = self.create_marker_array(
-            bounding_boxes_camera, red=0.5, green=1.0, blue=0.5
+        marker_array_camera, boundingboxes_camera = self.process_lanemask(
+            lanemask,
+            points_camera,
+            red=1.0,
+            green=0.5,
+            blue=0.5,
+            epsilon=self.epsilon_camera,
+            min_samples=self.min_samples_camera,
         )
-        marker_array_lidar = self.create_marker_array(
-            bounding_boxes_lidar, red=1.0, green=0.5, blue=0.5
+        marker_array_lidar, boundingboxes_lidar = self.process_lanemask(
+            lanemask,
+            points_lidar,
+            red=0.5,
+            green=1.0,
+            blue=0.5,
+            epsilon=self.epsilon_lidar,
+            min_samples=self.min_samples_lidar,
         )
 
         # Publish the MarkerArray for visualization
@@ -161,11 +171,14 @@ class lane_position(CompatibleNode):
         pass
 """
 
-    def process_lanemask(self, points, red, green, blue, epsilon, min_samples):
-        clusters, labels = self.cluster_points(points, epsilon, min_samples)
+    def process_lanemask(
+        self, lanemask, points, red, green, blue, epsilon, min_samples
+    ):
+        clusters, labels = self.cluster_points(lanemask, epsilon, min_samples)
+        lidar_clusters = self.map_lidar2cluster(lanemask, labels)
         bounding_boxes = self.get_bounding_boxes(labels, points)
         marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
-        return marker_array
+        return marker_array, bounding_boxes
 
     def create_marker_array(self, bounding_boxes, red, green, blue):
         # Create a MarkerArray for visualization
@@ -176,83 +189,6 @@ class lane_position(CompatibleNode):
             )
             marker_array.markers.append(marker)
         return marker_array
-
-    def create_bounding_box_marker(
-        self, label, bounding_boxes, namespace, red=1.0, green=0.5, blue=0.5
-    ):
-        """
-        Creates an RViz Marker for visualizing a 3D bounding box.
-
-        This function generates a Marker object for RViz to visualize a 3D bounding box
-        as a series of connected lines representing the edges of the box.
-
-        Args:
-            label (int): Unique identifier for the cluster or object.
-                        Used as the Marker ID.
-            bbox (tuple): Bounding box dimensions in the format:
-                        (x_min, x_max, y_min, y_max, z_min, z_max).
-
-        Returns:
-            Marker: A LINE_LIST Marker object that can be published to RViz.
-        """
-        x_min = bounding_boxes[0]
-        y_min = bounding_boxes[1]
-        x_max = bounding_boxes[2]
-        y_max = bounding_boxes[3]
-
-        z_min = -1.7
-        z_max = -1.2
-
-        # Initialize the Marker object
-        marker = Marker()
-        marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
-        marker.ns = "marker_lidar"  # Namespace to group related markers
-        marker.id = int(label)  # Use the label as the unique marker ID
-        marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
-        marker.type = Marker.LINE_LIST  # Marker type to represent bounding box edges
-        marker.action = Marker.ADD  # Action to add or modify the marker
-
-        # Set marker properties
-        marker.scale.x = 0.1  # Line thickness
-        marker.color.r = red  # Red color component
-        marker.color.g = green  # Green color component
-        marker.color.b = blue  # Blue color component
-        marker.color.a = 1.0  # Opacity (1.0 = fully visible)
-
-        # Define the 8 corners of the 3D bounding box
-        points = [
-            Point(x_min, y_min, z_min),  # Bottom face
-            Point(x_max, y_min, z_min),
-            Point(x_max, y_max, z_min),
-            Point(x_min, y_max, z_min),
-            Point(x_min, y_min, z_max),  # Top face
-            Point(x_max, y_min, z_max),
-            Point(x_max, y_max, z_max),
-            Point(x_min, y_max, z_max),
-        ]
-
-        # Define lines connecting the corners of the bounding box
-        lines = [
-            (0, 1),
-            (1, 2),
-            (2, 3),
-            (3, 0),  # Bottom face
-            (4, 5),
-            (5, 6),
-            (6, 7),
-            (7, 4),  # Top face
-            (0, 4),
-            (1, 5),
-            (2, 6),
-            (3, 7),  # Vertical edges
-        ]
-
-        # Add points for each line segment to the marker
-        for start, end in lines:
-            marker.points.append(points[start])
-            marker.points.append(points[end])
-
-        return marker
 
     def create_rectangle_marker(
         self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
@@ -328,9 +264,10 @@ class lane_position(CompatibleNode):
         return marker
 
     def driveable_area_handler(self, ImageMsg):
-        mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        x_coords, y_coords = self.get_point_by_angle(mask)
-        bounding_boxes = self.get_bounding_boxes(x_coords, y_coords)
+        """mask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
+        points = self.get_point_by_angle(mask)
+        labels = []
+        bounding_boxes = self.get_bounding_boxes(labels, points)"""
 
     def distance_array_handler(self, ImageMsg):
         dist_array = self.bridge.imgmsg_to_cv2(
@@ -387,13 +324,16 @@ class lane_position(CompatibleNode):
             bounding_boxes.append(rect_points)
         return bounding_boxes
 
-    def cluster_points(self, points, epsilon, min_samples):
+    def cluster_points(self, lanemask, epsilon, min_samples):
         labels = []
         clustering = []
+        points = np.argwhere(lanemask == 255)
         try:
             # DBSCAN-Clustering
-            clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+            clustering = DBSCAN(eps=2, min_samples=1).fit(points)
             labels = clustering.labels_
+            mask = np.zeros_like(lanemask)
+            labels = labels.reshape(720, 1280)
 
         except Exception as e:
             self.get_logger().error(f"could not cluster given points: {str(e)}")
@@ -456,18 +396,6 @@ class lane_position(CompatibleNode):
             bounding_boxes.append((x_min, y_min, x_max, y_max))
 
         return bounding_boxes
-
-    def draw_lines(self, img, lines, color=[255, 0, 0], thickness=3):
-        line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-        img = np.copy(img)
-
-        if lines is None:
-            return img
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                cv2.line(line_img, (x1, y1), (x2, y2), color, thickness)
-        img = cv2.addWeighted(img, 0.8, line_img, 1.0, 0.0)
-        return img, line_img
 
     """    def create_coordinate_image(self, x_coords, y_coords):
         # 1. Schritt: Bildgröße bestimmen (maximale Werte aus x und y)
