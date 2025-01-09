@@ -38,6 +38,9 @@ class lane_position(CompatibleNode):
         self.center_x = 5
         self.line_length = 15
         self.line_width = 0.5
+        self.zmin = -1.7
+        self.z_max = -1.6
+
         # self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_subscriptions()
@@ -101,28 +104,25 @@ class lane_position(CompatibleNode):
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        x_coords, y_coords = self.get_point_by_angle(lanemask)
-        bounding_boxes_camera = self.get_bounding_boxes(x_coords, y_coords)
-        bounding_boxes_lidar = self.get_bounding_boxes(lanemask)
 
-        # Create a MarkerArray for visualization
-        marker_array_camera = MarkerArray()
-        for label, bounding_box in enumerate(bounding_boxes_camera):
-            marker = self.create_rectangle_marker(
-                label, bounding_box, "marker_camera", 0.5, 1.0, 0.5
-            )
-            marker_array_camera.markers.append(marker)
-        # Create a MarkerArray for visualization
-        marker_array_lidar = MarkerArray()
-        for label, bounding_box in enumerate(bounding_boxes_lidar):
-            marker = self.create_bounding_box_marker(
-                label, bounding_box, "marker_lidar"
-            )
-            marker_array_camera.markers.append(marker)
+        points_camera = self.get_point_by_angle(lanemask)
+        points_lidar = self.get_points_by_lidar(lanemask)
+
+        clusters, labels_camera = self.cluster_points(points_camera, 0.4, 180)
+        clusters, labels_lidar = self.cluster_points(points_lidar, 1.0, 3)
+        bounding_boxes_camera = self.get_bounding_boxes(labels_camera, points_camera)
+        bounding_boxes_lidar = self.get_bounding_boxes(labels_lidar, points_lidar)
+
+        marker_array_camera = self.create_marker_array(
+            bounding_boxes_camera, red=0.5, green=1.0, blue=0.5
+        )
+        marker_array_lidar = self.create_marker_array(
+            bounding_boxes_lidar, red=1.0, green=0.5, blue=0.5
+        )
 
         # Publish the MarkerArray for visualization
         self.marker_visualization_camera_publisher.publish(marker_array_camera)
-        # self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
+        self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
 
         """transform = Transform2D.new_translation(Vector2.new())
         Lanemarking(
@@ -160,6 +160,22 @@ class lane_position(CompatibleNode):
         return lidar_entities
         pass
 """
+
+    def process_lanemask(self, points, red, green, blue, epsilon, min_samples):
+        clusters, labels = self.cluster_points(points, epsilon, min_samples)
+        bounding_boxes = self.get_bounding_boxes(labels, points)
+        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
+        return marker_array
+
+    def create_marker_array(self, bounding_boxes, red, green, blue):
+        # Create a MarkerArray for visualization
+        marker_array = MarkerArray()
+        for label, bounding_box in enumerate(bounding_boxes):
+            marker = self.create_rectangle_marker(
+                label, bounding_box, "marker_camera", red, green, blue
+            )
+            marker_array.markers.append(marker)
+        return marker_array
 
     def create_bounding_box_marker(
         self, label, bounding_boxes, namespace, red=1.0, green=0.5, blue=0.5
@@ -322,7 +338,7 @@ class lane_position(CompatibleNode):
         )
         self.dist_arrays = dist_array
 
-    def get_bounding_boxes(self, x_coords, y_coords, epsilon=0.5, min_samples=180):
+    def get_bounding_boxes(self, labels, points):
         """
         Berechnet die Bounding Boxes für geclusterte Punkte.
 
@@ -332,20 +348,11 @@ class lane_position(CompatibleNode):
         :param min_samples: Minimale Punktanzahl pro Cluster
         :return: Liste von Bounding Boxes [(x_min, y_min, x_max, y_max), ...]
         """
-        # Stack x und y in ein Array für Clustering
-        points = np.stack((x_coords, y_coords), axis=1)
-        labels = []
-        try:
-            # DBSCAN-Clustering
-            clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
-            labels = clustering.labels_
-
-        except Exception as e:
-            self.get_logger().error(f"could not cluster given points: {str(e)}")
         # Berechnung der Bounding Boxes für jeden Cluster
         bounding_boxes = []
         unique_labels = set(labels)
         poly_list = []
+
         for label in unique_labels:
             if label == -1:  # Rauschen ignorieren
                 continue
@@ -377,12 +384,20 @@ class lane_position(CompatibleNode):
                 (x2 - dx_perp, y2 + dy_perp),
             ]
 
-            """x_min, y_min = cluster_points.min(axis=0)
-            x_max, y_max = cluster_points.max(axis=0)"""
             bounding_boxes.append(rect_points)
-        """image = np.zeros((1280, 720))
-        line_image = self.draw_lines(image, poly_list)"""
         return bounding_boxes
+
+    def cluster_points(self, points, epsilon, min_samples):
+        labels = []
+        clustering = []
+        try:
+            # DBSCAN-Clustering
+            clustering = DBSCAN(eps=epsilon, min_samples=min_samples).fit(points)
+            labels = clustering.labels_
+
+        except Exception as e:
+            self.get_logger().error(f"could not cluster given points: {str(e)}")
+        return clustering, labels
 
     def get_point_by_angle(self, lanemask):  # nur einmal berrechen
         x_ground = []
@@ -412,7 +427,14 @@ class lane_position(CompatibleNode):
             y_ground = y_ground[~np.isnan(y_ground)]
         except Exception as e:
             self.get_logger().error(f"Failed to calculate distance of Pixel: {str(e)}")
-        return x_ground, y_ground
+        points = np.stack((x_ground, y_ground), axis=1)
+        return points
+
+    def get_points_by_lidar(self, lanemask):
+        mask = lanemask != 0
+        points = self.dist_arrays[mask]
+        points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
+        return points
 
     def get_boundingbox_by_lidar(self, lanemask):
         mask = lanemask != 0
