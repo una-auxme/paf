@@ -76,7 +76,7 @@ class lane_position(CompatibleNode):
         """
 
         self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+            msg_type=numpy_msg(ImageMsg),numpy transpose
             callback=self.distance_array_handler,
             topic="/paf/hero/Center/dist_array",
             qos_profile=1,
@@ -413,11 +413,78 @@ class lane_position(CompatibleNode):
         except Exception as e:
             self.get_logger().error(f"Failed to calculate distance of Pixel: {str(e)}")
         return x_ground, y_ground
+    
+    def project_2d_into_3d(self, lanemask):
+        z = self.filter_lanemask(lanemask)
+        coordinates = self.filter_image(lanemask)
 
-    def get_boundingbox_by_lidar(self, lanemask):
+        K = self.create_K()
+        R = self.create_rotation_matrix()
+        x = (coordinates[0] - K[0][2])/ K[0][0]
+        y = (coordinates[1] - K[1][2])/ K[1][1]
+        
+        X_c = x * z 
+        Y_c = y * z
+        Z_c = z
+        C = np.array([[X_c], [Y_c], [Z_c]])
+        T = np.array([[self.camera_x],[self.camera_y],[self.camera_z]])
+        W = R @ C + T
+
+    def create_K(self):
+        fov_horizontal = np.deg2rad(self.camera_fov)
+        fov_vertical = 2 * np.arctan((self.camera_height/self.camera_width)*np.tan(fov_horizontal/2))
+        f_x = self.camera_width / (2 * np.tan(fov_horizontal/2))
+        f_y = self.camera_height / (2 * np.tan(fov_vertical/2))
+        c_x = self.camera_width
+        c_y = self.camera_height
+        K = np.array([[f_x, 0, c_x], [0, f_y, c_y], [0,0,1]])
+        return K
+    
+    def create_rotation_matrix(self):
+        roll = np.deg2rad(self.camera_roll)
+        pitch = np.deg2rad(self.camera_pitch)
+        yaw = np.deg2rad(self.camera_yaw)
+
+        R_x = np.array([
+        [1, 0, 0],
+        [0, np.cos(roll), -np.sin(roll)],
+        [0, np.sin(roll), np.cos(roll)]
+        ])
+
+        # Rotation matrix around y-axis (Pitch)
+        R_y = np.array([
+            [np.cos(pitch), 0, np.sin(pitch)],
+            [0, 1, 0],
+            [-np.sin(pitch), 0, np.cos(pitch)]
+        ])
+
+        # Rotation matrix around z-axis (Yaw)
+        R_z = np.array([
+            [np.cos(yaw), -np.sin(yaw), 0],
+            [np.sin(yaw), np.cos(yaw), 0],
+            [0, 0, 1]
+        ])
+
+        # Combined rotation matrix (Yaw -> Pitch -> Roll)
+        R = np.dot(R_z, np.dot(R_y, R_x))
+        
+        return R
+
+    def filter_image(self, lanemask):
+        y_coords, x_coords = np.where(lanemask != 0)
+        # Combine the x and y coordinates into pairs
+        coordinates = list(zip(x_coords, y_coords))
+
+        return coordinates
+
+    def filter_lanemask(self, lanemask):
         mask = lanemask != 0
         points = self.dist_arrays[mask]
         points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
+        return points
+
+    def get_boundingbox_by_lidar(self, lanemask):
+        points = self.filter_lanemask(lanemask)
         # DBSCAN-Clustering
         clustering = DBSCAN(eps=1.0, min_samples=5).fit(points)
         labels = clustering.labels_
@@ -558,7 +625,7 @@ class lane_position(CompatibleNode):
         pitch = np.radians(pitch)
         yaw = np.radians(yaw)
 
-        # Rotation matrix for rotation around the x-axis (Roll)
+        # Rotation numpy transposematrix for rotation around the x-axis (Roll)
         R_z = np.array(
             [
                 [1, 0, 0],
@@ -594,3 +661,9 @@ if __name__ == "__main__":
     roscomp.init("Lanedetection_node")
     node = lane_position("Lanedetection_node")
     node.run()
+
+
+'''
+pitch=y
+roll = x
+yaw = z'''
