@@ -19,9 +19,22 @@ import sensor_msgs.point_cloud2 as pc2
 
 import struct
 
+from collections import defaultdict
+
+# from threading import Timer
+from rosgraph_msgs.msg import Clock
+
 
 class RadarNode:
     """See doc/perception/radar_node.md on how to configure this node."""
+
+    def __init__(self):
+        self.sensor_data_buffer = defaultdict(list)
+        self.timer_interval = 0.1  # 0.1 seconds
+
+        self.now = 0
+        self.previous_time = 0
+        self.current_time = 0
 
     def transform_point_cloud(self, raw_data, point_step, translation, rotation_angle):
         # Winkel in Radianten umwandeln
@@ -56,9 +69,23 @@ class RadarNode:
         )
         return transformed_raw_data
 
+    def time_check(self, time):
 
+        sec = time.clock.secs
+        nsec = time.clock.nsecs
+        nsec /= 1000000000
 
-    def callback(self, data):
+        self.now = sec + nsec
+        if self.previous_time == 0:
+            self.previous_time = self.now
+            return
+
+        if self.now - self.previous_time > 0.1:
+            # self.process_data()
+            self.previous_time = 0
+            return
+
+    def callback2(self, data):
         """Process radar Point2Cloud data and publish clustered data points.
 
         Extracts information from radar data
@@ -68,11 +95,75 @@ class RadarNode:
         Args:
             data: Point2Cloud message containing radar data
         """
+        # Speichere Daten in den Puffer
+        sensor_name = rospy.get_param("~point_cloud_topic").split("/")[-1]
+        self.sensor_data_buffer[sensor_name].append(data)
 
+    def process_data(self):
+        # Verarbeite die Daten aller Sensoren
+        combined_points = []
+
+        for sensor_name, messages in self.sensor_data_buffer.items():
+            for msg in messages:
+                points = self.extract_points(msg, sensor_name)
+                combined_points.extend(points)
+
+        self.sensor_data_buffer.clear()  # Puffer leeren
+
+        # Weiterverarbeitung (z. B. Transformation, Clustering, Bounding Boxes)
+        self.create_bounding_boxes(combined_points)
+
+    def extract_points(self, msg, sensor_name):
+        # Transformiere die Punkte und konvertiere sie in eine gemeinsame Darstellung
+        sensor_config = {
+            "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
+            "RADAR2": [2.0, 1.0, 0.7, 0.0, 0.0, 5.0],
+            "RADAR3": [2.0, -1.0, 0.7, 0.0, 0.0, 355.0],
+        }
+        translation = sensor_config[sensor_name]
+        data_array = pointcloud2_to_array(msg)
+
+        # radar position z=0.7
+        dataarray = filter_data(data_array, min_z=-0.40, max_z=2)
+
+        transformation_matrix = self.get_transformation_matrix(*translation)
+
+        transformed_points = np.array(
+            [self.transform_point(point, transformation_matrix) for point in dataarray]
+        )
+
+        return transformed_points
+
+    def create_bounding_boxes(self, points):
+        # Punkte clustern
+        clustered_data = cluster_data(np.array(points))
+
+        cloud = create_pointcloud2(np.array(points), clustered_data.labels_)
+        self.visualization_radar_publisher.publish(cloud)
+
+        points_with_labels = np.hstack(
+            (np.array(points), clustered_data.labels_.reshape(-1, 1))
+        )
+        bounding_boxes = generate_bounding_boxes(points_with_labels)
+
+        # Bounding Boxes visualisieren und veröffentlichen
+        marker_array = MarkerArray()
+        for label, bbox in bounding_boxes:
+            if label != -1:
+                marker = create_bounding_box_marker(label, bbox)
+                marker_array.markers.append(marker)
+        self.marker_visualization_radar_publisher.publish(marker_array)
+
+        cluster_info = generate_cluster_info(
+            clustered_data, np.array(points), marker_array, bounding_boxes
+        )
+        self.cluster_info_radar_publisher.publish(cluster_info)
+
+    def callback(self, data):
         # Sensorpositionen und -orientierungen (Beispielwerte)
         sensor_config = {
             "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
-            "RADAR2": [2.0, 1.0, 0.7, 0.0, 0.0, 10.0],  # yaw in degrees
+            "RADAR2": [2.0, 1.0, 0.7, 0.0, 0.0, 5.0],
             "RADAR3": [2.0, -1.0, 0.7, 0.0, 0.0, 355.0],
         }
 
@@ -83,9 +174,13 @@ class RadarNode:
             rospy.logwarn(f"Unknown sensor: {sensor_name}")
             return
 
+        ######### Transform raw data ##########
+        #######################################
         # Beispielwerte
         point_step = 32  # Punktgröße in Bytes
-        translation = sensor_config[sensor_name]  # [-1.0, 0.0, 0.0]  # Translation (Beispielwerte)
+        translation = sensor_config[
+            sensor_name
+        ]  # [-1.0, 0.0, 0.0]  # Translation (Beispielwerte)
         rotation_angle = -5  # Drehwinkel (Yaw)
 
         # Rohdaten des PointCloud2-Objekts (z. B. data.data)
@@ -95,23 +190,6 @@ class RadarNode:
 
         # Ersetzen der Daten
         # data.data = transformed_data
-
-        # Extract transformation parameters for this sensorda
-        # x, y, z, roll, pitch, yaw = sensor_config[sensor_name]
-        # transformation_matrix = self.get_transformation_matrix(
-        #    x, y, z, roll, pitch, yaw
-        # )
-
-        # Transform the point cloud
-        # coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-
-        # Create an array of points with x, y, z
-        # points = np.array([coordinates["x"], coordinates["y"], coordinates["z"]]).T
-
-        # Apply transformation to each point
-        # transformed_points = np.array(
-        #    [self.transform_point(point, transformation_matrix) for point in points]
-        # )
 
         # header = data.header
 
@@ -129,7 +207,30 @@ class RadarNode:
         # radar position z=0.7
         dataarray = filter_data(dataarray, min_z=-0.40, max_z=2)
 
-        clustered_data = cluster_data(dataarray)
+        ######### Transform filter_data ##########
+        ##########################################
+
+        # Extract transformation parameters for this sensorda
+        x, y, z, roll, pitch, yaw = sensor_config[sensor_name]
+        transformation_matrix = self.get_transformation_matrix(
+            x, y, z, roll, pitch, yaw
+        )
+
+        # Transform the point cloud
+        # coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+
+        # Create an array of points with x, y, z
+        # points = np.array([coordinates["x"], coordinates["y"], coordinates["z"]]).T
+
+        # Apply transformation to each point
+        transformed_points = np.array(
+            [self.transform_point(point, transformation_matrix) for point in dataarray]
+        )
+
+        ##############################################
+        ######### Transform filter_data end ##########
+
+        clustered_data = cluster_data(transformed_points)  # dataarray)
 
         # transformed_data = transform_data_to_2d(dataarray)
 
@@ -198,10 +299,20 @@ class RadarNode:
         return transformation_matrix
 
     def transform_point(self, point, transformation_matrix):
-        # Add 1 to the point for homogeneous transformation
-        homogeneous_point = np.append(point, 1)
+
+        # Extract x, y, z and ignore velocity for transformation
+        x, y, z, velocity = point
+
+        # Convert to homogeneous coordinates
+        homogeneous_point = np.array([x, y, z, 1])
+
+        # Apply transformation
         transformed_point = np.dot(transformation_matrix, homogeneous_point)
-        return transformed_point[:3]
+
+        # Return the transformed x, y, z along with the original velocity
+        return np.array(
+            [transformed_point[0], transformed_point[1], transformed_point[2], velocity]
+        )
 
     def listener(self):
         """Initializes the node and its publishers."""
@@ -243,6 +354,12 @@ class RadarNode:
             PointCloud2,
             self.callback,
         )
+        rospy.Subscriber(
+            "/clock",  # rospy.get_param("/clock_topic", "/clock"),
+            Clock,
+            self.time_check,
+        )
+
         rospy.spin()
 
 
