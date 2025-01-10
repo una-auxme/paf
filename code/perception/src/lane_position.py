@@ -19,6 +19,8 @@ from geometry_msgs.msg import Point
 # clustering imports
 import numpy as np
 from sklearn.cluster import DBSCAN
+from scipy.interpolate import griddata
+import random
 
 
 class lane_position(CompatibleNode):
@@ -36,6 +38,7 @@ class lane_position(CompatibleNode):
         self.camera_width = self.get_param("camera_width")
         self.camera_height = self.get_param("camera_height")
         self.camera_fov = self.get_param("camera_fov")
+        self.camera_coordinates = []
         self.center_x = 5
         self.line_length = 15
         self.line_width = 0.5
@@ -43,8 +46,9 @@ class lane_position(CompatibleNode):
         self.z_max = -1.6
         self.epsilon_camera = 0.4
         self.min_samples_camera = 180
-        self.epsilon_lidar = 2
+        self.epsilon_lidar = 12
         self.min_samples_lidar = 1
+        self.confidence_treshold = 1500
         # self.P, self.K, self.R, self.T = self.create_Matrices()
 
         self.setup_subscriptions()
@@ -106,11 +110,18 @@ class lane_position(CompatibleNode):
             queue_size=10,
         )
 
+        """sets up a publisher for the lane mask
+        topic: /Lane/label_image
+        """
+        self.label_image_publisher = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic="/paf/hero/Lane/label_image",
+            qos_profile=1,
+        )
+
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-        # points_camera = self.project_2d_into_3d(lanemask)
-        # points_lidar = self.get_points_by_lidar(lanemask)
-        points_lidar = []
+
         """ marker_array_camera, boundingboxes_camera = self.process_lanemask(
             lanemask,
             points_camera,
@@ -122,7 +133,6 @@ class lane_position(CompatibleNode):
         )"""
         marker_array_lidar, boundingboxes_lidar = self.process_lanemask(
             lanemask,
-            points_lidar,
             red=0.5,
             green=1.0,
             blue=0.5,
@@ -171,12 +181,13 @@ class lane_position(CompatibleNode):
         pass
         """
 
-    def process_lanemask(
-        self, lanemask, points, red, green, blue, epsilon, min_samples
-    ):
+    def process_lanemask(self, lanemask, red, green, blue, epsilon, min_samples):
         clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
-        lidar_clusters = self.mask_lidarpoints(clustered_mask, labels)
-        bounding_boxes = self.get_bounding_boxes(lidar_clusters)
+        lidar_clusters, cluster_confidences = self.mask_lidarpoints(
+            clustered_mask, labels
+        )
+        self.publish_label_image(clustered_mask)
+        bounding_boxes = self.get_bounding_boxes(lidar_clusters, cluster_confidences)
         marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
         return marker_array, bounding_boxes
 
@@ -192,17 +203,20 @@ class lane_position(CompatibleNode):
 
     def mask_lidarpoints(self, clustered_mask, labels):
         lidar_clusters = []
+        cluster_confidences = []
         unique_labels = set(labels)
         for label in unique_labels:
             if label == -1:
                 continue
+            confidence = np.count_nonzero(clustered_mask == label)
             points_with_label = self.dist_arrays[clustered_mask == label]
             points = points_with_label[
                 ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
             ]
             if len(points) != 0:
                 lidar_clusters.append(points)
-        return lidar_clusters
+                cluster_confidences.append(confidence)
+        return lidar_clusters, cluster_confidences
 
     def create_rectangle_marker(
         self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
@@ -288,8 +302,10 @@ class lane_position(CompatibleNode):
             img_msg=ImageMsg, desired_encoding="passthrough"
         )
         self.dist_arrays = dist_array
+        # if len(self.camera_coordinates) == 0:
+        # self.camera_coordinates = self.calibrate_camera_coordinates(dist_array)
 
-    def get_bounding_boxes(self, clusters):
+    def get_bounding_boxes(self, clusters, confidences):
         """
         Berechnet die Bounding Boxes für geclusterte Punkte.
 
@@ -303,8 +319,9 @@ class lane_position(CompatibleNode):
         bounding_boxes = []
         poly_list = []
 
-        for cluster in clusters:
-            if len(cluster) < 3:
+        for index, cluster in enumerate(clusters):
+            # je gröer das cluster, desto wahrscheinlicher ist es, dass es tatsächlich eine lane markierung ist
+            if confidences[index] < self.confidence_treshold:
                 continue
             y = cluster[:, 1]
             x = cluster[:, 0]
@@ -383,6 +400,62 @@ class lane_position(CompatibleNode):
 
         points = np.stack((x_ground, y_ground), axis=1)
         return points
+
+    def calibrate_camera_coordinates(self, distarray):
+        # Extrahiere bekannte Positionen und Werte
+        known_positions = np.array(
+            np.nonzero(distarray[:, :, 0])
+        ).T  # Indizes von Nicht-Null-Punkten
+        known_values = distarray[
+            known_positions[:, 0], known_positions[:, 1]
+        ]  # (x, y, z)-Werte
+        # Filtere die bekannten Positionen basierend auf dem z-Wert nahe 0.0
+        z_values = known_values[:, 2]
+        valid_positions = np.abs(z_values) < 0.25  # Nur Positionen mit |z| < 0.2
+        known_positions = known_positions[valid_positions]
+        known_values = known_values[valid_positions]
+        if len(known_values) < 150:
+            return []
+        # Erstelle ein Gitter für die Interpolation
+        grid_x, grid_y = np.meshgrid(
+            np.arange(distarray.shape[1]),  # Breite
+            np.arange(distarray.shape[0]),  # Höhe
+        )
+
+        # Interpolation durchführen (für x und y separat, z bleibt niedrig priorisiert)
+        interpolated = np.zeros_like(distarray)  # Ergebnisarray (x, y, z)
+        for i in range(2):  # Nur x und y interpolieren
+            interpolated[:, :, i] = griddata(
+                known_positions,  # Stützpunkte
+                known_values[:, i],  # Werte für die Dimension (x oder y)
+                (grid_y, grid_x),  # Zielgitter (y, x)
+                method="linear",  # Interpolationsmethode
+                fill_value=np.nan,  # Auffüllen leerer Werte mit NaN
+            )
+
+        # Extrapolation für Ränder
+        nan_mask = np.isnan(interpolated)
+        for i in range(2):  # Nur x und y extrapolieren
+            interpolated[:, :, i] = np.where(
+                nan_mask[:, :, i],
+                griddata(
+                    known_positions,
+                    known_values[:, i],
+                    (grid_y, grid_x),
+                    method="nearest",
+                ),
+                interpolated[:, :, i],
+            )
+
+        # Z-Werte direkt aus den bekannten Punkten übernehmen, ohne Interpolation
+        interpolated[:, :, 2] = griddata(
+            known_positions,
+            known_values[:, 2],
+            (grid_y, grid_x),
+            method="nearest",  # Z-Werte werden einfach übernommen
+            fill_value=0.0,
+        )
+        return interpolated
 
     def get_points_by_lidar(self, lanemask):
         mask = lanemask != 0
@@ -483,6 +556,60 @@ class lane_position(CompatibleNode):
             bounding_boxes.append((x_min, y_min, x_max, y_max))
 
         return bounding_boxes
+
+    def generate_random_color(self):
+        """Generiert eine zufällige RGB-Farbe."""
+        return [random.randint(0, 255) for _ in range(3)]
+
+    def label_to_rgb(self, clustered_mask):
+        """Wandelt das Label-Array in ein RGB-Bild um, wobei jedem Label eine zufällige Farbe zugeordnet wird."""
+        # Identifiziere alle einzigartigen Labels im Array (außer 0, falls es als Hintergrund betrachtet wird)
+        unique_labels = np.unique(clustered_mask)
+        # Entferne alle 0-Werte
+        # unique_labels = unique_labels[unique_labels != 0]
+        # Beispiel-Dictionary mit festen Farben
+        label_to_color = {
+            0: [0, 0, 0],  # schwarz
+            1: [255, 0, 0],  # rot
+            2: [0, 255, 0],  # grün
+            3: [0, 0, 255],  # blau
+            4: [255, 255, 0],  # gelb
+            5: [255, 0, 255],  # magenta
+            6: [0, 255, 255],  # cyan
+            7: [128, 0, 0],  # dunkelrot
+            8: [0, 128, 0],  # dunkelgrün
+            9: [0, 0, 128],  # dunkelblau
+            10: [128, 128, 0],  # olivgrün
+            11: [128, 0, 128],  # lila
+            12: [0, 128, 128],  # türkis
+            13: [192, 192, 192],  # silber
+            14: [255, 165, 0],  # orange
+            15: [255, 20, 147],  # deep pink
+            16: [34, 139, 34],  # forest green
+            17: [255, 105, 180],  # hot pink
+            18: [255, 215, 0],  # gold
+            19: [0, 191, 255],  # deep sky blue
+        }
+        # Erstelle ein leeres RGB-Bild
+        rgb_image = np.zeros(
+            (clustered_mask.shape[0], clustered_mask.shape[1], 3), dtype=np.uint8
+        )
+
+        """# Erstelle eine Zufallsfarbe für jedes Label
+        label_to_color = {
+            label: self.generate_random_color() for label in unique_labels
+        }"""
+
+        # Fülle das RGB-Bild mit den zugehörigen Farben für jedes Label
+        for label, color in label_to_color.items():
+            rgb_image[clustered_mask == label] = color
+
+        return rgb_image
+
+    def publish_label_image(self, clustered_mask):
+        image = self.label_to_rgb(clustered_mask)
+        ros_image = self.bridge.cv2_to_imgmsg(image)
+        self.label_image_publisher.publish(ros_image)
 
     """    def create_coordinate_image(self, x_coords, y_coords):
         # 1. Schritt: Bildgröße bestimmen (maximale Werte aus x und y)
