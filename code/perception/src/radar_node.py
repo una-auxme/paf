@@ -29,12 +29,23 @@ class RadarNode:
     """See doc/perception/radar_node.md on how to configure this node."""
 
     def __init__(self):
+
+        # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
+        # Alternative: only one set of data
+        self.sensor_data = {
+            "RADAR": None,
+            "RADAR2": None,
+            "RADAR3": None,
+        }
+
         self.timer_interval = 0.1  # 0.1 seconds
 
         self.now = 0
         self.previous_time = 0
         self.current_time = 0
+
+        self.datacollecting_started = False
 
     def transform_point_cloud(self, raw_data, point_step, translation, rotation_angle):
         # Winkel in Radianten umwandeln
@@ -76,16 +87,20 @@ class RadarNode:
         nsec /= 1000000000
 
         self.now = sec + nsec
+
+        if self.datacollecting_started is False:
+            return
+
         if self.previous_time == 0:
             self.previous_time = self.now
             return
 
-        if self.now - self.previous_time > 0.1:
-            # self.process_data()
+        if self.now - self.previous_time > 0.05:
+            self.process_data()
             self.previous_time = 0
             return
 
-    def callback2(self, data):
+    def callback(self, data, sensor_name):
         """Process radar Point2Cloud data and publish clustered data points.
 
         Extracts information from radar data
@@ -95,71 +110,118 @@ class RadarNode:
         Args:
             data: Point2Cloud message containing radar data
         """
+        self.datacollecting_started = True
         # Speichere Daten in den Puffer
-        sensor_name = rospy.get_param("~point_cloud_topic").split("/")[-1]
-        self.sensor_data_buffer[sensor_name].append(data)
+        # sensor_name = rospy.get_param("~point_cloud_topic").split("/")[-1]
+
+        if sensor_name not in self.sensor_data:
+            rospy.logwarn(f"Unknown sensor: {sensor_name}")
+            return
+
+        # Speichere die neueste Nachricht
+        self.sensor_data[sensor_name] = data
+
+        # Prüfe, ob alle Sensoren Daten haben
+        if all(msg is not None for msg in self.sensor_data.values()):
+            self.process_data()
+
+        # self.sensor_data_buffer[sensor_name].append(data)
 
     def process_data(self):
-        # Verarbeite die Daten aller Sensoren
+        rospy.loginfo("Processing sensor data...")
         combined_points = []
 
-        for sensor_name, messages in self.sensor_data_buffer.items():
-            for msg in messages:
+        # For-Loop to iterate through buffer data
+        # for sensor_name, messages in self.sensor_data_buffer:
+        #    for msg in messages:
+        #        rospy.loginfo(f"Processing data from sensor: {sensor_name}")
+        #        points = self.extract_points(msg, sensor_name)
+        #        combined_points.extend(points)
+
+        # For-Loop to check sensor data
+        for sensor_name, msg in self.sensor_data.items():
+            if msg is not None:
+                rospy.loginfo(f"Processing data from {sensor_name}")
                 points = self.extract_points(msg, sensor_name)
                 combined_points.extend(points)
 
-        self.sensor_data_buffer.clear()  # Puffer leeren
+        # No data available
+        if not combined_points:
+            rospy.logwarn("No points to process!")
+            return
 
-        # Weiterverarbeitung (z. B. Transformation, Clustering, Bounding Boxes)
-        self.create_bounding_boxes(combined_points)
+        rospy.loginfo(f"Total combined points: {len(combined_points)}")
+
+        # Change points to np.array
+        combined_points = np.array(combined_points)
+
+        # Create clusters with db scan
+        clustered_data = cluster_data(combined_points)
+        cloud = create_pointcloud2(combined_points, clustered_data.labels_)
+        self.visualization_radar_publisher.publish(cloud)
+
+        points_with_labels = np.hstack(
+            (combined_points, clustered_data.labels_.reshape(-1, 1))
+        )
+        bounding_boxes = generate_bounding_boxes(points_with_labels)
+
+        marker_array = MarkerArray()
+        for label, bbox in bounding_boxes:
+            rospy.loginfo(f"Label: {label}, Bounding Box: {bbox}")
+            marker = create_bounding_box_marker(label, bbox)
+            marker_array.markers.append(marker)
+
+        # Publish markers
+        rospy.loginfo(f"Publishing {len(marker_array.markers)} markers.")
+        self.marker_visualization_radar_publisher.publish(marker_array)
+
+        cluster_info = generate_cluster_info(
+            clustered_data, combined_points, marker_array, bounding_boxes
+        )
+        rospy.loginfo(f"Cluster Info: {cluster_info}")
+        self.cluster_info_radar_publisher.publish(cluster_info)
+
+        # Reset sensor_data to fill with new ones
+        self.sensor_data = {key: None for key in self.sensor_data}
 
     def extract_points(self, msg, sensor_name):
-        # Transformiere die Punkte und konvertiere sie in eine gemeinsame Darstellung
+        # Sensor configuration to create transform matrix
         sensor_config = {
             "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
             "RADAR2": [2.0, 1.0, 0.7, 0.0, 0.0, 5.0],
             "RADAR3": [2.0, -1.0, 0.7, 0.0, 0.0, 355.0],
         }
+
+        # Check if sensor name is in config
+        if sensor_name not in sensor_config:
+            rospy.logwarn(f"Unknown sensor: {sensor_name}")
+            return np.array([])
+
         translation = sensor_config[sensor_name]
         data_array = pointcloud2_to_array(msg)
 
-        # radar position z=0.7
-        dataarray = filter_data(data_array, min_z=-0.40, max_z=2)
+        # Filter data based on altitude restrictions
+        filtered_data = filter_data(data_array, min_z=-0.40, max_z=2)
 
+        if len(filtered_data) == 0:
+            rospy.logwarn(f"No valid points for sensor: {sensor_name}")
+            return np.array([])
+
+        # Apply the transformation
         transformation_matrix = self.get_transformation_matrix(*translation)
-
         transformed_points = np.array(
-            [self.transform_point(point, transformation_matrix) for point in dataarray]
+            [
+                self.transform_point(point, transformation_matrix)
+                for point in filtered_data
+            ]
         )
 
         return transformed_points
 
-    def create_bounding_boxes(self, points):
-        # Punkte clustern
-        clustered_data = cluster_data(np.array(points))
-
-        cloud = create_pointcloud2(np.array(points), clustered_data.labels_)
-        self.visualization_radar_publisher.publish(cloud)
-
-        points_with_labels = np.hstack(
-            (np.array(points), clustered_data.labels_.reshape(-1, 1))
-        )
-        bounding_boxes = generate_bounding_boxes(points_with_labels)
-
-        # Bounding Boxes visualisieren und veröffentlichen
-        marker_array = MarkerArray()
-        for label, bbox in bounding_boxes:
-            if label != -1:
-                marker = create_bounding_box_marker(label, bbox)
-                marker_array.markers.append(marker)
-        self.marker_visualization_radar_publisher.publish(marker_array)
-
-        cluster_info = generate_cluster_info(
-            clustered_data, np.array(points), marker_array, bounding_boxes
-        )
-        self.cluster_info_radar_publisher.publish(cluster_info)
-
-    def callback(self, data):
+    """
+    - Old callback function to cluster data of every radar sensor independetly 
+    - not in use anymore
+    def callback2(self, data):
         # Sensorpositionen und -orientierungen (Beispielwerte)
         sensor_config = {
             "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
@@ -176,7 +238,7 @@ class RadarNode:
 
         ######### Transform raw data ##########
         #######################################
-        # Beispielwerte
+        ""# Beispielwerte
         point_step = 32  # Punktgröße in Bytes
         translation = sensor_config[
             sensor_name
@@ -186,10 +248,13 @@ class RadarNode:
         # Rohdaten des PointCloud2-Objekts (z. B. data.data)
         transformed_data = self.transform_point_cloud(
             bytearray(data.data), point_step, translation, rotation_angle
-        )
+        )""
 
         # Ersetzen der Daten
         # data.data = transformed_data
+
+        ##############################################
+        ######### Transform raw data end ##########
 
         # header = data.header
 
@@ -257,7 +322,7 @@ class RadarNode:
         cluster_info = generate_cluster_info(
             clustered_data, dataarray, marker_array, bounding_boxes
         )
-        self.cluster_info_radar_publisher.publish(cluster_info)
+        self.cluster_info_radar_publisher.publish(cluster_info)"""
 
     def get_transformation_matrix(self, x, y, z, roll, pitch, yaw):
         # Convert angles to radians
@@ -339,26 +404,24 @@ class RadarNode:
             String,
             queue_size=10,
         )
+        # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR"), PointCloud2, self.callback,)
+        # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR2"), PointCloud2, self.callback,)
+        # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR3"), PointCloud2, self.callback,)
         rospy.Subscriber(
-            rospy.get_param("~source_topic", "/carla/hero/RADAR"),
-            PointCloud2,
-            self.callback,
+            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR"
         )
         rospy.Subscriber(
-            rospy.get_param("~source_topic", "/carla/hero/RADAR2"),
-            PointCloud2,
-            self.callback,
+            "/carla/hero/RADAR2", PointCloud2, self.callback, callback_args="RADAR2"
         )
         rospy.Subscriber(
-            rospy.get_param("~source_topic", "/carla/hero/RADAR3"),
-            PointCloud2,
-            self.callback,
+            "/carla/hero/RADAR3", PointCloud2, self.callback, callback_args="RADAR3"
         )
-        rospy.Subscriber(
-            "/clock",  # rospy.get_param("/clock_topic", "/clock"),
-            Clock,
-            self.time_check,
-        )
+        # Subscriber to create timer with ROS clock
+        # rospy.Subscriber(
+        #    "/clock",  # rospy.get_param("/clock_topic", "/clock"),
+        #    Clock,
+        #    self.time_check,
+        # )
 
         rospy.spin()
 
@@ -429,7 +492,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.4, min_samples=3):
+def cluster_data(data, eps=0.4, min_samples=5):
     """
     Clusters the radar data using the DBSCAN algorithm
 
