@@ -122,16 +122,15 @@ class lane_position(CompatibleNode):
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
 
-        """ marker_array_camera, boundingboxes_camera = self.process_lanemask(
+        """marker_array_camera, boundingboxes_camera = self.process_lanemask_camera(
             lanemask,
-            points_camera,
             red=1.0,
             green=0.5,
             blue=0.5,
-            epsilon=self.epsilon_camera,
-            min_samples=self.min_samples_camera,
+            epsilon=self.epsilon_lidar,
+            min_samples=self.min_samples_lidar,
         )"""
-        marker_array_lidar, boundingboxes_lidar = self.process_lanemask(
+        marker_array_lidar, boundingboxes_lidar = self.process_lanemask_lidar(
             lanemask,
             red=0.5,
             green=1.0,
@@ -141,8 +140,8 @@ class lane_position(CompatibleNode):
         )
 
         # Publish the MarkerArray for visualization
-        # self.marker_visualization_camera_publisher.publish(marker_array_camera)
         self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
+        # self.marker_visualization_camera_publisher.publish(marker_array_camera)
 
         """transform = Transform2D.new_translation(Vector2.new())
         Lanemarking(
@@ -181,13 +180,23 @@ class lane_position(CompatibleNode):
         pass
         """
 
-    def process_lanemask(self, lanemask, red, green, blue, epsilon, min_samples):
+    def process_lanemask_lidar(self, lanemask, red, green, blue, epsilon, min_samples):
         clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
         lidar_clusters, cluster_confidences = self.mask_lidarpoints(
             clustered_mask, labels
         )
         self.publish_label_image(clustered_mask)
         bounding_boxes = self.get_bounding_boxes(lidar_clusters, cluster_confidences)
+        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
+        return marker_array, bounding_boxes
+
+    def process_lanemask_camera(self, lanemask, red, green, blue, epsilon, min_samples):
+        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
+        camera_clusters, cluster_confidences = self.mask_camerapoints(
+            clustered_mask, labels
+        )
+        self.publish_label_image(clustered_mask)
+        bounding_boxes = self.get_bounding_boxes(camera_clusters, cluster_confidences)
         marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
         return marker_array, bounding_boxes
 
@@ -217,6 +226,23 @@ class lane_position(CompatibleNode):
                 lidar_clusters.append(points)
                 cluster_confidences.append(confidence)
         return lidar_clusters, cluster_confidences
+
+    def mask_camerapoints(self, clustered_mask, labels):
+        camera_clusters = []
+        cluster_confidences = []
+        unique_labels = set(labels)
+        for label in unique_labels:
+            if label == -1:
+                continue
+            confidence = np.count_nonzero(clustered_mask == label)
+            points_with_label = self.camera_coordinates[clustered_mask == label]
+            points = points_with_label[
+                ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
+            ]
+            if len(points) != 0:
+                camera_clusters.append(points)
+                cluster_confidences.append(confidence)
+        return camera_clusters, cluster_confidences
 
     def create_rectangle_marker(
         self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
@@ -302,8 +328,8 @@ class lane_position(CompatibleNode):
             img_msg=ImageMsg, desired_encoding="passthrough"
         )
         self.dist_arrays = dist_array
-        # if len(self.camera_coordinates) == 0:
-        # self.camera_coordinates = self.calibrate_camera_coordinates(dist_array)
+        if len(self.camera_coordinates) == 0:
+            self.camera_coordinates = self.calibrate_camera_coordinates(dist_array)
 
     def get_bounding_boxes(self, clusters, confidences):
         """
@@ -414,8 +440,6 @@ class lane_position(CompatibleNode):
         valid_positions = np.abs(z_values) < 0.25  # Nur Positionen mit |z| < 0.2
         known_positions = known_positions[valid_positions]
         known_values = known_values[valid_positions]
-        if len(known_values) < 150:
-            return []
         # Erstelle ein Gitter für die Interpolation
         grid_x, grid_y = np.meshgrid(
             np.arange(distarray.shape[1]),  # Breite

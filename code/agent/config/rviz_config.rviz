@@ -219,8 +219,28 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /paf/hero/Center/lane_mask
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /paf/hero/Lane/Marker_lidar
+      Name: MarkerArray
+      Namespaces:
+        marker_lidar: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Image
+      Enabled: false
+      Image Topic: /paf/hero/Lane/label_image
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -232,23 +252,11 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /paf/hero/Lane/Marker_lidar
+      Marker Topic: /paf/hero/Lane/Marker_camera
       Name: MarkerArray
       Namespaces:
         marker_lidar: true
       Queue Size: 100
-      Value: true
-    - Class: rviz/Image
-      Enabled: true
-      Image Topic: /paf/hero/Lane/label_image
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Image
-      Normalize Range: true
-      Queue Size: 2
-      Transport Hint: raw
-      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -321,4 +329,4 @@ Window Geometry:
     collapsed: false
   Width: 2781
   X: 772
-  Y: 203
+  Y: 129
