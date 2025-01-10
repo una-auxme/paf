@@ -6,6 +6,7 @@ import numpy as np
 
 from behaviours import behavior_speed as bs
 from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms
+from mapping_common.map import Map
 
 """
 Source: https://github.com/ll7/psaf2
@@ -86,6 +87,17 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_EXECUTING
         # Update distance to collision object
         _dis = self.blackboard.get("/paf/hero/collision")
+
+        # Intermediate layer map integration
+        data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map = Map.from_ros_msg(data)
+
+        entity = map.get_entity_in_front()
+        if entity is not None:
+            rospy.loginfo(
+                f"Translation to car in front: {entity.transform.translation().x()},"
+                f"{entity.transform.translation().y()}"
+            )
         if _dis is not None:
             self.ot_distance = _dis.data[0]
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")

@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
-
-from mapping_common.entity import Entity
+from mapping_common import entity
+from mapping_common.entity import Entity, Car
 
 from mapping import msg
 
@@ -66,6 +66,60 @@ class Map:
         if self.hero() is not None:
             return self.entities[1:]
         return self.entities
+
+    def get_entity_in_front(self) -> Optional[Entity]:
+        """Returns the entity in front
+
+        Rudimentary implementation without shapely
+        Returns:
+            Optional[Entity]: Entity in front
+        """
+        entities_in_front = []
+
+        for e in self.entities_without_hero():
+
+            translation = e.transform.translation()
+            x = translation.x()
+            y = translation.y()
+
+            filter = entity.FlagFilter(is_collider=True)
+            if y < 0.1 and y > -0.1 and x < -1.3 and e.matches_filter(filter):
+                entities_in_front.append(e)
+
+        if len(entities_in_front) > 0:
+            return max(
+                entities_in_front,
+                key=lambda entity: entity.transform.translation().x(),
+            )
+        else:
+            return None
+
+    def get_entity_in_back(self) -> Optional[Entity]:
+        """Returns the entity in front
+
+        Rudimentary implementation without shapely
+        Returns:
+            Optional[Entity]: Entity in front
+        """
+        entities_in_back = []
+
+        for e in self.entities_without_hero():
+
+            translation = e.transform.translation()
+            x = translation.x()
+            y = translation.y()
+
+            filter = entity.FlagFilter(is_collider=True)
+            if y < 0.1 and y > -0.1 and x > 1.3 and e.matches_filter(filter):
+                entities_in_back.append(e)
+
+        if len(entities_in_back) > 0:
+            return min(
+                entities_in_back,
+                key=lambda entity: entity.transform.translation().x(),
+            )
+        else:
+            return None
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
