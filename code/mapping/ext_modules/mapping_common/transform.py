@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import math
+import shapely
 
 from geometry_msgs import msg as geometry_msgs
 from mapping import msg
@@ -65,6 +66,9 @@ class Point2(_Coord2):
 
     def to_ros_msg(self) -> geometry_msgs.Point:
         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
+
+    def to_shapely(self) -> shapely.Point:
+        return shapely.Point(self._matrix[:2])
 
     def __add__(self, other):
         if isinstance(other, Vector2):

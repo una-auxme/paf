@@ -1,13 +1,19 @@
 from dataclasses import dataclass
 from typing import Optional
 
+import shapely
+import math
+from shapely import Polygon
+
 import rospy
 
-from .transform import Transform2D
+from .transform import Transform2D, Point2
 from mapping import msg
 
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import Marker
+
+CIRCLE_APPROXIMATION_LENGTH = 0.5
 
 
 @dataclass
@@ -76,6 +82,9 @@ class Shape2D:
         m.scale.z = 1.0
         return m
 
+    def to_shapely(self, transform: Transform2D) -> Polygon:
+        raise NotImplementedError
+
 
 @dataclass(init=False)
 class Rectangle(Shape2D):
@@ -120,6 +129,20 @@ class Rectangle(Shape2D):
 
         return m
 
+    def to_shapely(self, transform: Transform2D) -> Polygon:
+        shape_transform: Transform2D = transform * self.offset
+        half_length = self.length / 2.0
+        half_width = self.width / 2.0
+        # LeftBack, RightBack, RightFront, LeftFront
+        corners = [
+            Point2.new(-half_length, half_width),
+            Point2.new(-half_length, -half_width),
+            Point2.new(half_length, -half_width),
+            Point2.new(half_length, half_width),
+        ]
+        corners = map(lambda c: (shape_transform * c).to_shapely(), corners)
+        return Polygon(corners)
+
 
 @dataclass(init=False)
 class Circle(Shape2D):
@@ -153,6 +176,17 @@ class Circle(Shape2D):
         m.scale.y = self.radius * 2.0
 
         return m
+
+    def to_shapely(self, transform: Transform2D) -> Polygon:
+        shape_transform: Transform2D = transform * self.offset
+        p: Point2 = Point2.from_vector(shape_transform.translation())
+
+        outline_length = 2 * self.radius * math.pi
+        segments = outline_length / CIRCLE_APPROXIMATION_LENGTH
+        quad_segs: int = max(2, int(segments / 4))
+        return shapely.buffer(
+            p.to_shapely(), self.radius, quad_segs=quad_segs, cap_style="round"
+        )
 
 
 _shape_supported_classes = [Rectangle, Circle]
