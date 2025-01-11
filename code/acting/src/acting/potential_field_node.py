@@ -22,7 +22,11 @@ import rosgraph
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 
-import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+
+DISTANCE_THRESHOLD = 100
+RESOLUTION_SCALE = 10
 
 
 class Potential_field_node(CompatibleNode):
@@ -31,6 +35,8 @@ class Potential_field_node(CompatibleNode):
         # self.potentialField = PotentialField(1, [], (0,0))
         self.entities: list[Entity] = []
         self.role_name = self.get_param("role_name", "ego_vehicle")
+
+        self.entity_matrix = None
 
         self.entities_sub: Subscriber = self.new_subscription(
             msg_type=MapMsg,
@@ -45,46 +51,76 @@ class Potential_field_node(CompatibleNode):
 
     def __get_entities(self, data: MapMsg):
         self.map = Map.from_ros_msg(data)
-        self.loginfo(len(self.map.entities))
-        if len(self.map.entities) > 0:
-            x = self.map.entities[0].transform.translation().x()
-            y = self.map.entities[0].transform.translation().y()
-            self.loginfo(f"{x} {y}")
+        # seems like the uuid of the entities is not implemended yet
+        self.entities = self.map.entities_without_hero()
+        self.loginfo("Got entities")
 
-        self.entities_plot_pub.publish()
+    def __filter_entities(self):
+        # filter out entities with a larger euclidean distance than DISTANCE_THRESHOLD
+        self.loginfo(f" length before filtering {len(self.entities)}")
+        self.entities = [
+            entity
+            for entity in self.entities
+            if entity.transform.translation().length() < DISTANCE_THRESHOLD
+        ]
 
-    def __plot_entities(self) -> Marker:
-        marker = Marker()
-        marker.header.frame_id = "map"
-        marker.header.stamp = rospy.Time.now()
-        marker.ns = "entities"
-        marker.id = 0
-        marker.type = Marker.POINTS
-        marker.action = Marker.ADD
-        marker.pose.orientation.w = 1.0
-        marker.scale.x = 0.1
-        marker.scale.y = 0.1
-        marker.color.a = 1.0
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
+        # self.loginfo(f"after first filtering :{len(self.entities)}")
 
-        for entity in self.map.entities:
-            point = Point()
-            point.x = entity.transform.translation().x()
-            point.y = entity.transform.translation().y()
-            point.z = 0
-            marker.points.append(point)
+        # filter out duplicates with similar position by filling it into a map
+        self.entity_matrix = np.zeros(
+            (
+                DISTANCE_THRESHOLD * RESOLUTION_SCALE,
+                DISTANCE_THRESHOLD * RESOLUTION_SCALE,
+            )
+        )
+        for entity in self.entities:
+            x = int(entity.transform.translation().x() * RESOLUTION_SCALE)
+            y = int(entity.transform.translation().y() * RESOLUTION_SCALE)
+            if self.entity_matrix[x][y] == 0:
+                self.entity_matrix[x][y] = 1
 
-        return marker
+        self.loginfo(f"after filtering :{len(self.entities)}")
+
+    def __plot_entities(self):
+        self.__filter_entities()
+
+        self.entity_matrix_for_plotting = np.zeros(
+            (
+                self.entity_matrix.shape[0],
+                self.entity_matrix.shape[1],
+                3,
+            )
+        )
+
+        # normalize the entity matrix to 0-255
+        self.entity_matrix = self.entity_matrix * 255
+
+        # flip image verically
+        self.entity_matrix_for_plotting = np.flipud(self.entity_matrix)
+
+        image = Image.fromarray(self.entity_matrix_for_plotting)
+        image = image.convert("RGB")
+        image.save("entity_matrix.png")
 
     def run(self):
         self.loginfo("Potential Field Node Running")
 
-        def loop(timerevent=None):
-            pass
+        def loop(timerevent=None, timed=True):
+            if timed:
+                starttime = rospy.get_time()
+                self.loginfo(f"TIMER LOOP START {starttime}")
+            self.__filter_entities()
+            if timed:
+                filtering_start = rospy.get_time()
+                self.loginfo(f"TIME TAKEN FOR FILTERING {rospy.get_time()-starttime}")
+            self.__plot_entities()
+            if timed:
+                self.loginfo(
+                    f"TIME TAKEN FOR PLOTTING {rospy.get_time()-filtering_start}"
+                )
+                self.loginfo(f"TIMER TAKEN FOR LOOP {rospy.get_time()-starttime}")
 
-        self.new_timer(1, loop)
+        self.new_timer(0.3, loop)
         self.spin()
 
 
