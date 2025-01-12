@@ -156,6 +156,7 @@ class Potential_field_node(CompatibleNode):
         num_steps = 0
         points: list[tuple[float]] = []
         plot_points: list[tuple[int]] = []
+        min_gradient_magnitude = 1e-5  # Add convergence threshold
 
         x, y = self.entity_matrix_midpoint
         while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
@@ -163,6 +164,12 @@ class Potential_field_node(CompatibleNode):
             try:
                 dx = gradient_x[x, y] * GRADIENT_FACTOR
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
+                gradient_magnitude = np.sqrt(dx*dx + dy*dy)
+                if gradient_magnitude < min_gradient_magnitude:
+                    self.loginfo("Converged: gradient magnitude below threshold")
+                    finished = True
+                    break
+
                 x -= int(dx)
                 y -= int(dy)
                 plot_points.append((x, y))
@@ -173,14 +180,17 @@ class Potential_field_node(CompatibleNode):
                         (y - self.entity_matrix_midpoint[1]) / RESOLUTION_SCALE,
                     )
                 )
-                if int(dx) <= 0:
-                    self.loginfo("x is smaller than previous x, car going backwards")
+                # Allow some backwards movement but limit it
+                if len(points) > 2 and points[-1][0] < points[-2][0] - 0.5:
+                    self.loginfo("Excessive backwards movement detected")
                     finished = True
                 num_steps += 1
             except IndexError:
                 self.loginfo(f"index out of bounds after {num_steps} steps, way found")
                 finished = True
 
+        if num_steps >= MAX_GRADIENT_DESCENT_STEPS:
+            self.loginfo("Warning: Maximum steps reached without convergence")
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
