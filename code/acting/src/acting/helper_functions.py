@@ -264,11 +264,11 @@ def interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5):
 
 
 def generate_path_from_trajectory(trajectory) -> Path:
-    path_msg = Path
+    path_msg = Path()
+    path_msg.header = rospy.Header()
     path_msg.header.stamp = rospy.Time.now()
-    path_msg.header.frame_id = "global"
-    # clear old waypoints
-    path_msg.poses.clear()
+    path_msg.header.frame_id = "relative"
+    path_msg.poses = []
     for wp in trajectory:
         pos = PoseStamped()
         pos.header.stamp = rospy.Time.now()
@@ -276,11 +276,7 @@ def generate_path_from_trajectory(trajectory) -> Path:
         pos.pose.position.x = wp[0]
         pos.pose.position.y = wp[1]
         pos.pose.position.z = 0
-        # currently not used therefore zeros
-        pos.pose.orientation.x = 0
-        pos.pose.orientation.y = 0
-        pos.pose.orientation.z = 0
-        pos.pose.orientation.w = 0
+        pos.pose.orientation.w = 1
         path_msg.poses.append(pos)
 
     return path_msg

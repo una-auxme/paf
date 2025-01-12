@@ -13,18 +13,21 @@ import ros_compatibility as roscomp
 import rospy
 from visualization_msgs.msg import Marker
 
-from scipy.ndimage import distance_transform_edt, gaussian_filter
+from scipy.ndimage import distance_transform_edt
 import numpy as np
 from PIL import Image
-from PIL import ImageDraw
 
 from acting.helper_functions import interpolate_route, generate_path_from_trajectory
 
+
+# PARAMETERS
 DISTANCE_THRESHOLD = 10
 RESOLUTION_SCALE = 10
 FORCE_FACTOR = 25
 SLOPE = 255
 K_VALUE = 0.009
+MAX_GRADIENT_DESCENT_STEPS = 20
+GRADIENT_FACTOR = 10
 
 
 class Potential_field_node(CompatibleNode):
@@ -57,13 +60,6 @@ class Potential_field_node(CompatibleNode):
             qos_profile=1,
         )
 
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            msg_type=Path,
-            topic="/paf/hero/trajectory",
-            callback=self.__get_trajectory,
-            qos_profile=1,
-        )
-
         self.entities_plot_pub: Publisher = self.new_publisher(
             Marker, "/paf/hero/mapping/entities_plot", 1
         )
@@ -85,16 +81,20 @@ class Potential_field_node(CompatibleNode):
     # END CALLBACKS ###
 
     def __filter_entities(self):
-
-        # self.loginfo(f"after first filtering :{len(self.entities)}")
         self.entity_matrix = np.zeros(
             (
                 2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
                 2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
             )
         )
-        # filter out duplicates with similar position by filling it into a map
+        # fill in the entities into a matrix
         for entity in self.entities:
+            # try to filter out the car entities
+            if (
+                abs(entity.transform.translation().x()) < 2
+                and abs(entity.transform.translation().y()) < 4
+            ):
+                continue
             x = (
                 int(entity.transform.translation().x() * RESOLUTION_SCALE)
                 + self.entity_matrix_midpoint[0]
@@ -108,7 +108,7 @@ class Potential_field_node(CompatibleNode):
                 if self.entity_matrix[x][y] == 0:
                     self.entity_matrix[x][y] += 1
             except IndexError:
-                # self.loginfo(f"IndexError at x:{x} y:{y}")
+                # if the index not in the map horizon, skip the entity
                 continue
 
     def generate_new_trajectory(self, trajectory: Path) -> Path:
@@ -123,19 +123,9 @@ class Potential_field_node(CompatibleNode):
 
         return new_trajectory
 
-    def __plot_entities(self):
-        self.__filter_entities()
+    def __calculate_field(self):
         if self.entity_matrix is None:
             return
-
-        self.entity_matrix_for_plotting = np.zeros(
-            (
-                self.entity_matrix.shape[0],
-                self.entity_matrix.shape[1],
-                3,
-            ),
-            dtype=np.uint8,
-        )
 
         # normalize the entity matrix to 0-255
         self.entity_matrix = self.entity_matrix / np.max(self.entity_matrix) * 255
@@ -146,13 +136,10 @@ class Potential_field_node(CompatibleNode):
 
         # INTRODUCE A FORCE POINTING TO THE TOP OF THE IMAGE (TO MAKE THE CAR DRIVE)
         # slope distances matrix to the top of the image
-        slope_array = np.linspace(SLOPE, 0, self.entity_matrix_for_plotting.shape[0])
+        slope_array: np.ndarray = np.linspace(SLOPE, 0, self.entity_matrix.shape[0])
         # make slope array same shape as distances
-        slope_array = np.tile(
-            slope_array, (self.entity_matrix_for_plotting.shape[1], 1)
-        ).T
+        slope_array = np.tile(slope_array, (self.entity_matrix.shape[1], 1)).T
         distances += slope_array
-        self.entity_matrix_for_plotting[:, :, 0] = np.flipud(self.entity_matrix)
 
         # plot the updated trajectory
         # smooth the values with exponential decay
@@ -160,58 +147,67 @@ class Potential_field_node(CompatibleNode):
         # normalize smoothed values to 0-255
         smoothed_values = smoothed_values / np.max(smoothed_values) * 255
         distances[distances == 0] = smoothed_values[distances == 0]
-        self.entity_matrix_for_plotting[:, :, 2] = smoothed_values
 
         gradient_x, gradient_y = np.gradient(smoothed_values)
-        # TODO: GRADIENT DESCENT ALONG THE SURFACE TO GENERATE NEW TRAJECTORY
+
+        # GRADIENT DESCENT
         finished = False
         num_steps = 0
-        MAX_GRADIENT_DESCENT_STEPS = 20
-        GRADIENT_FACTOR = 10
         points: list[tuple[float]] = []
+        plot_points: list[tuple[int]] = []
 
-        grad_desc_start = rospy.get_time()
-        self.loginfo("gradient descent starting")
         x, y = self.entity_matrix_midpoint
         while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
-            # initialize at 0,0
             # move along the gradient
             try:
                 dx = gradient_x[x, y] * GRADIENT_FACTOR
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
+                x -= int(dx)
+                y -= int(dy)
+                plot_points.append((x, y))
+                points.append(
+                    (
+                        # back to the original coordinates
+                        -(x - self.entity_matrix_midpoint[0]) / RESOLUTION_SCALE,
+                        (y - self.entity_matrix_midpoint[1]) / RESOLUTION_SCALE,
+                    )
+                )
+                if int(dx) <= 0:
+                    self.loginfo("x is smaller than previous x, car going backwards")
+                    finished = True
+                num_steps += 1
             except IndexError:
                 self.loginfo(f"index out of bounds after {num_steps} steps, way found")
                 finished = True
-            x -= int(dx)
-            y -= int(dy)
-            points.append((x, y))
-            if x < points[-1][0]:
-                self.loginfo("x is smaller than previous x, car going backwards")
-            num_steps += 1
-        self.loginfo(f"gradient descent took {rospy.get_time()-grad_desc_start}")
 
-        midpoint = self.entity_matrix_for_plotting.shape[0] // 2
-        # TRAJECTORY UPDATING
-        """ 
-        for x in range(self.entity_matrix_for_plotting.shape[0]):
-            # move point according to the gradient in x direction
-            dx = (gradient_x[x, midpoint]) * FORCE_FACTOR
-            dy = (gradient_y[x, midpoint]) * FORCE_FACTOR
-            dx = int(dx)
-            dy = int(dy)
-            try:
-                self.entity_matrix_for_plotting[x + dx, midpoint + dy, 1] = 255
-            except IndexError:
-                pass
-        """
+        # generate a path from the trajectory and publish
+        self.potential_field_trajectory = generate_path_from_trajectory(points)
+        self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
+        try:
+            self.loginfo(
+                f"Potential field trajectory published after {str(rospy.get_time() - self.last_pub_time)}"
+            )
+        except:
+            pass
+        self.last_pub_time = rospy.get_time()
 
-        for point in points:
+        # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
+        self.entity_matrix_for_plotting = np.zeros(
+            (
+                self.entity_matrix.shape[0],
+                self.entity_matrix.shape[1],
+                3,
+            ),
+            dtype=np.uint8,
+        )
+
+        self.entity_matrix_for_plotting[:, :, 0] = np.flipud(self.entity_matrix)
+        self.entity_matrix_for_plotting[:, :, 2] = smoothed_values
+        for point in plot_points:
             try:
                 self.entity_matrix_for_plotting[point[0], point[1], 1] = 255
             except IndexError:
                 continue
-
-        # self.save_image(self.entity_matrix_for_plotting, "entity_matrix.png")
 
     def save_image(self, matrix: np.ndarray, path: str):
         image = Image.fromarray(matrix)
@@ -222,7 +218,7 @@ class Potential_field_node(CompatibleNode):
     def run(self):
         self.loginfo("Potential Field Node Running")
 
-        def loop(timerevent=None, logged=True):
+        def loop(timerevent=None, logged=False):
             starttime = rospy.get_time()
             if logged:
                 self.loginfo(f"TIMER LOOP START {starttime}")
@@ -230,7 +226,9 @@ class Potential_field_node(CompatibleNode):
             self.__filter_entities()
             if logged:
                 self.loginfo(f"TIME TAKEN FOR FILTERING {rospy.get_time()-starttime}")
-            self.__plot_entities()
+            self.__calculate_field()
+            # PLOTTING
+            self.save_image(self.entity_matrix_for_plotting, "entity_matrix.png")
             if logged:
                 self.loginfo(
                     f"TIME TAKEN FOR PLOTTING {rospy.get_time()-plotting_start}"
