@@ -38,6 +38,8 @@ class Potential_field_node(CompatibleNode):
         self.potential_field_trajectory = Path()
         self.role_name = self.get_param("role_name", "ego_vehicle")
 
+        self.last_pub_time = rospy.get_time()
+
         self.entity_matrix = np.zeros(
             (
                 2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
@@ -183,12 +185,9 @@ class Potential_field_node(CompatibleNode):
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
-        try:
-            self.loginfo(
-                f"Potential field trajectory published after {str(rospy.get_time() - self.last_pub_time)}"
-            )
-        except:
-            pass
+        self.loginfo(
+            f"Potential field trajectory published after {str(rospy.get_time() - self.last_pub_time)}"
+        )
         self.last_pub_time = rospy.get_time()
 
         # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
