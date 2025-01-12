@@ -4,38 +4,37 @@
 
 **Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
-- [Behavior Tree](#behavior-tree)
-  - [About](#about)
-  - [Our behaviour tree](#our-behaviour-tree)
-    - [Behavior](#behavior)
-      - [Selector](#selector)
-      - [Sequence](#sequence)
-      - [Condition](#condition)
-      - [Subtree](#subtree)
-    - [Intersection](#intersection)
-      - [Legend](#legend)
-    - [Other Behaviors](#other-behaviors)
-  - [Developing guide](#developing-guide)
-    - [Tree Definition](#tree-definition)
-    - [Behaviours](#behaviours)
-      - [Blackboard](#blackboard)
-    - [Guidelines](#guidelines)
-      - [Non-Blocking](#non-blocking)
-      - [Functions](#functions)
-        - [`__init__()`](#__init__)
-        - [`setup()`](#setup)
-        - [`initialise()`](#initialise)
-        - [`update()`](#update)
-        - [`terminate()`](#terminate)
+- [About](#about)
+- [Our behavior tree](#our-behavior-tree)
+  - [Behavior](#behavior)
+    - [Selector](#selector)
+    - [Sequence](#sequence)
+    - [Condition](#condition)
+    - [Subtree](#subtree)
+  - [Intersection](#intersection)
+    - [Legend](#legend)
+  - [Other Behaviors](#other-behaviors)
+- [Developing guide](#developing-guide)
+  - [Tree Definition](#tree-definition)
+  - [Behaviors](#behaviors)
+    - [Blackboard](#blackboard)
+  - [Guidelines](#guidelines)
+    - [Non-Blocking](#non-blocking)
+    - [Functions](#functions)
+      - [`__init__()`](#__init__)
+      - [`setup()`](#setup)
+      - [`initialise()`](#initialise)
+      - [`update()`](#update)
+      - [`terminate()`](#terminate)
 
 ## About
 
-This Package implements a behaviour agent for our autonomous car using **Behaviour Trees**. It uses the [py_trees](./py_trees.md) Framework, that works well with ROS.
+This Package implements a behavior agent for our autonomous car using **Behavior Trees**. It uses the [py_trees](./py_trees.md) Framework, that works well with ROS.
 For visualization at runtime you might want to also install this [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
-## Our behaviour tree
+## Our behavior tree
 
-The following section describes the behaviour tree we use for normal driving using all functionality provided by the agent. In the actual implementation this is part of a bigger tree, that handles things like writing topics to the blackboard, starting and finishing the decision tree.
+The following section describes the behavior tree we use for normal driving using all functionality provided by the agent. In the actual implementation this is part of a bigger tree, that handles things like writing topics to the blackboard, starting and finishing the decision tree.
 The following tree is a simplification. The draw.io xml file to update this diagram can be found inside /assets/planning/.
 
 ![Simple Tree](../assets/planning/behaviour_tree.PNG)
@@ -46,7 +45,7 @@ Represent an action the decision tree should execute. It has three return values
 
 - `SUCCESS`: The action has been performed successfully.
 - `RUNNING`: The action is still being executed.
-- `Failure`: The action couldn't be executed.
+- `FAILURE`: The action couldn't be executed.
 
 #### Selector
 
@@ -72,7 +71,7 @@ Represents a specific task/scenario which is handled by the decision tree.
 
 ![BT Intersection](../assets/intersection.png)
 
-If there is an intersection coming up, the agent executes the following sequence of behaviours:
+If there is an intersection coming up, the agent executes the following sequence of behaviors:
 
 - Approach Intersection
 
@@ -98,21 +97,15 @@ Lane Change and Overtake are built just like Intersection. So there is always an
 
 ### Tree Definition
 
-The tree is defined in the `grow_a_tree()`-function inside `code/planning/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees). This is also the place to change the execution rate of the tree:
+The tree is defined in the `grow_a_tree()`-function inside `code/planning/src/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
-``` python
-...
-behaviour_tree.tick_tock(500)
-...
-```
+### Behaviors
 
-### Behaviours
-
-`Behaviours` are implemented in the `code/planning/behavior_agent/behaviours/` directory. All the behaviours used in the current version of the tree are contained as skeletons.
+`Behaviors` are implemented in the `code/planning/src/behavior_agent/behaviors/` directory. All the behaviors used in the current version of the tree are contained as skeletons.
 
 #### Blackboard
 
-To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `src/behavior_agent/behaviours/topics2blackboard.py`:
+To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `code/planning/src/behavior_agent/behaviors/topics2blackboard.py`:
 
 ``` python
 ...
@@ -123,7 +116,7 @@ topics =[
 ...
 ```
 
-After that you can access them from everywhere in your Behaviour-Code using:
+After that you can access them from everywhere in your Behavior-Code using:
 
 ``` python
 ...
@@ -137,17 +130,17 @@ Note that you still need to resolve the data-fields of the message (i.e. `blackb
 
 ### Guidelines
 
-When implementing new behaviours you should adhere to the following guidelines:
+When implementing new behaviors you should adhere to the following guidelines:
 
 #### Non-Blocking
 
-You should avoid doing complicated calculations inside the behaviours. Use asynchronous Callbacks instead, and return ```RUNNING``` while another node does the computing.
+You should avoid doing complicated calculations inside the behaviors. Use asynchronous Callbacks instead, and return ```RUNNING``` while another node does the computing.
 
-Generally conditions should never return ```RUNNING``` and Action-Behaviours should only return ```FAILURE``` in special cases.
+Generally conditions should never return ```RUNNING``` and Action-Behaviors should only return ```FAILURE``` in special cases.
 
 #### Functions
 
-Behaviours generally provide five functions (you can define more of course). Short explanation when they get called and how to use them:
+Behaviors generally provide five functions (you can define more of course). Short explanation when they get called and how to use them:
 
 ##### `__init__()`
 
@@ -159,12 +152,12 @@ Gets called whenever the tree gets set up for the first time. Use this to setup 
 
 ##### `initialise()`
 
-Gets called every time the behaviour is entered for a new execution. Add code that only needs to be called once at the beginning of a behaviour (i.e. publishing a new target speed).
+Gets called every time the behavior is entered for a new execution. Add code that only needs to be called once at the beginning of a behavior (i.e. publishing a new target speed).
 
 ##### `update()`
 
-Main function of a behaviour, that gets called everytime the behaviour is ticked. Here you need to return ```SUCCESS```, ```RUNNING``` or ```FAILURE```.
+Main function of a behavior, that gets called everytime the behavior is ticked. Here you need to return ```SUCCESS```, ```RUNNING``` or ```FAILURE```.
 
 ##### `terminate()`
 
-This gets called, whenever a behaviour is cancelled by a higher priority branch. Use to terminate middleware connections or asynchronous Calculations, whose results are not needed anymore.
+This gets called, whenever a behavior is cancelled by a higher priority branch. Use to terminate middleware connections or asynchronous Calculations, whose results are not needed anymore.
