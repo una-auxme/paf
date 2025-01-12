@@ -73,7 +73,7 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
-        # Get distance to vehicle in front and velocity of the vehicle in front from radar sensor
+        # Get distance to and velocity of leading vehicle from radar sensor
         self.lead_vehicle_sub = self.new_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
@@ -122,7 +122,8 @@ class ACC(CompatibleNode):
     def __update_radar_data(self, data: Float32MultiArray):
         if (
             not data.data
-        ):  # no distance and speed data of the leading vehicle is transferred (leading vehicle is very far away)
+        ):  # no distance and speed data of the leading vehicle is transferred
+            # (leading vehicle is very far away)
             self.leading_vehicle_distance = None
             self.leading_vehicle_relative_speed = None
             self.leading_vehicle_speed = None
