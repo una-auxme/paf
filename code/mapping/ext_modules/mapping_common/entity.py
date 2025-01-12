@@ -2,6 +2,8 @@ from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
 
+from shapely import Polygon
+
 from uuid import UUID, uuid4
 from genpy.rostime import Time, Duration
 from std_msgs.msg import Header
@@ -368,6 +370,9 @@ class Entity:
         m.pose.position.z = m.scale.z / 2.0
 
         return m
+
+    def to_shapely(self) -> Polygon:
+        return self.shape.to_shapely(self.transform)
 
 
 @dataclass(init=False)

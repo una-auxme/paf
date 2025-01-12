@@ -1,10 +1,13 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional, Callable
+
+import shapely
+from shapely import STRtree
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
 
-from mapping_common.entity import Entity
+from mapping_common.entity import Entity, FlagFilter
 
 from mapping import msg
 
@@ -67,6 +70,13 @@ class Map:
             return self.entities[1:]
         return self.entities
 
+    def to_tree(
+        self,
+        f: Optional[FlagFilter] = None,
+        filter_fn: Optional[Callable[[Entity], bool]] = None,
+    ) -> "MapTree":
+        return MapTree(self)
+
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
         entities = list(map(lambda e: Entity.from_ros_msg(e), m.entities))
@@ -76,3 +86,18 @@ class Map:
         entities = list(map(lambda e: e.to_ros_msg(), self.entities))
         header = Header(stamp=self.timestamp)
         return msg.Map(header=header, entities=entities)
+
+
+@dataclass(init=False)
+class MapTree:
+    _str_tree: STRtree
+    _idx_map: Dict
+    map: Map
+
+    def __init__(
+        self,
+        map: Map,
+        f: Optional[FlagFilter] = None,
+        filter_fn: Optional[Callable[[Entity], bool]] = None,
+    ):
+        pass
