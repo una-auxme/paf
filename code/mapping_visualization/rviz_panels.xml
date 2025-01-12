@@ -1,0 +1,7 @@
+<library path="lib/libmapping_visualization">
+    <class type="filter_panel::filterPanel" base_class_type="rviz::Panel">
+        <description>
+            A Panel to filter the visualized map.
+        </description>
+    </class>
+</library>

@@ -19,7 +19,7 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
 from utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms, spawn_car
 
 sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
-from behaviours import behavior_speed as bs  # type: ignore # noqa: E402
+from behaviors import behavior_speed as bs  # type: ignore # noqa: E402
 
 # from scipy.spatial._kdtree import KDTree
 
