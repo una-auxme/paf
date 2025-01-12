@@ -539,6 +539,7 @@ def create_min_max_markers(
 
     return min_marker, max_marker
 
+
 # generates string with label-id and cluster size, can be used for extra debugging
 def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
     """
