@@ -5,14 +5,15 @@ from py_trees.behaviours import Running
 import py_trees_ros
 import rospy
 import sys
-from behaviours import (
+from behaviors import (
+    cruise,
     intersection,
     lane_change,
-    overtake,
-    maneuvers,
+    leave_parking_space,
     meta,
-    road_features,
+    overtake,
     topics2blackboard,
+    unstuck_routine,
 )
 from py_trees.composites import Parallel, Selector, Sequence
 
@@ -29,17 +30,17 @@ def grow_a_tree(role_name):
             Selector(
                 "Priorities",
                 children=[
-                    maneuvers.UnstuckRoutine("Unstuck Routine"),
+                    unstuck_routine.UnstuckRoutine("Unstuck Routine"),
                     Selector(
                         "Road Features",
                         children=[
-                            maneuvers.LeaveParkingSpace("Leave Parking Space"),
+                            leave_parking_space.LeaveParkingSpace(
+                                "Leave Parking Space"
+                            ),
                             Sequence(
                                 "Intersection",
                                 children=[
-                                    road_features.IntersectionAhead(
-                                        "Intersection Ahead?"
-                                    ),
+                                    intersection.Ahead("Intersection Ahead?"),
                                     Sequence(
                                         "Intersection Actions",
                                         children=[
@@ -61,7 +62,7 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Laneswitch",
                                 children=[
-                                    road_features.LaneChangeAhead("Lane Change Ahead?"),
+                                    lane_change.Ahead("Lane Change Ahead?"),
                                     Sequence(
                                         "Lane Change Actions",
                                         children=[
@@ -76,7 +77,7 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Overtaking",
                                 children=[
-                                    road_features.OvertakeAhead("Overtake Ahead?"),
+                                    overtake.Ahead("Overtake Ahead?"),
                                     Sequence(
                                         "Overtake Actions",
                                         children=[
@@ -90,7 +91,7 @@ def grow_a_tree(role_name):
                             ),
                         ],
                     ),
-                    maneuvers.Cruise("Cruise"),
+                    cruise.Cruise("Cruise"),
                 ],
             )
         ],
