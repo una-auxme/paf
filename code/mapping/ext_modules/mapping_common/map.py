@@ -6,6 +6,8 @@ from std_msgs.msg import Header
 from mapping_common import entity
 from mapping_common.entity import Entity, Car
 
+#from shapely.geometry import Polygon
+
 from mapping import msg
 
 
@@ -121,6 +123,51 @@ class Map:
         else:
             return None
 
+    """def project_plane(size_x, size_y):
+
+        Projects a rectangular plane starting from (0, 0) forward in the negative x-direction.
+    
+        Parameters:
+        - size_x (float): Length of the plane along the x-axis (negative direction).
+        - size_y (float): Width of the plane along the y-axis.
+    
+        Returns:
+        - Polygon: A Shapely Polygon representing the plane.
+
+        points = [
+            (0, 0),                 
+            (-size_x, 0),             
+            (-size_x, size_y),       
+            (0, size_y),               
+            (0, 0)                     
+        ]
+        
+        return Polygon(points)"""
+
+    """def curve_to_polygon(points, width):
+    
+        Creates a polygon with a specified width around a given curve.
+    
+        Parameters:
+        - points (list of tuple): A list of (x, y) coordinates representing the curve.
+        - width (float): The width of the polygon along the curve.
+    
+        Returns:
+        - Polygon: A Shapely Polygon representing the widened curve.
+    
+        if len(points) < 2:
+            raise ValueError("At least two points are required to define a curve.")
+        if width <= 0:
+            raise ValueError("Width must be a positive value.")
+        
+        # Create a LineString from the given points
+        curve = LineString(points)
+        
+        # Create a buffer around the curve to form a polygon with the given width
+        polygon = curve.buffer(width / 2, cap_style=1, join_style=2)
+    
+        return polygon"""
+    
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
         entities = list(map(lambda e: Entity.from_ros_msg(e), m.entities))
