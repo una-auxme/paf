@@ -82,7 +82,7 @@ def quaternion_to_heading(x: float, y: float, z: float, w: float) -> float:
     return rot_euler[2]
 
 
-def heading_to_quaternion(heading: float) -> (float, float, float, float):
+def heading_to_quaternion(heading: float) -> Tuple[float, float, float, float]:
     """
     Translates euler heading to quaternion
     :param heading: euler heading
@@ -272,7 +272,7 @@ def generate_path_from_trajectory(trajectory) -> Path:
     for wp in trajectory:
         pos = PoseStamped()
         pos.header.stamp = rospy.Time.now()
-        pos.header.frame_id = "global"
+        pos.header.frame_id = "relative"
         pos.pose.position.x = wp[0]
         pos.pose.position.y = wp[1]
         pos.pose.position.z = 0

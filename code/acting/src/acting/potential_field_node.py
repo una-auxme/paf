@@ -3,7 +3,6 @@ from ros_compatibility.node import CompatibleNode
 
 from mapping.msg import Map as MapMsg
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
 
 from acting.entity import Entity
 from acting.map import Map
@@ -17,7 +16,7 @@ from scipy.ndimage import distance_transform_edt
 import numpy as np
 from PIL import Image
 
-from acting.helper_functions import interpolate_route, generate_path_from_trajectory
+from acting.helper_functions import generate_path_from_trajectory
 
 
 # PARAMETERS
@@ -185,9 +184,8 @@ class Potential_field_node(CompatibleNode):
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
-        self.loginfo(
-            f"Potential field trajectory published after {str(rospy.get_time() - self.last_pub_time)}"
-        )
+        dt = rospy.get_time() - self.last_pub_time
+        self.loginfo(f"Potential field trajectory published after {dt} seconds")
         self.last_pub_time = rospy.get_time()
 
         # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
