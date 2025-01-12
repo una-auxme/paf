@@ -169,6 +169,31 @@ class Map:
         polygon = curve.buffer(width / 2, cap_style=1, join_style=2)
     
         return polygon"""
+
+    """def get_entities_with_coverage(polygon, entities, coverage):
+
+        Returns a list of entities that have at least coverage % in the given polygon.
+    
+        Parameters:
+        - polygon (Polygon): A Shapely Polygon object representing the target area.
+        - entities (list): A list of entities each having a Shapely shape.
+    
+        Returns:
+        - list: A list of entities that have at least coverage % in the polygon.
+    
+        
+        collision_entities = []
+        
+        for entity in entities:
+            shape = entity.getShapely()  # Get the Shapely shape of the entity, 
+                            # might have to change this depending on integration
+               
+            # Calculate intersection area
+            intersection = polygon.intersection(shape)
+            if intersection.area / shape.area >= coverage:
+                collision_entities.append(entity)
+        
+        return collision_entities"""
     
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
