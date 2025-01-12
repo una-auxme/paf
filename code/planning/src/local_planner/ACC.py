@@ -121,7 +121,7 @@ class ACC(CompatibleNode):
 
     def __update_radar_data(self, data: Float32MultiArray):
         if (
-            not data.data
+            not data.data or len(data.data) < 2:
         ):  # no distance and speed data of the leading vehicle is transferred
             # (leading vehicle is very far away)
             self.leading_vehicle_distance = None
