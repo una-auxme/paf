@@ -33,7 +33,6 @@ class Potential_field_node(CompatibleNode):
 
     def __init__(self):
         self.entities: list[Entity] = []
-        # self.trajectory: Path = self.__generate_default_path()
         self.potential_field_trajectory = Path()
         self.role_name = self.get_param("role_name", "ego_vehicle")
 
@@ -45,8 +44,6 @@ class Potential_field_node(CompatibleNode):
                 2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
             )
         )
-
-        self.loginfo(f"entity matrix shape {self.entity_matrix.shape}")
 
         self.entity_matrix_midpoint = (
             DISTANCE_THRESHOLD * RESOLUTION_SCALE,
@@ -73,15 +70,23 @@ class Potential_field_node(CompatibleNode):
 
     # CALLBACKS ###
     def __get_entities(self, data: MapMsg):
+        """
+        Callback for the entities subscriber
+        :param data: The received data
+        """
         self.map = Map.from_ros_msg(data)
         self.entities = self.map.entities_without_hero()
 
     def __get_trajectory(self, data: Path):
+        # currently not used
         self.trajectory = data
 
     # END CALLBACKS ###
 
     def __filter_entities(self):
+        """
+        Filters the entities and fills the entity matrix
+        """
         self.entity_matrix = np.zeros(
             (
                 2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
@@ -125,6 +130,9 @@ class Potential_field_node(CompatibleNode):
         return new_trajectory
 
     def __calculate_field(self):
+        """
+        Calculates the potential field and publishes the trajectory
+        """
         if self.entity_matrix is None:
             return
 
@@ -156,6 +164,7 @@ class Potential_field_node(CompatibleNode):
         num_steps = 0
         points: list[tuple[float]] = []
         plot_points: list[tuple[int]] = []
+        min_gradient_magnitude = 1e-5  # Add convergence threshold
 
         x, y = self.entity_matrix_midpoint
         while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
@@ -163,6 +172,12 @@ class Potential_field_node(CompatibleNode):
             try:
                 dx = gradient_x[x, y] * GRADIENT_FACTOR
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
+                gradient_magnitude = np.sqrt(dx * dx + dy * dy)
+                if gradient_magnitude < min_gradient_magnitude:
+                    self.loginfo("Converged: gradient magnitude below threshold")
+                    finished = True
+                    break
+
                 x -= int(dx)
                 y -= int(dy)
                 plot_points.append((x, y))
@@ -173,19 +188,21 @@ class Potential_field_node(CompatibleNode):
                         (y - self.entity_matrix_midpoint[1]) / RESOLUTION_SCALE,
                     )
                 )
-                if int(dx) <= 0:
-                    self.loginfo("x is smaller than previous x, car going backwards")
+                # Allow some backwards movement but limit it
+                if len(points) > 2 and points[-1][0] < points[-2][0] - 0.5:
+                    self.loginfo("Excessive backwards movement detected")
                     finished = True
                 num_steps += 1
             except IndexError:
                 self.loginfo(f"index out of bounds after {num_steps} steps, way found")
                 finished = True
 
+        if num_steps >= MAX_GRADIENT_DESCENT_STEPS:
+            self.loginfo("Warning: Maximum steps reached without convergence")
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
-        dt = rospy.get_time() - self.last_pub_time
-        self.loginfo(f"Potential field trajectory published after {dt} seconds")
+
         self.last_pub_time = rospy.get_time()
 
         # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
@@ -207,30 +224,30 @@ class Potential_field_node(CompatibleNode):
                 continue
 
     def save_image(self, matrix: np.ndarray, path: str):
+        """
+        Saves an image from a matrix
+
+        Args:
+            matrix (np.ndarray): the matrix to save
+            path (str): the path to save the image
+        """
         image = Image.fromarray(matrix)
         image = image.convert("RGB")
         image.save(path)
         # self.loginfo(f"Image saved at {path}")
 
     def run(self):
+        """
+        Runs the potential field node
+        """
         self.loginfo("Potential Field Node Running")
 
-        def loop(timerevent=None, logged=False):
-            starttime = rospy.get_time()
-            if logged:
-                self.loginfo(f"TIMER LOOP START {starttime}")
-            plotting_start = rospy.get_time()
+        def loop(timerevent=None):
             self.__filter_entities()
-            if logged:
-                self.loginfo(f"TIME TAKEN FOR FILTERING {rospy.get_time()-starttime}")
+
             self.__calculate_field()
             # PLOTTING
             self.save_image(self.entity_matrix_for_plotting, "entity_matrix.png")
-            if logged:
-                self.loginfo(
-                    f"TIME TAKEN FOR PLOTTING {rospy.get_time()-plotting_start}"
-                )
-                self.loginfo(f"TIMER TAKEN FOR LOOP {rospy.get_time()-starttime}")
 
         self.new_timer(0.5, loop)
         self.spin()
