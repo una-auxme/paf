@@ -123,7 +123,7 @@ class Map:
         else:
             return None
 
-    """def project_plane(size_x, size_y):
+    """def project_plane(start_point, size_x, size_y):
 
         Projects a rectangular plane starting from (0, 0) forward in the negative x-direction.
     
@@ -133,13 +133,15 @@ class Map:
     
         Returns:
         - Polygon: A Shapely Polygon representing the plane.
-
+        
+        x, y = start_point
+        
         points = [
-            (0, 0),                 
-            (-size_x, 0),             
-            (-size_x, size_y),       
-            (0, size_y),               
-            (0, 0)                     
+            (x, y),                 
+            (x - size_x, y),             
+            (x - size_x, y + size_y),       
+            (x, y + size_y),               
+            (x, y)                     
         ]
         
         return Polygon(points)"""
