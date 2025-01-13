@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mapping</name>
+  <version>0.0.1</version>
+  <description>The mapping package for the intermediate layer</description>
+  <maintainer email="peter.viechter@student.uni-augsburg.de">Peter Viechter</maintainer>
+  <license>TODO</license>
+
+  <depend>uuid_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>carla_msgs</depend>
+  <!-- Use build_depend for packages you need at compile time: -->
+  <build_depend>message_generation</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <!-- Use build_export_depend for packages you need in order to build against this package: -->
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <!-- Use buildtool_depend for build tool packages: -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <!-- Use exec_depend for packages you need at runtime: -->
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <!-- Use test_depend for packages you need only for testing: -->
+  <test_depend>ros_pytest</test_depend>
+ 
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
