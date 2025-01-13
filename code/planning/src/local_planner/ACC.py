@@ -107,9 +107,9 @@ class ACC(CompatibleNode):
         # Current speed
         self.__current_velocity: float = None
         # Distance and speed from possible collsion object
-        self.obstacle_speed: float = 10
+        self.obstacle_speed: float = None
         # Obstacle distance
-        self.obstacle_distance: float = 50
+        self.obstacle_distance: float = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
         # Radar data
