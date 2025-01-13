@@ -117,18 +117,6 @@ class Potential_field_node(CompatibleNode):
                 # if the index not in the map horizon, skip the entity
                 continue
 
-    def generate_new_trajectory(self, trajectory: Path) -> Path:
-        """
-        Generates a new trajectory based on the current trajectory
-        and the potential field
-        :param trajectory: The current trajectory
-        :return: The new trajectory
-        """
-        new_trajectory = Path()
-        new_trajectory.header = trajectory.header
-
-        return new_trajectory
-
     def __calculate_field(self):
         """
         Calculates the potential field and publishes the trajectory
@@ -140,8 +128,7 @@ class Potential_field_node(CompatibleNode):
         self.entity_matrix = self.entity_matrix / np.max(self.entity_matrix) * 255
 
         # flip image verically and smooth out the values
-        self.entity_grayscale = np.flipud(self.entity_matrix)
-        distances = distance_transform_edt(self.entity_grayscale == 0)
+        distances = distance_transform_edt(np.flipud(self.entity_matrix) == 0)
 
         # INTRODUCE A FORCE POINTING TO THE TOP OF THE IMAGE (TO MAKE THE CAR DRIVE)
         # slope distances matrix to the top of the image
