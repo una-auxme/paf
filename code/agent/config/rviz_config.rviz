@@ -3,7 +3,8 @@ Panels:
     Help Height: 138
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /PointCloud23
       Splitter Ratio: 0.5
     Tree Height: 690
   - Class: rviz/Selection
@@ -65,6 +66,7 @@ Visualization Manager:
         Intermediate layer: true
         Lidar: false
         Lidar_filtered: false
+        MarkerArray: true
         Path: false
         PointCloud2: true
         Radar: false
@@ -124,8 +126,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 11.824217796325684
-        Min Value: -0.001820981502532959
+        Max Value: 19.850238800048828
+        Min Value: -0.5895265936851501
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -265,6 +267,42 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /paf/hero/Radar/Marker
+      Name: MarkerArray
+      Namespaces:
+        marker_radar: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.4000000059604645
+      Style: Flat Squares
+      Topic: /paf/hero/Radar/Visualization
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -301,17 +339,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 4.547964096069336
+        Y: 0.805663526058197
+        Z: 3.589240550994873
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.40979671478271484
+      Pitch: 0.47979652881622314
       Target Frame: <Fixed Frame>
-      Yaw: 3.1423213481903076
+      Yaw: 3.1273210048675537
     Saved: ~
 Window Geometry:
   Camera:
