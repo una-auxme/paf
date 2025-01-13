@@ -717,7 +717,7 @@ class MotionPlanning(CompatibleNode):
                 self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
-                self.velocity_selector_pub.publish("0")
+                self.velocity_selector_pub.publish("not selected")
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
