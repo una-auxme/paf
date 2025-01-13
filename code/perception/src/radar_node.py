@@ -492,7 +492,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.4, min_samples=5):
+def cluster_data(data, eps=0.35, min_samples=4):
     """
     Clusters the radar data using the DBSCAN algorithm
 
