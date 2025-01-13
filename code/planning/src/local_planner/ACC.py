@@ -7,6 +7,7 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray
+from simple_pid import PID
 from utils import calculate_rule_of_thumb, interpolate_speed
 
 
@@ -230,6 +231,12 @@ class ACC(CompatibleNode):
         :return:
         """
 
+        # PID controller
+
+        pid = PID(0.60, 0.00076, 0.63)  # Parameters have to be set
+
+        pid.output_limits = (0, self.speed_limit)
+
         def loop(timer_event=None):
             """
             Permanent checks if distance to a possible object is too small and
@@ -254,16 +261,9 @@ class ACC(CompatibleNode):
                     False, self.__current_velocity
                 )
                 if self.leading_vehicle_distance < safety_distance:
-                    # If safety distance is reached, we want to reduce the
-                    # speed to meet the desired distance
-                    # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
-                    safe_speed = self.leading_vehicle_speed * (
-                        self.leading_vehicle_distance / safety_distance
-                    )
-                    # Interpolate speed for smoother braking
-                    safe_speed = interpolate_speed(safe_speed, self.__current_velocity)
-                    if safe_speed < 1.0:
-                        safe_speed = 0
+                    pid.setpoint = safety_distance
+                    # can I set the setpoint to a distance?
+                    safe_speed = pid(self.__current_velocity)
                     self.velocity_pub.publish(safe_speed)
                 else:
                     # If safety distance is reached just hold current speed
