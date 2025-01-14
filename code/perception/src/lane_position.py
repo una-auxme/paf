@@ -10,7 +10,7 @@ from cv_bridge import CvBridge
 
 # intermediate Layer imports
 from mapping_common.shape import Rectangle, Circle
-from mapping_common.entity import Entity, Lanemarking
+from mapping_common.entity import Entity, Lanemarking, Flags
 from mapping_common.transform import Transform2D, Vector2
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
@@ -121,7 +121,7 @@ class lane_position(CompatibleNode):
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
-
+        stamp = ImageMsg.header.stamp
         """marker_array_camera, boundingboxes_camera = self.process_lanemask_camera(
             lanemask,
             red=1.0,
@@ -130,55 +130,60 @@ class lane_position(CompatibleNode):
             epsilon=self.epsilon_lidar,
             min_samples=self.min_samples_lidar,
         )"""
-        marker_array_lidar, boundingboxes_lidar = self.process_lanemask_lidar(
-            lanemask,
-            red=0.5,
-            green=1.0,
-            blue=0.5,
-            epsilon=self.epsilon_lidar,
-            min_samples=self.min_samples_lidar,
+        marker_array_lidar, boundingboxes_lidar, angles_lidar, confidences = (
+            self.process_lanemask_lidar(
+                lanemask,
+                red=0.5,
+                green=1.0,
+                blue=0.5,
+                epsilon=self.epsilon_lidar,
+                min_samples=self.min_samples_lidar,
+            )
         )
 
         # Publish the MarkerArray for visualization
         self.marker_visualization_lidar_publisher.publish(marker_array_lidar)
         # self.marker_visualization_camera_publisher.publish(marker_array_camera)
-
-        """transform = Transform2D.new_translation(Vector2.new())
-        Lanemarking(
-            Lanemarking.Style.SOLID,
+        Lanemarkings = self.Lanemarking_from_lidar(
+            boundingboxes_lidar, angles_lidar, confidences, stamp
         )
 
-        def entities_from_lidar(self) -> List[Entity]:
-        if self.lidar_data is None:
+    def Lanemarking_from_lidar(
+        self, boundingboxes: np.array, angles: np.array, confidences, stamp
+    ):
+        if boundingboxes is None:
             return []
-
-        data = self.lidar_data
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        shape = Circle(0.15)
-        lidar_entities = []
-        for x, y, z, intensity in coordinates:
-            if z < -1.5 or z > 1.0:
-                # Ignore street level lidar points and stuff above
-                continue
-            if random.random() < 0.9:
-                # Get rid of points because performance
-                continue
-            v = Vector2.new(x, y)
-            transform = Transform2D.new_translation(v)
-            flags = Flags(is_collider=True)
-            e = Entity(
-                confidence=0.5 * intensity,
-                priority=0.25,
+        entities = []
+        for boundingbox, angle, confidence in zip(boundingboxes, angles, confidences):
+            x, y = self.calc_center(boundingbox)
+            transform = Transform2D.new_translation(Vector2.new(x, y))
+            transform.new_rotation(angle)
+            shape = Rectangle(width=0.3, length=15)
+            style = Lanemarking.Style.SOLID
+            flags = Flags(is_lanemark=True)
+            timestamp = stamp
+            lanemarking = Lanemarking(
+                style=style,
+                confidence=confidence,
+                priority=1,
                 shape=shape,
                 transform=transform,
-                timestamp=data.header.stamp,
+                timestamp=timestamp,
                 flags=flags,
             )
-            lidar_entities.append(e)
+            entities.append(lanemarking)
+        return entities
 
-        return lidar_entities
-        pass
-        """
+    def calc_center(self, boundingbox):
+        x_center = (
+            (boundingbox[0, 0] + boundingbox[1, 0]) / 2
+            + (boundingbox[2, 0] + boundingbox[3, 0]) / 2
+        ) / 2
+        y_center = (
+            (boundingbox[0, 1] + boundingbox[1, 1]) / 2
+            + (boundingbox[2, 1] + boundingbox[3, 1]) / 2
+        ) / 2
+        return x_center, y_center
 
     def process_lanemask_lidar(self, lanemask, red, green, blue, epsilon, min_samples):
         clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
@@ -186,9 +191,11 @@ class lane_position(CompatibleNode):
             clustered_mask, labels
         )
         self.publish_label_image(clustered_mask)
-        bounding_boxes = self.get_bounding_boxes(lidar_clusters, cluster_confidences)
+        bounding_boxes, angles = self.get_bounding_boxes(
+            lidar_clusters, cluster_confidences
+        )
         marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
-        return marker_array, bounding_boxes
+        return marker_array, bounding_boxes, angles, cluster_confidences
 
     def process_lanemask_camera(self, lanemask, red, green, blue, epsilon, min_samples):
         clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
@@ -344,7 +351,7 @@ class lane_position(CompatibleNode):
         # Berechnung der Bounding Boxes für jeden Cluster
         bounding_boxes = []
         poly_list = []
-
+        angles = []
         for index, cluster in enumerate(clusters):
             # je gröer das cluster, desto wahrscheinlicher ist es, dass es tatsächlich eine lane markierung ist
             if confidences[index] < self.confidence_treshold:
@@ -359,6 +366,7 @@ class lane_position(CompatibleNode):
             c = poly.coefficients[1]  # Achsenabschnitt
             center_y = np.mean(y)
             theta = np.arctan(m)
+            angles.append(theta)
             dx = (self.line_length / 2) * np.cos(theta)
             dy = (self.line_length / 2) * np.sin(theta)
             x1, y1 = self.center_x - dx, center_y - dy
@@ -376,7 +384,7 @@ class lane_position(CompatibleNode):
             ]
 
             bounding_boxes.append(rect_points)
-        return bounding_boxes
+        return bounding_boxes, angles
 
     def cluster_points(self, lanemask, epsilon, min_samples):
         labels = []
