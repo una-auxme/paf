@@ -73,6 +73,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get distance to and velocity of leading vehicle from radar sensor
+        self.lead_vehicle_sub = self.new_subscription(
+            Float32MultiArray,
+            f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
+            self.__update_radar_data,
+            qos_profile=1,
+        )
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
@@ -99,13 +107,31 @@ class ACC(CompatibleNode):
         # Current speed
         self.__current_velocity: float = None
         # Distance and speed from possible collsion object
-        self.obstacle_speed: tuple = None
+        self.obstacle_speed: float = None
         # Obstacle distance
-        self.obstacle_distance = None
+        self.obstacle_distance: float = None
         # Current speed limit
         self.speed_limit: float = None  # m/s
+        # Radar data
+        self.leading_vehicle_distance = None
+        self.leading_vehicle_relative_speed = None
+        self.leading_vehicle_speed = None
 
         self.logdebug("ACC initialized")
+
+    def __update_radar_data(self, data: Float32MultiArray):
+        if not data.data or len(data.data) < 2:
+            # no distance and speed data of the leading vehicle is transferred
+            # (leading vehicle is very far away)
+            self.leading_vehicle_distance = None
+            self.leading_vehicle_relative_speed = None
+            self.leading_vehicle_speed = None
+        else:
+            self.leading_vehicle_distance = data.data[0]
+            self.leading_vehicle_relative_speed = data.data[1]
+            self.leading_vehicle_speed = (
+                self.__current_velocity + self.leading_vehicle_relative_speed
+            )
 
     def __collision_callback(self, data: Float32):
         """Safe approximated speed form obstacle in front together with
@@ -209,22 +235,30 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
+
             if (
-                self.obstacle_distance is not None
-                and self.obstacle_speed is not None
+                # often none
+                self.leading_vehicle_distance is not None
+                # often none -> often does elif even if if-case is necessary
+                and self.leading_vehicle_speed is not None
                 and self.__current_velocity is not None
             ):
+                if self.leading_vehicle_speed < 0.0:
+                    acc_speed = 0.0
+                    self.velocity_pub.publish(acc_speed)
+
                 # If we have obstalce information,
                 # we can calculate the safe speed
+                safety_distance: float
                 safety_distance = calculate_rule_of_thumb(
                     False, self.__current_velocity
                 )
-                if self.obstacle_distance < safety_distance:
+                if self.leading_vehicle_distance < safety_distance:
                     # If safety distance is reached, we want to reduce the
                     # speed to meet the desired distance
                     # https://encyclopediaofmath.org/index.php?title=Linear_interpolation
-                    safe_speed = self.obstacle_speed * (
-                        self.obstacle_distance / safety_distance
+                    safe_speed = self.leading_vehicle_speed * (
+                        self.leading_vehicle_distance / safety_distance
                     )
                     # Interpolate speed for smoother braking
                     safe_speed = interpolate_speed(safe_speed, self.__current_velocity)

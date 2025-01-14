@@ -5,7 +5,7 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import ros_numpy
 import rospy
-
+from visualization_msgs.msg import MarkerArray, Marker
 import numpy as np
 from typing import List, Optional
 
@@ -29,6 +29,8 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    hero_speed: Optional[CarlaSpeedometer] = None
+    lidar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -39,14 +41,18 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
-        self.lidar_data = None
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
             callback=self.hero_speed_callback,
             qos_profile=1,
         )
-        self.hero_speed = None
+        self.new_subscription(
+            topic=self.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
+            msg_type=MarkerArray,
+            callback=self.lidar_marker_callback,
+            qos_profile=1,
+        )
 
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
@@ -59,8 +65,50 @@ class MappingDataIntegrationNode(CompatibleNode):
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
 
+    def lidar_marker_callback(self, data: MarkerArray):
+        self.lidar_marker_data = data
+
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def entities_from_lidar_marker(self) -> List[Entity]:
+        data = self.lidar_marker_data
+        if data is None or not hasattr(data, "markers") or data.markers is None:
+            # Handle cases where data or markers are invalid
+            rospy.logwarn("No valid marker data received.")
+            return []
+
+        lidar_entities = []
+        for marker in data.markers:
+            if marker.type != Marker.CUBE:
+                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
+                continue
+            # Extract position (center of the cube)
+            x_center = marker.pose.position.x
+            y_center = marker.pose.position.y
+
+            # Extract dimensions (scale gives the size of the cube)
+            width = marker.scale.x
+            length = marker.scale.y
+
+            # Create a shape and transform using the cube's data
+            shape = Rectangle(width, length)  # 2D rectangle for lidar data
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+            transform = Transform2D.new_translation(v)
+
+            # Add entity to the list
+            flags = Flags(is_collider=True)
+            e = Entity(
+                confidence=1,
+                priority=0.25,
+                shape=shape,
+                transform=transform,
+                timestamp=marker.header.stamp,
+                flags=flags,
+            )
+            lidar_entities.append(e)
+
+        return lidar_entities
 
     def entities_from_lidar(self) -> List[Entity]:
         if self.lidar_data is None:
@@ -140,11 +188,13 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero_car = self.create_hero_entity()
 
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_data is None or hero_car is None:
+        if self.lidar_marker_data is None or hero_car is None:
             return
 
         stamp = rospy.get_rostime()
-        map = Map(timestamp=stamp, entities=[hero_car] + self.entities_from_lidar())
+        map = Map(
+            timestamp=stamp, entities=[hero_car] + self.entities_from_lidar_marker()
+        )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
