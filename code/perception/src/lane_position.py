@@ -15,6 +15,7 @@ from mapping_common.transform import Transform2D, Vector2
 from mapping_common.map import Map
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
+from mapping.msg import Map as MapMsg
 
 # from scipy.spatial.transform import Rotation as R
 # clustering imports
@@ -119,6 +120,13 @@ class lane_position(CompatibleNode):
             topic="/paf/hero/Lane/label_image",
             qos_profile=1,
         )
+        self.map_publisher = self.new_publisher(
+            msg_type=MapMsg,
+            topic=self.get_param(
+                "~map_init_topic", "/paf/hero/mapping/init_lanemarkings"
+            ),
+            qos_profile=1,
+        )
 
     def lanemask_handler(self, ImageMsg):
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
@@ -188,12 +196,12 @@ class lane_position(CompatibleNode):
 
     def calc_center(self, boundingbox):
         x_center = (
-            (boundingbox[0, 0] + boundingbox[1, 0]) / 2
-            + (boundingbox[2, 0] + boundingbox[3, 0]) / 2
+            (boundingbox[0][0] + boundingbox[1][0]) / 2
+            + (boundingbox[2][0] + boundingbox[3][0]) / 2
         ) / 2
         y_center = (
-            (boundingbox[0, 1] + boundingbox[1, 1]) / 2
-            + (boundingbox[2, 1] + boundingbox[3, 1]) / 2
+            (boundingbox[0][1] + boundingbox[1][1]) / 2
+            + (boundingbox[2][1] + boundingbox[3][1]) / 2
         ) / 2
         return x_center, y_center
 
