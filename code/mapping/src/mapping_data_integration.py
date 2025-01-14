@@ -5,8 +5,7 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import ros_numpy
 import rospy
-from visualization_msgs.msg import MarkerArray
-import random
+from visualization_msgs.msg import MarkerArray, Marker
 import numpy as np
 from typing import List, Optional
 
@@ -83,16 +82,23 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         lidar_entities = []
         for marker in data.markers:
-            if not marker.points:
-                rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
+            if marker.type != Marker.CUBE:
+                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
-            width, length = calculate_marker_width_length_2d(marker.points)
-            x_center, y_center = calculate_marker_center_2d(marker.points)
+            # Extract position (center of the cube)
+            x_center = marker.pose.position.x
+            y_center = marker.pose.position.y
 
-            shape = Rectangle(width, length)
-            v = Vector2.new(x_center, y_center)
+            # Extract dimensions (scale gives the size of the cube)
+            width = marker.scale.x
+            length = marker.scale.y
+
+            # Create a shape and transform using the cube's data
+            shape = Rectangle(width, length)  # 2D rectangle for lidar data
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
             transform = Transform2D.new_translation(v)
 
+            # Add entity to the list
             flags = Flags(is_collider=True)
             e = Entity(
                 confidence=1,
@@ -193,62 +199,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
-
-
-def calculate_marker_center_2d(points):
-    """
-    Calculates the center (x, y) of a 2D bounding box based on marker points.
-
-    Args:
-        points (list or numpy.ndarray): List of geometry_msgs/Point objects
-        or NumPy array.
-
-    Returns:
-        tuple: Center coordinates (x_center, y_center).
-    """
-    # Convert list of points to NumPy array if necessary
-    points_array = (
-        np.array([[p.x, p.y] for p in points])
-        if not isinstance(points, np.ndarray)
-        else points
-    )
-
-    # Calculate min and max values
-    x_min, x_max = np.min(points_array[:, 0]), np.max(points_array[:, 0])
-    y_min, y_max = np.min(points_array[:, 1]), np.max(points_array[:, 1])
-
-    # Calculate the center
-    x_center = (x_min + x_max) / 2
-    y_center = (y_min + y_max) / 2
-
-    return x_center, y_center
-
-
-def calculate_marker_width_length_2d(points):
-    """
-    Calculates the width and length of a 2D bounding box (x, y dimensions only).
-
-    Args:
-        points (list or numpy.ndarray): List or array of points with [x, y, z].
-
-    Returns:
-        tuple: Width and length of the bounding box.
-    """
-    # Convert to NumPy array if points is a list
-    points_array = (
-        np.array([[p.x, p.y] for p in points])
-        if not isinstance(points, np.ndarray)
-        else points
-    )
-
-    # Calculate width and length using min/max on x and y dimensions
-    x_min, x_max = np.min(points_array[:, 0]), np.max(points_array[:, 0])
-    y_min, y_max = np.min(points_array[:, 1]), np.max(points_array[:, 1])
-
-    width = x_max - x_min
-    length = y_max - y_min
-
-    return width, length
 
 
 if __name__ == "__main__":
