@@ -40,8 +40,8 @@
     <param name="left" value="False" />
     <param name="right" value="False" />
 
-      <!--Object-Detection: 
-      - frcnn_resnet50_fpn_v2 
+      <!--Object-Detection:
+      - frcnn_resnet50_fpn_v2
       - frcnn_mobilenet_v3_large_320_fpn
       - yolov8n
       - yolov8s
@@ -78,8 +78,13 @@
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     <param name="role_name" value="$(arg role_name)" />
   </node>
-
+<!--
   <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
+    <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
+    <param name="range_topic" value="/carla/hero/LIDAR_range"/>
+  </node>
+-->
+    <node pkg="perception" type="debug_wrapper.py" name="lidar_distance" output="screen" args="--debug_node=lidar_distance.py --debug_port=53000">
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
   </node>

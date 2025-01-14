@@ -10,6 +10,7 @@ import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
+from tf.transformations import quaternion_from_matrix
 
 import struct
 
@@ -320,84 +321,85 @@ def generate_bounding_boxes(points_with_labels):
     return bounding_boxes
 
 
-def create_bounding_box_marker(label, bbox):
+def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     """
-    Creates an RViz Marker for visualizing a 3D bounding box.
-
-    This function generates a Marker object for RViz to visualize a 3D bounding box
-    based on the provided label and bounding box dimensions. The marker is
-    represented as a series of lines connecting the corners of the box.
+    Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
 
     Args:
-        label (int): The unique identifier for the cluster or object to which the
-        bounding box belongs. This label is used as the Marker ID.
-        bbox (tuple): A tuple containing the min and max coordinates of the bounding box
-                      in the format (x_min, x_max, y_min, y_max, z_min, z_max).
+        label (int): Unique identifier for the cluster or object.
+                     Used as the Marker ID.
+        bbox (tuple): Bounding box dimensions.
+                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): The type of bounding box ("aabb" or "obb").
 
     Returns:
-        Marker: A Marker object that can be published to RViz to display the
-        3D bounding box. The marker is of type LINE_LIST,
-        representing the edges of the bounding box.
+        Marker: A CUBE Marker object that can be published to RViz.
     """
-    # for 2d (top-down) boxes
-    # x_min, x_max, y_min, y_max = bbox
-
-    # for 3d boxes
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
+    # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero/RADAR"
-    marker.ns = "marker_radar"
-    marker.id = int(label)
-    marker.lifetime = rospy.Duration(1)
-    # marker.type = Marker.LINE_STRIP  # 2d boxes
-    marker.type = Marker.LINE_LIST  # 3d boxes
-    marker.action = Marker.ADD
-    marker.scale.x = 0.1
-    marker.color.r = 1.0
-    marker.color.g = 1.0
-    marker.color.b = 0.0
-    marker.color.a = 1.0
+    marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
+    marker.ns = "marker_lidar"  # Namespace to group related markers
+    marker.id = int(label)  # Use the label as the unique marker ID
+    marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
+    marker.type = Marker.CUBE  # Use a cube for the bounding box
+    marker.action = Marker.ADD  # Action to add or modify the marker
 
-    # for 2d (top-down) boxes
-    # points = [
-    #     Point(x_min, y_min, 0),
-    #     Point(x_max, y_min, 0),
-    #     Point(x_max, y_max, 0),
-    #     Point(x_min, y_max, 0),
-    #     Point(x_min, y_min, 0),
-    # ]
-    # marker.points = points
+    # Set marker color and opacity
+    marker.color.r = 1.0  # Red
+    marker.color.g = 0.5  # Green
+    marker.color.b = 0.0  # Blue
+    marker.color.a = 0.8  # Opacity
 
-    # for 3d boxes
-    points = [
-        Point(x_min, y_min, z_min),
-        Point(x_max, y_min, z_min),
-        Point(x_max, y_max, z_min),
-        Point(x_min, y_max, z_min),
-        Point(x_min, y_min, z_max),
-        Point(x_max, y_min, z_max),
-        Point(x_max, y_max, z_max),
-        Point(x_min, y_max, z_max),
-    ]
+    if bbox_type == "aabb":
+        x_min, x_max, y_min, y_max, z_min, z_max = bbox
 
-    lines = [
-        (0, 1),
-        (1, 2),
-        (2, 3),
-        (3, 0),  # Bottom
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 4),  # Top
-        (0, 4),
-        (1, 5),
-        (2, 6),
-        (3, 7),  # Vertical Edges
-    ]
-    for start, end in lines:
-        marker.points.append(points[start])
-        marker.points.append(points[end])
+        # Calculate center and dimensions for AABB
+        center_x = (x_min + x_max) / 2.0
+        center_y = (y_min + y_max) / 2.0
+        center_z = (z_min + z_max) / 2.0
+
+        size_x = x_max - x_min
+        size_y = y_max - y_min
+        size_z = z_max - z_min
+
+        marker.pose.position.x = center_x
+        marker.pose.position.y = center_y
+        marker.pose.position.z = center_z
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = size_x
+        marker.scale.y = size_y
+        marker.scale.z = size_z
+
+    elif bbox_type == "obb":
+        center, dimensions, eigenvectors = bbox
+        width, length, height = dimensions
+
+        # Assign OBB parameters
+        marker.pose.position.x = center[0]
+        marker.pose.position.y = center[1]
+        marker.pose.position.z = center[2]
+
+        # Convert eigenvectors to quaternion
+        quaternion = tf.transformations.quaternion_from_matrix(
+            np.vstack([eigenvectors.T, [0, 0, 0]]).T
+        )
+        marker.pose.orientation.x = quaternion[0]
+        marker.pose.orientation.y = quaternion[1]
+        marker.pose.orientation.z = quaternion[2]
+        marker.pose.orientation.w = quaternion[3]
+
+        marker.scale.x = width
+        marker.scale.y = length
+        marker.scale.z = height
+
+    else:
+        raise ValueError(f"Unsupported bbox_type: {bbox_type}")
 
     return marker
 
