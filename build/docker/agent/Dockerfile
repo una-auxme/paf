@@ -71,7 +71,7 @@ RUN apt-get update && apt-get install -y \
     ros-noetic-rviz ros-noetic-rqt ros-noetic-pcl-ros ros-noetic-rosbridge-suite ros-noetic-rosbridge-server \
     ros-noetic-robot-pose-ekf ros-noetic-ros-numpy \
     ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure \
-    ros-noetic-ros-pytest
+    ros-noetic-ros-pytest 
 
 SHELL ["/bin/bash", "-c"]
 
@@ -101,6 +101,12 @@ RUN source /opt/ros/noetic/setup.bash && \
     catkin_make install
 
 ENV CARLA_ROS_BRIDGE_ROOT=/catkin_ws/src/ros-bridge
+
+# Install teb_local_planner as well as teb_planner_pa
+RUN sudo apt-get install -y \
+    ros-noetic-teb-local-planner
+ARG TEB_PLANNER_PA_GITHUB_URL=https://github.com/TUC-ProAut/ros_teb_planner.git
+RUN git clone $TEB_PLANNER_PA_GITHUB_URL src/ros_teb_planner
 
 # avoid python warnings about missing bin directory in PATH
 # (as we're not running as root, pip installs into ~/.local/bin)
