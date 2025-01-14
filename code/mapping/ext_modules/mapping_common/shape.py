@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import rospy
 
@@ -33,9 +34,9 @@ class Shape2D:
             shape_type = _shape_supported_classes_dict[msg_type_lower]
         if shape_type is None:
             rospy.logerr(
-                f"""Received shape type '{m.type_name}' is not supported.
-'Circle' shape with radius 0.5 m will be used instead.
-The type must be one of {_shape_supported_classes_dict.keys()}"""
+                f"Received shape type '{m.type_name}' is not supported."
+                f"'Circle' shape with radius 0.5 m will be used instead."
+                f"The type must be one of {_shape_supported_classes_dict.keys()}"
             )
             return Circle(radius=0.5)
 
@@ -65,13 +66,12 @@ The type must be one of {_shape_supported_classes_dict.keys()}"""
         m.pose.position.x = transl.x()
         m.pose.position.y = transl.y()
         m.pose.position.z = 0.0
-        # TODO: apply rotation to marker
         (
             m.pose.orientation.x,
             m.pose.orientation.y,
             m.pose.orientation.z,
             m.pose.orientation.w,
-        ) = quaternion_from_euler(0, 0, 0)
+        ) = quaternion_from_euler(0, 0, shape_transform.rotation())
 
         m.scale.z = 1.0
         return m
@@ -88,8 +88,10 @@ class Rectangle(Shape2D):
         self,
         length: float,
         width: float,
-        offset: Transform2D = Transform2D.identity(),
+        offset: Optional[Transform2D] = None,
     ):
+        if offset is None:
+            offset = Transform2D.identity()
         super().__init__(offset=offset)
         self.length = length
         self.width = width
@@ -125,7 +127,9 @@ class Circle(Shape2D):
 
     radius: float
 
-    def __init__(self, radius: float, offset: Transform2D = Transform2D.identity()):
+    def __init__(self, radius: float, offset: Optional[Transform2D] = None):
+        if offset is None:
+            offset = Transform2D.identity()
         super().__init__(offset=offset)
         self.radius = radius
 

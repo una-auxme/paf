@@ -50,16 +50,19 @@ class Visualization(CompatibleNode):
         map = Map.from_ros_msg(data)
         marker_array = MarkerArray()
 
-        for id, entity in enumerate(map.entities):
+        marker_timestamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+        for id, entity in enumerate(map.entities_without_hero()):
             # TODO: filtering based on flags
-            marker_array.markers.append(self.create_marker_from_entity(id, entity))
+            marker_array.markers.append(
+                self.create_marker_from_entity(id, entity, marker_timestamp)
+            )
 
         self.marker_publisher.publish(marker_array)
 
-    def create_marker_from_entity(self, id, entity: Entity) -> Marker:
+    def create_marker_from_entity(self, id, entity: Entity, timestamp) -> Marker:
         marker = entity.to_marker()
         marker.header.frame_id = "hero"
-        marker.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+        marker.header.stamp = timestamp
         marker.ns = "m"
         marker.id = id
         marker.lifetime = Duration.from_sec(1.25 / 20.0)

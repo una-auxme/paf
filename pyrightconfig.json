@@ -5,9 +5,6 @@
     "exclude": [
         "**/__pycache__",
     ],
-    "defineConstant": {
-        "DEBUG": true
-    },
     "typeCheckingMode": "standard",
     "strictListInference": true,
     "strictDictionaryInference": true,

@@ -22,6 +22,7 @@ class Map:
     - All transformations to entities are relative to
       the hero car's coordinate system (position/heading)
     - The map's x-axis is aligned with the heading of the hero car
+    - The map's y-axis points to the left of the hero car
     - Coordinate system is a right-hand system like tf2 (can be visualized in RViz)
     - The map might include the hero car as the first entity in entities
     """
@@ -50,7 +51,7 @@ class Map:
         if len(self.entities) <= 0:
             return None
         hero = self.entities[0]
-        if not hero.flags.is_hero:
+        if not hero.flags._is_hero:
             return None
         return hero
 
