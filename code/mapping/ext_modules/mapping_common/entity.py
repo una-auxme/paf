@@ -2,7 +2,7 @@ from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
 
-from shapely import Polygon
+import shapely
 
 from uuid import UUID, uuid4
 from genpy.rostime import Time, Duration
@@ -371,8 +371,8 @@ class Entity:
 
         return m
 
-    def to_shapely(self) -> Polygon:
-        return self.shape.to_shapely(self.transform)
+    def to_shapely(self) -> "ShapelyEntity":
+        return ShapelyEntity(self, self.shape.to_shapely(self.transform))
 
 
 @dataclass(init=False)
@@ -482,3 +482,9 @@ _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()
     _entity_supported_classes_dict[t_name] = t
+
+
+@dataclass
+class ShapelyEntity:
+    entity: Entity
+    poly: shapely.Polygon

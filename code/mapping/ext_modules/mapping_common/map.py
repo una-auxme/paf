@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Callable
+from typing import List, Optional, Callable, Literal, Tuple
 
 import shapely
 from shapely import STRtree
+import numpy as np
+import numpy.typing as npt
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
 
-from mapping_common.entity import Entity, FlagFilter
+from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from mapping import msg
 
@@ -75,7 +77,14 @@ class Map:
         f: Optional[FlagFilter] = None,
         filter_fn: Optional[Callable[[Entity], bool]] = None,
     ) -> "MapTree":
-        return MapTree(self)
+        return MapTree(self, f, filter_fn)
+
+    def filtered(
+        self,
+        f: Optional[FlagFilter] = None,
+        filter_fn: Optional[Callable[[Entity], bool]] = None,
+    ) -> List[Entity]:
+        return [e for e in self.entities if _entity_matches_filter(e, f, filter_fn)]
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
@@ -91,7 +100,7 @@ class Map:
 @dataclass(init=False)
 class MapTree:
     _str_tree: STRtree
-    _idx_map: Dict
+    filtered_entities: List[ShapelyEntity]
     map: Map
 
     def __init__(
@@ -100,4 +109,77 @@ class MapTree:
         f: Optional[FlagFilter] = None,
         filter_fn: Optional[Callable[[Entity], bool]] = None,
     ):
-        pass
+        self.map = map
+        self.filtered_entities = [e.to_shapely() for e in map.filtered(f, filter_fn)]
+        self._str_tree = STRtree(geoms=[e.poly for e in self.filtered_entities])
+
+    def _idxs_to_entity(self, idxs: npt.NDArray) -> List[ShapelyEntity]:
+        return [self.filtered_entities[i] for i in idxs]
+
+    def nearest(self, geo: List[shapely.Geometry]) -> List[ShapelyEntity]:
+        idxs = self._str_tree.nearest(geo)
+        if idxs is None:
+            return []
+        return self._idxs_to_entity(idxs)
+
+    def query(
+        self,
+        geo: List[shapely.Geometry],
+        predicate: Optional[
+            Literal[
+                "intersects",
+                "within",
+                "contains",
+                "overlaps",
+                "crosses",
+                "touches",
+                "covers",
+                "covered_by",
+                "contains_properly",
+                "dwithin",
+            ]
+        ],
+        distance: Optional[npt.NDArray],
+    ) -> List[List[ShapelyEntity]]:
+        idxs: npt.NDArray[np.int64] = self._str_tree.query(
+            geo, predicate=predicate, distance=distance
+        )
+        return [self._idxs_to_entity(idxs_l) for idxs_l in idxs]
+
+    def query_nearest(
+        self,
+        geo: List[shapely.Geometry],
+        max_distance: Optional[float],
+        exclusive: bool = False,
+        all_matches: bool = True,
+    ) -> List[List[Tuple[ShapelyEntity, float]]]:
+        query: Tuple[npt.NDArray[np.int64], npt.NDArray[np.float64]] = (
+            self._str_tree.query_nearest(
+                geo,
+                max_distance=max_distance,
+                return_distance=True,
+                exclusive=exclusive,
+                all_matches=all_matches,
+            )
+        )
+        result = []
+        for geo_entry in zip(query[0], query[1]):
+            idxs: npt.NDArray[np.int64] = geo_entry[0]
+            distances: npt.NDArray[np.float64] = geo_entry[1]
+            entities = self._idxs_to_entity(idxs)
+            result += [(e, distances[i]) for i, e in enumerate(entities)]
+        return result
+
+
+def _entity_matches_filter(
+    e: Entity,
+    f: Optional[FlagFilter] = None,
+    filter_fn: Optional[Callable[[Entity], bool]] = None,
+) -> bool:
+    if f is not None:
+        if not e.matches_filter(f):
+            return False
+    if filter_fn is not None:
+        if not filter_fn(e):
+            return False
+    return True
