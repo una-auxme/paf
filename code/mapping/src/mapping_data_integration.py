@@ -12,7 +12,6 @@ from typing import List, Optional
 from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
-from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 
