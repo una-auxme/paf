@@ -33,9 +33,13 @@ class RadarNode:
         self.get_lead_vehicle_info(dataarray)
 
         # radar position z=0.7
-        dataarray = filter_data(dataarray, min_z=-0.40, max_z=2)
+        min_z = float(rospy.get_param("~clustering_radar_z_min", -0.40))
+        max_z = float(rospy.get_param("~clustering_radar_z_max", 2.0))
+        dataarray = filter_data(dataarray, min_z=min_z, max_z=max_z)
 
-        clustered_data = cluster_data(dataarray)
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 3)
+        clustered_data = cluster_data(dataarray, eps, min_samples)
 
         # transformed_data = transform_data_to_2d(dataarray)
 
@@ -238,7 +242,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.4, min_samples=3):
+def cluster_data(data, eps, min_samples):
     """
     Clusters the radar data using the DBSCAN algorithm
 

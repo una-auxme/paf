@@ -107,6 +107,7 @@ class LidarDistance:
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
         # Filter the point clouds to exclude irrelevant data
+        z_min = rospy.get_param("~clustering_lidar_z_min", -1.4)
         filtered_coordinates = coordinates[
             ~(
                 (coordinates["x"] >= -2)
@@ -115,13 +116,15 @@ class LidarDistance:
                 & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
             )
             & (
-                coordinates["z"] > -1.7 + 0.3
+                coordinates["z"] > z_min
             )  # Exclude points below a certain height (street)
         ]
 
         # Perform clustering on the filtered coordinates
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 10)
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
-            coordinates=filtered_coordinates
+            filtered_coordinates, eps, min_samples
         )
 
         # Extract x, y, z coordinates into a separate array
@@ -488,14 +491,6 @@ def calculate_aabb(cluster_points):
         along the x, y, and z axes.
     """
 
-    # for 2d (top-down) boxes
-    # x_min = np.min(cluster_points[:, 0])
-    # x_max = np.max(cluster_points[:, 0])
-    # y_min = np.min(cluster_points[:, 1])
-    # y_max = np.max(cluster_points[:, 1])
-    # rospy.loginfo(f"Bounding box: X({x_min}, {x_max}), Y({y_min}, {y_max})")
-    # return x_min, x_max, y_min, y_max
-
     # for 3d boxes
     x_min = np.min(cluster_points[:, 0])
     x_max = np.max(cluster_points[:, 0])
@@ -574,7 +569,7 @@ def combine_clusters(cluster_buffer):
     return combined_points
 
 
-def cluster_lidar_data_from_pointcloud(coordinates, eps=0.4, min_samples=10):
+def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     """
     Performs clustering on LiDAR data using DBSCAN and returns the clusters.
 
