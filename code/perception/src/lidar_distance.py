@@ -9,7 +9,6 @@ from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from tf.transformations import quaternion_from_matrix
 from visualization_msgs.msg import Marker, MarkerArray
-from geometry_msgs.msg import Point
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
