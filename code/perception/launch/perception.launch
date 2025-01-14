@@ -1,6 +1,9 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
+  <arg name="dbscan_eps" default="0.4"/>
+  <arg name="dbscan_samples" default="3"/>
+
 
   <!-- just for Debugging/ Optimizing purposes -> Uncomment to use and see plots -->
   <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
@@ -95,5 +98,7 @@
     <param name="point_cloud_topic" value="/carla/hero/RADAR2"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR3"/>
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
+    <param name="dbscan_eps" value="$(arg dbscan_eps)"/>
+    <param name="dbscan_samples" value="$(arg dbscan_samples)"/>
   </node>
 </launch>
