@@ -4,9 +4,9 @@ from typing import List, Optional
 from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
-from mapping_common.entity import Entity, Car
+from mapping_common.entity import Entity
 
-#from shapely.geometry import Polygon
+# from shapely.geometry import Polygon
 
 from mapping import msg
 
@@ -85,11 +85,11 @@ class Map:
             y = translation.y()
 
             filter = entity.FlagFilter(is_collider=True)
-            if y < 0.1 and y > -0.1 and x < -1.3 and e.matches_filter(filter):
+            if y < 0.25 and y > -0.25 and x > 2.1 and e.matches_filter(filter):
                 entities_in_front.append(e)
 
         if len(entities_in_front) > 0:
-            return max(
+            return min(
                 entities_in_front,
                 key=lambda entity: entity.transform.translation().x(),
             )
@@ -97,11 +97,11 @@ class Map:
             return None
 
     def get_entity_in_back(self) -> Optional[Entity]:
-        """Returns the entity in front
+        """Returns the entity in back
 
         Rudimentary implementation without shapely
         Returns:
-            Optional[Entity]: Entity in front
+            Optional[Entity]: Entity in back
         """
         entities_in_back = []
 
@@ -112,11 +112,11 @@ class Map:
             y = translation.y()
 
             filter = entity.FlagFilter(is_collider=True)
-            if y < 0.1 and y > -0.1 and x > 1.3 and e.matches_filter(filter):
+            if y < 0.25 and y > -0.25 and x < -2.1 and e.matches_filter(filter):
                 entities_in_back.append(e)
 
         if len(entities_in_back) > 0:
-            return min(
+            return max(
                 entities_in_back,
                 key=lambda entity: entity.transform.translation().x(),
             )
@@ -125,76 +125,76 @@ class Map:
 
     """def project_plane(start_point, size_x, size_y):
 
-        Projects a rectangular plane starting from (0, 0) forward in the negative x-direction.
-    
+        Projects a rectangular plane starting from (0, 0) forward in the x-direction.
+
         Parameters:
-        - size_x (float): Length of the plane along the x-axis (negative direction).
+        - size_x (float): Length of the plane along the x-axis.
         - size_y (float): Width of the plane along the y-axis.
-    
+
         Returns:
         - Polygon: A Shapely Polygon representing the plane.
-        
+
         x, y = start_point
-        
+
         points = [
-            (x, y),                 
-            (x - size_x, y),             
-            (x - size_x, y + size_y),       
-            (x, y + size_y),               
-            (x, y)                     
+            (x, y),
+            (x + size_x, y),
+            (x + size_x, y + size_y),
+            (x, y + size_y),
+            (x, y)
         ]
-        
+
         return Polygon(points)"""
 
     """def curve_to_polygon(points, width):
-    
+
         Creates a polygon with a specified width around a given curve.
-    
+
         Parameters:
         - points (list of tuple): A list of (x, y) coordinates representing the curve.
         - width (float): The width of the polygon along the curve.
-    
+
         Returns:
         - Polygon: A Shapely Polygon representing the widened curve.
-    
+
         if len(points) < 2:
             raise ValueError("At least two points are required to define a curve.")
         if width <= 0:
             raise ValueError("Width must be a positive value.")
-        
+
         # Create a LineString from the given points
         curve = LineString(points)
-        
+
         # Create a buffer around the curve to form a polygon with the given width
         polygon = curve.buffer(width / 2, cap_style=1, join_style=2)
-    
+
         return polygon"""
 
     """def get_entities_with_coverage(polygon, entities, coverage):
 
         Returns a list of entities that have at least coverage % in the given polygon.
-    
+
         Parameters:
         - polygon (Polygon): A Shapely Polygon object representing the target area.
         - entities (list): A list of entities each having a Shapely shape.
-    
+
         Returns:
         - list: A list of entities that have at least coverage % in the polygon.
-    
-        
+
+
         collision_entities = []
-        
+
         for entity in entities:
-            shape = entity.getShapely()  # Get the Shapely shape of the entity, 
+            shape = entity.getShapely()  # Get the Shapely shape of the entity,
                             # might have to change this depending on integration
-               
+
             # Calculate intersection area
             intersection = polygon.intersection(shape)
             if intersection.area / shape.area >= coverage:
                 collision_entities.append(entity)
-        
+
         return collision_entities"""
-    
+
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
         entities = list(map(lambda e: Entity.from_ros_msg(e), m.entities))
