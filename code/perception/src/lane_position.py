@@ -12,6 +12,7 @@ from cv_bridge import CvBridge
 from mapping_common.shape import Rectangle, Circle
 from mapping_common.entity import Entity, Lanemarking, Flags
 from mapping_common.transform import Transform2D, Vector2
+from mapping_common.map import Map
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 
@@ -147,6 +148,7 @@ class lane_position(CompatibleNode):
         Lanemarkings = self.Lanemarking_from_lidar(
             boundingboxes_lidar, angles_lidar, confidences, stamp
         )
+        self.publish_Lanemarkings_map(Lanemarkings)
 
     def Lanemarking_from_lidar(
         self, boundingboxes: np.array, angles: np.array, confidences, stamp
@@ -173,6 +175,16 @@ class lane_position(CompatibleNode):
             )
             entities.append(lanemarking)
         return entities
+
+    def publish_Lanemarkings_map(self, Lanemarkings):
+        # Make sure we have data for each dataset we are subscribed to
+        if Lanemarkings is None:
+            return
+
+        stamp = rospy.get_rostime()
+        map = Map(timestamp=stamp, entities=Lanemarkings)
+        msg = map.to_ros_msg()
+        self.map_publisher.publish(msg)
 
     def calc_center(self, boundingbox):
         x_center = (
