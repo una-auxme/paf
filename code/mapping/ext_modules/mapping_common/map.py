@@ -72,7 +72,7 @@ class Map:
             return self.entities[1:]
         return self.entities
 
-    def to_tree(
+    def build_tree(
         self,
         f: Optional[FlagFilter] = None,
         filter_fn: Optional[Callable[[Entity], bool]] = None,
