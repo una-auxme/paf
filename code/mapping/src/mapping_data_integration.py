@@ -188,7 +188,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero_car = self.create_hero_entity()
 
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_data is None or hero_car is None:
+        if self.lidar_marker_data is None or hero_car is None:
             return
 
         stamp = rospy.get_rostime()
