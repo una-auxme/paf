@@ -1,6 +1,16 @@
 # Intermediate layer
 
-The intermediate layer is a 2D top-down map for sensor fusion and entity tracking. The map can be visualized with the visualization node in the mapping_visualization package
+**Summary:** The intermediate layer is a 2D top-down map for sensor fusion and entity tracking. The map can be visualized with the visualization node in the mapping_visualization package
+
+**Important: The mapping_common module is compiled with Cython. If changes have been made to mapping_common, catkin_make needs to be executed to apply them!**
+Cmake executes pip to compile and install the mapping_common module to the user's python packages.
+
+- [Package structure](#package-structure)
+- [Data flow overview](#data-flow-overview)
+- [Debugging](#debugging)
+- [Tests](#tests)
+- [Research](#research)
+- [Troubleshooting](#troubleshooting)
 
 ## Package structure
 
@@ -27,6 +37,12 @@ flowchart TD
 
 This information is kept up-to-date with the package
 
+## Debugging
+
+The debugger is unable to debug the mapping_common package when it is compiled.
+
+To disable the compilation, you can replace the `False` in [./ext_modules/.debug_enabled](./ext_modules/.debug_enabled) with `True`. Rerun catkin_make after that.
+
 ## Tests
 
 This package contains pytest based unit tests at [./tests/mapping_common](./tests/mapping_common/)
@@ -40,3 +56,7 @@ Execute `catkin_make run_tests` in the catkin_ws to run them. A summary should a
 The original draft and class diagram for the intermediate layer can be found [here](../../doc/research/paf24/intermediate_layer/). Note that these documents are not kept up-to-date with this package.
 
 Most of the information of the draft has been inserted into the python class documentation. Look there for up-to-date information.
+
+## Troubleshooting
+
+Cython compile errors or import errors *related to the @dataclass decorators* are likely caused by an outdated docker image. Make sure the docker images are up-to-date.

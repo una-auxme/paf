@@ -28,12 +28,13 @@ class Motion2D:
     Direction vector based on the x-axis/heading of the entity
     (which is furthermore based on the entity's transform)
 
-    The length of the vector is the velocity in TODO: Speed unit? km/h?
+    The length of the vector is the velocity in m/s
     """
     angular_velocity: float = 0.0
-    """Angular velocity in TODO: Speed unit? radians/s?
+    """Angular velocity in radians/s
 
-    TODO: define if is cw or ccw depending on sign
+    - angle > 0: CCW
+    - angle < 0: CW
     """
 
     @staticmethod
@@ -48,18 +49,35 @@ class Motion2D:
         )
 
 
-@dataclass
+@dataclass(init=False)
 class Flags:
     """Dedicated flags an entity can have.
 
     Look into the FlagFilter class for an explanation fo the individual flags.
+
+    Note that attributes should not be accessed directly,
+    but only the matches_filter function should be used
     """
 
-    is_collider: bool = False
-    is_stopmark: bool = False
-    is_lanemark: bool = False
-    is_ignored: bool = False
-    is_hero: bool = False
+    _is_collider: bool = False
+    _is_stopmark: bool = False
+    _is_lanemark: bool = False
+    _is_ignored: bool = False
+    _is_hero: bool = False
+
+    def __init__(
+        self,
+        is_collider: bool = False,
+        is_stopmark: bool = False,
+        is_lanemark: bool = False,
+        is_ignored: bool = False,
+        is_hero: bool = False,
+    ):
+        self._is_collider = is_collider
+        self._is_stopmark = is_stopmark
+        self._is_lanemark = is_lanemark
+        self._is_ignored = is_ignored
+        self._is_hero = is_hero
 
     def matches_filter(self, f: "FlagFilter") -> bool:
         """Returns if these Flags match the filter mask f
@@ -70,7 +88,22 @@ class Flags:
         Returns:
             bool: If f matches self
         """
-        raise NotImplementedError
+        if f.is_ignored is not None:
+            if self._is_ignored is not f.is_ignored:
+                return False
+        if f.is_collider is not None:
+            if self._is_collider is not f.is_collider:
+                return False
+        if f.is_stopmark is not None:
+            if self._is_stopmark is not f.is_stopmark:
+                return False
+        if f.is_lanemark is not None:
+            if self._is_lanemark is not f.is_lanemark:
+                return False
+        if f.is_hero is not None:
+            if self._is_hero is not f.is_hero:
+                return False
+        return True
 
     @staticmethod
     def from_ros_msg(m: msg.Flags) -> "Flags":
@@ -84,11 +117,11 @@ class Flags:
 
     def to_ros_msg(self) -> msg.Flags:
         return msg.Flags(
-            is_collider=self.is_collider,
-            is_stopmark=self.is_stopmark,
-            is_lanemark=self.is_lanemark,
-            is_ignored=self.is_ignored,
-            is_hero=self.is_hero,
+            is_collider=self._is_collider,
+            is_stopmark=self._is_stopmark,
+            is_lanemark=self._is_lanemark,
+            is_ignored=self._is_ignored,
+            is_hero=self._is_hero,
         )
 
 
@@ -232,7 +265,15 @@ class Entity:
         Returns:
             bool: If f matches self
         """
-        raise NotImplementedError
+        if not self.flags.matches_filter(f):
+            return False
+        if f.has_motion is not None:
+            if (self.motion is not None) is not f.has_motion:
+                return False
+        if f.is_tracked is not None:
+            if (self.tracking_info is not None) is not f.is_tracked:
+                return False
+        return True
 
     @staticmethod
     def from_ros_msg(m: msg.Entity) -> "Entity":
@@ -246,9 +287,9 @@ class Entity:
             entity_type = _entity_supported_classes_dict[msg_type_lower]
         if entity_type is None:
             rospy.logerr(
-                f"""Received entity type '{m.type_name}' is not supported.
-Base class 'Entity' will be used instead.
-The type must be one of {_entity_supported_classes_dict.keys()}"""
+                f"Received entity type '{m.type_name}' is not supported."
+                f"Base class 'Entity' will be used instead."
+                f"The type must be one of {_entity_supported_classes_dict.keys()}"
             )
             entity_type = Entity
 
