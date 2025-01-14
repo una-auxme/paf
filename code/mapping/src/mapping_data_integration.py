@@ -29,6 +29,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
@@ -40,21 +41,19 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
-        self.lidar_data = None
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
             callback=self.hero_speed_callback,
             qos_profile=1,
         )
-        self.hero_speed = None
-
         self.new_subscription(
             topic=self.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
             msg_type=MarkerArray,
             callback=self.lidar_marker_callback,
             qos_profile=1,
         )
+
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
