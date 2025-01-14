@@ -131,18 +131,17 @@ class MappingDataIntegrationNode(CompatibleNode):
             if marker.type != Marker.CUBE:
                 rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
+            # Extract position (center of the cube) and calculate 2 meter offset because of radar positioning
+            x_center = marker.pose.position.x + 2
+            y_center = marker.pose.position.y
 
-            # Transformation in das Koordinatensystem des Hero cars
-            points_array = np.array([[p.x, p.y, p.z] for p in marker.points])
-            points_array[:, 0] += 2
-            for i, p in enumerate(marker.points):
-                p.x, p.y, p.z = points_array[i]
+            # Extract dimensions (scale gives the size of the cube)
+            width = marker.scale.x
+            length = marker.scale.y
 
-            width, length = calculate_marker_width_length_2d(marker.points)
-            x_center, y_center = calculate_marker_center_2d(marker.points)
-
-            shape = Rectangle(width, length)
-            v = Vector2.new(x_center, y_center)
+            # Create a shape and transform using the cube's data
+            shape = Rectangle(width, length)  # 2D rectangle for lidar data
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
             transform = Transform2D.new_translation(v)
 
             # Add entity to the list
@@ -237,12 +236,19 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero_car = self.create_hero_entity()
 
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_marker_data is None or hero_car is None:
+        if (
+            self.lidar_marker_data is None
+            or hero_car is None
+            or self.radar_marker_data is None
+        ):
             return
 
         stamp = rospy.get_rostime()
         map = Map(
-            timestamp=stamp, entities=[hero_car] + self.entities_from_lidar_marker()
+            timestamp=stamp,
+            entities=[hero_car]
+            + self.entities_from_lidar_marker()
+            + self.entities_from_radar_marker(),
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
