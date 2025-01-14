@@ -412,17 +412,11 @@ class Car(Entity):
 @dataclass(init=False)
 class Lanemarking(Entity):
     style: "Lanemarking.Style"
-    label: "Lanemarking.Label"
+    label: int
 
     class Style(Enum):
         SOLID = 0
         DASHED = 1
-
-    class Label(Enum):
-        LEFT_1 = 0
-        LEFT_2 = 1
-        RIGHT_1 = 2
-        RIGHT_2 = 3
 
     def __init__(self, style: "Lanemarking.Style", **kwargs):
         super().__init__(**kwargs)

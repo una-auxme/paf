@@ -41,7 +41,7 @@ class lane_position(CompatibleNode):
         self.camera_height = self.get_param("camera_height")
         self.camera_fov = self.get_param("camera_fov")
         self.camera_coordinates = []
-        self.center_x = 5
+        self.center_x = 5  # move to ros param
         self.line_length = 15
         self.line_width = 0.5
         self.zmin = -1.7
@@ -158,6 +158,27 @@ class lane_position(CompatibleNode):
         )
         self.publish_Lanemarkings_map(Lanemarkings)
 
+    def process_lanemask_lidar(self, lanemask, red, green, blue, epsilon, min_samples):
+        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
+        lidar_clusters, cluster_sizes = self.mask_lidarpoints(clustered_mask, labels)
+        self.publish_label_image(clustered_mask)
+        bounding_boxes, angles, deviations = self.get_bounding_boxes(
+            lidar_clusters, cluster_sizes
+        )
+        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
+        confidences = self.determine_confidences(angles, cluster_sizes, deviations)
+        return marker_array, bounding_boxes, angles, confidences
+
+    def process_lanemask_camera(self, lanemask, red, green, blue, epsilon, min_samples):
+        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
+        camera_clusters, cluster_confidences = self.mask_camerapoints(
+            clustered_mask, labels
+        )
+        self.publish_label_image(clustered_mask)
+        bounding_boxes = self.get_bounding_boxes(camera_clusters, cluster_confidences)
+        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
+        return marker_array, bounding_boxes
+
     def Lanemarking_from_lidar(
         self, boundingboxes: np.array, angles: np.array, confidences, stamp
     ):
@@ -166,9 +187,8 @@ class lane_position(CompatibleNode):
         entities = []
         for boundingbox, angle, confidence in zip(boundingboxes, angles, confidences):
             x, y = self.calc_center(boundingbox)
-            transform = Transform2D.new_translation(Vector2.new(x, y))
-            transform.new_rotation(angle)
-            shape = Rectangle(width=0.3, length=15)
+            transform = Transform2D.new_rotation_translation(angle, Vector2.new(x, y))
+            shape = Rectangle(width=0.3, length=15)  # move to ros param
             style = Lanemarking.Style.SOLID
             flags = Flags(is_lanemark=True)
             timestamp = stamp
@@ -185,7 +205,6 @@ class lane_position(CompatibleNode):
         return entities
 
     def publish_Lanemarkings_map(self, Lanemarkings):
-        # Make sure we have data for each dataset we are subscribed to
         if Lanemarkings is None:
             return
 
@@ -193,6 +212,48 @@ class lane_position(CompatibleNode):
         map = Map(timestamp=stamp, entities=Lanemarkings)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
+
+    def determine_confidences(self, angles, cluster_sizes, linear_deviations):
+        """determines a confidence for every found lanemarking.
+        confidence score consists of:
+            - Median Angle of the lanemarking to the others,
+            - cluster size
+            - deviation of the linear regression
+
+        Args:
+            angles np.array(rad): all angles between lane marking and car
+            cluster_sizes np.array(int): how many pixel in the lanemask contribute to the lanemarking
+            deviations (float): the standard deviations of the linear regression algorithm
+
+        Returns:
+            array with confidence scores
+        """
+        confidences = []
+        angles = np.array(angles)
+        # calculate the median deviation to other lanemarkings
+        angle_diff = np.abs(angles[:, None] - angles)
+        median_angle_deviation = np.median(angle_diff, axis=1)
+        # weight parameters
+        angle_weigth = 0.3  # move to ros param
+        size_weigth = 0.3
+        std_weight = 0.4
+        # calculate the confidence for each lanemarking
+        for angle, cluster_size, deviation in zip(
+            median_angle_deviation, cluster_sizes, linear_deviations
+        ):
+            # normalize all values so the maximum confidence is 1
+            normalized_angle = max(0, 1 - (abs(angle) / np.deg2rad(25)))
+            normalized_size = min(1, cluster_size / 5000)
+            normalized_std_dev = max(0, 1 - (deviation / 0.2))
+
+            confidence = (
+                angle_weigth * normalized_angle
+                + size_weigth * normalized_size
+                + std_weight * normalized_std_dev
+            )
+            confidences.append(confidence)
+
+        return confidences
 
     def calc_center(self, boundingbox):
         x_center = (
@@ -204,28 +265,6 @@ class lane_position(CompatibleNode):
             + (boundingbox[2][1] + boundingbox[3][1]) / 2
         ) / 2
         return x_center, y_center
-
-    def process_lanemask_lidar(self, lanemask, red, green, blue, epsilon, min_samples):
-        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
-        lidar_clusters, cluster_confidences = self.mask_lidarpoints(
-            clustered_mask, labels
-        )
-        self.publish_label_image(clustered_mask)
-        bounding_boxes, angles = self.get_bounding_boxes(
-            lidar_clusters, cluster_confidences
-        )
-        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
-        return marker_array, bounding_boxes, angles, cluster_confidences
-
-    def process_lanemask_camera(self, lanemask, red, green, blue, epsilon, min_samples):
-        clustered_mask, labels = self.cluster_points(lanemask, epsilon, min_samples)
-        camera_clusters, cluster_confidences = self.mask_camerapoints(
-            clustered_mask, labels
-        )
-        self.publish_label_image(clustered_mask)
-        bounding_boxes = self.get_bounding_boxes(camera_clusters, cluster_confidences)
-        marker_array = self.create_marker_array(bounding_boxes, red, green, blue)
-        return marker_array, bounding_boxes
 
     def create_marker_array(self, bounding_boxes, red, green, blue):
         # Create a MarkerArray for visualization
@@ -239,37 +278,39 @@ class lane_position(CompatibleNode):
 
     def mask_lidarpoints(self, clustered_mask, labels):
         lidar_clusters = []
-        cluster_confidences = []
+        cluster_sizes = []
         unique_labels = set(labels)
         for label in unique_labels:
             if label == -1:
                 continue
-            confidence = np.count_nonzero(clustered_mask == label)
+            size = np.count_nonzero(clustered_mask == label)
+            if size < self.confidence_treshold:
+                continue
             points_with_label = self.dist_arrays[clustered_mask == label]
             points = points_with_label[
                 ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
             ]
             if len(points) != 0:
                 lidar_clusters.append(points)
-                cluster_confidences.append(confidence)
-        return lidar_clusters, cluster_confidences
+                cluster_sizes.append(size)
+        return lidar_clusters, cluster_sizes
 
     def mask_camerapoints(self, clustered_mask, labels):
         camera_clusters = []
-        cluster_confidences = []
+        cluster_sizes = []
         unique_labels = set(labels)
         for label in unique_labels:
             if label == -1:
                 continue
-            confidence = np.count_nonzero(clustered_mask == label)
+            size = np.count_nonzero(clustered_mask == label)
             points_with_label = self.camera_coordinates[clustered_mask == label]
             points = points_with_label[
                 ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
             ]
             if len(points) != 0:
                 camera_clusters.append(points)
-                cluster_confidences.append(confidence)
-        return camera_clusters, cluster_confidences
+                cluster_sizes.append(size)
+        return camera_clusters, cluster_sizes
 
     def create_rectangle_marker(
         self, label, rectangle, namespace, red=1.0, green=0.5, blue=0.5
@@ -370,20 +411,24 @@ class lane_position(CompatibleNode):
         """
         # Berechnung der Bounding Boxes für jeden Cluster
         bounding_boxes = []
-        poly_list = []
         angles = []
+        deviations = []
         for index, cluster in enumerate(clusters):
             # je gröer das cluster, desto wahrscheinlicher ist es, dass es tatsächlich eine lane markierung ist
             if confidences[index] < self.confidence_treshold:
                 continue
             y = cluster[:, 1]
             x = cluster[:, 0]
-            poly = np.poly1d(np.polyfit(x, y, deg=1))
-            poly_list.append(poly)
+
+            p, res = np.polyfit(x, y, deg=1, cov=True)
+            if np.ndim(res) == 2:
+                std_dev = np.sqrt(np.diag(res))
+            else:
+                std_dev = np.sqrt(res)
+            deviations.append(std_dev[0])
 
             # Steigung und Achsenabschnitt der Geraden
-            m = poly.coefficients[0]  # Steigung
-            c = poly.coefficients[1]  # Achsenabschnitt
+            m = p[0]  # Steigung
             center_y = np.mean(y)
             theta = np.arctan(m)
             angles.append(theta)
@@ -404,7 +449,7 @@ class lane_position(CompatibleNode):
             ]
 
             bounding_boxes.append(rect_points)
-        return bounding_boxes, angles
+        return bounding_boxes, angles, deviations
 
     def cluster_points(self, lanemask, epsilon, min_samples):
         labels = []
@@ -609,10 +654,6 @@ class lane_position(CompatibleNode):
 
         return bounding_boxes
 
-    def generate_random_color(self):
-        """Generiert eine zufällige RGB-Farbe."""
-        return [random.randint(0, 255) for _ in range(3)]
-
     def label_to_rgb(self, clustered_mask):
         """Wandelt das Label-Array in ein RGB-Bild um, wobei jedem Label eine zufällige Farbe zugeordnet wird."""
         # Identifiziere alle einzigartigen Labels im Array (außer 0, falls es als Hintergrund betrachtet wird)
@@ -646,11 +687,6 @@ class lane_position(CompatibleNode):
         rgb_image = np.zeros(
             (clustered_mask.shape[0], clustered_mask.shape[1], 3), dtype=np.uint8
         )
-
-        """# Erstelle eine Zufallsfarbe für jedes Label
-        label_to_color = {
-            label: self.generate_random_color() for label in unique_labels
-        }"""
 
         # Fülle das RGB-Bild mit den zugehörigen Farben für jedes Label
         for label, color in label_to_color.items():
