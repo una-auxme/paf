@@ -1,14 +1,21 @@
 <launch>
+  <arg name="map_publish_rate" default="20" />
+  <arg name="lidar_z_min" default="-1.5" />
+  <arg name="lidar_z_max" default="1.0" />
+  <arg name="lidar_shape_radius" default="0.15" />
+  <arg name="lidar_priority" default="0.25" />
+  <arg name="lidar_discard_probability" default="0.9" />
+
 
   <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration" output="screen">
-    <param name="map_publish_rate" value="20" />
+    <param name="map_publish_rate" value="$(arg map_publish_rate)" />
 
     <!-- Lidar entity configuration -->
-    <param name="lidar_z_min" value="-1.5" />
-    <param name="lidar_z_max" value="1.0" />
-    <param name="lidar_shape_radius" value="0.15" />
-    <param name="lidar_priority" value="0.25" />
-    <param name="lidar_discard_probability" value="0.9" />
+    <param name="lidar_z_min" value="$(arg lidar_z_min)" />
+    <param name="lidar_z_max" value="$(arg lidar_z_max)" />
+    <param name="lidar_shape_radius" value="$(arg lidar_shape_radius)" />
+    <param name="lidar_priority" value="$(arg lidar_priority)" />
+    <param name="lidar_discard_probability" value="$(arg lidar_discard_probability)" />
   </node>
 
 </launch>
