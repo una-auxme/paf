@@ -11,7 +11,7 @@ from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
 from tf.transformations import quaternion_from_matrix
-
+from std_msgs.msg import Float32MultiArray
 import struct
 
 
@@ -30,6 +30,8 @@ class RadarNode:
         """
 
         dataarray = pointcloud2_to_array(data)
+
+        self.get_lead_vehicle_info(dataarray)
 
         # radar position z=0.7
         dataarray = filter_data(dataarray, min_z=-0.40, max_z=2)
@@ -88,12 +90,87 @@ class RadarNode:
             String,
             queue_size=10,
         )
+        self.range_velocity_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~range_velocity_topic",
+                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
+            ),
+            Float32MultiArray,
+            queue_size=10,
+        )
+        self.lead_vehicle_marker_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
+            ),
+            Marker,
+            queue_size=10,
+        )
         rospy.Subscriber(
             rospy.get_param("~source_topic", "/carla/hero/RADAR"),
             PointCloud2,
             self.callback,
         )
         rospy.spin()
+
+    def get_lead_vehicle_info(self, radar_data):
+        """
+        Processes radar data to identify and publish information about the lead vehicle.
+
+        This function filters radar points to identify the closest point within a
+        specified region, representing the lead vehicle. It publishes the distance
+        and velocity of the lead vehicle as a `Float32MultiArray` message and also
+        visualizes the lead vehicle using a marker in RViz.
+
+        Args:
+            radar_data (np.ndarray): Radar data represented as a 2D NumPy array where
+                                    each row corresponds to a radar point with the
+                                    format [x, y, z, velocity].
+
+        Returns:
+            None: The function publishes data to relevant ROS topics and does not return
+            any value.
+        """
+
+        # radar is positioned at z = 0.7
+        radar_data = filter_data(
+            radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
+        )
+
+        lead_vehicle_info = Float32MultiArray()
+
+        # Handle the case where no valid radar points are found
+        if len(radar_data) == 0:
+            lead_vehicle_info.data = []
+            self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+            return
+
+        # Identify the closest point (lead vehicle candidate) based on the x-coordinate
+        closest_point = radar_data[np.argmin(radar_data[:, 0])]
+
+        lead_vehicle_info.data = [closest_point[0], closest_point[3]]
+
+        # Create a marker for visualizing the lead vehicle in RViz
+        marker = Marker()
+        marker.header.frame_id = "hero/RADAR"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "lead_vehicle_marker"
+        marker.id = 500
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.position.x = closest_point[0]
+        marker.pose.position.y = closest_point[1]
+        marker.pose.position.z = closest_point[2]
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+
+        self.lead_vehicle_marker_publisher.publish(marker)
+        self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+        return
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -386,9 +463,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
         marker.pose.position.z = center[2]
 
         # Convert eigenvectors to quaternion
-        quaternion = tf.transformations.quaternion_from_matrix(
-            np.vstack([eigenvectors.T, [0, 0, 0]]).T
-        )
+        quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
         marker.pose.orientation.x = quaternion[0]
         marker.pose.orientation.y = quaternion[1]
         marker.pose.orientation.z = quaternion[2]

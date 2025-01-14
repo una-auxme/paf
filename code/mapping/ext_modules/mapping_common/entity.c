@@ -1817,8 +1817,8 @@ struct __pyx_obj_14mapping_common_9transform__Coord2 {
 };
 
 
-/* "mapping_common/transform.pxd":11
- *     cpdef void set_y(self, value: double)
+/* "mapping_common/transform.pxd":9
+ *     cpdef double y(self)
  * 
  * cdef class Point2(_Coord2):             # <<<<<<<<<<<<<<
  *     pass
@@ -1829,20 +1829,20 @@ struct __pyx_obj_14mapping_common_9transform_Point2 {
 };
 
 
-/* "mapping_common/transform.pxd":14
+/* "mapping_common/transform.pxd":12
  *     pass
  * 
  * cdef class Vector2(_Coord2):             # <<<<<<<<<<<<<<
- *     pass
  * 
+ *     cpdef double length(self)
  */
 struct __pyx_obj_14mapping_common_9transform_Vector2 {
   struct __pyx_obj_14mapping_common_9transform__Coord2 __pyx_base;
 };
 
 
-/* "mapping_common/transform.pxd":17
- *     pass
+/* "mapping_common/transform.pxd":18
+ *     cpdef double angle_to(self, Vector2 other)
  * 
  * cdef class Transform2D:             # <<<<<<<<<<<<<<
  *     cdef readonly np.ndarray _matrix
@@ -1866,15 +1866,13 @@ struct __pyx_obj_14mapping_common_9transform_Transform2D {
 
 struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 {
   double (*x)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch);
-  PyObject *(*set_x)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch);
   double (*y)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch);
-  void (*set_y)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 *__pyx_vtabptr_14mapping_common_9transform__Coord2;
 
 
-/* "mapping_common/transform.pxd":11
- *     cpdef void set_y(self, value: double)
+/* "mapping_common/transform.pxd":9
+ *     cpdef double y(self)
  * 
  * cdef class Point2(_Coord2):             # <<<<<<<<<<<<<<
  *     pass
@@ -1887,22 +1885,25 @@ struct __pyx_vtabstruct_14mapping_common_9transform_Point2 {
 static struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *__pyx_vtabptr_14mapping_common_9transform_Point2;
 
 
-/* "mapping_common/transform.pxd":14
+/* "mapping_common/transform.pxd":12
  *     pass
  * 
  * cdef class Vector2(_Coord2):             # <<<<<<<<<<<<<<
- *     pass
  * 
+ *     cpdef double length(self)
  */
 
 struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 {
   struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 __pyx_base;
+  double (*length)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *(*normalized)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
+  double (*angle_to)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *__pyx_vtabptr_14mapping_common_9transform_Vector2;
 
 
-/* "mapping_common/transform.pxd":17
- *     pass
+/* "mapping_common/transform.pxd":18
+ *     cpdef double angle_to(self, Vector2 other)
  * 
  * cdef class Transform2D:             # <<<<<<<<<<<<<<
  *     cdef readonly np.ndarray _matrix
@@ -1911,6 +1912,8 @@ static struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *__pyx_vtabpt
 
 struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D {
   struct __pyx_obj_14mapping_common_9transform_Vector2 *(*translation)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
+  double (*rotation)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
+  struct __pyx_obj_14mapping_common_9transform_Transform2D *(*inverse)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D *__pyx_vtabptr_14mapping_common_9transform_Transform2D;
 /* #### Code section: utility_code_proto ### */
@@ -2261,6 +2264,15 @@ static PyObject *__Pyx__GetModuleGlobalName(PyObject *name, PY_UINT64_T *dict_ve
 static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name);
 #endif
 
+/* PyObjectSetAttrStr.proto */
+#if CYTHON_USE_TYPE_SLOTS
+#define __Pyx_PyObject_DelAttrStr(o,n) __Pyx_PyObject_SetAttrStr(o, n, NULL)
+static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value);
+#else
+#define __Pyx_PyObject_DelAttrStr(o,n)   PyObject_DelAttr(o,n)
+#define __Pyx_PyObject_SetAttrStr(o,n,v) PyObject_SetAttr(o,n,v)
+#endif
+
 /* PySequenceContains.proto */
 static CYTHON_INLINE int __Pyx_PySequence_ContainsTF(PyObject* item, PyObject* seq, int eq) {
     int result = PySequence_Contains(seq, item);
@@ -2324,15 +2336,6 @@ static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *k
 /* JoinPyUnicode.proto */
 static PyObject* __Pyx_PyUnicode_Join(PyObject* value_tuple, Py_ssize_t value_count, Py_ssize_t result_ulength,
                                       Py_UCS4 max_char);
-
-/* PyObjectSetAttrStr.proto */
-#if CYTHON_USE_TYPE_SLOTS
-#define __Pyx_PyObject_DelAttrStr(o,n) __Pyx_PyObject_SetAttrStr(o, n, NULL)
-static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value);
-#else
-#define __Pyx_PyObject_DelAttrStr(o,n)   PyObject_DelAttr(o,n)
-#define __Pyx_PyObject_SetAttrStr(o,n,v) PyObject_SetAttr(o,n,v)
-#endif
 
 /* PyFloatBinop.proto */
 #if !CYTHON_COMPILING_IN_PYPY
@@ -2782,7 +2785,6 @@ int __pyx_module_is_main_mapping_common__entity = 0;
 /* Implementation of "mapping_common.entity" */
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_staticmethod;
-static PyObject *__pyx_builtin_NotImplementedError;
 static PyObject *__pyx_builtin_super;
 static PyObject *__pyx_builtin_ImportError;
 /* #### Code section: string_decls ### */
@@ -2800,7 +2802,7 @@ static const char __pyx_k__5[] = "*";
 static const char __pyx_k_Car[] = "Car";
 static const char __pyx_k_OFF[] = "OFF";
 static const char __pyx_k_RED[] = "RED";
-static const char __pyx_k__44[] = "?";
+static const char __pyx_k__47[] = "?";
 static const char __pyx_k_doc[] = "__doc__";
 static const char __pyx_k_int[] = "int";
 static const char __pyx_k_msg[] = "msg";
@@ -2880,6 +2882,7 @@ static const char __pyx_k_set_name[] = "__set_name__";
 static const char __pyx_k_type_car[] = "type_car";
 static const char __pyx_k_dataclass[] = "dataclass";
 static const char __pyx_k_indicator[] = "indicator";
+static const char __pyx_k_is_hero_2[] = "_is_hero";
 static const char __pyx_k_metaclass[] = "__metaclass__";
 static const char __pyx_k_msg_Flags[] = "msg.Flags";
 static const char __pyx_k_sensor_id[] = "sensor_id";
@@ -2912,11 +2915,13 @@ static const char __pyx_k_is_stopmark[] = "is_stopmark";
 static const char __pyx_k_moving_time[] = "moving_time";
 static const char __pyx_k_mro_entries[] = "__mro_entries__";
 static const char __pyx_k_FlagFilter_2[] = "FlagFilter";
+static const char __pyx_k_Flags___init[] = "Flags.__init__";
 static const char __pyx_k_TrackingInfo[] = "TrackingInfo";
 static const char __pyx_k_TrafficLight[] = "TrafficLight";
 static const char __pyx_k_from_ros_msg[] = "from_ros_msg";
 static const char __pyx_k_initializing[] = "_initializing";
 static const char __pyx_k_is_coroutine[] = "_is_coroutine";
+static const char __pyx_k_is_ignored_2[] = "_is_ignored";
 static const char __pyx_k_msg_Motion2D[] = "msg.Motion2D";
 static const char __pyx_k_staticmethod[] = "staticmethod";
 static const char __pyx_k_std_msgs_msg[] = "std_msgs.msg";
@@ -2924,6 +2929,9 @@ static const char __pyx_k_Optional_bool[] = "Optional[bool]";
 static const char __pyx_k_class_getitem[] = "__class_getitem__";
 static const char __pyx_k_genpy_rostime[] = "genpy.rostime";
 static const char __pyx_k_init_subclass[] = "__init_subclass__";
+static const char __pyx_k_is_collider_2[] = "_is_collider";
+static const char __pyx_k_is_lanemark_2[] = "_is_lanemark";
+static const char __pyx_k_is_stopmark_2[] = "_is_stopmark";
 static const char __pyx_k_linear_motion[] = "linear_motion";
 static const char __pyx_k_standing_time[] = "standing_time";
 static const char __pyx_k_tracking_info[] = "tracking_info";
@@ -2966,7 +2974,6 @@ static const char __pyx_k_Car__extract_kwargs[] = "Car._extract_kwargs";
 static const char __pyx_k_Entity_from_ros_msg[] = "Entity.from_ros_msg";
 static const char __pyx_k_Lanemarking_Style_2[] = "Lanemarking.Style";
 static const char __pyx_k_Motion2D_to_ros_msg[] = "Motion2D.to_ros_msg";
-static const char __pyx_k_NotImplementedError[] = "NotImplementedError";
 static const char __pyx_k_Optional_msg_Entity[] = "Optional[msg.Entity]";
 static const char __pyx_k_TrafficLight___init[] = "TrafficLight.__init__";
 static const char __pyx_k_Car_IndicatorState_2[] = "Car.IndicatorState";
@@ -2994,10 +3001,10 @@ static const char __pyx_k_Lanemarking__extract_kwargs[] = "Lanemarking._extract_
 static const char __pyx_k_TrafficLight__extract_kwargs[] = "TrafficLight._extract_kwargs";
 static const char __pyx_k_entity_supported_classes_dict[] = "_entity_supported_classes_dict";
 static const char __pyx_k_Traffic_light_or_stop_sign_Note[] = "Traffic light or stop sign\n\n    Note: Class may be split up later\n\n    TrafficLight and StopSign add only their stop line to the map.\n    They set the *is_stopmark* flag only if the car has to stop there.\n    ";
-static const char __pyx_k_is_not_supported_Base_class_Ent[] = "' is not supported.\nBase class 'Entity' will be used instead.\nThe type must be one of ";
+static const char __pyx_k_is_not_supported_Base_class_Ent[] = "' is not supported.Base class 'Entity' will be used instead.The type must be one of ";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_A_thing_of_interest_around_the_h[] = "A thing of interest around the hero car that has a location and a shape";
-static const char __pyx_k_Dedicated_flags_an_entity_can_ha[] = "Dedicated flags an entity can have.\n\n    Look into the FlagFilter class for an explanation fo the individual flags.\n    ";
+static const char __pyx_k_Dedicated_flags_an_entity_can_ha[] = "Dedicated flags an entity can have.\n\n    Look into the FlagFilter class for an explanation fo the individual flags.\n\n    Note that attributes should not be accessed directly,\n    but only the matches_filter function should be used\n    ";
 static const char __pyx_k_Filter_mask_to_filter_entities_b[] = "Filter mask to filter entities by their flags\n\n    Setting a flag to None means it is ignored when filtering\n    ";
 static const char __pyx_k_Information_that_might_be_requir[] = "Information that might be required to consistently track entities";
 static const char __pyx_k_Motion_of_an_entity_Speeds_are_g[] = "Motion of an entity\n\n    Speeds are global (not relative to hero car).\n    ";
@@ -3006,12 +3013,13 @@ static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath
 static PyObject *__pyx_lambda_funcdef_14mapping_common_6entity_8Motion2D_lambda(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_f); /* proto */
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_is_collider, PyObject *__pyx_v_is_stopmark, PyObject *__pyx_v_is_lanemark, PyObject *__pyx_v_is_ignored, PyObject *__pyx_v_is_hero); /* proto */
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2matches_filter(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_f); /* proto */
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_6to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_2to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_f); /* proto */
+static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_f); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m); /* proto */
 static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
@@ -3123,6 +3131,7 @@ typedef struct {
   PyObject *__pyx_n_s_FlagFilter_2;
   PyObject *__pyx_n_s_Flags;
   PyObject *__pyx_kp_s_Flags_2;
+  PyObject *__pyx_n_s_Flags___init;
   PyObject *__pyx_n_s_Flags_from_ros_msg;
   PyObject *__pyx_n_s_Flags_matches_filter;
   PyObject *__pyx_n_s_Flags_to_ros_msg;
@@ -3147,7 +3156,6 @@ typedef struct {
   PyObject *__pyx_n_s_Motion2D_lambda;
   PyObject *__pyx_n_s_Motion2D_to_ros_msg;
   PyObject *__pyx_kp_s_Motion_of_an_entity_Speeds_are_g;
-  PyObject *__pyx_n_s_NotImplementedError;
   PyObject *__pyx_n_s_OFF;
   PyObject *__pyx_n_s_ON;
   PyObject *__pyx_n_s_Optional;
@@ -3185,7 +3193,7 @@ typedef struct {
   PyObject *__pyx_n_s_Vector2;
   PyObject *__pyx_n_s_YELLOW;
   PyObject *__pyx_kp_u__3;
-  PyObject *__pyx_n_s__44;
+  PyObject *__pyx_n_s__47;
   PyObject *__pyx_n_s__5;
   PyObject *__pyx_n_s_a;
   PyObject *__pyx_n_s_angular_velocity;
@@ -3233,12 +3241,17 @@ typedef struct {
   PyObject *__pyx_n_s_invisibility_frame_count;
   PyObject *__pyx_n_s_invisibility_time;
   PyObject *__pyx_n_s_is_collider;
+  PyObject *__pyx_n_s_is_collider_2;
   PyObject *__pyx_n_s_is_coroutine;
   PyObject *__pyx_n_s_is_hero;
+  PyObject *__pyx_n_s_is_hero_2;
   PyObject *__pyx_n_s_is_ignored;
+  PyObject *__pyx_n_s_is_ignored_2;
   PyObject *__pyx_n_s_is_lanemark;
+  PyObject *__pyx_n_s_is_lanemark_2;
   PyObject *__pyx_kp_u_is_not_supported_Base_class_Ent;
   PyObject *__pyx_n_s_is_stopmark;
+  PyObject *__pyx_n_s_is_stopmark_2;
   PyObject *__pyx_n_s_is_tracked;
   PyObject *__pyx_n_s_keys;
   PyObject *__pyx_n_s_kwargs;
@@ -3340,40 +3353,43 @@ typedef struct {
   PyObject *__pyx_tuple__8;
   PyObject *__pyx_tuple__10;
   PyObject *__pyx_tuple__12;
-  PyObject *__pyx_tuple__14;
-  PyObject *__pyx_tuple__19;
-  PyObject *__pyx_tuple__21;
-  PyObject *__pyx_tuple__23;
-  PyObject *__pyx_tuple__25;
-  PyObject *__pyx_tuple__27;
-  PyObject *__pyx_tuple__29;
-  PyObject *__pyx_tuple__31;
-  PyObject *__pyx_tuple__33;
+  PyObject *__pyx_tuple__13;
+  PyObject *__pyx_tuple__15;
+  PyObject *__pyx_tuple__17;
+  PyObject *__pyx_tuple__22;
+  PyObject *__pyx_tuple__24;
+  PyObject *__pyx_tuple__26;
+  PyObject *__pyx_tuple__28;
+  PyObject *__pyx_tuple__30;
+  PyObject *__pyx_tuple__32;
   PyObject *__pyx_tuple__34;
-  PyObject *__pyx_tuple__38;
-  PyObject *__pyx_tuple__42;
+  PyObject *__pyx_tuple__36;
+  PyObject *__pyx_tuple__37;
+  PyObject *__pyx_tuple__41;
+  PyObject *__pyx_tuple__45;
   PyObject *__pyx_codeobj__7;
   PyObject *__pyx_codeobj__9;
   PyObject *__pyx_codeobj__11;
-  PyObject *__pyx_codeobj__13;
-  PyObject *__pyx_codeobj__15;
+  PyObject *__pyx_codeobj__14;
   PyObject *__pyx_codeobj__16;
-  PyObject *__pyx_codeobj__17;
   PyObject *__pyx_codeobj__18;
+  PyObject *__pyx_codeobj__19;
   PyObject *__pyx_codeobj__20;
-  PyObject *__pyx_codeobj__22;
-  PyObject *__pyx_codeobj__24;
-  PyObject *__pyx_codeobj__26;
-  PyObject *__pyx_codeobj__28;
-  PyObject *__pyx_codeobj__30;
-  PyObject *__pyx_codeobj__32;
+  PyObject *__pyx_codeobj__21;
+  PyObject *__pyx_codeobj__23;
+  PyObject *__pyx_codeobj__25;
+  PyObject *__pyx_codeobj__27;
+  PyObject *__pyx_codeobj__29;
+  PyObject *__pyx_codeobj__31;
+  PyObject *__pyx_codeobj__33;
   PyObject *__pyx_codeobj__35;
-  PyObject *__pyx_codeobj__36;
-  PyObject *__pyx_codeobj__37;
+  PyObject *__pyx_codeobj__38;
   PyObject *__pyx_codeobj__39;
   PyObject *__pyx_codeobj__40;
-  PyObject *__pyx_codeobj__41;
+  PyObject *__pyx_codeobj__42;
   PyObject *__pyx_codeobj__43;
+  PyObject *__pyx_codeobj__44;
+  PyObject *__pyx_codeobj__46;
 } __pyx_mstate;
 
 #if CYTHON_USE_MODULE_STATE
@@ -3463,6 +3479,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_FlagFilter_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_Flags);
   Py_CLEAR(clear_module_state->__pyx_kp_s_Flags_2);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Flags___init);
   Py_CLEAR(clear_module_state->__pyx_n_s_Flags_from_ros_msg);
   Py_CLEAR(clear_module_state->__pyx_n_s_Flags_matches_filter);
   Py_CLEAR(clear_module_state->__pyx_n_s_Flags_to_ros_msg);
@@ -3487,7 +3504,6 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Motion2D_lambda);
   Py_CLEAR(clear_module_state->__pyx_n_s_Motion2D_to_ros_msg);
   Py_CLEAR(clear_module_state->__pyx_kp_s_Motion_of_an_entity_Speeds_are_g);
-  Py_CLEAR(clear_module_state->__pyx_n_s_NotImplementedError);
   Py_CLEAR(clear_module_state->__pyx_n_s_OFF);
   Py_CLEAR(clear_module_state->__pyx_n_s_ON);
   Py_CLEAR(clear_module_state->__pyx_n_s_Optional);
@@ -3525,7 +3541,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2);
   Py_CLEAR(clear_module_state->__pyx_n_s_YELLOW);
   Py_CLEAR(clear_module_state->__pyx_kp_u__3);
-  Py_CLEAR(clear_module_state->__pyx_n_s__44);
+  Py_CLEAR(clear_module_state->__pyx_n_s__47);
   Py_CLEAR(clear_module_state->__pyx_n_s__5);
   Py_CLEAR(clear_module_state->__pyx_n_s_a);
   Py_CLEAR(clear_module_state->__pyx_n_s_angular_velocity);
@@ -3573,12 +3589,17 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_invisibility_frame_count);
   Py_CLEAR(clear_module_state->__pyx_n_s_invisibility_time);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_collider);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_collider_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_coroutine);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_hero);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_hero_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_ignored);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_ignored_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_lanemark);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_lanemark_2);
   Py_CLEAR(clear_module_state->__pyx_kp_u_is_not_supported_Base_class_Ent);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_stopmark);
+  Py_CLEAR(clear_module_state->__pyx_n_s_is_stopmark_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_tracked);
   Py_CLEAR(clear_module_state->__pyx_n_s_keys);
   Py_CLEAR(clear_module_state->__pyx_n_s_kwargs);
@@ -3680,40 +3701,43 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_tuple__8);
   Py_CLEAR(clear_module_state->__pyx_tuple__10);
   Py_CLEAR(clear_module_state->__pyx_tuple__12);
-  Py_CLEAR(clear_module_state->__pyx_tuple__14);
-  Py_CLEAR(clear_module_state->__pyx_tuple__19);
-  Py_CLEAR(clear_module_state->__pyx_tuple__21);
-  Py_CLEAR(clear_module_state->__pyx_tuple__23);
-  Py_CLEAR(clear_module_state->__pyx_tuple__25);
-  Py_CLEAR(clear_module_state->__pyx_tuple__27);
-  Py_CLEAR(clear_module_state->__pyx_tuple__29);
-  Py_CLEAR(clear_module_state->__pyx_tuple__31);
-  Py_CLEAR(clear_module_state->__pyx_tuple__33);
+  Py_CLEAR(clear_module_state->__pyx_tuple__13);
+  Py_CLEAR(clear_module_state->__pyx_tuple__15);
+  Py_CLEAR(clear_module_state->__pyx_tuple__17);
+  Py_CLEAR(clear_module_state->__pyx_tuple__22);
+  Py_CLEAR(clear_module_state->__pyx_tuple__24);
+  Py_CLEAR(clear_module_state->__pyx_tuple__26);
+  Py_CLEAR(clear_module_state->__pyx_tuple__28);
+  Py_CLEAR(clear_module_state->__pyx_tuple__30);
+  Py_CLEAR(clear_module_state->__pyx_tuple__32);
   Py_CLEAR(clear_module_state->__pyx_tuple__34);
-  Py_CLEAR(clear_module_state->__pyx_tuple__38);
-  Py_CLEAR(clear_module_state->__pyx_tuple__42);
+  Py_CLEAR(clear_module_state->__pyx_tuple__36);
+  Py_CLEAR(clear_module_state->__pyx_tuple__37);
+  Py_CLEAR(clear_module_state->__pyx_tuple__41);
+  Py_CLEAR(clear_module_state->__pyx_tuple__45);
   Py_CLEAR(clear_module_state->__pyx_codeobj__7);
   Py_CLEAR(clear_module_state->__pyx_codeobj__9);
   Py_CLEAR(clear_module_state->__pyx_codeobj__11);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__13);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__15);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__14);
   Py_CLEAR(clear_module_state->__pyx_codeobj__16);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__17);
   Py_CLEAR(clear_module_state->__pyx_codeobj__18);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__19);
   Py_CLEAR(clear_module_state->__pyx_codeobj__20);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__22);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__24);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__26);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__28);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__30);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__32);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__21);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__23);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__25);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__27);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__29);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__31);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__33);
   Py_CLEAR(clear_module_state->__pyx_codeobj__35);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__36);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__37);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__38);
   Py_CLEAR(clear_module_state->__pyx_codeobj__39);
   Py_CLEAR(clear_module_state->__pyx_codeobj__40);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__41);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__42);
   Py_CLEAR(clear_module_state->__pyx_codeobj__43);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__44);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__46);
   return 0;
 }
 #endif
@@ -3781,6 +3805,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_FlagFilter_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_Flags);
   Py_VISIT(traverse_module_state->__pyx_kp_s_Flags_2);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Flags___init);
   Py_VISIT(traverse_module_state->__pyx_n_s_Flags_from_ros_msg);
   Py_VISIT(traverse_module_state->__pyx_n_s_Flags_matches_filter);
   Py_VISIT(traverse_module_state->__pyx_n_s_Flags_to_ros_msg);
@@ -3805,7 +3830,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Motion2D_lambda);
   Py_VISIT(traverse_module_state->__pyx_n_s_Motion2D_to_ros_msg);
   Py_VISIT(traverse_module_state->__pyx_kp_s_Motion_of_an_entity_Speeds_are_g);
-  Py_VISIT(traverse_module_state->__pyx_n_s_NotImplementedError);
   Py_VISIT(traverse_module_state->__pyx_n_s_OFF);
   Py_VISIT(traverse_module_state->__pyx_n_s_ON);
   Py_VISIT(traverse_module_state->__pyx_n_s_Optional);
@@ -3843,7 +3867,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2);
   Py_VISIT(traverse_module_state->__pyx_n_s_YELLOW);
   Py_VISIT(traverse_module_state->__pyx_kp_u__3);
-  Py_VISIT(traverse_module_state->__pyx_n_s__44);
+  Py_VISIT(traverse_module_state->__pyx_n_s__47);
   Py_VISIT(traverse_module_state->__pyx_n_s__5);
   Py_VISIT(traverse_module_state->__pyx_n_s_a);
   Py_VISIT(traverse_module_state->__pyx_n_s_angular_velocity);
@@ -3891,12 +3915,17 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_invisibility_frame_count);
   Py_VISIT(traverse_module_state->__pyx_n_s_invisibility_time);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_collider);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_collider_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_coroutine);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_hero);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_hero_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_ignored);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_ignored_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_lanemark);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_lanemark_2);
   Py_VISIT(traverse_module_state->__pyx_kp_u_is_not_supported_Base_class_Ent);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_stopmark);
+  Py_VISIT(traverse_module_state->__pyx_n_s_is_stopmark_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_tracked);
   Py_VISIT(traverse_module_state->__pyx_n_s_keys);
   Py_VISIT(traverse_module_state->__pyx_n_s_kwargs);
@@ -3998,40 +4027,43 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_tuple__8);
   Py_VISIT(traverse_module_state->__pyx_tuple__10);
   Py_VISIT(traverse_module_state->__pyx_tuple__12);
-  Py_VISIT(traverse_module_state->__pyx_tuple__14);
-  Py_VISIT(traverse_module_state->__pyx_tuple__19);
-  Py_VISIT(traverse_module_state->__pyx_tuple__21);
-  Py_VISIT(traverse_module_state->__pyx_tuple__23);
-  Py_VISIT(traverse_module_state->__pyx_tuple__25);
-  Py_VISIT(traverse_module_state->__pyx_tuple__27);
-  Py_VISIT(traverse_module_state->__pyx_tuple__29);
-  Py_VISIT(traverse_module_state->__pyx_tuple__31);
-  Py_VISIT(traverse_module_state->__pyx_tuple__33);
+  Py_VISIT(traverse_module_state->__pyx_tuple__13);
+  Py_VISIT(traverse_module_state->__pyx_tuple__15);
+  Py_VISIT(traverse_module_state->__pyx_tuple__17);
+  Py_VISIT(traverse_module_state->__pyx_tuple__22);
+  Py_VISIT(traverse_module_state->__pyx_tuple__24);
+  Py_VISIT(traverse_module_state->__pyx_tuple__26);
+  Py_VISIT(traverse_module_state->__pyx_tuple__28);
+  Py_VISIT(traverse_module_state->__pyx_tuple__30);
+  Py_VISIT(traverse_module_state->__pyx_tuple__32);
   Py_VISIT(traverse_module_state->__pyx_tuple__34);
-  Py_VISIT(traverse_module_state->__pyx_tuple__38);
-  Py_VISIT(traverse_module_state->__pyx_tuple__42);
+  Py_VISIT(traverse_module_state->__pyx_tuple__36);
+  Py_VISIT(traverse_module_state->__pyx_tuple__37);
+  Py_VISIT(traverse_module_state->__pyx_tuple__41);
+  Py_VISIT(traverse_module_state->__pyx_tuple__45);
   Py_VISIT(traverse_module_state->__pyx_codeobj__7);
   Py_VISIT(traverse_module_state->__pyx_codeobj__9);
   Py_VISIT(traverse_module_state->__pyx_codeobj__11);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__13);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__15);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__14);
   Py_VISIT(traverse_module_state->__pyx_codeobj__16);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__17);
   Py_VISIT(traverse_module_state->__pyx_codeobj__18);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__19);
   Py_VISIT(traverse_module_state->__pyx_codeobj__20);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__22);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__24);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__26);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__28);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__30);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__32);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__21);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__23);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__25);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__27);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__29);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__31);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__33);
   Py_VISIT(traverse_module_state->__pyx_codeobj__35);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__36);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__37);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__38);
   Py_VISIT(traverse_module_state->__pyx_codeobj__39);
   Py_VISIT(traverse_module_state->__pyx_codeobj__40);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__41);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__42);
   Py_VISIT(traverse_module_state->__pyx_codeobj__43);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__44);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__46);
   return 0;
 }
 #endif
@@ -4129,6 +4161,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_FlagFilter_2 __pyx_mstate_global->__pyx_n_s_FlagFilter_2
 #define __pyx_n_s_Flags __pyx_mstate_global->__pyx_n_s_Flags
 #define __pyx_kp_s_Flags_2 __pyx_mstate_global->__pyx_kp_s_Flags_2
+#define __pyx_n_s_Flags___init __pyx_mstate_global->__pyx_n_s_Flags___init
 #define __pyx_n_s_Flags_from_ros_msg __pyx_mstate_global->__pyx_n_s_Flags_from_ros_msg
 #define __pyx_n_s_Flags_matches_filter __pyx_mstate_global->__pyx_n_s_Flags_matches_filter
 #define __pyx_n_s_Flags_to_ros_msg __pyx_mstate_global->__pyx_n_s_Flags_to_ros_msg
@@ -4153,7 +4186,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Motion2D_lambda __pyx_mstate_global->__pyx_n_s_Motion2D_lambda
 #define __pyx_n_s_Motion2D_to_ros_msg __pyx_mstate_global->__pyx_n_s_Motion2D_to_ros_msg
 #define __pyx_kp_s_Motion_of_an_entity_Speeds_are_g __pyx_mstate_global->__pyx_kp_s_Motion_of_an_entity_Speeds_are_g
-#define __pyx_n_s_NotImplementedError __pyx_mstate_global->__pyx_n_s_NotImplementedError
 #define __pyx_n_s_OFF __pyx_mstate_global->__pyx_n_s_OFF
 #define __pyx_n_s_ON __pyx_mstate_global->__pyx_n_s_ON
 #define __pyx_n_s_Optional __pyx_mstate_global->__pyx_n_s_Optional
@@ -4191,7 +4223,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Vector2 __pyx_mstate_global->__pyx_n_s_Vector2
 #define __pyx_n_s_YELLOW __pyx_mstate_global->__pyx_n_s_YELLOW
 #define __pyx_kp_u__3 __pyx_mstate_global->__pyx_kp_u__3
-#define __pyx_n_s__44 __pyx_mstate_global->__pyx_n_s__44
+#define __pyx_n_s__47 __pyx_mstate_global->__pyx_n_s__47
 #define __pyx_n_s__5 __pyx_mstate_global->__pyx_n_s__5
 #define __pyx_n_s_a __pyx_mstate_global->__pyx_n_s_a
 #define __pyx_n_s_angular_velocity __pyx_mstate_global->__pyx_n_s_angular_velocity
@@ -4239,12 +4271,17 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_invisibility_frame_count __pyx_mstate_global->__pyx_n_s_invisibility_frame_count
 #define __pyx_n_s_invisibility_time __pyx_mstate_global->__pyx_n_s_invisibility_time
 #define __pyx_n_s_is_collider __pyx_mstate_global->__pyx_n_s_is_collider
+#define __pyx_n_s_is_collider_2 __pyx_mstate_global->__pyx_n_s_is_collider_2
 #define __pyx_n_s_is_coroutine __pyx_mstate_global->__pyx_n_s_is_coroutine
 #define __pyx_n_s_is_hero __pyx_mstate_global->__pyx_n_s_is_hero
+#define __pyx_n_s_is_hero_2 __pyx_mstate_global->__pyx_n_s_is_hero_2
 #define __pyx_n_s_is_ignored __pyx_mstate_global->__pyx_n_s_is_ignored
+#define __pyx_n_s_is_ignored_2 __pyx_mstate_global->__pyx_n_s_is_ignored_2
 #define __pyx_n_s_is_lanemark __pyx_mstate_global->__pyx_n_s_is_lanemark
+#define __pyx_n_s_is_lanemark_2 __pyx_mstate_global->__pyx_n_s_is_lanemark_2
 #define __pyx_kp_u_is_not_supported_Base_class_Ent __pyx_mstate_global->__pyx_kp_u_is_not_supported_Base_class_Ent
 #define __pyx_n_s_is_stopmark __pyx_mstate_global->__pyx_n_s_is_stopmark
+#define __pyx_n_s_is_stopmark_2 __pyx_mstate_global->__pyx_n_s_is_stopmark_2
 #define __pyx_n_s_is_tracked __pyx_mstate_global->__pyx_n_s_is_tracked
 #define __pyx_n_s_keys __pyx_mstate_global->__pyx_n_s_keys
 #define __pyx_n_s_kwargs __pyx_mstate_global->__pyx_n_s_kwargs
@@ -4346,40 +4383,43 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_tuple__8 __pyx_mstate_global->__pyx_tuple__8
 #define __pyx_tuple__10 __pyx_mstate_global->__pyx_tuple__10
 #define __pyx_tuple__12 __pyx_mstate_global->__pyx_tuple__12
-#define __pyx_tuple__14 __pyx_mstate_global->__pyx_tuple__14
-#define __pyx_tuple__19 __pyx_mstate_global->__pyx_tuple__19
-#define __pyx_tuple__21 __pyx_mstate_global->__pyx_tuple__21
-#define __pyx_tuple__23 __pyx_mstate_global->__pyx_tuple__23
-#define __pyx_tuple__25 __pyx_mstate_global->__pyx_tuple__25
-#define __pyx_tuple__27 __pyx_mstate_global->__pyx_tuple__27
-#define __pyx_tuple__29 __pyx_mstate_global->__pyx_tuple__29
-#define __pyx_tuple__31 __pyx_mstate_global->__pyx_tuple__31
-#define __pyx_tuple__33 __pyx_mstate_global->__pyx_tuple__33
+#define __pyx_tuple__13 __pyx_mstate_global->__pyx_tuple__13
+#define __pyx_tuple__15 __pyx_mstate_global->__pyx_tuple__15
+#define __pyx_tuple__17 __pyx_mstate_global->__pyx_tuple__17
+#define __pyx_tuple__22 __pyx_mstate_global->__pyx_tuple__22
+#define __pyx_tuple__24 __pyx_mstate_global->__pyx_tuple__24
+#define __pyx_tuple__26 __pyx_mstate_global->__pyx_tuple__26
+#define __pyx_tuple__28 __pyx_mstate_global->__pyx_tuple__28
+#define __pyx_tuple__30 __pyx_mstate_global->__pyx_tuple__30
+#define __pyx_tuple__32 __pyx_mstate_global->__pyx_tuple__32
 #define __pyx_tuple__34 __pyx_mstate_global->__pyx_tuple__34
-#define __pyx_tuple__38 __pyx_mstate_global->__pyx_tuple__38
-#define __pyx_tuple__42 __pyx_mstate_global->__pyx_tuple__42
+#define __pyx_tuple__36 __pyx_mstate_global->__pyx_tuple__36
+#define __pyx_tuple__37 __pyx_mstate_global->__pyx_tuple__37
+#define __pyx_tuple__41 __pyx_mstate_global->__pyx_tuple__41
+#define __pyx_tuple__45 __pyx_mstate_global->__pyx_tuple__45
 #define __pyx_codeobj__7 __pyx_mstate_global->__pyx_codeobj__7
 #define __pyx_codeobj__9 __pyx_mstate_global->__pyx_codeobj__9
 #define __pyx_codeobj__11 __pyx_mstate_global->__pyx_codeobj__11
-#define __pyx_codeobj__13 __pyx_mstate_global->__pyx_codeobj__13
-#define __pyx_codeobj__15 __pyx_mstate_global->__pyx_codeobj__15
+#define __pyx_codeobj__14 __pyx_mstate_global->__pyx_codeobj__14
 #define __pyx_codeobj__16 __pyx_mstate_global->__pyx_codeobj__16
-#define __pyx_codeobj__17 __pyx_mstate_global->__pyx_codeobj__17
 #define __pyx_codeobj__18 __pyx_mstate_global->__pyx_codeobj__18
+#define __pyx_codeobj__19 __pyx_mstate_global->__pyx_codeobj__19
 #define __pyx_codeobj__20 __pyx_mstate_global->__pyx_codeobj__20
-#define __pyx_codeobj__22 __pyx_mstate_global->__pyx_codeobj__22
-#define __pyx_codeobj__24 __pyx_mstate_global->__pyx_codeobj__24
-#define __pyx_codeobj__26 __pyx_mstate_global->__pyx_codeobj__26
-#define __pyx_codeobj__28 __pyx_mstate_global->__pyx_codeobj__28
-#define __pyx_codeobj__30 __pyx_mstate_global->__pyx_codeobj__30
-#define __pyx_codeobj__32 __pyx_mstate_global->__pyx_codeobj__32
+#define __pyx_codeobj__21 __pyx_mstate_global->__pyx_codeobj__21
+#define __pyx_codeobj__23 __pyx_mstate_global->__pyx_codeobj__23
+#define __pyx_codeobj__25 __pyx_mstate_global->__pyx_codeobj__25
+#define __pyx_codeobj__27 __pyx_mstate_global->__pyx_codeobj__27
+#define __pyx_codeobj__29 __pyx_mstate_global->__pyx_codeobj__29
+#define __pyx_codeobj__31 __pyx_mstate_global->__pyx_codeobj__31
+#define __pyx_codeobj__33 __pyx_mstate_global->__pyx_codeobj__33
 #define __pyx_codeobj__35 __pyx_mstate_global->__pyx_codeobj__35
-#define __pyx_codeobj__36 __pyx_mstate_global->__pyx_codeobj__36
-#define __pyx_codeobj__37 __pyx_mstate_global->__pyx_codeobj__37
+#define __pyx_codeobj__38 __pyx_mstate_global->__pyx_codeobj__38
 #define __pyx_codeobj__39 __pyx_mstate_global->__pyx_codeobj__39
 #define __pyx_codeobj__40 __pyx_mstate_global->__pyx_codeobj__40
-#define __pyx_codeobj__41 __pyx_mstate_global->__pyx_codeobj__41
+#define __pyx_codeobj__42 __pyx_mstate_global->__pyx_codeobj__42
 #define __pyx_codeobj__43 __pyx_mstate_global->__pyx_codeobj__43
+#define __pyx_codeobj__44 __pyx_mstate_global->__pyx_codeobj__44
+#define __pyx_codeobj__46 __pyx_mstate_global->__pyx_codeobj__46
 /* #### Code section: module_code ### */
 
 /* "../../../../home/aleksandermichalak/.local/lib/python3.8/site-packages/numpy/__init__.cython-30.pxd":245
@@ -5713,7 +5753,7 @@ static PyObject *__pyx_lambda_funcdef_14mapping_common_6entity_8Motion2D_lambda(
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":39
+/* "mapping_common/entity.py":40
  *     """
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -5774,12 +5814,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 39, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 40, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 39, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 40, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -5790,7 +5830,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 39, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 40, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5831,16 +5871,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/entity.py":41
+  /* "mapping_common/entity.py":42
  *     @staticmethod
  *     def from_ros_msg(m: msg.Motion2D) -> "Motion2D":
  *         motion = Vector2.from_ros_msg(m.linear_motion)             # <<<<<<<<<<<<<<
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_linear_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_linear_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -5861,14 +5901,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 41, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_v_motion = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":42
+  /* "mapping_common/entity.py":43
  *     def from_ros_msg(m: msg.Motion2D) -> "Motion2D":
  *         motion = Vector2.from_ros_msg(m.linear_motion)
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)             # <<<<<<<<<<<<<<
@@ -5876,16 +5916,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON
  *     def to_ros_msg(self) -> msg.Motion2D:
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_linear_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_angular_velocity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_linear_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_angular_velocity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_angular_velocity, __pyx_t_3) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_angular_velocity, __pyx_t_3) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -5893,7 +5933,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":39
+  /* "mapping_common/entity.py":40
  *     """
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -5916,7 +5956,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_from_ros_msg(CYTHON
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":44
+/* "mapping_common/entity.py":45
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)
  * 
  *     def to_ros_msg(self) -> msg.Motion2D:             # <<<<<<<<<<<<<<
@@ -5977,12 +6017,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 44, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 44, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 45, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -5993,7 +6033,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 44, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 45, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6033,16 +6073,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":45
+  /* "mapping_common/entity.py":46
  * 
  *     def to_ros_msg(self) -> msg.Motion2D:
  *         motion = self.linear_motion.to_ros_msg()             # <<<<<<<<<<<<<<
  *         return msg.Motion2D(
  *             linear_motion=motion, angular_velocity=self.angular_velocity
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_linear_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_linear_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -6063,14 +6103,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 46, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_motion = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":46
+  /* "mapping_common/entity.py":47
  *     def to_ros_msg(self) -> msg.Motion2D:
  *         motion = self.linear_motion.to_ros_msg()
  *         return msg.Motion2D(             # <<<<<<<<<<<<<<
@@ -6078,35 +6118,35 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
  *         )
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 47, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 47, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":47
+  /* "mapping_common/entity.py":48
  *         motion = self.linear_motion.to_ros_msg()
  *         return msg.Motion2D(
  *             linear_motion=motion, angular_velocity=self.angular_velocity             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 48, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_linear_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 47, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_angular_velocity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_linear_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 48, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_angular_velocity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_angular_velocity, __pyx_t_2) < 0) __PYX_ERR(0, 47, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_angular_velocity, __pyx_t_2) < 0) __PYX_ERR(0, 48, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":46
+  /* "mapping_common/entity.py":47
  *     def to_ros_msg(self) -> msg.Motion2D:
  *         motion = self.linear_motion.to_ros_msg()
  *         return msg.Motion2D(             # <<<<<<<<<<<<<<
  *             linear_motion=motion, angular_velocity=self.angular_velocity
  *         )
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 47, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6114,7 +6154,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":44
+  /* "mapping_common/entity.py":45
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)
  * 
  *     def to_ros_msg(self) -> msg.Motion2D:             # <<<<<<<<<<<<<<
@@ -6136,8 +6176,305 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":64
- *     is_hero: bool = False
+/* "mapping_common/entity.py":68
+ *     _is_hero: bool = False
+ * 
+ *     def __init__(             # <<<<<<<<<<<<<<
+ *         self,
+ *         is_collider: bool = False,
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_1__init__(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_1__init__ = {"__init__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_1__init__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_1__init__(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  PyObject *__pyx_v_self = 0;
+  PyObject *__pyx_v_is_collider = 0;
+  PyObject *__pyx_v_is_stopmark = 0;
+  PyObject *__pyx_v_is_lanemark = 0;
+  PyObject *__pyx_v_is_ignored = 0;
+  PyObject *__pyx_v_is_hero = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[6] = {0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__init__ (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_self,&__pyx_n_s_is_collider,&__pyx_n_s_is_stopmark,&__pyx_n_s_is_lanemark,&__pyx_n_s_is_ignored,&__pyx_n_s_is_hero,0};
+
+    /* "mapping_common/entity.py":70
+ *     def __init__(
+ *         self,
+ *         is_collider: bool = False,             # <<<<<<<<<<<<<<
+ *         is_stopmark: bool = False,
+ *         is_lanemark: bool = False,
+ */
+    values[1] = __Pyx_Arg_NewRef_FASTCALL(((PyObject *)((PyObject *)Py_False)));
+
+    /* "mapping_common/entity.py":71
+ *         self,
+ *         is_collider: bool = False,
+ *         is_stopmark: bool = False,             # <<<<<<<<<<<<<<
+ *         is_lanemark: bool = False,
+ *         is_ignored: bool = False,
+ */
+    values[2] = __Pyx_Arg_NewRef_FASTCALL(((PyObject *)((PyObject *)Py_False)));
+
+    /* "mapping_common/entity.py":72
+ *         is_collider: bool = False,
+ *         is_stopmark: bool = False,
+ *         is_lanemark: bool = False,             # <<<<<<<<<<<<<<
+ *         is_ignored: bool = False,
+ *         is_hero: bool = False,
+ */
+    values[3] = __Pyx_Arg_NewRef_FASTCALL(((PyObject *)((PyObject *)Py_False)));
+
+    /* "mapping_common/entity.py":73
+ *         is_stopmark: bool = False,
+ *         is_lanemark: bool = False,
+ *         is_ignored: bool = False,             # <<<<<<<<<<<<<<
+ *         is_hero: bool = False,
+ *     ):
+ */
+    values[4] = __Pyx_Arg_NewRef_FASTCALL(((PyObject *)((PyObject *)Py_False)));
+
+    /* "mapping_common/entity.py":74
+ *         is_lanemark: bool = False,
+ *         is_ignored: bool = False,
+ *         is_hero: bool = False,             # <<<<<<<<<<<<<<
+ *     ):
+ *         self._is_collider = is_collider
+ */
+    values[5] = __Pyx_Arg_NewRef_FASTCALL(((PyObject *)((PyObject *)Py_False)));
+    if (__pyx_kwds) {
+      Py_ssize_t kw_args;
+      switch (__pyx_nargs) {
+        case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
+        CYTHON_FALLTHROUGH;
+        case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
+      switch (__pyx_nargs) {
+        case  0:
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_self)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_collider);
+          if (value) { values[1] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_stopmark);
+          if (value) { values[2] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_lanemark);
+          if (value) { values[3] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  4:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_ignored);
+          if (value) { values[4] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  5:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_hero);
+          if (value) { values[5] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        const Py_ssize_t kwd_pos_args = __pyx_nargs;
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 68, __pyx_L3_error)
+      }
+    } else {
+      switch (__pyx_nargs) {
+        case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
+        CYTHON_FALLTHROUGH;
+        case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+        break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+    }
+    __pyx_v_self = values[0];
+    __pyx_v_is_collider = values[1];
+    __pyx_v_is_stopmark = values[2];
+    __pyx_v_is_lanemark = values[3];
+    __pyx_v_is_ignored = values[4];
+    __pyx_v_is_hero = values[5];
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 6, __pyx_nargs); __PYX_ERR(0, 68, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_AddTraceback("mapping_common.entity.Flags.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags___init__(__pyx_self, __pyx_v_self, __pyx_v_is_collider, __pyx_v_is_stopmark, __pyx_v_is_lanemark, __pyx_v_is_ignored, __pyx_v_is_hero);
+
+  /* "mapping_common/entity.py":68
+ *     _is_hero: bool = False
+ * 
+ *     def __init__(             # <<<<<<<<<<<<<<
+ *         self,
+ *         is_collider: bool = False,
+ */
+
+  /* function exit code */
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_is_collider, PyObject *__pyx_v_is_stopmark, PyObject *__pyx_v_is_lanemark, PyObject *__pyx_v_is_ignored, PyObject *__pyx_v_is_hero) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__init__", 1);
+
+  /* "mapping_common/entity.py":76
+ *         is_hero: bool = False,
+ *     ):
+ *         self._is_collider = is_collider             # <<<<<<<<<<<<<<
+ *         self._is_stopmark = is_stopmark
+ *         self._is_lanemark = is_lanemark
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_is_collider_2, __pyx_v_is_collider) < 0) __PYX_ERR(0, 76, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":77
+ *     ):
+ *         self._is_collider = is_collider
+ *         self._is_stopmark = is_stopmark             # <<<<<<<<<<<<<<
+ *         self._is_lanemark = is_lanemark
+ *         self._is_ignored = is_ignored
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_is_stopmark_2, __pyx_v_is_stopmark) < 0) __PYX_ERR(0, 77, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":78
+ *         self._is_collider = is_collider
+ *         self._is_stopmark = is_stopmark
+ *         self._is_lanemark = is_lanemark             # <<<<<<<<<<<<<<
+ *         self._is_ignored = is_ignored
+ *         self._is_hero = is_hero
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_is_lanemark_2, __pyx_v_is_lanemark) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":79
+ *         self._is_stopmark = is_stopmark
+ *         self._is_lanemark = is_lanemark
+ *         self._is_ignored = is_ignored             # <<<<<<<<<<<<<<
+ *         self._is_hero = is_hero
+ * 
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_is_ignored_2, __pyx_v_is_ignored) < 0) __PYX_ERR(0, 79, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":80
+ *         self._is_lanemark = is_lanemark
+ *         self._is_ignored = is_ignored
+ *         self._is_hero = is_hero             # <<<<<<<<<<<<<<
+ * 
+ *     def matches_filter(self, f: "FlagFilter") -> bool:
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_is_hero_2, __pyx_v_is_hero) < 0) __PYX_ERR(0, 80, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":68
+ *     _is_hero: bool = False
+ * 
+ *     def __init__(             # <<<<<<<<<<<<<<
+ *         self,
+ *         is_collider: bool = False,
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("mapping_common.entity.Flags.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/entity.py":82
+ *         self._is_hero = is_hero
  * 
  *     def matches_filter(self, f: "FlagFilter") -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if these Flags match the filter mask f
@@ -6145,24 +6482,24 @@ static PyObject *__pyx_pf_14mapping_common_6entity_8Motion2D_2to_ros_msg(CYTHON_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_1matches_filter(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_3matches_filter(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_6entity_5Flags_matches_filter, "Returns if these Flags match the filter mask f\n\n        Args:\n            f (FlagFilter): Filter mask to filter with\n\n        Returns:\n            bool: If f matches self\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_1matches_filter = {"matches_filter", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_1matches_filter, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_6entity_5Flags_matches_filter};
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_1matches_filter(PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_14mapping_common_6entity_5Flags_2matches_filter, "Returns if these Flags match the filter mask f\n\n        Args:\n            f (FlagFilter): Filter mask to filter with\n\n        Returns:\n            bool: If f matches self\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_3matches_filter = {"matches_filter", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_3matches_filter, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_6entity_5Flags_2matches_filter};
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_3matches_filter(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
-  CYTHON_UNUSED PyObject *__pyx_v_self = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_f = 0;
+  PyObject *__pyx_v_self = 0;
+  PyObject *__pyx_v_f = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
@@ -6201,7 +6538,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 82, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -6209,14 +6546,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 64, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 82, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, 1); __PYX_ERR(0, 64, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, 1); __PYX_ERR(0, 82, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "matches_filter") < 0)) __PYX_ERR(0, 64, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "matches_filter") < 0)) __PYX_ERR(0, 82, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -6229,7 +6566,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 64, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 82, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6243,7 +6580,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_matches_filter(__pyx_self, __pyx_v_self, __pyx_v_f);
+  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_2matches_filter(__pyx_self, __pyx_v_self, __pyx_v_f);
 
   /* function exit code */
   {
@@ -6256,26 +6593,326 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_f) {
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2matches_filter(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_f) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("matches_filter", 1);
 
-  /* "mapping_common/entity.py":73
+  /* "mapping_common/entity.py":91
  *             bool: If f matches self
  *         """
- *         raise NotImplementedError             # <<<<<<<<<<<<<<
+ *         if f.is_ignored is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_ignored is not f.is_ignored:
+ *                 return False
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_ignored); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = (__pyx_t_1 != Py_None);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_2) {
+
+    /* "mapping_common/entity.py":92
+ *         """
+ *         if f.is_ignored is not None:
+ *             if self._is_ignored is not f.is_ignored:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_collider is not None:
+ */
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_ignored_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_ignored); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = (__pyx_t_1 != __pyx_t_3);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_2) {
+
+      /* "mapping_common/entity.py":93
+ *         if f.is_ignored is not None:
+ *             if self._is_ignored is not f.is_ignored:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         if f.is_collider is not None:
+ *             if self._is_collider is not f.is_collider:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":92
+ *         """
+ *         if f.is_ignored is not None:
+ *             if self._is_ignored is not f.is_ignored:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_collider is not None:
+ */
+    }
+
+    /* "mapping_common/entity.py":91
+ *             bool: If f matches self
+ *         """
+ *         if f.is_ignored is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_ignored is not f.is_ignored:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":94
+ *             if self._is_ignored is not f.is_ignored:
+ *                 return False
+ *         if f.is_collider is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_collider is not f.is_collider:
+ *                 return False
+ */
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_collider); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 94, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = (__pyx_t_3 != Py_None);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__pyx_t_2) {
+
+    /* "mapping_common/entity.py":95
+ *                 return False
+ *         if f.is_collider is not None:
+ *             if self._is_collider is not f.is_collider:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_stopmark is not None:
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_collider_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_collider); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = (__pyx_t_3 != __pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_2) {
+
+      /* "mapping_common/entity.py":96
+ *         if f.is_collider is not None:
+ *             if self._is_collider is not f.is_collider:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         if f.is_stopmark is not None:
+ *             if self._is_stopmark is not f.is_stopmark:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":95
+ *                 return False
+ *         if f.is_collider is not None:
+ *             if self._is_collider is not f.is_collider:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_stopmark is not None:
+ */
+    }
+
+    /* "mapping_common/entity.py":94
+ *             if self._is_ignored is not f.is_ignored:
+ *                 return False
+ *         if f.is_collider is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_collider is not f.is_collider:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":97
+ *             if self._is_collider is not f.is_collider:
+ *                 return False
+ *         if f.is_stopmark is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_stopmark is not f.is_stopmark:
+ *                 return False
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_stopmark); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 97, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = (__pyx_t_1 != Py_None);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_2) {
+
+    /* "mapping_common/entity.py":98
+ *                 return False
+ *         if f.is_stopmark is not None:
+ *             if self._is_stopmark is not f.is_stopmark:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_lanemark is not None:
+ */
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_stopmark_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_stopmark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = (__pyx_t_1 != __pyx_t_3);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_2) {
+
+      /* "mapping_common/entity.py":99
+ *         if f.is_stopmark is not None:
+ *             if self._is_stopmark is not f.is_stopmark:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         if f.is_lanemark is not None:
+ *             if self._is_lanemark is not f.is_lanemark:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":98
+ *                 return False
+ *         if f.is_stopmark is not None:
+ *             if self._is_stopmark is not f.is_stopmark:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_lanemark is not None:
+ */
+    }
+
+    /* "mapping_common/entity.py":97
+ *             if self._is_collider is not f.is_collider:
+ *                 return False
+ *         if f.is_stopmark is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_stopmark is not f.is_stopmark:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":100
+ *             if self._is_stopmark is not f.is_stopmark:
+ *                 return False
+ *         if f.is_lanemark is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_lanemark is not f.is_lanemark:
+ *                 return False
+ */
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_lanemark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 100, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = (__pyx_t_3 != Py_None);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__pyx_t_2) {
+
+    /* "mapping_common/entity.py":101
+ *                 return False
+ *         if f.is_lanemark is not None:
+ *             if self._is_lanemark is not f.is_lanemark:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_hero is not None:
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_lanemark_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_lanemark); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = (__pyx_t_3 != __pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_2) {
+
+      /* "mapping_common/entity.py":102
+ *         if f.is_lanemark is not None:
+ *             if self._is_lanemark is not f.is_lanemark:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         if f.is_hero is not None:
+ *             if self._is_hero is not f.is_hero:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":101
+ *                 return False
+ *         if f.is_lanemark is not None:
+ *             if self._is_lanemark is not f.is_lanemark:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_hero is not None:
+ */
+    }
+
+    /* "mapping_common/entity.py":100
+ *             if self._is_stopmark is not f.is_stopmark:
+ *                 return False
+ *         if f.is_lanemark is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_lanemark is not f.is_lanemark:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":103
+ *             if self._is_lanemark is not f.is_lanemark:
+ *                 return False
+ *         if f.is_hero is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_hero is not f.is_hero:
+ *                 return False
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_hero); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = (__pyx_t_1 != Py_None);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_2) {
+
+    /* "mapping_common/entity.py":104
+ *                 return False
+ *         if f.is_hero is not None:
+ *             if self._is_hero is not f.is_hero:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         return True
+ */
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_hero_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_hero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = (__pyx_t_1 != __pyx_t_3);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_2) {
+
+      /* "mapping_common/entity.py":105
+ *         if f.is_hero is not None:
+ *             if self._is_hero is not f.is_hero:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         return True
+ * 
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":104
+ *                 return False
+ *         if f.is_hero is not None:
+ *             if self._is_hero is not f.is_hero:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         return True
+ */
+    }
+
+    /* "mapping_common/entity.py":103
+ *             if self._is_lanemark is not f.is_lanemark:
+ *                 return False
+ *         if f.is_hero is not None:             # <<<<<<<<<<<<<<
+ *             if self._is_hero is not f.is_hero:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":106
+ *             if self._is_hero is not f.is_hero:
+ *                 return False
+ *         return True             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  __Pyx_Raise(__pyx_builtin_NotImplementedError, 0, 0, 0);
-  __PYX_ERR(0, 73, __pyx_L1_error)
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(Py_True);
+  __pyx_r = Py_True;
+  goto __pyx_L0;
 
-  /* "mapping_common/entity.py":64
- *     is_hero: bool = False
+  /* "mapping_common/entity.py":82
+ *         self._is_hero = is_hero
  * 
  *     def matches_filter(self, f: "FlagFilter") -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if these Flags match the filter mask f
@@ -6284,15 +6921,18 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_matches_filter(CYTHON_
 
   /* function exit code */
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("mapping_common.entity.Flags.matches_filter", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
+  __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":75
- *         raise NotImplementedError
+/* "mapping_common/entity.py":108
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
@@ -6300,15 +6940,15 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_matches_filter(CYTHON_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_3from_ros_msg(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_5from_ros_msg(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_3from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_3from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_3from_ros_msg(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_5from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_5from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_5from_ros_msg(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6352,12 +6992,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 75, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 108, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 75, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 108, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -6368,7 +7008,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 75, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 108, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6382,7 +7022,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(__pyx_self, __pyx_v_m);
+  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_4from_ros_msg(__pyx_self, __pyx_v_m);
 
   /* function exit code */
   {
@@ -6395,7 +7035,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m) {
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_m) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -6406,7 +7046,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_U
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/entity.py":77
+  /* "mapping_common/entity.py":110
  *     @staticmethod
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
  *         return Flags(             # <<<<<<<<<<<<<<
@@ -6414,79 +7054,79 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_U
  *             is_stopmark=m.is_stopmark,
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_Flags); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_Flags); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "mapping_common/entity.py":78
+  /* "mapping_common/entity.py":111
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
  *         return Flags(
  *             is_collider=m.is_collider,             # <<<<<<<<<<<<<<
  *             is_stopmark=m.is_stopmark,
  *             is_lanemark=m.is_lanemark,
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_collider); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_collider); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_collider, __pyx_t_3) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_collider, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":79
+  /* "mapping_common/entity.py":112
  *         return Flags(
  *             is_collider=m.is_collider,
  *             is_stopmark=m.is_stopmark,             # <<<<<<<<<<<<<<
  *             is_lanemark=m.is_lanemark,
  *             is_ignored=m.is_ignored,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_stopmark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_stopmark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_stopmark, __pyx_t_3) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_stopmark, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":80
+  /* "mapping_common/entity.py":113
  *             is_collider=m.is_collider,
  *             is_stopmark=m.is_stopmark,
  *             is_lanemark=m.is_lanemark,             # <<<<<<<<<<<<<<
  *             is_ignored=m.is_ignored,
  *             is_hero=m.is_hero,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_lanemark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_lanemark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 113, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_lanemark, __pyx_t_3) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_lanemark, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":81
+  /* "mapping_common/entity.py":114
  *             is_stopmark=m.is_stopmark,
  *             is_lanemark=m.is_lanemark,
  *             is_ignored=m.is_ignored,             # <<<<<<<<<<<<<<
  *             is_hero=m.is_hero,
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_ignored); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_ignored); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_ignored, __pyx_t_3) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_ignored, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":82
+  /* "mapping_common/entity.py":115
  *             is_lanemark=m.is_lanemark,
  *             is_ignored=m.is_ignored,
  *             is_hero=m.is_hero,             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_hero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_is_hero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 115, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_hero, __pyx_t_3) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_is_hero, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":77
+  /* "mapping_common/entity.py":110
  *     @staticmethod
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
  *         return Flags(             # <<<<<<<<<<<<<<
  *             is_collider=m.is_collider,
  *             is_stopmark=m.is_stopmark,
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 77, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 110, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -6494,8 +7134,8 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_U
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":75
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":108
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
@@ -6515,24 +7155,24 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_2from_ros_msg(CYTHON_U
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":85
+/* "mapping_common/entity.py":118
  *         )
  * 
  *     def to_ros_msg(self) -> msg.Flags:             # <<<<<<<<<<<<<<
  *         return msg.Flags(
- *             is_collider=self.is_collider,
+ *             is_collider=self._is_collider,
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_5to_ros_msg(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_7to_ros_msg(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_5to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_5to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_5to_ros_msg(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_6entity_5Flags_7to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_6entity_5Flags_7to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_6entity_5Flags_7to_ros_msg(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6576,12 +7216,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 85, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 118, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 85, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 118, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -6592,7 +7232,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 85, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 118, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6606,7 +7246,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(__pyx_self, __pyx_v_self);
+  __pyx_r = __pyx_pf_14mapping_common_6entity_5Flags_6to_ros_msg(__pyx_self, __pyx_v_self);
 
   /* function exit code */
   {
@@ -6619,7 +7259,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_6to_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -6630,90 +7270,90 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(CYTHON_UNU
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":86
+  /* "mapping_common/entity.py":119
  * 
  *     def to_ros_msg(self) -> msg.Flags:
  *         return msg.Flags(             # <<<<<<<<<<<<<<
- *             is_collider=self.is_collider,
- *             is_stopmark=self.is_stopmark,
+ *             is_collider=self._is_collider,
+ *             is_stopmark=self._is_stopmark,
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":87
+  /* "mapping_common/entity.py":120
  *     def to_ros_msg(self) -> msg.Flags:
  *         return msg.Flags(
- *             is_collider=self.is_collider,             # <<<<<<<<<<<<<<
- *             is_stopmark=self.is_stopmark,
- *             is_lanemark=self.is_lanemark,
+ *             is_collider=self._is_collider,             # <<<<<<<<<<<<<<
+ *             is_stopmark=self._is_stopmark,
+ *             is_lanemark=self._is_lanemark,
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_collider); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_collider_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_collider, __pyx_t_3) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_collider, __pyx_t_3) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":88
+  /* "mapping_common/entity.py":121
  *         return msg.Flags(
- *             is_collider=self.is_collider,
- *             is_stopmark=self.is_stopmark,             # <<<<<<<<<<<<<<
- *             is_lanemark=self.is_lanemark,
- *             is_ignored=self.is_ignored,
+ *             is_collider=self._is_collider,
+ *             is_stopmark=self._is_stopmark,             # <<<<<<<<<<<<<<
+ *             is_lanemark=self._is_lanemark,
+ *             is_ignored=self._is_ignored,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_stopmark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_stopmark_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 121, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_stopmark, __pyx_t_3) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_stopmark, __pyx_t_3) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":89
- *             is_collider=self.is_collider,
- *             is_stopmark=self.is_stopmark,
- *             is_lanemark=self.is_lanemark,             # <<<<<<<<<<<<<<
- *             is_ignored=self.is_ignored,
- *             is_hero=self.is_hero,
+  /* "mapping_common/entity.py":122
+ *             is_collider=self._is_collider,
+ *             is_stopmark=self._is_stopmark,
+ *             is_lanemark=self._is_lanemark,             # <<<<<<<<<<<<<<
+ *             is_ignored=self._is_ignored,
+ *             is_hero=self._is_hero,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_lanemark); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 89, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_lanemark_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_lanemark, __pyx_t_3) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_lanemark, __pyx_t_3) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":90
- *             is_stopmark=self.is_stopmark,
- *             is_lanemark=self.is_lanemark,
- *             is_ignored=self.is_ignored,             # <<<<<<<<<<<<<<
- *             is_hero=self.is_hero,
+  /* "mapping_common/entity.py":123
+ *             is_stopmark=self._is_stopmark,
+ *             is_lanemark=self._is_lanemark,
+ *             is_ignored=self._is_ignored,             # <<<<<<<<<<<<<<
+ *             is_hero=self._is_hero,
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_ignored); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 90, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_ignored_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_ignored, __pyx_t_3) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_ignored, __pyx_t_3) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":91
- *             is_lanemark=self.is_lanemark,
- *             is_ignored=self.is_ignored,
- *             is_hero=self.is_hero,             # <<<<<<<<<<<<<<
+  /* "mapping_common/entity.py":124
+ *             is_lanemark=self._is_lanemark,
+ *             is_ignored=self._is_ignored,
+ *             is_hero=self._is_hero,             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_hero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_is_hero_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 124, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_hero, __pyx_t_3) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_is_hero, __pyx_t_3) < 0) __PYX_ERR(0, 120, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":86
+  /* "mapping_common/entity.py":119
  * 
  *     def to_ros_msg(self) -> msg.Flags:
  *         return msg.Flags(             # <<<<<<<<<<<<<<
- *             is_collider=self.is_collider,
- *             is_stopmark=self.is_stopmark,
+ *             is_collider=self._is_collider,
+ *             is_stopmark=self._is_stopmark,
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6721,12 +7361,12 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(CYTHON_UNU
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":85
+  /* "mapping_common/entity.py":118
  *         )
  * 
  *     def to_ros_msg(self) -> msg.Flags:             # <<<<<<<<<<<<<<
  *         return msg.Flags(
- *             is_collider=self.is_collider,
+ *             is_collider=self._is_collider,
  */
 
   /* function exit code */
@@ -6742,7 +7382,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_5Flags_4to_ros_msg(CYTHON_UNU
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":145
+/* "mapping_common/entity.py":178
  *     """Maximum linear speed of this entity ever recorded"""
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -6803,12 +7443,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 145, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 145, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 178, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -6819,7 +7459,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 145, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 178, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6857,7 +7497,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_from_ros_msg(C
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/entity.py":147
+  /* "mapping_common/entity.py":180
  *     @staticmethod
  *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
  *         return TrackingInfo(             # <<<<<<<<<<<<<<
@@ -6865,139 +7505,139 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_from_ros_msg(C
  *             invisibility_time=m.invisibility_time,
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "mapping_common/entity.py":148
+  /* "mapping_common/entity.py":181
  *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
  *         return TrackingInfo(
  *             visibility_time=m.visibility_time,             # <<<<<<<<<<<<<<
  *             invisibility_time=m.invisibility_time,
  *             visibility_frame_count=m.visibility_frame_count,
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_visibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_visibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":149
+  /* "mapping_common/entity.py":182
  *         return TrackingInfo(
  *             visibility_time=m.visibility_time,
  *             invisibility_time=m.invisibility_time,             # <<<<<<<<<<<<<<
  *             visibility_frame_count=m.visibility_frame_count,
  *             invisibility_frame_count=m.invisibility_frame_count,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_invisibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_invisibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_invisibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_invisibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":150
+  /* "mapping_common/entity.py":183
  *             visibility_time=m.visibility_time,
  *             invisibility_time=m.invisibility_time,
  *             visibility_frame_count=m.visibility_frame_count,             # <<<<<<<<<<<<<<
  *             invisibility_frame_count=m.invisibility_frame_count,
  *             moving_time=m.moving_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_visibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 150, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_visibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_visibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_visibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":151
+  /* "mapping_common/entity.py":184
  *             invisibility_time=m.invisibility_time,
  *             visibility_frame_count=m.visibility_frame_count,
  *             invisibility_frame_count=m.invisibility_frame_count,             # <<<<<<<<<<<<<<
  *             moving_time=m.moving_time,
  *             standing_time=m.standing_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_invisibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_invisibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_invisibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_invisibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":152
+  /* "mapping_common/entity.py":185
  *             visibility_frame_count=m.visibility_frame_count,
  *             invisibility_frame_count=m.invisibility_frame_count,
  *             moving_time=m.moving_time,             # <<<<<<<<<<<<<<
  *             standing_time=m.standing_time,
  *             moving_time_sum=m.moving_time_sum,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_moving_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 152, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_moving_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":153
+  /* "mapping_common/entity.py":186
  *             invisibility_frame_count=m.invisibility_frame_count,
  *             moving_time=m.moving_time,
  *             standing_time=m.standing_time,             # <<<<<<<<<<<<<<
  *             moving_time_sum=m.moving_time_sum,
  *             standing_time_sum=m.standing_time_sum,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_standing_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 153, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_standing_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_standing_time, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_standing_time, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":154
+  /* "mapping_common/entity.py":187
  *             moving_time=m.moving_time,
  *             standing_time=m.standing_time,
  *             moving_time_sum=m.moving_time_sum,             # <<<<<<<<<<<<<<
  *             standing_time_sum=m.standing_time_sum,
  *             min_linear_speed=m.min_linear_speed,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_moving_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 154, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_moving_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":155
+  /* "mapping_common/entity.py":188
  *             standing_time=m.standing_time,
  *             moving_time_sum=m.moving_time_sum,
  *             standing_time_sum=m.standing_time_sum,             # <<<<<<<<<<<<<<
  *             min_linear_speed=m.min_linear_speed,
  *             max_linear_speed=m.max_linear_speed,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_standing_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_standing_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_standing_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_standing_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":156
+  /* "mapping_common/entity.py":189
  *             moving_time_sum=m.moving_time_sum,
  *             standing_time_sum=m.standing_time_sum,
  *             min_linear_speed=m.min_linear_speed,             # <<<<<<<<<<<<<<
  *             max_linear_speed=m.max_linear_speed,
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_min_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 156, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_min_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_min_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_min_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":157
+  /* "mapping_common/entity.py":190
  *             standing_time_sum=m.standing_time_sum,
  *             min_linear_speed=m.min_linear_speed,
  *             max_linear_speed=m.max_linear_speed,             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_max_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_max_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_max_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_max_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":147
+  /* "mapping_common/entity.py":180
  *     @staticmethod
  *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
  *         return TrackingInfo(             # <<<<<<<<<<<<<<
  *             visibility_time=m.visibility_time,
  *             invisibility_time=m.invisibility_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -7005,7 +7645,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_from_ros_msg(C
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":145
+  /* "mapping_common/entity.py":178
  *     """Maximum linear speed of this entity ever recorded"""
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -7026,7 +7666,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_from_ros_msg(C
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":160
+/* "mapping_common/entity.py":193
  *         )
  * 
  *     def to_ros_msg(self) -> msg.TrackingInfo:             # <<<<<<<<<<<<<<
@@ -7087,12 +7727,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 160, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 193, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 160, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 193, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -7103,7 +7743,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 160, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 193, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -7141,7 +7781,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_2to_ros_msg(CY
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":161
+  /* "mapping_common/entity.py":194
  * 
  *     def to_ros_msg(self) -> msg.TrackingInfo:
  *         return msg.TrackingInfo(             # <<<<<<<<<<<<<<
@@ -7149,142 +7789,142 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_2to_ros_msg(CY
  *             invisibility_time=self.invisibility_time,
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":162
+  /* "mapping_common/entity.py":195
  *     def to_ros_msg(self) -> msg.TrackingInfo:
  *         return msg.TrackingInfo(
  *             visibility_time=self.visibility_time,             # <<<<<<<<<<<<<<
  *             invisibility_time=self.invisibility_time,
  *             visibility_frame_count=self.visibility_frame_count,
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 162, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_visibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 162, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_visibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":163
+  /* "mapping_common/entity.py":196
  *         return msg.TrackingInfo(
  *             visibility_time=self.visibility_time,
  *             invisibility_time=self.invisibility_time,             # <<<<<<<<<<<<<<
  *             visibility_frame_count=self.visibility_frame_count,
  *             invisibility_frame_count=self.invisibility_frame_count,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_invisibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_invisibility_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 196, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_invisibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_invisibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":164
+  /* "mapping_common/entity.py":197
  *             visibility_time=self.visibility_time,
  *             invisibility_time=self.invisibility_time,
  *             visibility_frame_count=self.visibility_frame_count,             # <<<<<<<<<<<<<<
  *             invisibility_frame_count=self.invisibility_frame_count,
  *             moving_time=self.moving_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_visibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 164, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_visibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 197, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_visibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_visibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":165
+  /* "mapping_common/entity.py":198
  *             invisibility_time=self.invisibility_time,
  *             visibility_frame_count=self.visibility_frame_count,
  *             invisibility_frame_count=self.invisibility_frame_count,             # <<<<<<<<<<<<<<
  *             moving_time=self.moving_time,
  *             standing_time=self.standing_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_invisibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_invisibility_frame_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_invisibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_invisibility_frame_count, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":166
+  /* "mapping_common/entity.py":199
  *             visibility_frame_count=self.visibility_frame_count,
  *             invisibility_frame_count=self.invisibility_frame_count,
  *             moving_time=self.moving_time,             # <<<<<<<<<<<<<<
  *             standing_time=self.standing_time,
  *             moving_time_sum=self.moving_time_sum,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_moving_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_moving_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 199, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":167
+  /* "mapping_common/entity.py":200
  *             invisibility_frame_count=self.invisibility_frame_count,
  *             moving_time=self.moving_time,
  *             standing_time=self.standing_time,             # <<<<<<<<<<<<<<
  *             moving_time_sum=self.moving_time_sum,
  *             standing_time_sum=self.standing_time_sum,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_standing_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_standing_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 200, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_standing_time, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_standing_time, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":168
+  /* "mapping_common/entity.py":201
  *             moving_time=self.moving_time,
  *             standing_time=self.standing_time,
  *             moving_time_sum=self.moving_time_sum,             # <<<<<<<<<<<<<<
  *             standing_time_sum=self.standing_time_sum,
  *             min_linear_speed=self.min_linear_speed,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_moving_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 168, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_moving_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":169
+  /* "mapping_common/entity.py":202
  *             standing_time=self.standing_time,
  *             moving_time_sum=self.moving_time_sum,
  *             standing_time_sum=self.standing_time_sum,             # <<<<<<<<<<<<<<
  *             min_linear_speed=self.min_linear_speed,
  *             max_linear_speed=self.max_linear_speed,
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_standing_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_standing_time_sum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 202, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_standing_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_standing_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":170
+  /* "mapping_common/entity.py":203
  *             moving_time_sum=self.moving_time_sum,
  *             standing_time_sum=self.standing_time_sum,
  *             min_linear_speed=self.min_linear_speed,             # <<<<<<<<<<<<<<
  *             max_linear_speed=self.max_linear_speed,
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_min_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_min_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 203, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_min_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_min_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":171
+  /* "mapping_common/entity.py":204
  *             standing_time_sum=self.standing_time_sum,
  *             min_linear_speed=self.min_linear_speed,
  *             max_linear_speed=self.max_linear_speed,             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_max_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_max_linear_speed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_max_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_max_linear_speed, __pyx_t_3) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":161
+  /* "mapping_common/entity.py":194
  * 
  *     def to_ros_msg(self) -> msg.TrackingInfo:
  *         return msg.TrackingInfo(             # <<<<<<<<<<<<<<
  *             visibility_time=self.visibility_time,
  *             invisibility_time=self.invisibility_time,
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 194, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -7292,7 +7932,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_2to_ros_msg(CY
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":160
+  /* "mapping_common/entity.py":193
  *         )
  * 
  *     def to_ros_msg(self) -> msg.TrackingInfo:             # <<<<<<<<<<<<<<
@@ -7313,7 +7953,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrackingInfo_2to_ros_msg(CY
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":226
+/* "mapping_common/entity.py":259
  *     If this entity is supposed to be tracked, tracking_info must not be None"""
  * 
  *     def matches_filter(self, f: FlagFilter) -> bool:             # <<<<<<<<<<<<<<
@@ -7338,8 +7978,8 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
-  CYTHON_UNUSED PyObject *__pyx_v_self = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_f = 0;
+  PyObject *__pyx_v_self = 0;
+  PyObject *__pyx_v_f = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
@@ -7378,7 +8018,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 226, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 259, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -7386,14 +8026,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 226, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 259, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, 1); __PYX_ERR(0, 226, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, 1); __PYX_ERR(0, 259, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "matches_filter") < 0)) __PYX_ERR(0, 226, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "matches_filter") < 0)) __PYX_ERR(0, 259, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -7406,7 +8046,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 226, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("matches_filter", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 259, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -7433,25 +8073,219 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, CYTHON_UNUSED PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_f) {
+static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_matches_filter(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_f) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  unsigned int __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_t_6;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("matches_filter", 1);
 
-  /* "mapping_common/entity.py":235
+  /* "mapping_common/entity.py":268
  *             bool: If f matches self
  *         """
- *         raise NotImplementedError             # <<<<<<<<<<<<<<
+ *         if not self.flags.matches_filter(f):             # <<<<<<<<<<<<<<
+ *             return False
+ *         if f.has_motion is not None:
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 268, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_matches_filter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  __pyx_t_4 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __pyx_t_4 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_v_f};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
+    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 268, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  }
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 268, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_6 = (!__pyx_t_5);
+  if (__pyx_t_6) {
+
+    /* "mapping_common/entity.py":269
+ *         """
+ *         if not self.flags.matches_filter(f):
+ *             return False             # <<<<<<<<<<<<<<
+ *         if f.has_motion is not None:
+ *             if (self.motion is not None) is not f.has_motion:
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __Pyx_INCREF(Py_False);
+    __pyx_r = Py_False;
+    goto __pyx_L0;
+
+    /* "mapping_common/entity.py":268
+ *             bool: If f matches self
+ *         """
+ *         if not self.flags.matches_filter(f):             # <<<<<<<<<<<<<<
+ *             return False
+ *         if f.has_motion is not None:
+ */
+  }
+
+  /* "mapping_common/entity.py":270
+ *         if not self.flags.matches_filter(f):
+ *             return False
+ *         if f.has_motion is not None:             # <<<<<<<<<<<<<<
+ *             if (self.motion is not None) is not f.has_motion:
+ *                 return False
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_has_motion); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 270, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_6 = (__pyx_t_1 != Py_None);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_6) {
+
+    /* "mapping_common/entity.py":271
+ *             return False
+ *         if f.has_motion is not None:
+ *             if (self.motion is not None) is not f.has_motion:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_tracked is not None:
+ */
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 271, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_6 = (__pyx_t_1 != Py_None);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 271, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_has_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 271, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_6 = (__pyx_t_1 != __pyx_t_3);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_6) {
+
+      /* "mapping_common/entity.py":272
+ *         if f.has_motion is not None:
+ *             if (self.motion is not None) is not f.has_motion:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         if f.is_tracked is not None:
+ *             if (self.tracking_info is not None) is not f.is_tracked:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":271
+ *             return False
+ *         if f.has_motion is not None:
+ *             if (self.motion is not None) is not f.has_motion:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         if f.is_tracked is not None:
+ */
+    }
+
+    /* "mapping_common/entity.py":270
+ *         if not self.flags.matches_filter(f):
+ *             return False
+ *         if f.has_motion is not None:             # <<<<<<<<<<<<<<
+ *             if (self.motion is not None) is not f.has_motion:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":273
+ *             if (self.motion is not None) is not f.has_motion:
+ *                 return False
+ *         if f.is_tracked is not None:             # <<<<<<<<<<<<<<
+ *             if (self.tracking_info is not None) is not f.is_tracked:
+ *                 return False
+ */
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_tracked); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 273, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = (__pyx_t_3 != Py_None);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__pyx_t_6) {
+
+    /* "mapping_common/entity.py":274
+ *                 return False
+ *         if f.is_tracked is not None:
+ *             if (self.tracking_info is not None) is not f.is_tracked:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         return True
+ */
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_6 = (__pyx_t_3 != Py_None);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyBool_FromLong(__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_is_tracked); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_6 = (__pyx_t_3 != __pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_6) {
+
+      /* "mapping_common/entity.py":275
+ *         if f.is_tracked is not None:
+ *             if (self.tracking_info is not None) is not f.is_tracked:
+ *                 return False             # <<<<<<<<<<<<<<
+ *         return True
+ * 
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(Py_False);
+      __pyx_r = Py_False;
+      goto __pyx_L0;
+
+      /* "mapping_common/entity.py":274
+ *                 return False
+ *         if f.is_tracked is not None:
+ *             if (self.tracking_info is not None) is not f.is_tracked:             # <<<<<<<<<<<<<<
+ *                 return False
+ *         return True
+ */
+    }
+
+    /* "mapping_common/entity.py":273
+ *             if (self.motion is not None) is not f.has_motion:
+ *                 return False
+ *         if f.is_tracked is not None:             # <<<<<<<<<<<<<<
+ *             if (self.tracking_info is not None) is not f.is_tracked:
+ *                 return False
+ */
+  }
+
+  /* "mapping_common/entity.py":276
+ *             if (self.tracking_info is not None) is not f.is_tracked:
+ *                 return False
+ *         return True             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  __Pyx_Raise(__pyx_builtin_NotImplementedError, 0, 0, 0);
-  __PYX_ERR(0, 235, __pyx_L1_error)
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(Py_True);
+  __pyx_r = Py_True;
+  goto __pyx_L0;
 
-  /* "mapping_common/entity.py":226
+  /* "mapping_common/entity.py":259
  *     If this entity is supposed to be tracked, tracking_info must not be None"""
  * 
  *     def matches_filter(self, f: FlagFilter) -> bool:             # <<<<<<<<<<<<<<
@@ -7461,15 +8295,19 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_matches_filter(CYTHON
 
   /* function exit code */
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("mapping_common.entity.Entity.matches_filter", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
+  __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":237
- *         raise NotImplementedError
+/* "mapping_common/entity.py":278
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Entity) -> "Entity":
@@ -7530,12 +8368,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 237, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 278, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 237, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(0, 278, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -7546,7 +8384,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 237, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 278, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -7594,7 +8432,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/entity.py":243
+  /* "mapping_common/entity.py":284
  *         Note that the returned entity might be a subclass of Entity
  *         """
  *         entity_type = None             # <<<<<<<<<<<<<<
@@ -7604,16 +8442,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
   __Pyx_INCREF(Py_None);
   __pyx_v_entity_type = Py_None;
 
-  /* "mapping_common/entity.py":244
+  /* "mapping_common/entity.py":285
  *         """
  *         entity_type = None
  *         msg_type_lower = m.type_name.lower()             # <<<<<<<<<<<<<<
  *         if msg_type_lower in _entity_supported_classes_dict:
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 285, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_lower); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_lower); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 285, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -7634,42 +8472,42 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 244, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 285, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_msg_type_lower = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":245
+  /* "mapping_common/entity.py":286
  *         entity_type = None
  *         msg_type_lower = m.type_name.lower()
  *         if msg_type_lower in _entity_supported_classes_dict:             # <<<<<<<<<<<<<<
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]
  *         if entity_type is None:
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 286, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_v_msg_type_lower, __pyx_t_1, Py_EQ)); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_v_msg_type_lower, __pyx_t_1, Py_EQ)); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 286, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_5) {
 
-    /* "mapping_common/entity.py":246
+    /* "mapping_common/entity.py":287
  *         msg_type_lower = m.type_name.lower()
  *         if msg_type_lower in _entity_supported_classes_dict:
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]             # <<<<<<<<<<<<<<
  *         if entity_type is None:
  *             rospy.logerr(
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 246, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 287, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_1, __pyx_v_msg_type_lower); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 246, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_1, __pyx_v_msg_type_lower); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 287, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF_SET(__pyx_v_entity_type, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "mapping_common/entity.py":245
+    /* "mapping_common/entity.py":286
  *         entity_type = None
  *         msg_type_lower = m.type_name.lower()
  *         if msg_type_lower in _entity_supported_classes_dict:             # <<<<<<<<<<<<<<
@@ -7678,37 +8516,37 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
  */
   }
 
-  /* "mapping_common/entity.py":247
+  /* "mapping_common/entity.py":288
  *         if msg_type_lower in _entity_supported_classes_dict:
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]
  *         if entity_type is None:             # <<<<<<<<<<<<<<
  *             rospy.logerr(
- *                 f"""Received entity type '{m.type_name}' is not supported.
+ *                 f"Received entity type '{m.type_name}' is not supported."
  */
   __pyx_t_5 = (__pyx_v_entity_type == Py_None);
   if (__pyx_t_5) {
 
-    /* "mapping_common/entity.py":248
+    /* "mapping_common/entity.py":289
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]
  *         if entity_type is None:
  *             rospy.logerr(             # <<<<<<<<<<<<<<
- *                 f"""Received entity type '{m.type_name}' is not supported.
- * Base class 'Entity' will be used instead.
+ *                 f"Received entity type '{m.type_name}' is not supported."
+ *                 f"Base class 'Entity' will be used instead."
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_rospy); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 248, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_rospy); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 289, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_logerr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 248, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_logerr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 289, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "mapping_common/entity.py":249
+    /* "mapping_common/entity.py":290
  *         if entity_type is None:
  *             rospy.logerr(
- *                 f"""Received entity type '{m.type_name}' is not supported.             # <<<<<<<<<<<<<<
- * Base class 'Entity' will be used instead.
- * The type must be one of {_entity_supported_classes_dict.keys()}"""
+ *                 f"Received entity type '{m.type_name}' is not supported."             # <<<<<<<<<<<<<<
+ *                 f"Base class 'Entity' will be used instead."
+ *                 f"The type must be one of {_entity_supported_classes_dict.keys()}"
  */
-    __pyx_t_1 = PyTuple_New(4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 249, __pyx_L1_error)
+    __pyx_t_1 = PyTuple_New(4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 290, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_6 = 0;
     __pyx_t_7 = 127;
@@ -7716,9 +8554,9 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
     __pyx_t_6 += 22;
     __Pyx_GIVEREF(__pyx_kp_u_Received_entity_type);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_kp_u_Received_entity_type);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_name); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 249, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_name); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 290, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_9 = __Pyx_PyObject_FormatSimple(__pyx_t_8, __pyx_empty_unicode); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 249, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_FormatSimple(__pyx_t_8, __pyx_empty_unicode); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 290, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_t_7 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_9) > __pyx_t_7) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_9) : __pyx_t_7;
@@ -7727,12 +8565,20 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
     PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_9);
     __pyx_t_9 = 0;
     __Pyx_INCREF(__pyx_kp_u_is_not_supported_Base_class_Ent);
-    __pyx_t_6 += 86;
+    __pyx_t_6 += 84;
     __Pyx_GIVEREF(__pyx_kp_u_is_not_supported_Base_class_Ent);
     PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_kp_u_is_not_supported_Base_class_Ent);
-    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 249, __pyx_L1_error)
+
+    /* "mapping_common/entity.py":292
+ *                 f"Received entity type '{m.type_name}' is not supported."
+ *                 f"Base class 'Entity' will be used instead."
+ *                 f"The type must be one of {_entity_supported_classes_dict.keys()}"             # <<<<<<<<<<<<<<
+ *             )
+ *             entity_type = Entity
+ */
+    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 292, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_keys); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 249, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_keys); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 292, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_t_8 = NULL;
@@ -7753,11 +8599,11 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
       PyObject *__pyx_callargs[2] = {__pyx_t_8, NULL};
       __pyx_t_9 = __Pyx_PyObject_FastCall(__pyx_t_10, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 249, __pyx_L1_error)
+      if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 292, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     }
-    __pyx_t_10 = __Pyx_PyObject_FormatSimple(__pyx_t_9, __pyx_empty_unicode); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 249, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_FormatSimple(__pyx_t_9, __pyx_empty_unicode); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 292, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __pyx_t_7 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_10) > __pyx_t_7) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_10) : __pyx_t_7;
@@ -7765,7 +8611,15 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
     __Pyx_GIVEREF(__pyx_t_10);
     PyTuple_SET_ITEM(__pyx_t_1, 3, __pyx_t_10);
     __pyx_t_10 = 0;
-    __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_1, 4, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 249, __pyx_L1_error)
+
+    /* "mapping_common/entity.py":290
+ *         if entity_type is None:
+ *             rospy.logerr(
+ *                 f"Received entity type '{m.type_name}' is not supported."             # <<<<<<<<<<<<<<
+ *                 f"Base class 'Entity' will be used instead."
+ *                 f"The type must be one of {_entity_supported_classes_dict.keys()}"
+ */
+    __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_1, 4, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 290, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -7787,41 +8641,41 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 248, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 289, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "mapping_common/entity.py":253
- * The type must be one of {_entity_supported_classes_dict.keys()}"""
+    /* "mapping_common/entity.py":294
+ *                 f"The type must be one of {_entity_supported_classes_dict.keys()}"
  *             )
  *             entity_type = Entity             # <<<<<<<<<<<<<<
  * 
  *         kwargs = entity_type._extract_kwargs(m)
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Entity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Entity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF_SET(__pyx_v_entity_type, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "mapping_common/entity.py":247
+    /* "mapping_common/entity.py":288
  *         if msg_type_lower in _entity_supported_classes_dict:
  *             entity_type = _entity_supported_classes_dict[msg_type_lower]
  *         if entity_type is None:             # <<<<<<<<<<<<<<
  *             rospy.logerr(
- *                 f"""Received entity type '{m.type_name}' is not supported.
+ *                 f"Received entity type '{m.type_name}' is not supported."
  */
   }
 
-  /* "mapping_common/entity.py":255
+  /* "mapping_common/entity.py":296
  *             entity_type = Entity
  * 
  *         kwargs = entity_type._extract_kwargs(m)             # <<<<<<<<<<<<<<
  *         return entity_type(**kwargs)
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_entity_type, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 255, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_entity_type, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 296, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_10 = NULL;
   __pyx_t_4 = 0;
@@ -7841,14 +8695,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
     PyObject *__pyx_callargs[2] = {__pyx_t_10, __pyx_v_m};
     __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 255, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_v_kwargs = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":256
+  /* "mapping_common/entity.py":297
  * 
  *         kwargs = entity_type._extract_kwargs(m)
  *         return entity_type(**kwargs)             # <<<<<<<<<<<<<<
@@ -7858,24 +8712,24 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
   __Pyx_XDECREF(__pyx_r);
   if (unlikely(__pyx_v_kwargs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "argument after ** must be a mapping, not NoneType");
-    __PYX_ERR(0, 256, __pyx_L1_error)
+    __PYX_ERR(0, 297, __pyx_L1_error)
   }
   if (likely(PyDict_CheckExact(__pyx_v_kwargs))) {
-    __pyx_t_3 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 256, __pyx_L1_error)
+    __pyx_t_3 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 297, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg((PyObject*)&PyDict_Type, __pyx_v_kwargs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 256, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg((PyObject*)&PyDict_Type, __pyx_v_kwargs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 297, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   }
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_v_entity_type, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 256, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_v_entity_type, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 297, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":237
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":278
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Entity) -> "Entity":
@@ -7901,7 +8755,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_2from_ros_msg(CYTHON_
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":258
+/* "mapping_common/entity.py":299
  *         return entity_type(**kwargs)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -7963,12 +8817,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 258, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 299, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 258, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 299, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -7979,7 +8833,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 258, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 299, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -8023,16 +8877,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_extract_kwargs", 1);
 
-  /* "mapping_common/entity.py":269
+  /* "mapping_common/entity.py":310
  *         """
  *         motion = (
  *             None if m.flags.has_motion is False else Motion2D.from_ros_msg(m.motion)             # <<<<<<<<<<<<<<
  *         )
  *         tracking_info = (
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 269, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_has_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 269, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_has_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_4 = (__pyx_t_3 == Py_False);
@@ -8041,12 +8895,12 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
     __Pyx_INCREF(Py_None);
     __pyx_t_1 = Py_None;
   } else {
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 269, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 310, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 269, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 310, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 269, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 310, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_6 = NULL;
     __pyx_t_7 = 0;
@@ -8067,7 +8921,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 269, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 310, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
@@ -8077,23 +8931,23 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
   __pyx_v_motion = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":273
+  /* "mapping_common/entity.py":314
  *         tracking_info = (
  *             None
  *             if m.flags.is_tracked is False             # <<<<<<<<<<<<<<
  *             else TrackingInfo.from_ros_msg(m.tracking_info)
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 273, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_is_tracked); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 273, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_is_tracked); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_4 = (__pyx_t_5 == Py_False);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   if (__pyx_t_4) {
 
-    /* "mapping_common/entity.py":272
+    /* "mapping_common/entity.py":313
  *         )
  *         tracking_info = (
  *             None             # <<<<<<<<<<<<<<
@@ -8104,19 +8958,19 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
     __pyx_t_1 = Py_None;
   } else {
 
-    /* "mapping_common/entity.py":274
+    /* "mapping_common/entity.py":315
  *             None
  *             if m.flags.is_tracked is False
  *             else TrackingInfo.from_ros_msg(m.tracking_info)             # <<<<<<<<<<<<<<
  *         )
  *         return {
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 315, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 315, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 315, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_6 = NULL;
     __pyx_t_7 = 0;
@@ -8137,7 +8991,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
       __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 274, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 315, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
@@ -8147,7 +9001,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
   __pyx_v_tracking_info = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":276
+  /* "mapping_common/entity.py":317
  *             else TrackingInfo.from_ros_msg(m.tracking_info)
  *         )
  *         return {             # <<<<<<<<<<<<<<
@@ -8156,45 +9010,45 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
  */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "mapping_common/entity.py":277
+  /* "mapping_common/entity.py":318
  *         )
  *         return {
  *             "confidence": m.confidence,             # <<<<<<<<<<<<<<
  *             "priority": m.priority,
  *             "shape": Shape2D.from_ros_msg(m.shape),
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 277, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_confidence); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 277, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_confidence); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_confidence, __pyx_t_5) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_confidence, __pyx_t_5) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":278
+  /* "mapping_common/entity.py":319
  *         return {
  *             "confidence": m.confidence,
  *             "priority": m.priority,             # <<<<<<<<<<<<<<
  *             "shape": Shape2D.from_ros_msg(m.shape),
  *             "transform": Transform2D.from_ros_msg(m.transform),
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_priority); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_priority); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_priority, __pyx_t_5) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_priority, __pyx_t_5) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":279
+  /* "mapping_common/entity.py":320
  *             "confidence": m.confidence,
  *             "priority": m.priority,
  *             "shape": Shape2D.from_ros_msg(m.shape),             # <<<<<<<<<<<<<<
  *             "transform": Transform2D.from_ros_msg(m.transform),
  *             "timestamp": m.header.stamp,
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Shape2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Shape2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 320, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 320, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 320, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = NULL;
   __pyx_t_7 = 0;
@@ -8215,23 +9069,23 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
     __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 279, __pyx_L1_error)
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 320, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_shape, __pyx_t_5) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_shape, __pyx_t_5) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":280
+  /* "mapping_common/entity.py":321
  *             "priority": m.priority,
  *             "shape": Shape2D.from_ros_msg(m.shape),
  *             "transform": Transform2D.from_ros_msg(m.transform),             # <<<<<<<<<<<<<<
  *             "timestamp": m.header.stamp,
  *             "flags": Flags.from_ros_msg(m.flags),
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 321, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_transform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 280, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_transform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 321, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = NULL;
   __pyx_t_7 = 0;
@@ -8252,41 +9106,41 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
     __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L1_error)
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 321, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_transform, __pyx_t_5) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_transform, __pyx_t_5) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":281
+  /* "mapping_common/entity.py":322
  *             "shape": Shape2D.from_ros_msg(m.shape),
  *             "transform": Transform2D.from_ros_msg(m.transform),
  *             "timestamp": m.header.stamp,             # <<<<<<<<<<<<<<
  *             "flags": Flags.from_ros_msg(m.flags),
  *             "uuid": UUID(bytes=m.uuid.uuid),
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_header); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 281, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_header); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 322, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_stamp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_stamp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 322, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_timestamp, __pyx_t_3) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_timestamp, __pyx_t_3) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":282
+  /* "mapping_common/entity.py":323
  *             "transform": Transform2D.from_ros_msg(m.transform),
  *             "timestamp": m.header.stamp,
  *             "flags": Flags.from_ros_msg(m.flags),             # <<<<<<<<<<<<<<
  *             "uuid": UUID(bytes=m.uuid.uuid),
  *             "sensor_id": m.sensor_id,
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Flags); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Flags); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 323, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 282, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 323, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_flags); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 323, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_6 = NULL;
   __pyx_t_7 = 0;
@@ -8307,72 +9161,72 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
     __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 323, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_flags, __pyx_t_3) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_flags, __pyx_t_3) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":283
+  /* "mapping_common/entity.py":324
  *             "timestamp": m.header.stamp,
  *             "flags": Flags.from_ros_msg(m.flags),
  *             "uuid": UUID(bytes=m.uuid.uuid),             # <<<<<<<<<<<<<<
  *             "sensor_id": m.sensor_id,
  *             "motion": motion,
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_UUID); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_UUID); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_uuid); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_uuid); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_uuid); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_uuid); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_bytes, __pyx_t_6) < 0) __PYX_ERR(0, 283, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_bytes, __pyx_t_6) < 0) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 324, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_uuid, __pyx_t_6) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_uuid, __pyx_t_6) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":284
+  /* "mapping_common/entity.py":325
  *             "flags": Flags.from_ros_msg(m.flags),
  *             "uuid": UUID(bytes=m.uuid.uuid),
  *             "sensor_id": m.sensor_id,             # <<<<<<<<<<<<<<
  *             "motion": motion,
  *             "tracking_info": tracking_info,
  */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_sensor_id); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 284, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_sensor_id); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 325, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_sensor_id, __pyx_t_6) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_sensor_id, __pyx_t_6) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":285
+  /* "mapping_common/entity.py":326
  *             "uuid": UUID(bytes=m.uuid.uuid),
  *             "sensor_id": m.sensor_id,
  *             "motion": motion,             # <<<<<<<<<<<<<<
  *             "tracking_info": tracking_info,
  *         }
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":286
+  /* "mapping_common/entity.py":327
  *             "sensor_id": m.sensor_id,
  *             "motion": motion,
  *             "tracking_info": tracking_info,             # <<<<<<<<<<<<<<
  *         }
  * 
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_tracking_info, __pyx_v_tracking_info) < 0) __PYX_ERR(0, 277, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_u_tracking_info, __pyx_v_tracking_info) < 0) __PYX_ERR(0, 318, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":258
+  /* "mapping_common/entity.py":299
  *         return entity_type(**kwargs)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8397,7 +9251,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_4_extract_kwargs(CYTH
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":289
+/* "mapping_common/entity.py":330
  *         }
  * 
  *     def to_ros_msg(self) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -8458,12 +9312,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 289, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 330, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 289, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 330, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -8474,7 +9328,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 289, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 330, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -8521,28 +9375,28 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":290
+  /* "mapping_common/entity.py":331
  * 
  *     def to_ros_msg(self) -> msg.Entity:
  *         type_name = type(self).__name__             # <<<<<<<<<<<<<<
  *         flags = self.flags.to_ros_msg()
  *         flags.has_motion = self.motion is not None
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_self)), __pyx_n_s_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 290, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(__pyx_v_self)), __pyx_n_s_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 331, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_type_name = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":291
+  /* "mapping_common/entity.py":332
  *     def to_ros_msg(self) -> msg.Entity:
  *         type_name = type(self).__name__
  *         flags = self.flags.to_ros_msg()             # <<<<<<<<<<<<<<
  *         flags.has_motion = self.motion is not None
  *         flags.is_tracked = self.tracking_info is not None
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_flags); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 332, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 332, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -8563,60 +9417,60 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 291, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 332, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_flags = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":292
+  /* "mapping_common/entity.py":333
  *         type_name = type(self).__name__
  *         flags = self.flags.to_ros_msg()
  *         flags.has_motion = self.motion is not None             # <<<<<<<<<<<<<<
  *         flags.is_tracked = self.tracking_info is not None
  *         motion = self.motion.to_ros_msg() if self.motion is not None else msg.Motion2D()
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_5 = (__pyx_t_1 != Py_None);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_flags, __pyx_n_s_has_motion, __pyx_t_1) < 0) __PYX_ERR(0, 292, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_flags, __pyx_n_s_has_motion, __pyx_t_1) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":293
+  /* "mapping_common/entity.py":334
  *         flags = self.flags.to_ros_msg()
  *         flags.has_motion = self.motion is not None
  *         flags.is_tracked = self.tracking_info is not None             # <<<<<<<<<<<<<<
  *         motion = self.motion.to_ros_msg() if self.motion is not None else msg.Motion2D()
  *         tracking_info = (
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 293, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 334, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_5 = (__pyx_t_1 != Py_None);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 293, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 334, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_flags, __pyx_n_s_is_tracked, __pyx_t_1) < 0) __PYX_ERR(0, 293, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_flags, __pyx_n_s_is_tracked, __pyx_t_1) < 0) __PYX_ERR(0, 334, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":294
+  /* "mapping_common/entity.py":335
  *         flags.has_motion = self.motion is not None
  *         flags.is_tracked = self.tracking_info is not None
  *         motion = self.motion.to_ros_msg() if self.motion is not None else msg.Motion2D()             # <<<<<<<<<<<<<<
  *         tracking_info = (
  *             self.tracking_info.to_ros_msg()
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 335, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = (__pyx_t_3 != Py_None);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_5) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 294, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_motion); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 335, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 294, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 335, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -8637,16 +9491,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
       PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 335, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __pyx_t_1 = __pyx_t_3;
     __pyx_t_3 = 0;
   } else {
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 294, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 335, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 294, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_Motion2D); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 335, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_6 = NULL;
@@ -8667,7 +9521,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
       PyObject *__pyx_callargs[2] = {__pyx_t_6, NULL};
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 335, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
@@ -8677,29 +9531,29 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
   __pyx_v_motion = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":297
+  /* "mapping_common/entity.py":338
  *         tracking_info = (
  *             self.tracking_info.to_ros_msg()
  *             if self.tracking_info is not None             # <<<<<<<<<<<<<<
  *             else msg.TrackingInfo()
  *         )
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 297, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 338, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = (__pyx_t_3 != Py_None);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_5) {
 
-    /* "mapping_common/entity.py":296
+    /* "mapping_common/entity.py":337
  *         motion = self.motion.to_ros_msg() if self.motion is not None else msg.Motion2D()
  *         tracking_info = (
  *             self.tracking_info.to_ros_msg()             # <<<<<<<<<<<<<<
  *             if self.tracking_info is not None
  *             else msg.TrackingInfo()
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 296, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_tracking_info); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 337, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 296, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 337, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -8720,7 +9574,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
       PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 337, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
@@ -8728,16 +9582,16 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
     __pyx_t_3 = 0;
   } else {
 
-    /* "mapping_common/entity.py":298
+    /* "mapping_common/entity.py":339
  *             self.tracking_info.to_ros_msg()
  *             if self.tracking_info is not None
  *             else msg.TrackingInfo()             # <<<<<<<<<<<<<<
  *         )
  *         return msg.Entity(
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 298, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 339, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 298, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_TrackingInfo); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 339, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_6 = NULL;
@@ -8758,7 +9612,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
       PyObject *__pyx_callargs[2] = {__pyx_t_6, NULL};
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 298, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 339, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
@@ -8768,7 +9622,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
   __pyx_v_tracking_info = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":300
+  /* "mapping_common/entity.py":341
  *             else msg.TrackingInfo()
  *         )
  *         return msg.Entity(             # <<<<<<<<<<<<<<
@@ -8776,48 +9630,48 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
  *             priority=self.priority,
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 300, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 341, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Entity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 300, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Entity); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 341, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":301
+  /* "mapping_common/entity.py":342
  *         )
  *         return msg.Entity(
  *             confidence=self.confidence,             # <<<<<<<<<<<<<<
  *             priority=self.priority,
  *             shape=self.shape.to_ros_msg(),
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 301, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_confidence); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 301, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_confidence); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_confidence, __pyx_t_2) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_confidence, __pyx_t_2) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":302
+  /* "mapping_common/entity.py":343
  *         return msg.Entity(
  *             confidence=self.confidence,
  *             priority=self.priority,             # <<<<<<<<<<<<<<
  *             shape=self.shape.to_ros_msg(),
  *             transform=self.transform.to_ros_msg(),
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_priority); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 302, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_priority); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 343, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_priority, __pyx_t_2) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_priority, __pyx_t_2) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":303
+  /* "mapping_common/entity.py":344
  *             confidence=self.confidence,
  *             priority=self.priority,
  *             shape=self.shape.to_ros_msg(),             # <<<<<<<<<<<<<<
  *             transform=self.transform.to_ros_msg(),
  *             header=Header(stamp=self.timestamp),
  */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_shape); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 303, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_shape); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 344, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 303, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 344, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_6 = NULL;
@@ -8838,23 +9692,23 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
     PyObject *__pyx_callargs[2] = {__pyx_t_6, NULL};
     __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_7, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 303, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 344, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   }
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_shape, __pyx_t_2) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_shape, __pyx_t_2) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":304
+  /* "mapping_common/entity.py":345
  *             priority=self.priority,
  *             shape=self.shape.to_ros_msg(),
  *             transform=self.transform.to_ros_msg(),             # <<<<<<<<<<<<<<
  *             header=Header(stamp=self.timestamp),
  *             flags=flags,
  */
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_transform); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 304, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_transform); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 345, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 304, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 345, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_7 = NULL;
@@ -8875,119 +9729,119 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
     PyObject *__pyx_callargs[2] = {__pyx_t_7, NULL};
     __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 304, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 345, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_transform, __pyx_t_2) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_transform, __pyx_t_2) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":305
+  /* "mapping_common/entity.py":346
  *             shape=self.shape.to_ros_msg(),
  *             transform=self.transform.to_ros_msg(),
  *             header=Header(stamp=self.timestamp),             # <<<<<<<<<<<<<<
  *             flags=flags,
  *             uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Header); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Header); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 346, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_timestamp); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_timestamp); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 346, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_stamp, __pyx_t_7) < 0) __PYX_ERR(0, 305, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_stamp, __pyx_t_7) < 0) __PYX_ERR(0, 346, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 346, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_header, __pyx_t_7) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_header, __pyx_t_7) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-  /* "mapping_common/entity.py":306
+  /* "mapping_common/entity.py":347
  *             transform=self.transform.to_ros_msg(),
  *             header=Header(stamp=self.timestamp),
  *             flags=flags,             # <<<<<<<<<<<<<<
  *             uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),
  *             sensor_id=self.sensor_id,
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_flags, __pyx_v_flags) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_flags, __pyx_v_flags) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":307
+  /* "mapping_common/entity.py":348
  *             header=Header(stamp=self.timestamp),
  *             flags=flags,
  *             uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),             # <<<<<<<<<<<<<<
  *             sensor_id=self.sensor_id,
  *             motion=motion,
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_uuid_msgs); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_uuid_msgs); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_UniqueID); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_UniqueID); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_uuid); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_uuid); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_bytes); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_bytes); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_uuid, __pyx_t_8) < 0) __PYX_ERR(0, 307, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_uuid, __pyx_t_8) < 0) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 348, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_uuid, __pyx_t_8) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_uuid, __pyx_t_8) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":308
+  /* "mapping_common/entity.py":349
  *             flags=flags,
  *             uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),
  *             sensor_id=self.sensor_id,             # <<<<<<<<<<<<<<
  *             motion=motion,
  *             tracking_info=tracking_info,
  */
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sensor_id); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 308, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sensor_id); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 349, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_sensor_id, __pyx_t_8) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_sensor_id, __pyx_t_8) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":309
+  /* "mapping_common/entity.py":350
  *             uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),
  *             sensor_id=self.sensor_id,
  *             motion=motion,             # <<<<<<<<<<<<<<
  *             tracking_info=tracking_info,
  *             type_name=type_name,
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_motion, __pyx_v_motion) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":310
+  /* "mapping_common/entity.py":351
  *             sensor_id=self.sensor_id,
  *             motion=motion,
  *             tracking_info=tracking_info,             # <<<<<<<<<<<<<<
  *             type_name=type_name,
  *         )
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_tracking_info, __pyx_v_tracking_info) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_tracking_info, __pyx_v_tracking_info) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":311
+  /* "mapping_common/entity.py":352
  *             motion=motion,
  *             tracking_info=tracking_info,
  *             type_name=type_name,             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_type_name, __pyx_v_type_name) < 0) __PYX_ERR(0, 301, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_type_name, __pyx_v_type_name) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":300
+  /* "mapping_common/entity.py":341
  *             else msg.TrackingInfo()
  *         )
  *         return msg.Entity(             # <<<<<<<<<<<<<<
  *             confidence=self.confidence,
  *             priority=self.priority,
  */
-  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 300, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 341, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -8995,7 +9849,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
   __pyx_t_8 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":289
+  /* "mapping_common/entity.py":330
  *         }
  * 
  *     def to_ros_msg(self) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -9023,7 +9877,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_6to_ros_msg(CYTHON_UN
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":314
+/* "mapping_common/entity.py":355
  *         )
  * 
  *     def to_marker(self) -> Marker:             # <<<<<<<<<<<<<<
@@ -9085,12 +9939,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 314, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 355, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_marker") < 0)) __PYX_ERR(0, 314, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_marker") < 0)) __PYX_ERR(0, 355, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -9101,7 +9955,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_marker", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 314, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_marker", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 355, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9142,19 +9996,19 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_8to_marker(CYTHON_UNU
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_marker", 1);
 
-  /* "mapping_common/entity.py":320
+  /* "mapping_common/entity.py":361
  *             Marker: ROS marker message
  *         """
  *         m = self.shape.to_marker(self.transform)             # <<<<<<<<<<<<<<
  * 
  *         m.color.a = 0.5
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 320, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 361, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_marker); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 320, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_marker); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 361, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_transform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 320, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_transform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 361, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -9175,86 +10029,86 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_8to_marker(CYTHON_UNU
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 320, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 361, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_m = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":322
+  /* "mapping_common/entity.py":363
  *         m = self.shape.to_marker(self.transform)
  * 
  *         m.color.a = 0.5             # <<<<<<<<<<<<<<
  *         m.color.r = 128
  *         m.color.g = 128
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 322, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 363, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_a, __pyx_float_0_5) < 0) __PYX_ERR(0, 322, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_a, __pyx_float_0_5) < 0) __PYX_ERR(0, 363, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":323
+  /* "mapping_common/entity.py":364
  * 
  *         m.color.a = 0.5
  *         m.color.r = 128             # <<<<<<<<<<<<<<
  *         m.color.g = 128
  *         m.color.b = 128
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 323, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 364, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_r, __pyx_int_128) < 0) __PYX_ERR(0, 323, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_r, __pyx_int_128) < 0) __PYX_ERR(0, 364, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":324
+  /* "mapping_common/entity.py":365
  *         m.color.a = 0.5
  *         m.color.r = 128
  *         m.color.g = 128             # <<<<<<<<<<<<<<
  *         m.color.b = 128
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 324, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 365, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_g, __pyx_int_128) < 0) __PYX_ERR(0, 324, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_g, __pyx_int_128) < 0) __PYX_ERR(0, 365, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":325
+  /* "mapping_common/entity.py":366
  *         m.color.r = 128
  *         m.color.g = 128
  *         m.color.b = 128             # <<<<<<<<<<<<<<
  * 
  *         m.pose.position.z = m.scale.z / 2.0
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 325, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_color); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 366, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_b, __pyx_int_128) < 0) __PYX_ERR(0, 325, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_1, __pyx_n_s_b, __pyx_int_128) < 0) __PYX_ERR(0, 366, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":327
+  /* "mapping_common/entity.py":368
  *         m.color.b = 128
  * 
  *         m.pose.position.z = m.scale.z / 2.0             # <<<<<<<<<<<<<<
  * 
  *         return m
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_scale); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 327, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_scale); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 327, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyFloat_TrueDivideObjC(__pyx_t_3, __pyx_float_2_0, 2.0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 327, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyFloat_TrueDivideObjC(__pyx_t_3, __pyx_float_2_0, 2.0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_pose); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 327, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_pose); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_position); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 327, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_position); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_z, __pyx_t_1) < 0) __PYX_ERR(0, 327, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_z, __pyx_t_1) < 0) __PYX_ERR(0, 368, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":329
+  /* "mapping_common/entity.py":370
  *         m.pose.position.z = m.scale.z / 2.0
  * 
  *         return m             # <<<<<<<<<<<<<<
@@ -9266,7 +10120,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_8to_marker(CYTHON_UNU
   __pyx_r = __pyx_v_m;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":314
+  /* "mapping_common/entity.py":355
  *         )
  * 
  *     def to_marker(self) -> Marker:             # <<<<<<<<<<<<<<
@@ -9289,7 +10143,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_6Entity_8to_marker(CYTHON_UNU
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":346
+/* "mapping_common/entity.py":387
  *         RIGHT = 2
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -9307,21 +10161,21 @@ static PyObject *__pyx_pf_14mapping_common_6entity___defaults__(CYTHON_UNUSED Py
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__defaults__", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 346, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 387, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_brake_light);
   __Pyx_GIVEREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_brake_light);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_1, 0, __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_brake_light)) __PYX_ERR(0, 346, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_1, 0, __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_brake_light)) __PYX_ERR(0, 387, __pyx_L1_error);
   __Pyx_INCREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_indicator);
   __Pyx_GIVEREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_indicator);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_1, 1, __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_indicator)) __PYX_ERR(0, 346, __pyx_L1_error);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 346, __pyx_L1_error)
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_1, 1, __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_indicator)) __PYX_ERR(0, 387, __pyx_L1_error);
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 387, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 346, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 387, __pyx_L1_error);
   __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(Py_None);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, Py_None)) __PYX_ERR(0, 346, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, Py_None)) __PYX_ERR(0, 387, __pyx_L1_error);
   __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -9404,26 +10258,26 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 346, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 387, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
         if (kw_args > 0) {
           PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_brake_light);
           if (value) { values[1] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
-          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 346, __pyx_L3_error)
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 387, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (kw_args > 0) {
           PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_indicator);
           if (value) { values[2] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
-          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 346, __pyx_L3_error)
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 387, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 346, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 387, __pyx_L3_error)
       }
     } else {
       switch (__pyx_nargs) {
@@ -9442,7 +10296,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 3, __pyx_nargs); __PYX_ERR(0, 346, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 1, 3, __pyx_nargs); __PYX_ERR(0, 387, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9482,7 +10336,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car___init__(CYTHON_UNUSED P
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/entity.py":352
+  /* "mapping_common/entity.py":393
  *         **kwargs,
  *     ):
  *         super().__init__(**kwargs)             # <<<<<<<<<<<<<<
@@ -9490,49 +10344,49 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car___init__(CYTHON_UNUSED P
  *         self.indicator = indicator
  */
   __pyx_t_1 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 352, __pyx_L1_error) }
+  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 393, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 393, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 352, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 393, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 352, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 393, __pyx_L1_error);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 393, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 393, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 393, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 393, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":353
+  /* "mapping_common/entity.py":394
  *     ):
  *         super().__init__(**kwargs)
  *         self.brake_light = brake_light             # <<<<<<<<<<<<<<
  *         self.indicator = indicator
  * 
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_brake_light, __pyx_v_brake_light) < 0) __PYX_ERR(0, 353, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_brake_light, __pyx_v_brake_light) < 0) __PYX_ERR(0, 394, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":354
+  /* "mapping_common/entity.py":395
  *         super().__init__(**kwargs)
  *         self.brake_light = brake_light
  *         self.indicator = indicator             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_indicator, __pyx_v_indicator) < 0) __PYX_ERR(0, 354, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_indicator, __pyx_v_indicator) < 0) __PYX_ERR(0, 395, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":346
+  /* "mapping_common/entity.py":387
  *         RIGHT = 2
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -9555,7 +10409,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car___init__(CYTHON_UNUSED P
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":356
+/* "mapping_common/entity.py":397
  *         self.indicator = indicator
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -9616,12 +10470,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 356, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 397, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 356, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 397, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -9632,7 +10486,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 356, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 397, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9673,29 +10527,29 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_extract_kwargs", 1);
 
-  /* "mapping_common/entity.py":358
+  /* "mapping_common/entity.py":399
  *     @staticmethod
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(Car, Car)._extract_kwargs(m)             # <<<<<<<<<<<<<<
  *         kwargs["brake_light"] = Car.BrakeLightState(m.type_car.brake_light)
  *         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Car); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 358, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Car); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 399, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 358, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 399, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 358, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 399, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 358, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 399, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 358, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 399, __pyx_L1_error);
   __pyx_t_2 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 358, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 399, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 358, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 399, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -9716,28 +10570,28 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
     PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_v_m};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 358, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 399, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __pyx_v_kwargs = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":359
+  /* "mapping_common/entity.py":400
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(Car, Car)._extract_kwargs(m)
  *         kwargs["brake_light"] = Car.BrakeLightState(m.type_car.brake_light)             # <<<<<<<<<<<<<<
  *         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)
  *         return kwargs
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Car); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 359, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Car); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 400, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_BrakeLightState); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 359, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_BrakeLightState); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 400, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_car); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 359, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_car); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 400, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_brake_light); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 359, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_brake_light); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 400, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_4 = NULL;
@@ -9759,28 +10613,28 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 359, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 400, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_brake_light, __pyx_t_1) < 0))) __PYX_ERR(0, 359, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_brake_light, __pyx_t_1) < 0))) __PYX_ERR(0, 400, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":360
+  /* "mapping_common/entity.py":401
  *         kwargs = super(Car, Car)._extract_kwargs(m)
  *         kwargs["brake_light"] = Car.BrakeLightState(m.type_car.brake_light)
  *         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)             # <<<<<<<<<<<<<<
  *         return kwargs
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 360, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_IndicatorState); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 360, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_IndicatorState); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 360, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_car); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_indicator); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 360, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_indicator); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -9802,14 +10656,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 360, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 401, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_indicator, __pyx_t_1) < 0))) __PYX_ERR(0, 360, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_indicator, __pyx_t_1) < 0))) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":361
+  /* "mapping_common/entity.py":402
  *         kwargs["brake_light"] = Car.BrakeLightState(m.type_car.brake_light)
  *         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)
  *         return kwargs             # <<<<<<<<<<<<<<
@@ -9817,12 +10671,12 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  */
   __Pyx_XDECREF(__pyx_r);
-  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 361, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 402, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_kwargs);
   __pyx_r = ((PyObject*)__pyx_v_kwargs);
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":356
+  /* "mapping_common/entity.py":397
  *         self.indicator = indicator
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -9845,7 +10699,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_2_extract_kwargs(CYTHON_
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":363
+/* "mapping_common/entity.py":404
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -9910,19 +10764,19 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 363, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 404, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
         if (kw_args > 0) {
           PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_base_msg);
           if (value) { values[1] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
-          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 363, __pyx_L3_error)
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 404, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 363, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 404, __pyx_L3_error)
       }
     } else {
       switch (__pyx_nargs) {
@@ -9938,7 +10792,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 363, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 404, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9979,7 +10833,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_4to_ros_msg(CYTHON_UNUSE
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":364
+  /* "mapping_common/entity.py":405
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()             # <<<<<<<<<<<<<<
@@ -9987,20 +10841,20 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_4to_ros_msg(CYTHON_UNUSE
  *             brake_light=self.brake_light.value, indicator=self.indicator.value
  */
   __pyx_t_2 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 364, __pyx_L1_error) }
+  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 405, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 364, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 405, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 364, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 405, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 364, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 405, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 364, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 405, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 364, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 405, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -10021,65 +10875,65 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_4to_ros_msg(CYTHON_UNUSE
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 364, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 405, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_m = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":365
+  /* "mapping_common/entity.py":406
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()
  *         m.type_car = msg.TypeCar(             # <<<<<<<<<<<<<<
  *             brake_light=self.brake_light.value, indicator=self.indicator.value
  *         )
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 365, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 406, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeCar); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 365, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeCar); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 406, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":366
+  /* "mapping_common/entity.py":407
  *         m = super().to_ros_msg()
  *         m.type_car = msg.TypeCar(
  *             brake_light=self.brake_light.value, indicator=self.indicator.value             # <<<<<<<<<<<<<<
  *         )
  *         return m
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 366, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_brake_light); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 366, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_brake_light); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 366, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_brake_light, __pyx_t_5) < 0) __PYX_ERR(0, 366, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_brake_light, __pyx_t_5) < 0) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_indicator); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 366, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_indicator); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_value); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 366, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_value); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_indicator, __pyx_t_2) < 0) __PYX_ERR(0, 366, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_indicator, __pyx_t_2) < 0) __PYX_ERR(0, 407, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":365
+  /* "mapping_common/entity.py":406
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()
  *         m.type_car = msg.TypeCar(             # <<<<<<<<<<<<<<
  *             brake_light=self.brake_light.value, indicator=self.indicator.value
  *         )
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 365, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 406, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_car, __pyx_t_2) < 0) __PYX_ERR(0, 365, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_car, __pyx_t_2) < 0) __PYX_ERR(0, 406, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":368
+  /* "mapping_common/entity.py":409
  *             brake_light=self.brake_light.value, indicator=self.indicator.value
  *         )
  *         return m             # <<<<<<<<<<<<<<
@@ -10091,7 +10945,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_4to_ros_msg(CYTHON_UNUSE
   __pyx_r = __pyx_v_m;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":363
+  /* "mapping_common/entity.py":404
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -10114,7 +10968,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_3Car_4to_ros_msg(CYTHON_UNUSE
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":379
+/* "mapping_common/entity.py":420
  *         DASHED = 1
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):             # <<<<<<<<<<<<<<
@@ -10181,7 +11035,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 379, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 420, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -10189,14 +11043,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 379, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 420, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 379, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 420, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 379, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 420, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -10209,7 +11063,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 379, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 420, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10249,7 +11103,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking___init__(CYTHON
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/entity.py":380
+  /* "mapping_common/entity.py":421
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):
  *         super().__init__(**kwargs)             # <<<<<<<<<<<<<<
@@ -10257,40 +11111,40 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking___init__(CYTHON
  * 
  */
   __pyx_t_1 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 380, __pyx_L1_error) }
+  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 421, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 380, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 421, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 380, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 421, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 380, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 421, __pyx_L1_error);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 380, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 421, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 380, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 421, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 380, __pyx_L1_error)
+  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 421, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 380, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 421, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":381
+  /* "mapping_common/entity.py":422
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):
  *         super().__init__(**kwargs)
  *         self.style = style             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_style, __pyx_v_style) < 0) __PYX_ERR(0, 381, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_style, __pyx_v_style) < 0) __PYX_ERR(0, 422, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":379
+  /* "mapping_common/entity.py":420
  *         DASHED = 1
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):             # <<<<<<<<<<<<<<
@@ -10313,7 +11167,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking___init__(CYTHON
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":383
+/* "mapping_common/entity.py":424
  *         self.style = style
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -10374,12 +11228,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 383, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 424, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 383, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 424, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -10390,7 +11244,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 383, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 424, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10431,29 +11285,29 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_2_extract_kwarg
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_extract_kwargs", 1);
 
-  /* "mapping_common/entity.py":385
+  /* "mapping_common/entity.py":426
  *     @staticmethod
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)             # <<<<<<<<<<<<<<
  *         kwargs["style"] = Lanemarking.Style(m.type_lanemarking.style)
  *         return kwargs
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 385, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 426, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 385, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 426, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 385, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 426, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 385, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 426, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 385, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 426, __pyx_L1_error);
   __pyx_t_2 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 385, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 426, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 385, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 426, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -10474,28 +11328,28 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_2_extract_kwarg
     PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_v_m};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 385, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 426, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __pyx_v_kwargs = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":386
+  /* "mapping_common/entity.py":427
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  *         kwargs["style"] = Lanemarking.Style(m.type_lanemarking.style)             # <<<<<<<<<<<<<<
  *         return kwargs
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Lanemarking); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 386, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Lanemarking); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 427, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_Style); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 386, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_Style); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 427, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_lanemarking); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 386, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_lanemarking); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 427, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_style); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 386, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_style); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 427, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_4 = NULL;
@@ -10517,14 +11371,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_2_extract_kwarg
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 386, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 427, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_style, __pyx_t_1) < 0))) __PYX_ERR(0, 386, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_style, __pyx_t_1) < 0))) __PYX_ERR(0, 427, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":387
+  /* "mapping_common/entity.py":428
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  *         kwargs["style"] = Lanemarking.Style(m.type_lanemarking.style)
  *         return kwargs             # <<<<<<<<<<<<<<
@@ -10532,12 +11386,12 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_2_extract_kwarg
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  */
   __Pyx_XDECREF(__pyx_r);
-  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 387, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 428, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_kwargs);
   __pyx_r = ((PyObject*)__pyx_v_kwargs);
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":383
+  /* "mapping_common/entity.py":424
  *         self.style = style
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -10560,7 +11414,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_2_extract_kwarg
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":389
+/* "mapping_common/entity.py":430
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -10625,19 +11479,19 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 389, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 430, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
         if (kw_args > 0) {
           PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_base_msg);
           if (value) { values[1] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
-          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 389, __pyx_L3_error)
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 430, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 389, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 430, __pyx_L3_error)
       }
     } else {
       switch (__pyx_nargs) {
@@ -10653,7 +11507,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 389, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 430, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10694,7 +11548,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_4to_ros_msg(CYT
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":390
+  /* "mapping_common/entity.py":431
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()             # <<<<<<<<<<<<<<
@@ -10702,20 +11556,20 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_4to_ros_msg(CYT
  *         return m
  */
   __pyx_t_2 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 390, __pyx_L1_error) }
+  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 431, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 390, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 431, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 390, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 431, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 390, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 431, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 390, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 431, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 390, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 431, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -10736,42 +11590,42 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_4to_ros_msg(CYT
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 390, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 431, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_m = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":391
+  /* "mapping_common/entity.py":432
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()
  *         m.type_lanemarking = msg.TypeLanemarking(style=self.style.value)             # <<<<<<<<<<<<<<
  *         return m
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeLanemarking); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeLanemarking); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_style); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_style); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_style, __pyx_t_5) < 0) __PYX_ERR(0, 391, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_style, __pyx_t_5) < 0) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 391, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_lanemarking, __pyx_t_5) < 0) __PYX_ERR(0, 391, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_lanemarking, __pyx_t_5) < 0) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":392
+  /* "mapping_common/entity.py":433
  *         m = super().to_ros_msg()
  *         m.type_lanemarking = msg.TypeLanemarking(style=self.style.value)
  *         return m             # <<<<<<<<<<<<<<
@@ -10783,7 +11637,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_4to_ros_msg(CYT
   __pyx_r = __pyx_v_m;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":389
+  /* "mapping_common/entity.py":430
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -10806,7 +11660,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_11Lanemarking_4to_ros_msg(CYT
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":412
+/* "mapping_common/entity.py":453
  *         YELLOW = 2
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):             # <<<<<<<<<<<<<<
@@ -10873,7 +11727,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 412, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 453, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -10881,14 +11735,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 412, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 453, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 412, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 453, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 412, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 453, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -10901,7 +11755,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 412, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 453, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10941,7 +11795,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight___init__(CYTHO
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/entity.py":413
+  /* "mapping_common/entity.py":454
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):
  *         super().__init__(**kwargs)             # <<<<<<<<<<<<<<
@@ -10949,40 +11803,40 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight___init__(CYTHO
  * 
  */
   __pyx_t_1 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 413, __pyx_L1_error) }
+  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 454, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 413, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 454, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 413, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 454, __pyx_L1_error);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 454, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":414
+  /* "mapping_common/entity.py":455
  *     def __init__(self, state: "TrafficLight.State", **kwargs):
  *         super().__init__(**kwargs)
  *         self.state = state             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_state, __pyx_v_state) < 0) __PYX_ERR(0, 414, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_state, __pyx_v_state) < 0) __PYX_ERR(0, 455, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":412
+  /* "mapping_common/entity.py":453
  *         YELLOW = 2
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):             # <<<<<<<<<<<<<<
@@ -11005,7 +11859,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight___init__(CYTHO
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":416
+/* "mapping_common/entity.py":457
  *         self.state = state
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -11066,12 +11920,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 416, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 457, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 416, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "_extract_kwargs") < 0)) __PYX_ERR(0, 457, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -11082,7 +11936,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 416, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_extract_kwargs", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 457, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11123,29 +11977,29 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_2_extract_kwar
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_extract_kwargs", 1);
 
-  /* "mapping_common/entity.py":418
+  /* "mapping_common/entity.py":459
  *     @staticmethod
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)             # <<<<<<<<<<<<<<
  *         kwargs["state"] = TrafficLight.State(m.type_traffic_light.state)
  *         return kwargs
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 418, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 459, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 418, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 459, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 418, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 459, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 418, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 459, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 418, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(0, 459, __pyx_L1_error);
   __pyx_t_2 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 418, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 459, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 418, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_extract_kwargs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 459, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -11166,28 +12020,28 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_2_extract_kwar
     PyObject *__pyx_callargs[2] = {__pyx_t_3, __pyx_v_m};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 418, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 459, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __pyx_v_kwargs = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":419
+  /* "mapping_common/entity.py":460
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  *         kwargs["state"] = TrafficLight.State(m.type_traffic_light.state)             # <<<<<<<<<<<<<<
  *         return kwargs
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 419, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 460, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_State); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 419, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_State); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 460, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_traffic_light); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 419, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_type_traffic_light); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 460, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 419, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 460, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_4 = NULL;
@@ -11209,14 +12063,14 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_2_extract_kwar
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 419, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 460, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_state, __pyx_t_1) < 0))) __PYX_ERR(0, 419, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_v_kwargs, __pyx_n_u_state, __pyx_t_1) < 0))) __PYX_ERR(0, 460, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":420
+  /* "mapping_common/entity.py":461
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  *         kwargs["state"] = TrafficLight.State(m.type_traffic_light.state)
  *         return kwargs             # <<<<<<<<<<<<<<
@@ -11224,12 +12078,12 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_2_extract_kwar
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  */
   __Pyx_XDECREF(__pyx_r);
-  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 420, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_v_kwargs))||((__pyx_v_kwargs) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_v_kwargs))) __PYX_ERR(0, 461, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_kwargs);
   __pyx_r = ((PyObject*)__pyx_v_kwargs);
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":416
+  /* "mapping_common/entity.py":457
  *         self.state = state
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -11252,7 +12106,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_2_extract_kwar
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":422
+/* "mapping_common/entity.py":463
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -11317,19 +12171,19 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 422, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 463, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
         if (kw_args > 0) {
           PyObject* value = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_base_msg);
           if (value) { values[1] = __Pyx_Arg_NewRef_FASTCALL(value); kw_args--; }
-          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 422, __pyx_L3_error)
+          else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 463, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 422, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "to_ros_msg") < 0)) __PYX_ERR(0, 463, __pyx_L3_error)
       }
     } else {
       switch (__pyx_nargs) {
@@ -11345,7 +12199,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 422, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("to_ros_msg", 0, 1, 2, __pyx_nargs); __PYX_ERR(0, 463, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11386,7 +12240,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_4to_ros_msg(CY
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/entity.py":423
+  /* "mapping_common/entity.py":464
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()             # <<<<<<<<<<<<<<
@@ -11394,20 +12248,20 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_4to_ros_msg(CY
  *         return m
  */
   __pyx_t_2 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 423, __pyx_L1_error) }
+  if (!__pyx_t_2) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 464, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 423, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 464, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 423, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 464, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 423, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self)) __PYX_ERR(0, 464, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 423, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 464, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 423, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_to_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 464, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -11428,42 +12282,42 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_4to_ros_msg(CY
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 423, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 464, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_m = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/entity.py":424
+  /* "mapping_common/entity.py":465
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
  *         m = super().to_ros_msg()
  *         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)             # <<<<<<<<<<<<<<
  *         return m
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_msg); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeTrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_TypeTrafficLight); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_state, __pyx_t_5) < 0) __PYX_ERR(0, 424, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_state, __pyx_t_5) < 0) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_traffic_light, __pyx_t_5) < 0) __PYX_ERR(0, 424, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_m, __pyx_n_s_type_traffic_light, __pyx_t_5) < 0) __PYX_ERR(0, 465, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":425
+  /* "mapping_common/entity.py":466
  *         m = super().to_ros_msg()
  *         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)
  *         return m             # <<<<<<<<<<<<<<
@@ -11475,7 +12329,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_4to_ros_msg(CY
   __pyx_r = __pyx_v_m;
   goto __pyx_L0;
 
-  /* "mapping_common/entity.py":422
+  /* "mapping_common/entity.py":463
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
@@ -11498,7 +12352,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_12TrafficLight_4to_ros_msg(CY
   return __pyx_r;
 }
 
-/* "mapping_common/entity.py":430
+/* "mapping_common/entity.py":471
  * @dataclass(init=False)
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):             # <<<<<<<<<<<<<<
@@ -11562,12 +12416,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 430, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 471, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 430, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, __pyx_v_kwargs, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(0, 471, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -11578,7 +12432,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 430, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 471, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11618,7 +12472,7 @@ static PyObject *__pyx_pf_14mapping_common_6entity_10Pedestrian___init__(CYTHON_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/entity.py":431
+  /* "mapping_common/entity.py":472
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):
  *         super().__init__(**kwargs)             # <<<<<<<<<<<<<<
@@ -11626,31 +12480,31 @@ static PyObject *__pyx_pf_14mapping_common_6entity_10Pedestrian___init__(CYTHON_
  * 
  */
   __pyx_t_1 = __Pyx_CyFunction_GetClassObj(__pyx_self);
-  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 431, __pyx_L1_error) }
+  if (!__pyx_t_1) { PyErr_SetString(PyExc_SystemError, "super(): empty __class__ cell"); __PYX_ERR(0, 472, __pyx_L1_error) }
   __Pyx_INCREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 472, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 431, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1)) __PYX_ERR(0, 472, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 431, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self)) __PYX_ERR(0, 472, __pyx_L1_error);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 472, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 472, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_1 = PyDict_Copy(__pyx_v_kwargs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 472, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 472, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":430
+  /* "mapping_common/entity.py":471
  * @dataclass(init=False)
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):             # <<<<<<<<<<<<<<
@@ -11716,6 +12570,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_FlagFilter_2, __pyx_k_FlagFilter_2, sizeof(__pyx_k_FlagFilter_2), 0, 0, 1, 1},
     {&__pyx_n_s_Flags, __pyx_k_Flags, sizeof(__pyx_k_Flags), 0, 0, 1, 1},
     {&__pyx_kp_s_Flags_2, __pyx_k_Flags_2, sizeof(__pyx_k_Flags_2), 0, 0, 1, 0},
+    {&__pyx_n_s_Flags___init, __pyx_k_Flags___init, sizeof(__pyx_k_Flags___init), 0, 0, 1, 1},
     {&__pyx_n_s_Flags_from_ros_msg, __pyx_k_Flags_from_ros_msg, sizeof(__pyx_k_Flags_from_ros_msg), 0, 0, 1, 1},
     {&__pyx_n_s_Flags_matches_filter, __pyx_k_Flags_matches_filter, sizeof(__pyx_k_Flags_matches_filter), 0, 0, 1, 1},
     {&__pyx_n_s_Flags_to_ros_msg, __pyx_k_Flags_to_ros_msg, sizeof(__pyx_k_Flags_to_ros_msg), 0, 0, 1, 1},
@@ -11740,7 +12595,6 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Motion2D_lambda, __pyx_k_Motion2D_lambda, sizeof(__pyx_k_Motion2D_lambda), 0, 0, 1, 1},
     {&__pyx_n_s_Motion2D_to_ros_msg, __pyx_k_Motion2D_to_ros_msg, sizeof(__pyx_k_Motion2D_to_ros_msg), 0, 0, 1, 1},
     {&__pyx_kp_s_Motion_of_an_entity_Speeds_are_g, __pyx_k_Motion_of_an_entity_Speeds_are_g, sizeof(__pyx_k_Motion_of_an_entity_Speeds_are_g), 0, 0, 1, 0},
-    {&__pyx_n_s_NotImplementedError, __pyx_k_NotImplementedError, sizeof(__pyx_k_NotImplementedError), 0, 0, 1, 1},
     {&__pyx_n_s_OFF, __pyx_k_OFF, sizeof(__pyx_k_OFF), 0, 0, 1, 1},
     {&__pyx_n_s_ON, __pyx_k_ON, sizeof(__pyx_k_ON), 0, 0, 1, 1},
     {&__pyx_n_s_Optional, __pyx_k_Optional, sizeof(__pyx_k_Optional), 0, 0, 1, 1},
@@ -11778,7 +12632,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Vector2, __pyx_k_Vector2, sizeof(__pyx_k_Vector2), 0, 0, 1, 1},
     {&__pyx_n_s_YELLOW, __pyx_k_YELLOW, sizeof(__pyx_k_YELLOW), 0, 0, 1, 1},
     {&__pyx_kp_u__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 1, 0, 0},
-    {&__pyx_n_s__44, __pyx_k__44, sizeof(__pyx_k__44), 0, 0, 1, 1},
+    {&__pyx_n_s__47, __pyx_k__47, sizeof(__pyx_k__47), 0, 0, 1, 1},
     {&__pyx_n_s__5, __pyx_k__5, sizeof(__pyx_k__5), 0, 0, 1, 1},
     {&__pyx_n_s_a, __pyx_k_a, sizeof(__pyx_k_a), 0, 0, 1, 1},
     {&__pyx_n_s_angular_velocity, __pyx_k_angular_velocity, sizeof(__pyx_k_angular_velocity), 0, 0, 1, 1},
@@ -11826,12 +12680,17 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_invisibility_frame_count, __pyx_k_invisibility_frame_count, sizeof(__pyx_k_invisibility_frame_count), 0, 0, 1, 1},
     {&__pyx_n_s_invisibility_time, __pyx_k_invisibility_time, sizeof(__pyx_k_invisibility_time), 0, 0, 1, 1},
     {&__pyx_n_s_is_collider, __pyx_k_is_collider, sizeof(__pyx_k_is_collider), 0, 0, 1, 1},
+    {&__pyx_n_s_is_collider_2, __pyx_k_is_collider_2, sizeof(__pyx_k_is_collider_2), 0, 0, 1, 1},
     {&__pyx_n_s_is_coroutine, __pyx_k_is_coroutine, sizeof(__pyx_k_is_coroutine), 0, 0, 1, 1},
     {&__pyx_n_s_is_hero, __pyx_k_is_hero, sizeof(__pyx_k_is_hero), 0, 0, 1, 1},
+    {&__pyx_n_s_is_hero_2, __pyx_k_is_hero_2, sizeof(__pyx_k_is_hero_2), 0, 0, 1, 1},
     {&__pyx_n_s_is_ignored, __pyx_k_is_ignored, sizeof(__pyx_k_is_ignored), 0, 0, 1, 1},
+    {&__pyx_n_s_is_ignored_2, __pyx_k_is_ignored_2, sizeof(__pyx_k_is_ignored_2), 0, 0, 1, 1},
     {&__pyx_n_s_is_lanemark, __pyx_k_is_lanemark, sizeof(__pyx_k_is_lanemark), 0, 0, 1, 1},
+    {&__pyx_n_s_is_lanemark_2, __pyx_k_is_lanemark_2, sizeof(__pyx_k_is_lanemark_2), 0, 0, 1, 1},
     {&__pyx_kp_u_is_not_supported_Base_class_Ent, __pyx_k_is_not_supported_Base_class_Ent, sizeof(__pyx_k_is_not_supported_Base_class_Ent), 0, 1, 0, 0},
     {&__pyx_n_s_is_stopmark, __pyx_k_is_stopmark, sizeof(__pyx_k_is_stopmark), 0, 0, 1, 1},
+    {&__pyx_n_s_is_stopmark_2, __pyx_k_is_stopmark_2, sizeof(__pyx_k_is_stopmark_2), 0, 0, 1, 1},
     {&__pyx_n_s_is_tracked, __pyx_k_is_tracked, sizeof(__pyx_k_is_tracked), 0, 0, 1, 1},
     {&__pyx_n_s_keys, __pyx_k_keys, sizeof(__pyx_k_keys), 0, 0, 1, 1},
     {&__pyx_n_s_kwargs, __pyx_k_kwargs, sizeof(__pyx_k_kwargs), 0, 0, 1, 1},
@@ -11925,9 +12784,8 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
 }
 /* #### Code section: cached_builtins ### */
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_n_s_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_builtin_NotImplementedError = __Pyx_GetBuiltinName(__pyx_n_s_NotImplementedError); if (!__pyx_builtin_NotImplementedError) __PYX_ERR(0, 73, __pyx_L1_error)
-  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 352, __pyx_L1_error)
+  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_n_s_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 393, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 986, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -11972,251 +12830,266 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "mapping_common/entity.py":39
+  /* "mapping_common/entity.py":40
  *     """
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Motion2D) -> "Motion2D":
  *         motion = Vector2.from_ros_msg(m.linear_motion)
  */
-  __pyx_tuple__6 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_motion); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_motion); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
-  __pyx_codeobj__7 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__6, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 39, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__7)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_codeobj__7 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__6, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 40, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__7)) __PYX_ERR(0, 40, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":44
+  /* "mapping_common/entity.py":45
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)
  * 
  *     def to_ros_msg(self) -> msg.Motion2D:             # <<<<<<<<<<<<<<
  *         motion = self.linear_motion.to_ros_msg()
  *         return msg.Motion2D(
  */
-  __pyx_tuple__8 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_motion); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_motion); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
-  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 44, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 45, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 45, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":64
- *     is_hero: bool = False
+  /* "mapping_common/entity.py":68
+ *     _is_hero: bool = False
+ * 
+ *     def __init__(             # <<<<<<<<<<<<<<
+ *         self,
+ *         is_collider: bool = False,
+ */
+  __pyx_tuple__10 = PyTuple_Pack(6, __pyx_n_s_self, __pyx_n_s_is_collider, __pyx_n_s_is_stopmark, __pyx_n_s_is_lanemark, __pyx_n_s_is_ignored, __pyx_n_s_is_hero); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(6, 0, 0, 6, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 68, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_tuple__12 = PyTuple_Pack(5, ((PyObject *)Py_False), ((PyObject *)Py_False), ((PyObject *)Py_False), ((PyObject *)Py_False), ((PyObject *)Py_False)); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__12);
+  __Pyx_GIVEREF(__pyx_tuple__12);
+
+  /* "mapping_common/entity.py":82
+ *         self._is_hero = is_hero
  * 
  *     def matches_filter(self, f: "FlagFilter") -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if these Flags match the filter mask f
  * 
  */
-  __pyx_tuple__10 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_f); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 64, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__10);
-  __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_matches_filter, 64, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 64, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_f); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__13);
+  __Pyx_GIVEREF(__pyx_tuple__13);
+  __pyx_codeobj__14 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_matches_filter, 82, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__14)) __PYX_ERR(0, 82, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":75
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":108
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
  *         return Flags(
  */
-  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_n_s_m); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__12);
-  __Pyx_GIVEREF(__pyx_tuple__12);
-  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 75, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_tuple__15 = PyTuple_Pack(1, __pyx_n_s_m); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__15);
+  __Pyx_GIVEREF(__pyx_tuple__15);
+  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__15, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 108, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) __PYX_ERR(0, 108, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":85
+  /* "mapping_common/entity.py":118
  *         )
  * 
  *     def to_ros_msg(self) -> msg.Flags:             # <<<<<<<<<<<<<<
  *         return msg.Flags(
- *             is_collider=self.is_collider,
+ *             is_collider=self._is_collider,
  */
-  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 85, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__14);
-  __Pyx_GIVEREF(__pyx_tuple__14);
-  __pyx_codeobj__15 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 85, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__15)) __PYX_ERR(0, 85, __pyx_L1_error)
+  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__17);
+  __Pyx_GIVEREF(__pyx_tuple__17);
+  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 118, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 118, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":145
+  /* "mapping_common/entity.py":178
  *     """Maximum linear speed of this entity ever recorded"""
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
  *         return TrackingInfo(
  */
-  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 145, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) __PYX_ERR(0, 145, __pyx_L1_error)
+  __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__15, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 178, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(0, 178, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":160
+  /* "mapping_common/entity.py":193
  *         )
  * 
  *     def to_ros_msg(self) -> msg.TrackingInfo:             # <<<<<<<<<<<<<<
  *         return msg.TrackingInfo(
  *             visibility_time=self.visibility_time,
  */
-  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 160, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 193, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 193, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":226
+  /* "mapping_common/entity.py":259
  *     If this entity is supposed to be tracked, tracking_info must not be None"""
  * 
  *     def matches_filter(self, f: FlagFilter) -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if this entity matches the filter mask f
  * 
  */
-  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_matches_filter, 226, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 226, __pyx_L1_error)
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_matches_filter, 259, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 259, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":237
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":278
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Entity) -> "Entity":
  *         """Creates an entity from m
  */
-  __pyx_tuple__19 = PyTuple_Pack(4, __pyx_n_s_m, __pyx_n_s_entity_type, __pyx_n_s_msg_type_lower, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 237, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 237, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 237, __pyx_L1_error)
+  __pyx_tuple__22 = PyTuple_Pack(4, __pyx_n_s_m, __pyx_n_s_entity_type, __pyx_n_s_msg_type_lower, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__22);
+  __Pyx_GIVEREF(__pyx_tuple__22);
+  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_from_ros_msg, 278, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 278, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":258
+  /* "mapping_common/entity.py":299
  *         return entity_type(**kwargs)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         """Extracts all attributes for the __init__ of this type from m
  */
-  __pyx_tuple__21 = PyTuple_Pack(3, __pyx_n_s_m, __pyx_n_s_motion, __pyx_n_s_tracking_info); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 258, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__21);
-  __Pyx_GIVEREF(__pyx_tuple__21);
-  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 258, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_tuple__24 = PyTuple_Pack(3, __pyx_n_s_m, __pyx_n_s_motion, __pyx_n_s_tracking_info); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(0, 299, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__24);
+  __Pyx_GIVEREF(__pyx_tuple__24);
+  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 299, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 299, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":289
+  /* "mapping_common/entity.py":330
  *         }
  * 
  *     def to_ros_msg(self) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         type_name = type(self).__name__
  *         flags = self.flags.to_ros_msg()
  */
-  __pyx_tuple__23 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_type_name, __pyx_n_s_flags, __pyx_n_s_motion, __pyx_n_s_tracking_info); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(0, 289, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__23);
-  __Pyx_GIVEREF(__pyx_tuple__23);
-  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__23, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 289, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) __PYX_ERR(0, 289, __pyx_L1_error)
+  __pyx_tuple__26 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_type_name, __pyx_n_s_flags, __pyx_n_s_motion, __pyx_n_s_tracking_info); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 330, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__26);
+  __Pyx_GIVEREF(__pyx_tuple__26);
+  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 330, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 330, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":314
+  /* "mapping_common/entity.py":355
  *         )
  * 
  *     def to_marker(self) -> Marker:             # <<<<<<<<<<<<<<
  *         """Creates an ROS marker based on the entity
  * 
  */
-  __pyx_tuple__25 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_m); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__25);
-  __Pyx_GIVEREF(__pyx_tuple__25);
-  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_marker, 314, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(0, 314, __pyx_L1_error)
+  __pyx_tuple__28 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_m); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(0, 355, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__28);
+  __Pyx_GIVEREF(__pyx_tuple__28);
+  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_marker, 355, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) __PYX_ERR(0, 355, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":346
+  /* "mapping_common/entity.py":387
  *         RIGHT = 2
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
  *         brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
  */
-  __pyx_tuple__27 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_brake_light, __pyx_n_s_indicator, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__27)) __PYX_ERR(0, 346, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__27);
-  __Pyx_GIVEREF(__pyx_tuple__27);
-  __pyx_codeobj__28 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__27, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 346, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__28)) __PYX_ERR(0, 346, __pyx_L1_error)
+  __pyx_tuple__30 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_brake_light, __pyx_n_s_indicator, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__30)) __PYX_ERR(0, 387, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__30);
+  __Pyx_GIVEREF(__pyx_tuple__30);
+  __pyx_codeobj__31 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__30, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 387, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__31)) __PYX_ERR(0, 387, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":356
+  /* "mapping_common/entity.py":397
  *         self.indicator = indicator
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(Car, Car)._extract_kwargs(m)
  */
-  __pyx_tuple__29 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__29)) __PYX_ERR(0, 356, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__29);
-  __Pyx_GIVEREF(__pyx_tuple__29);
-  __pyx_codeobj__30 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 356, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__30)) __PYX_ERR(0, 356, __pyx_L1_error)
+  __pyx_tuple__32 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__32)) __PYX_ERR(0, 397, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__32);
+  __Pyx_GIVEREF(__pyx_tuple__32);
+  __pyx_codeobj__33 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__32, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 397, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__33)) __PYX_ERR(0, 397, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":363
+  /* "mapping_common/entity.py":404
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_car = msg.TypeCar(
  */
-  __pyx_tuple__31 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_base_msg, __pyx_n_s_m); if (unlikely(!__pyx_tuple__31)) __PYX_ERR(0, 363, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__31);
-  __Pyx_GIVEREF(__pyx_tuple__31);
-  __pyx_codeobj__32 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 363, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__32)) __PYX_ERR(0, 363, __pyx_L1_error)
-  __pyx_tuple__33 = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(0, 363, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__33);
-  __Pyx_GIVEREF(__pyx_tuple__33);
+  __pyx_tuple__34 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_base_msg, __pyx_n_s_m); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(0, 404, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__34);
+  __Pyx_GIVEREF(__pyx_tuple__34);
+  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 404, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) __PYX_ERR(0, 404, __pyx_L1_error)
+  __pyx_tuple__36 = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_tuple__36)) __PYX_ERR(0, 404, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__36);
+  __Pyx_GIVEREF(__pyx_tuple__36);
 
-  /* "mapping_common/entity.py":379
+  /* "mapping_common/entity.py":420
  *         DASHED = 1
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  *         self.style = style
  */
-  __pyx_tuple__34 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_style, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(0, 379, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__34);
-  __Pyx_GIVEREF(__pyx_tuple__34);
-  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 379, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) __PYX_ERR(0, 379, __pyx_L1_error)
+  __pyx_tuple__37 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_style, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__37)) __PYX_ERR(0, 420, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__37);
+  __Pyx_GIVEREF(__pyx_tuple__37);
+  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 420, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) __PYX_ERR(0, 420, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":383
+  /* "mapping_common/entity.py":424
  *         self.style = style
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  */
-  __pyx_codeobj__36 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 383, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__36)) __PYX_ERR(0, 383, __pyx_L1_error)
+  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__32, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 424, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) __PYX_ERR(0, 424, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":389
+  /* "mapping_common/entity.py":430
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_lanemarking = msg.TypeLanemarking(style=self.style.value)
  */
-  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 389, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) __PYX_ERR(0, 389, __pyx_L1_error)
+  __pyx_codeobj__40 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 430, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__40)) __PYX_ERR(0, 430, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":412
+  /* "mapping_common/entity.py":453
  *         YELLOW = 2
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  *         self.state = state
  */
-  __pyx_tuple__38 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__38)) __PYX_ERR(0, 412, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__38);
-  __Pyx_GIVEREF(__pyx_tuple__38);
-  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__38, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 412, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) __PYX_ERR(0, 412, __pyx_L1_error)
+  __pyx_tuple__41 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__41)) __PYX_ERR(0, 453, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__41);
+  __Pyx_GIVEREF(__pyx_tuple__41);
+  __pyx_codeobj__42 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__41, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 453, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__42)) __PYX_ERR(0, 453, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":416
+  /* "mapping_common/entity.py":457
  *         self.state = state
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  */
-  __pyx_codeobj__40 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 416, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__40)) __PYX_ERR(0, 416, __pyx_L1_error)
+  __pyx_codeobj__43 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__32, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_extract_kwargs, 457, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__43)) __PYX_ERR(0, 457, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":422
+  /* "mapping_common/entity.py":463
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)
  */
-  __pyx_codeobj__41 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 422, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__41)) __PYX_ERR(0, 422, __pyx_L1_error)
+  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_to_ros_msg, 463, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) __PYX_ERR(0, 463, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":430
+  /* "mapping_common/entity.py":471
  * @dataclass(init=False)
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  * 
  */
-  __pyx_tuple__42 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__42)) __PYX_ERR(0, 430, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__42);
-  __Pyx_GIVEREF(__pyx_tuple__42);
-  __pyx_codeobj__43 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__42, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 430, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__43)) __PYX_ERR(0, 430, __pyx_L1_error)
+  __pyx_tuple__45 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_kwargs); if (unlikely(!__pyx_tuple__45)) __PYX_ERR(0, 471, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__45);
+  __Pyx_GIVEREF(__pyx_tuple__45);
+  __pyx_codeobj__46 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__45, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_entity_py, __pyx_n_s_init, 471, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__46)) __PYX_ERR(0, 471, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -12327,12 +13200,12 @@ static int __Pyx_modinit_type_import_code(void) {
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_ptype_14mapping_common_9transform__Coord2 = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "_Coord2", sizeof(struct __pyx_obj_14mapping_common_9transform__Coord2), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform__Coord2),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform__Coord2) __PYX_ERR(3, 3, __pyx_L1_error)
   __pyx_vtabptr_14mapping_common_9transform__Coord2 = (struct __pyx_vtabstruct_14mapping_common_9transform__Coord2*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform__Coord2); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform__Coord2)) __PYX_ERR(3, 3, __pyx_L1_error)
-  __pyx_ptype_14mapping_common_9transform_Point2 = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Point2", sizeof(struct __pyx_obj_14mapping_common_9transform_Point2), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Point2),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Point2) __PYX_ERR(3, 11, __pyx_L1_error)
-  __pyx_vtabptr_14mapping_common_9transform_Point2 = (struct __pyx_vtabstruct_14mapping_common_9transform_Point2*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Point2); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Point2)) __PYX_ERR(3, 11, __pyx_L1_error)
-  __pyx_ptype_14mapping_common_9transform_Vector2 = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Vector2", sizeof(struct __pyx_obj_14mapping_common_9transform_Vector2), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Vector2),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Vector2) __PYX_ERR(3, 14, __pyx_L1_error)
-  __pyx_vtabptr_14mapping_common_9transform_Vector2 = (struct __pyx_vtabstruct_14mapping_common_9transform_Vector2*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Vector2); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Vector2)) __PYX_ERR(3, 14, __pyx_L1_error)
-  __pyx_ptype_14mapping_common_9transform_Transform2D = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Transform2D", sizeof(struct __pyx_obj_14mapping_common_9transform_Transform2D), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Transform2D),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Transform2D) __PYX_ERR(3, 17, __pyx_L1_error)
-  __pyx_vtabptr_14mapping_common_9transform_Transform2D = (struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Transform2D); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Transform2D)) __PYX_ERR(3, 17, __pyx_L1_error)
+  __pyx_ptype_14mapping_common_9transform_Point2 = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Point2", sizeof(struct __pyx_obj_14mapping_common_9transform_Point2), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Point2),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Point2) __PYX_ERR(3, 9, __pyx_L1_error)
+  __pyx_vtabptr_14mapping_common_9transform_Point2 = (struct __pyx_vtabstruct_14mapping_common_9transform_Point2*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Point2); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Point2)) __PYX_ERR(3, 9, __pyx_L1_error)
+  __pyx_ptype_14mapping_common_9transform_Vector2 = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Vector2", sizeof(struct __pyx_obj_14mapping_common_9transform_Vector2), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Vector2),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Vector2) __PYX_ERR(3, 12, __pyx_L1_error)
+  __pyx_vtabptr_14mapping_common_9transform_Vector2 = (struct __pyx_vtabstruct_14mapping_common_9transform_Vector2*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Vector2); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Vector2)) __PYX_ERR(3, 12, __pyx_L1_error)
+  __pyx_ptype_14mapping_common_9transform_Transform2D = __Pyx_ImportType_3_0_11(__pyx_t_1, "mapping_common.transform", "Transform2D", sizeof(struct __pyx_obj_14mapping_common_9transform_Transform2D), __PYX_GET_STRUCT_ALIGNMENT_3_0_11(struct __pyx_obj_14mapping_common_9transform_Transform2D),__Pyx_ImportType_CheckSize_Warn_3_0_11); if (!__pyx_ptype_14mapping_common_9transform_Transform2D) __PYX_ERR(3, 18, __pyx_L1_error)
+  __pyx_vtabptr_14mapping_common_9transform_Transform2D = (struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D*)__Pyx_GetVtable(__pyx_ptype_14mapping_common_9transform_Transform2D); if (unlikely(!__pyx_vtabptr_14mapping_common_9transform_Transform2D)) __PYX_ERR(3, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;
@@ -12950,50 +13823,50 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "mapping_common/entity.py":33
- *     The length of the vector is the velocity in TODO: Speed unit? km/h?
+ *     The length of the vector is the velocity in m/s
  *     """
  *     angular_velocity: float = 0.0             # <<<<<<<<<<<<<<
- *     """Angular velocity in TODO: Speed unit? radians/s?
+ *     """Angular velocity in radians/s
  * 
  */
   if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_angular_velocity, __pyx_float_0_0) < 0) __PYX_ERR(0, 33, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":39
+  /* "mapping_common/entity.py":40
  *     """
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Motion2D) -> "Motion2D":
  *         motion = Vector2.from_ros_msg(m.linear_motion)
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Motion2D) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Motion2D_2) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_8Motion2D_1from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Motion2D_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__7)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Motion2D) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Motion2D_2) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_8Motion2D_1from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Motion2D_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__7)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":44
+  /* "mapping_common/entity.py":45
  *         return Motion2D(linear_motion=motion, angular_velocity=m.angular_velocity)
  * 
  *     def to_ros_msg(self) -> msg.Motion2D:             # <<<<<<<<<<<<<<
  *         motion = self.linear_motion.to_ros_msg()
  *         return msg.Motion2D(
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_Motion2D) < 0) __PYX_ERR(0, 44, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_8Motion2D_3to_ros_msg, 0, __pyx_n_s_Motion2D_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__9)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 44, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_Motion2D) < 0) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_8Motion2D_3to_ros_msg, 0, __pyx_n_s_Motion2D_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__9)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 44, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "mapping_common/entity.py":18
@@ -13042,283 +13915,588 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":52
+  /* "mapping_common/entity.py":53
  * 
- * @dataclass
+ * @dataclass(init=False)
  * class Flags:             # <<<<<<<<<<<<<<
  *     """Dedicated flags an entity can have.
  * 
  */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_Flags, __pyx_n_s_Flags, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Dedicated_flags_an_entity_can_ha); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_Flags, __pyx_n_s_Flags, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Dedicated_flags_an_entity_can_ha); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_collider, __pyx_n_s_bool) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_stopmark, __pyx_n_s_bool) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_lanemark, __pyx_n_s_bool) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_ignored, __pyx_n_s_bool) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_hero, __pyx_n_s_bool) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_collider_2, __pyx_n_s_bool) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_stopmark_2, __pyx_n_s_bool) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_lanemark_2, __pyx_n_s_bool) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_ignored_2, __pyx_n_s_bool) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_hero_2, __pyx_n_s_bool) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":58
+  /* "mapping_common/entity.py":62
  *     """
  * 
- *     is_collider: bool = False             # <<<<<<<<<<<<<<
- *     is_stopmark: bool = False
- *     is_lanemark: bool = False
+ *     _is_collider: bool = False             # <<<<<<<<<<<<<<
+ *     _is_stopmark: bool = False
+ *     _is_lanemark: bool = False
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_collider, Py_False) < 0) __PYX_ERR(0, 58, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_collider_2, Py_False) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":59
+  /* "mapping_common/entity.py":63
  * 
- *     is_collider: bool = False
- *     is_stopmark: bool = False             # <<<<<<<<<<<<<<
- *     is_lanemark: bool = False
- *     is_ignored: bool = False
+ *     _is_collider: bool = False
+ *     _is_stopmark: bool = False             # <<<<<<<<<<<<<<
+ *     _is_lanemark: bool = False
+ *     _is_ignored: bool = False
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_stopmark, Py_False) < 0) __PYX_ERR(0, 59, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":60
- *     is_collider: bool = False
- *     is_stopmark: bool = False
- *     is_lanemark: bool = False             # <<<<<<<<<<<<<<
- *     is_ignored: bool = False
- *     is_hero: bool = False
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_lanemark, Py_False) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":61
- *     is_stopmark: bool = False
- *     is_lanemark: bool = False
- *     is_ignored: bool = False             # <<<<<<<<<<<<<<
- *     is_hero: bool = False
- * 
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_ignored, Py_False) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":62
- *     is_lanemark: bool = False
- *     is_ignored: bool = False
- *     is_hero: bool = False             # <<<<<<<<<<<<<<
- * 
- *     def matches_filter(self, f: "FlagFilter") -> bool:
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_hero, Py_False) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_stopmark_2, Py_False) < 0) __PYX_ERR(0, 63, __pyx_L1_error)
 
   /* "mapping_common/entity.py":64
- *     is_hero: bool = False
+ *     _is_collider: bool = False
+ *     _is_stopmark: bool = False
+ *     _is_lanemark: bool = False             # <<<<<<<<<<<<<<
+ *     _is_ignored: bool = False
+ *     _is_hero: bool = False
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_lanemark_2, Py_False) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":65
+ *     _is_stopmark: bool = False
+ *     _is_lanemark: bool = False
+ *     _is_ignored: bool = False             # <<<<<<<<<<<<<<
+ *     _is_hero: bool = False
+ * 
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_ignored_2, Py_False) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":66
+ *     _is_lanemark: bool = False
+ *     _is_ignored: bool = False
+ *     _is_hero: bool = False             # <<<<<<<<<<<<<<
+ * 
+ *     def __init__(
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_hero_2, Py_False) < 0) __PYX_ERR(0, 66, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":68
+ *     _is_hero: bool = False
+ * 
+ *     def __init__(             # <<<<<<<<<<<<<<
+ *         self,
+ *         is_collider: bool = False,
+ */
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_collider, __pyx_n_s_bool) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_stopmark, __pyx_n_s_bool) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_lanemark, __pyx_n_s_bool) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_ignored, __pyx_n_s_bool) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_hero, __pyx_n_s_bool) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_1__init__, 0, __pyx_n_s_Flags___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_tuple__12);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 68, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":82
+ *         self._is_hero = is_hero
  * 
  *     def matches_filter(self, f: "FlagFilter") -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if these Flags match the filter mask f
  * 
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 64, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_f, __pyx_kp_s_FlagFilter) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_n_s_bool) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_1matches_filter, 0, __pyx_n_s_Flags_matches_filter, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 64, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 82, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_matches_filter, __pyx_t_5) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_f, __pyx_kp_s_FlagFilter) < 0) __PYX_ERR(0, 82, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_n_s_bool) < 0) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_3matches_filter, 0, __pyx_n_s_Flags_matches_filter, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__14)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_matches_filter, __pyx_t_4) < 0) __PYX_ERR(0, 82, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":75
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":108
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Flags) -> "Flags":
  *         return Flags(
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Flags) < 0) __PYX_ERR(0, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Flags_2) < 0) __PYX_ERR(0, 75, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_3from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Flags_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__13)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 75, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_m, __pyx_kp_s_msg_Flags) < 0) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Flags_2) < 0) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_5from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Flags_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__16)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":85
+  /* "mapping_common/entity.py":118
  *         )
  * 
  *     def to_ros_msg(self) -> msg.Flags:             # <<<<<<<<<<<<<<
  *         return msg.Flags(
- *             is_collider=self.is_collider,
+ *             is_collider=self._is_collider,
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 85, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_Flags) < 0) __PYX_ERR(0, 85, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_5to_ros_msg, 0, __pyx_n_s_Flags_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__15)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 85, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 118, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 85, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":51
- * 
- * 
- * @dataclass             # <<<<<<<<<<<<<<
- * class Flags:
- *     """Dedicated flags an entity can have.
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_msg_Flags) < 0) __PYX_ERR(0, 118, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_5Flags_7to_ros_msg, 0, __pyx_n_s_Flags_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 118, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "mapping_common/entity.py":52
  * 
- * @dataclass
+ * 
+ * @dataclass(init=False)             # <<<<<<<<<<<<<<
+ * class Flags:
+ *     """Dedicated flags an entity can have.
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/entity.py":53
+ * 
+ * @dataclass(init=False)
  * class Flags:             # <<<<<<<<<<<<<<
  *     """Dedicated flags an entity can have.
  * 
  */
-  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_Flags, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_Flags, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = NULL;
+  __pyx_t_4 = NULL;
   __pyx_t_7 = 0;
   #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_5))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-      __Pyx_INCREF(__pyx_t_6);
+  if (unlikely(PyMethod_Check(__pyx_t_6))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_6);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_5, function);
+      __Pyx_DECREF_SET(__pyx_t_6, function);
       __pyx_t_7 = 1;
     }
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_3};
-    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_t_3};
+    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 51, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 52, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Flags, __pyx_t_4) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Flags, __pyx_t_5) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":96
+  /* "mapping_common/entity.py":129
  * 
  * @dataclass
  * class FlagFilter:             # <<<<<<<<<<<<<<
  *     """Filter mask to filter entities by their flags
  * 
  */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_FlagFilter_2, __pyx_n_s_FlagFilter_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Filter_mask_to_filter_entities_b); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_FlagFilter_2, __pyx_n_s_FlagFilter_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Filter_mask_to_filter_entities_b); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_has_motion, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_collider, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_tracked, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_stopmark, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_lanemark, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_ignored, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_is_hero, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_has_motion, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_collider, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_tracked, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_stopmark, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_lanemark, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_ignored, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_is_hero, __pyx_kp_s_Optional_bool) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_5) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":102
+  /* "mapping_common/entity.py":135
  *     """
  * 
  *     has_motion: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """motion is not None"""
  *     is_collider: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_has_motion, Py_None) < 0) __PYX_ERR(0, 102, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_has_motion, Py_None) < 0) __PYX_ERR(0, 135, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":104
+  /* "mapping_common/entity.py":137
  *     has_motion: Optional[bool] = None
  *     """motion is not None"""
  *     is_collider: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """hero can collide with this entity"""
  *     is_tracked: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_collider, Py_None) < 0) __PYX_ERR(0, 104, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_collider, Py_None) < 0) __PYX_ERR(0, 137, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":106
+  /* "mapping_common/entity.py":139
  *     is_collider: Optional[bool] = None
  *     """hero can collide with this entity"""
  *     is_tracked: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """tracking_info is not None"""
  *     is_stopmark: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_tracked, Py_None) < 0) __PYX_ERR(0, 106, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_tracked, Py_None) < 0) __PYX_ERR(0, 139, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":108
+  /* "mapping_common/entity.py":141
  *     is_tracked: Optional[bool] = None
  *     """tracking_info is not None"""
  *     is_stopmark: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """entity is a stopmark/-line where hero has to stop and wait"""
  *     is_lanemark: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_stopmark, Py_None) < 0) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_stopmark, Py_None) < 0) __PYX_ERR(0, 141, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":110
+  /* "mapping_common/entity.py":143
  *     is_stopmark: Optional[bool] = None
  *     """entity is a stopmark/-line where hero has to stop and wait"""
  *     is_lanemark: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """entity is a lanemark"""
  *     is_ignored: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_lanemark, Py_None) < 0) __PYX_ERR(0, 110, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_lanemark, Py_None) < 0) __PYX_ERR(0, 143, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":112
+  /* "mapping_common/entity.py":145
  *     is_lanemark: Optional[bool] = None
  *     """entity is a lanemark"""
  *     is_ignored: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """entity should be ignored in all downstream algorithms"""
  *     is_hero: Optional[bool] = None
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_ignored, Py_None) < 0) __PYX_ERR(0, 112, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_ignored, Py_None) < 0) __PYX_ERR(0, 145, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":114
+  /* "mapping_common/entity.py":147
  *     is_ignored: Optional[bool] = None
  *     """entity should be ignored in all downstream algorithms"""
  *     is_hero: Optional[bool] = None             # <<<<<<<<<<<<<<
  *     """this entity is the SssssssssssssssssssssuperCar"""
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_hero, Py_None) < 0) __PYX_ERR(0, 114, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_is_hero, Py_None) < 0) __PYX_ERR(0, 147, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":95
+  /* "mapping_common/entity.py":128
  * 
  * 
  * @dataclass             # <<<<<<<<<<<<<<
  * class FlagFilter:
  *     """Filter mask to filter entities by their flags
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 95, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
 
-  /* "mapping_common/entity.py":96
+  /* "mapping_common/entity.py":129
  * 
  * @dataclass
  * class FlagFilter:             # <<<<<<<<<<<<<<
  *     """Filter mask to filter entities by their flags
  * 
  */
-  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_FlagFilter_2, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_FlagFilter_2, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = NULL;
+  __pyx_t_4 = NULL;
+  __pyx_t_7 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_6))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_6);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_6, function);
+      __pyx_t_7 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_t_3};
+    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  }
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_FlagFilter_2, __pyx_t_5) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "mapping_common/entity.py":152
+ * 
+ * @dataclass
+ * class TrackingInfo:             # <<<<<<<<<<<<<<
+ *     """Information that might be required to consistently track entities"""
+ * 
+ */
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_TrackingInfo, __pyx_n_s_TrackingInfo, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Information_that_might_be_requir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_visibility_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_invisibility_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_visibility_frame_count, __pyx_n_s_int) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_invisibility_frame_count, __pyx_n_s_int) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_moving_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_standing_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_moving_time_sum, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_standing_time_sum, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_min_linear_speed, __pyx_n_s_float) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_max_linear_speed, __pyx_n_s_float) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_5) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":155
+ *     """Information that might be required to consistently track entities"""
+ * 
+ *     visibility_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """How long the entity has been visible for. Never gets reset"""
+ *     invisibility_time: Duration = field(default_factory=Duration)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 155, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/entity.py":157
+ *     visibility_time: Duration = field(default_factory=Duration)
+ *     """How long the entity has been visible for. Never gets reset"""
+ *     invisibility_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """How long the entity has been uninterruptedly not visible.
+ *     Reset when the entity is visible again"""
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Duration); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_5) < 0) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_invisibility_time, __pyx_t_5) < 0) __PYX_ERR(0, 157, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":160
+ *     """How long the entity has been uninterruptedly not visible.
+ *     Reset when the entity is visible again"""
+ *     visibility_frame_count: int = 0             # <<<<<<<<<<<<<<
+ *     """In how many data frames the entity was visible. Never gets reset"""
+ *     invisibility_frame_count: int = 0
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_visibility_frame_count, __pyx_int_0) < 0) __PYX_ERR(0, 160, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":162
+ *     visibility_frame_count: int = 0
+ *     """In how many data frames the entity was visible. Never gets reset"""
+ *     invisibility_frame_count: int = 0             # <<<<<<<<<<<<<<
+ *     """In how many consecutive data frames the entity was not visible.
+ *     Reset when the entity is visible again"""
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_invisibility_frame_count, __pyx_int_0) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":165
+ *     """In how many consecutive data frames the entity was not visible.
+ *     Reset when the entity is visible again"""
+ *     moving_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """How long an entity was moving continuously. Reset when standing"""
+ *     standing_time: Duration = field(default_factory=Duration)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 165, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/entity.py":167
+ *     moving_time: Duration = field(default_factory=Duration)
+ *     """How long an entity was moving continuously. Reset when standing"""
+ *     standing_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """How long an entity stood still continuously. Reset when moving"""
+ *     moving_time_sum: Duration = field(default_factory=Duration)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Duration); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_5) < 0) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_standing_time, __pyx_t_5) < 0) __PYX_ERR(0, 167, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":169
+ *     standing_time: Duration = field(default_factory=Duration)
+ *     """How long an entity stood still continuously. Reset when moving"""
+ *     moving_time_sum: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """Sums of all the time the entity was moving. Never gets reset"""
+ *     standing_time_sum: Duration = field(default_factory=Duration)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/entity.py":171
+ *     moving_time_sum: Duration = field(default_factory=Duration)
+ *     """Sums of all the time the entity was moving. Never gets reset"""
+ *     standing_time_sum: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
+ *     """Sums of all the time the entity was standing still. Never gets reset"""
+ *     min_linear_speed: float = 0.0
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Duration); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_default_factory, __pyx_t_5) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_standing_time_sum, __pyx_t_5) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":173
+ *     standing_time_sum: Duration = field(default_factory=Duration)
+ *     """Sums of all the time the entity was standing still. Never gets reset"""
+ *     min_linear_speed: float = 0.0             # <<<<<<<<<<<<<<
+ *     """Minimum linear speed of this entity ever recorded"""
+ *     max_linear_speed: float = 0.0
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_min_linear_speed, __pyx_float_0_0) < 0) __PYX_ERR(0, 173, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":175
+ *     min_linear_speed: float = 0.0
+ *     """Minimum linear speed of this entity ever recorded"""
+ *     max_linear_speed: float = 0.0             # <<<<<<<<<<<<<<
+ *     """Maximum linear speed of this entity ever recorded"""
+ * 
+ */
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_max_linear_speed, __pyx_float_0_0) < 0) __PYX_ERR(0, 175, __pyx_L1_error)
+
+  /* "mapping_common/entity.py":178
+ *     """Maximum linear speed of this entity ever recorded"""
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
+ *         return TrackingInfo(
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_TrackingInfo) < 0) __PYX_ERR(0, 178, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_TrackingInfo_2) < 0) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrackingInfo_1from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_TrackingInfo_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__19)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 178, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+  /* "mapping_common/entity.py":193
+ *         )
+ * 
+ *     def to_ros_msg(self) -> msg.TrackingInfo:             # <<<<<<<<<<<<<<
+ *         return msg.TrackingInfo(
+ *             visibility_time=self.visibility_time,
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_TrackingInfo) < 0) __PYX_ERR(0, 193, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrackingInfo_3to_ros_msg, 0, __pyx_n_s_TrackingInfo_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_6) < 0) __PYX_ERR(0, 193, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+
+  /* "mapping_common/entity.py":151
+ * 
+ * 
+ * @dataclass             # <<<<<<<<<<<<<<
+ * class TrackingInfo:
+ *     """Information that might be required to consistently track entities"""
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+
+  /* "mapping_common/entity.py":152
+ * 
+ * @dataclass
+ * class TrackingInfo:             # <<<<<<<<<<<<<<
+ *     """Information that might be required to consistently track entities"""
+ * 
+ */
+  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_TrackingInfo, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = NULL;
   __pyx_t_7 = 0;
   #if CYTHON_UNPACK_METHODS
   if (unlikely(PyMethod_Check(__pyx_t_5))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
-    if (likely(__pyx_t_6)) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_4)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_5, function);
       __pyx_t_7 = 1;
@@ -13326,554 +14504,278 @@ if (!__Pyx_RefNanny) {
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_3};
-    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_t_3};
+    __pyx_t_6 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 95, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 151, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_FlagFilter_2, __pyx_t_4) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TrackingInfo, __pyx_t_6) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":119
- * 
- * @dataclass
- * class TrackingInfo:             # <<<<<<<<<<<<<<
- *     """Information that might be required to consistently track entities"""
- * 
- */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_TrackingInfo, __pyx_n_s_TrackingInfo, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Information_that_might_be_requir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_visibility_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_invisibility_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_visibility_frame_count, __pyx_n_s_int) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_invisibility_frame_count, __pyx_n_s_int) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_moving_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_standing_time, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_moving_time_sum, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_standing_time_sum, __pyx_n_s_Duration) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_min_linear_speed, __pyx_n_s_float) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_max_linear_speed, __pyx_n_s_float) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":122
- *     """Information that might be required to consistently track entities"""
- * 
- *     visibility_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """How long the entity has been visible for. Never gets reset"""
- *     invisibility_time: Duration = field(default_factory=Duration)
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_visibility_time, __pyx_t_3) < 0) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "mapping_common/entity.py":124
- *     visibility_time: Duration = field(default_factory=Duration)
- *     """How long the entity has been visible for. Never gets reset"""
- *     invisibility_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """How long the entity has been uninterruptedly not visible.
- *     Reset when the entity is visible again"""
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Duration); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_4) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_invisibility_time, __pyx_t_4) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":127
- *     """How long the entity has been uninterruptedly not visible.
- *     Reset when the entity is visible again"""
- *     visibility_frame_count: int = 0             # <<<<<<<<<<<<<<
- *     """In how many data frames the entity was visible. Never gets reset"""
- *     invisibility_frame_count: int = 0
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_visibility_frame_count, __pyx_int_0) < 0) __PYX_ERR(0, 127, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":129
- *     visibility_frame_count: int = 0
- *     """In how many data frames the entity was visible. Never gets reset"""
- *     invisibility_frame_count: int = 0             # <<<<<<<<<<<<<<
- *     """In how many consecutive data frames the entity was not visible.
- *     Reset when the entity is visible again"""
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_invisibility_frame_count, __pyx_int_0) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":132
- *     """In how many consecutive data frames the entity was not visible.
- *     Reset when the entity is visible again"""
- *     moving_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """How long an entity was moving continuously. Reset when standing"""
- *     standing_time: Duration = field(default_factory=Duration)
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_moving_time, __pyx_t_3) < 0) __PYX_ERR(0, 132, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "mapping_common/entity.py":134
- *     moving_time: Duration = field(default_factory=Duration)
- *     """How long an entity was moving continuously. Reset when standing"""
- *     standing_time: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """How long an entity stood still continuously. Reset when moving"""
- *     moving_time_sum: Duration = field(default_factory=Duration)
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Duration); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_4) < 0) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_standing_time, __pyx_t_4) < 0) __PYX_ERR(0, 134, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":136
- *     standing_time: Duration = field(default_factory=Duration)
- *     """How long an entity stood still continuously. Reset when moving"""
- *     moving_time_sum: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """Sums of all the time the entity was moving. Never gets reset"""
- *     standing_time_sum: Duration = field(default_factory=Duration)
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Duration); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_moving_time_sum, __pyx_t_3) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "mapping_common/entity.py":138
- *     moving_time_sum: Duration = field(default_factory=Duration)
- *     """Sums of all the time the entity was moving. Never gets reset"""
- *     standing_time_sum: Duration = field(default_factory=Duration)             # <<<<<<<<<<<<<<
- *     """Sums of all the time the entity was standing still. Never gets reset"""
- *     min_linear_speed: float = 0.0
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Duration); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_4) < 0) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_standing_time_sum, __pyx_t_4) < 0) __PYX_ERR(0, 138, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":140
- *     standing_time_sum: Duration = field(default_factory=Duration)
- *     """Sums of all the time the entity was standing still. Never gets reset"""
- *     min_linear_speed: float = 0.0             # <<<<<<<<<<<<<<
- *     """Minimum linear speed of this entity ever recorded"""
- *     max_linear_speed: float = 0.0
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_min_linear_speed, __pyx_float_0_0) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":142
- *     min_linear_speed: float = 0.0
- *     """Minimum linear speed of this entity ever recorded"""
- *     max_linear_speed: float = 0.0             # <<<<<<<<<<<<<<
- *     """Maximum linear speed of this entity ever recorded"""
- * 
- */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_max_linear_speed, __pyx_float_0_0) < 0) __PYX_ERR(0, 142, __pyx_L1_error)
-
-  /* "mapping_common/entity.py":145
- *     """Maximum linear speed of this entity ever recorded"""
- * 
- *     @staticmethod             # <<<<<<<<<<<<<<
- *     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
- *         return TrackingInfo(
- */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_m, __pyx_kp_s_msg_TrackingInfo) < 0) __PYX_ERR(0, 145, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_TrackingInfo_2) < 0) __PYX_ERR(0, 145, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrackingInfo_1from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_TrackingInfo_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__16)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "mapping_common/entity.py":160
- *         )
- * 
- *     def to_ros_msg(self) -> msg.TrackingInfo:             # <<<<<<<<<<<<<<
- *         return msg.TrackingInfo(
- *             visibility_time=self.visibility_time,
- */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 160, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_msg_TrackingInfo) < 0) __PYX_ERR(0, 160, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrackingInfo_3to_ros_msg, 0, __pyx_n_s_TrackingInfo_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 160, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 160, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-  /* "mapping_common/entity.py":118
- * 
- * 
- * @dataclass             # <<<<<<<<<<<<<<
- * class TrackingInfo:
- *     """Information that might be required to consistently track entities"""
- */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 118, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-
-  /* "mapping_common/entity.py":119
- * 
- * @dataclass
- * class TrackingInfo:             # <<<<<<<<<<<<<<
- *     """Information that might be required to consistently track entities"""
- * 
- */
-  __pyx_t_3 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_TrackingInfo, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = NULL;
-  __pyx_t_7 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-      __pyx_t_7 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_3};
-    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 118, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TrackingInfo, __pyx_t_5) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "mapping_common/entity.py":176
+  /* "mapping_common/entity.py":209
  * 
  * @dataclass
  * class Entity:             # <<<<<<<<<<<<<<
  *     """A thing of interest around the hero car that has a location and a shape"""
  * 
  */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_Entity, __pyx_n_s_Entity, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_A_thing_of_interest_around_the_h); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_empty_tuple, __pyx_n_s_Entity, __pyx_n_s_Entity, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_A_thing_of_interest_around_the_h); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 209, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_confidence, __pyx_n_s_float) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_priority, __pyx_n_s_float) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_shape, __pyx_n_s_Shape2D) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_transform, __pyx_n_s_Transform2D) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_timestamp, __pyx_n_s_Time) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_flags, __pyx_n_s_Flags) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_uuid, __pyx_n_s_UUID) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_sensor_id, __pyx_kp_s_List_str) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_motion, __pyx_kp_s_Optional_Motion2D) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_tracking_info, __pyx_kp_s_Optional_TrackingInfo) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_5) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_confidence, __pyx_n_s_float) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_priority, __pyx_n_s_float) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_shape, __pyx_n_s_Shape2D) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_transform, __pyx_n_s_Transform2D) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_timestamp, __pyx_n_s_Time) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_flags, __pyx_n_s_Flags) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_uuid, __pyx_n_s_UUID) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_sensor_id, __pyx_kp_s_List_str) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_motion, __pyx_kp_s_Optional_Motion2D) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_tracking_info, __pyx_kp_s_Optional_TrackingInfo) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_annotations, __pyx_t_6) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":187
+  /* "mapping_common/entity.py":220
  *     transform: Transform2D
  *     """Transform2D based on the map origin (hero car)"""
  *     timestamp: Time = field(default_factory=Time)             # <<<<<<<<<<<<<<
  *     """When adding the entity its timestamp is the timestamp
  *     of the associated sensor data
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_field); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 220, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 220, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 187, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 187, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_3) < 0) __PYX_ERR(0, 220, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_timestamp, __pyx_t_3) < 0) __PYX_ERR(0, 187, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_timestamp, __pyx_t_3) < 0) __PYX_ERR(0, 220, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":195
+  /* "mapping_common/entity.py":228
  *     All entities of the output map have the same timestamp as the map.
  *     """
  *     flags: Flags = field(default_factory=Flags)             # <<<<<<<<<<<<<<
  *     """Flags (Categories) this entity is in
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 228, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 195, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Flags); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 195, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 228, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_default_factory, __pyx_t_5) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 195, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_Flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 228, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, __pyx_t_6) < 0) __PYX_ERR(0, 228, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 228, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_flags, __pyx_t_5) < 0) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_flags, __pyx_t_6) < 0) __PYX_ERR(0, 228, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":200
+  /* "mapping_common/entity.py":233
  *     Filter for them with the matches_filter(f) function and a FlagFilter
  *     """
  *     uuid: UUID = uuid4()             # <<<<<<<<<<<<<<
  *     """Unique id of the entity in the map, set by the map
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_uuid4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 200, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_uuid4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 233, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_3 = NULL;
   __pyx_t_7 = 0;
   #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
+  if (unlikely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_5);
     if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
       __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
       __pyx_t_7 = 1;
     }
   }
   #endif
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
-    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_7, 0+__pyx_t_7);
+    __pyx_t_6 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 0+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 200, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 233, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_uuid, __pyx_t_5) < 0) __PYX_ERR(0, 200, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_uuid, __pyx_t_6) < 0) __PYX_ERR(0, 233, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":205
+  /* "mapping_common/entity.py":238
  *     If the entity is tracked, this id is persistent across map data frames
  *     """
  *     sensor_id: List[str] = field(default_factory=list)             # <<<<<<<<<<<<<<
  *     """Sort-of unique id(s) set by the sensor
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 205, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_field); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 238, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 238, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_default_factory, ((PyObject *)(&PyList_Type))) < 0) __PYX_ERR(0, 205, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 205, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_default_factory, ((PyObject *)(&PyList_Type))) < 0) __PYX_ERR(0, 238, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 238, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_sensor_id, __pyx_t_3) < 0) __PYX_ERR(0, 205, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_sensor_id, __pyx_t_3) < 0) __PYX_ERR(0, 238, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":214
+  /* "mapping_common/entity.py":247
  *     Mainly set from the tracking id outputs of the yolov11 model.
  *     """
  *     motion: Optional[Motion2D] = None             # <<<<<<<<<<<<<<
  *     """The motion of this entity
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_motion, Py_None) < 0) __PYX_ERR(0, 214, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_motion, Py_None) < 0) __PYX_ERR(0, 247, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":221
+  /* "mapping_common/entity.py":254
  *     Some algorithms might assume the motion is zero when unset.
  *     """
  *     tracking_info: Optional[TrackingInfo] = None             # <<<<<<<<<<<<<<
  *     """Hold the tracking information for this entity
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_tracking_info, Py_None) < 0) __PYX_ERR(0, 221, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_tracking_info, Py_None) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":226
+  /* "mapping_common/entity.py":259
  *     If this entity is supposed to be tracked, tracking_info must not be None"""
  * 
  *     def matches_filter(self, f: FlagFilter) -> bool:             # <<<<<<<<<<<<<<
  *         """Returns if this entity matches the filter mask f
  * 
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 226, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_f, __pyx_n_s_FlagFilter_2) < 0) __PYX_ERR(0, 226, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_n_s_bool) < 0) __PYX_ERR(0, 226, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_1matches_filter, 0, __pyx_n_s_Entity_matches_filter, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_f, __pyx_n_s_FlagFilter_2) < 0) __PYX_ERR(0, 259, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_n_s_bool) < 0) __PYX_ERR(0, 259, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_1matches_filter, 0, __pyx_n_s_Entity_matches_filter, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 259, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_matches_filter, __pyx_t_4) < 0) __PYX_ERR(0, 226, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_matches_filter, __pyx_t_5) < 0) __PYX_ERR(0, 259, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":237
- *         raise NotImplementedError
+  /* "mapping_common/entity.py":278
+ *         return True
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Entity) -> "Entity":
  *         """Creates an entity from m
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 237, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 237, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Entity_2) < 0) __PYX_ERR(0, 237, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_3from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Entity_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 237, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Entity_2) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_3from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Entity_from_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__23)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 237, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 237, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":258
+  /* "mapping_common/entity.py":299
  *         return entity_type(**kwargs)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         """Extracts all attributes for the __init__ of this type from m
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 258, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_5_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Entity__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__22)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 299, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 299, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 299, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_5_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Entity__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__25)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 299, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 258, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 299, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_extract_kwargs, __pyx_t_4) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_extract_kwargs, __pyx_t_5) < 0) __PYX_ERR(0, 299, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":289
+  /* "mapping_common/entity.py":330
  *         }
  * 
  *     def to_ros_msg(self) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         type_name = type(self).__name__
  *         flags = self.flags.to_ros_msg()
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 289, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 289, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_7to_ros_msg, 0, __pyx_n_s_Entity_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__24)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 289, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 330, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 330, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_7to_ros_msg, 0, __pyx_n_s_Entity_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__27)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 330, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_3) < 0) __PYX_ERR(0, 289, __pyx_L1_error)
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_ros_msg, __pyx_t_3) < 0) __PYX_ERR(0, 330, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":314
+  /* "mapping_common/entity.py":355
  *         )
  * 
  *     def to_marker(self) -> Marker:             # <<<<<<<<<<<<<<
  *         """Creates an ROS marker based on the entity
  * 
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 314, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 355, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_n_s_Marker) < 0) __PYX_ERR(0, 314, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_9to_marker, 0, __pyx_n_s_Entity_to_marker, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_n_s_Marker) < 0) __PYX_ERR(0, 355, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_6Entity_9to_marker, 0, __pyx_n_s_Entity_to_marker, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__29)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 355, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_marker, __pyx_t_4) < 0) __PYX_ERR(0, 314, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_to_marker, __pyx_t_5) < 0) __PYX_ERR(0, 355, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":175
+  /* "mapping_common/entity.py":208
  * 
  * 
  * @dataclass             # <<<<<<<<<<<<<<
  * class Entity:
  *     """A thing of interest around the hero car that has a location and a shape"""
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 175, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
 
-  /* "mapping_common/entity.py":176
+  /* "mapping_common/entity.py":209
  * 
  * @dataclass
  * class Entity:             # <<<<<<<<<<<<<<
  *     """A thing of interest around the hero car that has a location and a shape"""
  * 
  */
-  __pyx_t_5 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_Entity, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = NULL;
+  __pyx_t_6 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_n_s_Entity, __pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_4 = NULL;
   __pyx_t_7 = 0;
   #if CYTHON_UNPACK_METHODS
   if (unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_6)) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_4)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
       __pyx_t_7 = 1;
@@ -13881,309 +14783,309 @@ if (!__Pyx_RefNanny) {
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_6, __pyx_t_5};
-    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 175, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_t_6};
+    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Entity, __pyx_t_4) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Entity, __pyx_t_5) < 0) __PYX_ERR(0, 209, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":333
+  /* "mapping_common/entity.py":374
  * 
  * @dataclass(init=False)
  * class Car(Entity):             # <<<<<<<<<<<<<<
  *     brake_light: "Car.BrakeLightState"
  *     indicator: "Car.IndicatorState"
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 333, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 333, __pyx_L1_error);
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_Py3MetaclassPrepare(__pyx_t_3, __pyx_t_2, __pyx_n_s_Car, __pyx_n_s_Car, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 333, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (__pyx_t_2 != __pyx_t_4) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_5, "__orig_bases__", __pyx_t_4) < 0))) __PYX_ERR(0, 333, __pyx_L1_error)
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyList_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 333, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2)) __PYX_ERR(0, 374, __pyx_L1_error);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = __Pyx_Py3MetaclassPrepare(__pyx_t_3, __pyx_t_2, __pyx_n_s_Car, __pyx_n_s_Car, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_brake_light, __pyx_kp_s_Car_BrakeLightState) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_indicator, __pyx_kp_s_Car_IndicatorState) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_annotations, __pyx_t_6) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__pyx_t_2 != __pyx_t_5) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_6, "__orig_bases__", __pyx_t_5) < 0))) __PYX_ERR(0, 374, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = PyList_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_brake_light, __pyx_kp_s_Car_BrakeLightState) < 0) __PYX_ERR(0, 374, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_indicator, __pyx_kp_s_Car_IndicatorState) < 0) __PYX_ERR(0, 374, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":337
+  /* "mapping_common/entity.py":378
  *     indicator: "Car.IndicatorState"
  * 
  *     class BrakeLightState(Enum):             # <<<<<<<<<<<<<<
  *         OFF = 0
  *         ON = 1
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_Enum); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 337, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 337, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Enum); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 378, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 378, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6)) __PYX_ERR(0, 337, __pyx_L1_error);
-  __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PEP560_update_bases(__pyx_t_8); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 337, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_9 = __Pyx_CalculateMetaclass(NULL, __pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 337, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_4);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_4)) __PYX_ERR(0, 378, __pyx_L1_error);
+  __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PEP560_update_bases(__pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 378, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_9 = __Pyx_CalculateMetaclass(NULL, __pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 378, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_10 = __Pyx_Py3MetaclassPrepare(__pyx_t_9, __pyx_t_6, __pyx_n_s_BrakeLightState, __pyx_n_s_Car_BrakeLightState_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 337, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_Py3MetaclassPrepare(__pyx_t_9, __pyx_t_4, __pyx_n_s_BrakeLightState, __pyx_n_s_Car_BrakeLightState_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 378, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (__pyx_t_6 != __pyx_t_8) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_10, "__orig_bases__", __pyx_t_8) < 0))) __PYX_ERR(0, 337, __pyx_L1_error)
+  if (__pyx_t_4 != __pyx_t_8) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_10, "__orig_bases__", __pyx_t_8) < 0))) __PYX_ERR(0, 378, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":338
+  /* "mapping_common/entity.py":379
  * 
  *     class BrakeLightState(Enum):
  *         OFF = 0             # <<<<<<<<<<<<<<
  *         ON = 1
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_OFF, __pyx_int_0) < 0) __PYX_ERR(0, 338, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_OFF, __pyx_int_0) < 0) __PYX_ERR(0, 379, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":339
+  /* "mapping_common/entity.py":380
  *     class BrakeLightState(Enum):
  *         OFF = 0
  *         ON = 1             # <<<<<<<<<<<<<<
  * 
  *     class IndicatorState(Enum):
  */
-  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_ON, __pyx_int_1) < 0) __PYX_ERR(0, 339, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_ON, __pyx_int_1) < 0) __PYX_ERR(0, 380, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":337
+  /* "mapping_common/entity.py":378
  *     indicator: "Car.IndicatorState"
  * 
  *     class BrakeLightState(Enum):             # <<<<<<<<<<<<<<
  *         OFF = 0
  *         ON = 1
  */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_9, __pyx_n_s_BrakeLightState, __pyx_t_6, __pyx_t_10, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 337, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_9, __pyx_n_s_BrakeLightState, __pyx_t_4, __pyx_t_10, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 378, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_BrakeLightState, __pyx_t_8) < 0) __PYX_ERR(0, 337, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_BrakeLightState, __pyx_t_8) < 0) __PYX_ERR(0, 378, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":341
+  /* "mapping_common/entity.py":382
  *         ON = 1
  * 
  *     class IndicatorState(Enum):             # <<<<<<<<<<<<<<
  *         OFF = 0
  *         LEFT = 1
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_Enum); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 341, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 341, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Enum); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 382, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 382, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6)) __PYX_ERR(0, 341, __pyx_L1_error);
-  __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 341, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_10 = __Pyx_CalculateMetaclass(NULL, __pyx_t_6); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 341, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_4);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_4)) __PYX_ERR(0, 382, __pyx_L1_error);
+  __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 382, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_10 = __Pyx_CalculateMetaclass(NULL, __pyx_t_4); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 382, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_Py3MetaclassPrepare(__pyx_t_10, __pyx_t_6, __pyx_n_s_IndicatorState, __pyx_n_s_Car_IndicatorState_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 341, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3MetaclassPrepare(__pyx_t_10, __pyx_t_4, __pyx_n_s_IndicatorState, __pyx_n_s_Car_IndicatorState_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 382, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (__pyx_t_6 != __pyx_t_9) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_8, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 341, __pyx_L1_error)
+  if (__pyx_t_4 != __pyx_t_9) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_8, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 382, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "mapping_common/entity.py":342
+  /* "mapping_common/entity.py":383
  * 
  *     class IndicatorState(Enum):
  *         OFF = 0             # <<<<<<<<<<<<<<
  *         LEFT = 1
  *         RIGHT = 2
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_OFF, __pyx_int_0) < 0) __PYX_ERR(0, 342, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_OFF, __pyx_int_0) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":343
+  /* "mapping_common/entity.py":384
  *     class IndicatorState(Enum):
  *         OFF = 0
  *         LEFT = 1             # <<<<<<<<<<<<<<
  *         RIGHT = 2
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_LEFT, __pyx_int_1) < 0) __PYX_ERR(0, 343, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_LEFT, __pyx_int_1) < 0) __PYX_ERR(0, 384, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":344
+  /* "mapping_common/entity.py":385
  *         OFF = 0
  *         LEFT = 1
  *         RIGHT = 2             # <<<<<<<<<<<<<<
  * 
  *     def __init__(
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_RIGHT, __pyx_int_2) < 0) __PYX_ERR(0, 344, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_RIGHT, __pyx_int_2) < 0) __PYX_ERR(0, 385, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":341
+  /* "mapping_common/entity.py":382
  *         ON = 1
  * 
  *     class IndicatorState(Enum):             # <<<<<<<<<<<<<<
  *         OFF = 0
  *         LEFT = 1
  */
-  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_10, __pyx_n_s_IndicatorState, __pyx_t_6, __pyx_t_8, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 341, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_10, __pyx_n_s_IndicatorState, __pyx_t_4, __pyx_t_8, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 382, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_IndicatorState, __pyx_t_9) < 0) __PYX_ERR(0, 341, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_IndicatorState, __pyx_t_9) < 0) __PYX_ERR(0, 382, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":346
+  /* "mapping_common/entity.py":387
  *         RIGHT = 2
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
  *         self,
  *         brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
  */
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_brake_light, __pyx_kp_s_Car_BrakeLightState) < 0) __PYX_ERR(0, 346, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_indicator, __pyx_kp_s_Car_IndicatorState) < 0) __PYX_ERR(0, 346, __pyx_L1_error)
-  __pyx_t_10 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_1__init__, 0, __pyx_n_s_Car___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__28)); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 346, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 387, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_brake_light, __pyx_kp_s_Car_BrakeLightState) < 0) __PYX_ERR(0, 387, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_indicator, __pyx_kp_s_Car_IndicatorState) < 0) __PYX_ERR(0, 387, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_1__init__, 0, __pyx_n_s_Car___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__31)); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 387, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_INCREF(__pyx_t_10);
-  PyList_Append(__pyx_t_4, __pyx_t_10);
+  PyList_Append(__pyx_t_5, __pyx_t_10);
   __Pyx_GIVEREF(__pyx_t_10);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_10, sizeof(__pyx_defaults), 2)) __PYX_ERR(0, 346, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_10, sizeof(__pyx_defaults), 2)) __PYX_ERR(0, 387, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":348
+  /* "mapping_common/entity.py":389
  *     def __init__(
  *         self,
  *         brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,             # <<<<<<<<<<<<<<
  *         indicator: "Car.IndicatorState" = IndicatorState.OFF,
  *         **kwargs,
  */
-  __pyx_t_8 = PyObject_GetItem(__pyx_t_5, __pyx_n_s_BrakeLightState);
+  __pyx_t_8 = PyObject_GetItem(__pyx_t_6, __pyx_n_s_BrakeLightState);
   if (unlikely(!__pyx_t_8)) {
     PyErr_Clear();
     __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_BrakeLightState);
   }
-  if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 348, __pyx_L1_error)
+  if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 389, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_OFF); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 348, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_OFF); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 389, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_t_10)->__pyx_arg_brake_light = __pyx_t_9;
   __Pyx_GIVEREF(__pyx_t_9);
   __pyx_t_9 = 0;
 
-  /* "mapping_common/entity.py":349
+  /* "mapping_common/entity.py":390
  *         self,
  *         brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
  *         indicator: "Car.IndicatorState" = IndicatorState.OFF,             # <<<<<<<<<<<<<<
  *         **kwargs,
  *     ):
  */
-  __pyx_t_9 = PyObject_GetItem(__pyx_t_5, __pyx_n_s_IndicatorState);
+  __pyx_t_9 = PyObject_GetItem(__pyx_t_6, __pyx_n_s_IndicatorState);
   if (unlikely(!__pyx_t_9)) {
     PyErr_Clear();
     __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_n_s_IndicatorState);
   }
-  if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 349, __pyx_L1_error)
+  if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 390, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_OFF); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 349, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_OFF); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 390, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_t_10)->__pyx_arg_indicator = __pyx_t_8;
   __Pyx_GIVEREF(__pyx_t_8);
   __pyx_t_8 = 0;
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_10, __pyx_pf_14mapping_common_6entity___defaults__);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_10, __pyx_t_6);
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_init, __pyx_t_10) < 0) __PYX_ERR(0, 346, __pyx_L1_error)
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_10, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_init, __pyx_t_10) < 0) __PYX_ERR(0, 387, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":356
+  /* "mapping_common/entity.py":397
  *         self.indicator = indicator
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(Car, Car)._extract_kwargs(m)
  */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 356, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 397, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 356, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 356, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Car__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__30)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 356, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_10);
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 397, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 397, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Car__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__33)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 397, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_10);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_6); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 356, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 397, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_extract_kwargs, __pyx_t_10) < 0) __PYX_ERR(0, 356, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_extract_kwargs, __pyx_t_10) < 0) __PYX_ERR(0, 397, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":363
+  /* "mapping_common/entity.py":404
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_car = msg.TypeCar(
  */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 363, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 404, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 363, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 363, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_5to_ros_msg, 0, __pyx_n_s_Car_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__32)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 363, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_INCREF(__pyx_t_6);
-  PyList_Append(__pyx_t_4, __pyx_t_6);
-  __Pyx_GIVEREF(__pyx_t_6);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_6, __pyx_tuple__33);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_10);
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 404, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 404, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_3Car_5to_ros_msg, 0, __pyx_n_s_Car_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__35)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 404, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_INCREF(__pyx_t_4);
+  PyList_Append(__pyx_t_5, __pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_4);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_tuple__36);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_10);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_to_ros_msg, __pyx_t_6) < 0) __PYX_ERR(0, 363, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 404, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "mapping_common/entity.py":332
+  /* "mapping_common/entity.py":373
  * 
  * 
  * @dataclass(init=False)             # <<<<<<<<<<<<<<
  * class Car(Entity):
  *     brake_light: "Car.BrakeLightState"
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 332, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 373, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 332, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 373, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 332, __pyx_L1_error)
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 332, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 373, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 373, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":333
+  /* "mapping_common/entity.py":374
  * 
  * @dataclass(init=False)
  * class Car(Entity):             # <<<<<<<<<<<<<<
  *     brake_light: "Car.BrakeLightState"
  *     indicator: "Car.IndicatorState"
  */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_3, __pyx_n_s_Car, __pyx_t_2, __pyx_t_5, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 333, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_3, __pyx_n_s_Car, __pyx_t_2, __pyx_t_6, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_10 = NULL;
   __pyx_t_7 = 0;
@@ -14201,199 +15103,199 @@ if (!__Pyx_RefNanny) {
   #endif
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_10, __pyx_t_8};
-    __pyx_t_6 = __Pyx_PyObject_FastCall(__pyx_t_9, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_9, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 332, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 373, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   }
-  if (__Pyx_CyFunction_InitClassCell(__pyx_t_4, __pyx_t_6) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Car, __pyx_t_6) < 0) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (__Pyx_CyFunction_InitClassCell(__pyx_t_5, __pyx_t_4) < 0) __PYX_ERR(0, 374, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Car, __pyx_t_4) < 0) __PYX_ERR(0, 374, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":372
+  /* "mapping_common/entity.py":413
  * 
  * @dataclass(init=False)
  * class Lanemarking(Entity):             # <<<<<<<<<<<<<<
  *     style: "Lanemarking.Style"
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 372, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2)) __PYX_ERR(0, 413, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 372, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_Py3MetaclassPrepare(__pyx_t_5, __pyx_t_2, __pyx_n_s_Lanemarking, __pyx_n_s_Lanemarking, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_4 = __Pyx_Py3MetaclassPrepare(__pyx_t_6, __pyx_t_2, __pyx_n_s_Lanemarking, __pyx_n_s_Lanemarking, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   if (__pyx_t_2 != __pyx_t_3) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_6, "__orig_bases__", __pyx_t_3) < 0))) __PYX_ERR(0, 372, __pyx_L1_error)
+    if (unlikely((PyDict_SetItemString(__pyx_t_4, "__orig_bases__", __pyx_t_3) < 0))) __PYX_ERR(0, 413, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 372, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_style, __pyx_kp_s_Lanemarking_Style) < 0) __PYX_ERR(0, 372, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_annotations, __pyx_t_4) < 0) __PYX_ERR(0, 372, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 413, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_style, __pyx_kp_s_Lanemarking_Style) < 0) __PYX_ERR(0, 413, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_annotations, __pyx_t_5) < 0) __PYX_ERR(0, 413, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":375
+  /* "mapping_common/entity.py":416
  *     style: "Lanemarking.Style"
  * 
  *     class Style(Enum):             # <<<<<<<<<<<<<<
  *         SOLID = 0
  *         DASHED = 1
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Enum); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 375, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Enum); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 416, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 416, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_4)) __PYX_ERR(0, 375, __pyx_L1_error);
-  __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 375, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_8 = __Pyx_CalculateMetaclass(NULL, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_5);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_5)) __PYX_ERR(0, 416, __pyx_L1_error);
+  __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 416, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_8 = __Pyx_CalculateMetaclass(NULL, __pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 416, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_10 = __Pyx_Py3MetaclassPrepare(__pyx_t_8, __pyx_t_4, __pyx_n_s_Style, __pyx_n_s_Lanemarking_Style_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_Py3MetaclassPrepare(__pyx_t_8, __pyx_t_5, __pyx_n_s_Style, __pyx_n_s_Lanemarking_Style_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 416, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (__pyx_t_4 != __pyx_t_9) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_10, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 375, __pyx_L1_error)
+  if (__pyx_t_5 != __pyx_t_9) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_10, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 416, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "mapping_common/entity.py":376
+  /* "mapping_common/entity.py":417
  * 
  *     class Style(Enum):
  *         SOLID = 0             # <<<<<<<<<<<<<<
  *         DASHED = 1
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_SOLID, __pyx_int_0) < 0) __PYX_ERR(0, 376, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_SOLID, __pyx_int_0) < 0) __PYX_ERR(0, 417, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":377
+  /* "mapping_common/entity.py":418
  *     class Style(Enum):
  *         SOLID = 0
  *         DASHED = 1             # <<<<<<<<<<<<<<
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):
  */
-  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_DASHED, __pyx_int_1) < 0) __PYX_ERR(0, 377, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_10, __pyx_n_s_DASHED, __pyx_int_1) < 0) __PYX_ERR(0, 418, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":375
+  /* "mapping_common/entity.py":416
  *     style: "Lanemarking.Style"
  * 
  *     class Style(Enum):             # <<<<<<<<<<<<<<
  *         SOLID = 0
  *         DASHED = 1
  */
-  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_8, __pyx_n_s_Style, __pyx_t_4, __pyx_t_10, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 375, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_8, __pyx_n_s_Style, __pyx_t_5, __pyx_t_10, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 416, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_Style, __pyx_t_9) < 0) __PYX_ERR(0, 375, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_Style, __pyx_t_9) < 0) __PYX_ERR(0, 416, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":379
+  /* "mapping_common/entity.py":420
  *         DASHED = 1
  * 
  *     def __init__(self, style: "Lanemarking.Style", **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  *         self.style = style
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 379, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_style, __pyx_kp_s_Lanemarking_Style) < 0) __PYX_ERR(0, 379, __pyx_L1_error)
-  __pyx_t_8 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_1__init__, 0, __pyx_n_s_Lanemarking___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__35)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 379, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 420, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_style, __pyx_kp_s_Lanemarking_Style) < 0) __PYX_ERR(0, 420, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_1__init__, 0, __pyx_n_s_Lanemarking___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 420, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_INCREF(__pyx_t_8);
   PyList_Append(__pyx_t_3, __pyx_t_8);
   __Pyx_GIVEREF(__pyx_t_8);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_8, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_init, __pyx_t_8) < 0) __PYX_ERR(0, 379, __pyx_L1_error)
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_8, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_init, __pyx_t_8) < 0) __PYX_ERR(0, 420, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":383
+  /* "mapping_common/entity.py":424
  *         self.style = style
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  */
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 383, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 424, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Lanemarking__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__36)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 383, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_8);
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 424, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 424, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_Lanemarking__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__39)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 424, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_8);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 383, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 424, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_extract_kwargs, __pyx_t_8) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_extract_kwargs, __pyx_t_8) < 0) __PYX_ERR(0, 424, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":389
+  /* "mapping_common/entity.py":430
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_lanemarking = msg.TypeLanemarking(style=self.style.value)
  */
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 389, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 430, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 389, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 389, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_5to_ros_msg, 0, __pyx_n_s_Lanemarking_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__37)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 389, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_INCREF(__pyx_t_4);
-  PyList_Append(__pyx_t_3, __pyx_t_4);
-  __Pyx_GIVEREF(__pyx_t_4);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_tuple__33);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_8);
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 430, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 430, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_11Lanemarking_5to_ros_msg, 0, __pyx_n_s_Lanemarking_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__40)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 430, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_INCREF(__pyx_t_5);
+  PyList_Append(__pyx_t_3, __pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_5);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_tuple__36);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_8);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_6, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(0, 389, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_to_ros_msg, __pyx_t_5) < 0) __PYX_ERR(0, 430, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "mapping_common/entity.py":371
+  /* "mapping_common/entity.py":412
  * 
  * 
  * @dataclass(init=False)             # <<<<<<<<<<<<<<
  * class Lanemarking(Entity):
  *     style: "Lanemarking.Style"
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 371, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 412, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 371, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 412, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 371, __pyx_L1_error)
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_empty_tuple, __pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 371, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 412, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_empty_tuple, __pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 412, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":372
+  /* "mapping_common/entity.py":413
  * 
  * @dataclass(init=False)
  * class Lanemarking(Entity):             # <<<<<<<<<<<<<<
  *     style: "Lanemarking.Style"
  * 
  */
-  __pyx_t_10 = __Pyx_Py3ClassCreate(__pyx_t_5, __pyx_n_s_Lanemarking, __pyx_t_2, __pyx_t_6, NULL, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_Py3ClassCreate(__pyx_t_6, __pyx_n_s_Lanemarking, __pyx_t_2, __pyx_t_4, NULL, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __pyx_t_8 = NULL;
   __pyx_t_7 = 0;
@@ -14411,208 +15313,208 @@ if (!__Pyx_RefNanny) {
   #endif
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_8, __pyx_t_10};
-    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_9, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_9, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 371, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 412, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   }
-  if (__Pyx_CyFunction_InitClassCell(__pyx_t_3, __pyx_t_4) < 0) __PYX_ERR(0, 372, __pyx_L1_error)
+  if (__Pyx_CyFunction_InitClassCell(__pyx_t_3, __pyx_t_5) < 0) __PYX_ERR(0, 413, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Lanemarking, __pyx_t_4) < 0) __PYX_ERR(0, 372, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Lanemarking, __pyx_t_5) < 0) __PYX_ERR(0, 413, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":396
+  /* "mapping_common/entity.py":437
  * 
  * @dataclass(init=False)
  * class TrafficLight(Entity):             # <<<<<<<<<<<<<<
  *     """Traffic light or stop sign
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 396, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 396, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2)) __PYX_ERR(0, 396, __pyx_L1_error);
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 396, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 396, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_4 = __Pyx_Py3MetaclassPrepare(__pyx_t_6, __pyx_t_2, __pyx_n_s_TrafficLight, __pyx_n_s_TrafficLight, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Traffic_light_or_stop_sign_Note); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 396, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2)) __PYX_ERR(0, 437, __pyx_L1_error);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 437, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (__pyx_t_2 != __pyx_t_5) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_4, "__orig_bases__", __pyx_t_5) < 0))) __PYX_ERR(0, 396, __pyx_L1_error)
-  }
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = PyList_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 396, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_Py3MetaclassPrepare(__pyx_t_4, __pyx_t_2, __pyx_n_s_TrafficLight, __pyx_n_s_TrafficLight, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, __pyx_kp_s_Traffic_light_or_stop_sign_Note); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 396, __pyx_L1_error)
+  if (__pyx_t_2 != __pyx_t_6) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_5, "__orig_bases__", __pyx_t_6) < 0))) __PYX_ERR(0, 437, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 437, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_state, __pyx_kp_s_TrafficLight_State) < 0) __PYX_ERR(0, 396, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_annotations, __pyx_t_3) < 0) __PYX_ERR(0, 396, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_state, __pyx_kp_s_TrafficLight_State) < 0) __PYX_ERR(0, 437, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_annotations, __pyx_t_3) < 0) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":407
+  /* "mapping_common/entity.py":448
  *     state: "TrafficLight.State"
  * 
  *     class State(Enum):             # <<<<<<<<<<<<<<
  *         RED = 0
  *         GREEN = 1
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Enum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Enum); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_3)) __PYX_ERR(0, 407, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PEP560_update_bases(__pyx_t_9); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_10 = __Pyx_CalculateMetaclass(NULL, __pyx_t_3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_CalculateMetaclass(NULL, __pyx_t_3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_Py3MetaclassPrepare(__pyx_t_10, __pyx_t_3, __pyx_n_s_State, __pyx_n_s_TrafficLight_State_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3MetaclassPrepare(__pyx_t_10, __pyx_t_3, __pyx_n_s_State, __pyx_n_s_TrafficLight_State_2, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   if (__pyx_t_3 != __pyx_t_9) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_8, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 407, __pyx_L1_error)
+    if (unlikely((PyDict_SetItemString(__pyx_t_8, "__orig_bases__", __pyx_t_9) < 0))) __PYX_ERR(0, 448, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "mapping_common/entity.py":408
+  /* "mapping_common/entity.py":449
  * 
  *     class State(Enum):
  *         RED = 0             # <<<<<<<<<<<<<<
  *         GREEN = 1
  *         YELLOW = 2
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_RED, __pyx_int_0) < 0) __PYX_ERR(0, 408, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_RED, __pyx_int_0) < 0) __PYX_ERR(0, 449, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":409
+  /* "mapping_common/entity.py":450
  *     class State(Enum):
  *         RED = 0
  *         GREEN = 1             # <<<<<<<<<<<<<<
  *         YELLOW = 2
  * 
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_GREEN, __pyx_int_1) < 0) __PYX_ERR(0, 409, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_GREEN, __pyx_int_1) < 0) __PYX_ERR(0, 450, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":410
+  /* "mapping_common/entity.py":451
  *         RED = 0
  *         GREEN = 1
  *         YELLOW = 2             # <<<<<<<<<<<<<<
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):
  */
-  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_YELLOW, __pyx_int_2) < 0) __PYX_ERR(0, 410, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_8, __pyx_n_s_YELLOW, __pyx_int_2) < 0) __PYX_ERR(0, 451, __pyx_L1_error)
 
-  /* "mapping_common/entity.py":407
+  /* "mapping_common/entity.py":448
  *     state: "TrafficLight.State"
  * 
  *     class State(Enum):             # <<<<<<<<<<<<<<
  *         RED = 0
  *         GREEN = 1
  */
-  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_10, __pyx_n_s_State, __pyx_t_3, __pyx_t_8, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 407, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_Py3ClassCreate(__pyx_t_10, __pyx_n_s_State, __pyx_t_3, __pyx_t_8, NULL, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_State, __pyx_t_9) < 0) __PYX_ERR(0, 407, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_State, __pyx_t_9) < 0) __PYX_ERR(0, 448, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":412
+  /* "mapping_common/entity.py":453
  *         YELLOW = 2
  * 
  *     def __init__(self, state: "TrafficLight.State", **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  *         self.state = state
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 412, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 453, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_state, __pyx_kp_s_TrafficLight_State) < 0) __PYX_ERR(0, 412, __pyx_L1_error)
-  __pyx_t_10 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_1__init__, 0, __pyx_n_s_TrafficLight___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__39)); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 412, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_state, __pyx_kp_s_TrafficLight_State) < 0) __PYX_ERR(0, 453, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_1__init__, 0, __pyx_n_s_TrafficLight___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__42)); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 453, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_INCREF(__pyx_t_10);
-  PyList_Append(__pyx_t_5, __pyx_t_10);
+  PyList_Append(__pyx_t_6, __pyx_t_10);
   __Pyx_GIVEREF(__pyx_t_10);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_10, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_init, __pyx_t_10) < 0) __PYX_ERR(0, 412, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_init, __pyx_t_10) < 0) __PYX_ERR(0, 453, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":416
+  /* "mapping_common/entity.py":457
  *         self.state = state
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def _extract_kwargs(m: msg.Entity) -> Dict:
  *         kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
  */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 416, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 457, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 416, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 416, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_TrafficLight__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__40)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 416, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_m, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 457, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_n_s_Dict) < 0) __PYX_ERR(0, 457, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_3_extract_kwargs, __Pyx_CYFUNCTION_STATICMETHOD, __pyx_n_s_TrafficLight__extract_kwargs, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__43)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 457, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_10);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 416, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 457, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_extract_kwargs, __pyx_t_10) < 0) __PYX_ERR(0, 416, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_extract_kwargs, __pyx_t_10) < 0) __PYX_ERR(0, 457, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":422
+  /* "mapping_common/entity.py":463
  *         return kwargs
  * 
  *     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:             # <<<<<<<<<<<<<<
  *         m = super().to_ros_msg()
  *         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)
  */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 422, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 463, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 422, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 422, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_5to_ros_msg, 0, __pyx_n_s_TrafficLight_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__41)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 422, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_base_msg, __pyx_kp_s_Optional_msg_Entity) < 0) __PYX_ERR(0, 463, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_return, __pyx_kp_s_msg_Entity) < 0) __PYX_ERR(0, 463, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_12TrafficLight_5to_ros_msg, 0, __pyx_n_s_TrafficLight_to_ros_msg, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__44)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 463, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_t_3);
-  PyList_Append(__pyx_t_5, __pyx_t_3);
+  PyList_Append(__pyx_t_6, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_tuple__33);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_tuple__36);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_10);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  if (__Pyx_SetNameInClass(__pyx_t_4, __pyx_n_s_to_ros_msg, __pyx_t_3) < 0) __PYX_ERR(0, 422, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_n_s_to_ros_msg, __pyx_t_3) < 0) __PYX_ERR(0, 463, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/entity.py":395
+  /* "mapping_common/entity.py":436
  * 
  * 
  * @dataclass(init=False)             # <<<<<<<<<<<<<<
  * class TrafficLight(Entity):
  *     """Traffic light or stop sign
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 395, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 395, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 395, __pyx_L1_error)
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 395, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 436, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":396
+  /* "mapping_common/entity.py":437
  * 
  * @dataclass(init=False)
  * class TrafficLight(Entity):             # <<<<<<<<<<<<<<
  *     """Traffic light or stop sign
  * 
  */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_6, __pyx_n_s_TrafficLight, __pyx_t_2, __pyx_t_4, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 396, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_4, __pyx_n_s_TrafficLight, __pyx_t_2, __pyx_t_5, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_10 = NULL;
   __pyx_t_7 = 0;
@@ -14633,85 +15535,85 @@ if (!__Pyx_RefNanny) {
     __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_9, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 395, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 436, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   }
-  if (__Pyx_CyFunction_InitClassCell(__pyx_t_5, __pyx_t_3) < 0) __PYX_ERR(0, 396, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TrafficLight, __pyx_t_3) < 0) __PYX_ERR(0, 396, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_CyFunction_InitClassCell(__pyx_t_6, __pyx_t_3) < 0) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TrafficLight, __pyx_t_3) < 0) __PYX_ERR(0, 437, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":429
+  /* "mapping_common/entity.py":470
  * 
  * @dataclass(init=False)
  * class Pedestrian(Entity):             # <<<<<<<<<<<<<<
  *     def __init__(self, **kwargs):
  *         super().__init__(**kwargs)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 429, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 470, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 429, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2)) __PYX_ERR(0, 429, __pyx_L1_error);
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 429, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 429, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 470, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_4, __pyx_t_2, __pyx_n_s_Pedestrian, __pyx_n_s_Pedestrian, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 429, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_2);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2)) __PYX_ERR(0, 470, __pyx_L1_error);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PEP560_update_bases(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 470, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 470, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_5, __pyx_t_2, __pyx_n_s_Pedestrian, __pyx_n_s_Pedestrian, (PyObject *) NULL, __pyx_n_s_mapping_common_entity, (PyObject *) NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 470, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (__pyx_t_2 != __pyx_t_6) {
-    if (unlikely((PyDict_SetItemString(__pyx_t_3, "__orig_bases__", __pyx_t_6) < 0))) __PYX_ERR(0, 429, __pyx_L1_error)
+  if (__pyx_t_2 != __pyx_t_4) {
+    if (unlikely((PyDict_SetItemString(__pyx_t_3, "__orig_bases__", __pyx_t_4) < 0))) __PYX_ERR(0, 470, __pyx_L1_error)
   }
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 429, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = PyList_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 470, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
 
-  /* "mapping_common/entity.py":430
+  /* "mapping_common/entity.py":471
  * @dataclass(init=False)
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):             # <<<<<<<<<<<<<<
  *         super().__init__(**kwargs)
  * 
  */
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_10Pedestrian_1__init__, 0, __pyx_n_s_Pedestrian___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__43)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 430, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_INCREF(__pyx_t_5);
-  PyList_Append(__pyx_t_6, __pyx_t_5);
-  __Pyx_GIVEREF(__pyx_t_5);
-  if (__Pyx_SetNameInClass(__pyx_t_3, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 430, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_6entity_10Pedestrian_1__init__, 0, __pyx_n_s_Pedestrian___init, NULL, __pyx_n_s_mapping_common_entity, __pyx_d, ((PyObject *)__pyx_codeobj__46)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 471, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_INCREF(__pyx_t_6);
+  PyList_Append(__pyx_t_4, __pyx_t_6);
+  __Pyx_GIVEREF(__pyx_t_6);
+  if (__Pyx_SetNameInClass(__pyx_t_3, __pyx_n_s_init, __pyx_t_6) < 0) __PYX_ERR(0, 471, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "mapping_common/entity.py":428
+  /* "mapping_common/entity.py":469
  * 
  * 
  * @dataclass(init=False)             # <<<<<<<<<<<<<<
  * class Pedestrian(Entity):
  *     def __init__(self, **kwargs):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 428, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_n_s_dataclass); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 469, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 428, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 469, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 428, __pyx_L1_error)
-  __pyx_t_10 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 428, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_init_2, Py_False) < 0) __PYX_ERR(0, 469, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 469, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "mapping_common/entity.py":429
+  /* "mapping_common/entity.py":470
  * 
  * @dataclass(init=False)
  * class Pedestrian(Entity):             # <<<<<<<<<<<<<<
  *     def __init__(self, **kwargs):
  *         super().__init__(**kwargs)
  */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_4, __pyx_n_s_Pedestrian, __pyx_t_2, __pyx_t_3, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 429, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(__pyx_t_5, __pyx_n_s_Pedestrian, __pyx_t_2, __pyx_t_3, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 470, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_9 = NULL;
   __pyx_t_7 = 0;
@@ -14729,191 +15631,191 @@ if (!__Pyx_RefNanny) {
   #endif
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_9, __pyx_t_8};
-    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_10, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
+    __pyx_t_6 = __Pyx_PyObject_FastCall(__pyx_t_10, __pyx_callargs+1-__pyx_t_7, 1+__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 428, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 469, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   }
-  if (__Pyx_CyFunction_InitClassCell(__pyx_t_6, __pyx_t_5) < 0) __PYX_ERR(0, 429, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Pedestrian, __pyx_t_5) < 0) __PYX_ERR(0, 429, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_CyFunction_InitClassCell(__pyx_t_4, __pyx_t_6) < 0) __PYX_ERR(0, 470, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Pedestrian, __pyx_t_6) < 0) __PYX_ERR(0, 470, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/entity.py":434
+  /* "mapping_common/entity.py":475
  * 
  * 
  * _entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]             # <<<<<<<<<<<<<<
  * _entity_supported_classes_dict = {}
  * for t in _entity_supported_classes:
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 434, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_Entity); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 475, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Car); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 434, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Lanemarking); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 434, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 434, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_Car); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 475, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_Pedestrian); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 434, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_Lanemarking); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 475, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_TrafficLight); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 475, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_10 = PyList_New(5); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 434, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_Pedestrian); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 475, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_10 = PyList_New(5); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 475, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 0, __pyx_t_2)) __PYX_ERR(0, 434, __pyx_L1_error);
-  __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 1, __pyx_t_4)) __PYX_ERR(0, 434, __pyx_L1_error);
-  __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 2, __pyx_t_3)) __PYX_ERR(0, 434, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 0, __pyx_t_2)) __PYX_ERR(0, 475, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_5);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 3, __pyx_t_5)) __PYX_ERR(0, 434, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 1, __pyx_t_5)) __PYX_ERR(0, 475, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_3);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 2, __pyx_t_3)) __PYX_ERR(0, 475, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_6);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 4, __pyx_t_6)) __PYX_ERR(0, 434, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 3, __pyx_t_6)) __PYX_ERR(0, 475, __pyx_L1_error);
+  __Pyx_GIVEREF(__pyx_t_4);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_10, 4, __pyx_t_4)) __PYX_ERR(0, 475, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_4 = 0;
-  __pyx_t_3 = 0;
   __pyx_t_5 = 0;
+  __pyx_t_3 = 0;
   __pyx_t_6 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_entity_supported_classes, __pyx_t_10) < 0) __PYX_ERR(0, 434, __pyx_L1_error)
+  __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_entity_supported_classes, __pyx_t_10) < 0) __PYX_ERR(0, 475, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":435
+  /* "mapping_common/entity.py":476
  * 
  * _entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]
  * _entity_supported_classes_dict = {}             # <<<<<<<<<<<<<<
  * for t in _entity_supported_classes:
  *     t_name = t.__name__.lower()
  */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 435, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 476, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_entity_supported_classes_dict, __pyx_t_10) < 0) __PYX_ERR(0, 435, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_entity_supported_classes_dict, __pyx_t_10) < 0) __PYX_ERR(0, 476, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "mapping_common/entity.py":436
+  /* "mapping_common/entity.py":477
  * _entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]
  * _entity_supported_classes_dict = {}
  * for t in _entity_supported_classes:             # <<<<<<<<<<<<<<
  *     t_name = t.__name__.lower()
  *     _entity_supported_classes_dict[t_name] = t
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_entity_supported_classes); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 436, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_entity_supported_classes); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 477, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   if (likely(PyList_CheckExact(__pyx_t_10)) || PyTuple_CheckExact(__pyx_t_10)) {
-    __pyx_t_6 = __pyx_t_10; __Pyx_INCREF(__pyx_t_6);
+    __pyx_t_4 = __pyx_t_10; __Pyx_INCREF(__pyx_t_4);
     __pyx_t_11 = 0;
     __pyx_t_12 = NULL;
   } else {
-    __pyx_t_11 = -1; __pyx_t_6 = PyObject_GetIter(__pyx_t_10); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 436, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_12 = __Pyx_PyObject_GetIterNextFunc(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 436, __pyx_L1_error)
+    __pyx_t_11 = -1; __pyx_t_4 = PyObject_GetIter(__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 477, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_12 = __Pyx_PyObject_GetIterNextFunc(__pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 477, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   for (;;) {
     if (likely(!__pyx_t_12)) {
-      if (likely(PyList_CheckExact(__pyx_t_6))) {
+      if (likely(PyList_CheckExact(__pyx_t_4))) {
         {
-          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_6);
+          Py_ssize_t __pyx_temp = __Pyx_PyList_GET_SIZE(__pyx_t_4);
           #if !CYTHON_ASSUME_SAFE_MACROS
-          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 436, __pyx_L1_error)
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 477, __pyx_L1_error)
           #endif
           if (__pyx_t_11 >= __pyx_temp) break;
         }
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_10 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_11); __Pyx_INCREF(__pyx_t_10); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 436, __pyx_L1_error)
+        __pyx_t_10 = PyList_GET_ITEM(__pyx_t_4, __pyx_t_11); __Pyx_INCREF(__pyx_t_10); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 477, __pyx_L1_error)
         #else
-        __pyx_t_10 = __Pyx_PySequence_ITEM(__pyx_t_6, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 436, __pyx_L1_error)
+        __pyx_t_10 = __Pyx_PySequence_ITEM(__pyx_t_4, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 477, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_10);
         #endif
       } else {
         {
-          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_6);
+          Py_ssize_t __pyx_temp = __Pyx_PyTuple_GET_SIZE(__pyx_t_4);
           #if !CYTHON_ASSUME_SAFE_MACROS
-          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 436, __pyx_L1_error)
+          if (unlikely((__pyx_temp < 0))) __PYX_ERR(0, 477, __pyx_L1_error)
           #endif
           if (__pyx_t_11 >= __pyx_temp) break;
         }
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_10 = PyTuple_GET_ITEM(__pyx_t_6, __pyx_t_11); __Pyx_INCREF(__pyx_t_10); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 436, __pyx_L1_error)
+        __pyx_t_10 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_11); __Pyx_INCREF(__pyx_t_10); __pyx_t_11++; if (unlikely((0 < 0))) __PYX_ERR(0, 477, __pyx_L1_error)
         #else
-        __pyx_t_10 = __Pyx_PySequence_ITEM(__pyx_t_6, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 436, __pyx_L1_error)
+        __pyx_t_10 = __Pyx_PySequence_ITEM(__pyx_t_4, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 477, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_10);
         #endif
       }
     } else {
-      __pyx_t_10 = __pyx_t_12(__pyx_t_6);
+      __pyx_t_10 = __pyx_t_12(__pyx_t_4);
       if (unlikely(!__pyx_t_10)) {
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 436, __pyx_L1_error)
+          else __PYX_ERR(0, 477, __pyx_L1_error)
         }
         break;
       }
       __Pyx_GOTREF(__pyx_t_10);
     }
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_t, __pyx_t_10) < 0) __PYX_ERR(0, 436, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_d, __pyx_n_s_t, __pyx_t_10) < 0) __PYX_ERR(0, 477, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-    /* "mapping_common/entity.py":437
+    /* "mapping_common/entity.py":478
  * _entity_supported_classes_dict = {}
  * for t in _entity_supported_classes:
  *     t_name = t.__name__.lower()             # <<<<<<<<<<<<<<
  *     _entity_supported_classes_dict[t_name] = t
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_t); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 437, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 437, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_t); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 478, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 478, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_lower); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 437, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_lower); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 478, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_3 = NULL;
     __pyx_t_7 = 0;
     #if CYTHON_UNPACK_METHODS
-    if (likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_6);
       if (likely(__pyx_t_3)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
         __Pyx_INCREF(__pyx_t_3);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
         __pyx_t_7 = 1;
       }
     }
     #endif
     {
       PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
-      __pyx_t_10 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_7, 0+__pyx_t_7);
+      __pyx_t_10 = __Pyx_PyObject_FastCall(__pyx_t_6, __pyx_callargs+1-__pyx_t_7, 0+__pyx_t_7);
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 437, __pyx_L1_error)
+      if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 478, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_10);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_t_name, __pyx_t_10) < 0) __PYX_ERR(0, 437, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_d, __pyx_n_s_t_name, __pyx_t_10) < 0) __PYX_ERR(0, 478, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-    /* "mapping_common/entity.py":438
+    /* "mapping_common/entity.py":479
  * for t in _entity_supported_classes:
  *     t_name = t.__name__.lower()
  *     _entity_supported_classes_dict[t_name] = t             # <<<<<<<<<<<<<<
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_t); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 438, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_t); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 479, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 438, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_t_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 438, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_entity_supported_classes_dict); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 479, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_t_name); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 479, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (unlikely((PyObject_SetItem(__pyx_t_5, __pyx_t_3, __pyx_t_10) < 0))) __PYX_ERR(0, 438, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (unlikely((PyObject_SetItem(__pyx_t_6, __pyx_t_3, __pyx_t_10) < 0))) __PYX_ERR(0, 479, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-    /* "mapping_common/entity.py":436
+    /* "mapping_common/entity.py":477
  * _entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]
  * _entity_supported_classes_dict = {}
  * for t in _entity_supported_classes:             # <<<<<<<<<<<<<<
@@ -14921,17 +15823,17 @@ if (!__Pyx_RefNanny) {
  *     _entity_supported_classes_dict[t_name] = t
  */
   }
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "mapping_common/entity.py":1
  * from typing import List, Optional, Dict             # <<<<<<<<<<<<<<
  * from enum import Enum
  * from dataclasses import dataclass, field
  */
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_6) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -16246,6 +17148,20 @@ static CYTHON_INLINE PyObject *__Pyx__GetModuleGlobalName(PyObject *name)
     return __Pyx_GetBuiltinName(name);
 }
 
+/* PyObjectSetAttrStr */
+#if CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value) {
+    PyTypeObject* tp = Py_TYPE(obj);
+    if (likely(tp->tp_setattro))
+        return tp->tp_setattro(obj, attr_name, value);
+#if PY_MAJOR_VERSION < 3
+    if (likely(tp->tp_setattr))
+        return tp->tp_setattr(obj, PyString_AS_STRING(attr_name), value);
+#endif
+    return PyObject_SetAttr(obj, attr_name, value);
+}
+#endif
+
 /* GetItemInt */
 static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
     PyObject *r;
@@ -16465,20 +17381,6 @@ bad:
     return PyUnicode_Join(__pyx_empty_unicode, value_tuple);
 #endif
 }
-
-/* PyObjectSetAttrStr */
-#if CYTHON_USE_TYPE_SLOTS
-static CYTHON_INLINE int __Pyx_PyObject_SetAttrStr(PyObject* obj, PyObject* attr_name, PyObject* value) {
-    PyTypeObject* tp = Py_TYPE(obj);
-    if (likely(tp->tp_setattro))
-        return tp->tp_setattro(obj, attr_name, value);
-#if PY_MAJOR_VERSION < 3
-    if (likely(tp->tp_setattr))
-        return tp->tp_setattr(obj, PyString_AS_STRING(attr_name), value);
-#endif
-    return PyObject_SetAttr(obj, attr_name, value);
-}
-#endif
 
 /* PyFloatBinop */
 #if !CYTHON_COMPILING_IN_PYPY
@@ -19166,7 +20068,7 @@ __Pyx_PyType_GetName(PyTypeObject* tp)
     if (unlikely(name == NULL) || unlikely(!PyUnicode_Check(name))) {
         PyErr_Clear();
         Py_XDECREF(name);
-        name = __Pyx_NewRef(__pyx_n_s__44);
+        name = __Pyx_NewRef(__pyx_n_s__47);
     }
     return name;
 }

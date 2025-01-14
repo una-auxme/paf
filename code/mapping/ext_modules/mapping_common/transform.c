@@ -1811,8 +1811,8 @@ struct __pyx_obj_14mapping_common_9transform__Coord2 {
 };
 
 
-/* "mapping_common/transform.pxd":11
- *     cpdef void set_y(self, value: double)
+/* "mapping_common/transform.pxd":9
+ *     cpdef double y(self)
  * 
  * cdef class Point2(_Coord2):             # <<<<<<<<<<<<<<
  *     pass
@@ -1823,20 +1823,20 @@ struct __pyx_obj_14mapping_common_9transform_Point2 {
 };
 
 
-/* "mapping_common/transform.pxd":14
+/* "mapping_common/transform.pxd":12
  *     pass
  * 
  * cdef class Vector2(_Coord2):             # <<<<<<<<<<<<<<
- *     pass
  * 
+ *     cpdef double length(self)
  */
 struct __pyx_obj_14mapping_common_9transform_Vector2 {
   struct __pyx_obj_14mapping_common_9transform__Coord2 __pyx_base;
 };
 
 
-/* "mapping_common/transform.pxd":17
- *     pass
+/* "mapping_common/transform.pxd":18
+ *     cpdef double angle_to(self, Vector2 other)
  * 
  * cdef class Transform2D:             # <<<<<<<<<<<<<<
  *     cdef readonly np.ndarray _matrix
@@ -1850,7 +1850,7 @@ struct __pyx_obj_14mapping_common_9transform_Transform2D {
 
 
 
-/* "mapping_common/transform.py":13
+/* "mapping_common/transform.py":12
  * 
  * @dataclass(init=False, eq=False)
  * class _Coord2:             # <<<<<<<<<<<<<<
@@ -1860,14 +1860,12 @@ struct __pyx_obj_14mapping_common_9transform_Transform2D {
 
 struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 {
   double (*x)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch);
-  PyObject *(*set_x)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch);
   double (*y)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch);
-  void (*set_y)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 *__pyx_vtabptr_14mapping_common_9transform__Coord2;
 
 
-/* "mapping_common/transform.py":48
+/* "mapping_common/transform.py":41
  * 
  * @dataclass(init=False, eq=False)
  * class Point2(_Coord2):             # <<<<<<<<<<<<<<
@@ -1881,7 +1879,7 @@ struct __pyx_vtabstruct_14mapping_common_9transform_Point2 {
 static struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *__pyx_vtabptr_14mapping_common_9transform_Point2;
 
 
-/* "mapping_common/transform.py":75
+/* "mapping_common/transform.py":80
  * 
  * @dataclass(init=False, eq=False)
  * class Vector2(_Coord2):             # <<<<<<<<<<<<<<
@@ -1891,11 +1889,14 @@ static struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *__pyx_vtabptr
 
 struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 {
   struct __pyx_vtabstruct_14mapping_common_9transform__Coord2 __pyx_base;
+  double (*length)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *(*normalized)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
+  double (*angle_to)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *__pyx_vtabptr_14mapping_common_9transform_Vector2;
 
 
-/* "mapping_common/transform.py":126
+/* "mapping_common/transform.py":198
  * 
  * @dataclass(init=False, eq=False)
  * class Transform2D:             # <<<<<<<<<<<<<<
@@ -1905,6 +1906,8 @@ static struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *__pyx_vtabpt
 
 struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D {
   struct __pyx_obj_14mapping_common_9transform_Vector2 *(*translation)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
+  double (*rotation)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
+  struct __pyx_obj_14mapping_common_9transform_Transform2D *(*inverse)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch);
 };
 static struct __pyx_vtabstruct_14mapping_common_9transform_Transform2D *__pyx_vtabptr_14mapping_common_9transform_Transform2D;
 /* #### Code section: utility_code_proto ### */
@@ -2333,16 +2336,6 @@ static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
 /* KeywordStringCheck.proto */
 static int __Pyx_CheckKeywordStrings(PyObject *kw, const char* function_name, int kw_allowed);
 
-/* SetItemInt.proto */
-#define __Pyx_SetItemInt(o, i, v, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_SetItemInt_Fast(o, (Py_ssize_t)i, v, is_list, wraparound, boundscheck) :\
-    (is_list ? (PyErr_SetString(PyExc_IndexError, "list assignment index out of range"), -1) :\
-               __Pyx_SetItemInt_Generic(o, to_py_func(i), v)))
-static int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v);
-static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v,
-                                               int is_list, int wraparound, int boundscheck);
-
 /* PyObjectCallOneArg.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
 
@@ -2401,18 +2394,28 @@ static int __Pyx_RaiseUnexpectedTypeError(const char *expected, PyObject *obj);
         __Pyx__ArgTypeTest(obj, type, name, exact))
 static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
 
-/* ObjectGetItem.proto */
-#if CYTHON_USE_TYPE_SLOTS
-static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key);
-#else
-#define __Pyx_PyObject_GetItem(obj, key)  PyObject_GetItem(obj, key)
-#endif
+/* SetItemInt.proto */
+#define __Pyx_SetItemInt(o, i, v, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_SetItemInt_Fast(o, (Py_ssize_t)i, v, is_list, wraparound, boundscheck) :\
+    (is_list ? (PyErr_SetString(PyExc_IndexError, "list assignment index out of range"), -1) :\
+               __Pyx_SetItemInt_Generic(o, to_py_func(i), v)))
+static int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v);
+static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v,
+                                               int is_list, int wraparound, int boundscheck);
 
 /* SliceObject.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(
         PyObject* obj, Py_ssize_t cstart, Py_ssize_t cstop,
         PyObject** py_start, PyObject** py_stop, PyObject** py_slice,
         int has_cstart, int has_cstop, int wraparound);
+
+/* ObjectGetItem.proto */
+#if CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key);
+#else
+#define __Pyx_PyObject_GetItem(obj, key)  PyObject_GetItem(obj, key)
+#endif
 
 /* Import.proto */
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
@@ -2865,10 +2868,13 @@ static CYTHON_INLINE npy_intp *__pyx_f_5numpy_7ndarray_7strides_strides(PyArrayO
 static CYTHON_INLINE npy_intp __pyx_f_5numpy_7ndarray_4size_size(PyArrayObject *__pyx_v_self); /* proto*/
 static CYTHON_INLINE char *__pyx_f_5numpy_7ndarray_4data_data(PyArrayObject *__pyx_v_self); /* proto*/
 static double __pyx_f_14mapping_common_9transform_7_Coord2_x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
-static PyObject *__pyx_f_14mapping_common_9transform_7_Coord2_set_x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value, int __pyx_skip_dispatch); /* proto*/
 static double __pyx_f_14mapping_common_9transform_7_Coord2_y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_14mapping_common_9transform_7_Coord2_set_y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value, int __pyx_skip_dispatch); /* proto*/
+static double __pyx_f_14mapping_common_9transform_7Vector2_length(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_common_9transform_7Vector2_normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static double __pyx_f_14mapping_common_9transform_7Vector2_angle_to(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_other, int __pyx_skip_dispatch); /* proto*/
 static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_common_9transform_11Transform2D_translation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static double __pyx_f_14mapping_common_9transform_11Transform2D_rotation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_f_14mapping_common_9transform_11Transform2D_inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 
 /* Module declarations from "libc.string" */
 
@@ -2887,8 +2893,6 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_c
 /* Module declarations from "numpy" */
 
 /* Module declarations from "numpy" */
-
-/* Module declarations from "cython" */
 
 /* Module declarations from "mapping_common.transform" */
 static PyObject *__pyx_f_14mapping_common_9transform___pyx_unpickle__Coord2__set_state(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *); /*proto*/
@@ -2922,31 +2926,31 @@ static const char __pyx_k_y[] = "y";
 static const char __pyx_k_z[] = "z";
 static const char __pyx_k__4[] = "...";
 static const char __pyx_k__5[] = ")";
+static const char __pyx_k__7[] = "'";
 static const char __pyx_k_eq[] = "eq";
 static const char __pyx_k_gc[] = "gc";
 static const char __pyx_k_id[] = "id";
 static const char __pyx_k_np[] = "np";
-static const char __pyx_k__14[] = "'";
-static const char __pyx_k__16[] = ".";
-static const char __pyx_k__17[] = "*";
-static const char __pyx_k__75[] = "?";
+static const char __pyx_k__22[] = ".";
+static const char __pyx_k__23[] = "*";
+static const char __pyx_k__85[] = "?";
 static const char __pyx_k_add[] = "add";
 static const char __pyx_k_all[] = "all";
 static const char __pyx_k_and[] = "' and '";
 static const char __pyx_k_cos[] = "cos";
-static const char __pyx_k_div[] = "div";
 static const char __pyx_k_dot[] = "dot";
 static const char __pyx_k_eye[] = "eye";
 static const char __pyx_k_inv[] = "inv";
 static const char __pyx_k_msg[] = "msg";
+static const char __pyx_k_mul[] = "__mul__";
 static const char __pyx_k_new[] = "new";
 static const char __pyx_k_npt[] = "npt";
 static const char __pyx_k_sin[] = "sin";
-static const char __pyx_k_acos[] = "acos";
 static const char __pyx_k_copy[] = "copy";
 static const char __pyx_k_dict[] = "__dict__";
 static const char __pyx_k_hash[] = "hash";
 static const char __pyx_k_init[] = "init";
+static const char __pyx_k_left[] = "left";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_math[] = "math";
 static const char __pyx_k_name[] = "__name__";
@@ -2961,6 +2965,8 @@ static const char __pyx_k_FIELD[] = "_FIELD";
 static const char __pyx_k_Point[] = "Point";
 static const char __pyx_k_angle[] = "angle";
 static const char __pyx_k_array[] = "array";
+static const char __pyx_k_atan2[] = "atan2";
+static const char __pyx_k_cross[] = "cross";
 static const char __pyx_k_dtype[] = "dtype";
 static const char __pyx_k_field[] = "field";
 static const char __pyx_k_float[] = "float";
@@ -2969,12 +2975,11 @@ static const char __pyx_k_new_2[] = "__new__";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_order[] = "order";
 static const char __pyx_k_other[] = "other";
-static const char __pyx_k_set_x[] = "set_x";
-static const char __pyx_k_set_y[] = "set_y";
+static const char __pyx_k_point[] = "point";
+static const char __pyx_k_right[] = "right";
 static const char __pyx_k_shape[] = "shape";
 static const char __pyx_k_slots[] = "slots";
 static const char __pyx_k_state[] = "state";
-static const char __pyx_k_value[] = "value";
 static const char __pyx_k_Coord2[] = "_Coord2";
 static const char __pyx_k_Point2[] = "Point2";
 static const char __pyx_k_dict_2[] = "_dict";
@@ -2992,12 +2997,15 @@ static const char __pyx_k_remove[] = "remove";
 static const char __pyx_k_return[] = "return";
 static const char __pyx_k_typing[] = "typing";
 static const char __pyx_k_update[] = "update";
+static const char __pyx_k_vector[] = "vector";
 static const char __pyx_k_Vector2[] = "Vector2";
 static const char __pyx_k_Vector3[] = "Vector3";
+static const char __pyx_k_arctan2[] = "arctan2";
 static const char __pyx_k_compare[] = "compare";
 static const char __pyx_k_disable[] = "disable";
 static const char __pyx_k_flatten[] = "flatten";
 static const char __pyx_k_float64[] = "float64";
+static const char __pyx_k_forward[] = "forward";
 static const char __pyx_k_inverse[] = "inverse";
 static const char __pyx_k_kw_only[] = "kw_only";
 static const char __pyx_k_mapping[] = "mapping";
@@ -3008,6 +3016,7 @@ static const char __pyx_k_Coord2_x[] = "_Coord2.x";
 static const char __pyx_k_Coord2_y[] = "_Coord2.y";
 static const char __pyx_k_Point2_2[] = "'Point2'";
 static const char __pyx_k_angle_to[] = "angle_to";
+static const char __pyx_k_backward[] = "backward";
 static const char __pyx_k_getstate[] = "__getstate__";
 static const char __pyx_k_identity[] = "identity";
 static const char __pyx_k_matrix_2[] = "_matrix";
@@ -3015,6 +3024,7 @@ static const char __pyx_k_matrix_3[] = "(_matrix=";
 static const char __pyx_k_metadata[] = "metadata";
 static const char __pyx_k_pyx_type[] = "__pyx_type";
 static const char __pyx_k_qualname[] = "__qualname__";
+static const char __pyx_k_rotation[] = "rotation";
 static const char __pyx_k_setstate[] = "__setstate__";
 static const char __pyx_k_TypeError[] = "TypeError";
 static const char __pyx_k_Vector2_2[] = "'Vector2'";
@@ -3042,8 +3052,7 @@ static const char __pyx_k_dataclasses[] = "dataclasses";
 static const char __pyx_k_from_vector[] = "from_vector";
 static const char __pyx_k_translation[] = "translation";
 static const char __pyx_k_unsafe_hash[] = "unsafe_hash";
-static const char __pyx_k_Coord2_set_x[] = "_Coord2.set_x";
-static const char __pyx_k_Coord2_set_y[] = "_Coord2.set_y";
+static const char __pyx_k_Vector2_left[] = "Vector2.left";
 static const char __pyx_k_Vector2_zero[] = "Vector2.zero";
 static const char __pyx_k_from_ros_msg[] = "from_ros_msg";
 static const char __pyx_k_initializing[] = "_initializing";
@@ -3055,20 +3064,24 @@ static const char __pyx_k_staticmethod[] = "staticmethod";
 static const char __pyx_k_stringsource[] = "<stringsource>";
 static const char __pyx_k_use_setstate[] = "use_setstate";
 static const char __pyx_k_weakref_slot[] = "weakref_slot";
+static const char __pyx_k_Point2_vector[] = "Point2.vector";
 static const char __pyx_k_Transform2D_2[] = "'Transform2D'";
+static const char __pyx_k_Vector2_point[] = "Vector2.point";
+static const char __pyx_k_Vector2_right[] = "Vector2.right";
 static const char __pyx_k_class_getitem[] = "__class_getitem__";
-static const char __pyx_k_cython_double[] = "cython.double";
 static const char __pyx_k_geometry_msgs[] = "geometry_msgs";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
 static const char __pyx_k_AssertionError[] = "AssertionError";
 static const char __pyx_k_Vector2_length[] = "Vector2.length";
 static const char __pyx_k_getfullargspec[] = "getfullargspec";
 static const char __pyx_k_DataclassParams[] = "_DataclassParams";
+static const char __pyx_k_Vector2_forward[] = "Vector2.forward";
 static const char __pyx_k_msg_Transform2D[] = "msg.Transform2D";
 static const char __pyx_k_new_translation[] = "new_translation";
 static const char __pyx_k_pyx_PickleError[] = "__pyx_PickleError";
 static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_Vector2_angle_to[] = "Vector2.angle_to";
+static const char __pyx_k_Vector2_backward[] = "Vector2.backward";
 static const char __pyx_k_dataclass_fields[] = "__dataclass_fields__";
 static const char __pyx_k_dataclass_params[] = "__dataclass_params__";
 static const char __pyx_k_Point2_to_ros_msg[] = "Point2.to_ros_msg";
@@ -3083,6 +3096,7 @@ static const char __pyx_k_Transform2D_inverse[] = "Transform2D.inverse";
 static const char __pyx_k_geometry_msgs_Point[] = "geometry_msgs.Point";
 static const char __pyx_k_pyx_unpickle_Point2[] = "__pyx_unpickle_Point2";
 static const char __pyx_k_Transform2D_identity[] = "Transform2D.identity";
+static const char __pyx_k_Transform2D_rotation[] = "Transform2D.rotation";
 static const char __pyx_k_Vector2_from_ros_msg[] = "Vector2.from_ros_msg";
 static const char __pyx_k_pyx_unpickle_Vector2[] = "__pyx_unpickle_Vector2";
 static const char __pyx_k_pyx_unpickle__Coord2[] = "__pyx_unpickle__Coord2";
@@ -3107,8 +3121,9 @@ static const char __pyx_k_Transform2D___reduce_cython[] = "Transform2D.__reduce_
 static const char __pyx_k_Transform2D_new_translation[] = "Transform2D.new_translation";
 static const char __pyx_k_mapping_common_transform_py[] = "mapping_common/transform.py";
 static const char __pyx_k_Transform2D___setstate_cython[] = "Transform2D.__setstate_cython__";
-static const char __pyx_k_Unsupported_operand_types_for[] = "Unsupported operand types for *: '";
+static const char __pyx_k_Unsupported_operand_types_for[] = "Unsupported operand types for +: '";
 static const char __pyx_k_Transformation_matrix_must_be_a[] = "Transformation matrix must be a homogenous 3x3 matrix";
+static const char __pyx_k_Unsupported_operand_types_for_2[] = "Unsupported operand types for *: '";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_Incompatible_checksums_0x_x_vs_0[] = "Incompatible checksums (0x%x vs (0x8045713, 0x31f093a, 0xed8a903) = (_matrix))";
 static const char __pyx_k_Transform2D_new_rotation_transla[] = "Transform2D.new_rotation_translation";
@@ -3116,48 +3131,57 @@ static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath
 /* #### Code section: decls ### */
 static int __pyx_pf_14mapping_common_9transform_7_Coord2___init__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_matrix); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_2x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_4set_x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, double __pyx_v_value); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_8set_y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, double __pyx_v_value); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_12__repr__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_4y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6__eq__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_8__repr__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_7_matrix___get__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_14__reduce_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_16__setstate_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_new(double __pyx_v_x, double __pyx_v_y); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_2zero(void); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_4from_vector(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_6from_ros_msg(PyObject *__pyx_v_m); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_10__repr__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_12__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_14__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__reduce_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_12__setstate_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_6Point2_vector(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_2new(double __pyx_v_x, double __pyx_v_y); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_4zero(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_6from_vector(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_8from_ros_msg(PyObject *__pyx_v_m); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_10to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_12__add__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_14__repr__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_16__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_18__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_length(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_2normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_2normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_4angle_to(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_other); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_6new(double __pyx_v_x, double __pyx_v_y); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_8zero(void); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_10from_point(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_p); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_12from_ros_msg(PyObject *__pyx_v_m); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_16__repr__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_18__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_20__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_7Vector2_6point(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_8new(double __pyx_v_x, double __pyx_v_y); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_10zero(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_12forward(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_14backward(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_16left(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_18right(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_20from_point(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_p); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_22from_ros_msg(PyObject *__pyx_v_m); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_24to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_26__mul__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_28__rmul__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_30__add__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_32__repr__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_34__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_36__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_14mapping_common_9transform_11Transform2D___init__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_matrix); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_2translation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_4inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_6identity(void); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_8new_rotation(double __pyx_v_angle); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_10new_translation(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_12new_rotation_translation(double __pyx_v_angle, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_14from_ros_msg(PyObject *__pyx_v_m); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_22__repr__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_4rotation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_6inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_8identity(void); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_10new_rotation(double __pyx_v_angle); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_12new_translation(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_14new_rotation_translation(double __pyx_v_angle, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v); /* proto */
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_16from_ros_msg(PyObject *__pyx_v_m); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__mul__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_other); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_22__eq__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_24__repr__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_7_matrix___get__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_24__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_26__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_26__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_28__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform___pyx_unpickle__Coord2(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_2__pyx_unpickle_Point2(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_14mapping_common_9transform_4__pyx_unpickle_Vector2(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
@@ -3228,8 +3252,6 @@ typedef struct {
   PyTypeObject *__pyx_ptype_5numpy_character;
   PyTypeObject *__pyx_ptype_5numpy_ufunc;
   #if CYTHON_USE_MODULE_STATE
-  #endif
-  #if CYTHON_USE_MODULE_STATE
   PyObject *__pyx_type_14mapping_common_9transform__Coord2;
   PyObject *__pyx_type_14mapping_common_9transform_Point2;
   PyObject *__pyx_type_14mapping_common_9transform_Vector2;
@@ -3244,8 +3266,6 @@ typedef struct {
   PyObject *__pyx_n_s_Coord2;
   PyObject *__pyx_n_s_Coord2___reduce_cython;
   PyObject *__pyx_n_s_Coord2___setstate_cython;
-  PyObject *__pyx_n_s_Coord2_set_x;
-  PyObject *__pyx_n_s_Coord2_set_y;
   PyObject *__pyx_n_s_Coord2_x;
   PyObject *__pyx_n_s_Coord2_y;
   PyObject *__pyx_n_s_DataclassParams;
@@ -3262,6 +3282,7 @@ typedef struct {
   PyObject *__pyx_n_s_Point2_from_vector;
   PyObject *__pyx_n_s_Point2_new;
   PyObject *__pyx_n_s_Point2_to_ros_msg;
+  PyObject *__pyx_n_s_Point2_vector;
   PyObject *__pyx_n_s_Point2_zero;
   PyObject *__pyx_n_s_Transform2D;
   PyObject *__pyx_kp_s_Transform2D_2;
@@ -3273,45 +3294,54 @@ typedef struct {
   PyObject *__pyx_n_s_Transform2D_new_rotation;
   PyObject *__pyx_n_s_Transform2D_new_rotation_transla;
   PyObject *__pyx_n_s_Transform2D_new_translation;
+  PyObject *__pyx_n_s_Transform2D_rotation;
   PyObject *__pyx_n_s_Transform2D_to_ros_msg;
   PyObject *__pyx_n_s_Transform2D_translation;
   PyObject *__pyx_kp_u_Transformation_matrix_must_be_a;
   PyObject *__pyx_n_s_TypeError;
   PyObject *__pyx_kp_u_Unsupported_operand_types_for;
+  PyObject *__pyx_kp_u_Unsupported_operand_types_for_2;
   PyObject *__pyx_n_s_Vector2;
   PyObject *__pyx_kp_s_Vector2_2;
   PyObject *__pyx_n_s_Vector2___reduce_cython;
   PyObject *__pyx_n_s_Vector2___setstate_cython;
   PyObject *__pyx_n_s_Vector2_angle_to;
+  PyObject *__pyx_n_s_Vector2_backward;
+  PyObject *__pyx_n_s_Vector2_forward;
   PyObject *__pyx_n_s_Vector2_from_point;
   PyObject *__pyx_n_s_Vector2_from_ros_msg;
+  PyObject *__pyx_n_s_Vector2_left;
   PyObject *__pyx_n_s_Vector2_length;
   PyObject *__pyx_n_s_Vector2_new;
   PyObject *__pyx_n_s_Vector2_normalized;
+  PyObject *__pyx_n_s_Vector2_point;
+  PyObject *__pyx_n_s_Vector2_right;
   PyObject *__pyx_n_s_Vector2_to_ros_msg;
   PyObject *__pyx_n_s_Vector2_zero;
   PyObject *__pyx_n_s_Vector3;
-  PyObject *__pyx_kp_u__14;
-  PyObject *__pyx_kp_u__16;
-  PyObject *__pyx_n_s__17;
+  PyObject *__pyx_kp_u__22;
+  PyObject *__pyx_n_s__23;
   PyObject *__pyx_kp_s__4;
   PyObject *__pyx_kp_u__5;
-  PyObject *__pyx_n_s__75;
-  PyObject *__pyx_n_s_acos;
+  PyObject *__pyx_kp_u__7;
+  PyObject *__pyx_n_s__85;
   PyObject *__pyx_n_s_add;
   PyObject *__pyx_n_s_all;
   PyObject *__pyx_kp_u_and;
   PyObject *__pyx_n_s_angle;
   PyObject *__pyx_n_s_angle_to;
+  PyObject *__pyx_n_s_arctan2;
   PyObject *__pyx_n_s_array;
   PyObject *__pyx_n_s_asyncio_coroutines;
+  PyObject *__pyx_n_s_atan2;
+  PyObject *__pyx_n_s_backward;
   PyObject *__pyx_n_s_c;
   PyObject *__pyx_n_s_class_getitem;
   PyObject *__pyx_n_s_cline_in_traceback;
   PyObject *__pyx_n_s_compare;
   PyObject *__pyx_n_s_copy;
   PyObject *__pyx_n_s_cos;
-  PyObject *__pyx_kp_s_cython_double;
+  PyObject *__pyx_n_s_cross;
   PyObject *__pyx_n_s_dataclass;
   PyObject *__pyx_n_s_dataclass_fields;
   PyObject *__pyx_n_s_dataclass_params;
@@ -3319,7 +3349,6 @@ typedef struct {
   PyObject *__pyx_n_s_dict;
   PyObject *__pyx_n_s_dict_2;
   PyObject *__pyx_kp_u_disable;
-  PyObject *__pyx_n_s_div;
   PyObject *__pyx_n_s_dot;
   PyObject *__pyx_n_s_dtype;
   PyObject *__pyx_kp_u_enable;
@@ -3330,6 +3359,7 @@ typedef struct {
   PyObject *__pyx_n_s_flatten;
   PyObject *__pyx_n_s_float;
   PyObject *__pyx_n_s_float64;
+  PyObject *__pyx_n_s_forward;
   PyObject *__pyx_n_s_from_point;
   PyObject *__pyx_n_s_from_ros_msg;
   PyObject *__pyx_n_s_from_vector;
@@ -3351,6 +3381,7 @@ typedef struct {
   PyObject *__pyx_n_s_is_coroutine;
   PyObject *__pyx_kp_u_isenabled;
   PyObject *__pyx_n_s_kw_only;
+  PyObject *__pyx_n_s_left;
   PyObject *__pyx_n_s_length;
   PyObject *__pyx_n_s_linalg;
   PyObject *__pyx_n_s_local;
@@ -3369,6 +3400,7 @@ typedef struct {
   PyObject *__pyx_n_s_metadata;
   PyObject *__pyx_n_s_msg;
   PyObject *__pyx_kp_s_msg_Transform2D;
+  PyObject *__pyx_n_s_mul;
   PyObject *__pyx_n_s_name;
   PyObject *__pyx_n_s_name_2;
   PyObject *__pyx_n_s_ndarray;
@@ -3389,6 +3421,7 @@ typedef struct {
   PyObject *__pyx_n_s_other;
   PyObject *__pyx_n_s_p;
   PyObject *__pyx_n_s_pickle;
+  PyObject *__pyx_n_s_point;
   PyObject *__pyx_n_s_pyx_PickleError;
   PyObject *__pyx_n_s_pyx_checksum;
   PyObject *__pyx_n_s_pyx_recursive_repr_guard;
@@ -3408,12 +3441,12 @@ typedef struct {
   PyObject *__pyx_n_s_repr;
   PyObject *__pyx_n_s_reshape;
   PyObject *__pyx_n_s_return;
+  PyObject *__pyx_n_s_right;
   PyObject *__pyx_n_s_rot_matrix;
+  PyObject *__pyx_n_s_rotation;
   PyObject *__pyx_n_s_running;
   PyObject *__pyx_n_s_s;
   PyObject *__pyx_n_s_self;
-  PyObject *__pyx_n_s_set_x;
-  PyObject *__pyx_n_s_set_y;
   PyObject *__pyx_n_s_setstate;
   PyObject *__pyx_n_s_setstate_cython;
   PyObject *__pyx_n_s_shape;
@@ -3436,7 +3469,7 @@ typedef struct {
   PyObject *__pyx_n_s_update;
   PyObject *__pyx_n_s_use_setstate;
   PyObject *__pyx_n_s_v;
-  PyObject *__pyx_n_s_value;
+  PyObject *__pyx_n_s_vector;
   PyObject *__pyx_n_s_weakref_slot;
   PyObject *__pyx_n_s_x;
   PyObject *__pyx_n_s_y;
@@ -3444,6 +3477,9 @@ typedef struct {
   PyObject *__pyx_n_s_zero;
   PyObject *__pyx_float_0_0;
   PyObject *__pyx_float_1_0;
+  PyObject *__pyx_float_neg_1_0;
+  PyObject *__pyx_int_0;
+  PyObject *__pyx_int_1;
   PyObject *__pyx_int_2;
   PyObject *__pyx_int_3;
   PyObject *__pyx_int_52365626;
@@ -3454,70 +3490,80 @@ typedef struct {
   PyObject *__pyx_tuple__2;
   PyObject *__pyx_tuple__3;
   PyObject *__pyx_tuple__6;
-  PyObject *__pyx_tuple__7;
   PyObject *__pyx_tuple__9;
-  PyObject *__pyx_slice__10;
+  PyObject *__pyx_slice__14;
+  PyObject *__pyx_tuple__10;
   PyObject *__pyx_tuple__11;
   PyObject *__pyx_tuple__12;
   PyObject *__pyx_tuple__13;
   PyObject *__pyx_tuple__15;
+  PyObject *__pyx_tuple__16;
+  PyObject *__pyx_tuple__17;
   PyObject *__pyx_tuple__18;
   PyObject *__pyx_tuple__19;
+  PyObject *__pyx_tuple__20;
   PyObject *__pyx_tuple__21;
+  PyObject *__pyx_tuple__24;
   PyObject *__pyx_tuple__25;
-  PyObject *__pyx_tuple__26;
   PyObject *__pyx_tuple__28;
-  PyObject *__pyx_tuple__30;
-  PyObject *__pyx_tuple__33;
-  PyObject *__pyx_tuple__35;
-  PyObject *__pyx_tuple__38;
-  PyObject *__pyx_tuple__43;
+  PyObject *__pyx_tuple__29;
+  PyObject *__pyx_tuple__31;
+  PyObject *__pyx_tuple__34;
+  PyObject *__pyx_tuple__37;
+  PyObject *__pyx_tuple__39;
+  PyObject *__pyx_tuple__42;
   PyObject *__pyx_tuple__47;
-  PyObject *__pyx_tuple__51;
-  PyObject *__pyx_tuple__57;
-  PyObject *__pyx_tuple__59;
-  PyObject *__pyx_tuple__61;
-  PyObject *__pyx_tuple__63;
-  PyObject *__pyx_tuple__65;
+  PyObject *__pyx_tuple__56;
+  PyObject *__pyx_tuple__60;
   PyObject *__pyx_tuple__67;
-  PyObject *__pyx_tuple__70;
-  PyObject *__pyx_codeobj__20;
-  PyObject *__pyx_codeobj__22;
-  PyObject *__pyx_codeobj__23;
-  PyObject *__pyx_codeobj__24;
+  PyObject *__pyx_tuple__69;
+  PyObject *__pyx_tuple__71;
+  PyObject *__pyx_tuple__73;
+  PyObject *__pyx_tuple__75;
+  PyObject *__pyx_tuple__77;
+  PyObject *__pyx_tuple__80;
+  PyObject *__pyx_codeobj__26;
   PyObject *__pyx_codeobj__27;
-  PyObject *__pyx_codeobj__29;
-  PyObject *__pyx_codeobj__31;
+  PyObject *__pyx_codeobj__30;
   PyObject *__pyx_codeobj__32;
-  PyObject *__pyx_codeobj__34;
+  PyObject *__pyx_codeobj__33;
+  PyObject *__pyx_codeobj__35;
   PyObject *__pyx_codeobj__36;
-  PyObject *__pyx_codeobj__37;
-  PyObject *__pyx_codeobj__39;
+  PyObject *__pyx_codeobj__38;
   PyObject *__pyx_codeobj__40;
   PyObject *__pyx_codeobj__41;
-  PyObject *__pyx_codeobj__42;
+  PyObject *__pyx_codeobj__43;
   PyObject *__pyx_codeobj__44;
   PyObject *__pyx_codeobj__45;
   PyObject *__pyx_codeobj__46;
   PyObject *__pyx_codeobj__48;
   PyObject *__pyx_codeobj__49;
   PyObject *__pyx_codeobj__50;
+  PyObject *__pyx_codeobj__51;
   PyObject *__pyx_codeobj__52;
   PyObject *__pyx_codeobj__53;
   PyObject *__pyx_codeobj__54;
   PyObject *__pyx_codeobj__55;
-  PyObject *__pyx_codeobj__56;
+  PyObject *__pyx_codeobj__57;
   PyObject *__pyx_codeobj__58;
-  PyObject *__pyx_codeobj__60;
+  PyObject *__pyx_codeobj__59;
+  PyObject *__pyx_codeobj__61;
   PyObject *__pyx_codeobj__62;
+  PyObject *__pyx_codeobj__63;
   PyObject *__pyx_codeobj__64;
+  PyObject *__pyx_codeobj__65;
   PyObject *__pyx_codeobj__66;
   PyObject *__pyx_codeobj__68;
-  PyObject *__pyx_codeobj__69;
-  PyObject *__pyx_codeobj__71;
+  PyObject *__pyx_codeobj__70;
   PyObject *__pyx_codeobj__72;
-  PyObject *__pyx_codeobj__73;
   PyObject *__pyx_codeobj__74;
+  PyObject *__pyx_codeobj__76;
+  PyObject *__pyx_codeobj__78;
+  PyObject *__pyx_codeobj__79;
+  PyObject *__pyx_codeobj__81;
+  PyObject *__pyx_codeobj__82;
+  PyObject *__pyx_codeobj__83;
+  PyObject *__pyx_codeobj__84;
 } __pyx_mstate;
 
 #if CYTHON_USE_MODULE_STATE
@@ -3589,8 +3635,6 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Coord2);
   Py_CLEAR(clear_module_state->__pyx_n_s_Coord2___reduce_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_Coord2___setstate_cython);
-  Py_CLEAR(clear_module_state->__pyx_n_s_Coord2_set_x);
-  Py_CLEAR(clear_module_state->__pyx_n_s_Coord2_set_y);
   Py_CLEAR(clear_module_state->__pyx_n_s_Coord2_x);
   Py_CLEAR(clear_module_state->__pyx_n_s_Coord2_y);
   Py_CLEAR(clear_module_state->__pyx_n_s_DataclassParams);
@@ -3607,6 +3651,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Point2_from_vector);
   Py_CLEAR(clear_module_state->__pyx_n_s_Point2_new);
   Py_CLEAR(clear_module_state->__pyx_n_s_Point2_to_ros_msg);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Point2_vector);
   Py_CLEAR(clear_module_state->__pyx_n_s_Point2_zero);
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D);
   Py_CLEAR(clear_module_state->__pyx_kp_s_Transform2D_2);
@@ -3618,45 +3663,54 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_new_rotation);
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_new_rotation_transla);
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_new_translation);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_rotation);
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_to_ros_msg);
   Py_CLEAR(clear_module_state->__pyx_n_s_Transform2D_translation);
   Py_CLEAR(clear_module_state->__pyx_kp_u_Transformation_matrix_must_be_a);
   Py_CLEAR(clear_module_state->__pyx_n_s_TypeError);
   Py_CLEAR(clear_module_state->__pyx_kp_u_Unsupported_operand_types_for);
+  Py_CLEAR(clear_module_state->__pyx_kp_u_Unsupported_operand_types_for_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2);
   Py_CLEAR(clear_module_state->__pyx_kp_s_Vector2_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2___reduce_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2___setstate_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_angle_to);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_backward);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_forward);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_from_point);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_from_ros_msg);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_left);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_length);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_new);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_normalized);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_point);
+  Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_right);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_to_ros_msg);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector2_zero);
   Py_CLEAR(clear_module_state->__pyx_n_s_Vector3);
-  Py_CLEAR(clear_module_state->__pyx_kp_u__14);
-  Py_CLEAR(clear_module_state->__pyx_kp_u__16);
-  Py_CLEAR(clear_module_state->__pyx_n_s__17);
+  Py_CLEAR(clear_module_state->__pyx_kp_u__22);
+  Py_CLEAR(clear_module_state->__pyx_n_s__23);
   Py_CLEAR(clear_module_state->__pyx_kp_s__4);
   Py_CLEAR(clear_module_state->__pyx_kp_u__5);
-  Py_CLEAR(clear_module_state->__pyx_n_s__75);
-  Py_CLEAR(clear_module_state->__pyx_n_s_acos);
+  Py_CLEAR(clear_module_state->__pyx_kp_u__7);
+  Py_CLEAR(clear_module_state->__pyx_n_s__85);
   Py_CLEAR(clear_module_state->__pyx_n_s_add);
   Py_CLEAR(clear_module_state->__pyx_n_s_all);
   Py_CLEAR(clear_module_state->__pyx_kp_u_and);
   Py_CLEAR(clear_module_state->__pyx_n_s_angle);
   Py_CLEAR(clear_module_state->__pyx_n_s_angle_to);
+  Py_CLEAR(clear_module_state->__pyx_n_s_arctan2);
   Py_CLEAR(clear_module_state->__pyx_n_s_array);
   Py_CLEAR(clear_module_state->__pyx_n_s_asyncio_coroutines);
+  Py_CLEAR(clear_module_state->__pyx_n_s_atan2);
+  Py_CLEAR(clear_module_state->__pyx_n_s_backward);
   Py_CLEAR(clear_module_state->__pyx_n_s_c);
   Py_CLEAR(clear_module_state->__pyx_n_s_class_getitem);
   Py_CLEAR(clear_module_state->__pyx_n_s_cline_in_traceback);
   Py_CLEAR(clear_module_state->__pyx_n_s_compare);
   Py_CLEAR(clear_module_state->__pyx_n_s_copy);
   Py_CLEAR(clear_module_state->__pyx_n_s_cos);
-  Py_CLEAR(clear_module_state->__pyx_kp_s_cython_double);
+  Py_CLEAR(clear_module_state->__pyx_n_s_cross);
   Py_CLEAR(clear_module_state->__pyx_n_s_dataclass);
   Py_CLEAR(clear_module_state->__pyx_n_s_dataclass_fields);
   Py_CLEAR(clear_module_state->__pyx_n_s_dataclass_params);
@@ -3664,7 +3718,6 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_dict);
   Py_CLEAR(clear_module_state->__pyx_n_s_dict_2);
   Py_CLEAR(clear_module_state->__pyx_kp_u_disable);
-  Py_CLEAR(clear_module_state->__pyx_n_s_div);
   Py_CLEAR(clear_module_state->__pyx_n_s_dot);
   Py_CLEAR(clear_module_state->__pyx_n_s_dtype);
   Py_CLEAR(clear_module_state->__pyx_kp_u_enable);
@@ -3675,6 +3728,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_flatten);
   Py_CLEAR(clear_module_state->__pyx_n_s_float);
   Py_CLEAR(clear_module_state->__pyx_n_s_float64);
+  Py_CLEAR(clear_module_state->__pyx_n_s_forward);
   Py_CLEAR(clear_module_state->__pyx_n_s_from_point);
   Py_CLEAR(clear_module_state->__pyx_n_s_from_ros_msg);
   Py_CLEAR(clear_module_state->__pyx_n_s_from_vector);
@@ -3696,6 +3750,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_is_coroutine);
   Py_CLEAR(clear_module_state->__pyx_kp_u_isenabled);
   Py_CLEAR(clear_module_state->__pyx_n_s_kw_only);
+  Py_CLEAR(clear_module_state->__pyx_n_s_left);
   Py_CLEAR(clear_module_state->__pyx_n_s_length);
   Py_CLEAR(clear_module_state->__pyx_n_s_linalg);
   Py_CLEAR(clear_module_state->__pyx_n_s_local);
@@ -3714,6 +3769,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_metadata);
   Py_CLEAR(clear_module_state->__pyx_n_s_msg);
   Py_CLEAR(clear_module_state->__pyx_kp_s_msg_Transform2D);
+  Py_CLEAR(clear_module_state->__pyx_n_s_mul);
   Py_CLEAR(clear_module_state->__pyx_n_s_name);
   Py_CLEAR(clear_module_state->__pyx_n_s_name_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_ndarray);
@@ -3734,6 +3790,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_other);
   Py_CLEAR(clear_module_state->__pyx_n_s_p);
   Py_CLEAR(clear_module_state->__pyx_n_s_pickle);
+  Py_CLEAR(clear_module_state->__pyx_n_s_point);
   Py_CLEAR(clear_module_state->__pyx_n_s_pyx_PickleError);
   Py_CLEAR(clear_module_state->__pyx_n_s_pyx_checksum);
   Py_CLEAR(clear_module_state->__pyx_n_s_pyx_recursive_repr_guard);
@@ -3753,12 +3810,12 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_repr);
   Py_CLEAR(clear_module_state->__pyx_n_s_reshape);
   Py_CLEAR(clear_module_state->__pyx_n_s_return);
+  Py_CLEAR(clear_module_state->__pyx_n_s_right);
   Py_CLEAR(clear_module_state->__pyx_n_s_rot_matrix);
+  Py_CLEAR(clear_module_state->__pyx_n_s_rotation);
   Py_CLEAR(clear_module_state->__pyx_n_s_running);
   Py_CLEAR(clear_module_state->__pyx_n_s_s);
   Py_CLEAR(clear_module_state->__pyx_n_s_self);
-  Py_CLEAR(clear_module_state->__pyx_n_s_set_x);
-  Py_CLEAR(clear_module_state->__pyx_n_s_set_y);
   Py_CLEAR(clear_module_state->__pyx_n_s_setstate);
   Py_CLEAR(clear_module_state->__pyx_n_s_setstate_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_shape);
@@ -3781,7 +3838,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_update);
   Py_CLEAR(clear_module_state->__pyx_n_s_use_setstate);
   Py_CLEAR(clear_module_state->__pyx_n_s_v);
-  Py_CLEAR(clear_module_state->__pyx_n_s_value);
+  Py_CLEAR(clear_module_state->__pyx_n_s_vector);
   Py_CLEAR(clear_module_state->__pyx_n_s_weakref_slot);
   Py_CLEAR(clear_module_state->__pyx_n_s_x);
   Py_CLEAR(clear_module_state->__pyx_n_s_y);
@@ -3789,6 +3846,9 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_zero);
   Py_CLEAR(clear_module_state->__pyx_float_0_0);
   Py_CLEAR(clear_module_state->__pyx_float_1_0);
+  Py_CLEAR(clear_module_state->__pyx_float_neg_1_0);
+  Py_CLEAR(clear_module_state->__pyx_int_0);
+  Py_CLEAR(clear_module_state->__pyx_int_1);
   Py_CLEAR(clear_module_state->__pyx_int_2);
   Py_CLEAR(clear_module_state->__pyx_int_3);
   Py_CLEAR(clear_module_state->__pyx_int_52365626);
@@ -3799,70 +3859,80 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_tuple__2);
   Py_CLEAR(clear_module_state->__pyx_tuple__3);
   Py_CLEAR(clear_module_state->__pyx_tuple__6);
-  Py_CLEAR(clear_module_state->__pyx_tuple__7);
   Py_CLEAR(clear_module_state->__pyx_tuple__9);
-  Py_CLEAR(clear_module_state->__pyx_slice__10);
+  Py_CLEAR(clear_module_state->__pyx_slice__14);
+  Py_CLEAR(clear_module_state->__pyx_tuple__10);
   Py_CLEAR(clear_module_state->__pyx_tuple__11);
   Py_CLEAR(clear_module_state->__pyx_tuple__12);
   Py_CLEAR(clear_module_state->__pyx_tuple__13);
   Py_CLEAR(clear_module_state->__pyx_tuple__15);
+  Py_CLEAR(clear_module_state->__pyx_tuple__16);
+  Py_CLEAR(clear_module_state->__pyx_tuple__17);
   Py_CLEAR(clear_module_state->__pyx_tuple__18);
   Py_CLEAR(clear_module_state->__pyx_tuple__19);
+  Py_CLEAR(clear_module_state->__pyx_tuple__20);
   Py_CLEAR(clear_module_state->__pyx_tuple__21);
+  Py_CLEAR(clear_module_state->__pyx_tuple__24);
   Py_CLEAR(clear_module_state->__pyx_tuple__25);
-  Py_CLEAR(clear_module_state->__pyx_tuple__26);
   Py_CLEAR(clear_module_state->__pyx_tuple__28);
-  Py_CLEAR(clear_module_state->__pyx_tuple__30);
-  Py_CLEAR(clear_module_state->__pyx_tuple__33);
-  Py_CLEAR(clear_module_state->__pyx_tuple__35);
-  Py_CLEAR(clear_module_state->__pyx_tuple__38);
-  Py_CLEAR(clear_module_state->__pyx_tuple__43);
+  Py_CLEAR(clear_module_state->__pyx_tuple__29);
+  Py_CLEAR(clear_module_state->__pyx_tuple__31);
+  Py_CLEAR(clear_module_state->__pyx_tuple__34);
+  Py_CLEAR(clear_module_state->__pyx_tuple__37);
+  Py_CLEAR(clear_module_state->__pyx_tuple__39);
+  Py_CLEAR(clear_module_state->__pyx_tuple__42);
   Py_CLEAR(clear_module_state->__pyx_tuple__47);
-  Py_CLEAR(clear_module_state->__pyx_tuple__51);
-  Py_CLEAR(clear_module_state->__pyx_tuple__57);
-  Py_CLEAR(clear_module_state->__pyx_tuple__59);
-  Py_CLEAR(clear_module_state->__pyx_tuple__61);
-  Py_CLEAR(clear_module_state->__pyx_tuple__63);
-  Py_CLEAR(clear_module_state->__pyx_tuple__65);
+  Py_CLEAR(clear_module_state->__pyx_tuple__56);
+  Py_CLEAR(clear_module_state->__pyx_tuple__60);
   Py_CLEAR(clear_module_state->__pyx_tuple__67);
-  Py_CLEAR(clear_module_state->__pyx_tuple__70);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__20);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__22);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__23);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__24);
+  Py_CLEAR(clear_module_state->__pyx_tuple__69);
+  Py_CLEAR(clear_module_state->__pyx_tuple__71);
+  Py_CLEAR(clear_module_state->__pyx_tuple__73);
+  Py_CLEAR(clear_module_state->__pyx_tuple__75);
+  Py_CLEAR(clear_module_state->__pyx_tuple__77);
+  Py_CLEAR(clear_module_state->__pyx_tuple__80);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__26);
   Py_CLEAR(clear_module_state->__pyx_codeobj__27);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__29);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__31);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__30);
   Py_CLEAR(clear_module_state->__pyx_codeobj__32);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__34);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__33);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__35);
   Py_CLEAR(clear_module_state->__pyx_codeobj__36);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__37);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__39);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__38);
   Py_CLEAR(clear_module_state->__pyx_codeobj__40);
   Py_CLEAR(clear_module_state->__pyx_codeobj__41);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__42);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__43);
   Py_CLEAR(clear_module_state->__pyx_codeobj__44);
   Py_CLEAR(clear_module_state->__pyx_codeobj__45);
   Py_CLEAR(clear_module_state->__pyx_codeobj__46);
   Py_CLEAR(clear_module_state->__pyx_codeobj__48);
   Py_CLEAR(clear_module_state->__pyx_codeobj__49);
   Py_CLEAR(clear_module_state->__pyx_codeobj__50);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__51);
   Py_CLEAR(clear_module_state->__pyx_codeobj__52);
   Py_CLEAR(clear_module_state->__pyx_codeobj__53);
   Py_CLEAR(clear_module_state->__pyx_codeobj__54);
   Py_CLEAR(clear_module_state->__pyx_codeobj__55);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__56);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__57);
   Py_CLEAR(clear_module_state->__pyx_codeobj__58);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__60);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__59);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__61);
   Py_CLEAR(clear_module_state->__pyx_codeobj__62);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__63);
   Py_CLEAR(clear_module_state->__pyx_codeobj__64);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__65);
   Py_CLEAR(clear_module_state->__pyx_codeobj__66);
   Py_CLEAR(clear_module_state->__pyx_codeobj__68);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__69);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__71);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__70);
   Py_CLEAR(clear_module_state->__pyx_codeobj__72);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__73);
   Py_CLEAR(clear_module_state->__pyx_codeobj__74);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__76);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__78);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__79);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__81);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__82);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__83);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__84);
   return 0;
 }
 #endif
@@ -3912,8 +3982,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Coord2);
   Py_VISIT(traverse_module_state->__pyx_n_s_Coord2___reduce_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_Coord2___setstate_cython);
-  Py_VISIT(traverse_module_state->__pyx_n_s_Coord2_set_x);
-  Py_VISIT(traverse_module_state->__pyx_n_s_Coord2_set_y);
   Py_VISIT(traverse_module_state->__pyx_n_s_Coord2_x);
   Py_VISIT(traverse_module_state->__pyx_n_s_Coord2_y);
   Py_VISIT(traverse_module_state->__pyx_n_s_DataclassParams);
@@ -3930,6 +3998,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Point2_from_vector);
   Py_VISIT(traverse_module_state->__pyx_n_s_Point2_new);
   Py_VISIT(traverse_module_state->__pyx_n_s_Point2_to_ros_msg);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Point2_vector);
   Py_VISIT(traverse_module_state->__pyx_n_s_Point2_zero);
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D);
   Py_VISIT(traverse_module_state->__pyx_kp_s_Transform2D_2);
@@ -3941,45 +4010,54 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_new_rotation);
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_new_rotation_transla);
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_new_translation);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_rotation);
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_to_ros_msg);
   Py_VISIT(traverse_module_state->__pyx_n_s_Transform2D_translation);
   Py_VISIT(traverse_module_state->__pyx_kp_u_Transformation_matrix_must_be_a);
   Py_VISIT(traverse_module_state->__pyx_n_s_TypeError);
   Py_VISIT(traverse_module_state->__pyx_kp_u_Unsupported_operand_types_for);
+  Py_VISIT(traverse_module_state->__pyx_kp_u_Unsupported_operand_types_for_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2);
   Py_VISIT(traverse_module_state->__pyx_kp_s_Vector2_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2___reduce_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2___setstate_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_angle_to);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_backward);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_forward);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_from_point);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_from_ros_msg);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_left);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_length);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_new);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_normalized);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_point);
+  Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_right);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_to_ros_msg);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector2_zero);
   Py_VISIT(traverse_module_state->__pyx_n_s_Vector3);
-  Py_VISIT(traverse_module_state->__pyx_kp_u__14);
-  Py_VISIT(traverse_module_state->__pyx_kp_u__16);
-  Py_VISIT(traverse_module_state->__pyx_n_s__17);
+  Py_VISIT(traverse_module_state->__pyx_kp_u__22);
+  Py_VISIT(traverse_module_state->__pyx_n_s__23);
   Py_VISIT(traverse_module_state->__pyx_kp_s__4);
   Py_VISIT(traverse_module_state->__pyx_kp_u__5);
-  Py_VISIT(traverse_module_state->__pyx_n_s__75);
-  Py_VISIT(traverse_module_state->__pyx_n_s_acos);
+  Py_VISIT(traverse_module_state->__pyx_kp_u__7);
+  Py_VISIT(traverse_module_state->__pyx_n_s__85);
   Py_VISIT(traverse_module_state->__pyx_n_s_add);
   Py_VISIT(traverse_module_state->__pyx_n_s_all);
   Py_VISIT(traverse_module_state->__pyx_kp_u_and);
   Py_VISIT(traverse_module_state->__pyx_n_s_angle);
   Py_VISIT(traverse_module_state->__pyx_n_s_angle_to);
+  Py_VISIT(traverse_module_state->__pyx_n_s_arctan2);
   Py_VISIT(traverse_module_state->__pyx_n_s_array);
   Py_VISIT(traverse_module_state->__pyx_n_s_asyncio_coroutines);
+  Py_VISIT(traverse_module_state->__pyx_n_s_atan2);
+  Py_VISIT(traverse_module_state->__pyx_n_s_backward);
   Py_VISIT(traverse_module_state->__pyx_n_s_c);
   Py_VISIT(traverse_module_state->__pyx_n_s_class_getitem);
   Py_VISIT(traverse_module_state->__pyx_n_s_cline_in_traceback);
   Py_VISIT(traverse_module_state->__pyx_n_s_compare);
   Py_VISIT(traverse_module_state->__pyx_n_s_copy);
   Py_VISIT(traverse_module_state->__pyx_n_s_cos);
-  Py_VISIT(traverse_module_state->__pyx_kp_s_cython_double);
+  Py_VISIT(traverse_module_state->__pyx_n_s_cross);
   Py_VISIT(traverse_module_state->__pyx_n_s_dataclass);
   Py_VISIT(traverse_module_state->__pyx_n_s_dataclass_fields);
   Py_VISIT(traverse_module_state->__pyx_n_s_dataclass_params);
@@ -3987,7 +4065,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_dict);
   Py_VISIT(traverse_module_state->__pyx_n_s_dict_2);
   Py_VISIT(traverse_module_state->__pyx_kp_u_disable);
-  Py_VISIT(traverse_module_state->__pyx_n_s_div);
   Py_VISIT(traverse_module_state->__pyx_n_s_dot);
   Py_VISIT(traverse_module_state->__pyx_n_s_dtype);
   Py_VISIT(traverse_module_state->__pyx_kp_u_enable);
@@ -3998,6 +4075,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_flatten);
   Py_VISIT(traverse_module_state->__pyx_n_s_float);
   Py_VISIT(traverse_module_state->__pyx_n_s_float64);
+  Py_VISIT(traverse_module_state->__pyx_n_s_forward);
   Py_VISIT(traverse_module_state->__pyx_n_s_from_point);
   Py_VISIT(traverse_module_state->__pyx_n_s_from_ros_msg);
   Py_VISIT(traverse_module_state->__pyx_n_s_from_vector);
@@ -4019,6 +4097,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_is_coroutine);
   Py_VISIT(traverse_module_state->__pyx_kp_u_isenabled);
   Py_VISIT(traverse_module_state->__pyx_n_s_kw_only);
+  Py_VISIT(traverse_module_state->__pyx_n_s_left);
   Py_VISIT(traverse_module_state->__pyx_n_s_length);
   Py_VISIT(traverse_module_state->__pyx_n_s_linalg);
   Py_VISIT(traverse_module_state->__pyx_n_s_local);
@@ -4037,6 +4116,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_metadata);
   Py_VISIT(traverse_module_state->__pyx_n_s_msg);
   Py_VISIT(traverse_module_state->__pyx_kp_s_msg_Transform2D);
+  Py_VISIT(traverse_module_state->__pyx_n_s_mul);
   Py_VISIT(traverse_module_state->__pyx_n_s_name);
   Py_VISIT(traverse_module_state->__pyx_n_s_name_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_ndarray);
@@ -4057,6 +4137,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_other);
   Py_VISIT(traverse_module_state->__pyx_n_s_p);
   Py_VISIT(traverse_module_state->__pyx_n_s_pickle);
+  Py_VISIT(traverse_module_state->__pyx_n_s_point);
   Py_VISIT(traverse_module_state->__pyx_n_s_pyx_PickleError);
   Py_VISIT(traverse_module_state->__pyx_n_s_pyx_checksum);
   Py_VISIT(traverse_module_state->__pyx_n_s_pyx_recursive_repr_guard);
@@ -4076,12 +4157,12 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_repr);
   Py_VISIT(traverse_module_state->__pyx_n_s_reshape);
   Py_VISIT(traverse_module_state->__pyx_n_s_return);
+  Py_VISIT(traverse_module_state->__pyx_n_s_right);
   Py_VISIT(traverse_module_state->__pyx_n_s_rot_matrix);
+  Py_VISIT(traverse_module_state->__pyx_n_s_rotation);
   Py_VISIT(traverse_module_state->__pyx_n_s_running);
   Py_VISIT(traverse_module_state->__pyx_n_s_s);
   Py_VISIT(traverse_module_state->__pyx_n_s_self);
-  Py_VISIT(traverse_module_state->__pyx_n_s_set_x);
-  Py_VISIT(traverse_module_state->__pyx_n_s_set_y);
   Py_VISIT(traverse_module_state->__pyx_n_s_setstate);
   Py_VISIT(traverse_module_state->__pyx_n_s_setstate_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_shape);
@@ -4104,7 +4185,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_update);
   Py_VISIT(traverse_module_state->__pyx_n_s_use_setstate);
   Py_VISIT(traverse_module_state->__pyx_n_s_v);
-  Py_VISIT(traverse_module_state->__pyx_n_s_value);
+  Py_VISIT(traverse_module_state->__pyx_n_s_vector);
   Py_VISIT(traverse_module_state->__pyx_n_s_weakref_slot);
   Py_VISIT(traverse_module_state->__pyx_n_s_x);
   Py_VISIT(traverse_module_state->__pyx_n_s_y);
@@ -4112,6 +4193,9 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_zero);
   Py_VISIT(traverse_module_state->__pyx_float_0_0);
   Py_VISIT(traverse_module_state->__pyx_float_1_0);
+  Py_VISIT(traverse_module_state->__pyx_float_neg_1_0);
+  Py_VISIT(traverse_module_state->__pyx_int_0);
+  Py_VISIT(traverse_module_state->__pyx_int_1);
   Py_VISIT(traverse_module_state->__pyx_int_2);
   Py_VISIT(traverse_module_state->__pyx_int_3);
   Py_VISIT(traverse_module_state->__pyx_int_52365626);
@@ -4122,70 +4206,80 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_tuple__2);
   Py_VISIT(traverse_module_state->__pyx_tuple__3);
   Py_VISIT(traverse_module_state->__pyx_tuple__6);
-  Py_VISIT(traverse_module_state->__pyx_tuple__7);
   Py_VISIT(traverse_module_state->__pyx_tuple__9);
-  Py_VISIT(traverse_module_state->__pyx_slice__10);
+  Py_VISIT(traverse_module_state->__pyx_slice__14);
+  Py_VISIT(traverse_module_state->__pyx_tuple__10);
   Py_VISIT(traverse_module_state->__pyx_tuple__11);
   Py_VISIT(traverse_module_state->__pyx_tuple__12);
   Py_VISIT(traverse_module_state->__pyx_tuple__13);
   Py_VISIT(traverse_module_state->__pyx_tuple__15);
+  Py_VISIT(traverse_module_state->__pyx_tuple__16);
+  Py_VISIT(traverse_module_state->__pyx_tuple__17);
   Py_VISIT(traverse_module_state->__pyx_tuple__18);
   Py_VISIT(traverse_module_state->__pyx_tuple__19);
+  Py_VISIT(traverse_module_state->__pyx_tuple__20);
   Py_VISIT(traverse_module_state->__pyx_tuple__21);
+  Py_VISIT(traverse_module_state->__pyx_tuple__24);
   Py_VISIT(traverse_module_state->__pyx_tuple__25);
-  Py_VISIT(traverse_module_state->__pyx_tuple__26);
   Py_VISIT(traverse_module_state->__pyx_tuple__28);
-  Py_VISIT(traverse_module_state->__pyx_tuple__30);
-  Py_VISIT(traverse_module_state->__pyx_tuple__33);
-  Py_VISIT(traverse_module_state->__pyx_tuple__35);
-  Py_VISIT(traverse_module_state->__pyx_tuple__38);
-  Py_VISIT(traverse_module_state->__pyx_tuple__43);
+  Py_VISIT(traverse_module_state->__pyx_tuple__29);
+  Py_VISIT(traverse_module_state->__pyx_tuple__31);
+  Py_VISIT(traverse_module_state->__pyx_tuple__34);
+  Py_VISIT(traverse_module_state->__pyx_tuple__37);
+  Py_VISIT(traverse_module_state->__pyx_tuple__39);
+  Py_VISIT(traverse_module_state->__pyx_tuple__42);
   Py_VISIT(traverse_module_state->__pyx_tuple__47);
-  Py_VISIT(traverse_module_state->__pyx_tuple__51);
-  Py_VISIT(traverse_module_state->__pyx_tuple__57);
-  Py_VISIT(traverse_module_state->__pyx_tuple__59);
-  Py_VISIT(traverse_module_state->__pyx_tuple__61);
-  Py_VISIT(traverse_module_state->__pyx_tuple__63);
-  Py_VISIT(traverse_module_state->__pyx_tuple__65);
+  Py_VISIT(traverse_module_state->__pyx_tuple__56);
+  Py_VISIT(traverse_module_state->__pyx_tuple__60);
   Py_VISIT(traverse_module_state->__pyx_tuple__67);
-  Py_VISIT(traverse_module_state->__pyx_tuple__70);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__20);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__22);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__23);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__24);
+  Py_VISIT(traverse_module_state->__pyx_tuple__69);
+  Py_VISIT(traverse_module_state->__pyx_tuple__71);
+  Py_VISIT(traverse_module_state->__pyx_tuple__73);
+  Py_VISIT(traverse_module_state->__pyx_tuple__75);
+  Py_VISIT(traverse_module_state->__pyx_tuple__77);
+  Py_VISIT(traverse_module_state->__pyx_tuple__80);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__26);
   Py_VISIT(traverse_module_state->__pyx_codeobj__27);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__29);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__31);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__30);
   Py_VISIT(traverse_module_state->__pyx_codeobj__32);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__34);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__33);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__35);
   Py_VISIT(traverse_module_state->__pyx_codeobj__36);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__37);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__39);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__38);
   Py_VISIT(traverse_module_state->__pyx_codeobj__40);
   Py_VISIT(traverse_module_state->__pyx_codeobj__41);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__42);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__43);
   Py_VISIT(traverse_module_state->__pyx_codeobj__44);
   Py_VISIT(traverse_module_state->__pyx_codeobj__45);
   Py_VISIT(traverse_module_state->__pyx_codeobj__46);
   Py_VISIT(traverse_module_state->__pyx_codeobj__48);
   Py_VISIT(traverse_module_state->__pyx_codeobj__49);
   Py_VISIT(traverse_module_state->__pyx_codeobj__50);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__51);
   Py_VISIT(traverse_module_state->__pyx_codeobj__52);
   Py_VISIT(traverse_module_state->__pyx_codeobj__53);
   Py_VISIT(traverse_module_state->__pyx_codeobj__54);
   Py_VISIT(traverse_module_state->__pyx_codeobj__55);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__56);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__57);
   Py_VISIT(traverse_module_state->__pyx_codeobj__58);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__60);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__59);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__61);
   Py_VISIT(traverse_module_state->__pyx_codeobj__62);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__63);
   Py_VISIT(traverse_module_state->__pyx_codeobj__64);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__65);
   Py_VISIT(traverse_module_state->__pyx_codeobj__66);
   Py_VISIT(traverse_module_state->__pyx_codeobj__68);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__69);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__71);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__70);
   Py_VISIT(traverse_module_state->__pyx_codeobj__72);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__73);
   Py_VISIT(traverse_module_state->__pyx_codeobj__74);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__76);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__78);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__79);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__81);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__82);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__83);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__84);
   return 0;
 }
 #endif
@@ -4249,8 +4343,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_ptype_5numpy_character __pyx_mstate_global->__pyx_ptype_5numpy_character
 #define __pyx_ptype_5numpy_ufunc __pyx_mstate_global->__pyx_ptype_5numpy_ufunc
 #if CYTHON_USE_MODULE_STATE
-#endif
-#if CYTHON_USE_MODULE_STATE
 #define __pyx_type_14mapping_common_9transform__Coord2 __pyx_mstate_global->__pyx_type_14mapping_common_9transform__Coord2
 #define __pyx_type_14mapping_common_9transform_Point2 __pyx_mstate_global->__pyx_type_14mapping_common_9transform_Point2
 #define __pyx_type_14mapping_common_9transform_Vector2 __pyx_mstate_global->__pyx_type_14mapping_common_9transform_Vector2
@@ -4265,8 +4357,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Coord2 __pyx_mstate_global->__pyx_n_s_Coord2
 #define __pyx_n_s_Coord2___reduce_cython __pyx_mstate_global->__pyx_n_s_Coord2___reduce_cython
 #define __pyx_n_s_Coord2___setstate_cython __pyx_mstate_global->__pyx_n_s_Coord2___setstate_cython
-#define __pyx_n_s_Coord2_set_x __pyx_mstate_global->__pyx_n_s_Coord2_set_x
-#define __pyx_n_s_Coord2_set_y __pyx_mstate_global->__pyx_n_s_Coord2_set_y
 #define __pyx_n_s_Coord2_x __pyx_mstate_global->__pyx_n_s_Coord2_x
 #define __pyx_n_s_Coord2_y __pyx_mstate_global->__pyx_n_s_Coord2_y
 #define __pyx_n_s_DataclassParams __pyx_mstate_global->__pyx_n_s_DataclassParams
@@ -4283,6 +4373,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Point2_from_vector __pyx_mstate_global->__pyx_n_s_Point2_from_vector
 #define __pyx_n_s_Point2_new __pyx_mstate_global->__pyx_n_s_Point2_new
 #define __pyx_n_s_Point2_to_ros_msg __pyx_mstate_global->__pyx_n_s_Point2_to_ros_msg
+#define __pyx_n_s_Point2_vector __pyx_mstate_global->__pyx_n_s_Point2_vector
 #define __pyx_n_s_Point2_zero __pyx_mstate_global->__pyx_n_s_Point2_zero
 #define __pyx_n_s_Transform2D __pyx_mstate_global->__pyx_n_s_Transform2D
 #define __pyx_kp_s_Transform2D_2 __pyx_mstate_global->__pyx_kp_s_Transform2D_2
@@ -4294,45 +4385,54 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Transform2D_new_rotation __pyx_mstate_global->__pyx_n_s_Transform2D_new_rotation
 #define __pyx_n_s_Transform2D_new_rotation_transla __pyx_mstate_global->__pyx_n_s_Transform2D_new_rotation_transla
 #define __pyx_n_s_Transform2D_new_translation __pyx_mstate_global->__pyx_n_s_Transform2D_new_translation
+#define __pyx_n_s_Transform2D_rotation __pyx_mstate_global->__pyx_n_s_Transform2D_rotation
 #define __pyx_n_s_Transform2D_to_ros_msg __pyx_mstate_global->__pyx_n_s_Transform2D_to_ros_msg
 #define __pyx_n_s_Transform2D_translation __pyx_mstate_global->__pyx_n_s_Transform2D_translation
 #define __pyx_kp_u_Transformation_matrix_must_be_a __pyx_mstate_global->__pyx_kp_u_Transformation_matrix_must_be_a
 #define __pyx_n_s_TypeError __pyx_mstate_global->__pyx_n_s_TypeError
 #define __pyx_kp_u_Unsupported_operand_types_for __pyx_mstate_global->__pyx_kp_u_Unsupported_operand_types_for
+#define __pyx_kp_u_Unsupported_operand_types_for_2 __pyx_mstate_global->__pyx_kp_u_Unsupported_operand_types_for_2
 #define __pyx_n_s_Vector2 __pyx_mstate_global->__pyx_n_s_Vector2
 #define __pyx_kp_s_Vector2_2 __pyx_mstate_global->__pyx_kp_s_Vector2_2
 #define __pyx_n_s_Vector2___reduce_cython __pyx_mstate_global->__pyx_n_s_Vector2___reduce_cython
 #define __pyx_n_s_Vector2___setstate_cython __pyx_mstate_global->__pyx_n_s_Vector2___setstate_cython
 #define __pyx_n_s_Vector2_angle_to __pyx_mstate_global->__pyx_n_s_Vector2_angle_to
+#define __pyx_n_s_Vector2_backward __pyx_mstate_global->__pyx_n_s_Vector2_backward
+#define __pyx_n_s_Vector2_forward __pyx_mstate_global->__pyx_n_s_Vector2_forward
 #define __pyx_n_s_Vector2_from_point __pyx_mstate_global->__pyx_n_s_Vector2_from_point
 #define __pyx_n_s_Vector2_from_ros_msg __pyx_mstate_global->__pyx_n_s_Vector2_from_ros_msg
+#define __pyx_n_s_Vector2_left __pyx_mstate_global->__pyx_n_s_Vector2_left
 #define __pyx_n_s_Vector2_length __pyx_mstate_global->__pyx_n_s_Vector2_length
 #define __pyx_n_s_Vector2_new __pyx_mstate_global->__pyx_n_s_Vector2_new
 #define __pyx_n_s_Vector2_normalized __pyx_mstate_global->__pyx_n_s_Vector2_normalized
+#define __pyx_n_s_Vector2_point __pyx_mstate_global->__pyx_n_s_Vector2_point
+#define __pyx_n_s_Vector2_right __pyx_mstate_global->__pyx_n_s_Vector2_right
 #define __pyx_n_s_Vector2_to_ros_msg __pyx_mstate_global->__pyx_n_s_Vector2_to_ros_msg
 #define __pyx_n_s_Vector2_zero __pyx_mstate_global->__pyx_n_s_Vector2_zero
 #define __pyx_n_s_Vector3 __pyx_mstate_global->__pyx_n_s_Vector3
-#define __pyx_kp_u__14 __pyx_mstate_global->__pyx_kp_u__14
-#define __pyx_kp_u__16 __pyx_mstate_global->__pyx_kp_u__16
-#define __pyx_n_s__17 __pyx_mstate_global->__pyx_n_s__17
+#define __pyx_kp_u__22 __pyx_mstate_global->__pyx_kp_u__22
+#define __pyx_n_s__23 __pyx_mstate_global->__pyx_n_s__23
 #define __pyx_kp_s__4 __pyx_mstate_global->__pyx_kp_s__4
 #define __pyx_kp_u__5 __pyx_mstate_global->__pyx_kp_u__5
-#define __pyx_n_s__75 __pyx_mstate_global->__pyx_n_s__75
-#define __pyx_n_s_acos __pyx_mstate_global->__pyx_n_s_acos
+#define __pyx_kp_u__7 __pyx_mstate_global->__pyx_kp_u__7
+#define __pyx_n_s__85 __pyx_mstate_global->__pyx_n_s__85
 #define __pyx_n_s_add __pyx_mstate_global->__pyx_n_s_add
 #define __pyx_n_s_all __pyx_mstate_global->__pyx_n_s_all
 #define __pyx_kp_u_and __pyx_mstate_global->__pyx_kp_u_and
 #define __pyx_n_s_angle __pyx_mstate_global->__pyx_n_s_angle
 #define __pyx_n_s_angle_to __pyx_mstate_global->__pyx_n_s_angle_to
+#define __pyx_n_s_arctan2 __pyx_mstate_global->__pyx_n_s_arctan2
 #define __pyx_n_s_array __pyx_mstate_global->__pyx_n_s_array
 #define __pyx_n_s_asyncio_coroutines __pyx_mstate_global->__pyx_n_s_asyncio_coroutines
+#define __pyx_n_s_atan2 __pyx_mstate_global->__pyx_n_s_atan2
+#define __pyx_n_s_backward __pyx_mstate_global->__pyx_n_s_backward
 #define __pyx_n_s_c __pyx_mstate_global->__pyx_n_s_c
 #define __pyx_n_s_class_getitem __pyx_mstate_global->__pyx_n_s_class_getitem
 #define __pyx_n_s_cline_in_traceback __pyx_mstate_global->__pyx_n_s_cline_in_traceback
 #define __pyx_n_s_compare __pyx_mstate_global->__pyx_n_s_compare
 #define __pyx_n_s_copy __pyx_mstate_global->__pyx_n_s_copy
 #define __pyx_n_s_cos __pyx_mstate_global->__pyx_n_s_cos
-#define __pyx_kp_s_cython_double __pyx_mstate_global->__pyx_kp_s_cython_double
+#define __pyx_n_s_cross __pyx_mstate_global->__pyx_n_s_cross
 #define __pyx_n_s_dataclass __pyx_mstate_global->__pyx_n_s_dataclass
 #define __pyx_n_s_dataclass_fields __pyx_mstate_global->__pyx_n_s_dataclass_fields
 #define __pyx_n_s_dataclass_params __pyx_mstate_global->__pyx_n_s_dataclass_params
@@ -4340,7 +4440,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_dict __pyx_mstate_global->__pyx_n_s_dict
 #define __pyx_n_s_dict_2 __pyx_mstate_global->__pyx_n_s_dict_2
 #define __pyx_kp_u_disable __pyx_mstate_global->__pyx_kp_u_disable
-#define __pyx_n_s_div __pyx_mstate_global->__pyx_n_s_div
 #define __pyx_n_s_dot __pyx_mstate_global->__pyx_n_s_dot
 #define __pyx_n_s_dtype __pyx_mstate_global->__pyx_n_s_dtype
 #define __pyx_kp_u_enable __pyx_mstate_global->__pyx_kp_u_enable
@@ -4351,6 +4450,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_flatten __pyx_mstate_global->__pyx_n_s_flatten
 #define __pyx_n_s_float __pyx_mstate_global->__pyx_n_s_float
 #define __pyx_n_s_float64 __pyx_mstate_global->__pyx_n_s_float64
+#define __pyx_n_s_forward __pyx_mstate_global->__pyx_n_s_forward
 #define __pyx_n_s_from_point __pyx_mstate_global->__pyx_n_s_from_point
 #define __pyx_n_s_from_ros_msg __pyx_mstate_global->__pyx_n_s_from_ros_msg
 #define __pyx_n_s_from_vector __pyx_mstate_global->__pyx_n_s_from_vector
@@ -4372,6 +4472,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_is_coroutine __pyx_mstate_global->__pyx_n_s_is_coroutine
 #define __pyx_kp_u_isenabled __pyx_mstate_global->__pyx_kp_u_isenabled
 #define __pyx_n_s_kw_only __pyx_mstate_global->__pyx_n_s_kw_only
+#define __pyx_n_s_left __pyx_mstate_global->__pyx_n_s_left
 #define __pyx_n_s_length __pyx_mstate_global->__pyx_n_s_length
 #define __pyx_n_s_linalg __pyx_mstate_global->__pyx_n_s_linalg
 #define __pyx_n_s_local __pyx_mstate_global->__pyx_n_s_local
@@ -4390,6 +4491,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_metadata __pyx_mstate_global->__pyx_n_s_metadata
 #define __pyx_n_s_msg __pyx_mstate_global->__pyx_n_s_msg
 #define __pyx_kp_s_msg_Transform2D __pyx_mstate_global->__pyx_kp_s_msg_Transform2D
+#define __pyx_n_s_mul __pyx_mstate_global->__pyx_n_s_mul
 #define __pyx_n_s_name __pyx_mstate_global->__pyx_n_s_name
 #define __pyx_n_s_name_2 __pyx_mstate_global->__pyx_n_s_name_2
 #define __pyx_n_s_ndarray __pyx_mstate_global->__pyx_n_s_ndarray
@@ -4410,6 +4512,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_other __pyx_mstate_global->__pyx_n_s_other
 #define __pyx_n_s_p __pyx_mstate_global->__pyx_n_s_p
 #define __pyx_n_s_pickle __pyx_mstate_global->__pyx_n_s_pickle
+#define __pyx_n_s_point __pyx_mstate_global->__pyx_n_s_point
 #define __pyx_n_s_pyx_PickleError __pyx_mstate_global->__pyx_n_s_pyx_PickleError
 #define __pyx_n_s_pyx_checksum __pyx_mstate_global->__pyx_n_s_pyx_checksum
 #define __pyx_n_s_pyx_recursive_repr_guard __pyx_mstate_global->__pyx_n_s_pyx_recursive_repr_guard
@@ -4429,12 +4532,12 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_repr __pyx_mstate_global->__pyx_n_s_repr
 #define __pyx_n_s_reshape __pyx_mstate_global->__pyx_n_s_reshape
 #define __pyx_n_s_return __pyx_mstate_global->__pyx_n_s_return
+#define __pyx_n_s_right __pyx_mstate_global->__pyx_n_s_right
 #define __pyx_n_s_rot_matrix __pyx_mstate_global->__pyx_n_s_rot_matrix
+#define __pyx_n_s_rotation __pyx_mstate_global->__pyx_n_s_rotation
 #define __pyx_n_s_running __pyx_mstate_global->__pyx_n_s_running
 #define __pyx_n_s_s __pyx_mstate_global->__pyx_n_s_s
 #define __pyx_n_s_self __pyx_mstate_global->__pyx_n_s_self
-#define __pyx_n_s_set_x __pyx_mstate_global->__pyx_n_s_set_x
-#define __pyx_n_s_set_y __pyx_mstate_global->__pyx_n_s_set_y
 #define __pyx_n_s_setstate __pyx_mstate_global->__pyx_n_s_setstate
 #define __pyx_n_s_setstate_cython __pyx_mstate_global->__pyx_n_s_setstate_cython
 #define __pyx_n_s_shape __pyx_mstate_global->__pyx_n_s_shape
@@ -4457,7 +4560,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_update __pyx_mstate_global->__pyx_n_s_update
 #define __pyx_n_s_use_setstate __pyx_mstate_global->__pyx_n_s_use_setstate
 #define __pyx_n_s_v __pyx_mstate_global->__pyx_n_s_v
-#define __pyx_n_s_value __pyx_mstate_global->__pyx_n_s_value
+#define __pyx_n_s_vector __pyx_mstate_global->__pyx_n_s_vector
 #define __pyx_n_s_weakref_slot __pyx_mstate_global->__pyx_n_s_weakref_slot
 #define __pyx_n_s_x __pyx_mstate_global->__pyx_n_s_x
 #define __pyx_n_s_y __pyx_mstate_global->__pyx_n_s_y
@@ -4465,6 +4568,9 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_zero __pyx_mstate_global->__pyx_n_s_zero
 #define __pyx_float_0_0 __pyx_mstate_global->__pyx_float_0_0
 #define __pyx_float_1_0 __pyx_mstate_global->__pyx_float_1_0
+#define __pyx_float_neg_1_0 __pyx_mstate_global->__pyx_float_neg_1_0
+#define __pyx_int_0 __pyx_mstate_global->__pyx_int_0
+#define __pyx_int_1 __pyx_mstate_global->__pyx_int_1
 #define __pyx_int_2 __pyx_mstate_global->__pyx_int_2
 #define __pyx_int_3 __pyx_mstate_global->__pyx_int_3
 #define __pyx_int_52365626 __pyx_mstate_global->__pyx_int_52365626
@@ -4475,70 +4581,80 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_tuple__2 __pyx_mstate_global->__pyx_tuple__2
 #define __pyx_tuple__3 __pyx_mstate_global->__pyx_tuple__3
 #define __pyx_tuple__6 __pyx_mstate_global->__pyx_tuple__6
-#define __pyx_tuple__7 __pyx_mstate_global->__pyx_tuple__7
 #define __pyx_tuple__9 __pyx_mstate_global->__pyx_tuple__9
-#define __pyx_slice__10 __pyx_mstate_global->__pyx_slice__10
+#define __pyx_slice__14 __pyx_mstate_global->__pyx_slice__14
+#define __pyx_tuple__10 __pyx_mstate_global->__pyx_tuple__10
 #define __pyx_tuple__11 __pyx_mstate_global->__pyx_tuple__11
 #define __pyx_tuple__12 __pyx_mstate_global->__pyx_tuple__12
 #define __pyx_tuple__13 __pyx_mstate_global->__pyx_tuple__13
 #define __pyx_tuple__15 __pyx_mstate_global->__pyx_tuple__15
+#define __pyx_tuple__16 __pyx_mstate_global->__pyx_tuple__16
+#define __pyx_tuple__17 __pyx_mstate_global->__pyx_tuple__17
 #define __pyx_tuple__18 __pyx_mstate_global->__pyx_tuple__18
 #define __pyx_tuple__19 __pyx_mstate_global->__pyx_tuple__19
+#define __pyx_tuple__20 __pyx_mstate_global->__pyx_tuple__20
 #define __pyx_tuple__21 __pyx_mstate_global->__pyx_tuple__21
+#define __pyx_tuple__24 __pyx_mstate_global->__pyx_tuple__24
 #define __pyx_tuple__25 __pyx_mstate_global->__pyx_tuple__25
-#define __pyx_tuple__26 __pyx_mstate_global->__pyx_tuple__26
 #define __pyx_tuple__28 __pyx_mstate_global->__pyx_tuple__28
-#define __pyx_tuple__30 __pyx_mstate_global->__pyx_tuple__30
-#define __pyx_tuple__33 __pyx_mstate_global->__pyx_tuple__33
-#define __pyx_tuple__35 __pyx_mstate_global->__pyx_tuple__35
-#define __pyx_tuple__38 __pyx_mstate_global->__pyx_tuple__38
-#define __pyx_tuple__43 __pyx_mstate_global->__pyx_tuple__43
+#define __pyx_tuple__29 __pyx_mstate_global->__pyx_tuple__29
+#define __pyx_tuple__31 __pyx_mstate_global->__pyx_tuple__31
+#define __pyx_tuple__34 __pyx_mstate_global->__pyx_tuple__34
+#define __pyx_tuple__37 __pyx_mstate_global->__pyx_tuple__37
+#define __pyx_tuple__39 __pyx_mstate_global->__pyx_tuple__39
+#define __pyx_tuple__42 __pyx_mstate_global->__pyx_tuple__42
 #define __pyx_tuple__47 __pyx_mstate_global->__pyx_tuple__47
-#define __pyx_tuple__51 __pyx_mstate_global->__pyx_tuple__51
-#define __pyx_tuple__57 __pyx_mstate_global->__pyx_tuple__57
-#define __pyx_tuple__59 __pyx_mstate_global->__pyx_tuple__59
-#define __pyx_tuple__61 __pyx_mstate_global->__pyx_tuple__61
-#define __pyx_tuple__63 __pyx_mstate_global->__pyx_tuple__63
-#define __pyx_tuple__65 __pyx_mstate_global->__pyx_tuple__65
+#define __pyx_tuple__56 __pyx_mstate_global->__pyx_tuple__56
+#define __pyx_tuple__60 __pyx_mstate_global->__pyx_tuple__60
 #define __pyx_tuple__67 __pyx_mstate_global->__pyx_tuple__67
-#define __pyx_tuple__70 __pyx_mstate_global->__pyx_tuple__70
-#define __pyx_codeobj__20 __pyx_mstate_global->__pyx_codeobj__20
-#define __pyx_codeobj__22 __pyx_mstate_global->__pyx_codeobj__22
-#define __pyx_codeobj__23 __pyx_mstate_global->__pyx_codeobj__23
-#define __pyx_codeobj__24 __pyx_mstate_global->__pyx_codeobj__24
+#define __pyx_tuple__69 __pyx_mstate_global->__pyx_tuple__69
+#define __pyx_tuple__71 __pyx_mstate_global->__pyx_tuple__71
+#define __pyx_tuple__73 __pyx_mstate_global->__pyx_tuple__73
+#define __pyx_tuple__75 __pyx_mstate_global->__pyx_tuple__75
+#define __pyx_tuple__77 __pyx_mstate_global->__pyx_tuple__77
+#define __pyx_tuple__80 __pyx_mstate_global->__pyx_tuple__80
+#define __pyx_codeobj__26 __pyx_mstate_global->__pyx_codeobj__26
 #define __pyx_codeobj__27 __pyx_mstate_global->__pyx_codeobj__27
-#define __pyx_codeobj__29 __pyx_mstate_global->__pyx_codeobj__29
-#define __pyx_codeobj__31 __pyx_mstate_global->__pyx_codeobj__31
+#define __pyx_codeobj__30 __pyx_mstate_global->__pyx_codeobj__30
 #define __pyx_codeobj__32 __pyx_mstate_global->__pyx_codeobj__32
-#define __pyx_codeobj__34 __pyx_mstate_global->__pyx_codeobj__34
+#define __pyx_codeobj__33 __pyx_mstate_global->__pyx_codeobj__33
+#define __pyx_codeobj__35 __pyx_mstate_global->__pyx_codeobj__35
 #define __pyx_codeobj__36 __pyx_mstate_global->__pyx_codeobj__36
-#define __pyx_codeobj__37 __pyx_mstate_global->__pyx_codeobj__37
-#define __pyx_codeobj__39 __pyx_mstate_global->__pyx_codeobj__39
+#define __pyx_codeobj__38 __pyx_mstate_global->__pyx_codeobj__38
 #define __pyx_codeobj__40 __pyx_mstate_global->__pyx_codeobj__40
 #define __pyx_codeobj__41 __pyx_mstate_global->__pyx_codeobj__41
-#define __pyx_codeobj__42 __pyx_mstate_global->__pyx_codeobj__42
+#define __pyx_codeobj__43 __pyx_mstate_global->__pyx_codeobj__43
 #define __pyx_codeobj__44 __pyx_mstate_global->__pyx_codeobj__44
 #define __pyx_codeobj__45 __pyx_mstate_global->__pyx_codeobj__45
 #define __pyx_codeobj__46 __pyx_mstate_global->__pyx_codeobj__46
 #define __pyx_codeobj__48 __pyx_mstate_global->__pyx_codeobj__48
 #define __pyx_codeobj__49 __pyx_mstate_global->__pyx_codeobj__49
 #define __pyx_codeobj__50 __pyx_mstate_global->__pyx_codeobj__50
+#define __pyx_codeobj__51 __pyx_mstate_global->__pyx_codeobj__51
 #define __pyx_codeobj__52 __pyx_mstate_global->__pyx_codeobj__52
 #define __pyx_codeobj__53 __pyx_mstate_global->__pyx_codeobj__53
 #define __pyx_codeobj__54 __pyx_mstate_global->__pyx_codeobj__54
 #define __pyx_codeobj__55 __pyx_mstate_global->__pyx_codeobj__55
-#define __pyx_codeobj__56 __pyx_mstate_global->__pyx_codeobj__56
+#define __pyx_codeobj__57 __pyx_mstate_global->__pyx_codeobj__57
 #define __pyx_codeobj__58 __pyx_mstate_global->__pyx_codeobj__58
-#define __pyx_codeobj__60 __pyx_mstate_global->__pyx_codeobj__60
+#define __pyx_codeobj__59 __pyx_mstate_global->__pyx_codeobj__59
+#define __pyx_codeobj__61 __pyx_mstate_global->__pyx_codeobj__61
 #define __pyx_codeobj__62 __pyx_mstate_global->__pyx_codeobj__62
+#define __pyx_codeobj__63 __pyx_mstate_global->__pyx_codeobj__63
 #define __pyx_codeobj__64 __pyx_mstate_global->__pyx_codeobj__64
+#define __pyx_codeobj__65 __pyx_mstate_global->__pyx_codeobj__65
 #define __pyx_codeobj__66 __pyx_mstate_global->__pyx_codeobj__66
 #define __pyx_codeobj__68 __pyx_mstate_global->__pyx_codeobj__68
-#define __pyx_codeobj__69 __pyx_mstate_global->__pyx_codeobj__69
-#define __pyx_codeobj__71 __pyx_mstate_global->__pyx_codeobj__71
+#define __pyx_codeobj__70 __pyx_mstate_global->__pyx_codeobj__70
 #define __pyx_codeobj__72 __pyx_mstate_global->__pyx_codeobj__72
-#define __pyx_codeobj__73 __pyx_mstate_global->__pyx_codeobj__73
 #define __pyx_codeobj__74 __pyx_mstate_global->__pyx_codeobj__74
+#define __pyx_codeobj__76 __pyx_mstate_global->__pyx_codeobj__76
+#define __pyx_codeobj__78 __pyx_mstate_global->__pyx_codeobj__78
+#define __pyx_codeobj__79 __pyx_mstate_global->__pyx_codeobj__79
+#define __pyx_codeobj__81 __pyx_mstate_global->__pyx_codeobj__81
+#define __pyx_codeobj__82 __pyx_mstate_global->__pyx_codeobj__82
+#define __pyx_codeobj__83 __pyx_mstate_global->__pyx_codeobj__83
+#define __pyx_codeobj__84 __pyx_mstate_global->__pyx_codeobj__84
 /* #### Code section: module_code ### */
 
 /* "../../../../home/aleksandermichalak/.local/lib/python3.8/site-packages/numpy/__init__.cython-30.pxd":245
@@ -5795,7 +5911,7 @@ static CYTHON_INLINE NPY_DATETIMEUNIT __pyx_f_5numpy_get_datetime64_unit(PyObjec
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":23
+/* "mapping_common/transform.py":22
  *     _matrix: npt.NDArray[np.float64]
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:             # <<<<<<<<<<<<<<
@@ -5839,12 +5955,12 @@ static int __pyx_pw_14mapping_common_9transform_7_Coord2_1__init__(PyObject *__p
           (void)__Pyx_Arg_NewRef_VARARGS(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 23, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 22, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(1, 23, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(1, 22, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -5855,7 +5971,7 @@ static int __pyx_pw_14mapping_common_9transform_7_Coord2_1__init__(PyObject *__p
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 23, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 22, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5893,7 +6009,7 @@ static int __pyx_pf_14mapping_common_9transform_7_Coord2___init__(struct __pyx_o
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/transform.py":24
+  /* "mapping_common/transform.py":23
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (             # <<<<<<<<<<<<<<
@@ -5902,62 +6018,62 @@ static int __pyx_pf_14mapping_common_9transform_7_Coord2___init__(struct __pyx_o
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(__pyx_assertions_enabled())) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 24, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "mapping_common/transform.py":25
+    /* "mapping_common/transform.py":24
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (
  *             3,             # <<<<<<<<<<<<<<
  *         ), f"{type(self).__name__} matrix must have shape (3,)"
  *         self._matrix = matrix
  */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_tuple__3, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 24, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_tuple__3, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "mapping_common/transform.py":24
+    /* "mapping_common/transform.py":23
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (             # <<<<<<<<<<<<<<
  *             3,
  *         ), f"{type(self).__name__} matrix must have shape (3,)"
  */
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(1, 24, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(1, 23, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (unlikely(!__pyx_t_3)) {
 
-      /* "mapping_common/transform.py":26
+      /* "mapping_common/transform.py":25
  *         assert matrix.shape == (
  *             3,
  *         ), f"{type(self).__name__} matrix must have shape (3,)"             # <<<<<<<<<<<<<<
  *         self._matrix = matrix
  * 
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 26, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_n_s_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 25, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 26, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 25, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u_matrix_must_have_shape_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 26, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyUnicode_ConcatInPlace(__pyx_t_1, __pyx_kp_u_matrix_must_have_shape_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 25, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_Raise(__pyx_builtin_AssertionError, __pyx_t_2, 0, 0);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __PYX_ERR(1, 24, __pyx_L1_error)
+      __PYX_ERR(1, 23, __pyx_L1_error)
     }
   }
   #else
-  if ((1)); else __PYX_ERR(1, 24, __pyx_L1_error)
+  if ((1)); else __PYX_ERR(1, 23, __pyx_L1_error)
   #endif
 
-  /* "mapping_common/transform.py":27
+  /* "mapping_common/transform.py":26
  *             3,
  *         ), f"{type(self).__name__} matrix must have shape (3,)"
  *         self._matrix = matrix             # <<<<<<<<<<<<<<
  * 
- *     def x(self) -> cython.double:
+ *     def x(self) -> float:
  */
-  if (!(likely(((__pyx_v_matrix) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_matrix, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 27, __pyx_L1_error)
+  if (!(likely(((__pyx_v_matrix) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_matrix, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 26, __pyx_L1_error)
   __pyx_t_2 = __pyx_v_matrix;
   __Pyx_INCREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
@@ -5966,7 +6082,7 @@ static int __pyx_pf_14mapping_common_9transform_7_Coord2___init__(struct __pyx_o
   __pyx_v_self->_matrix = ((PyArrayObject *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":23
+  /* "mapping_common/transform.py":22
  *     _matrix: npt.NDArray[np.float64]
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:             # <<<<<<<<<<<<<<
@@ -5987,10 +6103,10 @@ static int __pyx_pf_14mapping_common_9transform_7_Coord2___init__(struct __pyx_o
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":29
+/* "mapping_common/transform.py":28
  *         self._matrix = matrix
  * 
- *     def x(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def x(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[0]
  * 
  */
@@ -6024,7 +6140,7 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_x(struct __pyx_obj_14
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 29, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 28, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7_Coord2_3x)) {
         __Pyx_INCREF(__pyx_t_1);
@@ -6046,11 +6162,11 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_x(struct __pyx_obj_14
           PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 29, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 28, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
-        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 29, __pyx_L1_error)
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 28, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_r = __pyx_t_6;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6069,24 +6185,24 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_x(struct __pyx_obj_14
     #endif
   }
 
-  /* "mapping_common/transform.py":30
+  /* "mapping_common/transform.py":29
  * 
- *     def x(self) -> cython.double:
+ *     def x(self) -> float:
  *         return self._matrix[0]             # <<<<<<<<<<<<<<
  * 
- *     def set_x(self, value: cython.double):
+ *     def y(self) -> float:
  */
-  __pyx_t_1 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->_matrix), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 30, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->_matrix), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 29, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 30, __pyx_L1_error)
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 29, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_6;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":29
+  /* "mapping_common/transform.py":28
  *         self._matrix = matrix
  * 
- *     def x(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def x(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[0]
  * 
  */
@@ -6155,8 +6271,8 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_2x(struct __pyx_o
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("x", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7_Coord2_x(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 29, __pyx_L1_error)
-  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 29, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7_Coord2_x(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 28, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -6173,256 +6289,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_2x(struct __pyx_o
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":32
+/* "mapping_common/transform.py":31
  *         return self._matrix[0]
  * 
- *     def set_x(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[0] = value
- * 
- */
-
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5set_x(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static PyObject *__pyx_f_14mapping_common_9transform_7_Coord2_set_x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value, int __pyx_skip_dispatch) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  unsigned int __pyx_t_5;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("set_x", 1);
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
-    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
-      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 32, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7_Coord2_5set_x)) {
-        __Pyx_XDECREF(__pyx_r);
-        __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
-        __pyx_t_5 = 0;
-        #if CYTHON_UNPACK_METHODS
-        if (unlikely(PyMethod_Check(__pyx_t_3))) {
-          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-          if (likely(__pyx_t_4)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-            __Pyx_INCREF(__pyx_t_4);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_3, function);
-            __pyx_t_5 = 1;
-          }
-        }
-        #endif
-        {
-          PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_v_value};
-          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
-          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 32, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        }
-        __pyx_r = __pyx_t_2;
-        __pyx_t_2 = 0;
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        goto __pyx_L0;
-      }
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
-      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
-        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-      }
-      #endif
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    }
-    #endif
-  }
-
-  /* "mapping_common/transform.py":33
- * 
- *     def set_x(self, value: cython.double):
- *         self._matrix[0] = value             # <<<<<<<<<<<<<<
- * 
- *     def y(self) -> cython.double:
- */
-  if (unlikely((__Pyx_SetItemInt(((PyObject *)__pyx_v_self->_matrix), 0, __pyx_v_value, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0))) __PYX_ERR(1, 33, __pyx_L1_error)
-
-  /* "mapping_common/transform.py":32
- *         return self._matrix[0]
- * 
- *     def set_x(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[0] = value
- * 
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_x", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5set_x(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_5set_x = {"set_x", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_5set_x, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5set_x(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-) {
-  double __pyx_v_value;
-  #if !CYTHON_METH_FASTCALL
-  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
-  #endif
-  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[1] = {0};
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("set_x (wrapper)", 0);
-  #if !CYTHON_METH_FASTCALL
-  #if CYTHON_ASSUME_SAFE_MACROS
-  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
-  #else
-  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
-  #endif
-  #endif
-  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
-  {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_value,0};
-    if (__pyx_kwds) {
-      Py_ssize_t kw_args;
-      switch (__pyx_nargs) {
-        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
-      switch (__pyx_nargs) {
-        case  0:
-        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_value)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-        else goto __pyx_L5_argtuple_error;
-      }
-      if (unlikely(kw_args > 0)) {
-        const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "set_x") < 0)) __PYX_ERR(1, 32, __pyx_L3_error)
-      }
-    } else if (unlikely(__pyx_nargs != 1)) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
-    }
-    __pyx_v_value = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_value == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L3_error)
-  }
-  goto __pyx_L6_skip;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("set_x", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 32, __pyx_L3_error)
-  __pyx_L6_skip:;
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L3_error:;
-  {
-    Py_ssize_t __pyx_temp;
-    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
-    }
-  }
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_x", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_4set_x(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), __pyx_v_value);
-
-  /* function exit code */
-  {
-    Py_ssize_t __pyx_temp;
-    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
-    }
-  }
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_4set_x(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, double __pyx_v_value) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("set_x", 1);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_f_14mapping_common_9transform_7_Coord2_set_x(__pyx_v_self, __pyx_t_1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_r = __pyx_t_2;
-  __pyx_t_2 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_x", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "mapping_common/transform.py":35
- *         self._matrix[0] = value
- * 
- *     def y(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def y(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[1]
  * 
  */
 
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_7y(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5y(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6451,9 +6326,9 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_y(struct __pyx_obj_14
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_y); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 35, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_y); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 31, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7_Coord2_7y)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7_Coord2_5y)) {
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
         __pyx_t_5 = 0;
@@ -6473,11 +6348,11 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_y(struct __pyx_obj_14
           PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 35, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 31, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
-        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 35, __pyx_L1_error)
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 31, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_r = __pyx_t_6;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -6496,24 +6371,24 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_y(struct __pyx_obj_14
     #endif
   }
 
-  /* "mapping_common/transform.py":36
+  /* "mapping_common/transform.py":32
  * 
- *     def y(self) -> cython.double:
+ *     def y(self) -> float:
  *         return self._matrix[1]             # <<<<<<<<<<<<<<
  * 
- *     def set_y(self, value: cython.double):
+ *     def __eq__(self, value) -> bool:
  */
-  __pyx_t_1 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->_matrix), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 36, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->_matrix), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 36, __pyx_L1_error)
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_6;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":35
- *         self._matrix[0] = value
+  /* "mapping_common/transform.py":31
+ *         return self._matrix[0]
  * 
- *     def y(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def y(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[1]
  * 
  */
@@ -6532,15 +6407,15 @@ static double __pyx_f_14mapping_common_9transform_7_Coord2_y(struct __pyx_obj_14
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_7y(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5y(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_7y = {"y", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_7y, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_7y(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_5y = {"y", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_5y, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_5y(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -6565,14 +6440,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("y", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "y", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_6y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_4y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_4y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   double __pyx_t_1;
@@ -6582,8 +6457,8 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6y(struct __pyx_o
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("y", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7_Coord2_y(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 35, __pyx_L1_error)
-  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 35, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7_Coord2_y(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 31, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -6600,241 +6475,8 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6y(struct __pyx_o
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":38
+/* "mapping_common/transform.py":34
  *         return self._matrix[1]
- * 
- *     def set_y(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[1] = value
- * 
- */
-
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_9set_y(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static void __pyx_f_14mapping_common_9transform_7_Coord2_set_y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value, int __pyx_skip_dispatch) {
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  unsigned int __pyx_t_5;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("set_y", 1);
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
-    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
-      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set_y); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 38, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7_Coord2_9set_y)) {
-        __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
-        __pyx_t_5 = 0;
-        #if CYTHON_UNPACK_METHODS
-        if (unlikely(PyMethod_Check(__pyx_t_3))) {
-          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-          if (likely(__pyx_t_4)) {
-            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-            __Pyx_INCREF(__pyx_t_4);
-            __Pyx_INCREF(function);
-            __Pyx_DECREF_SET(__pyx_t_3, function);
-            __pyx_t_5 = 1;
-          }
-        }
-        #endif
-        {
-          PyObject *__pyx_callargs[2] = {__pyx_t_4, __pyx_v_value};
-          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
-          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 38, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        }
-        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        goto __pyx_L0;
-      }
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
-      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
-      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
-        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
-      }
-      #endif
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
-    }
-    #endif
-  }
-
-  /* "mapping_common/transform.py":39
- * 
- *     def set_y(self, value: cython.double):
- *         self._matrix[1] = value             # <<<<<<<<<<<<<<
- * 
- *     def __eq__(self, value) -> bool:
- */
-  if (unlikely((__Pyx_SetItemInt(((PyObject *)__pyx_v_self->_matrix), 1, __pyx_v_value, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0))) __PYX_ERR(1, 39, __pyx_L1_error)
-
-  /* "mapping_common/transform.py":38
- *         return self._matrix[1]
- * 
- *     def set_y(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[1] = value
- * 
- */
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_y", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_9set_y(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_9set_y = {"set_y", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_9set_y, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_9set_y(PyObject *__pyx_v_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-) {
-  double __pyx_v_value;
-  #if !CYTHON_METH_FASTCALL
-  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
-  #endif
-  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[1] = {0};
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("set_y (wrapper)", 0);
-  #if !CYTHON_METH_FASTCALL
-  #if CYTHON_ASSUME_SAFE_MACROS
-  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
-  #else
-  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
-  #endif
-  #endif
-  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
-  {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_value,0};
-    if (__pyx_kwds) {
-      Py_ssize_t kw_args;
-      switch (__pyx_nargs) {
-        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
-      switch (__pyx_nargs) {
-        case  0:
-        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_value)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 38, __pyx_L3_error)
-        else goto __pyx_L5_argtuple_error;
-      }
-      if (unlikely(kw_args > 0)) {
-        const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "set_y") < 0)) __PYX_ERR(1, 38, __pyx_L3_error)
-      }
-    } else if (unlikely(__pyx_nargs != 1)) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
-    }
-    __pyx_v_value = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_value == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 38, __pyx_L3_error)
-  }
-  goto __pyx_L6_skip;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("set_y", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 38, __pyx_L3_error)
-  __pyx_L6_skip:;
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L3_error:;
-  {
-    Py_ssize_t __pyx_temp;
-    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
-    }
-  }
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_y", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_8set_y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), __pyx_v_value);
-
-  /* function exit code */
-  {
-    Py_ssize_t __pyx_temp;
-    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
-    }
-  }
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_8set_y(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, double __pyx_v_value) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("set_y", 1);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_f_14mapping_common_9transform_7_Coord2_set_y(__pyx_v_self, __pyx_t_1, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 38, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("mapping_common.transform._Coord2.set_y", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "mapping_common/transform.py":41
- *         self._matrix[1] = value
  * 
  *     def __eq__(self, value) -> bool:             # <<<<<<<<<<<<<<
  *         if type(self) is type(value):
@@ -6842,21 +6484,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_8set_y(struct __p
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_11__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_11__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_7__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_7__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__eq__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_6__eq__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), ((PyObject *)__pyx_v_value));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_6__eq__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v_value) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
@@ -6869,7 +6511,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__eq__", 1);
 
-  /* "mapping_common/transform.py":42
+  /* "mapping_common/transform.py":35
  * 
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):             # <<<<<<<<<<<<<<
@@ -6879,7 +6521,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
   __pyx_t_1 = (((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))) == ((PyObject *)Py_TYPE(__pyx_v_value)));
   if (__pyx_t_1) {
 
-    /* "mapping_common/transform.py":43
+    /* "mapping_common/transform.py":36
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):
  *             return (self._matrix == value._matrix).all()             # <<<<<<<<<<<<<<
@@ -6887,11 +6529,11 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
  * 
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 43, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 36, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = PyObject_RichCompare(((PyObject *)__pyx_v_self->_matrix), __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 43, __pyx_L1_error)
+    __pyx_t_4 = PyObject_RichCompare(((PyObject *)__pyx_v_self->_matrix), __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 36, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_all); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 43, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_all); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 36, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_t_4 = NULL;
@@ -6912,7 +6554,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
       PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
       __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 43, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 36, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
@@ -6920,7 +6562,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "mapping_common/transform.py":42
+    /* "mapping_common/transform.py":35
  * 
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):             # <<<<<<<<<<<<<<
@@ -6929,7 +6571,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
  */
   }
 
-  /* "mapping_common/transform.py":44
+  /* "mapping_common/transform.py":37
  *         if type(self) is type(value):
  *             return (self._matrix == value._matrix).all()
  *         return False             # <<<<<<<<<<<<<<
@@ -6941,8 +6583,8 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
   __pyx_r = Py_False;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":41
- *         self._matrix[1] = value
+  /* "mapping_common/transform.py":34
+ *         return self._matrix[1]
  * 
  *     def __eq__(self, value) -> bool:             # <<<<<<<<<<<<<<
  *         if type(self) is type(value):
@@ -6971,21 +6613,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__eq__(struct _
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__(PyObject *__pyx_v_self) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__repr__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_12__repr__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_8__repr__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_12__repr__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_8__repr__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
   PyObject *__pyx_v_key = NULL;
   PyObject *__pyx_v_guard_set = NULL;
   PyObject *__pyx_v_name = NULL;
@@ -7333,15 +6975,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_7_matrix___get__(
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_15__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_11__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_15__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_15__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_11__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_11__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_11__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -7366,14 +7008,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "__reduce_cython__", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_14__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_10__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_14__reduce_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_10__reduce_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -7593,15 +7235,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_14__reduce_cython
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_17__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_13__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_17__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_17__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7_Coord2_13__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_13__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7_Coord2_13__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -7675,7 +7317,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_16__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7_Coord2_12__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   {
@@ -7688,7 +7330,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_16__setstate_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_12__setstate_cython__(struct __pyx_obj_14mapping_common_9transform__Coord2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -7727,8 +7369,99 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_16__setstate_cyth
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":53
+/* "mapping_common/transform.py":46
  *     Receives both rotation and translation when transformed with a Transform2D"""
+ * 
+ *     def vector(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         return Vector2(self._matrix)
+ * 
+ */
+
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_6Point2_1vector(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_1vector = {"vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_1vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_6Point2_1vector(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("vector (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("vector", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "vector", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_vector(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_6Point2_vector(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("vector", 1);
+
+  /* "mapping_common/transform.py":47
+ * 
+ *     def vector(self) -> "Vector2":
+ *         return Vector2(self._matrix)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), ((PyObject *)__pyx_v_self->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 47, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_1);
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":46
+ *     Receives both rotation and translation when transformed with a Transform2D"""
+ * 
+ *     def vector(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         return Vector2(self._matrix)
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("mapping_common.transform.Point2.vector", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":49
+ *         return Vector2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Point2":
@@ -7736,15 +7469,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7_Coord2_16__setstate_cyth
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_1new(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_3new(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_1new = {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_1new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_1new(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_3new = {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_3new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_3new(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -7791,7 +7524,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 53, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 49, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -7799,14 +7532,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 53, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 49, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, 1); __PYX_ERR(1, 53, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, 1); __PYX_ERR(1, 49, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new") < 0)) __PYX_ERR(1, 53, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new") < 0)) __PYX_ERR(1, 49, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -7814,12 +7547,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
       values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
     }
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 54, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 54, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 50, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 50, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 53, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 49, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -7833,7 +7566,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_new(__pyx_v_x, __pyx_v_y);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_2new(__pyx_v_x, __pyx_v_y);
 
   /* function exit code */
   {
@@ -7846,7 +7579,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_new(double __pyx_v_x, double __pyx_v_y) {
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_2new(double __pyx_v_x, double __pyx_v_y) {
   PyObject *__pyx_v_m = NULL;
   struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -7860,48 +7593,48 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("new", 1);
 
-  /* "mapping_common/transform.py":55
+  /* "mapping_common/transform.py":51
  *     @staticmethod
  *     def new(x: float, y: float) -> "Point2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)             # <<<<<<<<<<<<<<
  *         return Point2(m)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_t_1)) __PYX_ERR(1, 55, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_t_1)) __PYX_ERR(1, 51, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(1, 55, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(1, 51, __pyx_L1_error);
   __Pyx_INCREF(__pyx_float_1_0);
   __Pyx_GIVEREF(__pyx_float_1_0);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 2, __pyx_float_1_0)) __PYX_ERR(1, 55, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 2, __pyx_float_1_0)) __PYX_ERR(1, 51, __pyx_L1_error);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4)) __PYX_ERR(1, 55, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4)) __PYX_ERR(1, 51, __pyx_L1_error);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 55, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 55, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -7909,7 +7642,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   __pyx_v_m = __pyx_t_5;
   __pyx_t_5 = 0;
 
-  /* "mapping_common/transform.py":56
+  /* "mapping_common/transform.py":52
  *     def new(x: float, y: float) -> "Point2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  *         return Point2(m)             # <<<<<<<<<<<<<<
@@ -7917,14 +7650,14 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_v_m); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 56, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_v_m); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 52, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_t_5);
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":53
- *     Receives both rotation and translation when transformed with a Transform2D"""
+  /* "mapping_common/transform.py":49
+ *         return Vector2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Point2":
@@ -7947,7 +7680,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":58
+/* "mapping_common/transform.py":54
  *         return Point2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -7956,15 +7689,15 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_3zero(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_5zero(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_3zero = {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_3zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_3zero(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_5zero = {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_5zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_5zero(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -7989,14 +7722,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("zero", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "zero", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_2zero();
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_4zero();
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_2zero(void) {
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_4zero(void) {
   struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8006,7 +7739,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("zero", 1);
 
-  /* "mapping_common/transform.py":60
+  /* "mapping_common/transform.py":56
  *     @staticmethod
  *     def zero() -> "Point2":
  *         return Point2.new(0.0, 0.0)             # <<<<<<<<<<<<<<
@@ -8014,17 +7747,17 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 60, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 60, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Point2))))) __PYX_ERR(1, 60, __pyx_L1_error)
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Point2))))) __PYX_ERR(1, 56, __pyx_L1_error)
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_t_2);
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":58
+  /* "mapping_common/transform.py":54
  *         return Point2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8044,7 +7777,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":62
+/* "mapping_common/transform.py":58
  *         return Point2.new(0.0, 0.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8053,15 +7786,15 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_5from_vector(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_7from_vector(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_5from_vector = {"from_vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_5from_vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_5from_vector(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_7from_vector = {"from_vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_7from_vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_7from_vector(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8105,12 +7838,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 62, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 58, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_vector") < 0)) __PYX_ERR(1, 62, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_vector") < 0)) __PYX_ERR(1, 58, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -8121,7 +7854,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_vector", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 62, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_vector", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 58, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -8135,8 +7868,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 63, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_4from_vector(__pyx_v_v);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 59, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_6from_vector(__pyx_v_v);
 
   /* function exit code */
   goto __pyx_L0;
@@ -8153,7 +7886,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_4from_vector(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_6from_vector(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
   struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8162,7 +7895,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_vector", 1);
 
-  /* "mapping_common/transform.py":64
+  /* "mapping_common/transform.py":60
  *     @staticmethod
  *     def from_vector(v: "Vector2") -> "Point2":
  *         return Point2(v._matrix)             # <<<<<<<<<<<<<<
@@ -8170,13 +7903,13 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), ((PyObject *)__pyx_v_v->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 64, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), ((PyObject *)__pyx_v_v->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":62
+  /* "mapping_common/transform.py":58
  *         return Point2.new(0.0, 0.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8195,7 +7928,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":66
+/* "mapping_common/transform.py":62
  *         return Point2(v._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8204,15 +7937,15 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_7from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_9from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_7from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_7from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_7from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_9from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_9from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_6Point2_9from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8256,12 +7989,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 66, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 62, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 66, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 62, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -8272,7 +8005,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 66, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 62, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -8286,7 +8019,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_6from_ros_msg(__pyx_v_m);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_8from_ros_msg(__pyx_v_m);
 
   /* function exit code */
   {
@@ -8299,7 +8032,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_6from_ros_msg(PyObject *__pyx_v_m) {
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_6Point2_8from_ros_msg(PyObject *__pyx_v_m) {
   struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8313,7 +8046,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/transform.py":68
+  /* "mapping_common/transform.py":64
  *     @staticmethod
  *     def from_ros_msg(m: geometry_msgs.Point) -> "Point2":
  *         return Point2.new(m.x, m.y)             # <<<<<<<<<<<<<<
@@ -8321,11 +8054,11 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  *     def to_ros_msg(self) -> geometry_msgs.Point:
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_y); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 68, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_y); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   __pyx_t_6 = 0;
@@ -8347,16 +8080,16 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 68, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 64, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_14mapping_common_9transform_Point2))))) __PYX_ERR(1, 68, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_14mapping_common_9transform_Point2))))) __PYX_ERR(1, 64, __pyx_L1_error)
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":66
+  /* "mapping_common/transform.py":62
  *         return Point2(v._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -8379,7 +8112,7 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":70
+/* "mapping_common/transform.py":66
  *         return Point2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Point:             # <<<<<<<<<<<<<<
@@ -8388,15 +8121,15 @@ static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_c
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_9to_ros_msg(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_11to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_9to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_9to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_9to_ros_msg(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_11to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_11to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_11to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8421,14 +8154,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "to_ros_msg", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_10to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_10to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -8440,33 +8173,33 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/transform.py":71
+  /* "mapping_common/transform.py":67
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Point:
  *         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)             # <<<<<<<<<<<<<<
  * 
- * 
+ *     def __add__(self, other):
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_geometry_msgs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_geometry_msgs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Point); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Point); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.x(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 71, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.x(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_x, __pyx_t_4) < 0) __PYX_ERR(1, 71, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_x, __pyx_t_4) < 0) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 71, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 71, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Point2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_y, __pyx_t_4) < 0) __PYX_ERR(1, 71, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_y, __pyx_t_4) < 0) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_z, __pyx_float_0_0) < 0) __PYX_ERR(1, 71, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 71, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_z, __pyx_float_0_0) < 0) __PYX_ERR(1, 67, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -8474,7 +8207,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct
   __pyx_t_4 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":70
+  /* "mapping_common/transform.py":66
  *         return Point2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Point:             # <<<<<<<<<<<<<<
@@ -8495,6 +8228,176 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct
   return __pyx_r;
 }
 
+/* "mapping_common/transform.py":69
+ *         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
+ * 
+ *     def __add__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_13__add__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_13__add__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__add__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_12__add__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self), ((PyObject *)__pyx_v_other));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_12__add__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v_other) {
+  PyObject *__pyx_v_matrix = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  Py_ssize_t __pyx_t_4;
+  Py_UCS4 __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__add__", 1);
+
+  /* "mapping_common/transform.py":70
+ * 
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ */
+  __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_14mapping_common_9transform_Vector2); 
+  if (__pyx_t_1) {
+
+    /* "mapping_common/transform.py":71
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix             # <<<<<<<<<<<<<<
+ *             matrix[2] = 1.0
+ *             return Point2(matrix)
+ */
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 71, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyNumber_Add(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 71, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_v_matrix = __pyx_t_3;
+    __pyx_t_3 = 0;
+
+    /* "mapping_common/transform.py":72
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0             # <<<<<<<<<<<<<<
+ *             return Point2(matrix)
+ *         raise TypeError(
+ */
+    if (unlikely((__Pyx_SetItemInt(__pyx_v_matrix, 2, __pyx_float_1_0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0))) __PYX_ERR(1, 72, __pyx_L1_error)
+
+    /* "mapping_common/transform.py":73
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ *             return Point2(matrix)             # <<<<<<<<<<<<<<
+ *         raise TypeError(
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_v_matrix); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 73, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "mapping_common/transform.py":70
+ * 
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ */
+  }
+
+  /* "mapping_common/transform.py":75
+ *             return Point2(matrix)
+ *         raise TypeError(
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"             # <<<<<<<<<<<<<<
+ *         )
+ * 
+ */
+  __pyx_t_3 = PyTuple_New(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = 0;
+  __pyx_t_5 = 127;
+  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for);
+  __pyx_t_4 += 34;
+  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_kp_u_Unsupported_operand_types_for);
+  __pyx_t_2 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u_and);
+  __pyx_t_4 += 7;
+  __Pyx_GIVEREF(__pyx_kp_u_and);
+  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_kp_u_and);
+  __pyx_t_2 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u__7);
+  __pyx_t_4 += 1;
+  __Pyx_GIVEREF(__pyx_kp_u__7);
+  PyTuple_SET_ITEM(__pyx_t_3, 4, __pyx_kp_u__7);
+  __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/transform.py":74
+ *             matrix[2] = 1.0
+ *             return Point2(matrix)
+ *         raise TypeError(             # <<<<<<<<<<<<<<
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
+ *         )
+ */
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 74, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __PYX_ERR(1, 74, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":69
+ *         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
+ * 
+ *     def __add__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("mapping_common.transform.Point2.__add__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_matrix);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
 /* "(tree fragment)":3
  * __pyx_recursive_repr_guard = __import__('threading').local()
  * __pyx_recursive_repr_guard.running = set()
@@ -8504,21 +8407,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_8to_ros_msg(struct
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_11__repr__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_11__repr__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_15__repr__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_15__repr__(PyObject *__pyx_v_self) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__repr__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_10__repr__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_14__repr__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_10__repr__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_14__repr__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
   PyObject *__pyx_v_key = NULL;
   PyObject *__pyx_v_guard_set = NULL;
   PyObject *__pyx_v_name = NULL;
@@ -8827,15 +8730,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_10__repr__(struct 
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_13__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_17__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_13__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_13__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_13__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_17__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_17__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_17__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -8860,14 +8763,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "__reduce_cython__", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_12__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_16__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_12__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_16__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -9087,15 +8990,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_12__reduce_cython_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_15__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_19__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_15__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_15__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_15__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_6Point2_19__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_19__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_6Point2_19__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -9169,7 +9072,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_14__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_6Point2_18__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   {
@@ -9182,7 +9085,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_14__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_18__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -9221,13 +9124,164 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6Point2_14__setstate_cytho
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":80
+/* "mapping_common/transform.py":85
  *     Receives only the rotation when transformed with a Transform2D"""
  * 
  *     def length(self) -> float:             # <<<<<<<<<<<<<<
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+ *         """Calculates the length of this vector
  * 
  */
+
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_1length(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static double __pyx_f_14mapping_common_9transform_7Vector2_length(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, int __pyx_skip_dispatch) {
+  double __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  double __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("length", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 85, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7Vector2_1length)) {
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 85, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_6;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "mapping_common/transform.py":93
+ *         # This implementation was chosen because (at the time of writing this) it was
+ *         # about 2 times faster than `np.linalg.norm(self._matrix[:2])`
+ *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)             # <<<<<<<<<<<<<<
+ * 
+ *     def normalized(self) -> "Vector2":
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_math); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_sqrt); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->__pyx_base._matrix), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = PyNumber_Power(__pyx_t_2, __pyx_int_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->__pyx_base._matrix), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_7 = PyNumber_Power(__pyx_t_2, __pyx_int_2, Py_None); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = PyNumber_Add(__pyx_t_4, __pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+  __pyx_t_7 = NULL;
+  __pyx_t_5 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_7)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __pyx_t_5 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_7, __pyx_t_2};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 93, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  }
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 93, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":85
+ *     Receives only the rotation when transformed with a Transform2D"""
+ * 
+ *     def length(self) -> float:             # <<<<<<<<<<<<<<
+ *         """Calculates the length of this vector
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.length", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
 
 /* Python wrapper */
 static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_1length(PyObject *__pyx_v_self, 
@@ -9237,7 +9291,8 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_1length = {"length", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_1length, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_7Vector2_length, "Calculates the length of this vector\n\n        Returns:\n            float: length of this vector\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_1length = {"length", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_1length, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_7Vector2_length};
 static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_1length(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
@@ -9273,76 +9328,210 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
 static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_length(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
+  double __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  unsigned int __pyx_t_6;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("length", 1);
-
-  /* "mapping_common/transform.py":81
- * 
- *     def length(self) -> float:
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)             # <<<<<<<<<<<<<<
- * 
- *     def normalized(self) -> "Vector2":
- */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_math); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7Vector2_length(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 85, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 85, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_sqrt); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 81, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->__pyx_base._matrix), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.length", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":95
+ *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+ * 
+ *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         """Returns this direction Vector with length 1.0
+ * 
+ */
+
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_3normalized(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_common_9transform_7Vector2_normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_zero = NULL;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  int __pyx_t_6;
+  double __pyx_t_7;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("normalized", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_normalized); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 95, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7Vector2_3normalized)) {
+        __Pyx_XDECREF((PyObject *)__pyx_r);
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 95, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 95, __pyx_L1_error)
+        __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
+        __pyx_t_2 = 0;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "mapping_common/transform.py":103
+ *             Vector2: Vector with length 1.0
+ *         """
+ *         zero = Vector2.zero()             # <<<<<<<<<<<<<<
+ *         if self == zero:
+ *             return zero
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_zero); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 103, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyNumber_Power(__pyx_t_2, __pyx_int_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 81, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetItemInt(((PyObject *)__pyx_v_self->__pyx_base._matrix), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = PyNumber_Power(__pyx_t_2, __pyx_int_2, Py_None); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 81, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyNumber_Add(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 81, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = NULL;
-  __pyx_t_6 = 0;
+  __pyx_t_3 = NULL;
+  __pyx_t_5 = 0;
   #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_5);
+  if (likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_6 = 1;
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_5 = 1;
     }
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_t_2};
-    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_6, 1+__pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 81, __pyx_L1_error)
+    PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 103, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  __pyx_r = __pyx_t_1;
+  __pyx_v_zero = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "mapping_common/transform.py":104
+ *         """
+ *         zero = Vector2.zero()
+ *         if self == zero:             # <<<<<<<<<<<<<<
+ *             return zero
+ *         return Vector2(self._matrix / self.length())
+ */
+  __pyx_t_1 = PyObject_RichCompare(((PyObject *)__pyx_v_self), __pyx_v_zero, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_6 < 0))) __PYX_ERR(1, 104, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__pyx_t_6) {
+
+    /* "mapping_common/transform.py":105
+ *         zero = Vector2.zero()
+ *         if self == zero:
+ *             return zero             # <<<<<<<<<<<<<<
+ *         return Vector2(self._matrix / self.length())
+ * 
+ */
+    __Pyx_XDECREF((PyObject *)__pyx_r);
+    if (!(likely(((__pyx_v_zero) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_zero, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 105, __pyx_L1_error)
+    __Pyx_INCREF(__pyx_v_zero);
+    __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_zero);
+    goto __pyx_L0;
+
+    /* "mapping_common/transform.py":104
+ *         """
+ *         zero = Vector2.zero()
+ *         if self == zero:             # <<<<<<<<<<<<<<
+ *             return zero
+ *         return Vector2(self._matrix / self.length())
+ */
+  }
+
+  /* "mapping_common/transform.py":106
+ *         if self == zero:
+ *             return zero
+ *         return Vector2(self._matrix / self.length())             # <<<<<<<<<<<<<<
+ * 
+ *     def angle_to(self, other: "Vector2") -> float:
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_7 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->length(__pyx_v_self, 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyNumber_Divide(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":80
- *     Receives only the rotation when transformed with a Transform2D"""
- * 
- *     def length(self) -> float:             # <<<<<<<<<<<<<<
+  /* "mapping_common/transform.py":95
  *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+ * 
+ *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         """Returns this direction Vector with length 1.0
  * 
  */
 
@@ -9352,34 +9541,26 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_length(struct __p
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("mapping_common.transform.Vector2.length", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.normalized", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_XDECREF(__pyx_v_zero);
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":83
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
- * 
- *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
- *         """Returns this direction Vector with length 1.0
- * 
- */
-
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_3normalized(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_3normalized(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_7Vector2_2normalized, "Returns this direction Vector with length 1.0\n\n        Returns:\n            Vector2: Vector with length 1.0\n        ");
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_7Vector2_2normalized, "Returns this direction Vector with length 1.0\n\n        If the vector is the zero vector, the result will be zero as well\n\n        Returns:\n            Vector2: Vector with length 1.0\n        ");
 static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_3normalized = {"normalized", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_3normalized, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_7Vector2_2normalized};
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_3normalized(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_3normalized(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -9390,7 +9571,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("normalized (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
@@ -9411,65 +9592,247 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_2normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
-  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_2normalized(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  unsigned int __pyx_t_4;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("normalized", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = ((PyObject *)__pyx_f_14mapping_common_9transform_7Vector2_normalized(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
 
-  /* "mapping_common/transform.py":89
- *             Vector2: Vector with length 1.0
- *         """
- *         return Vector2(self._matrix / self.length())             # <<<<<<<<<<<<<<
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.normalized", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":108
+ *         return Vector2(self._matrix / self.length())
  * 
- *     def angle_to(self, other: "Vector2") -> float:
+ *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
+ *         """Calculates the angle to *other*
+ * 
  */
-  __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_length); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 89, __pyx_L1_error)
+
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_5angle_to(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static double __pyx_f_14mapping_common_9transform_7Vector2_angle_to(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_other, int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_cross = NULL;
+  PyObject *__pyx_v_dot = NULL;
+  double __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  double __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("angle_to", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_angle_to); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_7Vector2_5angle_to)) {
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, ((PyObject *)__pyx_v_other)};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 108, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_6;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "mapping_common/transform.py":128
+ *         # => |A| |B| can be ignored because it is just a scalar multiplication
+ *         #  of the vector (does not change direction)
+ *         cross = np.cross(self._matrix[:2], other._matrix[:2])             # <<<<<<<<<<<<<<
+ *         dot = np.dot(self._matrix[:2], other._matrix[:2])
+ *         return math.atan2(cross, dot)
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 128, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = NULL;
-  __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_cross); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_self->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_other->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_7 = NULL;
+  __pyx_t_5 = 0;
   #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
+  if (unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_7)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_7);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-      __pyx_t_4 = 1;
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __pyx_t_5 = 1;
     }
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
-    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 89, __pyx_L1_error)
+    PyObject *__pyx_callargs[3] = {__pyx_t_7, __pyx_t_2, __pyx_t_4};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 2+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 128, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  }
+  __pyx_v_cross = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "mapping_common/transform.py":129
+ *         #  of the vector (does not change direction)
+ *         cross = np.cross(self._matrix[:2], other._matrix[:2])
+ *         dot = np.dot(self._matrix[:2], other._matrix[:2])             # <<<<<<<<<<<<<<
+ *         return math.atan2(cross, dot)
+ * 
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_dot); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_self->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_other->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 129, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_7 = NULL;
+  __pyx_t_5 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_7)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+      __pyx_t_5 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[3] = {__pyx_t_7, __pyx_t_3, __pyx_t_2};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_5, 2+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 129, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  }
+  __pyx_v_dot = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "mapping_common/transform.py":130
+ *         cross = np.cross(self._matrix[:2], other._matrix[:2])
+ *         dot = np.dot(self._matrix[:2], other._matrix[:2])
+ *         return math.atan2(cross, dot)             # <<<<<<<<<<<<<<
+ * 
+ *     def point(self) -> Point2:
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_math); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 130, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_atan2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 130, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = NULL;
+  __pyx_t_5 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_5 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[3] = {__pyx_t_4, __pyx_v_cross, __pyx_v_dot};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 2+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 130, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  __pyx_t_2 = __Pyx_PyNumber_Divide(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 89, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 130, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 89, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_1);
-  __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":83
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+  /* "mapping_common/transform.py":108
+ *         return Vector2(self._matrix / self.length())
  * 
- *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
- *         """Returns this direction Vector with length 1.0
+ *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
+ *         """Calculates the angle to *other*
  * 
  */
 
@@ -9478,21 +9841,16 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("mapping_common.transform.Vector2.normalized", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.angle_to", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_XDECREF(__pyx_v_cross);
+  __Pyx_XDECREF(__pyx_v_dot);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
-
-/* "mapping_common/transform.py":91
- *         return Vector2(self._matrix / self.length())
- * 
- *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
- *         """Calculates the angle to *other*
- * 
- */
 
 /* Python wrapper */
 static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_5angle_to(PyObject *__pyx_v_self, 
@@ -9502,7 +9860,7 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_7Vector2_4angle_to, "Calculates the angle to *other*\n\n        Args:\n            other (Vector2): _description_\n\n        Returns:\n            float: angle in radians. Always in interval [-pi,pi].\n            TODO: define if angle is cw or ccw depending on sign\n        ");
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_7Vector2_4angle_to, "Calculates the angle to *other*\n\n        Args:\n            other (Vector2): Vector to calculate the angle to\n\n        Returns:\n            float: signed angle in radians. Always in interval [-pi,pi].\n\n            - angle > 0: CCW\n            - angle < 0: CW\n        ");
 static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_5angle_to = {"angle_to", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_5angle_to, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_7Vector2_4angle_to};
 static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_5angle_to(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
@@ -9548,12 +9906,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 91, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 108, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "angle_to") < 0)) __PYX_ERR(1, 91, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "angle_to") < 0)) __PYX_ERR(1, 108, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -9564,7 +9922,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("angle_to", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 91, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("angle_to", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 108, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9578,7 +9936,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_other), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "other", 0))) __PYX_ERR(1, 91, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_other), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "other", 0))) __PYX_ERR(1, 108, __pyx_L1_error)
   __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_4angle_to(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), __pyx_v_other);
 
   /* function exit code */
@@ -9597,173 +9955,126 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
 }
 
 static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_4angle_to(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_other) {
-  PyObject *__pyx_v_div = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
+  double __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  unsigned int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("angle_to", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_14mapping_common_9transform_7Vector2_angle_to(__pyx_v_self, __pyx_v_other, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 108, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
 
-  /* "mapping_common/transform.py":101
- *             TODO: define if angle is cw or ccw depending on sign
- *         """
- *         div = self._matrix.dot(other._matrix) / self.length() * other.length()             # <<<<<<<<<<<<<<
- *         return math.acos(div)
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.angle_to", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":132
+ *         return math.atan2(cross, dot)
+ * 
+ *     def point(self) -> Point2:             # <<<<<<<<<<<<<<
+ *         return Point2(self._matrix)
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_n_s_dot); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 101, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = NULL;
-  __pyx_t_4 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_3, ((PyObject *)__pyx_v_other->__pyx_base._matrix)};
-    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 101, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  }
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_length); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 101, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = NULL;
-  __pyx_t_4 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_5, NULL};
-    __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 101, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  }
-  __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 101, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_other), __pyx_n_s_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 101, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = NULL;
-  __pyx_t_4 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_1))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_1);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_1, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_5, NULL};
-    __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_1, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 101, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  }
-  __pyx_t_1 = PyNumber_Multiply(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 101, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v_div = __pyx_t_1;
-  __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":102
- *         """
- *         div = self._matrix.dot(other._matrix) / self.length() * other.length()
- *         return math.acos(div)             # <<<<<<<<<<<<<<
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_7Vector2_7point(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_7point = {"point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_7point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pw_14mapping_common_9transform_7Vector2_7point(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("point (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("point", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "point", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_6point(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_pf_14mapping_common_9transform_7Vector2_6point(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
+  struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("point", 1);
+
+  /* "mapping_common/transform.py":133
+ * 
+ *     def point(self) -> Point2:
+ *         return Point2(self._matrix)             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_math); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 102, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_acos); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 102, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  __pyx_t_4 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_2, __pyx_v_div};
-    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 102, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  }
-  __pyx_r = __pyx_t_1;
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), ((PyObject *)__pyx_v_self->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 133, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Point2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":91
- *         return Vector2(self._matrix / self.length())
+  /* "mapping_common/transform.py":132
+ *         return math.atan2(cross, dot)
  * 
- *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
- *         """Calculates the angle to *other*
+ *     def point(self) -> Point2:             # <<<<<<<<<<<<<<
+ *         return Point2(self._matrix)
  * 
  */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("mapping_common.transform.Vector2.angle_to", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.point", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_div);
-  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":104
- *         return math.acos(div)
+/* "mapping_common/transform.py":135
+ *         return Point2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Vector2":
@@ -9771,15 +10082,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_4angle_to(struct 
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_7new(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_9new(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_7new = {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_7new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_7new(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_9new = {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_9new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_9new(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -9826,7 +10137,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 104, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 135, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -9834,14 +10145,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 104, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 135, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, 1); __PYX_ERR(1, 104, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, 1); __PYX_ERR(1, 135, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new") < 0)) __PYX_ERR(1, 104, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new") < 0)) __PYX_ERR(1, 135, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -9849,12 +10160,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
       values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
     }
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 105, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 105, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 136, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 136, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 104, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("new", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 135, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -9868,7 +10179,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_6new(__pyx_v_x, __pyx_v_y);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_8new(__pyx_v_x, __pyx_v_y);
 
   /* function exit code */
   {
@@ -9881,7 +10192,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_6new(double __pyx_v_x, double __pyx_v_y) {
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_8new(double __pyx_v_x, double __pyx_v_y) {
   PyObject *__pyx_v_m = NULL;
   struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -9895,48 +10206,48 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("new", 1);
 
-  /* "mapping_common/transform.py":106
+  /* "mapping_common/transform.py":137
  *     @staticmethod
  *     def new(x: float, y: float) -> "Vector2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)             # <<<<<<<<<<<<<<
  *         return Vector2(m)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_x); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_4 = PyList_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_t_1)) __PYX_ERR(1, 137, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_3);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(1, 106, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_3)) __PYX_ERR(1, 137, __pyx_L1_error);
   __Pyx_INCREF(__pyx_float_1_0);
   __Pyx_GIVEREF(__pyx_float_1_0);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 2, __pyx_float_1_0)) __PYX_ERR(1, 106, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 2, __pyx_float_1_0)) __PYX_ERR(1, 137, __pyx_L1_error);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4)) __PYX_ERR(1, 106, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4)) __PYX_ERR(1, 137, __pyx_L1_error);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 106, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 106, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -9944,7 +10255,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   __pyx_v_m = __pyx_t_5;
   __pyx_t_5 = 0;
 
-  /* "mapping_common/transform.py":107
+  /* "mapping_common/transform.py":138
  *     def new(x: float, y: float) -> "Vector2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  *         return Vector2(m)             # <<<<<<<<<<<<<<
@@ -9952,14 +10263,14 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 107, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 138, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_5);
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":104
- *         return math.acos(div)
+  /* "mapping_common/transform.py":135
+ *         return Point2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Vector2":
@@ -9982,7 +10293,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":109
+/* "mapping_common/transform.py":140
  *         return Vector2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -9991,15 +10302,15 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_9zero(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_11zero(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_9zero = {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_9zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_9zero(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_11zero = {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_11zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_11zero(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -10024,14 +10335,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("zero", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "zero", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_8zero();
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_10zero();
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_8zero(void) {
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_10zero(void) {
   struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -10041,7 +10352,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("zero", 1);
 
-  /* "mapping_common/transform.py":111
+  /* "mapping_common/transform.py":142
  *     @staticmethod
  *     def zero() -> "Vector2":
  *         return Vector2.new(0.0, 0.0)             # <<<<<<<<<<<<<<
@@ -10049,17 +10360,17 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 111, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 111, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 111, __pyx_L1_error)
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 142, __pyx_L1_error)
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":109
+  /* "mapping_common/transform.py":140
  *         return Vector2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -10079,8 +10390,396 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":113
+/* "mapping_common/transform.py":144
  *         return Vector2.new(0.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)
+ */
+
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_13forward(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_13forward = {"forward", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_13forward, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_13forward(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("forward (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("forward", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "forward", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_12forward();
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_12forward(void) {
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("forward", 1);
+
+  /* "mapping_common/transform.py":146
+ *     @staticmethod
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 146, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 146, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 146, __pyx_L1_error)
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":144
+ *         return Vector2.new(0.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.forward", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":148
+ *         return Vector2.new(1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)
+ */
+
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_15backward(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_15backward = {"backward", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_15backward, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_15backward(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("backward (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("backward", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "backward", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_14backward();
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_14backward(void) {
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("backward", 1);
+
+  /* "mapping_common/transform.py":150
+ *     @staticmethod
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 150, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 150, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 150, __pyx_L1_error)
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":148
+ *         return Vector2.new(1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.backward", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":152
+ *         return Vector2.new(-1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)
+ */
+
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_17left(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_17left = {"left", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_17left, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_17left(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("left (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("left", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "left", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_16left();
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_16left(void) {
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("left", 1);
+
+  /* "mapping_common/transform.py":154
+ *     @staticmethod
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 154, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 154, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 154, __pyx_L1_error)
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":152
+ *         return Vector2.new(-1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.left", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":156
+ *         return Vector2.new(0.0, 1.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)
+ */
+
+/* Python wrapper */
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_19right(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_19right = {"right", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_19right, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_19right(CYTHON_UNUSED PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("right (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("right", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "right", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_18right();
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_18right(void) {
+  struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("right", 1);
+
+  /* "mapping_common/transform.py":158
+ *     @staticmethod
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 158, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 158, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 158, __pyx_L1_error)
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":156
+ *         return Vector2.new(0.0, 1.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.right", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":160
+ *         return Vector2.new(0.0, -1.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_point(p: Point2) -> "Vector2":
@@ -10088,15 +10787,15 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_11from_point(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_21from_point(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_11from_point = {"from_point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_11from_point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_11from_point(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_21from_point = {"from_point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_21from_point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_21from_point(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -10140,12 +10839,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 113, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 160, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_point") < 0)) __PYX_ERR(1, 113, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_point") < 0)) __PYX_ERR(1, 160, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -10156,7 +10855,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_point", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 113, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_point", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 160, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10170,8 +10869,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_p), __pyx_ptype_14mapping_common_9transform_Point2, 0, "p", 0))) __PYX_ERR(1, 114, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_10from_point(__pyx_v_p);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_p), __pyx_ptype_14mapping_common_9transform_Point2, 0, "p", 0))) __PYX_ERR(1, 161, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_20from_point(__pyx_v_p);
 
   /* function exit code */
   goto __pyx_L0;
@@ -10188,7 +10887,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_10from_point(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_p) {
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_20from_point(struct __pyx_obj_14mapping_common_9transform_Point2 *__pyx_v_p) {
   struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -10197,7 +10896,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_point", 1);
 
-  /* "mapping_common/transform.py":115
+  /* "mapping_common/transform.py":162
  *     @staticmethod
  *     def from_point(p: Point2) -> "Vector2":
  *         return Vector2(p._matrix)             # <<<<<<<<<<<<<<
@@ -10205,14 +10904,14 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), ((PyObject *)__pyx_v_p->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 115, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), ((PyObject *)__pyx_v_p->__pyx_base._matrix)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 162, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":113
- *         return Vector2.new(0.0, 0.0)
+  /* "mapping_common/transform.py":160
+ *         return Vector2.new(0.0, -1.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_point(p: Point2) -> "Vector2":
@@ -10230,7 +10929,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":117
+/* "mapping_common/transform.py":164
  *         return Vector2(p._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -10239,15 +10938,15 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_13from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_23from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_13from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_13from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_13from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_23from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_23from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pw_14mapping_common_9transform_7Vector2_23from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -10291,12 +10990,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 117, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 164, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 117, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 164, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -10307,7 +11006,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 117, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 164, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10321,7 +11020,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_12from_ros_msg(__pyx_v_m);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_22from_ros_msg(__pyx_v_m);
 
   /* function exit code */
   {
@@ -10334,7 +11033,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_12from_ros_msg(PyObject *__pyx_v_m) {
+static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_common_9transform_7Vector2_22from_ros_msg(PyObject *__pyx_v_m) {
   struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -10348,7 +11047,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/transform.py":119
+  /* "mapping_common/transform.py":166
  *     @staticmethod
  *     def from_ros_msg(m: geometry_msgs.Vector3) -> "Vector2":
  *         return Vector2.new(m.x, m.y)             # <<<<<<<<<<<<<<
@@ -10356,11 +11055,11 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 119, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 166, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 119, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 166, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_y); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 119, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_y); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 166, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   __pyx_t_6 = 0;
@@ -10382,16 +11081,16 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 119, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 166, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 119, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 166, __pyx_L1_error)
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":117
+  /* "mapping_common/transform.py":164
  *         return Vector2(p._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -10414,7 +11113,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":121
+/* "mapping_common/transform.py":168
  *         return Vector2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:             # <<<<<<<<<<<<<<
@@ -10423,15 +11122,15 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_pf_14mapping_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_15to_ros_msg(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_25to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_15to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_15to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_15to_ros_msg(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_25to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_25to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_25to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -10456,14 +11155,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "to_ros_msg", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_24to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_24to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -10475,33 +11174,33 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(stru
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/transform.py":122
+  /* "mapping_common/transform.py":169
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:
  *         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)             # <<<<<<<<<<<<<<
  * 
- * 
+ *     def __mul__(self, other):
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_geometry_msgs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 122, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_geometry_msgs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Vector3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 122, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_Vector3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 122, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.x(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 122, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 122, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.x(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 169, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_x, __pyx_t_4) < 0) __PYX_ERR(1, 122, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_x, __pyx_t_4) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 122, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 122, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_14mapping_common_9transform_Vector2 *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.y(((struct __pyx_obj_14mapping_common_9transform__Coord2 *)__pyx_v_self), 0); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 169, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_y, __pyx_t_4) < 0) __PYX_ERR(1, 122, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_y, __pyx_t_4) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_z, __pyx_float_0_0) < 0) __PYX_ERR(1, 122, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 122, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_z, __pyx_float_0_0) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -10509,7 +11208,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(stru
   __pyx_t_4 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":121
+  /* "mapping_common/transform.py":168
  *         return Vector2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:             # <<<<<<<<<<<<<<
@@ -10530,6 +11229,530 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(stru
   return __pyx_r;
 }
 
+/* "mapping_common/transform.py":171
+ *         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
+ * 
+ *     def __mul__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, (float, int)):
+ *             matrix = self._matrix * other
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_27__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_27__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__mul__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_26__mul__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), ((PyObject *)__pyx_v_other));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_26__mul__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other) {
+  PyObject *__pyx_v_matrix = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  Py_ssize_t __pyx_t_4;
+  Py_UCS4 __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__mul__", 1);
+
+  /* "mapping_common/transform.py":172
+ * 
+ *     def __mul__(self, other):
+ *         if isinstance(other, (float, int)):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix * other
+ *             matrix[2] = 1.0
+ */
+  __pyx_t_2 = PyFloat_Check(__pyx_v_other); 
+  if (!__pyx_t_2) {
+  } else {
+    __pyx_t_1 = __pyx_t_2;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_2 = PyInt_Check(__pyx_v_other); 
+  __pyx_t_1 = __pyx_t_2;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_1) {
+
+    /* "mapping_common/transform.py":173
+ *     def __mul__(self, other):
+ *         if isinstance(other, (float, int)):
+ *             matrix = self._matrix * other             # <<<<<<<<<<<<<<
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)
+ */
+    __pyx_t_3 = PyNumber_Multiply(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_v_other); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 173, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_v_matrix = __pyx_t_3;
+    __pyx_t_3 = 0;
+
+    /* "mapping_common/transform.py":174
+ *         if isinstance(other, (float, int)):
+ *             matrix = self._matrix * other
+ *             matrix[2] = 1.0             # <<<<<<<<<<<<<<
+ *             return Vector2(matrix)
+ *         raise TypeError(
+ */
+    if (unlikely((__Pyx_SetItemInt(__pyx_v_matrix, 2, __pyx_float_1_0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0))) __PYX_ERR(1, 174, __pyx_L1_error)
+
+    /* "mapping_common/transform.py":175
+ *             matrix = self._matrix * other
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)             # <<<<<<<<<<<<<<
+ *         raise TypeError(
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_matrix); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 175, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "mapping_common/transform.py":172
+ * 
+ *     def __mul__(self, other):
+ *         if isinstance(other, (float, int)):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix * other
+ *             matrix[2] = 1.0
+ */
+  }
+
+  /* "mapping_common/transform.py":177
+ *             return Vector2(matrix)
+ *         raise TypeError(
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"             # <<<<<<<<<<<<<<
+ *         )
+ * 
+ */
+  __pyx_t_3 = PyTuple_New(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = 0;
+  __pyx_t_5 = 127;
+  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for_2);
+  __pyx_t_4 += 34;
+  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_kp_u_Unsupported_operand_types_for_2);
+  __pyx_t_6 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6);
+  __Pyx_GIVEREF(__pyx_t_6);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_6);
+  __pyx_t_6 = 0;
+  __Pyx_INCREF(__pyx_kp_u_and);
+  __pyx_t_4 += 7;
+  __Pyx_GIVEREF(__pyx_kp_u_and);
+  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_kp_u_and);
+  __pyx_t_6 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6);
+  __Pyx_GIVEREF(__pyx_t_6);
+  PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_6);
+  __pyx_t_6 = 0;
+  __Pyx_INCREF(__pyx_kp_u__7);
+  __pyx_t_4 += 1;
+  __Pyx_GIVEREF(__pyx_kp_u__7);
+  PyTuple_SET_ITEM(__pyx_t_3, 4, __pyx_kp_u__7);
+  __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/transform.py":176
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)
+ *         raise TypeError(             # <<<<<<<<<<<<<<
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+ *         )
+ */
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 176, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __PYX_ERR(1, 176, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":171
+ *         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
+ * 
+ *     def __mul__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, (float, int)):
+ *             matrix = self._matrix * other
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.__mul__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_matrix);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":180
+ *         )
+ * 
+ *     def __rmul__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, (float, int)):
+ *             return self.__mul__(other)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_29__rmul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_29__rmul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__rmul__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_28__rmul__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), ((PyObject *)__pyx_v_other));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_28__rmul__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  unsigned int __pyx_t_6;
+  Py_ssize_t __pyx_t_7;
+  Py_UCS4 __pyx_t_8;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__rmul__", 1);
+
+  /* "mapping_common/transform.py":181
+ * 
+ *     def __rmul__(self, other):
+ *         if isinstance(other, (float, int)):             # <<<<<<<<<<<<<<
+ *             return self.__mul__(other)
+ *         raise TypeError(
+ */
+  __pyx_t_2 = PyFloat_Check(__pyx_v_other); 
+  if (!__pyx_t_2) {
+  } else {
+    __pyx_t_1 = __pyx_t_2;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_2 = PyInt_Check(__pyx_v_other); 
+  __pyx_t_1 = __pyx_t_2;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_1) {
+
+    /* "mapping_common/transform.py":182
+ *     def __rmul__(self, other):
+ *         if isinstance(other, (float, int)):
+ *             return self.__mul__(other)             # <<<<<<<<<<<<<<
+ *         raise TypeError(
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_mul); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 182, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_5 = NULL;
+    __pyx_t_6 = 0;
+    #if CYTHON_UNPACK_METHODS
+    if (likely(PyMethod_Check(__pyx_t_4))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_4, function);
+        __pyx_t_6 = 1;
+      }
+    }
+    #endif
+    {
+      PyObject *__pyx_callargs[2] = {__pyx_t_5, __pyx_v_other};
+      __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 1+__pyx_t_6);
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 182, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "mapping_common/transform.py":181
+ * 
+ *     def __rmul__(self, other):
+ *         if isinstance(other, (float, int)):             # <<<<<<<<<<<<<<
+ *             return self.__mul__(other)
+ *         raise TypeError(
+ */
+  }
+
+  /* "mapping_common/transform.py":184
+ *             return self.__mul__(other)
+ *         raise TypeError(
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"             # <<<<<<<<<<<<<<
+ *         )
+ * 
+ */
+  __pyx_t_3 = PyTuple_New(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 184, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_7 = 0;
+  __pyx_t_8 = 127;
+  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for_2);
+  __pyx_t_7 += 34;
+  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_kp_u_Unsupported_operand_types_for_2);
+  __pyx_t_4 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 184, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_8 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) > __pyx_t_8) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) : __pyx_t_8;
+  __pyx_t_7 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_4);
+  __pyx_t_4 = 0;
+  __Pyx_INCREF(__pyx_kp_u_and);
+  __pyx_t_7 += 7;
+  __Pyx_GIVEREF(__pyx_kp_u_and);
+  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_kp_u_and);
+  __pyx_t_4 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 184, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_8 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) > __pyx_t_8) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) : __pyx_t_8;
+  __pyx_t_7 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_4);
+  __pyx_t_4 = 0;
+  __Pyx_INCREF(__pyx_kp_u__7);
+  __pyx_t_7 += 1;
+  __Pyx_GIVEREF(__pyx_kp_u__7);
+  PyTuple_SET_ITEM(__pyx_t_3, 4, __pyx_kp_u__7);
+  __pyx_t_4 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, __pyx_t_7, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 184, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/transform.py":183
+ *         if isinstance(other, (float, int)):
+ *             return self.__mul__(other)
+ *         raise TypeError(             # <<<<<<<<<<<<<<
+ *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+ *         )
+ */
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 183, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __PYX_ERR(1, 183, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":180
+ *         )
+ * 
+ *     def __rmul__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, (float, int)):
+ *             return self.__mul__(other)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.__rmul__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":187
+ *         )
+ * 
+ *     def __add__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_31__add__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_31__add__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__add__ (wrapper)", 0);
+  __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_30__add__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), ((PyObject *)__pyx_v_other));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_30__add__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v_other) {
+  PyObject *__pyx_v_matrix = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  Py_ssize_t __pyx_t_4;
+  Py_UCS4 __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("__add__", 1);
+
+  /* "mapping_common/transform.py":188
+ * 
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ */
+  __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_14mapping_common_9transform_Vector2); 
+  if (__pyx_t_1) {
+
+    /* "mapping_common/transform.py":189
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix             # <<<<<<<<<<<<<<
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)
+ */
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 189, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyNumber_Add(((PyObject *)__pyx_v_self->__pyx_base._matrix), __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 189, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_v_matrix = __pyx_t_3;
+    __pyx_t_3 = 0;
+
+    /* "mapping_common/transform.py":190
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0             # <<<<<<<<<<<<<<
+ *             return Vector2(matrix)
+ *         raise TypeError(
+ */
+    if (unlikely((__Pyx_SetItemInt(__pyx_v_matrix, 2, __pyx_float_1_0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0))) __PYX_ERR(1, 190, __pyx_L1_error)
+
+    /* "mapping_common/transform.py":191
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)             # <<<<<<<<<<<<<<
+ *         raise TypeError(
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_matrix); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 191, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "mapping_common/transform.py":188
+ * 
+ *     def __add__(self, other):
+ *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
+ *             matrix = self._matrix + other._matrix
+ *             matrix[2] = 1.0
+ */
+  }
+
+  /* "mapping_common/transform.py":193
+ *             return Vector2(matrix)
+ *         raise TypeError(
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"             # <<<<<<<<<<<<<<
+ *         )
+ * 
+ */
+  __pyx_t_3 = PyTuple_New(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = 0;
+  __pyx_t_5 = 127;
+  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for);
+  __pyx_t_4 += 34;
+  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_kp_u_Unsupported_operand_types_for);
+  __pyx_t_2 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u_and);
+  __pyx_t_4 += 7;
+  __Pyx_GIVEREF(__pyx_kp_u_and);
+  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_kp_u_and);
+  __pyx_t_2 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_5) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_5;
+  __pyx_t_4 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u__7);
+  __pyx_t_4 += 1;
+  __Pyx_GIVEREF(__pyx_kp_u__7);
+  PyTuple_SET_ITEM(__pyx_t_3, 4, __pyx_kp_u__7);
+  __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "mapping_common/transform.py":192
+ *             matrix[2] = 1.0
+ *             return Vector2(matrix)
+ *         raise TypeError(             # <<<<<<<<<<<<<<
+ *             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
+ *         )
+ */
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 192, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __PYX_ERR(1, 192, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":187
+ *         )
+ * 
+ *     def __add__(self, other):             # <<<<<<<<<<<<<<
+ *         if isinstance(other, Vector2):
+ *             matrix = self._matrix + other._matrix
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("mapping_common.transform.Vector2.__add__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_matrix);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
 /* "(tree fragment)":3
  * __pyx_recursive_repr_guard = __import__('threading').local()
  * __pyx_recursive_repr_guard.running = set()
@@ -10539,21 +11762,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_14to_ros_msg(stru
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_17__repr__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_17__repr__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_33__repr__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_33__repr__(PyObject *__pyx_v_self) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__repr__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_16__repr__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_32__repr__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_16__repr__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_32__repr__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
   PyObject *__pyx_v_key = NULL;
   PyObject *__pyx_v_guard_set = NULL;
   PyObject *__pyx_v_name = NULL;
@@ -10862,15 +12085,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_16__repr__(struct
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_19__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_35__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_19__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_19__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_19__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_35__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_35__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_35__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -10895,14 +12118,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "__reduce_cython__", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_18__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_34__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_18__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_34__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -11122,15 +12345,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_18__reduce_cython
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_21__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_37__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_21__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_21__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_21__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_7Vector2_37__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_37__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_7Vector2_37__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -11204,7 +12427,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_20__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_7Vector2_36__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   {
@@ -11217,7 +12440,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_20__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_36__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -11256,7 +12479,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_7Vector2_20__setstate_cyth
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":135
+/* "mapping_common/transform.py":218
  *     _matrix: npt.NDArray[np.float64]
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:             # <<<<<<<<<<<<<<
@@ -11300,12 +12523,12 @@ static int __pyx_pw_14mapping_common_9transform_11Transform2D_1__init__(PyObject
           (void)__Pyx_Arg_NewRef_VARARGS(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 135, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 218, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(1, 135, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "__init__") < 0)) __PYX_ERR(1, 218, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -11316,7 +12539,7 @@ static int __pyx_pw_14mapping_common_9transform_11Transform2D_1__init__(PyObject
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 135, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 218, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11354,7 +12577,7 @@ static int __pyx_pf_14mapping_common_9transform_11Transform2D___init__(struct __
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 1);
 
-  /* "mapping_common/transform.py":136
+  /* "mapping_common/transform.py":219
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (             # <<<<<<<<<<<<<<
@@ -11363,45 +12586,45 @@ static int __pyx_pf_14mapping_common_9transform_11Transform2D___init__(struct __
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(__pyx_assertions_enabled())) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 136, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 219, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "mapping_common/transform.py":137
+    /* "mapping_common/transform.py":220
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (
  *             3,             # <<<<<<<<<<<<<<
  *             3,
  *         ), "Transformation matrix must be a homogenous 3x3 matrix"
  */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_tuple__7, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 136, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_tuple__13, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 219, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "mapping_common/transform.py":136
+    /* "mapping_common/transform.py":219
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (             # <<<<<<<<<<<<<<
  *             3,
  *             3,
  */
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(1, 136, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(1, 219, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (unlikely(!__pyx_t_3)) {
       __Pyx_Raise(__pyx_builtin_AssertionError, __pyx_kp_u_Transformation_matrix_must_be_a, 0, 0);
-      __PYX_ERR(1, 136, __pyx_L1_error)
+      __PYX_ERR(1, 219, __pyx_L1_error)
     }
   }
   #else
-  if ((1)); else __PYX_ERR(1, 136, __pyx_L1_error)
+  if ((1)); else __PYX_ERR(1, 219, __pyx_L1_error)
   #endif
 
-  /* "mapping_common/transform.py":140
+  /* "mapping_common/transform.py":223
  *             3,
  *         ), "Transformation matrix must be a homogenous 3x3 matrix"
  *         self._matrix = matrix             # <<<<<<<<<<<<<<
  * 
  *     def translation(self) -> Vector2:
  */
-  if (!(likely(((__pyx_v_matrix) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_matrix, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 140, __pyx_L1_error)
+  if (!(likely(((__pyx_v_matrix) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_matrix, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 223, __pyx_L1_error)
   __pyx_t_2 = __pyx_v_matrix;
   __Pyx_INCREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
@@ -11410,7 +12633,7 @@ static int __pyx_pf_14mapping_common_9transform_11Transform2D___init__(struct __
   __pyx_v_self->_matrix = ((PyArrayObject *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":135
+  /* "mapping_common/transform.py":218
  *     _matrix: npt.NDArray[np.float64]
  * 
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:             # <<<<<<<<<<<<<<
@@ -11431,7 +12654,7 @@ static int __pyx_pf_14mapping_common_9transform_11Transform2D___init__(struct __
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":142
+/* "mapping_common/transform.py":225
  *         self._matrix = matrix
  * 
  *     def translation(self) -> Vector2:             # <<<<<<<<<<<<<<
@@ -11468,7 +12691,7 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_c
     if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
       PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
       #endif
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_translation); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 142, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_translation); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 225, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_11Transform2D_3translation)) {
         __Pyx_XDECREF((PyObject *)__pyx_r);
@@ -11491,11 +12714,11 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_c
           PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
           __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 142, __pyx_L1_error)
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 225, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
-        if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 142, __pyx_L1_error)
+        if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Vector2))))) __PYX_ERR(1, 225, __pyx_L1_error)
         __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
         __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -11514,48 +12737,48 @@ static struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_f_14mapping_c
     #endif
   }
 
-  /* "mapping_common/transform.py":148
+  /* "mapping_common/transform.py":231
  *             Vector2: translation
  *         """
  *         m = self._matrix[:, 2]             # <<<<<<<<<<<<<<
  *         m = m / m[2]
  *         return Vector2(m)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetItem(((PyObject *)__pyx_v_self->_matrix), __pyx_tuple__9); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 148, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetItem(((PyObject *)__pyx_v_self->_matrix), __pyx_tuple__15); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 231, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_m = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":149
+  /* "mapping_common/transform.py":232
  *         """
  *         m = self._matrix[:, 2]
  *         m = m / m[2]             # <<<<<<<<<<<<<<
  *         return Vector2(m)
  * 
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 149, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 232, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 149, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 232, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF_SET(__pyx_v_m, __pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":150
+  /* "mapping_common/transform.py":233
  *         m = self._matrix[:, 2]
  *         m = m / m[2]
  *         return Vector2(m)             # <<<<<<<<<<<<<<
  * 
- *     def inverse(self) -> "Transform2D":
+ *     def rotation(self) -> float:
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 150, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 233, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)__pyx_t_2);
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":142
+  /* "mapping_common/transform.py":225
  *         self._matrix = matrix
  * 
  *     def translation(self) -> Vector2:             # <<<<<<<<<<<<<<
@@ -11629,7 +12852,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_2translation
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("translation", 1);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_14mapping_common_9transform_11Transform2D_translation(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 142, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__pyx_f_14mapping_common_9transform_11Transform2D_translation(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 225, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -11646,25 +12869,167 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_2translation
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":152
+/* "mapping_common/transform.py":235
  *         return Vector2(m)
  * 
- *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
- *         """Returns an inverted Transformation matrix
+ *     def rotation(self) -> float:             # <<<<<<<<<<<<<<
+ *         """Returns only the rotation that this Transform applies
  * 
  */
 
-/* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_5inverse(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_5rotation(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_4inverse, "Returns an inverted Transformation matrix\n\n        Returns:\n            Transform2D: Inverted Transformation matrix\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_5inverse = {"inverse", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_5inverse, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_4inverse};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_5inverse(PyObject *__pyx_v_self, 
+static double __pyx_f_14mapping_common_9transform_11Transform2D_rotation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, int __pyx_skip_dispatch) {
+  double __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  double __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("rotation", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_rotation); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 235, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_11Transform2D_5rotation)) {
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 235, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 235, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_r = __pyx_t_6;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "mapping_common/transform.py":246
+ *         # Atan2(y, x) is angle to Vector(x, y)
+ *         # => matrix[1, 0] = sin(a) = y; self._matrix[0, 0] = cos(a) = x
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])             # <<<<<<<<<<<<<<
+ * 
+ *     def inverse(self) -> "Transform2D":
+ */
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_arctan2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetItem(((PyObject *)__pyx_v_self->_matrix), __pyx_tuple__16); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyObject_GetItem(((PyObject *)__pyx_v_self->_matrix), __pyx_tuple__17); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_7 = NULL;
+  __pyx_t_5 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_7)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_7);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __pyx_t_5 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[3] = {__pyx_t_7, __pyx_t_2, __pyx_t_4};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 2+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 246, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  }
+  __pyx_t_6 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_6 == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":235
+ *         return Vector2(m)
+ * 
+ *     def rotation(self) -> float:             # <<<<<<<<<<<<<<
+ *         """Returns only the rotation that this Transform applies
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("mapping_common.transform.Transform2D.rotation", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_5rotation(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_4rotation, "Returns only the rotation that this Transform applies\n\n        Returns:\n            float: rotation angle in radians\n\n            - angle > 0: CCW\n            - angle < 0: CW\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_5rotation = {"rotation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_5rotation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_4rotation};
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_5rotation(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -11675,7 +13040,226 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("rotation (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  if (unlikely(__pyx_nargs > 0)) {
+    __Pyx_RaiseArgtupleInvalid("rotation", 1, 0, 0, __pyx_nargs); return NULL;}
+  if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "rotation", 0))) return NULL;
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_4rotation(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_4rotation(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  double __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("rotation", 1);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_14mapping_common_9transform_11Transform2D_rotation(__pyx_v_self, 1); if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 235, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 235, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("mapping_common.transform.Transform2D.rotation", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "mapping_common/transform.py":248
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
+ * 
+ *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
+ *         """Returns an inverted Transformation matrix
+ * 
+ */
+
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_7inverse(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_f_14mapping_common_9transform_11Transform2D_inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, int __pyx_skip_dispatch) {
+  struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  unsigned int __pyx_t_5;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("inverse", 1);
+  /* Check if called by wrapper */
+  if (unlikely(__pyx_skip_dispatch)) ;
+  /* Check if overridden in Python */
+  else if (unlikely((Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0) || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))) {
+    #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    static PY_UINT64_T __pyx_tp_dict_version = __PYX_DICT_VERSION_INIT, __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+    if (unlikely(!__Pyx_object_dict_version_matches(((PyObject *)__pyx_v_self), __pyx_tp_dict_version, __pyx_obj_dict_version))) {
+      PY_UINT64_T __pyx_typedict_guard = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      #endif
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_inverse); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 248, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void*) __pyx_pw_14mapping_common_9transform_11Transform2D_7inverse)) {
+        __Pyx_XDECREF((PyObject *)__pyx_r);
+        __Pyx_INCREF(__pyx_t_1);
+        __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
+        __pyx_t_5 = 0;
+        #if CYTHON_UNPACK_METHODS
+        if (unlikely(PyMethod_Check(__pyx_t_3))) {
+          __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+          if (likely(__pyx_t_4)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+            __Pyx_INCREF(__pyx_t_4);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_3, function);
+            __pyx_t_5 = 1;
+          }
+        }
+        #endif
+        {
+          PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
+          __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
+          __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 248, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_2);
+          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        }
+        if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 248, __pyx_L1_error)
+        __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_t_2);
+        __pyx_t_2 = 0;
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        goto __pyx_L0;
+      }
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+      __pyx_tp_dict_version = __Pyx_get_tp_dict_version(((PyObject *)__pyx_v_self));
+      __pyx_obj_dict_version = __Pyx_get_object_dict_version(((PyObject *)__pyx_v_self));
+      if (unlikely(__pyx_typedict_guard != __pyx_tp_dict_version)) {
+        __pyx_tp_dict_version = __pyx_obj_dict_version = __PYX_DICT_VERSION_INIT;
+      }
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      #if CYTHON_USE_DICT_VERSIONS && CYTHON_USE_PYTYPE_LOOKUP && CYTHON_USE_TYPE_SLOTS
+    }
+    #endif
+  }
+
+  /* "mapping_common/transform.py":254
+ *             Transform2D: Inverted Transformation matrix
+ *         """
+ *         return Transform2D(np.linalg.inv(self._matrix))             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __Pyx_XDECREF((PyObject *)__pyx_r);
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 254, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_linalg); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 254, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_inv); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 254, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = NULL;
+  __pyx_t_5 = 0;
+  #if CYTHON_UNPACK_METHODS
+  if (likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_5 = 1;
+    }
+  }
+  #endif
+  {
+    PyObject *__pyx_callargs[2] = {__pyx_t_3, ((PyObject *)__pyx_v_self->_matrix)};
+    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 254, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  }
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 254, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "mapping_common/transform.py":248
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
+ * 
+ *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
+ *         """Returns an inverted Transformation matrix
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_AddTraceback("mapping_common.transform.Transform2D.inverse", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_7inverse(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_6inverse, "Returns an inverted Transformation matrix\n\n        Returns:\n            Transform2D: Inverted Transformation matrix\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_7inverse = {"inverse", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_7inverse, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_6inverse};
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_7inverse(PyObject *__pyx_v_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("inverse (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
@@ -11689,92 +13273,40 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("inverse", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "inverse", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_4inverse(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_6inverse(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_4inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
-  struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_6inverse(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  unsigned int __pyx_t_4;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("inverse", 1);
-
-  /* "mapping_common/transform.py":158
- *             Transform2D: Inverted Transformation matrix
- *         """
- *         return Transform2D(np.linalg.inv(self._matrix))             # <<<<<<<<<<<<<<
- * 
- *     @staticmethod
- */
-  __Pyx_XDECREF((PyObject *)__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 158, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_linalg); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 158, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_inv); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 158, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = NULL;
-  __pyx_t_4 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_3, ((PyObject *)__pyx_v_self->_matrix)};
-    __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 1+__pyx_t_4);
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 158, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  }
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 158, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = ((PyObject *)__pyx_f_14mapping_common_9transform_11Transform2D_inverse(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 248, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
   goto __pyx_L0;
-
-  /* "mapping_common/transform.py":152
- *         return Vector2(m)
- * 
- *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
- *         """Returns an inverted Transformation matrix
- * 
- */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("mapping_common.transform.Transform2D.inverse", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XGIVEREF((PyObject *)__pyx_r);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":160
+/* "mapping_common/transform.py":256
  *         return Transform2D(np.linalg.inv(self._matrix))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -11783,16 +13315,16 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_7identity(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_9identity(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_6identity, "Returns the identity transform (no transformation)\n\n        Returns:\n            Transform2D: Identity transform\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_7identity = {"identity", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_7identity, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_6identity};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_7identity(CYTHON_UNUSED PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_8identity, "Returns the identity transform (no transformation)\n\n        Returns:\n            Transform2D: Identity transform\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_9identity = {"identity", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_9identity, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_8identity};
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_9identity(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -11817,14 +13349,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("identity", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "identity", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_6identity();
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_8identity();
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_6identity(void) {
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_8identity(void) {
   struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -11837,7 +13369,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("identity", 1);
 
-  /* "mapping_common/transform.py":167
+  /* "mapping_common/transform.py":263
  *             Transform2D: Identity transform
  *         """
  *         return Transform2D(matrix=np.eye(3, dtype=np.float64))             # <<<<<<<<<<<<<<
@@ -11845,36 +13377,36 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_eye); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_eye); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 167, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__3, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__3, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_matrix, __pyx_t_5) < 0) __PYX_ERR(1, 167, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_matrix, __pyx_t_5) < 0) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 167, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 263, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_t_5);
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":160
+  /* "mapping_common/transform.py":256
  *         return Transform2D(np.linalg.inv(self._matrix))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -11897,7 +13429,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":169
+/* "mapping_common/transform.py":265
  *         return Transform2D(matrix=np.eye(3, dtype=np.float64))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -11906,16 +13438,16 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_9new_rotation(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_11new_rotation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_8new_rotation, "Returns a transformation matrix consisting of a rotation around `angle`\n\n        Args:\n            angle (float): Rotation angle in radians\n            TODO: define if angle is cw or ccw depending on sign\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_9new_rotation = {"new_rotation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_9new_rotation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_8new_rotation};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_9new_rotation(CYTHON_UNUSED PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_10new_rotation, "Returns a transformation matrix consisting of a rotation around `angle`\n\n        Args:\n            angle (float): Rotation angle in radians\n\n            - angle > 0: CCW\n            - angle < 0: CW\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_11new_rotation = {"new_rotation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_11new_rotation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_10new_rotation};
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_11new_rotation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -11959,23 +13491,23 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 169, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 265, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_rotation") < 0)) __PYX_ERR(1, 169, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_rotation") < 0)) __PYX_ERR(1, 265, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
     }
-    __pyx_v_angle = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_angle == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 170, __pyx_L3_error)
+    __pyx_v_angle = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_angle == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 266, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("new_rotation", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 169, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("new_rotation", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 265, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -11989,7 +13521,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_8new_rotation(__pyx_v_angle);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_10new_rotation(__pyx_v_angle);
 
   /* function exit code */
   {
@@ -12002,7 +13534,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_8new_rotation(double __pyx_v_angle) {
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_10new_rotation(double __pyx_v_angle) {
   PyObject *__pyx_v_c = NULL;
   PyObject *__pyx_v_s = NULL;
   PyObject *__pyx_v_rot_matrix = NULL;
@@ -12020,19 +13552,19 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("new_rotation", 1);
 
-  /* "mapping_common/transform.py":177
- *             TODO: define if angle is cw or ccw depending on sign
+  /* "mapping_common/transform.py":275
+ *             - angle < 0: CW
  *         """
  *         c = np.cos(angle)             # <<<<<<<<<<<<<<
  *         s = np.sin(angle)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 275, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_cos); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_cos); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 275, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 177, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 275, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -12053,26 +13585,26 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 177, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 275, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_c = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":178
+  /* "mapping_common/transform.py":276
  *         """
  *         c = np.cos(angle)
  *         s = np.sin(angle)             # <<<<<<<<<<<<<<
  * 
  *         rot_matrix = np.array([[c, -s], [s, c]])
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 178, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 276, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_sin); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 178, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_sin); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 276, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 178, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 276, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -12093,49 +13625,49 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 178, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 276, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_v_s = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":180
+  /* "mapping_common/transform.py":278
  *         s = np.sin(angle)
  * 
  *         rot_matrix = np.array([[c, -s], [s, c]])             # <<<<<<<<<<<<<<
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, :2] = rot_matrix
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 180, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 180, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyNumber_Negative(__pyx_v_s); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 180, __pyx_L1_error)
+  __pyx_t_2 = PyNumber_Negative(__pyx_v_s); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyList_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 180, __pyx_L1_error)
+  __pyx_t_4 = PyList_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_INCREF(__pyx_v_c);
   __Pyx_GIVEREF(__pyx_v_c);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_v_c)) __PYX_ERR(1, 180, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 0, __pyx_v_c)) __PYX_ERR(1, 278, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_2)) __PYX_ERR(1, 180, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_4, 1, __pyx_t_2)) __PYX_ERR(1, 278, __pyx_L1_error);
   __pyx_t_2 = 0;
-  __pyx_t_2 = PyList_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 180, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_v_s);
   __Pyx_GIVEREF(__pyx_v_s);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 0, __pyx_v_s)) __PYX_ERR(1, 180, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 0, __pyx_v_s)) __PYX_ERR(1, 278, __pyx_L1_error);
   __Pyx_INCREF(__pyx_v_c);
   __Pyx_GIVEREF(__pyx_v_c);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 1, __pyx_v_c)) __PYX_ERR(1, 180, __pyx_L1_error);
-  __pyx_t_6 = PyList_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 180, __pyx_L1_error)
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 1, __pyx_v_c)) __PYX_ERR(1, 278, __pyx_L1_error);
+  __pyx_t_6 = PyList_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_4);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 0, __pyx_t_4)) __PYX_ERR(1, 180, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 0, __pyx_t_4)) __PYX_ERR(1, 278, __pyx_L1_error);
   __Pyx_GIVEREF(__pyx_t_2);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 1, __pyx_t_2)) __PYX_ERR(1, 180, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_6, 1, __pyx_t_2)) __PYX_ERR(1, 278, __pyx_L1_error);
   __pyx_t_4 = 0;
   __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -12157,21 +13689,21 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 180, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 278, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_rot_matrix = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":181
+  /* "mapping_common/transform.py":279
  * 
  *         rot_matrix = np.array([[c, -s], [s, c]])
  *         transform = Transform2D.identity()             # <<<<<<<<<<<<<<
  *         transform._matrix[:2, :2] = rot_matrix
  *         return transform
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_identity); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 181, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_identity); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 279, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_6 = NULL;
   __pyx_t_5 = 0;
@@ -12191,26 +13723,26 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     PyObject *__pyx_callargs[2] = {__pyx_t_6, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 181, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 279, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __pyx_v_transform = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":182
+  /* "mapping_common/transform.py":280
  *         rot_matrix = np.array([[c, -s], [s, c]])
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, :2] = rot_matrix             # <<<<<<<<<<<<<<
  *         return transform
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 182, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 280, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely((PyObject_SetItem(__pyx_t_1, __pyx_tuple__11, __pyx_v_rot_matrix) < 0))) __PYX_ERR(1, 182, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_t_1, __pyx_tuple__18, __pyx_v_rot_matrix) < 0))) __PYX_ERR(1, 280, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":183
+  /* "mapping_common/transform.py":281
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, :2] = rot_matrix
  *         return transform             # <<<<<<<<<<<<<<
@@ -12218,12 +13750,12 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 183, __pyx_L1_error)
+  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 281, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_transform);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_transform);
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":169
+  /* "mapping_common/transform.py":265
  *         return Transform2D(matrix=np.eye(3, dtype=np.float64))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12250,7 +13782,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":185
+/* "mapping_common/transform.py":283
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12259,16 +13791,16 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_11new_translation(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_13new_translation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_10new_translation, "Returns a transformation matrix consisting of a translation along `v`\n\n        Args:\n            v (Vector2): Translation vector\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_11new_translation = {"new_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_11new_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_10new_translation};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_11new_translation(CYTHON_UNUSED PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_12new_translation, "Returns a transformation matrix consisting of a translation along `v`\n\n        Args:\n            v (Vector2): Translation vector\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_13new_translation = {"new_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_13new_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_12new_translation};
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_13new_translation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -12312,12 +13844,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 185, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 283, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_translation") < 0)) __PYX_ERR(1, 185, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_translation") < 0)) __PYX_ERR(1, 283, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -12328,7 +13860,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("new_translation", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 185, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("new_translation", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 283, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -12342,8 +13874,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 186, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_10new_translation(__pyx_v_v);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 284, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_12new_translation(__pyx_v_v);
 
   /* function exit code */
   goto __pyx_L0;
@@ -12360,7 +13892,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_10new_translation(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_12new_translation(struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
   PyObject *__pyx_v_transform = NULL;
   struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -12373,14 +13905,14 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("new_translation", 1);
 
-  /* "mapping_common/transform.py":192
+  /* "mapping_common/transform.py":290
  *             v (Vector2): Translation vector
  *         """
  *         transform = Transform2D.identity()             # <<<<<<<<<<<<<<
  *         transform._matrix[:2, 2] = v._matrix[:2]
  *         return transform
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_identity); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 192, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_identity); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 290, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_4 = 0;
@@ -12400,29 +13932,29 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_4, 0+__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 192, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 290, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_v_transform = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":193
+  /* "mapping_common/transform.py":291
  *         """
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, 2] = v._matrix[:2]             # <<<<<<<<<<<<<<
  *         return transform
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_v->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__10, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_v->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 291, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 193, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 291, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely((PyObject_SetItem(__pyx_t_2, __pyx_tuple__12, __pyx_t_1) < 0))) __PYX_ERR(1, 193, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_t_2, __pyx_tuple__19, __pyx_t_1) < 0))) __PYX_ERR(1, 291, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":194
+  /* "mapping_common/transform.py":292
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, 2] = v._matrix[:2]
  *         return transform             # <<<<<<<<<<<<<<
@@ -12430,12 +13962,12 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 194, __pyx_L1_error)
+  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 292, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_transform);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_transform);
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":185
+  /* "mapping_common/transform.py":283
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12457,7 +13989,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":196
+/* "mapping_common/transform.py":294
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12466,16 +13998,16 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_13new_rotation_translation(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_15new_rotation_translation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_12new_rotation_translation, "Returns a transformation matrix consisting of first a rotation around `angle`\n        and then a translation along `v`.\n\n        Args:\n            angle (float): Rotation angle in radians\n            TODO: define if angle is cw or ccw depending on sign\n            v (Vector2): Translation vector\n        ");
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_13new_rotation_translation = {"new_rotation_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_13new_rotation_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_12new_rotation_translation};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_13new_rotation_translation(CYTHON_UNUSED PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_14mapping_common_9transform_11Transform2D_14new_rotation_translation, "Returns a transformation matrix consisting of first a rotation around `angle`\n        and then a translation along `v`.\n\n        Args:\n            angle (float): Rotation angle in radians\n            - angle > 0: CCW\n            - angle < 0: CW\n\n            v (Vector2): Translation vector\n        ");
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_15new_rotation_translation = {"new_rotation_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_15new_rotation_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_14new_rotation_translation};
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_15new_rotation_translation(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -12522,7 +14054,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 196, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 294, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -12530,14 +14062,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 196, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 294, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("new_rotation_translation", 1, 2, 2, 1); __PYX_ERR(1, 196, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("new_rotation_translation", 1, 2, 2, 1); __PYX_ERR(1, 294, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_rotation_translation") < 0)) __PYX_ERR(1, 196, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "new_rotation_translation") < 0)) __PYX_ERR(1, 294, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
@@ -12545,12 +14077,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
       values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
     }
-    __pyx_v_angle = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_angle == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 197, __pyx_L3_error)
+    __pyx_v_angle = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_angle == (double)-1) && PyErr_Occurred())) __PYX_ERR(1, 295, __pyx_L3_error)
     __pyx_v_v = ((struct __pyx_obj_14mapping_common_9transform_Vector2 *)values[1]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("new_rotation_translation", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 196, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("new_rotation_translation", 1, 2, 2, __pyx_nargs); __PYX_ERR(1, 294, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -12564,8 +14096,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 197, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_12new_rotation_translation(__pyx_v_angle, __pyx_v_v);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v), __pyx_ptype_14mapping_common_9transform_Vector2, 0, "v", 0))) __PYX_ERR(1, 295, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_14new_rotation_translation(__pyx_v_angle, __pyx_v_v);
 
   /* function exit code */
   goto __pyx_L0;
@@ -12582,7 +14114,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_12new_rotation_translation(double __pyx_v_angle, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_14new_rotation_translation(double __pyx_v_angle, struct __pyx_obj_14mapping_common_9transform_Vector2 *__pyx_v_v) {
   PyObject *__pyx_v_transform = NULL;
   struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -12596,16 +14128,16 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("new_rotation_translation", 1);
 
-  /* "mapping_common/transform.py":206
+  /* "mapping_common/transform.py":306
  *             v (Vector2): Translation vector
  *         """
  *         transform = Transform2D.new_rotation(angle)             # <<<<<<<<<<<<<<
  *         transform._matrix[:2, 2] = v._matrix[:2]
  *         return transform
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_new_rotation); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 206, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_n_s_new_rotation); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 306, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 206, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_angle); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 306, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -12626,29 +14158,29 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
     __pyx_t_1 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_5, 1+__pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 206, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 306, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __pyx_v_transform = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":207
+  /* "mapping_common/transform.py":307
  *         """
  *         transform = Transform2D.new_rotation(angle)
  *         transform._matrix[:2, 2] = v._matrix[:2]             # <<<<<<<<<<<<<<
  *         return transform
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_v->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__10, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 207, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(((PyObject *)__pyx_v_v->__pyx_base._matrix), 0, 2, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 207, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_transform, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely((PyObject_SetItem(__pyx_t_2, __pyx_tuple__12, __pyx_t_1) < 0))) __PYX_ERR(1, 207, __pyx_L1_error)
+  if (unlikely((PyObject_SetItem(__pyx_t_2, __pyx_tuple__19, __pyx_t_1) < 0))) __PYX_ERR(1, 307, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "mapping_common/transform.py":208
+  /* "mapping_common/transform.py":308
  *         transform = Transform2D.new_rotation(angle)
  *         transform._matrix[:2, 2] = v._matrix[:2]
  *         return transform             # <<<<<<<<<<<<<<
@@ -12656,12 +14188,12 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  *     @staticmethod
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 208, __pyx_L1_error)
+  if (!(likely(((__pyx_v_transform) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_transform, __pyx_ptype_14mapping_common_9transform_Transform2D))))) __PYX_ERR(1, 308, __pyx_L1_error)
   __Pyx_INCREF(__pyx_v_transform);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_transform);
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":196
+  /* "mapping_common/transform.py":294
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12684,7 +14216,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":210
+/* "mapping_common/transform.py":310
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12693,15 +14225,15 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_15from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_17from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_15from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_15from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_15from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_17from_ros_msg = {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_17from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pw_14mapping_common_9transform_11Transform2D_17from_ros_msg(CYTHON_UNUSED PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -12745,12 +14277,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 210, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(1, 310, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 210, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "from_ros_msg") < 0)) __PYX_ERR(1, 310, __pyx_L3_error)
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
@@ -12761,7 +14293,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 210, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("from_ros_msg", 1, 1, 1, __pyx_nargs); __PYX_ERR(1, 310, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -12775,7 +14307,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_14from_ros_msg(__pyx_v_m);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_16from_ros_msg(__pyx_v_m);
 
   /* function exit code */
   {
@@ -12788,7 +14320,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_14from_ros_msg(PyObject *__pyx_v_m) {
+static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapping_common_9transform_11Transform2D_16from_ros_msg(PyObject *__pyx_v_m) {
   PyObject *__pyx_v_matrix = NULL;
   struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -12802,53 +14334,53 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("from_ros_msg", 1);
 
-  /* "mapping_common/transform.py":212
+  /* "mapping_common/transform.py":312
  *     @staticmethod
  *     def from_ros_msg(m: msg.Transform2D) -> "Transform2D":
  *         matrix = np.array(m.matrix, dtype=np.float64).reshape((3, 3), order="C")             # <<<<<<<<<<<<<<
  *         return Transform2D(matrix)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_matrix); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_m, __pyx_n_s_matrix); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
-  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1)) __PYX_ERR(1, 212, __pyx_L1_error);
+  if (__Pyx_PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1)) __PYX_ERR(1, 312, __pyx_L1_error);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 212, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_reshape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_reshape); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 212, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(1, 212, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__13, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 212, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(1, 312, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__20, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 312, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_v_matrix = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":213
+  /* "mapping_common/transform.py":313
  *     def from_ros_msg(m: msg.Transform2D) -> "Transform2D":
  *         matrix = np.array(m.matrix, dtype=np.float64).reshape((3, 3), order="C")
  *         return Transform2D(matrix)             # <<<<<<<<<<<<<<
@@ -12856,13 +14388,13 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  *     def to_ros_msg(self) -> msg.Transform2D:
  */
   __Pyx_XDECREF((PyObject *)__pyx_r);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_v_matrix); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 213, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_v_matrix); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 313, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = ((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_t_3);
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":210
+  /* "mapping_common/transform.py":310
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
@@ -12886,7 +14418,7 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":215
+/* "mapping_common/transform.py":315
  *         return Transform2D(matrix)
  * 
  *     def to_ros_msg(self) -> msg.Transform2D:             # <<<<<<<<<<<<<<
@@ -12895,15 +14427,15 @@ static struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_pf_14mapp
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_17to_ros_msg(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_19to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_17to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_17to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_17to_ros_msg(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_19to_ros_msg = {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_19to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_19to_ros_msg(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -12928,14 +14460,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("to_ros_msg", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "to_ros_msg", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_18to_ros_msg(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18to_ros_msg(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
   PyObject *__pyx_v_t = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -12947,29 +14479,29 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("to_ros_msg", 1);
 
-  /* "mapping_common/transform.py":216
+  /* "mapping_common/transform.py":316
  * 
  *     def to_ros_msg(self) -> msg.Transform2D:
  *         t = tuple(self._matrix.flatten(order="C"))             # <<<<<<<<<<<<<<
  *         return msg.Transform2D(matrix=t)
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self->_matrix), __pyx_n_s_flatten); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 216, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self->_matrix), __pyx_n_s_flatten); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 316, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 216, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 316, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(1, 216, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 216, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(1, 316, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 316, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 216, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 316, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_t = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":217
+  /* "mapping_common/transform.py":317
  *     def to_ros_msg(self) -> msg.Transform2D:
  *         t = tuple(self._matrix.flatten(order="C"))
  *         return msg.Transform2D(matrix=t)             # <<<<<<<<<<<<<<
@@ -12977,15 +14509,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg
  *     def __mul__(self, other):
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 217, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 317, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_Transform2D); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 217, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_Transform2D); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 317, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 217, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 317, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_matrix, __pyx_v_t) < 0) __PYX_ERR(1, 217, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 217, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_matrix, __pyx_v_t) < 0) __PYX_ERR(1, 317, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 317, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -12993,7 +14525,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":215
+  /* "mapping_common/transform.py":315
  *         return Transform2D(matrix)
  * 
  *     def to_ros_msg(self) -> msg.Transform2D:             # <<<<<<<<<<<<<<
@@ -13015,7 +14547,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":219
+/* "mapping_common/transform.py":319
  *         return msg.Transform2D(matrix=t)
  * 
  *     def __mul__(self, other):             # <<<<<<<<<<<<<<
@@ -13024,21 +14556,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_16to_ros_msg
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_19__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_19__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_21__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_21__mul__(PyObject *__pyx_v_self, PyObject *__pyx_v_other) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__mul__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), ((PyObject *)__pyx_v_other));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_20__mul__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), ((PyObject *)__pyx_v_other));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_other) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__mul__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_other) {
   PyObject *__pyx_v_m = NULL;
   PyObject *__pyx_v_matrix = NULL;
   PyObject *__pyx_r = NULL;
@@ -13056,7 +14588,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__mul__", 1);
 
-  /* "mapping_common/transform.py":220
+  /* "mapping_common/transform.py":320
  * 
  *     def __mul__(self, other):
  *         if isinstance(other, Transform2D):             # <<<<<<<<<<<<<<
@@ -13066,7 +14598,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_14mapping_common_9transform_Transform2D); 
   if (__pyx_t_1) {
 
-    /* "mapping_common/transform.py":221
+    /* "mapping_common/transform.py":321
  *     def __mul__(self, other):
  *         if isinstance(other, Transform2D):
  *             return Transform2D(np.matmul(self._matrix, other._matrix))             # <<<<<<<<<<<<<<
@@ -13074,12 +14606,12 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  *             m = np.matmul(self._matrix, other._matrix)
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 221, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 321, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_matmul); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 221, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_matmul); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 321, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 221, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 321, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = NULL;
     __pyx_t_6 = 0;
@@ -13100,18 +14632,18 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
       __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 2+__pyx_t_6);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 221, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 321, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 221, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D), __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 321, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_r = __pyx_t_4;
     __pyx_t_4 = 0;
     goto __pyx_L0;
 
-    /* "mapping_common/transform.py":220
+    /* "mapping_common/transform.py":320
  * 
  *     def __mul__(self, other):
  *         if isinstance(other, Transform2D):             # <<<<<<<<<<<<<<
@@ -13120,7 +14652,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  */
   }
 
-  /* "mapping_common/transform.py":222
+  /* "mapping_common/transform.py":322
  *         if isinstance(other, Transform2D):
  *             return Transform2D(np.matmul(self._matrix, other._matrix))
  *         if isinstance(other, Point2):             # <<<<<<<<<<<<<<
@@ -13130,19 +14662,19 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_14mapping_common_9transform_Point2); 
   if (__pyx_t_1) {
 
-    /* "mapping_common/transform.py":223
+    /* "mapping_common/transform.py":323
  *             return Transform2D(np.matmul(self._matrix, other._matrix))
  *         if isinstance(other, Point2):
  *             m = np.matmul(self._matrix, other._matrix)             # <<<<<<<<<<<<<<
  *             m = m / m[2]
  *             return Point2(m)
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 223, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 323, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_matmul); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 223, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_matmul); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 323, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 223, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 323, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_5 = NULL;
     __pyx_t_6 = 0;
@@ -13163,29 +14695,29 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
       __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_6, 2+__pyx_t_6);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 223, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 323, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
     __pyx_v_m = __pyx_t_4;
     __pyx_t_4 = 0;
 
-    /* "mapping_common/transform.py":224
+    /* "mapping_common/transform.py":324
  *         if isinstance(other, Point2):
  *             m = np.matmul(self._matrix, other._matrix)
  *             m = m / m[2]             # <<<<<<<<<<<<<<
  *             return Point2(m)
  *         if isinstance(other, Vector2):
  */
-    __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 224, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 324, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 224, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 324, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF_SET(__pyx_v_m, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "mapping_common/transform.py":225
+    /* "mapping_common/transform.py":325
  *             m = np.matmul(self._matrix, other._matrix)
  *             m = m / m[2]
  *             return Point2(m)             # <<<<<<<<<<<<<<
@@ -13193,13 +14725,13 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  *             matrix = self._matrix.copy()
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_v_m); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 225, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2), __pyx_v_m); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 325, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_r = __pyx_t_3;
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "mapping_common/transform.py":222
+    /* "mapping_common/transform.py":322
  *         if isinstance(other, Transform2D):
  *             return Transform2D(np.matmul(self._matrix, other._matrix))
  *         if isinstance(other, Point2):             # <<<<<<<<<<<<<<
@@ -13208,7 +14740,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  */
   }
 
-  /* "mapping_common/transform.py":226
+  /* "mapping_common/transform.py":326
  *             m = m / m[2]
  *             return Point2(m)
  *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
@@ -13218,14 +14750,14 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_14mapping_common_9transform_Vector2); 
   if (__pyx_t_1) {
 
-    /* "mapping_common/transform.py":227
+    /* "mapping_common/transform.py":327
  *             return Point2(m)
  *         if isinstance(other, Vector2):
  *             matrix = self._matrix.copy()             # <<<<<<<<<<<<<<
  *             matrix[:2, 2] = 0.0
  *             m = np.matmul(matrix, other._matrix)
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self->_matrix), __pyx_n_s_copy); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 227, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self->_matrix), __pyx_n_s_copy); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 327, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_2 = NULL;
     __pyx_t_6 = 0;
@@ -13245,35 +14777,35 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
       PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 227, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 327, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
     __pyx_v_matrix = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "mapping_common/transform.py":228
+    /* "mapping_common/transform.py":328
  *         if isinstance(other, Vector2):
  *             matrix = self._matrix.copy()
  *             matrix[:2, 2] = 0.0             # <<<<<<<<<<<<<<
  *             m = np.matmul(matrix, other._matrix)
  *             m = m / m[2]
  */
-    if (unlikely((PyObject_SetItem(__pyx_v_matrix, __pyx_tuple__12, __pyx_float_0_0) < 0))) __PYX_ERR(1, 228, __pyx_L1_error)
+    if (unlikely((PyObject_SetItem(__pyx_v_matrix, __pyx_tuple__19, __pyx_float_0_0) < 0))) __PYX_ERR(1, 328, __pyx_L1_error)
 
-    /* "mapping_common/transform.py":229
+    /* "mapping_common/transform.py":329
  *             matrix = self._matrix.copy()
  *             matrix[:2, 2] = 0.0
  *             m = np.matmul(matrix, other._matrix)             # <<<<<<<<<<<<<<
  *             m = m / m[2]
  *             return Vector2(m)
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 229, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 329, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_matmul); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 229, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_matmul); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 329, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 229, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_other, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 329, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     __pyx_t_6 = 0;
@@ -13294,29 +14826,29 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
       __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_6, 2+__pyx_t_6);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 229, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 329, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     }
     __pyx_v_m = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "mapping_common/transform.py":230
+    /* "mapping_common/transform.py":330
  *             matrix[:2, 2] = 0.0
  *             m = np.matmul(matrix, other._matrix)
  *             m = m / m[2]             # <<<<<<<<<<<<<<
  *             return Vector2(m)
  *         raise TypeError(
  */
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 230, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_m, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 330, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 230, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_v_m, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 330, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF_SET(__pyx_v_m, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "mapping_common/transform.py":231
+    /* "mapping_common/transform.py":331
  *             m = np.matmul(matrix, other._matrix)
  *             m = m / m[2]
  *             return Vector2(m)             # <<<<<<<<<<<<<<
@@ -13324,13 +14856,13 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 231, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2), __pyx_v_m); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 331, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_r = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "mapping_common/transform.py":226
+    /* "mapping_common/transform.py":326
  *             m = m / m[2]
  *             return Point2(m)
  *         if isinstance(other, Vector2):             # <<<<<<<<<<<<<<
@@ -13339,22 +14871,22 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  */
   }
 
-  /* "mapping_common/transform.py":233
+  /* "mapping_common/transform.py":333
  *             return Vector2(m)
  *         raise TypeError(
  *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"             # <<<<<<<<<<<<<<
  *         )
  * 
  */
-  __pyx_t_2 = PyTuple_New(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 233, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_7 = 0;
   __pyx_t_8 = 127;
-  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for);
+  __Pyx_INCREF(__pyx_kp_u_Unsupported_operand_types_for_2);
   __pyx_t_7 += 34;
-  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_kp_u_Unsupported_operand_types_for);
-  __pyx_t_3 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 233, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_kp_u_Unsupported_operand_types_for_2);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_kp_u_Unsupported_operand_types_for_2);
+  __pyx_t_3 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))), __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_8 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) > __pyx_t_8) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) : __pyx_t_8;
   __pyx_t_7 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3);
@@ -13365,36 +14897,36 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   __pyx_t_7 += 7;
   __Pyx_GIVEREF(__pyx_kp_u_and);
   PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_kp_u_and);
-  __pyx_t_3 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 233, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_FormatSimple(((PyObject *)Py_TYPE(__pyx_v_other)), __pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_8 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) > __pyx_t_8) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) : __pyx_t_8;
   __pyx_t_7 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_t_3);
   __pyx_t_3 = 0;
-  __Pyx_INCREF(__pyx_kp_u__14);
+  __Pyx_INCREF(__pyx_kp_u__7);
   __pyx_t_7 += 1;
-  __Pyx_GIVEREF(__pyx_kp_u__14);
-  PyTuple_SET_ITEM(__pyx_t_2, 4, __pyx_kp_u__14);
-  __pyx_t_3 = __Pyx_PyUnicode_Join(__pyx_t_2, 5, __pyx_t_7, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 233, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_kp_u__7);
+  PyTuple_SET_ITEM(__pyx_t_2, 4, __pyx_kp_u__7);
+  __pyx_t_3 = __Pyx_PyUnicode_Join(__pyx_t_2, 5, __pyx_t_7, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 333, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":232
+  /* "mapping_common/transform.py":332
  *             m = m / m[2]
  *             return Vector2(m)
  *         raise TypeError(             # <<<<<<<<<<<<<<
  *             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
  *         )
  */
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 232, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 332, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_Raise(__pyx_t_2, 0, 0, 0);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __PYX_ERR(1, 232, __pyx_L1_error)
+  __PYX_ERR(1, 332, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":219
+  /* "mapping_common/transform.py":319
  *         return msg.Transform2D(matrix=t)
  * 
  *     def __mul__(self, other):             # <<<<<<<<<<<<<<
@@ -13418,7 +14950,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
   return __pyx_r;
 }
 
-/* "mapping_common/transform.py":236
+/* "mapping_common/transform.py":336
  *         )
  * 
  *     def __eq__(self, value) -> bool:             # <<<<<<<<<<<<<<
@@ -13427,21 +14959,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_18__mul__(st
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_21__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_21__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_23__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_23__eq__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__eq__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_22__eq__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), ((PyObject *)__pyx_v_value));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_value) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_22__eq__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v_value) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
@@ -13454,7 +14986,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__eq__", 1);
 
-  /* "mapping_common/transform.py":237
+  /* "mapping_common/transform.py":337
  * 
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):             # <<<<<<<<<<<<<<
@@ -13464,18 +14996,18 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
   __pyx_t_1 = (((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))) == ((PyObject *)Py_TYPE(__pyx_v_value)));
   if (__pyx_t_1) {
 
-    /* "mapping_common/transform.py":238
+    /* "mapping_common/transform.py":338
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):
  *             return (self._matrix == value._matrix).all()             # <<<<<<<<<<<<<<
  *         return False
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 238, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 338, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = PyObject_RichCompare(((PyObject *)__pyx_v_self->_matrix), __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 238, __pyx_L1_error)
+    __pyx_t_4 = PyObject_RichCompare(((PyObject *)__pyx_v_self->_matrix), __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 338, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_all); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 238, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_all); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 338, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_t_4 = NULL;
@@ -13496,7 +15028,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
       PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
       __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_5, 0+__pyx_t_5);
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 238, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 338, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
@@ -13504,7 +15036,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "mapping_common/transform.py":237
+    /* "mapping_common/transform.py":337
  * 
  *     def __eq__(self, value) -> bool:
  *         if type(self) is type(value):             # <<<<<<<<<<<<<<
@@ -13513,7 +15045,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
  */
   }
 
-  /* "mapping_common/transform.py":239
+  /* "mapping_common/transform.py":339
  *         if type(self) is type(value):
  *             return (self._matrix == value._matrix).all()
  *         return False             # <<<<<<<<<<<<<<
@@ -13523,7 +15055,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
   __pyx_r = Py_False;
   goto __pyx_L0;
 
-  /* "mapping_common/transform.py":236
+  /* "mapping_common/transform.py":336
  *         )
  * 
  *     def __eq__(self, value) -> bool:             # <<<<<<<<<<<<<<
@@ -13553,21 +15085,21 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_20__eq__(str
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__(PyObject *__pyx_v_self) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__repr__ (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_22__repr__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_24__repr__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_22__repr__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_24__repr__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
   PyObject *__pyx_v_key = NULL;
   PyObject *__pyx_v_guard_set = NULL;
   PyObject *__pyx_v_name = NULL;
@@ -13869,7 +15401,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_22__repr__(s
   return __pyx_r;
 }
 
-/* "mapping_common/transform.pxd":18
+/* "mapping_common/transform.pxd":19
  * 
  * cdef class Transform2D:
  *     cdef readonly np.ndarray _matrix             # <<<<<<<<<<<<<<
@@ -13915,15 +15447,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_7_matrix___g
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_25__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_27__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_25__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_25__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_25__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_27__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_27__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_27__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -13948,14 +15480,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   if (unlikely(__pyx_nargs > 0)) {
     __Pyx_RaiseArgtupleInvalid("__reduce_cython__", 1, 0, 0, __pyx_nargs); return NULL;}
   if (unlikely(__pyx_kwds) && __Pyx_NumKwargs_FASTCALL(__pyx_kwds) && unlikely(!__Pyx_CheckKeywordStrings(__pyx_kwds, "__reduce_cython__", 0))) return NULL;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_24__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_26__reduce_cython__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_24__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_26__reduce_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -14175,15 +15707,15 @@ static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_24__reduce_c
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_27__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_29__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_27__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_27__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_27__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_14mapping_common_9transform_11Transform2D_29__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_29__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_14mapping_common_9transform_11Transform2D_29__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -14257,7 +15789,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_26__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_14mapping_common_9transform_11Transform2D_28__setstate_cython__(((struct __pyx_obj_14mapping_common_9transform_Transform2D *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   {
@@ -14270,7 +15802,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_26__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_14mapping_common_9transform_11Transform2D_28__setstate_cython__(struct __pyx_obj_14mapping_common_9transform_Transform2D *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -14465,7 +15997,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform___pyx_unpickle__Coord2(CYT
  */
   __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__15, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__21, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
@@ -14909,7 +16441,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_2__pyx_unpickle_Point2(CYT
  */
   __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__15, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__21, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
@@ -15353,7 +16885,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_4__pyx_unpickle_Vector2(CY
  */
   __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__15, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__21, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
@@ -15797,7 +17329,7 @@ static PyObject *__pyx_pf_14mapping_common_9transform_6__pyx_unpickle_Transform2
  */
   __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__15, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_tuple__21, Py_NE)); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
 
@@ -16148,11 +17680,11 @@ static int __pyx_tp_clear_14mapping_common_9transform__Coord2(PyObject *o) {
 static PyObject *__pyx_tp_richcompare_14mapping_common_9transform__Coord2(PyObject *o1, PyObject *o2, int op) {
   switch (op) {
     case Py_EQ: {
-      return __pyx_pw_14mapping_common_9transform_7_Coord2_11__eq__(o1, o2);
+      return __pyx_pw_14mapping_common_9transform_7_Coord2_7__eq__(o1, o2);
     }
     case Py_NE: {
       PyObject *ret;
-      ret = __pyx_pw_14mapping_common_9transform_7_Coord2_11__eq__(o1, o2);
+      ret = __pyx_pw_14mapping_common_9transform_7_Coord2_7__eq__(o1, o2);
       if (likely(ret && ret != Py_NotImplemented)) {
         int b = __Pyx_PyObject_IsTrue(ret);
         Py_DECREF(ret);
@@ -16172,14 +17704,14 @@ static PyObject *__pyx_getprop_14mapping_common_9transform_7_Coord2__matrix(PyOb
   return __pyx_pw_14mapping_common_9transform_7_Coord2_7_matrix_1__get__(o);
 }
 
-static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
-  return __pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__(self);
+static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
+  return __pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__(self);
 }
 
 static PyMethodDef __pyx_methods_14mapping_common_9transform__Coord2[] = {
-  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__, METH_NOARGS|METH_COEXIST, 0},
-  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_15__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_17__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__, METH_NOARGS|METH_COEXIST, 0},
+  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_11__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7_Coord2_13__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 
@@ -16190,7 +17722,7 @@ static struct PyGetSetDef __pyx_getsets_14mapping_common_9transform__Coord2[] = 
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_14mapping_common_9transform__Coord2_slots[] = {
   {Py_tp_dealloc, (void *)__pyx_tp_dealloc_14mapping_common_9transform__Coord2},
-  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__},
+  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__},
   {Py_tp_doc, (void *)PyDoc_STR("Homogenous 2 dimensional coordinate\n\n    This base class should be abstract,\n    but cython does not support the ABC superclass and decorators\n    ")},
   {Py_tp_traverse, (void *)__pyx_tp_traverse_14mapping_common_9transform__Coord2},
   {Py_tp_clear, (void *)__pyx_tp_clear_14mapping_common_9transform__Coord2},
@@ -16230,7 +17762,7 @@ static PyTypeObject __pyx_type_14mapping_common_9transform__Coord2 = {
   #if PY_MAJOR_VERSION >= 3
   0, /*tp_as_async*/
   #endif
-  __pyx_pw_14mapping_common_9transform_7_Coord2_13__repr__, /*tp_repr*/
+  __pyx_pw_14mapping_common_9transform_7_Coord2_9__repr__, /*tp_repr*/
   0, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
@@ -16305,24 +17837,61 @@ static PyObject *__pyx_tp_new_14mapping_common_9transform_Point2(PyTypeObject *t
   return o;
 }
 
-static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_6Point2_11__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
-  return __pyx_pw_14mapping_common_9transform_6Point2_11__repr__(self);
+static CYTHON_INLINE PyObject *__pyx_nb_add_14mapping_common_9transform_Point2_maybe_call_slot(PyTypeObject* type, PyObject *left, PyObject *right ) {
+    binaryfunc slot;
+#if CYTHON_USE_TYPE_SLOTS || PY_MAJOR_VERSION < 3 || CYTHON_COMPILING_IN_PYPY
+    slot = type->tp_as_number ? type->tp_as_number->nb_add : NULL;
+#else
+    slot = (binaryfunc) PyType_GetSlot(type, Py_nb_add);
+#endif
+    return slot ? slot(left, right ) : __Pyx_NewRef(Py_NotImplemented);
+}
+static PyObject *__pyx_nb_add_14mapping_common_9transform_Point2(PyObject *left, PyObject *right ) {
+    int maybe_self_is_left, maybe_self_is_right = 0;
+    maybe_self_is_left = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(left)->tp_as_number && Py_TYPE(left)->tp_as_number->nb_add == &__pyx_nb_add_14mapping_common_9transform_Point2)
+#endif
+            || __Pyx_TypeCheck(left, __pyx_ptype_14mapping_common_9transform_Point2);
+    if (maybe_self_is_left) {
+        PyObject *res;
+        res = __pyx_pw_14mapping_common_9transform_6Point2_13__add__(left, right);
+        if (res != Py_NotImplemented) return res;
+        Py_DECREF(res);
+    }
+    maybe_self_is_right = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(right)->tp_as_number && Py_TYPE(right)->tp_as_number->nb_add == &__pyx_nb_add_14mapping_common_9transform_Point2)
+#endif
+            || PyType_IsSubtype(Py_TYPE(right), __pyx_ptype_14mapping_common_9transform_Point2);
+    if (maybe_self_is_right) {
+        return __pyx_nb_add_14mapping_common_9transform_Point2_maybe_call_slot(__Pyx_PyType_GetSlot(__pyx_ptype_14mapping_common_9transform_Point2, tp_base, PyTypeObject*), left, right );
+    }
+    return __Pyx_NewRef(Py_NotImplemented);
+}
+
+
+
+static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_6Point2_15__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
+  return __pyx_pw_14mapping_common_9transform_6Point2_15__repr__(self);
 }
 
 static PyMethodDef __pyx_methods_14mapping_common_9transform_Point2[] = {
-  {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_1new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_3zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"from_vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_5from_vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_7from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_9to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_6Point2_11__repr__, METH_NOARGS|METH_COEXIST, 0},
-  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_13__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_15__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_1vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_3new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_5zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"from_vector", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_7from_vector, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_9from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_11to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_6Point2_15__repr__, METH_NOARGS|METH_COEXIST, 0},
+  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_17__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_6Point2_19__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_14mapping_common_9transform_Point2_slots[] = {
-  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_6Point2_11__repr__},
+  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_6Point2_15__repr__},
+  {Py_nb_add, (void *)__pyx_nb_add_14mapping_common_9transform_Point2},
   {Py_tp_doc, (void *)PyDoc_STR("2 dimensional point.\n\n    Receives both rotation and translation when transformed with a Transform2D")},
   {Py_tp_traverse, (void *)__pyx_tp_traverse_14mapping_common_9transform__Coord2},
   {Py_tp_clear, (void *)__pyx_tp_clear_14mapping_common_9transform__Coord2},
@@ -16338,6 +17907,68 @@ static PyType_Spec __pyx_type_14mapping_common_9transform_Point2_spec = {
   __pyx_type_14mapping_common_9transform_Point2_slots,
 };
 #else
+
+static PyNumberMethods __pyx_tp_as_number_Point2 = {
+  __pyx_nb_add_14mapping_common_9transform_Point2, /*nb_add*/
+  0, /*nb_subtract*/
+  0, /*nb_multiply*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_divide*/
+  #endif
+  0, /*nb_remainder*/
+  0, /*nb_divmod*/
+  0, /*nb_power*/
+  0, /*nb_negative*/
+  0, /*nb_positive*/
+  0, /*nb_absolute*/
+  0, /*nb_bool*/
+  0, /*nb_invert*/
+  0, /*nb_lshift*/
+  0, /*nb_rshift*/
+  0, /*nb_and*/
+  0, /*nb_xor*/
+  0, /*nb_or*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_coerce*/
+  #endif
+  0, /*nb_int*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*nb_long*/
+  #else
+  0, /*reserved*/
+  #endif
+  0, /*nb_float*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_oct*/
+  #endif
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_hex*/
+  #endif
+  0, /*nb_inplace_add*/
+  0, /*nb_inplace_subtract*/
+  0, /*nb_inplace_multiply*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_inplace_divide*/
+  #endif
+  0, /*nb_inplace_remainder*/
+  0, /*nb_inplace_power*/
+  0, /*nb_inplace_lshift*/
+  0, /*nb_inplace_rshift*/
+  0, /*nb_inplace_and*/
+  0, /*nb_inplace_xor*/
+  0, /*nb_inplace_or*/
+  0, /*nb_floor_divide*/
+  0, /*nb_true_divide*/
+  0, /*nb_inplace_floor_divide*/
+  0, /*nb_inplace_true_divide*/
+  0, /*nb_index*/
+  #if PY_VERSION_HEX >= 0x03050000
+  0, /*nb_matrix_multiply*/
+  #endif
+  #if PY_VERSION_HEX >= 0x03050000
+  0, /*nb_inplace_matrix_multiply*/
+  #endif
+};
 
 static PyTypeObject __pyx_type_14mapping_common_9transform_Point2 = {
   PyVarObject_HEAD_INIT(0, 0)
@@ -16359,8 +17990,8 @@ static PyTypeObject __pyx_type_14mapping_common_9transform_Point2 = {
   #if PY_MAJOR_VERSION >= 3
   0, /*tp_as_async*/
   #endif
-  __pyx_pw_14mapping_common_9transform_6Point2_11__repr__, /*tp_repr*/
-  0, /*tp_as_number*/
+  __pyx_pw_14mapping_common_9transform_6Point2_15__repr__, /*tp_repr*/
+  &__pyx_tp_as_number_Point2, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
   0, /*tp_hash*/
@@ -16438,27 +18069,102 @@ static PyObject *__pyx_tp_new_14mapping_common_9transform_Vector2(PyTypeObject *
   return o;
 }
 
-static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7Vector2_17__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
-  return __pyx_pw_14mapping_common_9transform_7Vector2_17__repr__(self);
+static CYTHON_INLINE PyObject *__pyx_nb_add_14mapping_common_9transform_Vector2_maybe_call_slot(PyTypeObject* type, PyObject *left, PyObject *right ) {
+    binaryfunc slot;
+#if CYTHON_USE_TYPE_SLOTS || PY_MAJOR_VERSION < 3 || CYTHON_COMPILING_IN_PYPY
+    slot = type->tp_as_number ? type->tp_as_number->nb_add : NULL;
+#else
+    slot = (binaryfunc) PyType_GetSlot(type, Py_nb_add);
+#endif
+    return slot ? slot(left, right ) : __Pyx_NewRef(Py_NotImplemented);
+}
+static PyObject *__pyx_nb_add_14mapping_common_9transform_Vector2(PyObject *left, PyObject *right ) {
+    int maybe_self_is_left, maybe_self_is_right = 0;
+    maybe_self_is_left = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(left)->tp_as_number && Py_TYPE(left)->tp_as_number->nb_add == &__pyx_nb_add_14mapping_common_9transform_Vector2)
+#endif
+            || __Pyx_TypeCheck(left, __pyx_ptype_14mapping_common_9transform_Vector2);
+    if (maybe_self_is_left) {
+        PyObject *res;
+        res = __pyx_pw_14mapping_common_9transform_7Vector2_31__add__(left, right);
+        if (res != Py_NotImplemented) return res;
+        Py_DECREF(res);
+    }
+    maybe_self_is_right = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(right)->tp_as_number && Py_TYPE(right)->tp_as_number->nb_add == &__pyx_nb_add_14mapping_common_9transform_Vector2)
+#endif
+            || PyType_IsSubtype(Py_TYPE(right), __pyx_ptype_14mapping_common_9transform_Vector2);
+    if (maybe_self_is_right) {
+        return __pyx_nb_add_14mapping_common_9transform_Vector2_maybe_call_slot(__Pyx_PyType_GetSlot(__pyx_ptype_14mapping_common_9transform_Vector2, tp_base, PyTypeObject*), left, right );
+    }
+    return __Pyx_NewRef(Py_NotImplemented);
+}
+
+
+
+static CYTHON_INLINE PyObject *__pyx_nb_multiply_14mapping_common_9transform_Vector2_maybe_call_slot(PyTypeObject* type, PyObject *left, PyObject *right ) {
+    binaryfunc slot;
+#if CYTHON_USE_TYPE_SLOTS || PY_MAJOR_VERSION < 3 || CYTHON_COMPILING_IN_PYPY
+    slot = type->tp_as_number ? type->tp_as_number->nb_multiply : NULL;
+#else
+    slot = (binaryfunc) PyType_GetSlot(type, Py_nb_multiply);
+#endif
+    return slot ? slot(left, right ) : __Pyx_NewRef(Py_NotImplemented);
+}
+static PyObject *__pyx_nb_multiply_14mapping_common_9transform_Vector2(PyObject *left, PyObject *right ) {
+    int maybe_self_is_left, maybe_self_is_right = 0;
+    maybe_self_is_left = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(left)->tp_as_number && Py_TYPE(left)->tp_as_number->nb_multiply == &__pyx_nb_multiply_14mapping_common_9transform_Vector2)
+#endif
+            || __Pyx_TypeCheck(left, __pyx_ptype_14mapping_common_9transform_Vector2);
+    if (maybe_self_is_left) {
+        PyObject *res;
+        res = __pyx_pw_14mapping_common_9transform_7Vector2_27__mul__(left, right);
+        if (res != Py_NotImplemented) return res;
+        Py_DECREF(res);
+    }
+    maybe_self_is_right = Py_TYPE(left) == Py_TYPE(right)
+#if CYTHON_USE_TYPE_SLOTS
+            || (Py_TYPE(right)->tp_as_number && Py_TYPE(right)->tp_as_number->nb_multiply == &__pyx_nb_multiply_14mapping_common_9transform_Vector2)
+#endif
+            || PyType_IsSubtype(Py_TYPE(right), __pyx_ptype_14mapping_common_9transform_Vector2);
+    if (maybe_self_is_right) {
+        return __pyx_pw_14mapping_common_9transform_7Vector2_29__rmul__(right, left);
+    }
+    return __Pyx_NewRef(Py_NotImplemented);
+}
+
+
+
+static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7Vector2_33__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
+  return __pyx_pw_14mapping_common_9transform_7Vector2_33__repr__(self);
 }
 
 static PyMethodDef __pyx_methods_14mapping_common_9transform_Vector2[] = {
-  {"length", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_1length, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"normalized", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_3normalized, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_7Vector2_2normalized},
-  {"angle_to", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_5angle_to, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_7Vector2_4angle_to},
-  {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_7new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_9zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"from_point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_11from_point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_13from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_15to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7Vector2_17__repr__, METH_NOARGS|METH_COEXIST, 0},
-  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_19__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_21__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_7point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"new", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_9new, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"zero", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_11zero, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"forward", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_13forward, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"backward", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_15backward, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"left", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_17left, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"right", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_19right, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"from_point", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_21from_point, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_23from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_25to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__rmul__", (PyCFunction)__pyx_pw_14mapping_common_9transform_7Vector2_29__rmul__, METH_O|METH_COEXIST, 0},
+  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_7Vector2_33__repr__, METH_NOARGS|METH_COEXIST, 0},
+  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_35__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_7Vector2_37__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_14mapping_common_9transform_Vector2_slots[] = {
-  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_7Vector2_17__repr__},
+  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_7Vector2_33__repr__},
+  {Py_nb_add, (void *)__pyx_nb_add_14mapping_common_9transform_Vector2},
+  {Py_nb_multiply, (void *)__pyx_nb_multiply_14mapping_common_9transform_Vector2},
   {Py_tp_doc, (void *)PyDoc_STR("2 dimensional direction vector.\n\n    Receives only the rotation when transformed with a Transform2D")},
   {Py_tp_traverse, (void *)__pyx_tp_traverse_14mapping_common_9transform__Coord2},
   {Py_tp_clear, (void *)__pyx_tp_clear_14mapping_common_9transform__Coord2},
@@ -16474,6 +18180,68 @@ static PyType_Spec __pyx_type_14mapping_common_9transform_Vector2_spec = {
   __pyx_type_14mapping_common_9transform_Vector2_slots,
 };
 #else
+
+static PyNumberMethods __pyx_tp_as_number_Vector2 = {
+  __pyx_nb_add_14mapping_common_9transform_Vector2, /*nb_add*/
+  0, /*nb_subtract*/
+  __pyx_nb_multiply_14mapping_common_9transform_Vector2, /*nb_multiply*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_divide*/
+  #endif
+  0, /*nb_remainder*/
+  0, /*nb_divmod*/
+  0, /*nb_power*/
+  0, /*nb_negative*/
+  0, /*nb_positive*/
+  0, /*nb_absolute*/
+  0, /*nb_bool*/
+  0, /*nb_invert*/
+  0, /*nb_lshift*/
+  0, /*nb_rshift*/
+  0, /*nb_and*/
+  0, /*nb_xor*/
+  0, /*nb_or*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_coerce*/
+  #endif
+  0, /*nb_int*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*nb_long*/
+  #else
+  0, /*reserved*/
+  #endif
+  0, /*nb_float*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_oct*/
+  #endif
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_hex*/
+  #endif
+  0, /*nb_inplace_add*/
+  0, /*nb_inplace_subtract*/
+  0, /*nb_inplace_multiply*/
+  #if PY_MAJOR_VERSION < 3 || (CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x03050000)
+  0, /*nb_inplace_divide*/
+  #endif
+  0, /*nb_inplace_remainder*/
+  0, /*nb_inplace_power*/
+  0, /*nb_inplace_lshift*/
+  0, /*nb_inplace_rshift*/
+  0, /*nb_inplace_and*/
+  0, /*nb_inplace_xor*/
+  0, /*nb_inplace_or*/
+  0, /*nb_floor_divide*/
+  0, /*nb_true_divide*/
+  0, /*nb_inplace_floor_divide*/
+  0, /*nb_inplace_true_divide*/
+  0, /*nb_index*/
+  #if PY_VERSION_HEX >= 0x03050000
+  0, /*nb_matrix_multiply*/
+  #endif
+  #if PY_VERSION_HEX >= 0x03050000
+  0, /*nb_inplace_matrix_multiply*/
+  #endif
+};
 
 static PyTypeObject __pyx_type_14mapping_common_9transform_Vector2 = {
   PyVarObject_HEAD_INIT(0, 0)
@@ -16495,8 +18263,8 @@ static PyTypeObject __pyx_type_14mapping_common_9transform_Vector2 = {
   #if PY_MAJOR_VERSION >= 3
   0, /*tp_as_async*/
   #endif
-  __pyx_pw_14mapping_common_9transform_7Vector2_17__repr__, /*tp_repr*/
-  0, /*tp_as_number*/
+  __pyx_pw_14mapping_common_9transform_7Vector2_33__repr__, /*tp_repr*/
+  &__pyx_tp_as_number_Vector2, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
   0, /*tp_hash*/
@@ -16627,11 +18395,11 @@ static int __pyx_tp_clear_14mapping_common_9transform_Transform2D(PyObject *o) {
 static PyObject *__pyx_tp_richcompare_14mapping_common_9transform_Transform2D(PyObject *o1, PyObject *o2, int op) {
   switch (op) {
     case Py_EQ: {
-      return __pyx_pw_14mapping_common_9transform_11Transform2D_21__eq__(o1, o2);
+      return __pyx_pw_14mapping_common_9transform_11Transform2D_23__eq__(o1, o2);
     }
     case Py_NE: {
       PyObject *ret;
-      ret = __pyx_pw_14mapping_common_9transform_11Transform2D_21__eq__(o1, o2);
+      ret = __pyx_pw_14mapping_common_9transform_11Transform2D_23__eq__(o1, o2);
       if (likely(ret && ret != Py_NotImplemented)) {
         int b = __Pyx_PyObject_IsTrue(ret);
         Py_DECREF(ret);
@@ -16665,7 +18433,7 @@ static PyObject *__pyx_nb_multiply_14mapping_common_9transform_Transform2D(PyObj
             || __Pyx_TypeCheck(left, __pyx_ptype_14mapping_common_9transform_Transform2D);
     if (maybe_self_is_left) {
         PyObject *res;
-        res = __pyx_pw_14mapping_common_9transform_11Transform2D_19__mul__(left, right);
+        res = __pyx_pw_14mapping_common_9transform_11Transform2D_21__mul__(left, right);
         if (res != Py_NotImplemented) return res;
         Py_DECREF(res);
     }
@@ -16686,21 +18454,20 @@ static PyObject *__pyx_getprop_14mapping_common_9transform_11Transform2D__matrix
   return __pyx_pw_14mapping_common_9transform_11Transform2D_7_matrix_1__get__(o);
 }
 
-static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
-  return __pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__(self);
+static PyObject *__pyx_specialmethod___pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__(PyObject *self, CYTHON_UNUSED PyObject *arg) {
+  return __pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__(self);
 }
 
 static PyMethodDef __pyx_methods_14mapping_common_9transform_Transform2D[] = {
-  {"inverse", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_5inverse, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_4inverse},
-  {"identity", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_7identity, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_6identity},
-  {"new_rotation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_9new_rotation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_8new_rotation},
-  {"new_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_11new_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_10new_translation},
-  {"new_rotation_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_13new_rotation_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_12new_rotation_translation},
-  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_15from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_17to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__, METH_NOARGS|METH_COEXIST, 0},
-  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_25__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_27__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"identity", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_9identity, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_8identity},
+  {"new_rotation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_11new_rotation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_10new_rotation},
+  {"new_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_13new_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_12new_translation},
+  {"new_rotation_translation", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_15new_rotation_translation, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_14mapping_common_9transform_11Transform2D_14new_rotation_translation},
+  {"from_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_17from_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"to_ros_msg", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_19to_ros_msg, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__repr__", (PyCFunction)__pyx_specialmethod___pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__, METH_NOARGS|METH_COEXIST, 0},
+  {"__reduce_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_27__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_14mapping_common_9transform_11Transform2D_29__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 
@@ -16711,9 +18478,9 @@ static struct PyGetSetDef __pyx_getsets_14mapping_common_9transform_Transform2D[
 #if CYTHON_USE_TYPE_SPECS
 static PyType_Slot __pyx_type_14mapping_common_9transform_Transform2D_slots[] = {
   {Py_tp_dealloc, (void *)__pyx_tp_dealloc_14mapping_common_9transform_Transform2D},
-  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__},
+  {Py_tp_repr, (void *)__pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__},
   {Py_nb_multiply, (void *)__pyx_nb_multiply_14mapping_common_9transform_Transform2D},
-  {Py_tp_doc, (void *)PyDoc_STR("Homogeneous 2 dimensional transformation matrix\n\n    Based on https://alexsm.com/homogeneous-transforms/\n    ")},
+  {Py_tp_doc, (void *)PyDoc_STR("Homogeneous 2 dimensional transformation matrix\n\n    Based on https://alexsm.com/homogeneous-transforms/\n\n    ## Examples:\n    ### Transform a Vector2\n    ```python\n    v = Vector2.new(1.0, 0.0)\n    t = Transform2D.new_rotation(math.pi/2.0)\n    v_transformed = t * v\n    ```\n    v_transformed is (0.0, 1.0)\n\n    Note that Vectors are only directions/offsets and ignore translations.\n    ")},
   {Py_tp_traverse, (void *)__pyx_tp_traverse_14mapping_common_9transform_Transform2D},
   {Py_tp_clear, (void *)__pyx_tp_clear_14mapping_common_9transform_Transform2D},
   {Py_tp_richcompare, (void *)__pyx_tp_richcompare_14mapping_common_9transform_Transform2D},
@@ -16814,7 +18581,7 @@ static PyTypeObject __pyx_type_14mapping_common_9transform_Transform2D = {
   #if PY_MAJOR_VERSION >= 3
   0, /*tp_as_async*/
   #endif
-  __pyx_pw_14mapping_common_9transform_11Transform2D_23__repr__, /*tp_repr*/
+  __pyx_pw_14mapping_common_9transform_11Transform2D_25__repr__, /*tp_repr*/
   &__pyx_tp_as_number_Transform2D, /*tp_as_number*/
   0, /*tp_as_sequence*/
   0, /*tp_as_mapping*/
@@ -16825,7 +18592,7 @@ static PyTypeObject __pyx_type_14mapping_common_9transform_Transform2D = {
   0, /*tp_setattro*/
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
-  PyDoc_STR("Homogeneous 2 dimensional transformation matrix\n\n    Based on https://alexsm.com/homogeneous-transforms/\n    "), /*tp_doc*/
+  PyDoc_STR("Homogeneous 2 dimensional transformation matrix\n\n    Based on https://alexsm.com/homogeneous-transforms/\n\n    ## Examples:\n    ### Transform a Vector2\n    ```python\n    v = Vector2.new(1.0, 0.0)\n    t = Transform2D.new_rotation(math.pi/2.0)\n    v_transformed = t * v\n    ```\n    v_transformed is (0.0, 1.0)\n\n    Note that Vectors are only directions/offsets and ignore translations.\n    "), /*tp_doc*/
   __pyx_tp_traverse_14mapping_common_9transform_Transform2D, /*tp_traverse*/
   __pyx_tp_clear_14mapping_common_9transform_Transform2D, /*tp_clear*/
   __pyx_tp_richcompare_14mapping_common_9transform_Transform2D, /*tp_richcompare*/
@@ -16900,8 +18667,6 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Coord2, __pyx_k_Coord2, sizeof(__pyx_k_Coord2), 0, 0, 1, 1},
     {&__pyx_n_s_Coord2___reduce_cython, __pyx_k_Coord2___reduce_cython, sizeof(__pyx_k_Coord2___reduce_cython), 0, 0, 1, 1},
     {&__pyx_n_s_Coord2___setstate_cython, __pyx_k_Coord2___setstate_cython, sizeof(__pyx_k_Coord2___setstate_cython), 0, 0, 1, 1},
-    {&__pyx_n_s_Coord2_set_x, __pyx_k_Coord2_set_x, sizeof(__pyx_k_Coord2_set_x), 0, 0, 1, 1},
-    {&__pyx_n_s_Coord2_set_y, __pyx_k_Coord2_set_y, sizeof(__pyx_k_Coord2_set_y), 0, 0, 1, 1},
     {&__pyx_n_s_Coord2_x, __pyx_k_Coord2_x, sizeof(__pyx_k_Coord2_x), 0, 0, 1, 1},
     {&__pyx_n_s_Coord2_y, __pyx_k_Coord2_y, sizeof(__pyx_k_Coord2_y), 0, 0, 1, 1},
     {&__pyx_n_s_DataclassParams, __pyx_k_DataclassParams, sizeof(__pyx_k_DataclassParams), 0, 0, 1, 1},
@@ -16918,6 +18683,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Point2_from_vector, __pyx_k_Point2_from_vector, sizeof(__pyx_k_Point2_from_vector), 0, 0, 1, 1},
     {&__pyx_n_s_Point2_new, __pyx_k_Point2_new, sizeof(__pyx_k_Point2_new), 0, 0, 1, 1},
     {&__pyx_n_s_Point2_to_ros_msg, __pyx_k_Point2_to_ros_msg, sizeof(__pyx_k_Point2_to_ros_msg), 0, 0, 1, 1},
+    {&__pyx_n_s_Point2_vector, __pyx_k_Point2_vector, sizeof(__pyx_k_Point2_vector), 0, 0, 1, 1},
     {&__pyx_n_s_Point2_zero, __pyx_k_Point2_zero, sizeof(__pyx_k_Point2_zero), 0, 0, 1, 1},
     {&__pyx_n_s_Transform2D, __pyx_k_Transform2D, sizeof(__pyx_k_Transform2D), 0, 0, 1, 1},
     {&__pyx_kp_s_Transform2D_2, __pyx_k_Transform2D_2, sizeof(__pyx_k_Transform2D_2), 0, 0, 1, 0},
@@ -16929,45 +18695,54 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Transform2D_new_rotation, __pyx_k_Transform2D_new_rotation, sizeof(__pyx_k_Transform2D_new_rotation), 0, 0, 1, 1},
     {&__pyx_n_s_Transform2D_new_rotation_transla, __pyx_k_Transform2D_new_rotation_transla, sizeof(__pyx_k_Transform2D_new_rotation_transla), 0, 0, 1, 1},
     {&__pyx_n_s_Transform2D_new_translation, __pyx_k_Transform2D_new_translation, sizeof(__pyx_k_Transform2D_new_translation), 0, 0, 1, 1},
+    {&__pyx_n_s_Transform2D_rotation, __pyx_k_Transform2D_rotation, sizeof(__pyx_k_Transform2D_rotation), 0, 0, 1, 1},
     {&__pyx_n_s_Transform2D_to_ros_msg, __pyx_k_Transform2D_to_ros_msg, sizeof(__pyx_k_Transform2D_to_ros_msg), 0, 0, 1, 1},
     {&__pyx_n_s_Transform2D_translation, __pyx_k_Transform2D_translation, sizeof(__pyx_k_Transform2D_translation), 0, 0, 1, 1},
     {&__pyx_kp_u_Transformation_matrix_must_be_a, __pyx_k_Transformation_matrix_must_be_a, sizeof(__pyx_k_Transformation_matrix_must_be_a), 0, 1, 0, 0},
     {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
     {&__pyx_kp_u_Unsupported_operand_types_for, __pyx_k_Unsupported_operand_types_for, sizeof(__pyx_k_Unsupported_operand_types_for), 0, 1, 0, 0},
+    {&__pyx_kp_u_Unsupported_operand_types_for_2, __pyx_k_Unsupported_operand_types_for_2, sizeof(__pyx_k_Unsupported_operand_types_for_2), 0, 1, 0, 0},
     {&__pyx_n_s_Vector2, __pyx_k_Vector2, sizeof(__pyx_k_Vector2), 0, 0, 1, 1},
     {&__pyx_kp_s_Vector2_2, __pyx_k_Vector2_2, sizeof(__pyx_k_Vector2_2), 0, 0, 1, 0},
     {&__pyx_n_s_Vector2___reduce_cython, __pyx_k_Vector2___reduce_cython, sizeof(__pyx_k_Vector2___reduce_cython), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2___setstate_cython, __pyx_k_Vector2___setstate_cython, sizeof(__pyx_k_Vector2___setstate_cython), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_angle_to, __pyx_k_Vector2_angle_to, sizeof(__pyx_k_Vector2_angle_to), 0, 0, 1, 1},
+    {&__pyx_n_s_Vector2_backward, __pyx_k_Vector2_backward, sizeof(__pyx_k_Vector2_backward), 0, 0, 1, 1},
+    {&__pyx_n_s_Vector2_forward, __pyx_k_Vector2_forward, sizeof(__pyx_k_Vector2_forward), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_from_point, __pyx_k_Vector2_from_point, sizeof(__pyx_k_Vector2_from_point), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_from_ros_msg, __pyx_k_Vector2_from_ros_msg, sizeof(__pyx_k_Vector2_from_ros_msg), 0, 0, 1, 1},
+    {&__pyx_n_s_Vector2_left, __pyx_k_Vector2_left, sizeof(__pyx_k_Vector2_left), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_length, __pyx_k_Vector2_length, sizeof(__pyx_k_Vector2_length), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_new, __pyx_k_Vector2_new, sizeof(__pyx_k_Vector2_new), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_normalized, __pyx_k_Vector2_normalized, sizeof(__pyx_k_Vector2_normalized), 0, 0, 1, 1},
+    {&__pyx_n_s_Vector2_point, __pyx_k_Vector2_point, sizeof(__pyx_k_Vector2_point), 0, 0, 1, 1},
+    {&__pyx_n_s_Vector2_right, __pyx_k_Vector2_right, sizeof(__pyx_k_Vector2_right), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_to_ros_msg, __pyx_k_Vector2_to_ros_msg, sizeof(__pyx_k_Vector2_to_ros_msg), 0, 0, 1, 1},
     {&__pyx_n_s_Vector2_zero, __pyx_k_Vector2_zero, sizeof(__pyx_k_Vector2_zero), 0, 0, 1, 1},
     {&__pyx_n_s_Vector3, __pyx_k_Vector3, sizeof(__pyx_k_Vector3), 0, 0, 1, 1},
-    {&__pyx_kp_u__14, __pyx_k__14, sizeof(__pyx_k__14), 0, 1, 0, 0},
-    {&__pyx_kp_u__16, __pyx_k__16, sizeof(__pyx_k__16), 0, 1, 0, 0},
-    {&__pyx_n_s__17, __pyx_k__17, sizeof(__pyx_k__17), 0, 0, 1, 1},
+    {&__pyx_kp_u__22, __pyx_k__22, sizeof(__pyx_k__22), 0, 1, 0, 0},
+    {&__pyx_n_s__23, __pyx_k__23, sizeof(__pyx_k__23), 0, 0, 1, 1},
     {&__pyx_kp_s__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 0, 1, 0},
     {&__pyx_kp_u__5, __pyx_k__5, sizeof(__pyx_k__5), 0, 1, 0, 0},
-    {&__pyx_n_s__75, __pyx_k__75, sizeof(__pyx_k__75), 0, 0, 1, 1},
-    {&__pyx_n_s_acos, __pyx_k_acos, sizeof(__pyx_k_acos), 0, 0, 1, 1},
+    {&__pyx_kp_u__7, __pyx_k__7, sizeof(__pyx_k__7), 0, 1, 0, 0},
+    {&__pyx_n_s__85, __pyx_k__85, sizeof(__pyx_k__85), 0, 0, 1, 1},
     {&__pyx_n_s_add, __pyx_k_add, sizeof(__pyx_k_add), 0, 0, 1, 1},
     {&__pyx_n_s_all, __pyx_k_all, sizeof(__pyx_k_all), 0, 0, 1, 1},
     {&__pyx_kp_u_and, __pyx_k_and, sizeof(__pyx_k_and), 0, 1, 0, 0},
     {&__pyx_n_s_angle, __pyx_k_angle, sizeof(__pyx_k_angle), 0, 0, 1, 1},
     {&__pyx_n_s_angle_to, __pyx_k_angle_to, sizeof(__pyx_k_angle_to), 0, 0, 1, 1},
+    {&__pyx_n_s_arctan2, __pyx_k_arctan2, sizeof(__pyx_k_arctan2), 0, 0, 1, 1},
     {&__pyx_n_s_array, __pyx_k_array, sizeof(__pyx_k_array), 0, 0, 1, 1},
     {&__pyx_n_s_asyncio_coroutines, __pyx_k_asyncio_coroutines, sizeof(__pyx_k_asyncio_coroutines), 0, 0, 1, 1},
+    {&__pyx_n_s_atan2, __pyx_k_atan2, sizeof(__pyx_k_atan2), 0, 0, 1, 1},
+    {&__pyx_n_s_backward, __pyx_k_backward, sizeof(__pyx_k_backward), 0, 0, 1, 1},
     {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
     {&__pyx_n_s_class_getitem, __pyx_k_class_getitem, sizeof(__pyx_k_class_getitem), 0, 0, 1, 1},
     {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
     {&__pyx_n_s_compare, __pyx_k_compare, sizeof(__pyx_k_compare), 0, 0, 1, 1},
     {&__pyx_n_s_copy, __pyx_k_copy, sizeof(__pyx_k_copy), 0, 0, 1, 1},
     {&__pyx_n_s_cos, __pyx_k_cos, sizeof(__pyx_k_cos), 0, 0, 1, 1},
-    {&__pyx_kp_s_cython_double, __pyx_k_cython_double, sizeof(__pyx_k_cython_double), 0, 0, 1, 0},
+    {&__pyx_n_s_cross, __pyx_k_cross, sizeof(__pyx_k_cross), 0, 0, 1, 1},
     {&__pyx_n_s_dataclass, __pyx_k_dataclass, sizeof(__pyx_k_dataclass), 0, 0, 1, 1},
     {&__pyx_n_s_dataclass_fields, __pyx_k_dataclass_fields, sizeof(__pyx_k_dataclass_fields), 0, 0, 1, 1},
     {&__pyx_n_s_dataclass_params, __pyx_k_dataclass_params, sizeof(__pyx_k_dataclass_params), 0, 0, 1, 1},
@@ -16975,7 +18750,6 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_dict, __pyx_k_dict, sizeof(__pyx_k_dict), 0, 0, 1, 1},
     {&__pyx_n_s_dict_2, __pyx_k_dict_2, sizeof(__pyx_k_dict_2), 0, 0, 1, 1},
     {&__pyx_kp_u_disable, __pyx_k_disable, sizeof(__pyx_k_disable), 0, 1, 0, 0},
-    {&__pyx_n_s_div, __pyx_k_div, sizeof(__pyx_k_div), 0, 0, 1, 1},
     {&__pyx_n_s_dot, __pyx_k_dot, sizeof(__pyx_k_dot), 0, 0, 1, 1},
     {&__pyx_n_s_dtype, __pyx_k_dtype, sizeof(__pyx_k_dtype), 0, 0, 1, 1},
     {&__pyx_kp_u_enable, __pyx_k_enable, sizeof(__pyx_k_enable), 0, 1, 0, 0},
@@ -16986,6 +18760,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_flatten, __pyx_k_flatten, sizeof(__pyx_k_flatten), 0, 0, 1, 1},
     {&__pyx_n_s_float, __pyx_k_float, sizeof(__pyx_k_float), 0, 0, 1, 1},
     {&__pyx_n_s_float64, __pyx_k_float64, sizeof(__pyx_k_float64), 0, 0, 1, 1},
+    {&__pyx_n_s_forward, __pyx_k_forward, sizeof(__pyx_k_forward), 0, 0, 1, 1},
     {&__pyx_n_s_from_point, __pyx_k_from_point, sizeof(__pyx_k_from_point), 0, 0, 1, 1},
     {&__pyx_n_s_from_ros_msg, __pyx_k_from_ros_msg, sizeof(__pyx_k_from_ros_msg), 0, 0, 1, 1},
     {&__pyx_n_s_from_vector, __pyx_k_from_vector, sizeof(__pyx_k_from_vector), 0, 0, 1, 1},
@@ -17007,6 +18782,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_is_coroutine, __pyx_k_is_coroutine, sizeof(__pyx_k_is_coroutine), 0, 0, 1, 1},
     {&__pyx_kp_u_isenabled, __pyx_k_isenabled, sizeof(__pyx_k_isenabled), 0, 1, 0, 0},
     {&__pyx_n_s_kw_only, __pyx_k_kw_only, sizeof(__pyx_k_kw_only), 0, 0, 1, 1},
+    {&__pyx_n_s_left, __pyx_k_left, sizeof(__pyx_k_left), 0, 0, 1, 1},
     {&__pyx_n_s_length, __pyx_k_length, sizeof(__pyx_k_length), 0, 0, 1, 1},
     {&__pyx_n_s_linalg, __pyx_k_linalg, sizeof(__pyx_k_linalg), 0, 0, 1, 1},
     {&__pyx_n_s_local, __pyx_k_local, sizeof(__pyx_k_local), 0, 0, 1, 1},
@@ -17025,6 +18801,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_metadata, __pyx_k_metadata, sizeof(__pyx_k_metadata), 0, 0, 1, 1},
     {&__pyx_n_s_msg, __pyx_k_msg, sizeof(__pyx_k_msg), 0, 0, 1, 1},
     {&__pyx_kp_s_msg_Transform2D, __pyx_k_msg_Transform2D, sizeof(__pyx_k_msg_Transform2D), 0, 0, 1, 0},
+    {&__pyx_n_s_mul, __pyx_k_mul, sizeof(__pyx_k_mul), 0, 0, 1, 1},
     {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
     {&__pyx_n_s_name_2, __pyx_k_name_2, sizeof(__pyx_k_name_2), 0, 0, 1, 1},
     {&__pyx_n_s_ndarray, __pyx_k_ndarray, sizeof(__pyx_k_ndarray), 0, 0, 1, 1},
@@ -17045,6 +18822,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_other, __pyx_k_other, sizeof(__pyx_k_other), 0, 0, 1, 1},
     {&__pyx_n_s_p, __pyx_k_p, sizeof(__pyx_k_p), 0, 0, 1, 1},
     {&__pyx_n_s_pickle, __pyx_k_pickle, sizeof(__pyx_k_pickle), 0, 0, 1, 1},
+    {&__pyx_n_s_point, __pyx_k_point, sizeof(__pyx_k_point), 0, 0, 1, 1},
     {&__pyx_n_s_pyx_PickleError, __pyx_k_pyx_PickleError, sizeof(__pyx_k_pyx_PickleError), 0, 0, 1, 1},
     {&__pyx_n_s_pyx_checksum, __pyx_k_pyx_checksum, sizeof(__pyx_k_pyx_checksum), 0, 0, 1, 1},
     {&__pyx_n_s_pyx_recursive_repr_guard, __pyx_k_pyx_recursive_repr_guard, sizeof(__pyx_k_pyx_recursive_repr_guard), 0, 0, 1, 1},
@@ -17064,12 +18842,12 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_repr, __pyx_k_repr, sizeof(__pyx_k_repr), 0, 0, 1, 1},
     {&__pyx_n_s_reshape, __pyx_k_reshape, sizeof(__pyx_k_reshape), 0, 0, 1, 1},
     {&__pyx_n_s_return, __pyx_k_return, sizeof(__pyx_k_return), 0, 0, 1, 1},
+    {&__pyx_n_s_right, __pyx_k_right, sizeof(__pyx_k_right), 0, 0, 1, 1},
     {&__pyx_n_s_rot_matrix, __pyx_k_rot_matrix, sizeof(__pyx_k_rot_matrix), 0, 0, 1, 1},
+    {&__pyx_n_s_rotation, __pyx_k_rotation, sizeof(__pyx_k_rotation), 0, 0, 1, 1},
     {&__pyx_n_s_running, __pyx_k_running, sizeof(__pyx_k_running), 0, 0, 1, 1},
     {&__pyx_n_s_s, __pyx_k_s, sizeof(__pyx_k_s), 0, 0, 1, 1},
     {&__pyx_n_s_self, __pyx_k_self, sizeof(__pyx_k_self), 0, 0, 1, 1},
-    {&__pyx_n_s_set_x, __pyx_k_set_x, sizeof(__pyx_k_set_x), 0, 0, 1, 1},
-    {&__pyx_n_s_set_y, __pyx_k_set_y, sizeof(__pyx_k_set_y), 0, 0, 1, 1},
     {&__pyx_n_s_setstate, __pyx_k_setstate, sizeof(__pyx_k_setstate), 0, 0, 1, 1},
     {&__pyx_n_s_setstate_cython, __pyx_k_setstate_cython, sizeof(__pyx_k_setstate_cython), 0, 0, 1, 1},
     {&__pyx_n_s_shape, __pyx_k_shape, sizeof(__pyx_k_shape), 0, 0, 1, 1},
@@ -17092,7 +18870,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_update, __pyx_k_update, sizeof(__pyx_k_update), 0, 0, 1, 1},
     {&__pyx_n_s_use_setstate, __pyx_k_use_setstate, sizeof(__pyx_k_use_setstate), 0, 0, 1, 1},
     {&__pyx_n_s_v, __pyx_k_v, sizeof(__pyx_k_v), 0, 0, 1, 1},
-    {&__pyx_n_s_value, __pyx_k_value, sizeof(__pyx_k_value), 0, 0, 1, 1},
+    {&__pyx_n_s_vector, __pyx_k_vector, sizeof(__pyx_k_vector), 0, 0, 1, 1},
     {&__pyx_n_s_weakref_slot, __pyx_k_weakref_slot, sizeof(__pyx_k_weakref_slot), 0, 0, 1, 1},
     {&__pyx_n_s_x, __pyx_k_x, sizeof(__pyx_k_x), 0, 0, 1, 1},
     {&__pyx_n_s_y, __pyx_k_y, sizeof(__pyx_k_y), 0, 0, 1, 1},
@@ -17105,10 +18883,10 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
 /* #### Code section: cached_builtins ### */
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin___import__ = __Pyx_GetBuiltinName(__pyx_n_s_import); if (!__pyx_builtin___import__) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_n_s_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(1, 53, __pyx_L1_error)
-  __pyx_builtin_AssertionError = __Pyx_GetBuiltinName(__pyx_n_s_AssertionError); if (!__pyx_builtin_AssertionError) __PYX_ERR(1, 24, __pyx_L1_error)
+  __pyx_builtin_staticmethod = __Pyx_GetBuiltinName(__pyx_n_s_staticmethod); if (!__pyx_builtin_staticmethod) __PYX_ERR(1, 49, __pyx_L1_error)
+  __pyx_builtin_AssertionError = __Pyx_GetBuiltinName(__pyx_n_s_AssertionError); if (!__pyx_builtin_AssertionError) __PYX_ERR(1, 23, __pyx_L1_error)
   __pyx_builtin_id = __Pyx_GetBuiltinName(__pyx_n_s_id); if (!__pyx_builtin_id) __PYX_ERR(0, 4, __pyx_L1_error)
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 232, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 74, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(2, 986, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -17142,88 +18920,154 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "mapping_common/transform.py":25
+  /* "mapping_common/transform.py":24
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (
  *             3,             # <<<<<<<<<<<<<<
  *         ), f"{type(self).__name__} matrix must have shape (3,)"
  *         self._matrix = matrix
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_int_3); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(1, 25, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_int_3); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(1, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "mapping_common/transform.py":60
+  /* "mapping_common/transform.py":56
  *     @staticmethod
  *     def zero() -> "Point2":
  *         return Point2.new(0.0, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     @staticmethod
  */
-  __pyx_tuple__6 = PyTuple_Pack(2, __pyx_float_0_0, __pyx_float_0_0); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(1, 60, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(2, __pyx_float_0_0, __pyx_float_0_0); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(1, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "mapping_common/transform.py":137
+  /* "mapping_common/transform.py":128
+ *         # => |A| |B| can be ignored because it is just a scalar multiplication
+ *         #  of the vector (does not change direction)
+ *         cross = np.cross(self._matrix[:2], other._matrix[:2])             # <<<<<<<<<<<<<<
+ *         dot = np.dot(self._matrix[:2], other._matrix[:2])
+ *         return math.atan2(cross, dot)
+ */
+  __pyx_slice__8 = PySlice_New(Py_None, __pyx_int_2, Py_None); if (unlikely(!__pyx_slice__8)) __PYX_ERR(1, 128, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_slice__8);
+  __Pyx_GIVEREF(__pyx_slice__8);
+
+  /* "mapping_common/transform.py":146
+ *     @staticmethod
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __pyx_tuple__9 = PyTuple_Pack(2, __pyx_float_1_0, __pyx_float_0_0); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(1, 146, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__9);
+  __Pyx_GIVEREF(__pyx_tuple__9);
+
+  /* "mapping_common/transform.py":150
+ *     @staticmethod
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __pyx_tuple__10 = PyTuple_Pack(2, __pyx_float_neg_1_0, __pyx_float_0_0); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(1, 150, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
+
+  /* "mapping_common/transform.py":154
+ *     @staticmethod
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __pyx_tuple__11 = PyTuple_Pack(2, __pyx_float_0_0, __pyx_float_1_0); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(1, 154, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__11);
+  __Pyx_GIVEREF(__pyx_tuple__11);
+
+  /* "mapping_common/transform.py":158
+ *     @staticmethod
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)             # <<<<<<<<<<<<<<
+ * 
+ *     @staticmethod
+ */
+  __pyx_tuple__12 = PyTuple_Pack(2, __pyx_float_0_0, __pyx_float_neg_1_0); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(1, 158, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__12);
+  __Pyx_GIVEREF(__pyx_tuple__12);
+
+  /* "mapping_common/transform.py":220
  *     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
  *         assert matrix.shape == (
  *             3,             # <<<<<<<<<<<<<<
  *             3,
  *         ), "Transformation matrix must be a homogenous 3x3 matrix"
  */
-  __pyx_tuple__7 = PyTuple_Pack(2, __pyx_int_3, __pyx_int_3); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(1, 137, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__7);
-  __Pyx_GIVEREF(__pyx_tuple__7);
+  __pyx_tuple__13 = PyTuple_Pack(2, __pyx_int_3, __pyx_int_3); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(1, 220, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__13);
+  __Pyx_GIVEREF(__pyx_tuple__13);
 
-  /* "mapping_common/transform.py":148
+  /* "mapping_common/transform.py":231
  *             Vector2: translation
  *         """
  *         m = self._matrix[:, 2]             # <<<<<<<<<<<<<<
  *         m = m / m[2]
  *         return Vector2(m)
  */
-  __pyx_slice__8 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__8)) __PYX_ERR(1, 148, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__8);
-  __Pyx_GIVEREF(__pyx_slice__8);
-  __pyx_tuple__9 = PyTuple_Pack(2, __pyx_slice__8, __pyx_int_2); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(1, 148, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__9);
-  __Pyx_GIVEREF(__pyx_tuple__9);
+  __pyx_slice__14 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__14)) __PYX_ERR(1, 231, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_slice__14);
+  __Pyx_GIVEREF(__pyx_slice__14);
+  __pyx_tuple__15 = PyTuple_Pack(2, __pyx_slice__14, __pyx_int_2); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(1, 231, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__15);
+  __Pyx_GIVEREF(__pyx_tuple__15);
 
-  /* "mapping_common/transform.py":182
+  /* "mapping_common/transform.py":246
+ *         # Atan2(y, x) is angle to Vector(x, y)
+ *         # => matrix[1, 0] = sin(a) = y; self._matrix[0, 0] = cos(a) = x
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])             # <<<<<<<<<<<<<<
+ * 
+ *     def inverse(self) -> "Transform2D":
+ */
+  __pyx_tuple__16 = PyTuple_Pack(2, __pyx_int_1, __pyx_int_0); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__16);
+  __Pyx_GIVEREF(__pyx_tuple__16);
+  __pyx_tuple__17 = PyTuple_Pack(2, __pyx_int_0, __pyx_int_0); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(1, 246, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__17);
+  __Pyx_GIVEREF(__pyx_tuple__17);
+
+  /* "mapping_common/transform.py":280
  *         rot_matrix = np.array([[c, -s], [s, c]])
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, :2] = rot_matrix             # <<<<<<<<<<<<<<
  *         return transform
  * 
  */
-  __pyx_slice__10 = PySlice_New(Py_None, __pyx_int_2, Py_None); if (unlikely(!__pyx_slice__10)) __PYX_ERR(1, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__10);
-  __Pyx_GIVEREF(__pyx_slice__10);
-  __pyx_tuple__11 = PyTuple_Pack(2, __pyx_slice__10, __pyx_slice__10); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(1, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__11);
-  __Pyx_GIVEREF(__pyx_tuple__11);
+  __pyx_tuple__18 = PyTuple_Pack(2, __pyx_slice__8, __pyx_slice__8); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(1, 280, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
 
-  /* "mapping_common/transform.py":193
+  /* "mapping_common/transform.py":291
  *         """
  *         transform = Transform2D.identity()
  *         transform._matrix[:2, 2] = v._matrix[:2]             # <<<<<<<<<<<<<<
  *         return transform
  * 
  */
-  __pyx_tuple__12 = PyTuple_Pack(2, __pyx_slice__10, __pyx_int_2); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(1, 193, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__12);
-  __Pyx_GIVEREF(__pyx_tuple__12);
+  __pyx_tuple__19 = PyTuple_Pack(2, __pyx_slice__8, __pyx_int_2); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(1, 291, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__19);
+  __Pyx_GIVEREF(__pyx_tuple__19);
 
-  /* "mapping_common/transform.py":212
+  /* "mapping_common/transform.py":312
  *     @staticmethod
  *     def from_ros_msg(m: msg.Transform2D) -> "Transform2D":
  *         matrix = np.array(m.matrix, dtype=np.float64).reshape((3, 3), order="C")             # <<<<<<<<<<<<<<
  *         return Transform2D(matrix)
  * 
  */
-  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_tuple__7); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(1, 212, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__13);
-  __Pyx_GIVEREF(__pyx_tuple__13);
+  __pyx_tuple__20 = PyTuple_Pack(1, __pyx_tuple__13); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(1, 312, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__20);
+  __Pyx_GIVEREF(__pyx_tuple__20);
 
   /* "(tree fragment)":4
  *     cdef object __pyx_PickleError
@@ -17232,75 +19076,54 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  *         from pickle import PickleError as __pyx_PickleError
  *         raise __pyx_PickleError, "Incompatible checksums (0x%x vs (0x8045713, 0x31f093a, 0xed8a903) = (_matrix))" % __pyx_checksum
  */
-  __pyx_tuple__15 = PyTuple_Pack(3, __pyx_int_134502163, __pyx_int_52365626, __pyx_int_249080067); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__15);
-  __Pyx_GIVEREF(__pyx_tuple__15);
+  __pyx_tuple__21 = PyTuple_Pack(3, __pyx_int_134502163, __pyx_int_52365626, __pyx_int_249080067); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__21);
+  __Pyx_GIVEREF(__pyx_tuple__21);
 
-  /* "mapping_common/transform.py":5
+  /* "mapping_common/transform.py":4
  * 
  * import numpy as np
  * import numpy.typing as npt             # <<<<<<<<<<<<<<
  * import math
  * 
  */
-  __pyx_tuple__18 = PyTuple_Pack(2, __pyx_n_s_numpy, __pyx_n_s_typing); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(1, 5, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__18);
-  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_tuple__24 = PyTuple_Pack(2, __pyx_n_s_numpy, __pyx_n_s_typing); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__24);
+  __Pyx_GIVEREF(__pyx_tuple__24);
 
-  /* "mapping_common/transform.py":29
+  /* "mapping_common/transform.py":28
  *         self._matrix = matrix
  * 
- *     def x(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def x(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[0]
  * 
  */
-  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(1, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_x, 29, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(1, 29, __pyx_L1_error)
+  __pyx_tuple__25 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(1, 28, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__25);
+  __Pyx_GIVEREF(__pyx_tuple__25);
+  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_x, 28, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(1, 28, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":32
+  /* "mapping_common/transform.py":31
  *         return self._matrix[0]
  * 
- *     def set_x(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[0] = value
- * 
- */
-  __pyx_tuple__21 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_value); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__21);
-  __Pyx_GIVEREF(__pyx_tuple__21);
-  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_set_x, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(1, 32, __pyx_L1_error)
-
-  /* "mapping_common/transform.py":35
- *         self._matrix[0] = value
- * 
- *     def y(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def y(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[1]
  * 
  */
-  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_y, 35, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(1, 35, __pyx_L1_error)
-
-  /* "mapping_common/transform.py":38
- *         return self._matrix[1]
- * 
- *     def set_y(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[1] = value
- * 
- */
-  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_set_y, 38, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) __PYX_ERR(1, 38, __pyx_L1_error)
+  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_y, 31, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(1, 31, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_tuple__25 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__25);
-  __Pyx_GIVEREF(__pyx_tuple__25);
-  __pyx_tuple__26 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_dict_2, __pyx_n_s_use_setstate); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__26);
-  __Pyx_GIVEREF(__pyx_tuple__26);
-  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_tuple__28 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__28);
+  __Pyx_GIVEREF(__pyx_tuple__28);
+  __pyx_tuple__29 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_state, __pyx_n_s_dict_2, __pyx_n_s_use_setstate); if (unlikely(!__pyx_tuple__29)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__29);
+  __Pyx_GIVEREF(__pyx_tuple__29);
+  __pyx_codeobj__30 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__30)) __PYX_ERR(0, 1, __pyx_L1_error)
 
   /* "(tree fragment)":16
  *     else:
@@ -17308,74 +19131,83 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle__Coord2__set_state(self, __pyx_state)
  */
-  __pyx_tuple__28 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_pyx_state); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(0, 16, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__28);
-  __Pyx_GIVEREF(__pyx_tuple__28);
-  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_tuple__31 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_pyx_state); if (unlikely(!__pyx_tuple__31)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__31);
+  __Pyx_GIVEREF(__pyx_tuple__31);
+  __pyx_codeobj__32 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__32)) __PYX_ERR(0, 16, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":53
+  /* "mapping_common/transform.py":46
  *     Receives both rotation and translation when transformed with a Transform2D"""
+ * 
+ *     def vector(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         return Vector2(self._matrix)
+ * 
+ */
+  __pyx_codeobj__33 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_vector, 46, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__33)) __PYX_ERR(1, 46, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":49
+ *         return Vector2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Point2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  */
-  __pyx_tuple__30 = PyTuple_Pack(3, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_m); if (unlikely(!__pyx_tuple__30)) __PYX_ERR(1, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__30);
-  __Pyx_GIVEREF(__pyx_tuple__30);
-  __pyx_codeobj__31 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__30, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new, 53, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__31)) __PYX_ERR(1, 53, __pyx_L1_error)
+  __pyx_tuple__34 = PyTuple_Pack(3, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_m); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(1, 49, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__34);
+  __Pyx_GIVEREF(__pyx_tuple__34);
+  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new, 49, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) __PYX_ERR(1, 49, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":58
+  /* "mapping_common/transform.py":54
  *         return Point2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def zero() -> "Point2":
  *         return Point2.new(0.0, 0.0)
  */
-  __pyx_codeobj__32 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_zero, 58, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__32)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __pyx_codeobj__36 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_zero, 54, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__36)) __PYX_ERR(1, 54, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":62
+  /* "mapping_common/transform.py":58
  *         return Point2.new(0.0, 0.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_vector(v: "Vector2") -> "Point2":
  *         return Point2(v._matrix)
  */
-  __pyx_tuple__33 = PyTuple_Pack(1, __pyx_n_s_v); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(1, 62, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__33);
-  __Pyx_GIVEREF(__pyx_tuple__33);
-  __pyx_codeobj__34 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__33, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_vector, 62, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__34)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __pyx_tuple__37 = PyTuple_Pack(1, __pyx_n_s_v); if (unlikely(!__pyx_tuple__37)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__37);
+  __Pyx_GIVEREF(__pyx_tuple__37);
+  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_vector, 58, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) __PYX_ERR(1, 58, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":66
+  /* "mapping_common/transform.py":62
  *         return Point2(v._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: geometry_msgs.Point) -> "Point2":
  *         return Point2.new(m.x, m.y)
  */
-  __pyx_tuple__35 = PyTuple_Pack(1, __pyx_n_s_m); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(1, 66, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__35);
-  __Pyx_GIVEREF(__pyx_tuple__35);
-  __pyx_codeobj__36 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__35, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 66, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__36)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_tuple__39 = PyTuple_Pack(1, __pyx_n_s_m); if (unlikely(!__pyx_tuple__39)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__39);
+  __Pyx_GIVEREF(__pyx_tuple__39);
+  __pyx_codeobj__40 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__39, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 62, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__40)) __PYX_ERR(1, 62, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":70
+  /* "mapping_common/transform.py":66
  *         return Point2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Point:             # <<<<<<<<<<<<<<
  *         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
  * 
  */
-  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 70, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) __PYX_ERR(1, 70, __pyx_L1_error)
+  __pyx_codeobj__41 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 66, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__41)) __PYX_ERR(1, 66, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_tuple__38 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__38)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__38);
-  __Pyx_GIVEREF(__pyx_tuple__38);
-  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_tuple__42 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__42)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__42);
+  __Pyx_GIVEREF(__pyx_tuple__42);
+  __pyx_codeobj__43 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__43)) __PYX_ERR(0, 1, __pyx_L1_error)
 
   /* "(tree fragment)":16
  *     else:
@@ -17383,95 +19215,140 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Point2__set_state(self, __pyx_state)
  */
-  __pyx_codeobj__40 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__40)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) __PYX_ERR(0, 16, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":80
+  /* "mapping_common/transform.py":85
  *     Receives only the rotation when transformed with a Transform2D"""
  * 
  *     def length(self) -> float:             # <<<<<<<<<<<<<<
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+ *         """Calculates the length of this vector
  * 
  */
-  __pyx_codeobj__41 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_length, 80, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__41)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __pyx_codeobj__45 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_length, 85, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__45)) __PYX_ERR(1, 85, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":83
+  /* "mapping_common/transform.py":95
  *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
  * 
  *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
  *         """Returns this direction Vector with length 1.0
  * 
  */
-  __pyx_codeobj__42 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_normalized, 83, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__42)) __PYX_ERR(1, 83, __pyx_L1_error)
+  __pyx_codeobj__46 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_normalized, 95, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__46)) __PYX_ERR(1, 95, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":91
+  /* "mapping_common/transform.py":108
  *         return Vector2(self._matrix / self.length())
  * 
  *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
  *         """Calculates the angle to *other*
  * 
  */
-  __pyx_tuple__43 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_other, __pyx_n_s_div); if (unlikely(!__pyx_tuple__43)) __PYX_ERR(1, 91, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__43);
-  __Pyx_GIVEREF(__pyx_tuple__43);
-  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__43, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_angle_to, 91, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) __PYX_ERR(1, 91, __pyx_L1_error)
+  __pyx_tuple__47 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_other); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(1, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__47);
+  __Pyx_GIVEREF(__pyx_tuple__47);
+  __pyx_codeobj__48 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__47, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_angle_to, 108, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__48)) __PYX_ERR(1, 108, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":104
- *         return math.acos(div)
+  /* "mapping_common/transform.py":132
+ *         return math.atan2(cross, dot)
+ * 
+ *     def point(self) -> Point2:             # <<<<<<<<<<<<<<
+ *         return Point2(self._matrix)
+ * 
+ */
+  __pyx_codeobj__49 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_point, 132, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__49)) __PYX_ERR(1, 132, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":135
+ *         return Point2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Vector2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  */
-  __pyx_codeobj__45 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__30, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new, 104, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__45)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_codeobj__50 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new, 135, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__50)) __PYX_ERR(1, 135, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":109
+  /* "mapping_common/transform.py":140
  *         return Vector2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def zero() -> "Vector2":
  *         return Vector2.new(0.0, 0.0)
  */
-  __pyx_codeobj__46 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_zero, 109, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__46)) __PYX_ERR(1, 109, __pyx_L1_error)
+  __pyx_codeobj__51 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_zero, 140, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__51)) __PYX_ERR(1, 140, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":113
+  /* "mapping_common/transform.py":144
  *         return Vector2.new(0.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)
+ */
+  __pyx_codeobj__52 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_forward, 144, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__52)) __PYX_ERR(1, 144, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":148
+ *         return Vector2.new(1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)
+ */
+  __pyx_codeobj__53 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_backward, 148, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__53)) __PYX_ERR(1, 148, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":152
+ *         return Vector2.new(-1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)
+ */
+  __pyx_codeobj__54 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_left, 152, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__54)) __PYX_ERR(1, 152, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":156
+ *         return Vector2.new(0.0, 1.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)
+ */
+  __pyx_codeobj__55 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_right, 156, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__55)) __PYX_ERR(1, 156, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":160
+ *         return Vector2.new(0.0, -1.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_point(p: Point2) -> "Vector2":
  *         return Vector2(p._matrix)
  */
-  __pyx_tuple__47 = PyTuple_Pack(1, __pyx_n_s_p); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(1, 113, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__47);
-  __Pyx_GIVEREF(__pyx_tuple__47);
-  __pyx_codeobj__48 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__47, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_point, 113, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__48)) __PYX_ERR(1, 113, __pyx_L1_error)
+  __pyx_tuple__56 = PyTuple_Pack(1, __pyx_n_s_p); if (unlikely(!__pyx_tuple__56)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__56);
+  __Pyx_GIVEREF(__pyx_tuple__56);
+  __pyx_codeobj__57 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__56, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_point, 160, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__57)) __PYX_ERR(1, 160, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":117
+  /* "mapping_common/transform.py":164
  *         return Vector2(p._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: geometry_msgs.Vector3) -> "Vector2":
  *         return Vector2.new(m.x, m.y)
  */
-  __pyx_codeobj__49 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__35, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 117, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__49)) __PYX_ERR(1, 117, __pyx_L1_error)
+  __pyx_codeobj__58 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__39, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 164, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__58)) __PYX_ERR(1, 164, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":121
+  /* "mapping_common/transform.py":168
  *         return Vector2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:             # <<<<<<<<<<<<<<
  *         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
  * 
  */
-  __pyx_codeobj__50 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 121, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__50)) __PYX_ERR(1, 121, __pyx_L1_error)
+  __pyx_codeobj__59 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 168, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__59)) __PYX_ERR(1, 168, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_tuple__51 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__51)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__51);
-  __Pyx_GIVEREF(__pyx_tuple__51);
-  __pyx_codeobj__52 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__52)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_tuple__60 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__60)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__60);
+  __Pyx_GIVEREF(__pyx_tuple__60);
+  __pyx_codeobj__61 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__61)) __PYX_ERR(0, 1, __pyx_L1_error)
 
   /* "(tree fragment)":16
  *     else:
@@ -17479,104 +19356,113 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Vector2__set_state(self, __pyx_state)
  */
-  __pyx_codeobj__53 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__53)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_codeobj__62 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__62)) __PYX_ERR(0, 16, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":142
+  /* "mapping_common/transform.py":225
  *         self._matrix = matrix
  * 
  *     def translation(self) -> Vector2:             # <<<<<<<<<<<<<<
  *         """Returns only the translation that this Transform applies
  * 
  */
-  __pyx_codeobj__54 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_translation, 142, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__54)) __PYX_ERR(1, 142, __pyx_L1_error)
+  __pyx_codeobj__63 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_translation, 225, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__63)) __PYX_ERR(1, 225, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":152
+  /* "mapping_common/transform.py":235
  *         return Vector2(m)
+ * 
+ *     def rotation(self) -> float:             # <<<<<<<<<<<<<<
+ *         """Returns only the rotation that this Transform applies
+ * 
+ */
+  __pyx_codeobj__64 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_rotation, 235, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__64)) __PYX_ERR(1, 235, __pyx_L1_error)
+
+  /* "mapping_common/transform.py":248
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
  * 
  *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
  *         """Returns an inverted Transformation matrix
  * 
  */
-  __pyx_codeobj__55 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_inverse, 152, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__55)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __pyx_codeobj__65 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_inverse, 248, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__65)) __PYX_ERR(1, 248, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":160
+  /* "mapping_common/transform.py":256
  *         return Transform2D(np.linalg.inv(self._matrix))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def identity() -> "Transform2D":
  *         """Returns the identity transform (no transformation)
  */
-  __pyx_codeobj__56 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_identity, 160, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__56)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __pyx_codeobj__66 = (PyObject*)__Pyx_PyCode_New(0, 0, 0, 0, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_identity, 256, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__66)) __PYX_ERR(1, 256, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":169
+  /* "mapping_common/transform.py":265
  *         return Transform2D(matrix=np.eye(3, dtype=np.float64))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_rotation(angle: float) -> "Transform2D":
  *         """Returns a transformation matrix consisting of a rotation around `angle`
  */
-  __pyx_tuple__57 = PyTuple_Pack(5, __pyx_n_s_angle, __pyx_n_s_c, __pyx_n_s_s, __pyx_n_s_rot_matrix, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__57)) __PYX_ERR(1, 169, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__57);
-  __Pyx_GIVEREF(__pyx_tuple__57);
-  __pyx_codeobj__58 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__57, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_rotation, 169, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__58)) __PYX_ERR(1, 169, __pyx_L1_error)
+  __pyx_tuple__67 = PyTuple_Pack(5, __pyx_n_s_angle, __pyx_n_s_c, __pyx_n_s_s, __pyx_n_s_rot_matrix, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__67)) __PYX_ERR(1, 265, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__67);
+  __Pyx_GIVEREF(__pyx_tuple__67);
+  __pyx_codeobj__68 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__67, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_rotation, 265, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__68)) __PYX_ERR(1, 265, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":185
+  /* "mapping_common/transform.py":283
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_translation(v: Vector2) -> "Transform2D":
  *         """Returns a transformation matrix consisting of a translation along `v`
  */
-  __pyx_tuple__59 = PyTuple_Pack(2, __pyx_n_s_v, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__59)) __PYX_ERR(1, 185, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__59);
-  __Pyx_GIVEREF(__pyx_tuple__59);
-  __pyx_codeobj__60 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__59, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_translation, 185, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__60)) __PYX_ERR(1, 185, __pyx_L1_error)
+  __pyx_tuple__69 = PyTuple_Pack(2, __pyx_n_s_v, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__69)) __PYX_ERR(1, 283, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__69);
+  __Pyx_GIVEREF(__pyx_tuple__69);
+  __pyx_codeobj__70 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__69, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_translation, 283, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__70)) __PYX_ERR(1, 283, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":196
+  /* "mapping_common/transform.py":294
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_rotation_translation(angle: float, v: Vector2) -> "Transform2D":
  *         """Returns a transformation matrix consisting of first a rotation around `angle`
  */
-  __pyx_tuple__61 = PyTuple_Pack(3, __pyx_n_s_angle, __pyx_n_s_v, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__61)) __PYX_ERR(1, 196, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__61);
-  __Pyx_GIVEREF(__pyx_tuple__61);
-  __pyx_codeobj__62 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__61, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_rotation_translation, 196, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__62)) __PYX_ERR(1, 196, __pyx_L1_error)
+  __pyx_tuple__71 = PyTuple_Pack(3, __pyx_n_s_angle, __pyx_n_s_v, __pyx_n_s_transform); if (unlikely(!__pyx_tuple__71)) __PYX_ERR(1, 294, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__71);
+  __Pyx_GIVEREF(__pyx_tuple__71);
+  __pyx_codeobj__72 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 3, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__71, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_new_rotation_translation, 294, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__72)) __PYX_ERR(1, 294, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":210
+  /* "mapping_common/transform.py":310
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Transform2D) -> "Transform2D":
  *         matrix = np.array(m.matrix, dtype=np.float64).reshape((3, 3), order="C")
  */
-  __pyx_tuple__63 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_matrix); if (unlikely(!__pyx_tuple__63)) __PYX_ERR(1, 210, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__63);
-  __Pyx_GIVEREF(__pyx_tuple__63);
-  __pyx_codeobj__64 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__63, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 210, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__64)) __PYX_ERR(1, 210, __pyx_L1_error)
+  __pyx_tuple__73 = PyTuple_Pack(2, __pyx_n_s_m, __pyx_n_s_matrix); if (unlikely(!__pyx_tuple__73)) __PYX_ERR(1, 310, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__73);
+  __Pyx_GIVEREF(__pyx_tuple__73);
+  __pyx_codeobj__74 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__73, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_from_ros_msg, 310, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__74)) __PYX_ERR(1, 310, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":215
+  /* "mapping_common/transform.py":315
  *         return Transform2D(matrix)
  * 
  *     def to_ros_msg(self) -> msg.Transform2D:             # <<<<<<<<<<<<<<
  *         t = tuple(self._matrix.flatten(order="C"))
  *         return msg.Transform2D(matrix=t)
  */
-  __pyx_tuple__65 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_t); if (unlikely(!__pyx_tuple__65)) __PYX_ERR(1, 215, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__65);
-  __Pyx_GIVEREF(__pyx_tuple__65);
-  __pyx_codeobj__66 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__65, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 215, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__66)) __PYX_ERR(1, 215, __pyx_L1_error)
+  __pyx_tuple__75 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_t); if (unlikely(!__pyx_tuple__75)) __PYX_ERR(1, 315, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__75);
+  __Pyx_GIVEREF(__pyx_tuple__75);
+  __pyx_codeobj__76 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__75, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_mapping_common_transform_py, __pyx_n_s_to_ros_msg, 315, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__76)) __PYX_ERR(1, 315, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_tuple__67 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__67)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__67);
-  __Pyx_GIVEREF(__pyx_tuple__67);
-  __pyx_codeobj__68 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__68)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_tuple__77 = PyTuple_Pack(1, __pyx_n_s_threading); if (unlikely(!__pyx_tuple__77)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__77);
+  __Pyx_GIVEREF(__pyx_tuple__77);
+  __pyx_codeobj__78 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_reduce_cython, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__78)) __PYX_ERR(0, 1, __pyx_L1_error)
 
   /* "(tree fragment)":16
  *     else:
@@ -17584,20 +19470,20 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Transform2D__set_state(self, __pyx_state)
  */
-  __pyx_codeobj__69 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__69)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_codeobj__79 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_setstate_cython, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__79)) __PYX_ERR(0, 16, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __pyx_unpickle__Coord2(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_tuple__70 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__70)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__70);
-  __Pyx_GIVEREF(__pyx_tuple__70);
-  __pyx_codeobj__71 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__70, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle__Coord2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__71)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_codeobj__72 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__70, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Point2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__72)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_codeobj__73 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__70, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Vector2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__73)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_codeobj__74 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__70, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Transform2D, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__74)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_tuple__80 = PyTuple_Pack(5, __pyx_n_s_pyx_type, __pyx_n_s_pyx_checksum, __pyx_n_s_pyx_state, __pyx_n_s_pyx_PickleError, __pyx_n_s_pyx_result); if (unlikely(!__pyx_tuple__80)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__80);
+  __Pyx_GIVEREF(__pyx_tuple__80);
+  __pyx_codeobj__81 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__80, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle__Coord2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__81)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_codeobj__82 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__80, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Point2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__82)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_codeobj__83 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__80, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Vector2, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__83)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_codeobj__84 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__80, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Transform2D, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__84)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -17610,6 +19496,9 @@ static CYTHON_SMALL_CODE int __Pyx_InitConstants(void) {
   if (__Pyx_CreateStringTabAndInitStrings() < 0) __PYX_ERR(1, 1, __pyx_L1_error);
   __pyx_float_0_0 = PyFloat_FromDouble(0.0); if (unlikely(!__pyx_float_0_0)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_float_1_0 = PyFloat_FromDouble(1.0); if (unlikely(!__pyx_float_1_0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_float_neg_1_0 = PyFloat_FromDouble(-1.0); if (unlikely(!__pyx_float_neg_1_0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_int_3 = PyInt_FromLong(3); if (unlikely(!__pyx_int_3)) __PYX_ERR(1, 1, __pyx_L1_error)
   __pyx_int_52365626 = PyInt_FromLong(52365626L); if (unlikely(!__pyx_int_52365626)) __PYX_ERR(1, 1, __pyx_L1_error)
@@ -17675,19 +19564,17 @@ static int __Pyx_modinit_type_init_code(void) {
   /*--- Type init code ---*/
   __pyx_vtabptr_14mapping_common_9transform__Coord2 = &__pyx_vtable_14mapping_common_9transform__Coord2;
   __pyx_vtable_14mapping_common_9transform__Coord2.x = (double (*)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7_Coord2_x;
-  __pyx_vtable_14mapping_common_9transform__Coord2.set_x = (PyObject *(*)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7_Coord2_set_x;
   __pyx_vtable_14mapping_common_9transform__Coord2.y = (double (*)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7_Coord2_y;
-  __pyx_vtable_14mapping_common_9transform__Coord2.set_y = (void (*)(struct __pyx_obj_14mapping_common_9transform__Coord2 *, PyObject *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7_Coord2_set_y;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_ptype_14mapping_common_9transform__Coord2 = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform__Coord2_spec, NULL); if (unlikely(!__pyx_ptype_14mapping_common_9transform__Coord2)) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform__Coord2_spec, __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_ptype_14mapping_common_9transform__Coord2 = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform__Coord2_spec, NULL); if (unlikely(!__pyx_ptype_14mapping_common_9transform__Coord2)) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform__Coord2_spec, __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #else
   __pyx_ptype_14mapping_common_9transform__Coord2 = &__pyx_type_14mapping_common_9transform__Coord2;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #endif
   #if PY_MAJOR_VERSION < 3
   __pyx_ptype_14mapping_common_9transform__Coord2->tp_print = 0;
@@ -17697,23 +19584,23 @@ static int __Pyx_modinit_type_init_code(void) {
     __pyx_ptype_14mapping_common_9transform__Coord2->tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_vtabptr_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_vtabptr_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #endif
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Coord2, (PyObject *) __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Coord2, (PyObject *) __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform__Coord2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   #endif
   __pyx_vtabptr_14mapping_common_9transform_Point2 = &__pyx_vtable_14mapping_common_9transform_Point2;
   __pyx_vtable_14mapping_common_9transform_Point2.__pyx_base = *__pyx_vtabptr_14mapping_common_9transform__Coord2;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_t_1 = PyTuple_Pack(1, (PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_Pack(1, (PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_ptype_14mapping_common_9transform_Point2 = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform_Point2_spec, __pyx_t_1);
   __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(!__pyx_ptype_14mapping_common_9transform_Point2)) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Point2_spec, __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (unlikely(!__pyx_ptype_14mapping_common_9transform_Point2)) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Point2_spec, __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #else
   __pyx_ptype_14mapping_common_9transform_Point2 = &__pyx_type_14mapping_common_9transform_Point2;
   #endif
@@ -17721,7 +19608,7 @@ static int __Pyx_modinit_type_init_code(void) {
   __pyx_ptype_14mapping_common_9transform_Point2->tp_base = __pyx_ptype_14mapping_common_9transform__Coord2;
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #endif
   #if PY_MAJOR_VERSION < 3
   __pyx_ptype_14mapping_common_9transform_Point2->tp_print = 0;
@@ -17731,23 +19618,26 @@ static int __Pyx_modinit_type_init_code(void) {
     __pyx_ptype_14mapping_common_9transform_Point2->tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Point2, __pyx_vtabptr_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Point2, __pyx_vtabptr_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #endif
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Point2, (PyObject *) __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Point2, (PyObject *) __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Point2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   #endif
   __pyx_vtabptr_14mapping_common_9transform_Vector2 = &__pyx_vtable_14mapping_common_9transform_Vector2;
   __pyx_vtable_14mapping_common_9transform_Vector2.__pyx_base = *__pyx_vtabptr_14mapping_common_9transform__Coord2;
+  __pyx_vtable_14mapping_common_9transform_Vector2.length = (double (*)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7Vector2_length;
+  __pyx_vtable_14mapping_common_9transform_Vector2.normalized = (struct __pyx_obj_14mapping_common_9transform_Vector2 *(*)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7Vector2_normalized;
+  __pyx_vtable_14mapping_common_9transform_Vector2.angle_to = (double (*)(struct __pyx_obj_14mapping_common_9transform_Vector2 *, struct __pyx_obj_14mapping_common_9transform_Vector2 *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_7Vector2_angle_to;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_t_1 = PyTuple_Pack(1, (PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_Pack(1, (PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_ptype_14mapping_common_9transform_Vector2 = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform_Vector2_spec, __pyx_t_1);
   __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(!__pyx_ptype_14mapping_common_9transform_Vector2)) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Vector2_spec, __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (unlikely(!__pyx_ptype_14mapping_common_9transform_Vector2)) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Vector2_spec, __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #else
   __pyx_ptype_14mapping_common_9transform_Vector2 = &__pyx_type_14mapping_common_9transform_Vector2;
   #endif
@@ -17755,7 +19645,7 @@ static int __Pyx_modinit_type_init_code(void) {
   __pyx_ptype_14mapping_common_9transform_Vector2->tp_base = __pyx_ptype_14mapping_common_9transform__Coord2;
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #endif
   #if PY_MAJOR_VERSION < 3
   __pyx_ptype_14mapping_common_9transform_Vector2->tp_print = 0;
@@ -17765,26 +19655,28 @@ static int __Pyx_modinit_type_init_code(void) {
     __pyx_ptype_14mapping_common_9transform_Vector2->tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_vtabptr_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_vtabptr_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #endif
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Vector2, (PyObject *) __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Vector2, (PyObject *) __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Vector2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   #endif
   __pyx_vtabptr_14mapping_common_9transform_Transform2D = &__pyx_vtable_14mapping_common_9transform_Transform2D;
   __pyx_vtable_14mapping_common_9transform_Transform2D.translation = (struct __pyx_obj_14mapping_common_9transform_Vector2 *(*)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_11Transform2D_translation;
+  __pyx_vtable_14mapping_common_9transform_Transform2D.rotation = (double (*)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_11Transform2D_rotation;
+  __pyx_vtable_14mapping_common_9transform_Transform2D.inverse = (struct __pyx_obj_14mapping_common_9transform_Transform2D *(*)(struct __pyx_obj_14mapping_common_9transform_Transform2D *, int __pyx_skip_dispatch))__pyx_f_14mapping_common_9transform_11Transform2D_inverse;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_ptype_14mapping_common_9transform_Transform2D = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform_Transform2D_spec, NULL); if (unlikely(!__pyx_ptype_14mapping_common_9transform_Transform2D)) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Transform2D_spec, __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  __pyx_ptype_14mapping_common_9transform_Transform2D = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_14mapping_common_9transform_Transform2D_spec, NULL); if (unlikely(!__pyx_ptype_14mapping_common_9transform_Transform2D)) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_14mapping_common_9transform_Transform2D_spec, __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #else
   __pyx_ptype_14mapping_common_9transform_Transform2D = &__pyx_type_14mapping_common_9transform_Transform2D;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #endif
   #if PY_MAJOR_VERSION < 3
   __pyx_ptype_14mapping_common_9transform_Transform2D->tp_print = 0;
@@ -17794,13 +19686,13 @@ static int __Pyx_modinit_type_init_code(void) {
     __pyx_ptype_14mapping_common_9transform_Transform2D->tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_vtabptr_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_vtabptr_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #endif
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Transform2D, (PyObject *) __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Transform2D, (PyObject *) __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_ptype_14mapping_common_9transform_Transform2D) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
   #endif
   __Pyx_RefNannyFinishContext();
   return 0;
@@ -18156,8 +20048,8 @@ if (!__Pyx_RefNanny) {
 
   /* "mapping_common/transform.py":1
  * from dataclasses import dataclass             # <<<<<<<<<<<<<<
- * import cython
  * 
+ * import numpy as np
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -18173,199 +20065,163 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":4
- * import cython
+  /* "mapping_common/transform.py":3
+ * from dataclasses import dataclass
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * import numpy.typing as npt
  * import math
  */
-  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_numpy, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_numpy, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_3) < 0) __PYX_ERR(1, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_3) < 0) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":5
+  /* "mapping_common/transform.py":4
  * 
  * import numpy as np
  * import numpy.typing as npt             # <<<<<<<<<<<<<<
  * import math
  * 
  */
-  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_numpy_typing, __pyx_tuple__18); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_numpy_typing, __pyx_tuple__24); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_npt, __pyx_t_3) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_npt, __pyx_t_3) < 0) __PYX_ERR(1, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":6
+  /* "mapping_common/transform.py":5
  * import numpy as np
  * import numpy.typing as npt
  * import math             # <<<<<<<<<<<<<<
  * 
  * from geometry_msgs import msg as geometry_msgs
  */
-  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_math, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 6, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_ImportDottedModule(__pyx_n_s_math, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_math, __pyx_t_3) < 0) __PYX_ERR(1, 6, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_math, __pyx_t_3) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":8
+  /* "mapping_common/transform.py":7
  * import math
  * 
  * from geometry_msgs import msg as geometry_msgs             # <<<<<<<<<<<<<<
  * from mapping import msg
  * 
  */
-  __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 8, __pyx_L1_error)
+  __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_n_s_msg);
   __Pyx_GIVEREF(__pyx_n_s_msg);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_msg)) __PYX_ERR(1, 8, __pyx_L1_error);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_geometry_msgs, __pyx_t_3, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 8, __pyx_L1_error)
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_msg)) __PYX_ERR(1, 7, __pyx_L1_error);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_geometry_msgs, __pyx_t_3, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 8, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_geometry_msgs, __pyx_t_3) < 0) __PYX_ERR(1, 8, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_geometry_msgs, __pyx_t_3) < 0) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "mapping_common/transform.py":9
+  /* "mapping_common/transform.py":8
  * 
  * from geometry_msgs import msg as geometry_msgs
  * from mapping import msg             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 9, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_msg);
   __Pyx_GIVEREF(__pyx_n_s_msg);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_msg)) __PYX_ERR(1, 9, __pyx_L1_error);
-  __pyx_t_3 = __Pyx_Import(__pyx_n_s_mapping, __pyx_t_2, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 9, __pyx_L1_error)
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_msg)) __PYX_ERR(1, 8, __pyx_L1_error);
+  __pyx_t_3 = __Pyx_Import(__pyx_n_s_mapping, __pyx_t_2, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 9, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_3, __pyx_n_s_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_msg, __pyx_t_2) < 0) __PYX_ERR(1, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_msg, __pyx_t_2) < 0) __PYX_ERR(1, 8, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "mapping_common/transform.py":29
+  /* "mapping_common/transform.py":28
  *         self._matrix = matrix
  * 
- *     def x(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def x(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[0]
  * 
  */
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_3x, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_x, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 29, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_3x, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_x, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_x, __pyx_t_3) < 0) __PYX_ERR(1, 29, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_x, __pyx_t_3) < 0) __PYX_ERR(1, 28, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
 
-  /* "mapping_common/transform.py":32
+  /* "mapping_common/transform.py":31
  *         return self._matrix[0]
  * 
- *     def set_x(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[0] = value
- * 
- */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_value, __pyx_kp_s_cython_double) < 0) __PYX_ERR(1, 32, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_5set_x, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_set_x, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__22)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_set_x, __pyx_t_2) < 0) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
-
-  /* "mapping_common/transform.py":35
- *         self._matrix[0] = value
- * 
- *     def y(self) -> cython.double:             # <<<<<<<<<<<<<<
+ *     def y(self) -> float:             # <<<<<<<<<<<<<<
  *         return self._matrix[1]
  * 
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_7y, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_y, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__23)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 35, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_y, __pyx_t_2) < 0) __PYX_ERR(1, 35, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
-
-  /* "mapping_common/transform.py":38
- *         return self._matrix[1]
- * 
- *     def set_y(self, value: cython.double):             # <<<<<<<<<<<<<<
- *         self._matrix[1] = value
- * 
- */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_value, __pyx_kp_s_cython_double) < 0) __PYX_ERR(1, 38, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_9set_y, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_set_y, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__24)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 38, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_5y, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2_y, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__27)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_2);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_set_y, __pyx_t_3) < 0) __PYX_ERR(1, 38, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_y, __pyx_t_3) < 0) __PYX_ERR(1, 31, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
 
-  /* "mapping_common/transform.py":13
+  /* "mapping_common/transform.py":12
  * 
  * @dataclass(init=False, eq=False)
  * class _Coord2:             # <<<<<<<<<<<<<<
  *     """Homogenous 2 dimensional coordinate
  * 
  */
-  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_dataclass_params, __pyx_t_4) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_dataclass_params, __pyx_t_4) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_matrix_2, __pyx_t_5) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_matrix_2, __pyx_t_5) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_dataclass_fields, __pyx_t_4) < 0) __PYX_ERR(1, 13, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_dataclass_fields, __pyx_t_4) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
 
@@ -18419,7 +20275,7 @@ if (!__Pyx_RefNanny) {
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__25, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__28, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_local); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
@@ -18469,7 +20325,7 @@ if (!__Pyx_RefNanny) {
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_15__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__27)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_11__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__30)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_reduce_cython, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -18481,207 +20337,225 @@ if (!__Pyx_RefNanny) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle__Coord2__set_state(self, __pyx_state)
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_17__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__29)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7_Coord2_13__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Coord2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__32)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform__Coord2, __pyx_n_s_setstate_cython, __pyx_t_4) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform__Coord2);
 
-  /* "mapping_common/transform.py":53
+  /* "mapping_common/transform.py":46
  *     Receives both rotation and translation when transformed with a Transform2D"""
+ * 
+ *     def vector(self) -> "Vector2":             # <<<<<<<<<<<<<<
+ *         return Vector2(self._matrix)
+ * 
+ */
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 46, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 46, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_1vector, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_vector, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__33)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 46, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_vector, __pyx_t_3) < 0) __PYX_ERR(1, 46, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
+
+  /* "mapping_common/transform.py":49
+ *         return Vector2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Point2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_x, __pyx_n_s_float) < 0) __PYX_ERR(1, 53, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_y, __pyx_n_s_float) < 0) __PYX_ERR(1, 53, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 53, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_1new, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_new, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__31)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 53, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new, __pyx_t_3) < 0) __PYX_ERR(1, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_x, __pyx_n_s_float) < 0) __PYX_ERR(1, 49, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_y, __pyx_n_s_float) < 0) __PYX_ERR(1, 49, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 49, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_3new, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_new, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__35)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 49, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new, __pyx_t_4) < 0) __PYX_ERR(1, 49, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
-  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 53, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new, __pyx_t_4) < 0) __PYX_ERR(1, 53, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 49, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_new, __pyx_t_3) < 0) __PYX_ERR(1, 49, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":58
+  /* "mapping_common/transform.py":54
  *         return Point2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def zero() -> "Point2":
  *         return Point2.new(0.0, 0.0)
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_3zero, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_zero, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__32)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 54, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero, __pyx_t_3) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 54, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_5zero, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_zero, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__36)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 54, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero, __pyx_t_4) < 0) __PYX_ERR(1, 54, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
-  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 54, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero, __pyx_t_4) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 54, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_zero, __pyx_t_3) < 0) __PYX_ERR(1, 54, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":62
+  /* "mapping_common/transform.py":58
  *         return Point2.new(0.0, 0.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_vector(v: "Vector2") -> "Point2":
  *         return Point2(v._matrix)
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 62, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_v, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_5from_vector, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_from_vector, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__34)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 58, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector, __pyx_t_3) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_v, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_7from_vector, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_from_vector, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector, __pyx_t_4) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
-  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 62, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 58, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector, __pyx_t_4) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_vector, __pyx_t_3) < 0) __PYX_ERR(1, 58, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":66
+  /* "mapping_common/transform.py":62
  *         return Point2(v._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: geometry_msgs.Point) -> "Point2":
  *         return Point2.new(m.x, m.y)
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 66, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_m, __pyx_kp_s_geometry_msgs_Point) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_7from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__36)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg, __pyx_t_3) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_m, __pyx_kp_s_geometry_msgs_Point) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Point2_2) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_9from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__40)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
-  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 66, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_from_ros_msg, __pyx_t_3) < 0) __PYX_ERR(1, 62, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":70
+  /* "mapping_common/transform.py":66
  *         return Point2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Point:             # <<<<<<<<<<<<<<
  *         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
  * 
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_kp_s_geometry_msgs_Point) < 0) __PYX_ERR(1, 70, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_9to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__37)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 70, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 66, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_4);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_to_ros_msg, __pyx_t_3) < 0) __PYX_ERR(1, 70, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_geometry_msgs_Point) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_11to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__41)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 66, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 66, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":48
+  /* "mapping_common/transform.py":41
  * 
  * @dataclass(init=False, eq=False)
  * class Point2(_Coord2):             # <<<<<<<<<<<<<<
  *     """2 dimensional point.
  * 
  */
-  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_DataclassesCallHelper(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 41, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_DataclassesCallHelper(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 41, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_dataclass_params, __pyx_t_5) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_dataclass_params, __pyx_t_5) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_field); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 41, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
 
-  /* "mapping_common/transform.py":13
+  /* "mapping_common/transform.py":12
  * 
  * @dataclass(init=False, eq=False)
  * class _Coord2:             # <<<<<<<<<<<<<<
  *     """Homogenous 2 dimensional coordinate
  * 
  */
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":48
+  /* "mapping_common/transform.py":41
  * 
  * @dataclass(init=False, eq=False)
  * class Point2(_Coord2):             # <<<<<<<<<<<<<<
  *     """2 dimensional point.
  * 
  */
-  __pyx_t_2 = __Pyx_DataclassesCallHelper(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 48, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_DataclassesCallHelper(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_matrix_2, __pyx_t_2) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_matrix_2, __pyx_t_2) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_dataclass_fields, __pyx_t_5) < 0) __PYX_ERR(1, 48, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_dataclass_fields, __pyx_t_5) < 0) __PYX_ERR(1, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
@@ -18723,19 +20597,19 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_Dict_GetItem(__pyx_t_5, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_5, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_3, __pyx_n_s_field_type, __pyx_t_2) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_field_type, __pyx_t_2) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__38, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__42, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_local); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
@@ -18756,14 +20630,14 @@ if (!__Pyx_RefNanny) {
   #endif
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_2, NULL};
-    __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
+    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_5, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
   /* "(tree fragment)":2
@@ -18772,12 +20646,12 @@ if (!__Pyx_RefNanny) {
  * def __repr__(self):
  *     key = id(self)
  */
-  __pyx_t_3 = PySet_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = PySet_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_pyx_recursive_repr_guard); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_5, __pyx_n_s_running, __pyx_t_3) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_5, __pyx_n_s_running, __pyx_t_4) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "(tree fragment)":1
@@ -18785,7 +20659,7 @@ if (!__Pyx_RefNanny) {
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_13__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__39)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_17__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__43)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_reduce_cython, __pyx_t_5) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -18797,262 +20671,373 @@ if (!__Pyx_RefNanny) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Point2__set_state(self, __pyx_state)
  */
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_15__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__40)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_6Point2_19__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Point2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__44)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Point2, __pyx_n_s_setstate_cython, __pyx_t_5) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Point2);
 
-  /* "mapping_common/transform.py":80
+  /* "mapping_common/transform.py":85
  *     Receives only the rotation when transformed with a Transform2D"""
  * 
  *     def length(self) -> float:             # <<<<<<<<<<<<<<
- *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
+ *         """Calculates the length of this vector
  * 
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_1length, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_length, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__45)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 85, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_n_s_float) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_1length, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_length, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__41)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 80, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_5);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_length, __pyx_t_5) < 0) __PYX_ERR(1, 85, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_length, __pyx_t_3) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":83
+  /* "mapping_common/transform.py":95
  *         return math.sqrt(self._matrix[0] ** 2 + self._matrix[1] ** 2)
  * 
  *     def normalized(self) -> "Vector2":             # <<<<<<<<<<<<<<
  *         """Returns this direction Vector with length 1.0
  * 
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 83, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 83, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_3normalized, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_normalized, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__42)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 83, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_3normalized, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_normalized, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__46)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 95, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_normalized, __pyx_t_5) < 0) __PYX_ERR(1, 83, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_normalized, __pyx_t_5) < 0) __PYX_ERR(1, 95, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":91
+  /* "mapping_common/transform.py":108
  *         return Vector2(self._matrix / self.length())
  * 
  *     def angle_to(self, other: "Vector2") -> float:             # <<<<<<<<<<<<<<
  *         """Calculates the angle to *other*
  * 
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 91, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_other, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 91, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_n_s_float) < 0) __PYX_ERR(1, 91, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_5angle_to, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_angle_to, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__44)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 91, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_other, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 108, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_5angle_to, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_angle_to, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__48)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_angle_to, __pyx_t_3) < 0) __PYX_ERR(1, 91, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_angle_to, __pyx_t_4) < 0) __PYX_ERR(1, 108, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":104
- *         return math.acos(div)
+  /* "mapping_common/transform.py":132
+ *         return math.atan2(cross, dot)
+ * 
+ *     def point(self) -> Point2:             # <<<<<<<<<<<<<<
+ *         return Point2(self._matrix)
+ * 
+ */
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 132, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_return, __pyx_n_s_Point2) < 0) __PYX_ERR(1, 132, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_7point, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_point, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__49)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 132, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_point, __pyx_t_5) < 0) __PYX_ERR(1, 132, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+
+  /* "mapping_common/transform.py":135
+ *         return Point2(self._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new(x: float, y: float) -> "Vector2":
  *         m = np.array([x, y, 1.0], dtype=np.float64)
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 104, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_x, __pyx_n_s_float) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_y, __pyx_n_s_float) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_7new, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_new, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__45)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 135, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new, __pyx_t_5) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_x, __pyx_n_s_float) < 0) __PYX_ERR(1, 135, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_y, __pyx_n_s_float) < 0) __PYX_ERR(1, 135, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 135, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_9new, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_new, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__50)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 135, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new, __pyx_t_4) < 0) __PYX_ERR(1, 135, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
-  __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 135, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 135, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 104, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new, __pyx_t_5) < 0) __PYX_ERR(1, 135, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_new, __pyx_t_3) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":109
+  /* "mapping_common/transform.py":140
  *         return Vector2(m)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def zero() -> "Vector2":
  *         return Vector2.new(0.0, 0.0)
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 109, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 109, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_9zero, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_zero, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__46)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 109, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 140, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero, __pyx_t_5) < 0) __PYX_ERR(1, 109, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 140, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_11zero, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_zero, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__51)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 140, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero, __pyx_t_4) < 0) __PYX_ERR(1, 140, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
-  __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 109, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 140, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 140, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 109, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero, __pyx_t_5) < 0) __PYX_ERR(1, 140, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_zero, __pyx_t_3) < 0) __PYX_ERR(1, 109, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":113
+  /* "mapping_common/transform.py":144
  *         return Vector2.new(0.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def forward() -> "Vector2":
+ *         return Vector2.new(1.0, 0.0)
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 144, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_13forward, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_forward, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__52)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_forward, __pyx_t_4) < 0) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_forward); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_forward, __pyx_t_5) < 0) __PYX_ERR(1, 144, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+
+  /* "mapping_common/transform.py":148
+ *         return Vector2.new(1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def backward() -> "Vector2":
+ *         return Vector2.new(-1.0, 0.0)
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 148, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_15backward, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_backward, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__53)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_backward, __pyx_t_4) < 0) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_backward); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_backward, __pyx_t_5) < 0) __PYX_ERR(1, 148, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+
+  /* "mapping_common/transform.py":152
+ *         return Vector2.new(-1.0, 0.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def left() -> "Vector2":
+ *         return Vector2.new(0.0, 1.0)
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 152, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_17left, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_left, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__54)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_left, __pyx_t_4) < 0) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_left); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_left, __pyx_t_5) < 0) __PYX_ERR(1, 152, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+
+  /* "mapping_common/transform.py":156
+ *         return Vector2.new(0.0, 1.0)
+ * 
+ *     @staticmethod             # <<<<<<<<<<<<<<
+ *     def right() -> "Vector2":
+ *         return Vector2.new(0.0, -1.0)
+ */
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 156, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_19right, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_right, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__55)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_right, __pyx_t_4) < 0) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_right); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_right, __pyx_t_5) < 0) __PYX_ERR(1, 156, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
+
+  /* "mapping_common/transform.py":160
+ *         return Vector2.new(0.0, -1.0)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_point(p: Point2) -> "Vector2":
  *         return Vector2(p._matrix)
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 113, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_p, __pyx_n_s_Point2) < 0) __PYX_ERR(1, 113, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 113, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_11from_point, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_from_point, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__48)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 113, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 160, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point, __pyx_t_5) < 0) __PYX_ERR(1, 113, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_p, __pyx_n_s_Point2) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_21from_point, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_from_point, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__57)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point, __pyx_t_4) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
-  __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 113, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 160, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 113, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point, __pyx_t_5) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_point, __pyx_t_3) < 0) __PYX_ERR(1, 113, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":117
+  /* "mapping_common/transform.py":164
  *         return Vector2(p._matrix)
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: geometry_msgs.Vector3) -> "Vector2":
  *         return Vector2.new(m.x, m.y)
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 117, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_m, __pyx_kp_s_geometry_msgs_Vector3) < 0) __PYX_ERR(1, 117, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 117, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_13from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__49)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 117, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 164, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(1, 117, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_geometry_msgs_Vector3) < 0) __PYX_ERR(1, 164, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Vector2_2) < 0) __PYX_ERR(1, 164, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_23from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__58)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 164, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 164, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
-  __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 117, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 164, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 164, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 117, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(1, 164, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_from_ros_msg, __pyx_t_3) < 0) __PYX_ERR(1, 117, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":121
+  /* "mapping_common/transform.py":168
  *         return Vector2.new(m.x, m.y)
  * 
  *     def to_ros_msg(self) -> geometry_msgs.Vector3:             # <<<<<<<<<<<<<<
  *         return geometry_msgs.Vector3(x=self.x(), y=self.y(), z=0.0)
  * 
  */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 121, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_geometry_msgs_Vector3) < 0) __PYX_ERR(1, 121, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_15to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__50)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 121, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 168, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_3);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_to_ros_msg, __pyx_t_5) < 0) __PYX_ERR(1, 121, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_geometry_msgs_Vector3) < 0) __PYX_ERR(1, 168, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_25to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__59)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 168, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 168, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":75
+  /* "mapping_common/transform.py":80
  * 
  * @dataclass(init=False, eq=False)
  * class Vector2(_Coord2):             # <<<<<<<<<<<<<<
  *     """2 dimensional direction vector.
  * 
  */
-  __pyx_t_5 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_DataclassesCallHelper(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_DataclassesCallHelper(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_params, __pyx_t_2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_params, __pyx_t_2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 75, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
 
-  /* "mapping_common/transform.py":13
+  /* "mapping_common/transform.py":12
  * 
  * @dataclass(init=False, eq=False)
  * class _Coord2:             # <<<<<<<<<<<<<<
  *     """Homogenous 2 dimensional coordinate
  * 
  */
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
 
-  /* "mapping_common/transform.py":75
+  /* "mapping_common/transform.py":80
  * 
  * @dataclass(init=False, eq=False)
  * class Vector2(_Coord2):             # <<<<<<<<<<<<<<
  *     """2 dimensional direction vector.
  * 
  */
-  __pyx_t_4 = __Pyx_DataclassesCallHelper(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_DataclassesCallHelper(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_matrix_2, __pyx_t_4) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields, __pyx_t_2) < 0) __PYX_ERR(1, 75, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_matrix_2, __pyx_t_3) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields, __pyx_t_2) < 0) __PYX_ERR(1, 80, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
@@ -19063,22 +21048,22 @@ if (!__Pyx_RefNanny) {
  */
   __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_2, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_Dict_GetItem(__pyx_t_2, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_name_2, __pyx_n_s_matrix_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_3, __pyx_n_s_name_2, __pyx_n_s_matrix_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "(tree fragment)":2
  * __dataclass_fields__['_matrix'].name = '_matrix'
  * __dataclass_fields__['_matrix'].type = PLACEHOLDER__matrix             # <<<<<<<<<<<<<<
  * __dataclass_fields__['_matrix']._field_type = PLACEHOLDER_FIELD_TYPE__matrix
  */
-  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_Dict_GetItem(__pyx_t_4, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_Dict_GetItem(__pyx_t_3, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_type, __pyx_n_s_ndarray) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
@@ -19089,36 +21074,36 @@ if (!__Pyx_RefNanny) {
  */
   __pyx_t_2 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_FIELD); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_Dict_GetItem(__pyx_t_2, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_2, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_5, __pyx_n_s_field_type, __pyx_t_4) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_field_type, __pyx_t_3) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__51, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_local); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__60, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_local); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = NULL;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = NULL;
   __pyx_t_6 = 0;
   #if CYTHON_UNPACK_METHODS
   if (likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_4)) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_2, function);
       __pyx_t_6 = 1;
@@ -19126,15 +21111,15 @@ if (!__Pyx_RefNanny) {
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
-    __pyx_t_5 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
+    PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
+    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_2, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_5) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
   /* "(tree fragment)":2
@@ -19143,12 +21128,12 @@ if (!__Pyx_RefNanny) {
  * def __repr__(self):
  *     key = id(self)
  */
-  __pyx_t_5 = PySet_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = PySet_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_pyx_recursive_repr_guard); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_running, __pyx_t_5) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_running, __pyx_t_4) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "(tree fragment)":1
@@ -19156,7 +21141,7 @@ if (!__Pyx_RefNanny) {
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_19__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__52)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_35__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__61)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_reduce_cython, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -19168,250 +21153,258 @@ if (!__Pyx_RefNanny) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Vector2__set_state(self, __pyx_state)
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_21__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__53)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7Vector2_37__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Vector2___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__62)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Vector2, __pyx_n_s_setstate_cython, __pyx_t_2) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Vector2);
 
-  /* "mapping_common/transform.py":142
+  /* "mapping_common/transform.py":225
  *         self._matrix = matrix
  * 
  *     def translation(self) -> Vector2:             # <<<<<<<<<<<<<<
  *         """Returns only the translation that this Transform applies
  * 
  */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_3translation, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_translation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__54)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 142, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_3translation, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_translation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__63)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 225, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_translation, __pyx_t_2) < 0) __PYX_ERR(1, 142, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_translation, __pyx_t_2) < 0) __PYX_ERR(1, 225, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":152
+  /* "mapping_common/transform.py":235
  *         return Vector2(m)
+ * 
+ *     def rotation(self) -> float:             # <<<<<<<<<<<<<<
+ *         """Returns only the rotation that this Transform applies
+ * 
+ */
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_5rotation, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_rotation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__64)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 235, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_rotation, __pyx_t_2) < 0) __PYX_ERR(1, 235, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
+
+  /* "mapping_common/transform.py":248
+ *         return np.arctan2(self._matrix[1, 0], self._matrix[0, 0])
  * 
  *     def inverse(self) -> "Transform2D":             # <<<<<<<<<<<<<<
  *         """Returns an inverted Transformation matrix
  * 
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 152, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_7inverse, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_inverse, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__65)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 152, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_5inverse, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_inverse, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__55)); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 152, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_5, __pyx_t_2);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_inverse, __pyx_t_2) < 0) __PYX_ERR(1, 248, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_inverse, __pyx_t_5) < 0) __PYX_ERR(1, 152, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":160
+  /* "mapping_common/transform.py":256
  *         return Transform2D(np.linalg.inv(self._matrix))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def identity() -> "Transform2D":
  *         """Returns the identity transform (no transformation)
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 160, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_7identity, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_identity, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__56)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 256, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity, __pyx_t_2) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 256, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_9identity, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_identity, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity, __pyx_t_4) < 0) __PYX_ERR(1, 256, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 160, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 256, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 160, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity, __pyx_t_2) < 0) __PYX_ERR(1, 256, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_identity, __pyx_t_5) < 0) __PYX_ERR(1, 160, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":169
+  /* "mapping_common/transform.py":265
  *         return Transform2D(matrix=np.eye(3, dtype=np.float64))
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_rotation(angle: float) -> "Transform2D":
  *         """Returns a transformation matrix consisting of a rotation around `angle`
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 169, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_angle, __pyx_n_s_float) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_9new_rotation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_rotation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__58)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 169, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 265, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation, __pyx_t_2) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_angle, __pyx_n_s_float) < 0) __PYX_ERR(1, 265, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 265, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_11new_rotation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_rotation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__68)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 265, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation, __pyx_t_4) < 0) __PYX_ERR(1, 265, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 169, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 265, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 265, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 169, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation, __pyx_t_2) < 0) __PYX_ERR(1, 265, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation, __pyx_t_5) < 0) __PYX_ERR(1, 169, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":185
+  /* "mapping_common/transform.py":283
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_translation(v: Vector2) -> "Transform2D":
  *         """Returns a transformation matrix consisting of a translation along `v`
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 185, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_v, __pyx_n_s_Vector2) < 0) __PYX_ERR(1, 185, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 185, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_11new_translation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_translation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__60)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 185, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation, __pyx_t_2) < 0) __PYX_ERR(1, 185, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_v, __pyx_n_s_Vector2) < 0) __PYX_ERR(1, 283, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 283, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_13new_translation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_translation, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__70)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 283, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation, __pyx_t_4) < 0) __PYX_ERR(1, 283, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 185, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 283, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 185, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation, __pyx_t_2) < 0) __PYX_ERR(1, 283, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_translation, __pyx_t_5) < 0) __PYX_ERR(1, 185, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":196
+  /* "mapping_common/transform.py":294
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def new_rotation_translation(angle: float, v: Vector2) -> "Transform2D":
  *         """Returns a transformation matrix consisting of first a rotation around `angle`
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 196, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_angle, __pyx_n_s_float) < 0) __PYX_ERR(1, 196, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_v, __pyx_n_s_Vector2) < 0) __PYX_ERR(1, 196, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 196, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_13new_rotation_translation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_rotation_transla, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__62)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 196, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 294, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation, __pyx_t_2) < 0) __PYX_ERR(1, 196, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_angle, __pyx_n_s_float) < 0) __PYX_ERR(1, 294, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_v, __pyx_n_s_Vector2) < 0) __PYX_ERR(1, 294, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 294, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_15new_rotation_translation, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_new_rotation_transla, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__72)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 294, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation, __pyx_t_4) < 0) __PYX_ERR(1, 294, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 196, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 294, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 294, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 196, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation, __pyx_t_2) < 0) __PYX_ERR(1, 294, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_new_rotation_translation, __pyx_t_5) < 0) __PYX_ERR(1, 196, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":210
+  /* "mapping_common/transform.py":310
  *         return transform
  * 
  *     @staticmethod             # <<<<<<<<<<<<<<
  *     def from_ros_msg(m: msg.Transform2D) -> "Transform2D":
  *         matrix = np.array(m.matrix, dtype=np.float64).reshape((3, 3), order="C")
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 210, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_m, __pyx_kp_s_msg_Transform2D) < 0) __PYX_ERR(1, 210, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 210, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_15from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__64)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 210, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg, __pyx_t_2) < 0) __PYX_ERR(1, 210, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_m, __pyx_kp_s_msg_Transform2D) < 0) __PYX_ERR(1, 310, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_Transform2D_2) < 0) __PYX_ERR(1, 310, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_17from_ros_msg, __Pyx_CYFUNCTION_STATICMETHOD | __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_from_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__74)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 310, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 310, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __Pyx_GetNameInClass(__pyx_t_2, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 210, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 310, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_builtin_staticmethod, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 210, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg, __pyx_t_2) < 0) __PYX_ERR(1, 310, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_from_ros_msg, __pyx_t_5) < 0) __PYX_ERR(1, 210, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":215
+  /* "mapping_common/transform.py":315
  *         return Transform2D(matrix)
  * 
  *     def to_ros_msg(self) -> msg.Transform2D:             # <<<<<<<<<<<<<<
  *         t = tuple(self._matrix.flatten(order="C"))
  *         return msg.Transform2D(matrix=t)
  */
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 215, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_return, __pyx_kp_s_msg_Transform2D) < 0) __PYX_ERR(1, 215, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_17to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 215, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_5);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_to_ros_msg, __pyx_t_2) < 0) __PYX_ERR(1, 215, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_msg_Transform2D) < 0) __PYX_ERR(1, 315, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_19to_ros_msg, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D_to_ros_msg, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__76)); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 315, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_to_ros_msg, __pyx_t_4) < 0) __PYX_ERR(1, 315, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
-  /* "mapping_common/transform.py":126
+  /* "mapping_common/transform.py":198
  * 
  * @dataclass(init=False, eq=False)
  * class Transform2D:             # <<<<<<<<<<<<<<
  *     """Homogeneous 2 dimensional transformation matrix
  * 
  */
-  __pyx_t_2 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_DataclassesCallHelper(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 126, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_params, __pyx_t_4) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_DataclassParams); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 126, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(11); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_field); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_DataclassesCallHelper(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 126, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_eq, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_order, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_unsafe_hash, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_frozen, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_kw_only, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_match_args, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_slots, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_weakref_slot, Py_False) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_matrix_2, __pyx_t_3) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields, __pyx_t_4) < 0) __PYX_ERR(1, 126, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_params, __pyx_t_3) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_field); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_repr, Py_True) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_hash, Py_None) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_init, Py_True) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_compare, Py_True) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_metadata, Py_None) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_DataclassesCallHelper(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_matrix_2, __pyx_t_5) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields, __pyx_t_3) < 0) __PYX_ERR(1, 198, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
   /* "(tree fragment)":1
@@ -19419,80 +21412,80 @@ if (!__Pyx_RefNanny) {
  * __dataclass_fields__['_matrix'].type = PLACEHOLDER__matrix
  * __dataclass_fields__['_matrix']._field_type = PLACEHOLDER_FIELD_TYPE__matrix
  */
-  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_Dict_GetItem(__pyx_t_4, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_3, __pyx_n_s_name_2, __pyx_n_s_matrix_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Dict_GetItem(__pyx_t_3, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_5, __pyx_n_s_name_2, __pyx_n_s_matrix_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "(tree fragment)":2
  * __dataclass_fields__['_matrix'].name = '_matrix'
  * __dataclass_fields__['_matrix'].type = PLACEHOLDER__matrix             # <<<<<<<<<<<<<<
  * __dataclass_fields__['_matrix']._field_type = PLACEHOLDER_FIELD_TYPE__matrix
  */
-  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GetNameInClass(__pyx_t_5, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = __Pyx_PyObject_Dict_GetItem(__pyx_t_5, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_3, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_3, __pyx_n_s_type, __pyx_kp_s_npt_NDArray_np_float64) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_type, __pyx_kp_s_npt_NDArray_np_float64) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "(tree fragment)":3
  * __dataclass_fields__['_matrix'].name = '_matrix'
  * __dataclass_fields__['_matrix'].type = PLACEHOLDER__matrix
  * __dataclass_fields__['_matrix']._field_type = PLACEHOLDER_FIELD_TYPE__matrix             # <<<<<<<<<<<<<<
  */
-  __pyx_t_4 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Load_dataclasses_Module(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_Dict_GetItem(__pyx_t_4, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_2, __pyx_n_s_field_type, __pyx_t_3) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_FIELD); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_dataclass_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyObject_Dict_GetItem(__pyx_t_3, __pyx_n_s_matrix_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_field_type, __pyx_t_5) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "(tree fragment)":1
  * __pyx_recursive_repr_guard = __import__('threading').local()             # <<<<<<<<<<<<<<
  * __pyx_recursive_repr_guard.running = set()
  * def __repr__(self):
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__67, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin___import__, __pyx_tuple__77, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_local); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_local); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = NULL;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = NULL;
   __pyx_t_6 = 0;
   #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_3);
+  if (likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_5);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
       __pyx_t_6 = 1;
     }
   }
   #endif
   {
-    PyObject *__pyx_callargs[2] = {__pyx_t_3, NULL};
-    __pyx_t_2 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    PyObject *__pyx_callargs[2] = {__pyx_t_5, NULL};
+    __pyx_t_4 = __Pyx_PyObject_FastCall(__pyx_t_3, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_pyx_recursive_repr_guard, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
   /* "(tree fragment)":2
@@ -19501,23 +21494,23 @@ if (!__Pyx_RefNanny) {
  * def __repr__(self):
  *     key = id(self)
  */
-  __pyx_t_2 = PySet_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetNameInClass(__pyx_t_4, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_pyx_recursive_repr_guard); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __pyx_t_4 = PySet_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_t_4, __pyx_n_s_running, __pyx_t_2) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_GetNameInClass(__pyx_t_3, (PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_pyx_recursive_repr_guard); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (__Pyx_PyObject_SetAttrStr(__pyx_t_3, __pyx_n_s_running, __pyx_t_4) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "(tree fragment)":1
  * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
  *     cdef tuple state
  *     cdef object _dict
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_25__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__68)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_reduce_cython, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_27__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D___reduce_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__78)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_reduce_cython, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
   /* "(tree fragment)":16
@@ -19526,10 +21519,10 @@ if (!__Pyx_RefNanny) {
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_Transform2D__set_state(self, __pyx_state)
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_27__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__69)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_setstate_cython, __pyx_t_4) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_11Transform2D_29__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_n_s_Transform2D___setstate_cython, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__79)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (__Pyx_SetItemOnTypeDict((PyObject *)__pyx_ptype_14mapping_common_9transform_Transform2D, __pyx_n_s_setstate_cython, __pyx_t_3) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   PyType_Modified(__pyx_ptype_14mapping_common_9transform_Transform2D);
 
   /* "(tree fragment)":1
@@ -19537,10 +21530,10 @@ if (!__Pyx_RefNanny) {
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_1__pyx_unpickle__Coord2, 0, __pyx_n_s_pyx_unpickle__Coord2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__71)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle__Coord2, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_1__pyx_unpickle__Coord2, 0, __pyx_n_s_pyx_unpickle__Coord2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__81)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle__Coord2, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "(tree fragment)":11
  *         __pyx_unpickle__Coord2__set_state(<_Coord2> __pyx_result, __pyx_state)
@@ -19549,20 +21542,20 @@ if (!__Pyx_RefNanny) {
  *     __pyx_result._matrix = __pyx_state[0]
  *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_3__pyx_unpickle_Point2, 0, __pyx_n_s_pyx_unpickle_Point2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__72)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Point2, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_3__pyx_unpickle_Point2, 0, __pyx_n_s_pyx_unpickle_Point2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__82)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Point2, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_Vector2(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_5__pyx_unpickle_Vector2, 0, __pyx_n_s_pyx_unpickle_Vector2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__73)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Vector2, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_5__pyx_unpickle_Vector2, 0, __pyx_n_s_pyx_unpickle_Vector2, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__83)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Vector2, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "(tree fragment)":11
  *         __pyx_unpickle_Vector2__set_state(<Vector2> __pyx_result, __pyx_state)
@@ -19571,20 +21564,20 @@ if (!__Pyx_RefNanny) {
  *     __pyx_result._matrix = __pyx_state[0]
  *     if len(__pyx_state) > 1 and hasattr(__pyx_result, '__dict__'):
  */
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7__pyx_unpickle_Transform2D, 0, __pyx_n_s_pyx_unpickle_Transform2D, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__74)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Transform2D, __pyx_t_4) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_14mapping_common_9transform_7__pyx_unpickle_Transform2D, 0, __pyx_n_s_pyx_unpickle_Transform2D, NULL, __pyx_n_s_mapping_common_transform, __pyx_d, ((PyObject *)__pyx_codeobj__84)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Transform2D, __pyx_t_3) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "mapping_common/transform.py":1
  * from dataclasses import dataclass             # <<<<<<<<<<<<<<
- * import cython
  * 
+ * import numpy as np
  */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_4) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_3) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -21105,60 +23098,6 @@ invalid_keyword:
     return 0;
 }
 
-/* SetItemInt */
-static int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v) {
-    int r;
-    if (unlikely(!j)) return -1;
-    r = PyObject_SetItem(o, j, v);
-    Py_DECREF(j);
-    return r;
-}
-static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v, int is_list,
-                                               CYTHON_NCP_UNUSED int wraparound, CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = (!wraparound) ? i : ((likely(i >= 0)) ? i : i + PyList_GET_SIZE(o));
-        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o)))) {
-            PyObject* old = PyList_GET_ITEM(o, n);
-            Py_INCREF(v);
-            PyList_SET_ITEM(o, n, v);
-            Py_DECREF(old);
-            return 1;
-        }
-    } else {
-        PyMappingMethods *mm = Py_TYPE(o)->tp_as_mapping;
-        PySequenceMethods *sm = Py_TYPE(o)->tp_as_sequence;
-        if (mm && mm->mp_ass_subscript) {
-            int r;
-            PyObject *key = PyInt_FromSsize_t(i);
-            if (unlikely(!key)) return -1;
-            r = mm->mp_ass_subscript(o, key, v);
-            Py_DECREF(key);
-            return r;
-        }
-        if (likely(sm && sm->sq_ass_item)) {
-            if (wraparound && unlikely(i < 0) && likely(sm->sq_length)) {
-                Py_ssize_t l = sm->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return -1;
-                    PyErr_Clear();
-                }
-            }
-            return sm->sq_ass_item(o, i, v);
-        }
-    }
-#else
-    if (is_list || !PyMapping_Check(o))
-    {
-        return PySequence_SetItem(o, i, v);
-    }
-#endif
-    return __Pyx_SetItemInt_Generic(o, PyInt_FromSsize_t(i), v);
-}
-
 /* PyObjectCallOneArg */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg) {
     PyObject *args[2] = {NULL, arg};
@@ -21422,55 +23361,59 @@ static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *nam
     return 0;
 }
 
-/* ObjectGetItem */
-#if CYTHON_USE_TYPE_SLOTS
-static PyObject *__Pyx_PyObject_GetIndex(PyObject *obj, PyObject *index) {
-    PyObject *runerr = NULL;
-    Py_ssize_t key_value;
-    key_value = __Pyx_PyIndex_AsSsize_t(index);
-    if (likely(key_value != -1 || !(runerr = PyErr_Occurred()))) {
-        return __Pyx_GetItemInt_Fast(obj, key_value, 0, 1, 1);
-    }
-    if (PyErr_GivenExceptionMatches(runerr, PyExc_OverflowError)) {
-        __Pyx_TypeName index_type_name = __Pyx_PyType_GetName(Py_TYPE(index));
-        PyErr_Clear();
-        PyErr_Format(PyExc_IndexError,
-            "cannot fit '" __Pyx_FMT_TYPENAME "' into an index-sized integer", index_type_name);
-        __Pyx_DECREF_TypeName(index_type_name);
-    }
-    return NULL;
+/* SetItemInt */
+static int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v) {
+    int r;
+    if (unlikely(!j)) return -1;
+    r = PyObject_SetItem(o, j, v);
+    Py_DECREF(j);
+    return r;
 }
-static PyObject *__Pyx_PyObject_GetItem_Slow(PyObject *obj, PyObject *key) {
-    __Pyx_TypeName obj_type_name;
-    if (likely(PyType_Check(obj))) {
-        PyObject *meth = __Pyx_PyObject_GetAttrStrNoError(obj, __pyx_n_s_class_getitem);
-        if (!meth) {
-            PyErr_Clear();
-        } else {
-            PyObject *result = __Pyx_PyObject_CallOneArg(meth, key);
-            Py_DECREF(meth);
-            return result;
+static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v, int is_list,
+                                               CYTHON_NCP_UNUSED int wraparound, CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = (!wraparound) ? i : ((likely(i >= 0)) ? i : i + PyList_GET_SIZE(o));
+        if ((!boundscheck) || likely(__Pyx_is_valid_index(n, PyList_GET_SIZE(o)))) {
+            PyObject* old = PyList_GET_ITEM(o, n);
+            Py_INCREF(v);
+            PyList_SET_ITEM(o, n, v);
+            Py_DECREF(old);
+            return 1;
+        }
+    } else {
+        PyMappingMethods *mm = Py_TYPE(o)->tp_as_mapping;
+        PySequenceMethods *sm = Py_TYPE(o)->tp_as_sequence;
+        if (mm && mm->mp_ass_subscript) {
+            int r;
+            PyObject *key = PyInt_FromSsize_t(i);
+            if (unlikely(!key)) return -1;
+            r = mm->mp_ass_subscript(o, key, v);
+            Py_DECREF(key);
+            return r;
+        }
+        if (likely(sm && sm->sq_ass_item)) {
+            if (wraparound && unlikely(i < 0) && likely(sm->sq_length)) {
+                Py_ssize_t l = sm->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return -1;
+                    PyErr_Clear();
+                }
+            }
+            return sm->sq_ass_item(o, i, v);
         }
     }
-    obj_type_name = __Pyx_PyType_GetName(Py_TYPE(obj));
-    PyErr_Format(PyExc_TypeError,
-        "'" __Pyx_FMT_TYPENAME "' object is not subscriptable", obj_type_name);
-    __Pyx_DECREF_TypeName(obj_type_name);
-    return NULL;
-}
-static PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key) {
-    PyTypeObject *tp = Py_TYPE(obj);
-    PyMappingMethods *mm = tp->tp_as_mapping;
-    PySequenceMethods *sm = tp->tp_as_sequence;
-    if (likely(mm && mm->mp_subscript)) {
-        return mm->mp_subscript(obj, key);
+#else
+    if (is_list || !PyMapping_Check(o))
+    {
+        return PySequence_SetItem(o, i, v);
     }
-    if (likely(sm && sm->sq_item)) {
-        return __Pyx_PyObject_GetIndex(obj, key);
-    }
-    return __Pyx_PyObject_GetItem_Slow(obj, key);
-}
 #endif
+    return __Pyx_SetItemInt_Generic(o, PyInt_FromSsize_t(i), v);
+}
 
 /* SliceObject */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(PyObject* obj,
@@ -21576,6 +23519,56 @@ bad:
     return NULL;
 }
 
+/* ObjectGetItem */
+#if CYTHON_USE_TYPE_SLOTS
+static PyObject *__Pyx_PyObject_GetIndex(PyObject *obj, PyObject *index) {
+    PyObject *runerr = NULL;
+    Py_ssize_t key_value;
+    key_value = __Pyx_PyIndex_AsSsize_t(index);
+    if (likely(key_value != -1 || !(runerr = PyErr_Occurred()))) {
+        return __Pyx_GetItemInt_Fast(obj, key_value, 0, 1, 1);
+    }
+    if (PyErr_GivenExceptionMatches(runerr, PyExc_OverflowError)) {
+        __Pyx_TypeName index_type_name = __Pyx_PyType_GetName(Py_TYPE(index));
+        PyErr_Clear();
+        PyErr_Format(PyExc_IndexError,
+            "cannot fit '" __Pyx_FMT_TYPENAME "' into an index-sized integer", index_type_name);
+        __Pyx_DECREF_TypeName(index_type_name);
+    }
+    return NULL;
+}
+static PyObject *__Pyx_PyObject_GetItem_Slow(PyObject *obj, PyObject *key) {
+    __Pyx_TypeName obj_type_name;
+    if (likely(PyType_Check(obj))) {
+        PyObject *meth = __Pyx_PyObject_GetAttrStrNoError(obj, __pyx_n_s_class_getitem);
+        if (!meth) {
+            PyErr_Clear();
+        } else {
+            PyObject *result = __Pyx_PyObject_CallOneArg(meth, key);
+            Py_DECREF(meth);
+            return result;
+        }
+    }
+    obj_type_name = __Pyx_PyType_GetName(Py_TYPE(obj));
+    PyErr_Format(PyExc_TypeError,
+        "'" __Pyx_FMT_TYPENAME "' object is not subscriptable", obj_type_name);
+    __Pyx_DECREF_TypeName(obj_type_name);
+    return NULL;
+}
+static PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *key) {
+    PyTypeObject *tp = Py_TYPE(obj);
+    PyMappingMethods *mm = tp->tp_as_mapping;
+    PySequenceMethods *sm = tp->tp_as_sequence;
+    if (likely(mm && mm->mp_subscript)) {
+        return mm->mp_subscript(obj, key);
+    }
+    if (likely(sm && sm->sq_item)) {
+        return __Pyx_PyObject_GetIndex(obj, key);
+    }
+    return __Pyx_PyObject_GetItem_Slow(obj, key);
+}
+#endif
+
 /* Import */
 static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level) {
     PyObject *module = 0;
@@ -21647,7 +23640,7 @@ static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
         if (unlikely(!module_name_str)) { goto modbad; }
         module_name = PyUnicode_FromString(module_name_str);
         if (unlikely(!module_name)) { goto modbad; }
-        module_dot = PyUnicode_Concat(module_name, __pyx_kp_u__16);
+        module_dot = PyUnicode_Concat(module_name, __pyx_kp_u__22);
         if (unlikely(!module_dot)) { goto modbad; }
         full_name = PyUnicode_Concat(module_dot, name);
         if (unlikely(!full_name)) { goto modbad; }
@@ -22483,7 +24476,7 @@ static PyObject *__Pyx_ImportDottedModule_WalkParts(PyObject *module, PyObject *
 #endif
 static PyObject *__Pyx__ImportDottedModule(PyObject *name, PyObject *parts_tuple) {
 #if PY_MAJOR_VERSION < 3
-    PyObject *module, *from_list, *star = __pyx_n_s__17;
+    PyObject *module, *from_list, *star = __pyx_n_s__23;
     CYTHON_UNUSED_VAR(parts_tuple);
     from_list = PyList_New(1);
     if (unlikely(!from_list))
@@ -24903,7 +26896,7 @@ __Pyx_PyType_GetName(PyTypeObject* tp)
     if (unlikely(name == NULL) || unlikely(!PyUnicode_Check(name))) {
         PyErr_Clear();
         Py_XDECREF(name);
-        name = __Pyx_NewRef(__pyx_n_s__75);
+        name = __Pyx_NewRef(__pyx_n_s__85);
     }
     return name;
 }

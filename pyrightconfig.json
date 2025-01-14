@@ -1,0 +1,23 @@
+{
+    "include": [
+        "code"
+    ],
+    "exclude": [
+        "**/__pycache__",
+    ],
+    "typeCheckingMode": "standard",
+    "strictListInference": true,
+    "strictDictionaryInference": true,
+    "strictSetInference": true,
+    "pythonVersion": "3.8",
+    "pythonPlatform": "Linux",
+    "executionEnvironments": [
+        {
+            "root": "code",
+            // Extra paths can be added here for autocompletion to work when importing packages defined in the setup.py files
+            "extraPaths": [
+                "code/mapping/ext_modules"
+            ]
+        }
+    ]
+}
