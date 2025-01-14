@@ -232,6 +232,8 @@ class lane_position(CompatibleNode):
         angles = np.array(angles)
         # calculate the median deviation to other lanemarkings
         angle_diff = np.abs(angles[:, None] - angles)
+        # Set diagonal to np.nan, to ignore it while calculating the median
+        np.fill_diagonal(angle_diff, np.nan)
         median_angle_deviation = np.median(angle_diff, axis=1)
         # weight parameters
         angle_weigth = 0.3  # move to ros param
@@ -244,7 +246,7 @@ class lane_position(CompatibleNode):
             # normalize all values so the maximum confidence is 1
             normalized_angle = max(0, 1 - (abs(angle) / np.deg2rad(25)))
             normalized_size = min(1, cluster_size / 5000)
-            normalized_std_dev = max(0, 1 - (deviation / 0.2))
+            normalized_std_dev = max(0, 1 - (deviation / 0.1))
 
             confidence = (
                 angle_weigth * normalized_angle
