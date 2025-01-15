@@ -116,24 +116,24 @@ class MapTree:
     def _idxs_to_entity(self, idxs: npt.NDArray) -> List[ShapelyEntity]:
         return [self.filtered_entities[i] for i in idxs]
 
-    def nearest(self, geo: List[shapely.Geometry]) -> Optional[List[ShapelyEntity]]:
-        """Returns the nearest Entity inside the tree for each element in geo
+    def nearest(self, geo: shapely.Geometry) -> Optional[ShapelyEntity]:
+        """Returns the nearest Entity inside the tree to geo
 
         Args:
-            geo (List[shapely.Geometry]): Geometries to calculate the nearest entity to
+            geo (shapely.Geometry): Geometry to calculate the nearest entity to
 
         Returns:
-            Optional[List[ShapelyEntity]]: If the tree is empty, will return None.
-                Otherwise will return an array of the same length as geo
+            Optional[ShapelyEntity]: If the tree is empty, will return None.
+                Otherwise will return the nearest Entity
         """
-        idxs = self._str_tree.nearest(geo)
-        if idxs is None:
+        idx = self._str_tree.nearest(geo)
+        if idx is None:
             return None
-        return self._idxs_to_entity(idxs)
+        return self.filtered_entities[idx]
 
     def query(
         self,
-        geo: List[shapely.Geometry],
+        geo: shapely.Geometry,
         predicate: Optional[
             Literal[
                 "intersects",
@@ -148,13 +148,12 @@ class MapTree:
                 "dwithin",
             ]
         ] = None,
-        distance: Optional[npt.NDArray] = None,
-    ) -> List[List[ShapelyEntity]]:
+        distance: Optional[float] = None,
+    ) -> List[ShapelyEntity]:
         idxs: npt.NDArray[np.int64] = self._str_tree.query(
             geo, predicate=predicate, distance=distance
         )
-        print(idxs)
-        return [self._idxs_to_entity(idxs_l) for idxs_l in idxs]
+        return self._idxs_to_entity(idxs)
 
     def query_nearest(
         self,
