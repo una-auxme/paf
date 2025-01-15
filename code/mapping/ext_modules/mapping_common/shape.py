@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
-
 import rospy
-
+from typing import List, Optional
+from shapely.geometry import Polygon as ShapelyPolygon
 from .transform import Transform2D
 from mapping import msg
-
+from transform import Point2
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 
 
 @dataclass
@@ -151,6 +152,59 @@ class Circle(Shape2D):
         m.type = Marker.CYLINDER
         m.scale.x = self.radius * 2.0
         m.scale.y = self.radius * 2.0
+
+        return m
+
+
+@dataclass(init=False)
+class Polygon(Shape2D):
+    """Polygon defined by a list of Point2 objects."""
+
+    points: List[Point2]
+
+    def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
+        if offset is None:
+            offset = Transform2D.identity()
+        super().__init__(offset=offset)
+        self.points = points
+
+    @staticmethod
+    def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
+        assert len(m.points) >= 3, "Polygon requires at least 3 points."
+        points = [Point2.from_ros_msg(p) for p in m.points]
+        return Polygon(points=points, offset=Transform2D.from_ros_msg(m.offset))
+
+    def to_ros_msg(self) -> msg.Shape2D:
+        m = super().to_ros_msg()
+        m.points = [pt.to_ros_msg() for pt in self.points]
+        return m
+
+    def to_shapely(self) -> ShapelyPolygon:
+        """Convert to a Shapely Polygon."""
+        coordinates = [(pt.x(), pt.y()) for pt in self.points]
+        return ShapelyPolygon(coordinates)
+
+    def to_marker(self, transform: Transform2D) -> Marker:
+        """Convert to a visualization Marker for RViz."""
+        m = super().to_marker(transform)
+        m.type = Marker.LINE_STRIP
+        m.scale.x = 0.05  # Line thickness
+
+        # Transform and add points to marker
+        for pt in self.points:
+            if isinstance(pt, Point2):  # Sicherstellen, dass der Punkt korrekt ist
+                transformed_pt: Point2 = (
+                    transform * pt
+                )  # Transform2D.__mul__ auf Point2 anwenden
+                p = Point()
+                p.x = transformed_pt.x()
+                p.y = transformed_pt.y()
+                p.z = 0.0
+                m.points.append(p)
+
+        # Close the polygon loop
+        if len(m.points) > 0:
+            m.points.append(m.points[0])
 
         return m
 

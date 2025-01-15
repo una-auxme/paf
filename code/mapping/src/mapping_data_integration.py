@@ -31,6 +31,8 @@ class MappingDataIntegrationNode(CompatibleNode):
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
+    lidar_cluster_entities: Optional[List[Entity]] = None
+    radar_cluster_entities: Optional[List[Entity]] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -53,6 +55,18 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_marker_callback,
             qos_profile=1,
         )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Lidar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.lidar_cluster_entities_callback,
+            qos_profile=1,
+        )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.radar_cluster_entities_callback,
+            qos_profile=1,
+        )
 
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
@@ -67,6 +81,12 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_marker_callback(self, data: MarkerArray):
         self.lidar_marker_data = data
+
+    def lidar_cluster_entities_callback(self, data: MapMsg):
+        self.lidar_cluster_entities = data.entities
+
+    def radar_cluster_entities_callback(self, data: MapMsg):
+        self.radar_cluster_entities = data.entities
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
@@ -193,7 +213,11 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         stamp = rospy.get_rostime()
         map = Map(
-            timestamp=stamp, entities=[hero_car] + self.entities_from_lidar_marker()
+            timestamp=stamp,
+            entities=[hero_car]
+            + self.entities_from_lidar_marker()
+            + self.lidar_cluster_entities,
+            + self.radar_cluster_entities
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
