@@ -8,13 +8,9 @@ import numpy.typing as npt
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
-<<<<<<< HEAD
 from mapping_common import entity
-from mapping_common.entity import Entity
-=======
 
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
->>>>>>> origin/578-integrate-shapely-into-shape2d
 
 # from shapely.geometry import Polygon
 
@@ -79,7 +75,6 @@ class Map:
             return self.entities[1:]
         return self.entities
 
-<<<<<<< HEAD
     def get_entity_in_front(self) -> Optional[Entity]:
         """Returns the entity in front
 
@@ -205,7 +200,7 @@ class Map:
                 collision_entities.append(entity)
 
         return collision_entities"""
-=======
+
     def build_tree(
         self,
         f: Optional[FlagFilter] = None,
@@ -219,7 +214,6 @@ class Map:
         filter_fn: Optional[Callable[[Entity], bool]] = None,
     ) -> List[Entity]:
         return [e for e in self.entities if _entity_matches_filter(e, f, filter_fn)]
->>>>>>> origin/578-integrate-shapely-into-shape2d
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
