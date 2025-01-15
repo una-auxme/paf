@@ -12,6 +12,11 @@ from visualization_msgs.msg import Marker, MarkerArray
 from tf.transformations import quaternion_from_matrix
 from std_msgs.msg import Float32MultiArray
 import struct
+from shapely.geometry import Polygon as ShapelyPoloygon
+from mapping.msg import Map as MapMsg
+from mapping_common.entity import Entity, Flags, Motion2D
+from mapping_common.transform import Transform2D, Vector2
+from typing import List
 
 
 class RadarNode:
@@ -41,6 +46,10 @@ class RadarNode:
         min_samples = rospy.get_param("~dbscan_min_samples", 3)
         clustered_data = cluster_data(dataarray, eps, min_samples)
 
+        rospy.loginfo(
+            f"Radar coordinates: ['0 x']: {dataarray['x']} [1 y]: {dataarray[1]} [3 vel]: {dataarray[3]}"
+        )
+
         # transformed_data = transform_data_to_2d(dataarray)
 
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
@@ -62,6 +71,11 @@ class RadarNode:
                 # marker_array.markers.append(max_marker)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
+
+        # polygon_array = create_shapely_polygons(points_with_labels)
+        # velocities = calculate_cluster_velocity(points_with_labels)
+        # entities = create_entities(polygon_array)
+        # self.entity_radar_publisher(entities)
 
         cluster_info = generate_cluster_info(
             clustered_data, dataarray, marker_array, bounding_boxes
@@ -88,6 +102,11 @@ class RadarNode:
             MarkerArray,
             queue_size=10,
         )
+        # self.entity_radar_publisher = rospy.Publisher(
+        #     rospy.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+        #     msg_type=MapMsg,
+        #     qos_profile=1,
+        # )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
@@ -480,6 +499,120 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
         raise ValueError(f"Unsupported bbox_type: {bbox_type}")
 
     return marker
+
+
+def create_shapely_polygons(points_with_labels):
+    polygons = []
+    unique_labels = np.unique(points_with_labels[:, -1])
+    for label in unique_labels:
+        if label == -1:
+            continue
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+        polygon = ShapelyPoloygon(cluster_points)
+        polygons.append(polygon)
+    return polygons
+
+
+def calculate_cluster_velocity(points_with_labels):
+    cluster_motions = []
+    unique_labels = np.unique(points_with_labels[:, -1])
+    for label in unique_labels:
+        if label == -1:
+            continue
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label]
+
+        avg_velocity = np.mean(cluster_points[:, 3])
+        avg_x = np.mean(cluster_points[:, 0])
+        avg_y = np.mean(cluster_points[:, 1])
+
+        # Normalisiere die Richtung (x, y)
+        magnitude = np.sqrt(avg_x**2 + avg_y**2)
+        if magnitude == 0:
+            direction = np.array([0, 0])  # Keine Richtung
+        else:
+            direction = np.array([avg_x, avg_y]) / magnitude
+
+        # Skaliere Richtung mit Geschwindigkeit
+        motion = avg_velocity * direction
+
+        cluster_motion = Vector2.new(motion[0], motion[1])
+        cluster_motions.append(cluster_motion)
+    return cluster_motions
+
+
+def create_entities(polygons):
+    if polygons is None or len(polygons) == 0:
+        # Handle cases where data is invalid or empty
+        rospy.logwarn("No valid polygon data received.")
+        return []
+
+    radar_entities = []
+    for polygon in polygons:
+        if not isinstance(polygon, ShapelyPoloygon):
+            rospy.logwarn("Skipping non-Polygon entity.")
+            continue
+
+        # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
+        centroid = polygon.centroid
+        x_center = centroid.x
+        y_center = centroid.y
+
+        v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+        transform = Transform2D.new_translation(v)
+
+        # # motion = Motion2D()
+        # flags = Flags(is_collider=True)
+        # e = Entity(
+        #     confidence=1,
+        #     priority=0.25,
+        #     shape=Polygon(polygon.coords),
+        #     transform=transform,
+        #     timestamp=rospy.Time.now(),
+        #     flags=flags,
+        #     # motion=
+        # )
+        # radar_entities.append(e)
+    return radar_entities
+
+
+# def entities_from_lidar_marker(self) -> List[Entity]:
+#     data = self.lidar_marker_data
+#     if data is None or not hasattr(data, "markers") or data.markers is None:
+#         # Handle cases where data or markers are invalid
+#         rospy.logwarn("No valid marker data received.")
+#         return []
+
+#     lidar_entities = []
+#     for marker in data.markers:
+#         if marker.type != Marker.CUBE:
+#             rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
+#             continue
+#         # Extract position (center of the cube)
+#         x_center = marker.pose.position.x
+#         y_center = marker.pose.position.y
+
+#         # Extract dimensions (scale gives the size of the cube)
+#         width = marker.scale.x
+#         length = marker.scale.y
+
+#         # Create a shape and transform using the cube's data
+#         shape = Rectangle(width, length)  # 2D rectangle for lidar data
+#         v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+#         transform = Transform2D.new_translation(v)
+
+#         # Add entity to the list
+#         flags = Flags(is_collider=True)
+#         e = Entity(
+#             confidence=1,
+#             priority=0.25,
+#             shape=shape,
+#             transform=transform,
+#             timestamp=marker.header.stamp,
+#             flags=flags,
+#         )
+#         lidar_entities.append(e)
+
+#     return lidar_entities
 
 
 # can be used for extra debugging
