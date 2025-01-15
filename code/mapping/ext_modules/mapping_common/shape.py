@@ -198,7 +198,7 @@ class Polygon(Shape2D):
 
         # Transform and add points
         for pt in self.points:
-            transformed_pt: Point2 = transform * pt  # Apply transformation
+            transformed_pt: Point2 = pt  # Apply transformation
             p = Point()
             p.x = transformed_pt.x()
             p.y = transformed_pt.y()
