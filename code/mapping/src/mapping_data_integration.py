@@ -216,8 +216,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             timestamp=stamp,
             entities=[hero_car]
             + self.entities_from_lidar_marker()
-            + self.lidar_cluster_entities,
-            + self.radar_cluster_entities
+            + (self.lidar_cluster_entities or []),
+            + (self.radar_cluster_entities or [])
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
