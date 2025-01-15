@@ -157,7 +157,7 @@ class Circle(Shape2D):
 class Polygon(Shape2D):
     """Polygon defined by a list of Point2 objects."""
 
-    # points attribute does not need a redundant point for start and end
+    # The points attribute does not need a redundant point for start and end
     points: List[Point2]
 
     def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
@@ -171,7 +171,7 @@ class Polygon(Shape2D):
         assert len(m.dimensions) >= 6 and (
             len(m.dimensions) % 2 == 0
         ), "Polygon requires at least 3 points."
-        # Konvertiere die flache Liste in Point2-Objekte
+        # Convert the flat list into Point2 objects
         points = [
             Point2.new(m.dimensions[i], m.dimensions[i + 1])
             for i in range(0, len(m.dimensions), 2)
@@ -193,19 +193,19 @@ class Polygon(Shape2D):
         m.type = Marker.LINE_STRIP
         m.scale.x = 0.05  # Line thickness
 
-        # Initialisiere m.points als leere Liste
+        # Initialize m.points as an empty list
         m.points = []
 
-        # Transformiere und füge Punkte hinzu
+        # Transform and add points
         for pt in self.points:
-            transformed_pt: Point2 = transform * pt  # Transformation anwenden
+            transformed_pt: Point2 = transform * pt  # Apply transformation
             p = Point()
             p.x = transformed_pt.x()
             p.y = transformed_pt.y()
             p.z = 0.0
             m.points.append(p)
 
-        # Schließe die Polygon-Schleife
+        # Close the polygon loop
         if len(m.points) > 0:
             m.points.append(m.points[0])
 
