@@ -83,6 +83,14 @@ class Shape2D:
         return m
 
     def to_shapely(self, transform: Transform2D) -> Polygon:
+        """Creates a shapely.Polygon based on this shape
+
+        Args:
+            transform (Transform2D): Transforms the resulting Polygon
+
+        Returns:
+            Polygon
+        """
         raise NotImplementedError
 
 

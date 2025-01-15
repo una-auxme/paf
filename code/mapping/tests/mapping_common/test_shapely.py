@@ -58,7 +58,7 @@ def get_test_entities() -> List[entity.Entity]:
     return entities
 
 
-def test_map_tree_nearby():
+def test_map_tree_nearest():
     entities = get_test_entities()
 
     map = Map(entities=entities)
