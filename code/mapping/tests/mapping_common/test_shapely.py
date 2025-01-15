@@ -64,10 +64,10 @@ def test_map_tree_nearby():
     map = Map(entities=entities)
     tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
     test_shape = shape.Circle(0.5).to_shapely(Transform2D.identity())
-    nearest = tree.nearest([test_shape])
+    nearest = tree.nearest(test_shape)
 
-    assert len(nearest) == 1
-    assert nearest[0].entity == entities[2]
+    assert nearest is not None
+    assert nearest.entity == entities[2]
 
 
 def test_map_tree_query():
@@ -76,7 +76,20 @@ def test_map_tree_query():
     map = Map(entities=entities)
     tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
     test_shape = shape.Rectangle(3.0, 1.0).to_shapely(Transform2D.identity())
-    query = tree.query([test_shape])
+    query = tree.query(test_shape)
 
     assert len(query) == 1
     assert query[0].entity == entities[2]
+
+
+def test_map_tree_query_nearest():
+    entities = get_test_entities()
+
+    map = Map(entities=entities)
+    tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
+    test_shape = shape.Rectangle(1.0, 1.0).to_shapely(Transform2D.identity())
+    query = tree.query_nearest(test_shape)
+
+    assert len(query) == 1
+    assert query[0][0].entity == entities[2]
+    assert query[0][1] == 1.0

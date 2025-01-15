@@ -157,11 +157,11 @@ class MapTree:
 
     def query_nearest(
         self,
-        geo: List[shapely.Geometry],
-        max_distance: Optional[float],
+        geo: shapely.Geometry,
+        max_distance: Optional[float] = None,
         exclusive: bool = False,
         all_matches: bool = True,
-    ) -> List[List[Tuple[ShapelyEntity, float]]]:
+    ) -> List[Tuple[ShapelyEntity, float]]:
         query: Tuple[npt.NDArray[np.int64], npt.NDArray[np.float64]] = (
             self._str_tree.query_nearest(
                 geo,
@@ -171,12 +171,9 @@ class MapTree:
                 all_matches=all_matches,
             )
         )
-        result = []
-        for geo_entry in zip(query[0], query[1]):
-            idxs: npt.NDArray[np.int64] = geo_entry[0]
-            distances: npt.NDArray[np.float64] = geo_entry[1]
-            entities = self._idxs_to_entity(idxs)
-            result += [(e, distances[i]) for i, e in enumerate(entities)]
+        result: List[Tuple[ShapelyEntity, float]] = []
+        for idx, distance in zip(query[0], query[1]):
+            result.append((self.filtered_entities[idx], distance))
         return result
 
 
