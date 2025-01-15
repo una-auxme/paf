@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 import rospy
 from typing import List, Optional
-from shapely.geometry import Polygon as ShapelyPolygon
 from .transform import Transform2D, Point2
 from mapping import msg
 from tf.transformations import quaternion_from_euler

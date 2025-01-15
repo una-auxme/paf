@@ -95,7 +95,7 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def radar_cluster_entities_callback(self, data: MapMsg):
         self.radar_cluster_entities = data.entities
-        
+
     def radar_marker_callback(self, data: MarkerArray):
         self.radar_marker_data = data
 
@@ -269,10 +269,10 @@ class MappingDataIntegrationNode(CompatibleNode):
         map = Map(
             timestamp=stamp,
             entities=[hero_car]
-            + self.entities_from_lidar_marker(),
-            + self.entities_from_radar_marker(),
-            + (self.lidar_cluster_entities or []),
-            + (self.radar_cluster_entities or [])
+            + self.entities_from_lidar_marker()
+            + self.entities_from_radar_marker()
+            + (self.lidar_cluster_entities or [])
+            + (self.radar_cluster_entities or []),
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)

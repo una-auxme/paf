@@ -1,6 +1,5 @@
 from mapping_common import shape
 from mapping_common.transform import Transform2D, Vector2, Point2
-import numpy as np
 
 
 def test_rectangle_conversion():

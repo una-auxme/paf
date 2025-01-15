@@ -9,8 +9,6 @@ from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from tf.transformations import quaternion_from_matrix
 from visualization_msgs.msg import Marker, MarkerArray
-from shapely.geometry import Polygon as ShapelyPolygon
-from mapping.ext_modules.mapping_common.shape import Polygon
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
@@ -390,30 +388,6 @@ def generate_bounding_boxes(points_with_labels):
         bounding_boxes.append((label, bbox))
 
     return bounding_boxes
-
-
-def create_polygons_and_entities(label, bbox):
-    """
-    Erstelle ein Shapely-Polygon, ein Shape2D-Polygon und ein Entity aus einer Bounding Box.
-
-    Args:
-        bbox (tuple): Bounding Box als (x_min, x_max, y_min, y_max).
-        entity_id (str): ID der zu erstellenden Entity.
-        frame_id (str): Referenzrahmen für die Pose. Default ist "map".
-
-    Returns:
-        tuple: (ShapelyPolygon, Shape2DPolygon, Entity)
-    """
-    # Schritt 1: Shapely-Polygon aus Bounding Box
-    x_min, x_max, y_min, y_max = bbox
-    coordinates = [
-        (x_min, y_min),
-        (x_max, y_min),
-        (x_max, y_max),
-        (x_min, y_max),
-        (x_min, y_min),  # Schließe das Polygon
-    ]
-    shapely_polygon = ShapelyPolygon(coordinates)
 
 
 def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
