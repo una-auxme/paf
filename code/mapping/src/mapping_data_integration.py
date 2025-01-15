@@ -31,6 +31,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
+    radar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
