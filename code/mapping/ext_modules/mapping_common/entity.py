@@ -412,25 +412,60 @@ class Car(Entity):
 @dataclass(init=False)
 class Lanemarking(Entity):
     style: "Lanemarking.Style"
-    label: int
+    position_index: int
+    predicted: bool
 
     class Style(Enum):
         SOLID = 0
         DASHED = 1
 
-    def __init__(self, style: "Lanemarking.Style", **kwargs):
+    def __init__(
+        self, style: "Lanemarking.Style", position_index: int, predicted: bool, **kwargs
+    ):
         super().__init__(**kwargs)
         self.style = style
+        self.position_index = position_index
+        self.predicted = predicted
 
     @staticmethod
     def _extract_kwargs(m: msg.Entity) -> Dict:
-        kwargs = super(TrafficLight, TrafficLight)._extract_kwargs(m)
+        kwargs = super(Lanemarking, Lanemarking)._extract_kwargs(m)
         kwargs["style"] = Lanemarking.Style(m.type_lanemarking.style)
+        kwargs["position_index"] = m.type_lanemarking.position_index
+        kwargs["predicted"] = m.type_lanemarking.predicted
         return kwargs
 
     def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
         m = super().to_ros_msg()
-        m.type_lanemarking = msg.TypeLanemarking(style=self.style.value)
+        m.type_lanemarking = msg.TypeLanemarking(
+            style=self.style.value,
+            position_index=self.position_index,
+            predicted=self.predicted,
+        )
+        return m
+
+    def to_marker(self) -> Marker:
+        """Creates an ROS marker based on the entity
+
+        Returns:
+            Marker: ROS marker message
+        """
+        m = self.shape.to_marker(self.transform)
+
+        if self.predicted:
+            m.color.a = 0.5
+            m.color.r = int(255 * self.confidence)
+            m.color.g = 0
+            m.color.b = 0
+        else:
+            m.color.a = 0.5
+            m.color.r = 0
+            m.color.g = 0
+            m.color.b = int(255 * self.confidence)
+
+        m.scale.z = 0.1
+        m.pose.position.z = m.scale.z / 2.0
+
         return m
 
 
