@@ -161,6 +161,7 @@ class Polygon(Shape2D):
     points: List[Point2]
 
     def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
+        assert len(points) >= 3, "Polygon requires at least 3 points."
         if offset is None:
             offset = Transform2D.identity()
         super().__init__(offset=offset)
