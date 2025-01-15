@@ -31,6 +31,8 @@ class MappingDataIntegrationNode(CompatibleNode):
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
+    lidar_cluster_entities_data: Optional[List[Entity]] = None
+    radar_cluster_entities_data: Optional[List[Entity]] = None
     radar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
@@ -54,6 +56,18 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_marker_callback,
             qos_profile=1,
         )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Lidar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.lidar_cluster_entities_callback,
+            qos_profile=1,
+        )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.radar_cluster_entities_callback,
+            qos_profile=1,
+        )
 
         self.new_subscription(
             topic=self.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
@@ -75,6 +89,12 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_marker_callback(self, data: MarkerArray):
         self.lidar_marker_data = data
+
+    def lidar_cluster_entities_callback(self, data: MapMsg):
+        self.lidar_cluster_entities_data = data
+
+    def radar_cluster_entities_callback(self, data: MapMsg):
+        self.radar_cluster_entities_data = data
 
     def radar_marker_callback(self, data: MarkerArray):
         self.radar_marker_data = data
@@ -245,12 +265,21 @@ class MappingDataIntegrationNode(CompatibleNode):
         ):
             return
 
+        lidar_cluster_entities = (
+            Map.from_ros_msg(self.lidar_cluster_entities_data).entities or []
+        )
+        radar_cluster_entities = (
+            Map.from_ros_msg(self.radar_cluster_entities_data).entities or []
+        )
+
         stamp = rospy.get_rostime()
         map = Map(
             timestamp=stamp,
             entities=[hero_car]
             + self.entities_from_lidar_marker()
-            + self.entities_from_radar_marker(),
+            + self.entities_from_radar_marker()
+            + lidar_cluster_entities
+            + radar_cluster_entities,
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
