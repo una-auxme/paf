@@ -5,11 +5,12 @@ import shapely
 import math
 
 import rospy
-from .transform import Transform2D, Point2
 from mapping import msg
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
+
+from .transform import Transform2D, Point2, Vector2
 
 CIRCLE_APPROXIMATION_LENGTH = 0.5
 
@@ -146,8 +147,8 @@ class Rectangle(Shape2D):
             Point2.new(half_length, -half_width),
             Point2.new(half_length, half_width),
         ]
-        corners = map(lambda c: (shape_transform * c).to_shapely(), corners)
-        return Polygon(corners)
+        corners = [(shape_transform * p).to_shapely() for p in corners]
+        return shapely.Polygon(corners)
 
 
 @dataclass(init=False)
@@ -199,7 +200,7 @@ class Circle(Shape2D):
 class Polygon(Shape2D):
     """Polygon defined by a list of Point2 objects."""
 
-    # The points attribute does not need a redundant point for start and end
+    # The points attribute does not have a redundant point for start and end
     points: List[Point2]
 
     def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
@@ -252,6 +253,39 @@ class Polygon(Shape2D):
             m.points.append(m.points[0])
 
         return m
+
+    def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
+        shape_transform: Transform2D = transform * self.offset
+        poly_points = [(shape_transform * p).to_shapely() for p in self.points]
+        return shapely.Polygon(poly_points)
+
+    @staticmethod
+    def from_shapely(poly: shapely.Polygon, make_centered: bool = False) -> "Polygon":
+        """Creates a Polygon from a shapely.Polygon
+
+        If make_centered is True, the zero-point of the resulting polygon points
+        will be the centroid of poly.
+        And the offset will be the translation of the centroid.
+
+        If make_centered is False, the points will match the points of poly
+        and no offset will be applied.
+
+        Returns:
+            Polygon
+        """
+        coords = poly.exterior.coords
+        assert len(coords) >= 3, "Polygon requires at least 3 points."
+        coords = coords[:-1]
+        if make_centered:
+            center = poly.centroid
+            c_vec = Vector2.new(center.x, center.y)
+            transform = Transform2D.new_translation(c_vec)
+        else:
+            c_vec = Vector2.zero()
+            transform = Transform2D.identity()
+
+        points = [Point2.new(x, y) - c_vec for (x, y) in coords]
+        return Polygon(points, offset=transform)
 
 
 _shape_supported_classes = [Rectangle, Circle, Polygon]

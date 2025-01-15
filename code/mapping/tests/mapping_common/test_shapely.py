@@ -5,6 +5,7 @@ from mapping_common.map import Map
 from mapping_common.transform import Transform2D, Vector2
 
 import test_entity
+import test_shape
 
 
 def test_circle_shapely():
@@ -21,6 +22,31 @@ def test_rectangle_shapely():
     poly = s.to_shapely(Transform2D.identity())
     bounds = poly.bounds
     assert bounds == (-2.0, -0.75, 2.0, 0.75)
+
+
+def test_polygon_to_shapely():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    bounds = poly.bounds
+    assert bounds == (1.0, 2.0, 5.0, 6.0)
+
+
+def test_polygon_from_shapely():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    s_conv = shape.Polygon.from_shapely(poly)
+
+    assert s == s_conv
+
+
+def test_polygon_to_from_shapely_centered():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    s_conv = shape.Polygon.from_shapely(poly, make_centered=True)
+    poly_conv = s_conv.to_shapely(Transform2D.identity())
+
+    assert poly.equals_exact(poly_conv, tolerance=0.0)
+    assert s_conv.offset.translation() == Vector2.new(3.0, 4.0)
 
 
 def test_car_shapely():

@@ -79,6 +79,15 @@ class Point2(_Coord2):
             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
         )
 
+    def __sub__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix - other._matrix
+            matrix[2] = 1.0
+            return Point2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for -: '{type(self)}' and '{type(other)}'"
+        )
+
 
 @dataclass(init=False, eq=False)
 class Vector2(_Coord2):
@@ -193,9 +202,27 @@ class Vector2(_Coord2):
             matrix = self._matrix + other._matrix
             matrix[2] = 1.0
             return Vector2(matrix)
+        if isinstance(other, Point2):
+            matrix = self._matrix + other._matrix
+            matrix[2] = 1.0
+            return Point2(matrix)
         raise TypeError(
             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
         )
+
+    def __sub__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix - other._matrix
+            matrix[2] = 1.0
+            return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for -: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __neg__(self) -> "Vector2":
+        matrix = -self._matrix
+        matrix[2] = 1.0
+        return Vector2(matrix)
 
 
 @dataclass(init=False, eq=False)
