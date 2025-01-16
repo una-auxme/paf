@@ -104,7 +104,7 @@
     <param name="dbscan_min_samples" value="3" />
   </node>
 
-  <node pkg="perception" type="debug_wrapper.py" name="lane_position" output="screen" args="--debug_node=lane_position.py --debug_port=53000 --debug_wait">
+  <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
     <param name="camera_x" value="0.0"/>
     <param name="camera_y" value="0.0"/>
     <param name="camera_z" value="1.7"/>
