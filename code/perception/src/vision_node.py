@@ -3,35 +3,23 @@
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import torch
-from torchvision.models.segmentation import (
-    DeepLabV3_ResNet101_Weights,
-    deeplabv3_resnet101,
-)
-from torchvision.models.detection.faster_rcnn import (
-    FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
-    FasterRCNN_ResNet50_FPN_V2_Weights,
-    fasterrcnn_resnet50_fpn_v2,
-    fasterrcnn_mobilenet_v3_large_320_fpn,
-)
-import torchvision.transforms as t
 import cv2
 from vision_node_helper import coco_to_carla, get_carla_color
 from rospy.numpy_msg import numpy_msg
-from sensor_msgs.msg import Image as ImageMsg
+from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from std_msgs.msg import (
     Header,
     Float32MultiArray,
     Int8MultiArray,
-    MultiArrayLayout,
-    MultiArrayDimension,
 )
 from cv_bridge import CvBridge
-from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
+from torchvision.utils import draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 import rospy
 from ultralytics.utils.ops import scale_masks
 from time import time_ns
+import ros_numpy
 
 
 class VisionNode(CompatibleNode):
@@ -50,28 +38,6 @@ class VisionNode(CompatibleNode):
 
         # dictionary of pretrained models
         self.model_dict = {
-            "frcnn_resnet50_fpn_v2": (
-                fasterrcnn_resnet50_fpn_v2(
-                    weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
-                ),
-                FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT,
-                "detection",
-                "pyTorch",
-            ),
-            "frcnn_mobilenet_v3_large_320_fpn": (
-                fasterrcnn_mobilenet_v3_large_320_fpn(
-                    weights=FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
-                ),
-                FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT,
-                "detection",
-                "pyTorch",
-            ),
-            "deeplabv3_resnet101": (
-                deeplabv3_resnet101(weights=DeepLabV3_ResNet101_Weights.DEFAULT),
-                DeepLabV3_ResNet101_Weights.DEFAULT,
-                "segmentation",
-                "pyTorch",
-            ),
             "yolov8n": (YOLO, "yolov8n.pt", "detection", "ultralytics"),
             "yolov8s": (YOLO, "yolov8s.pt", "detection", "ultralytics"),
             "yolov8m": (YOLO, "yolov8m.pt", "detection", "ultralytics"),
@@ -102,7 +68,8 @@ class VisionNode(CompatibleNode):
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.depth_images = []
-        self.dist_arrays = None
+        self.dist_array = None
+        self.lidar_array = None
 
         # publish / subscribe setup
         if self.center:
@@ -116,6 +83,7 @@ class VisionNode(CompatibleNode):
 
         # self.setup_rainbow_subscription()
         self.setup_dist_array_subscription()
+        self.setup_pointcloud_publisher()
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
@@ -137,12 +105,6 @@ class VisionNode(CompatibleNode):
         print(f"Model -> {self.get_param('model')},")
         print(f"Type -> {self.type}, Framework -> {self.framework}")
         torch.cuda.memory.set_per_process_memory_fraction(0.1)
-
-        # pyTorch and CUDA setup
-        if self.framework == "pyTorch":
-            for param in self.model.parameters():
-                param.requires_grad = False
-                self.model.to(self.device)
 
         # ultralytics setup
         if self.framework == "ultralytics":
@@ -173,6 +135,17 @@ class VisionNode(CompatibleNode):
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_dist_array,
             topic="/paf/hero/Center/dist_array",
+            qos_profile=1,
+        )
+
+    def setup_pointcloud_publisher(self):
+        """
+        sets up a publisher for visualization pointcloud
+        """
+
+        self.pointcloud_publisher = self.new_publisher(
+            msg_type=PointCloud2,
+            topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
 
@@ -258,11 +231,10 @@ class VisionNode(CompatibleNode):
 
         vision_result = None
 
-        if self.framework == "pyTorch":
-            vision_result = self.predict_torch(image)
-
         if self.framework == "ultralytics":
-            vision_result = self.predict_ultralytics(image, return_image=False)
+            vision_result = self.predict_ultralytics(image, return_image=True)
+        else:
+            rospy.logerr("Framework not supported")
         if vision_result is None:
             return
 
@@ -299,52 +271,14 @@ class VisionNode(CompatibleNode):
         # callback function for lidar depth image
         # since frequency is lower than image frequency
         # the latest lidar image is saved
-        dist_array = self.bridge.imgmsg_to_cv2(
+        lidar_array = self.bridge.imgmsg_to_cv2(
             img_msg=dist_array, desired_encoding="passthrough"
         )
-        self.dist_arrays = dist_array
-
-    def predict_torch(self, image):
-        """
-        This function takes in an image from a camera and predicts a
-        PyTorch model on the image. Depending on the the type of prediction
-        a visualization function creates either a segmentation mask or bounding
-        boxes for the image. The resulting image is returned.
-
-        Args:
-            image (image msg): image from a camera subscription
-
-        Returns:
-            image: visualization of prediction for rviz
-        """
-
-        # set model in evaluation mode
-        self.model.eval()
-
-        # preprocess image
-        cv_image = self.bridge.imgmsg_to_cv2(
-            img_msg=image, desired_encoding="passthrough"
-        )
-        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
-        preprocess = t.Compose(
-            [
-                t.ToTensor(),
-                t.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ]
-        )
-        input_image = preprocess(cv_image).unsqueeze(dim=0)
-
-        # get prediction
-        input_image = input_image.to(self.device)
-        prediction = self.model(input_image)
-
-        # apply visualition
-        if self.type == "detection":
-            vision_result = self.apply_bounding_boxes(cv_image, prediction[0])
-        if self.type == "segmentation":
-            vision_result = self.create_mask(cv_image, prediction["out"])
-
-        return vision_result
+        lidar_array_copy = np.copy(lidar_array)
+        # add camera height to the z-axis
+        lidar_array_copy[..., 2] += 1.7
+        self.lidar_array = lidar_array_copy
+        self.dist_array = self.calculate_depth_values(lidar_array_copy)
 
     def predict_ultralytics(self, image, return_image=True):
         """
@@ -361,7 +295,7 @@ class VisionNode(CompatibleNode):
         Returns:
             (cv image): visualization output for rvizw
         """
-
+        scaled_masks = None
         # preprocess image
         cv_image = self.bridge.imgmsg_to_cv2(
             img_msg=image, desired_encoding="passthrough"
@@ -369,23 +303,35 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-
-        output = self.model(cv_image, half=True, verbose=False, imgsz=320)
+        output = self.model(cv_image, half=True, verbose=False, imgsz=640)
 
         # handle distance of objects
 
         # set up lists for visualization of distance outputs
-        c_colors = []
         boxes = output[0].boxes
         carla_classes = [coco_to_carla[int(cls)] for cls in boxes.cls]
         c_colors = [get_carla_color(int(cls)) for cls in boxes.cls]
 
-        if hasattr(output[0], "masks") and output[0].masks is not None:
+        if (
+            hasattr(output[0], "masks")
+            and output[0].masks is not None
+            and self.dist_array is not None
+            and self.lidar_array is not None
+        ):
             masks = output[0].masks.data
             scaled_masks = scale_masks(
                 masks.unsqueeze(1), cv_image.shape[:2], True
             ).squeeze(1)
-            self.publish_segmentation_mask(scaled_masks, carla_classes)
+            timestamp1 = time_ns()
+            self.process_segmentation_mask(
+                scaled_masks.cpu().numpy(),
+                carla_classes=carla_classes,
+                distance_array=self.dist_array,
+                lidar_array=self.lidar_array,
+            )
+            rospy.loginfo(
+                f"Segmentation mask processing took {(time_ns() - timestamp1) / 1e6} ms"
+            )
 
         else:
             masks = None
@@ -397,93 +343,96 @@ class VisionNode(CompatibleNode):
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)
 
-        if return_image is False:
+        if return_image is False or scaled_masks is None:
             return None
 
-        if masks is not None:
-
-            drawn_images = draw_segmentation_masks(
-                image_np_with_detections,
-                torch.from_numpy(scaled_masks > 0),
-                alpha=0.6,
-                colors=c_colors,
-            )
+        drawn_images = draw_segmentation_masks(
+            image_np_with_detections,
+            torch.from_numpy(scaled_masks > 0),
+            alpha=0.6,
+            colors=c_colors,
+        )
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
-    def publish_segmentation_mask(self, scaled_masks, carla_classes):
-        segmentation_array = (
-            (scaled_masks > 0).cpu() * torch.tensor(carla_classes).view(-1, 1, 1)
-        ).numpy()
+    def process_segmentation_mask(
+        self, segmentation_array, carla_classes, distance_array, lidar_array
+    ):
+        # Only process the segmentation mask if the distance array is not None
+        valid_distances_mask = distance_array > 0
+        car_length = 4.9
+        car_width = 1.86436
+        # Filter out points that are not in the car and not on the road and are not zero
+        car_filter_mask = (
+            # filter out points that are not in the car
+            (lidar_array[..., 0] >= -car_length / 2)
+            & (lidar_array[..., 0] <= car_length / 2)
+            & (lidar_array[..., 1] >= -car_width / 2)
+            & (lidar_array[..., 1] <= car_width / 2)
+        )
+        # Filter out points that are on the road
+        road_filter_mask = lidar_array[..., 2] >= 0.3
+        # Filter out points that are zero
+        zero_filter_mask = (
+            ~(lidar_array[..., 0] == 0.0)
+            & ~(lidar_array[..., 1] == 0.0)
+            & ~(lidar_array[..., 2] == 1.7)
+        )
+        lidar_filter_mask = ~car_filter_mask & road_filter_mask & zero_filter_mask
+        combined_mask = valid_distances_mask & lidar_filter_mask
+        # tiled_mask holds all the valid points
+        valid_points_from_mask = (
+            segmentation_array.astype(bool) & combined_mask[None, ...]
+        )
+        # get the x, y, z values of the valid points
+        tiled_lidar_array = np.tile(lidar_array, (segmentation_array.shape[0], 1, 1, 1))
 
-        # Flaches Array und Layout erstellen
+        valid_points = tiled_lidar_array[valid_points_from_mask]
 
-        layout = MultiArrayLayout()
-        layout.dim = [
-            MultiArrayDimension(
-                label="classes", size=segmentation_array.shape[0], stride=1
-            ),
-            MultiArrayDimension(
-                label="height",
-                size=segmentation_array.shape[1],
-                stride=segmentation_array.shape[1] * segmentation_array.shape[2],
-            ),
-            MultiArrayDimension(
-                label="width",
-                size=segmentation_array.shape[2],
-                stride=segmentation_array.shape[2],
-            ),
-        ]
-        layout.data_offset = 0
+        if valid_points.size > 0:
+            combined_points = np.zeros(
+                valid_points.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
+            )
+            combined_points["x"] = valid_points[:, 0]
+            combined_points["y"] = valid_points[:, 1]
+            combined_points["z"] = valid_points[:, 2]
 
-        # ROS-Nachricht erstellen
-        msg = Int8MultiArray()
-        msg.layout = layout
-        timestamp1 = time_ns()
-        msg.data = segmentation_array.ravel().tolist()
-        timeStamp2 = time_ns()
-        rospy.loginfo(f"Time for prediction: {(timeStamp2 - timestamp1) / 1e6} ms")
-        # Nachricht veröffentlichen
-        try:
-            self.segmentation_mask_publisher.publish(msg)
-        except Exception as e:
-            rospy.logerr(f"Error publishing segmentation mask: {e}")
+            # Calculate a distance_output array for the distance_publisher
+            # It holds the class, the min_x and the min_abs_y distance
+            # get minimum x and y point distance for each segmentation_mask
+            distance_output = []
+            # Get classes in the segmentation mask
+            mask_indices = np.argwhere(valid_points_from_mask)
+            classes_array = np.array(carla_classes)[mask_indices[:, 0]]
+            x_coords = valid_points[:, 0]
+            y_coords = valid_points[:, 1]
+            distance_output = np.column_stack(
+                (classes_array, x_coords, y_coords)
+            ).flatten()
 
-    def min_x(self, dist_array):
+            if len(distance_output) > 0:
+                self.distance_publisher.publish(
+                    Float32MultiArray(data=np.array(distance_output))
+                )
+        else:
+            combined_points = np.array(
+                [], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
+            )
+
+        pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(combined_points)
+        pointcloud_msg.header.frame_id = "hero"
+        pointcloud_msg.header.stamp = rospy.Time.now()
+        self.pointcloud_publisher.publish(pointcloud_msg)
+
+    def calculate_depth_values(self, dist_array):
         """
-        Calculate min x (distance forward)
-
-        Args:
-            dist_array (np array): numpy array containing all
-            lidar point in one bounding box
-
-        Returns:
-            np.array: 1x3 numpy array of min x lidar point
+        Berechnet die Tiefenwerte basierend auf den Lidar-Daten
         """
-
-        min_x_sorted_indices = np.argsort(dist_array[:, :, 0], axis=None)
-        x, y = np.unravel_index(min_x_sorted_indices[0], dist_array.shape[:2])
-        return dist_array[x][y].copy()
-
-    def min_abs_y(self, dist_array):
-        """
-        Calculate min abs y (distance sideways)
-
-        Args:
-            dist_array (np array): numpy array containing all
-            lidar point in one bounding box
-
-        Returns:
-            np.array: 1x3 numpy array of min abs y lidar point
-        """
-
-        abs_distance_copy = np.abs(dist_array.copy())
-        min_y_sorted_indices = np.argsort(abs_distance_copy[:, :, 1], axis=None)
-        x, y = np.unravel_index(min_y_sorted_indices[0], abs_distance_copy.shape[:2])
-        return dist_array[x][y].copy()
-
-    # you can add similar functions to support other camera angles here
+        abs_distance = np.sqrt(
+            dist_array[..., 0] ** 2 + dist_array[..., 1] ** 2 + dist_array[..., 2] ** 2
+        )
+        return abs_distance
 
     async def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
@@ -513,64 +462,6 @@ class VisionNode(CompatibleNode):
             traffic_light_image.header = image_header
             traffic_light_image.header.frame_id = str(traffic_light_y_distance)
             self.traffic_light_publisher.publish(traffic_light_image)
-
-    def create_mask(self, input_image, model_output):
-        """
-        function to create segmentation mask for pyTorch models
-
-        Args:
-            input_image (np.array): original image
-            model_output (np.array): model output
-
-        Returns:
-            np.array: image with segmentation mask
-        """
-
-        output_predictions = torch.argmax(model_output, dim=0)
-        for i in range(21):
-            output_predictions[i] = output_predictions[i] == i
-
-        output_predictions = output_predictions.to(dtype=torch.bool)
-
-        transposed_image = np.transpose(input_image, (2, 0, 1))
-        tensor_image = torch.tensor(transposed_image)
-        tensor_image = tensor_image.to(dtype=torch.uint8)
-        segmented_image = draw_segmentation_masks(
-            tensor_image, output_predictions, alpha=0.6
-        )
-        cv_segmented = segmented_image.detach().cpu().numpy()
-        cv_segmented = np.transpose(cv_segmented, (1, 2, 0))
-        return cv_segmented
-
-    def apply_bounding_boxes(self, input_image, model_output):
-        """
-        function to draw bounding boxes for pyTorch models
-
-        Args:
-            input_image (np.array): original image
-            model_output (np.array): model output
-
-        Returns:
-            np.array: image with segmentation mask
-        """
-
-        transposed_image = np.transpose(input_image, (2, 0, 1))
-        image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
-        boxes = model_output["boxes"]
-        labels = [self.weights.meta["categories"][i] for i in model_output["labels"]]
-
-        box = draw_bounding_boxes(
-            image_np_with_detections,
-            boxes,
-            labels,
-            colors="blue",
-            width=3,
-            font_size=24,
-        )
-
-        np_box_img = np.transpose(box.detach().numpy(), (1, 2, 0))
-        box_img = cv2.cvtColor(np_box_img, cv2.COLOR_BGR2RGB)
-        return box_img
 
     def run(self):
         self.spin()

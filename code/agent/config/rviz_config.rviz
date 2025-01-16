@@ -3,7 +3,8 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /PointCloud23
       Splitter Ratio: 0.5
     Tree Height: 313
   - Class: rviz/Selection
@@ -239,14 +240,14 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
+        Max Value: 2.3926172256469727
+        Min Value: 0.3121485710144043
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: AxisColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -257,7 +258,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.05000000074505806
       Style: Flat Squares
       Topic: /paf/hero/visualization_pointcloud
       Unreliable: false
@@ -308,9 +309,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8247969746589661
+      Pitch: 0.5947971940040588
       Target Frame: <Fixed Frame>
-      Yaw: 2.7423195838928223
+      Yaw: 2.927321195602417
     Saved: ~
 Window Geometry:
   Camera:
