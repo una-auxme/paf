@@ -41,6 +41,16 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
+        self.lanemarkings = None
+        self.new_subscription(
+            topic=self.get_param(
+                "~lanemarkings_init_topic", "/paf/hero/mapping/init_lanemarkings"
+            ),
+            msg_type=MapMsg,
+            callback=self.lanemarkings_callback,
+            qos_profile=1,
+        )
+        self.lidar_data = None
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
@@ -70,6 +80,10 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def lanemarkings_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
+        self.lanemarkings = map.entities_without_hero()
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -188,12 +202,13 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero_car = self.create_hero_entity()
 
         # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_marker_data is None or hero_car is None:
+        if self.lidar_data is None or hero_car is None or self.lanemarkings is None:
             return
 
         stamp = rospy.get_rostime()
         map = Map(
-            timestamp=stamp, entities=[hero_car] + self.entities_from_lidar_marker()
+            timestamp=stamp,
+            entities=[hero_car] + self.entities_from_lidar() + self.lanemarkings,
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
