@@ -15,6 +15,7 @@ import struct
 from shapely.geometry import Polygon as ShapelyPoloygon
 from mapping.msg import Map as MapMsg
 from mapping_common.entity import Entity, Flags, Motion2D
+from mapping_common.shape import Polygon
 from mapping_common.transform import Transform2D, Vector2
 from typing import List
 
@@ -47,7 +48,7 @@ class RadarNode:
         clustered_data = cluster_data(dataarray, eps, min_samples)
 
         rospy.loginfo(
-            f"Radar coordinates: ['0 x']: {dataarray['x']} [1 y]: {dataarray[1]} [3 vel]: {dataarray[3]}"
+            f"Radar coordinates: ['0 x']: {dataarray[0]} [1 y]: {dataarray[1]} [3 vel]: {dataarray[3]}"
         )
 
         # transformed_data = transform_data_to_2d(dataarray)
@@ -72,9 +73,11 @@ class RadarNode:
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        # polygon_array = create_shapely_polygons(points_with_labels)
-        # velocities = calculate_cluster_velocity(points_with_labels)
-        # entities = create_entities(polygon_array)
+        polygon_array = create_shapely_polygons(points_with_labels)
+        velocities = calculate_cluster_velocity(points_with_labels)
+        entities = create_entities(polygon_array, velocities)
+        rospy.loginfo(f"Entities: ['entities[0].motion']: {entities[0].motion}")
+
         # self.entity_radar_publisher(entities)
 
         cluster_info = generate_cluster_info(
@@ -105,7 +108,7 @@ class RadarNode:
         # self.entity_radar_publisher = rospy.Publisher(
         #     rospy.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
         #     msg_type=MapMsg,
-        #     qos_profile=1,
+        #     queue_size=10,
         # )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
@@ -540,15 +543,15 @@ def calculate_cluster_velocity(points_with_labels):
     return cluster_motions
 
 
-def create_entities(polygons):
+def create_entities(polygons, velocities):
     if polygons is None or len(polygons) == 0:
         # Handle cases where data is invalid or empty
         rospy.logwarn("No valid polygon data received.")
         return []
 
     radar_entities = []
-    for polygon in polygons:
-        if not isinstance(polygon, ShapelyPoloygon):
+    for polygon, velocity in zip(polygons, velocities):
+        if not polygon.is_valid:
             rospy.logwarn("Skipping non-Polygon entity.")
             continue
 
@@ -560,18 +563,18 @@ def create_entities(polygons):
         v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
         transform = Transform2D.new_translation(v)
 
-        # # motion = Motion2D()
-        # flags = Flags(is_collider=True)
-        # e = Entity(
-        #     confidence=1,
-        #     priority=0.25,
-        #     shape=Polygon(polygon.coords),
-        #     transform=transform,
-        #     timestamp=rospy.Time.now(),
-        #     flags=flags,
-        #     # motion=
-        # )
-        # radar_entities.append(e)
+        # motion = Motion2D()
+        flags = Flags(is_collider=True)
+        e = Entity(
+            confidence=1,
+            priority=0.25,
+            shape=Polygon(polygon.coords),
+            transform=transform,
+            timestamp=rospy.Time.now(),
+            flags=flags,
+            motion=velocity,
+        )
+        radar_entities.append(e)
     return radar_entities
 
 
