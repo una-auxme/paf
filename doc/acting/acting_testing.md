@@ -2,26 +2,27 @@
 
 **Summary:** This page shows ways to test and tune acting components and to verify that they work as intended.
 
-- [How to test/tune acting components independedly](#how-to-testtune-acting-components-independedly)
-  - [Acting\_Debug\_Node](#acting_debug_node)
-    - [Setup for Testing with the Debug-Node](#setup-for-testing-with-the-debug-node)
-    - [Operating the Debug-Node](#operating-the-debug-node)
+- [Acting\_Debug\_Node](#acting_debug_node)
+  - [Setup for Testing with the Debug-Node](#setup-for-testing-with-the-debug-node)
+  - [Operating the Debug-Node](#operating-the-debug-node)
 
 ## Acting_Debug_Node
 
-The [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) allows you to tune/test/verify all acting components independently of Planning-Inputs and also lets you easily output the data needed to plot/verify the tuning/testing you have done.
+The [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) allows you to tune/test/verify all acting and control components independently of Planning-Inputs and also lets you easily output the data needed to plot/verify the tuning/testing you have done.
+
+There is a dedicated [acting_debug.launch](../../code/acting/launch/acting_debug.launch) file which starts the acting component **as well as the necesarry perception components** automatically. It is recommended to first test the [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py)
+with an empty road scenario. The following guide provides instructions on how to launch this setup.
 
 ### Setup for Testing with the Debug-Node
 
 To use the [Acting_Debug_Node](../../code/acting/src/acting/Acting_Debug_Node.py) you first have to edit a few files in your current branch:
+>[!WARNING]! Make sure to revert these changes when pushing your branch!
 
-- In the [acting.launch](../../code/acting/launch/acting.launch) file, you need to un-comment the ```Acting_Debug_Node```-node.
-- Disable Planning from sending *trajectory*, *target_velocity*, *unstuck* or *emergency* Messages.
-The easiest way to achieve this is to go to the [planning.launch](../../code/planning/launch/planning.launch) and just comment-out every active node.
-- As the Perception-nodes use alot of processing power and ressources and you most likely do not need them, you can disable them, again commenting-out unwanted nodes in the [perception.launch](../../code/perception/launch/perception.launch) file.
-**IMPORTANT:** As you need the **position_heading_publisher_node** and most likely the **kalman_filter** for the GNSS/IMU data, do keep those 2 active!
-- There is a developer-enviroment ready to use, if you want to test your components on an empty road.
-To switch to this, go to [docker_compose.yml](../../build/docker-compose.yml), where you will find which enviroment is currently chosen in lines 64-66. Uncomment the ```dev_launch``` and comment-out the ```leaderboard_evaluator``` if you want to use this developer-enviroment.
+- In [dev.launch](../../code/agent/launch/dev.launch) the [agent.launch](../../code/agent/launch/agent.launch) file is included. Change this to include [acting_debug.launch](../../code/acting/launch/acting_debug.launch) from the **acting** package.
+As mentioned above this includes everything we need.
+- In [docker-compose.devroute.yaml](../../build/docker-compose.devroute.yaml) change the command to 'bash -c "sleep 10 && roslaunch agent/launch/dev.launch"'
+- You can now 'docker compose up' the [docker-compose.devroute.yaml](../../build/docker-compose.devroute.yaml).
+  This should result in an empty road scenario with rviz and rqt.
 
 To now decide whether to work on noisy sensor data, with or without the kalman-filter, here is how to change this:
 
@@ -29,6 +30,8 @@ To now decide whether to work on noisy sensor data, with or without the kalman-f
 - The developer_enviroment also allows you to adjust the sensors used, in particular their noise deviations.
 If you want to test a component on ideal sensor data (position/heading/both), go to the [dev_objects.json](../../code/agent/config/dev_objects.json) and find the ```GNSS```(position) and the ```IMU```(heading) sensors (lines 142-173) and set their noise-attributes to 0.
 It is then also recommended to set the ```pos_filter``` and ```heading_filter``` of the **position_heading_publisher_node** to None (as filtering ideal sensor data will make them inaccurate again).
+
+In [acting_debug.launch](../../code/acting/launch/acting_debug.launch) you can also set up different plot configurations for the rqt-window.
 
 ### Operating the Debug-Node
 

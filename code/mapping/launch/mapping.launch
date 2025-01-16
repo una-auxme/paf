@@ -1,0 +1,14 @@
+<launch>
+
+  <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration" output="screen">
+    <param name="map_publish_rate" value="20" />
+
+    <!-- Lidar entity configuration -->
+    <param name="lidar_z_min" value="-1.5" />
+    <param name="lidar_z_max" value="1.0" />
+    <param name="lidar_shape_radius" value="0.15" />
+    <param name="lidar_priority" value="0.25" />
+    <param name="lidar_discard_probability" value="0.9" />
+  </node>
+
+</launch>
