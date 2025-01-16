@@ -303,7 +303,7 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-        output = self.model(cv_image, half=True, verbose=False, imgsz=640)
+        output = self.model(cv_image, half=True, verbose=False, imgsz=320)
 
         # handle distance of objects
 
@@ -348,7 +348,7 @@ class VisionNode(CompatibleNode):
 
         drawn_images = draw_segmentation_masks(
             image_np_with_detections,
-            torch.from_numpy(scaled_masks > 0),
+            torch.tensor(scaled_masks > 0),
             alpha=0.6,
             colors=c_colors,
         )
@@ -386,9 +386,8 @@ class VisionNode(CompatibleNode):
             segmentation_array.astype(bool) & combined_mask[None, ...]
         )
         # get the x, y, z values of the valid points
-        tiled_lidar_array = np.tile(lidar_array, (segmentation_array.shape[0], 1, 1, 1))
-
-        valid_points = tiled_lidar_array[valid_points_from_mask]
+        valid_indices = np.where(valid_points_from_mask)
+        valid_points = lidar_array[valid_indices[1], valid_indices[2]]
 
         if valid_points.size > 0:
             combined_points = np.zeros(
