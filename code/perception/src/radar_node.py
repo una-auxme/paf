@@ -9,8 +9,8 @@ from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
-from geometry_msgs.msg import Point
-
+from tf.transformations import quaternion_from_matrix
+from std_msgs.msg import Float32MultiArray
 import struct
 
 
@@ -30,10 +30,16 @@ class RadarNode:
 
         dataarray = pointcloud2_to_array(data)
 
-        # radar position z=0.7
-        dataarray = filter_data(dataarray, min_z=-0.6)
+        self.get_lead_vehicle_info(dataarray)
 
-        clustered_data = cluster_data(dataarray)
+        # radar position z=0.7
+        min_z = float(rospy.get_param("~clustering_radar_z_min", -0.40))
+        max_z = float(rospy.get_param("~clustering_radar_z_max", 2.0))
+        dataarray = filter_data(dataarray, min_z=min_z, max_z=max_z)
+
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 3)
+        clustered_data = cluster_data(dataarray, eps, min_samples)
 
         # transformed_data = transform_data_to_2d(dataarray)
 
@@ -54,8 +60,6 @@ class RadarNode:
                 # min_marker, max_marker = create_min_max_markers(label, bbox)
                 # marker_array.markers.append(min_marker)
                 # marker_array.markers.append(max_marker)
-
-        marker_array = clear_old_markers(marker_array, max_id=len(bounding_boxes) - 1)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
@@ -89,12 +93,87 @@ class RadarNode:
             String,
             queue_size=10,
         )
+        self.range_velocity_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~range_velocity_topic",
+                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
+            ),
+            Float32MultiArray,
+            queue_size=10,
+        )
+        self.lead_vehicle_marker_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
+            ),
+            Marker,
+            queue_size=10,
+        )
         rospy.Subscriber(
             rospy.get_param("~source_topic", "/carla/hero/RADAR"),
             PointCloud2,
             self.callback,
         )
         rospy.spin()
+
+    def get_lead_vehicle_info(self, radar_data):
+        """
+        Processes radar data to identify and publish information about the lead vehicle.
+
+        This function filters radar points to identify the closest point within a
+        specified region, representing the lead vehicle. It publishes the distance
+        and velocity of the lead vehicle as a `Float32MultiArray` message and also
+        visualizes the lead vehicle using a marker in RViz.
+
+        Args:
+            radar_data (np.ndarray): Radar data represented as a 2D NumPy array where
+                                    each row corresponds to a radar point with the
+                                    format [x, y, z, velocity].
+
+        Returns:
+            None: The function publishes data to relevant ROS topics and does not return
+            any value.
+        """
+
+        # radar is positioned at z = 0.7
+        radar_data = filter_data(
+            radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
+        )
+
+        lead_vehicle_info = Float32MultiArray()
+
+        # Handle the case where no valid radar points are found
+        if len(radar_data) == 0:
+            lead_vehicle_info.data = []
+            self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+            return
+
+        # Identify the closest point (lead vehicle candidate) based on the x-coordinate
+        closest_point = radar_data[np.argmin(radar_data[:, 0])]
+
+        lead_vehicle_info.data = [closest_point[0], closest_point[3]]
+
+        # Create a marker for visualizing the lead vehicle in RViz
+        marker = Marker()
+        marker.header.frame_id = "hero/RADAR"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "lead_vehicle_marker"
+        marker.id = 500
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.position.x = closest_point[0]
+        marker.pose.position.y = closest_point[1]
+        marker.pose.position.z = closest_point[2]
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+
+        self.lead_vehicle_marker_publisher.publish(marker)
+        self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+        return
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -163,7 +242,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.8, min_samples=3):
+def cluster_data(data, eps, min_samples):
     """
     Clusters the radar data using the DBSCAN algorithm
 
@@ -322,82 +401,83 @@ def generate_bounding_boxes(points_with_labels):
     return bounding_boxes
 
 
-def create_bounding_box_marker(label, bbox):
+def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     """
-    Creates an RViz Marker for visualizing a 3D bounding box.
-
-    This function generates a Marker object for RViz to visualize a 3D bounding box
-    based on the provided label and bounding box dimensions. The marker is
-    represented as a series of lines connecting the corners of the box.
+    Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
 
     Args:
-        label (int): The unique identifier for the cluster or object to which the
-        bounding box belongs. This label is used as the Marker ID.
-        bbox (tuple): A tuple containing the min and max coordinates of the bounding box
-                      in the format (x_min, x_max, y_min, y_max, z_min, z_max).
+        label (int): Unique identifier for the cluster or object.
+                     Used as the Marker ID.
+        bbox (tuple): Bounding box dimensions.
+                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): The type of bounding box ("aabb" or "obb").
 
     Returns:
-        Marker: A Marker object that can be published to RViz to display the
-        3D bounding box. The marker is of type LINE_LIST,
-        representing the edges of the bounding box.
+        Marker: A CUBE Marker object that can be published to RViz.
     """
-    # for 2d (top-down) boxes
-    # x_min, x_max, y_min, y_max = bbox
-
-    # for 3d boxes
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
+    # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero/RADAR"
-    marker.id = int(label)
-    # marker.type = Marker.LINE_STRIP  # 2d boxes
-    marker.type = Marker.LINE_LIST  # 3d boxes
-    marker.action = Marker.ADD
-    marker.scale.x = 0.1
-    marker.color.r = 1.0
-    marker.color.g = 1.0
-    marker.color.b = 0.0
-    marker.color.a = 1.0
+    marker.header.frame_id = "hero/RADAR"  # Reference frame for the marker
+    marker.ns = "marker_radar"  # Namespace to group related markers
+    marker.id = int(label)  # Use the label as the unique marker ID
+    marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
+    marker.type = Marker.CUBE  # Use a cube for the bounding box
+    marker.action = Marker.ADD  # Action to add or modify the marker
 
-    # for 2d (top-down) boxes
-    # points = [
-    #     Point(x_min, y_min, 0),
-    #     Point(x_max, y_min, 0),
-    #     Point(x_max, y_max, 0),
-    #     Point(x_min, y_max, 0),
-    #     Point(x_min, y_min, 0),
-    # ]
-    # marker.points = points
+    # Set marker color and opacity
+    marker.color.r = 1.0  # Red
+    marker.color.g = 0.5  # Green
+    marker.color.b = 0.0  # Blue
+    marker.color.a = 0.8  # Opacity
 
-    # for 3d boxes
-    points = [
-        Point(x_min, y_min, z_min),
-        Point(x_max, y_min, z_min),
-        Point(x_max, y_max, z_min),
-        Point(x_min, y_max, z_min),
-        Point(x_min, y_min, z_max),
-        Point(x_max, y_min, z_max),
-        Point(x_max, y_max, z_max),
-        Point(x_min, y_max, z_max),
-    ]
+    if bbox_type == "aabb":
+        x_min, x_max, y_min, y_max, z_min, z_max = bbox
 
-    lines = [
-        (0, 1),
-        (1, 2),
-        (2, 3),
-        (3, 0),  # Bottom
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 4),  # Top
-        (0, 4),
-        (1, 5),
-        (2, 6),
-        (3, 7),  # Vertical Edges
-    ]
-    for start, end in lines:
-        marker.points.append(points[start])
-        marker.points.append(points[end])
+        # Calculate center and dimensions for AABB
+        center_x = (x_min + x_max) / 2.0
+        center_y = (y_min + y_max) / 2.0
+        center_z = (z_min + z_max) / 2.0
+
+        size_x = x_max - x_min
+        size_y = y_max - y_min
+        size_z = z_max - z_min
+
+        marker.pose.position.x = center_x
+        marker.pose.position.y = center_y
+        marker.pose.position.z = center_z
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = size_x
+        marker.scale.y = size_y
+        marker.scale.z = size_z
+
+    elif bbox_type == "obb":
+        center, dimensions, eigenvectors = bbox
+        width, length, height = dimensions
+
+        # Assign OBB parameters
+        marker.pose.position.x = center[0]
+        marker.pose.position.y = center[1]
+        marker.pose.position.z = center[2]
+
+        # Convert eigenvectors to quaternion
+        quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
+        marker.pose.orientation.x = quaternion[0]
+        marker.pose.orientation.y = quaternion[1]
+        marker.pose.orientation.z = quaternion[2]
+        marker.pose.orientation.w = quaternion[3]
+
+        marker.scale.x = width
+        marker.scale.y = length
+        marker.scale.z = height
+
+    else:
+        raise ValueError(f"Unsupported bbox_type: {bbox_type}")
 
     return marker
 
@@ -461,25 +541,6 @@ def create_min_max_markers(
     max_marker.pose.position.z = z_max
 
     return min_marker, max_marker
-
-
-def clear_old_markers(marker_array, max_id):
-    """
-    Removes old markers from the given MarkerArray by setting the action
-    to DELETE for markers with an ID greater than or equal to max_id.
-
-    Args:
-        marker_array (MarkerArray): The current MarkerArray containing all markers.
-        max_id (int): The highest ID of the new markers. Markers with an ID
-                      greater than or equal to this value will be marked for deletion.
-
-    Returns:
-        MarkerArray: The updated MarkerArray with old markers removed.
-    """
-    for marker in marker_array.markers:
-        if marker.id > max_id:
-            marker.action = Marker.DELETE
-    return marker_array
 
 
 # generates string with label-id and cluster size, can be used for extra debugging
