@@ -16,6 +16,10 @@
                 {
                     "localRoot": "${workspaceFolder}/code",
                     "remoteRoot": "${env:PAF_CATKIN_CODE_ROOT}"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/code",
+                    "remoteRoot": "${env:PAF_WORKSPACE_CODE_ROOT}"
                 }
             ]
         }
