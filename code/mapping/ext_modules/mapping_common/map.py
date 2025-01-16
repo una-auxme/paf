@@ -4,7 +4,7 @@ from typing import List, Optional
 from genpy.rostime import Time
 from std_msgs.msg import Header
 
-from mapping_common.entity import Entity
+from mapping_common.entity import Entity, Lanemarking
 
 from mapping import msg
 
@@ -76,3 +76,10 @@ class Map:
         entities = list(map(lambda e: e.to_ros_msg(), self.entities))
         header = Header(stamp=self.timestamp)
         return msg.Map(header=header, entities=entities)
+
+    def current_lane_marking_left(self):
+        for entity in self.entities:
+            current_entity = entity.to_ros_msg()
+            if current_entity.flags.is_lanemark is True:
+                return current_entity
+        return None
