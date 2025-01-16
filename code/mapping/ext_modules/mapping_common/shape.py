@@ -1,13 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
-
 import rospy
-
-from .transform import Transform2D
+from typing import List, Optional
+from .transform import Transform2D, Point2
 from mapping import msg
-
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 
 
 @dataclass
@@ -155,7 +153,66 @@ class Circle(Shape2D):
         return m
 
 
-_shape_supported_classes = [Rectangle, Circle]
+@dataclass(init=False)
+class Polygon(Shape2D):
+    """Polygon defined by a list of Point2 objects."""
+
+    # The points attribute does not need a redundant point for start and end
+    points: List[Point2]
+
+    def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
+        assert len(points) >= 3, "Polygon requires at least 3 points."
+        if offset is None:
+            offset = Transform2D.identity()
+        super().__init__(offset=offset)
+        self.points = points
+
+    @staticmethod
+    def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
+        assert len(m.dimensions) >= 6 and (
+            len(m.dimensions) % 2 == 0
+        ), "Polygon requires at least 3 points."
+        # Convert the flat list into Point2 objects
+        points = [
+            Point2.new(m.dimensions[i], m.dimensions[i + 1])
+            for i in range(0, len(m.dimensions), 2)
+        ]
+        return Polygon(points=points, offset=Transform2D.from_ros_msg(m.offset))
+
+    def to_ros_msg(self) -> msg.Shape2D:
+        m = super().to_ros_msg()
+        dimensions = []
+        for p in self.points:
+            dimensions.append(p.x())
+            dimensions.append(p.y())
+        m.dimensions = dimensions
+        return m
+
+    def to_marker(self, transform: Transform2D) -> Marker:
+        """Convert to a visualization Marker for RViz."""
+        m = super().to_marker(transform)
+        m.type = Marker.LINE_STRIP
+        m.scale.x = 0.05  # Line thickness
+
+        # Initialize m.points as an empty list
+        m.points = []
+
+        # Transform and add points
+        for pt in self.points:
+            p = Point()
+            p.x = pt.x()
+            p.y = pt.y()
+            p.z = 0.0
+            m.points.append(p)
+
+        # Close the polygon loop
+        if len(m.points) > 0:
+            m.points.append(m.points[0])
+
+        return m
+
+
+_shape_supported_classes = [Rectangle, Circle, Polygon]
 _shape_supported_classes_dict = {}
 for t in _shape_supported_classes:
     t_name = t.__name__.lower()
