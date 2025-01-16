@@ -33,7 +33,7 @@ class RadarNode(CompatibleNode):
     def __init__(self):
 
         self.dbscan_eps = float(self.get_param("dbscan_eps", "0.4"))
-        self.dbscan_samples = int(self.get_param("~bscan_samples", "3"))
+        self.dbscan_samples = int(self.get_param("dbscan_samples", "3"))
 
         # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
@@ -46,9 +46,10 @@ class RadarNode(CompatibleNode):
 
         # Sensor-Konfiguration: [X, Y, Z, Roll, Pitch, Jaw]
         self.sensor_config = {
-            "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
-            "RADAR2": [2.0, -1.0, 0.7, 0.0, 0.0, 0.0],
-            "RADAR3": [2.0, 1.0, 0.7, 0.0, 0.0, 0.0],
+            "RADAR0": [2.0, 0.5, 0.7, 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, -0.5, 0.7, 0.0, 0.0, 0.0],
+            "RADAR2": [2.0, -1.5, 0.7, 0.0, 0.0, 0.0],
+            "RADAR3": [2.0, 1.5, 0.7, 0.0, 0.0, 0.0],
         }
         self.transformation_matrix = {}
 
@@ -117,7 +118,7 @@ class RadarNode(CompatibleNode):
             self.previous_time = self.now
             return
 
-        if self.now - self.previous_time > 0.15:
+        if self.now - self.previous_time > 0.15:  # 0.15:
             self.process_data()
             self.previous_time = 0
             return
@@ -192,6 +193,7 @@ class RadarNode(CompatibleNode):
         for label, bbox in bounding_boxes:
             rospy.loginfo(f"Label: {label}, Bounding Box: {bbox}")
             marker = create_bounding_box_marker(label, bbox)
+            # marker = create_moving_bbox_marker(label, bbox)
             marker_array.markers.append(marker)
 
         rospy.loginfo(f"Publishing {len(marker_array.markers)} markers.")
@@ -206,7 +208,7 @@ class RadarNode(CompatibleNode):
         # Setze die gespeicherten Nachrichten zurück
         self.sensor_data = {key: None for key in self.sensor_data}
 
-    def process_data2(self):
+    """def process_data2(self):
         # Verarbeite die Daten aller Sensoren
         combined_points = []
 
@@ -241,7 +243,7 @@ class RadarNode(CompatibleNode):
             [self.transform_point(point, transformation_matrix) for point in dataarray]
         )
 
-        return transformed_points
+        return transformed_points"""
 
     def extract_points(self, msg, sensor_name):
         # Sensorkonfiguration um Transformationsmatrix zu erstellen
@@ -259,18 +261,18 @@ class RadarNode(CompatibleNode):
         data_array = pointcloud2_to_array(msg)
 
         # Filtere Daten basierend auf Höhenbeschränkungen
-        filtered_data = filter_data(data_array, min_z=-0, max_z=2)
+        # filtered_data = filter_data(data_array, min_z=-0, max_z=2)
 
-        if len(filtered_data) == 0:
+        """if len(filtered_data) == 0:
             rospy.logwarn(f"No valid points for sensor: {sensor_name}")
-            return np.array([])
+            return np.array([])"""
 
         # Wende die Transformation an
         # transformation_matrix = self.get_transformation_matrix(*translation)
         transformed_points = np.array(
             [
                 self.transform_point(point, self.transformation_matrix[sensor_name])
-                for point in filtered_data
+                for point in data_array  # filtered_data
             ]
         )
 
@@ -302,7 +304,7 @@ class RadarNode(CompatibleNode):
         )
         self.cluster_info_radar_publisher.publish(cluster_info)
 
-    def callback2(self, data):
+    """def callback2(self, data):
         # Sensorpositionen und -orientierungen (Beispielwerte)
         sensor_config = {
             "RADAR": [2.0, 0.0, 0.7, 0.0, 0.0, 0.0],
@@ -319,7 +321,7 @@ class RadarNode(CompatibleNode):
 
         ######### Transform raw data ##########
         #######################################
-        """# Beispielwerte
+        ""# Beispielwerte
         point_step = 32  # Punktgröße in Bytes
         translation = sensor_config[
             sensor_name
@@ -329,7 +331,7 @@ class RadarNode(CompatibleNode):
         # Rohdaten des PointCloud2-Objekts (z. B. data.data)
         transformed_data = self.transform_point_cloud(
             bytearray(data.data), point_step, translation, rotation_angle
-        )"""
+        )""" """
 
         # Ersetzen der Daten
         # data.data = transformed_data
@@ -403,7 +405,7 @@ class RadarNode(CompatibleNode):
         cluster_info = generate_cluster_info(
             clustered_data, dataarray, marker_array, bounding_boxes
         )
-        self.cluster_info_radar_publisher.publish(cluster_info)
+        self.cluster_info_radar_publisher.publish(cluster_info)"""
 
     def get_transformation_matrix(self, x, y, z, roll, pitch, yaw):
         # Convert angles to radians
@@ -489,7 +491,10 @@ class RadarNode(CompatibleNode):
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR2"), PointCloud2, self.callback,)
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR3"), PointCloud2, self.callback,)
         rospy.Subscriber(
-            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR"
+            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR0"
+        )
+        rospy.Subscriber(
+            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR1"
         )
         rospy.Subscriber(
             "/carla/hero/RADAR2", PointCloud2, self.callback, callback_args="RADAR2"
@@ -729,6 +734,11 @@ def generate_bounding_boxes(points_with_labels):
         bbox = calculate_aabb(cluster_points)
         bounding_boxes.append((label, bbox))
     return bounding_boxes
+
+
+def create_moving_bbox_marker(label, bbox):
+
+    return create_bounding_box_marker(label, bbox)
 
 
 def create_bounding_box_marker(label, bbox, bbox_type="aabb"):

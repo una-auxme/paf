@@ -94,7 +94,8 @@
 
   <node pkg="perception" type="debug_wrapper.py" name="radar_node" output="screen" args="--debug_node=radar_node.py --debug_port=53000">
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
-    <param name="point_cloud_topic" value="/carla/hero/RADAR"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR0"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR1"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR2"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR3"/>
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
