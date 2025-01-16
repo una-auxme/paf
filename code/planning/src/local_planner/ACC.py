@@ -11,6 +11,7 @@ from simple_pid import PID
 from utils import calculate_rule_of_thumb, interpolate_speed
 from typing import Optional
 from typing import List
+import ACC_PI_controller
 
 
 class ACC(CompatibleNode):
@@ -104,7 +105,7 @@ class ACC(CompatibleNode):
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: List[float] = []
         # Current Trajectory
-        self.__trajectory: Path = None
+        self.__trajectory: Optional[Path] = None
         # Current index from waypoint
         self.__current_wp_index: int = 0
         # Current speed
@@ -234,8 +235,11 @@ class ACC(CompatibleNode):
         """
 
         # PID controller
+        Kp = 1.0
+        Ki = 0.0
+        T_gap = 2 # unit: secornds
 
-        pid = PID(0.60, 0.00076, 0.63)  # Parameters have to be set
+        pid = ACC_PI_controller(Kp, Ki, T_gap)
 
         pid.output_limits = (0, self.speed_limit)
 
