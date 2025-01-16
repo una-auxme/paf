@@ -31,6 +31,7 @@ import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 import rospy
 from ultralytics.utils.ops import scale_masks
+from time import time_ns
 
 
 class VisionNode(CompatibleNode):
@@ -255,12 +256,13 @@ class VisionNode(CompatibleNode):
         if self.device == "cuda":
             torch.cuda.empty_cache()
 
+        vision_result = None
+
         if self.framework == "pyTorch":
             vision_result = self.predict_torch(image)
 
         if self.framework == "ultralytics":
             vision_result = self.predict_ultralytics(image, return_image=False)
-
         if vision_result is None:
             return
 
@@ -367,6 +369,7 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
+
         output = self.model(cv_image, half=True, verbose=False, imgsz=320)
 
         # handle distance of objects
@@ -376,16 +379,17 @@ class VisionNode(CompatibleNode):
         boxes = output[0].boxes
         carla_classes = [coco_to_carla[int(cls)] for cls in boxes.cls]
         c_colors = [get_carla_color(int(cls)) for cls in boxes.cls]
+
         if hasattr(output[0], "masks") and output[0].masks is not None:
             masks = output[0].masks.data
-            scaled_masks = np.squeeze(
-                scale_masks(masks.unsqueeze(1), cv_image.shape[:2], True).cpu().numpy(),
-                1,
-            )
-
+            scaled_masks = scale_masks(
+                masks.unsqueeze(1), cv_image.shape[:2], True
+            ).squeeze(1)
             self.publish_segmentation_mask(scaled_masks, carla_classes)
+
         else:
             masks = None
+
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
 
@@ -406,20 +410,15 @@ class VisionNode(CompatibleNode):
             )
 
         np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
-
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
     def publish_segmentation_mask(self, scaled_masks, carla_classes):
         segmentation_array = (
-            torch.from_numpy(scaled_masks > 0)
-            * torch.tensor(carla_classes).view(-1, 1, 1)
+            (scaled_masks > 0).cpu() * torch.tensor(carla_classes).view(-1, 1, 1)
         ).numpy()
 
-        # Konvertiere zu int8
-        segmentation_array = segmentation_array.astype("int8")
-
         # Flaches Array und Layout erstellen
-        flat_data = segmentation_array.flatten()
+
         layout = MultiArrayLayout()
         layout.dim = [
             MultiArrayDimension(
@@ -441,8 +440,10 @@ class VisionNode(CompatibleNode):
         # ROS-Nachricht erstellen
         msg = Int8MultiArray()
         msg.layout = layout
-        msg.data = flat_data.tolist()  # Umwandeln in Liste für ROS
-
+        timestamp1 = time_ns()
+        msg.data = segmentation_array.ravel().tolist()
+        timeStamp2 = time_ns()
+        rospy.loginfo(f"Time for prediction: {(timeStamp2 - timestamp1) / 1e6} ms")
         # Nachricht veröffentlichen
         try:
             self.segmentation_mask_publisher.publish(msg)
