@@ -9,6 +9,8 @@ from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray
 from simple_pid import PID
 from utils import calculate_rule_of_thumb, interpolate_speed
+from typing import Optional
+from typing import List
 
 
 class ACC(CompatibleNode):
@@ -100,19 +102,19 @@ class ACC(CompatibleNode):
         self.__unstuck_distance: float = -1
 
         # List of all speed limits, sorted by waypoint index
-        self.__speed_limits_OD: [float] = []
+        self.__speed_limits_OD: List[float] = []
         # Current Trajectory
         self.__trajectory: Path = None
         # Current index from waypoint
         self.__current_wp_index: int = 0
         # Current speed
-        self.__current_velocity: float = None
+        self.__current_velocity: Optional[float] = None
         # Distance and speed from possible collsion object
-        self.obstacle_speed: float = None
+        self.obstacle_speed: Optional[float] = None
         # Obstacle distance
-        self.obstacle_distance: float = None
+        self.obstacle_distance: Optional[float] = None
         # Current speed limit
-        self.speed_limit: float = None  # m/s
+        self.speed_limit: Optional[float] = None  # m/s
         # Radar data
         self.leading_vehicle_distance = None
         self.leading_vehicle_relative_speed = None
