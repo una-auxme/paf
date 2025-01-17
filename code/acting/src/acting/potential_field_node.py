@@ -98,7 +98,7 @@ class Potential_field_node(CompatibleNode):
             # try to filter out the car entities
             if (
                 abs(entity.transform.translation().x()) < 2
-                and abs(entity.transform.translation().y()) < 4
+                and abs(entity.transform.translation().y()) < 2
             ):
                 continue
             x = (
@@ -189,6 +189,7 @@ class Potential_field_node(CompatibleNode):
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
+        self.loginfo("potential field trajectory published")
 
         self.last_pub_time = rospy.get_time()
 
@@ -221,7 +222,7 @@ class Potential_field_node(CompatibleNode):
         image = Image.fromarray(matrix)
         image = image.convert("RGB")
         image.save(path)
-        # self.loginfo(f"Image saved at {path}")
+        self.loginfo(f"Image saved at {path}")
 
     def run(self):
         """
@@ -234,7 +235,9 @@ class Potential_field_node(CompatibleNode):
 
             self.__calculate_field()
             # PLOTTING
-            self.save_image(self.entity_matrix_for_plotting, "entity_matrix.png")
+            self.save_image(
+                self.entity_matrix_for_plotting, "/workspace/code/entity_matrix.png"
+            )
 
         self.new_timer(0.5, loop)
         self.spin()

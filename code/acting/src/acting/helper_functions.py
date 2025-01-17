@@ -267,12 +267,12 @@ def generate_path_from_trajectory(trajectory) -> Path:
     path_msg = Path()
     path_msg.header = rospy.Header()
     path_msg.header.stamp = rospy.Time.now()
-    path_msg.header.frame_id = "relative"
+    path_msg.header.frame_id = "hero"
     path_msg.poses = []
     for wp in trajectory:
         pos = PoseStamped()
         pos.header.stamp = rospy.Time.now()
-        pos.header.frame_id = "relative"
+        pos.header.frame_id = "hero"
         pos.pose.position.x = wp[0]
         pos.pose.position.y = wp[1]
         pos.pose.position.z = 0
