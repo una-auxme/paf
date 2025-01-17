@@ -5,6 +5,7 @@
 - [Table of Contents](#table-of-contents)
 - [Introduction](#introduction)
 - [Key Traffic Principles and Complex Interactions](#key-traffic-principles-and-complex-interactions)
+- [Using the Traffic Manager in CARLA](#using-the-traffic-manager-in-carla)
 - [CARLA Maps and Their Traffic Scenarios](#carla-maps-and-their-traffic-scenarios)
   - [Overview of CARLA Maps](#overview-of-carla-maps)
   - [Rural and Highway Scenarios](#rural-and-highway-scenarios)
@@ -48,6 +49,44 @@ CARLA (Car Learning to Act) is an open-source simulator for testing and developi
 
 - **Parking Maneuvers**: Vehicles are tested on their ability to park in
   tight spaces, simulating real-life parking challenges.
+
+## Using the Traffic Manager in CARLA
+
+The Traffic Manager (TM) in CARLA controls vehicle behavior during simulations. Below are key considerations and customization options:
+
+### General Behavior Patterns
+- **Non-goal-oriented Navigation**: Vehicles follow dynamically generated trajectories, choosing paths randomly at junctions. Their navigation is endless.
+- **Speed Adjustment**: Vehicles maintain a target speed of 70% of the speed limit unless explicitly modified.
+- **Junction Priority**: Junction handling does not strictly follow traffic regulations. Instead, the TM applies its own priority system, leading to potential issues, such as vehicles inside a roundabout yielding to incoming traffic. This limitation is being addressed.
+
+### Customizing TM Behavior via Python API
+The TM behavior can be tailored using the Python API. Key functionalities include:
+
+#### General
+- Create a TM instance connected to a specific port.
+- Retrieve the port where the TM is connected.
+
+#### Safety Conditions
+- Set a minimum stopping distance for vehicles (globally or individually).
+- Adjust the desired speed as a percentage of the speed limit.
+- Reset traffic lights programmatically.
+
+#### Collision Management
+- Enable or disable collisions between vehicles and specific actors.
+- Configure vehicles to ignore:
+  - Other vehicles
+  - Pedestrians
+  - Traffic lights
+
+#### Lane Management
+- Force lane changes, overriding collision considerations.
+- Enable or disable lane changes for specific vehicles.
+
+#### Hybrid Physics Mode
+- Enable or disable hybrid physics mode for improved performance.
+- Adjust the radius within which physics is applied.
+
+For more details, refer to the [TM section of the Python API documentation](https://carla.readthedocs.io/en/latest/adv_traffic_manager/#vehicle-behavior-considerations).
 
 ## CARLA Maps and Their Traffic Scenarios
 
@@ -122,5 +161,5 @@ To keep tests consistent, CARLA uses standardized units:
 ## References
 
 - CARLA Documentation: [CARLA](https://carla.readthedocs.io/en/latest/)
-
+- Traffic Manager Behavior Considerations: [CARLA TM Documentation](https://carla.readthedocs.io/en/latest/adv_traffic_manager/#vehicle-behavior-considerations)
 - ASAM OpenDRIVE® Standard: [ASAM OpenDRIVE](https://www.asam.net/standards/detail/opendrive/)
