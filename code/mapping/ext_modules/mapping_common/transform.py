@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import math
+import shapely
 
 from geometry_msgs import msg as geometry_msgs
 from mapping import msg
@@ -66,6 +67,9 @@ class Point2(_Coord2):
     def to_ros_msg(self) -> geometry_msgs.Point:
         return geometry_msgs.Point(x=self.x(), y=self.y(), z=0.0)
 
+    def to_shapely(self) -> shapely.Point:
+        return shapely.Point(self._matrix[:2])
+
     def __add__(self, other):
         if isinstance(other, Vector2):
             matrix = self._matrix + other._matrix
@@ -73,6 +77,15 @@ class Point2(_Coord2):
             return Point2(matrix)
         raise TypeError(
             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __sub__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix - other._matrix
+            matrix[2] = 1.0
+            return Point2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for -: '{type(self)}' and '{type(other)}'"
         )
 
 
@@ -189,9 +202,27 @@ class Vector2(_Coord2):
             matrix = self._matrix + other._matrix
             matrix[2] = 1.0
             return Vector2(matrix)
+        if isinstance(other, Point2):
+            matrix = self._matrix + other._matrix
+            matrix[2] = 1.0
+            return Point2(matrix)
         raise TypeError(
             f"Unsupported operand types for +: '{type(self)}' and '{type(other)}'"
         )
+
+    def __sub__(self, other):
+        if isinstance(other, Vector2):
+            matrix = self._matrix - other._matrix
+            matrix[2] = 1.0
+            return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for -: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __neg__(self) -> "Vector2":
+        matrix = -self._matrix
+        matrix[2] = 1.0
+        return Vector2(matrix)
 
 
 @dataclass(init=False, eq=False)
