@@ -4,7 +4,7 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import torch
 import cv2
-from vision_node_helper import coco_to_carla, get_carla_color
+from vision_node_helper import coco_to_carla, carla_colors
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from std_msgs.msg import (
@@ -109,6 +109,8 @@ class VisionNode(CompatibleNode):
         # ultralytics setup
         if self.framework == "ultralytics":
             self.model = self.model(self.weights)
+        else:
+            rospy.logerr("Framework not supported")
 
     def setup_camera_subscriptions(self, side):
         """
@@ -229,13 +231,16 @@ class VisionNode(CompatibleNode):
         if self.device == "cuda":
             torch.cuda.empty_cache()
 
-        vision_result = None
-
         if self.framework == "ultralytics":
+            timestamp1 = time_ns()
+
             vision_result = self.predict_ultralytics(image, return_image=True)
+            rospy.loginfo(
+                f"Segmentation mask processing took {(time_ns() - timestamp1) / 1e6} ms"
+            )
         else:
+            # As we will not use pytorch models this is to prevent errors
             rospy.logerr("Framework not supported")
-        if vision_result is None:
             return
 
         # publish vision result to rviz
@@ -262,8 +267,9 @@ class VisionNode(CompatibleNode):
 
     def handle_dist_array(self, dist_array):
         """
-        This function overwrites the current depth image from
+        This function overwrites the current lidar depth image from
         the lidar distance node with the latest depth image.
+        The function also calculates the depth values of the lidar
 
         Args:
             dist_array (image msg): Depth image frim Lidar Distance Node
@@ -303,41 +309,35 @@ class VisionNode(CompatibleNode):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
         # run model prediction
-        output = self.model(cv_image, half=True, verbose=False, imgsz=320)
 
-        # handle distance of objects
-
-        # set up lists for visualization of distance outputs
-        boxes = output[0].boxes
-        carla_classes = [coco_to_carla[int(cls)] for cls in boxes.cls]
-        c_colors = [get_carla_color(int(cls)) for cls in boxes.cls]
-
-        if (
+        output = self.model.track(
+            cv_image, half=True, verbose=False, imgsz=320  # type: ignore
+        )
+        if not (
             hasattr(output[0], "masks")
             and output[0].masks is not None
+            and hasattr(output[0], "boxes")
+            and output[0].boxes is not None
             and self.dist_array is not None
             and self.lidar_array is not None
         ):
-            masks = output[0].masks.data
-            scaled_masks = scale_masks(
-                masks.unsqueeze(1), cv_image.shape[:2], True
-            ).squeeze(1)
-            timestamp1 = time_ns()
-            self.process_segmentation_mask(
-                scaled_masks.cpu().numpy(),
-                carla_classes=carla_classes,
-                distance_array=self.dist_array,
-                lidar_array=self.lidar_array,
-            )
-            rospy.loginfo(
-                f"Segmentation mask processing took {(time_ns() - timestamp1) / 1e6} ms"
-            )
+            return None
 
-        else:
-            masks = None
+        carla_classes = np.array(coco_to_carla)[
+            output[0].boxes.cls.to(torch.int).numpy()
+        ]
 
-        transposed_image = np.transpose(cv_image, (2, 0, 1))
-        image_np_with_detections = torch.tensor(transposed_image, dtype=torch.uint8)
+        masks = torch.tensor(output[0].masks.data)
+        scaled_masks = scale_masks(
+            masks.unsqueeze(1), cv_image.shape[:2], True
+        ).squeeze(1)
+
+        self.process_segmentation_mask(
+            scaled_masks.cpu().numpy(),
+            carla_classes=carla_classes,
+            distance_array=self.dist_array,
+            lidar_array=self.lidar_array,
+        )
 
         # proceed with traffic light detection
         if 9 in output[0].boxes.cls:
@@ -346,14 +346,16 @@ class VisionNode(CompatibleNode):
         if return_image is False or scaled_masks is None:
             return None
 
+        transposed_image = np.transpose(cv_image, (2, 0, 1))
+        image_tensor = torch.tensor(transposed_image, dtype=torch.uint8)
+        masks_tensor = torch.tensor(scaled_masks > 0, dtype=torch.bool)
+
+        class_colors = np.array(carla_colors)[carla_classes].tolist()
         drawn_images = draw_segmentation_masks(
-            image_np_with_detections,
-            torch.tensor(scaled_masks > 0),
-            alpha=0.6,
-            colors=c_colors,
+            image_tensor, masks_tensor, alpha=0.6, colors=class_colors
         )
 
-        np_image = np.transpose(drawn_images.detach().numpy(), (1, 2, 0))
+        np_image = drawn_images.permute(1, 2, 0).cpu().numpy()
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
     def process_segmentation_mask(
