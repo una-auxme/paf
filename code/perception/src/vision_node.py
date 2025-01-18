@@ -2,6 +2,7 @@
 
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
+from sklearn.cluster import DBSCAN
 import torch
 import cv2
 from vision_node_helper import coco_to_carla, carla_colors
@@ -20,6 +21,8 @@ import rospy
 from ultralytics.utils.ops import scale_masks
 from time import time_ns
 import ros_numpy
+from visualization_msgs.msg import MarkerArray
+from lidar_distance import create_bounding_box_marker
 
 
 class VisionNode(CompatibleNode):
@@ -104,7 +107,6 @@ class VisionNode(CompatibleNode):
         print("Device -> ", self.device)
         print(f"Model -> {self.get_param('model')},")
         print(f"Type -> {self.type}, Framework -> {self.framework}")
-        torch.cuda.memory.set_per_process_memory_fraction(0.1)
 
         # ultralytics setup
         if self.framework == "ultralytics":
@@ -218,6 +220,12 @@ class VisionNode(CompatibleNode):
             qos_profile=1,
         )
 
+        self.marker_visualization_vision_node_publisher = rospy.Publisher(
+            rospy.get_param("~marker_topic", "/paf/hero/Image/Marker"),
+            MarkerArray,
+            queue_size=10,
+        )
+
     def handle_camera_image(self, image):
         """
         This function handles a new camera image and publishes the
@@ -234,7 +242,9 @@ class VisionNode(CompatibleNode):
         if self.framework == "ultralytics":
             timestamp1 = time_ns()
 
-            vision_result = self.predict_ultralytics(image, return_image=True)
+            vision_result = self.predict_ultralytics(
+                image, return_image=False, image_size=320
+            )
             rospy.loginfo(
                 f"Segmentation mask processing took {(time_ns() - timestamp1) / 1e6} ms"
             )
@@ -242,7 +252,8 @@ class VisionNode(CompatibleNode):
             # As we will not use pytorch models this is to prevent errors
             rospy.logerr("Framework not supported")
             return
-
+        if vision_result is None:
+            return
         # publish vision result to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result, encoding="bgr8")
         img_msg.header = image.header
@@ -286,7 +297,7 @@ class VisionNode(CompatibleNode):
         self.lidar_array = lidar_array_copy
         self.dist_array = self.calculate_depth_values(lidar_array_copy)
 
-    def predict_ultralytics(self, image, return_image=True):
+    def predict_ultralytics(self, image, return_image=True, image_size=640):
         """
         This function takes in an image from a camera, predicts
         an ultralytics model on the image and looks for lidar points
@@ -311,7 +322,7 @@ class VisionNode(CompatibleNode):
         # run model prediction
 
         output = self.model.track(
-            cv_image, half=True, verbose=False, imgsz=320  # type: ignore
+            cv_image, half=True, verbose=False, imgsz=image_size  # type: ignore
         )
         if not (
             hasattr(output[0], "masks")
@@ -324,20 +335,40 @@ class VisionNode(CompatibleNode):
             return None
 
         carla_classes = np.array(coco_to_carla)[
-            output[0].boxes.cls.to(torch.int).numpy()
+            output[0].boxes.cls.to(torch.int).numpy()  # type: ignore
         ]
 
         masks = torch.tensor(output[0].masks.data)
         scaled_masks = scale_masks(
             masks.unsqueeze(1), cv_image.shape[:2], True
         ).squeeze(1)
-
-        self.process_segmentation_mask(
+        valid_points, class_indices = self.process_segmentation_mask(
             scaled_masks.cpu().numpy(),
             carla_classes=carla_classes,
             distance_array=self.dist_array,
             lidar_array=self.lidar_array,
         )
+        if valid_points is not None:
+            try:
+                clustered_points, valid_labels, valid_class_indices = (
+                    self.cluster_points(valid_points, class_indices)
+                )
+                # self.publish_pointcloud(clustered_points)
+
+                bounding_boxes = self.calculate_bounding_boxes(
+                    clustered_points, valid_class_indices
+                )
+
+                # Create a MarkerArray for visualization
+                marker_array = MarkerArray()
+                for label in bounding_boxes:
+                    marker = create_bounding_box_marker(label, bounding_boxes[label])
+                    marker_array.markers.append(marker)
+
+                # Publish the MarkerArray for visualization
+                self.marker_visualization_vision_node_publisher.publish(marker_array)
+            except Exception as e:
+                rospy.logerr(f"Error while processing point clusters: {e}")
 
         # proceed with traffic light detection
         if 9 in output[0].boxes.cls:
@@ -388,43 +419,159 @@ class VisionNode(CompatibleNode):
             segmentation_array.astype(bool) & combined_mask[None, ...]
         )
         # get the x, y, z values of the valid points
-        valid_indices = np.where(valid_points_from_mask)
+        valid_indices = np.nonzero(valid_points_from_mask)
         valid_points = lidar_array[valid_indices[1], valid_indices[2]]
-
+        combined_points = None
         if valid_points.size > 0:
             combined_points = np.zeros(
                 valid_points.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
             )
-            combined_points["x"] = valid_points[:, 0]
-            combined_points["y"] = valid_points[:, 1]
-            combined_points["z"] = valid_points[:, 2]
-
-            # Calculate a distance_output array for the distance_publisher
-            # It holds the class, the min_x and the min_abs_y distance
-            # get minimum x and y point distance for each segmentation_mask
-            distance_output = []
-            # Get classes in the segmentation mask
-            mask_indices = np.argwhere(valid_points_from_mask)
-            classes_array = np.array(carla_classes)[mask_indices[:, 0]]
-            x_coords = valid_points[:, 0]
-            y_coords = valid_points[:, 1]
-            distance_output = np.column_stack(
-                (classes_array, x_coords, y_coords)
-            ).flatten()
-
-            if len(distance_output) > 0:
-                self.distance_publisher.publish(
-                    Float32MultiArray(data=np.array(distance_output))
-                )
-        else:
-            combined_points = np.array(
-                [], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
+            combined_points["x"], combined_points["y"], combined_points["z"] = (
+                valid_points.T
+            )
+            self.publish_distance_output(
+                valid_points, valid_points_from_mask, carla_classes
             )
 
+        return combined_points, valid_indices[0]
+
+    def cluster_points(self, points, class_indices, eps=0.5, min_samples=2):
+        """
+        Clusters all points in the point cloud based on segmentation classes.
+        Returns only the largest cluster for each class.
+
+        Parameters:
+            points (numpy structured array): Array of points with fields 'x', 'y', 'z'.
+            class_indices (numpy array): Array of segmentation mask indices for each point.
+            eps (float): Maximum distance between points to be considered in the same
+                        neighborhood.
+            min_samples (int): Minimum number of points to form a dense region (cluster).
+
+        Returns:
+            clustered_points (numpy structured array): Points belonging to the largest cluster
+                                                    for each class index.
+            valid_labels (numpy array): Labels corresponding to each class index (one per class).
+            valid_class_indices (numpy array): Class indices corresponding to the returned points.
+        """
+        clustered_points_list = []
+        valid_labels_list = []
+        valid_class_indices_list = []
+
+        unique_classes = np.unique(class_indices)
+
+        for class_idx in unique_classes:
+            # Filter points belonging to the current class
+            class_mask = class_indices == class_idx
+            class_points = points[class_mask]
+
+            if class_points.size == 0:
+                continue
+
+            # Convert to a regular 2D array for clustering
+            xyz_points = np.vstack(
+                (class_points["x"], class_points["y"], class_points["z"])
+            ).T
+
+            # Apply DBSCAN clustering
+            db = DBSCAN(eps=eps, min_samples=min_samples)
+            labels = db.fit_predict(xyz_points)
+
+            # Identify the largest cluster for this class
+            unique_labels, counts = np.unique(labels, return_counts=True)
+            largest_cluster_label = (
+                unique_labels[np.argmax(counts)] if unique_labels.size > 0 else -1
+            )
+
+            if largest_cluster_label == -1:  # Skip noise-only results
+                continue
+
+            # Get points belonging to the largest cluster
+            largest_cluster_mask = labels == largest_cluster_label
+            largest_cluster_points = class_points[largest_cluster_mask]
+
+            # Append results
+            clustered_points_list.append(largest_cluster_points)
+            valid_labels_list.append(class_idx)  # Use the class index as the label
+            valid_class_indices_list.extend([class_idx] * len(largest_cluster_points))
+
+        # Concatenate results into arrays
+        if clustered_points_list:
+            clustered_points = np.concatenate(clustered_points_list)
+            valid_class_indices = np.array(valid_class_indices_list)
+        else:
+            clustered_points = np.array([], dtype=points.dtype)
+            valid_class_indices = np.array([])
+
+        return clustered_points, valid_labels_list, valid_class_indices
+
+    def calculate_bounding_boxes(self, clustered_points, cluster_labels):
+        """
+        Calculates axis-aligned bounding boxes (AABBs) for clustered points.
+
+        Parameters:
+            clustered_points (numpy structured array): Array of clustered points with
+            fields 'x', 'y', 'z'.
+            cluster_labels (numpy array): Array of cluster labels corresponding to each
+            point.
+
+        Returns:
+            bounding_boxes (dict): A dictionary where each key is a cluster label, and
+            the value is a dictionary:
+                {
+                    'min': (min_x, min_y, min_z),
+                    'max': (max_x, max_y, max_z)
+                }
+        """
+        bounding_boxes = {}
+
+        # Get unique cluster labels (excluding noise, label = -1)
+        unique_labels = set(cluster_labels)
+        if -1 in unique_labels:
+            unique_labels.remove(-1)  # Exclude noise
+
+        for label in unique_labels:
+            # Extract points belonging to the current cluster
+            cluster_points = clustered_points[cluster_labels == label]
+
+            # Calculate min and max for each axis
+            min_x, min_y, min_z = (
+                cluster_points["x"].min(),
+                cluster_points["y"].min(),
+                cluster_points["z"].min(),
+            )
+            max_x, max_y, max_z = (
+                cluster_points["x"].max(),
+                cluster_points["y"].max(),
+                cluster_points["z"].max(),
+            )
+
+            # Store bounding box as a dictionary
+            bounding_boxes[label] = min_x, max_x, min_y, max_y, min_z, max_z
+
+        return bounding_boxes
+
+    def publish_pointcloud(self, combined_points):
+        # Publish point cloud
         pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(combined_points)
         pointcloud_msg.header.frame_id = "hero"
         pointcloud_msg.header.stamp = rospy.Time.now()
         self.pointcloud_publisher.publish(pointcloud_msg)
+
+    def publish_distance_output(
+        self, valid_points, valid_points_from_mask, carla_classes
+    ):
+        """
+        Publishes the distance output of the object detection
+        """
+        # Direct calculation of distance output
+        mask_indices = np.argwhere(valid_points_from_mask)
+        classes_array = np.array(carla_classes)[mask_indices[:, 0]]
+        distance_output = np.column_stack(
+            (classes_array, valid_points[:, 0], valid_points[:, 1])
+        ).ravel()
+
+        if distance_output.size > 0:
+            self.distance_publisher.publish(Float32MultiArray(data=distance_output))
 
     def calculate_depth_values(self, dist_array):
         """
