@@ -12,7 +12,7 @@ This research explores the types of sensors which are used in real-world autonom
   
 ## Tesla
 
-- Tesla Cars use no Liadr nor Radar [[teslawissen](https://teslawissen.ch/tesla-autopilot-unterschiede-der-hardware-generationen/)]
+- Tesla Cars use neither Lidar nor Radar [[teslawissen](https://teslawissen.ch/tesla-autopilot-unterschiede-der-hardware-generationen/)]
 - *"12 sensors and 8 cameras, for a total of 20 sensors"* [[Ohio state University news](https://u.osu.edu/engr2367selfdrivingcars/how-does-a-self-driving-car-work-1-false/)]
 - *"Tesla Vision Update: Replacing Ultrasonic Sensors with Tesla Vision"* [[Tesla Website](https://www.tesla.com/support/transitioning-tesla-vision)]
   - it is speculated that they do that, to safe cost and because their self driving philosophy is heavily computer vision and deep learning guided.
