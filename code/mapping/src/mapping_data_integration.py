@@ -266,10 +266,14 @@ class MappingDataIntegrationNode(CompatibleNode):
             return
 
         lidar_cluster_entities = (
-            Map.from_ros_msg(self.lidar_cluster_entities_data).entities or []
+            []
+            if self.lidar_cluster_entities_data is None
+            else Map.from_ros_msg(self.lidar_cluster_entities_data).entities
         )
         radar_cluster_entities = (
-            Map.from_ros_msg(self.radar_cluster_entities_data).entities or []
+            []
+            if self.radar_cluster_entities_data is None
+            else Map.from_ros_msg(self.radar_cluster_entities_data).entities
         )
 
         stamp = rospy.get_rostime()
