@@ -12,6 +12,12 @@ import ros_compatibility as roscomp
 import rospy
 from visualization_msgs.msg import Marker
 
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from geometry_msgs.msg import PoseStamped
+from tf2_msgs.msg import TFMessage
+
+
 from scipy.ndimage import distance_transform_edt
 import numpy as np
 from PIL import Image
@@ -25,7 +31,7 @@ RESOLUTION_SCALE = 10
 FORCE_FACTOR = 25
 SLOPE = 255
 K_VALUE = 0.009
-MAX_GRADIENT_DESCENT_STEPS = 20
+MAX_GRADIENT_DESCENT_STEPS = 40
 GRADIENT_FACTOR = 10
 
 
@@ -35,6 +41,8 @@ class Potential_field_node(CompatibleNode):
         self.entities: list[Entity] = []
         self.potential_field_trajectory = Path()
         self.role_name = self.get_param("role_name", "ego_vehicle")
+
+        self.trajectory = Path()
 
         self.last_pub_time = rospy.get_time()
 
@@ -66,9 +74,30 @@ class Potential_field_node(CompatibleNode):
             Path, "/paf/hero/potential_field_trajectory", 1
         )
 
+        self.local_trajectory_pub: Publisher = self.new_publisher(
+            Path, "/paf/hero/local_trajectory", 1
+        )
+
+        self.trajectory_sub: Subscriber = self.new_subscription(
+            msg_type=Path,
+            topic="/paf/hero/trajectory",
+            callback=self.__get_trajectory,
+            qos_profile=1,
+        )
+
+        self.tf_sub: Subscriber = self.new_subscription(
+            msg_type=TFMessage,
+            topic="/tf",
+            callback=self.__get_transforms,
+            qos_profile=1,
+        )
+
         # END ROS SETUP ###
 
     # CALLBACKS ###
+    def __get_transforms(self, data: TFMessage):
+        self.transforms = data.transforms
+
     def __get_entities(self, data: MapMsg):
         """
         Callback for the entities subscriber
@@ -79,7 +108,7 @@ class Potential_field_node(CompatibleNode):
 
     def __get_trajectory(self, data: Path):
         # currently not used
-        self.trajectory = data
+        self.trajectory: Path = data
 
     # END CALLBACKS ###
 
@@ -117,6 +146,19 @@ class Potential_field_node(CompatibleNode):
                 # if the index not in the map horizon, skip the entity
                 continue
 
+    def __get_local_trajectory(self):
+        buffer = Buffer()
+        listener = TransformListener(buffer)
+
+        local_traj = Path()
+        local_traj.header = rospy.Header()
+        local_traj.header.stamp = rospy.Time.now()
+        local_traj.header.frame_id = "hero"
+        local_traj.poses = []
+        for pose in self.trajectory.poses:
+            local_traj.poses.append(buffer.transform(pose, "hero"))
+        self.local_trajectory_pub.publish(local_traj)
+
     def __calculate_field(self):
         """
         Calculates the potential field and publishes the trajectory
@@ -151,7 +193,7 @@ class Potential_field_node(CompatibleNode):
         num_steps = 0
         points: list[tuple[float]] = []
         plot_points: list[tuple[int]] = []
-        min_gradient_magnitude = 1e-5  # Add convergence threshold
+        min_gradient_magnitude = 1e-4  # Add convergence threshold
 
         x, y = self.entity_matrix_midpoint
         while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
@@ -161,7 +203,9 @@ class Potential_field_node(CompatibleNode):
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
                 gradient_magnitude = np.sqrt(dx * dx + dy * dy)
                 if gradient_magnitude < min_gradient_magnitude:
-                    self.loginfo("Converged: gradient magnitude below threshold")
+                    self.loginfo(
+                        "Potential Field: Converged: gradient magnitude below threshold"
+                    )
                     finished = True
                     break
 
@@ -192,6 +236,8 @@ class Potential_field_node(CompatibleNode):
         self.loginfo("potential field trajectory published")
 
         self.last_pub_time = rospy.get_time()
+
+        return
 
         # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
         self.entity_matrix_for_plotting = np.zeros(
@@ -231,13 +277,18 @@ class Potential_field_node(CompatibleNode):
         self.loginfo("Potential Field Node Running")
 
         def loop(timerevent=None):
+
             self.__filter_entities()
 
             self.__calculate_field()
+            try:
+                self.__get_local_trajectory()
+            except Exception as e:
+                self.logerr(f"Exception {e} caught, from POTENTIAL FIELD")
             # PLOTTING
-            self.save_image(
-                self.entity_matrix_for_plotting, "/workspace/code/entity_matrix.png"
-            )
+            # self.save_image(
+            #    self.entity_matrix_for_plotting, "/workspace/code/entity_matrix.png"
+            # )
 
         self.new_timer(0.5, loop)
         self.spin()
