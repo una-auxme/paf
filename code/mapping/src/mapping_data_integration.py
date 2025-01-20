@@ -13,6 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
+from mapping_common.filter import MapFilter, MergingFilter
 from mapping.msg import Map as MapMsg
 
 from sensor_msgs.msg import PointCloud2
@@ -28,15 +29,19 @@ class MappingDataIntegrationNode(CompatibleNode):
     (-> It buffers incoming sensor data slightly)
     """
 
+    map_filters: List[MapFilter]
+
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
-    lidar_cluster_entities_data: Optional[List[Entity]] = None
-    radar_cluster_entities_data: Optional[List[Entity]] = None
+    lidar_cluster_entities_data: Optional[MapMsg] = None
+    radar_cluster_entities_data: Optional[MapMsg] = None
     radar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
+
+        self.map_filters = [MergingFilter(growth_distance=0.5, min_merging_overlap=0.5)]
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
@@ -285,6 +290,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             + lidar_cluster_entities
             + radar_cluster_entities,
         )
+        for filter in self.map_filters:
+            map = filter.filter(map)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 

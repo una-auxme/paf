@@ -232,7 +232,7 @@ class Entity:
 
     Filter for them with the matches_filter(f) function and a FlagFilter
     """
-    uuid: UUID = uuid4()
+    uuid: UUID = field(default_factory=uuid4)
     """Unique id of the entity in the map, set by the map
 
     If the entity is tracked, this id is persistent across map data frames
