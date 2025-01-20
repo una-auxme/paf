@@ -73,10 +73,15 @@ class RadarNode:
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        polygon_array = create_shapely_polygons(points_with_labels)
-        velocities = calculate_cluster_velocity(points_with_labels)
-        entities = create_entities(polygon_array, velocities)
-        rospy.loginfo(f"Entities: ['entities[0].motion']: {entities[0].motion}")
+        pointcloudArray = create_pointcloud2Array(points_with_labels)
+        motion2DArray = calculate_cluster_velocity(points_with_labels)
+        # call function to create PointCloudCluster msg to send to intermediate layer
+        # (with PointCloudArray and Motion2DArray)
+
+        # polygon_array = create_shapely_polygons(points_with_labels)
+        # velocities = calculate_cluster_velocity(points_with_labels)
+        # entities = create_entities(polygon_array, velocities)
+        # rospy.loginfo(f"Entities: velocities[0]: {str(velocities[0])}")
 
         # self.entity_radar_publisher(entities)
 
@@ -336,6 +341,34 @@ def create_pointcloud2(clustered_points, cluster_labels):
     return point_cloud2.create_cloud(header, fields, points)
 
 
+def create_pointcloud2Array(points_with_labels):
+    """Erstellt mehrere PointCloud2-Nachrichten basierend auf Labels."""
+    pointclouds = []
+    unique_labels = np.unique(points_with_labels[:, -1])  # Letzte Spalte für Labels
+
+    for label in unique_labels:
+        if label == -1:  # Ignoriere -1 (z. B. Rauschen oder unklassifizierte Punkte)
+            continue
+
+        # Filtere Punkte mit dem aktuellen Label
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label]
+
+        # Extrahiere nur die relevanten Spalten (x, y, z, intensität)
+        cluster_data = cluster_points[:, :3]
+
+        # Erstelle PointCloud2 für diesen Cluster
+        fields = [
+            PointField("x", 0, PointField.FLOAT32, 1),
+            PointField("y", 4, PointField.FLOAT32, 1),
+            PointField("z", 8, PointField.FLOAT32, 1),
+        ]
+        cloud_data = [tuple(point) for point in cluster_data]
+        pc = point_cloud2.create_cloud(None, fields, cloud_data)
+        pointclouds.append(pc)
+
+    return pointclouds
+
+
 def transform_data_to_2d(clustered_data):
     """_summary_
 
@@ -504,16 +537,16 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     return marker
 
 
-def create_shapely_polygons(points_with_labels):
-    polygons = []
-    unique_labels = np.unique(points_with_labels[:, -1])
-    for label in unique_labels:
-        if label == -1:
-            continue
-        cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
-        polygon = ShapelyPoloygon(cluster_points)
-        polygons.append(polygon)
-    return polygons
+# def create_shapely_polygons(points_with_labels):
+#     polygons = []
+#     unique_labels = np.unique(points_with_labels[:, -1])
+#     for label in unique_labels:
+#         if label == -1:
+#             continue
+#         cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+#         polygon = ShapelyPoloygon(cluster_points)
+#         polygons.append(polygon)
+#     return polygons
 
 
 def calculate_cluster_velocity(points_with_labels):
@@ -538,44 +571,56 @@ def calculate_cluster_velocity(points_with_labels):
         # Skaliere Richtung mit Geschwindigkeit
         motion = avg_velocity * direction
 
+        rospy.loginfo(
+            f"Label {label}: avg_velocity={avg_velocity}, direction={direction}, motion={motion}"
+        )
+
+        v = Vector2.new(4.08816791e-05, 8.61750009e-07)
+        rospy.loginfo(
+            f"x: {v.x()}, y: {v.y()}"
+        )  # Sollte die erwarteten Werte ohne Fehler ausgeben
+
         cluster_motion = Vector2.new(motion[0], motion[1])
+        rospy.loginfo(
+            f"Cluster motion for label {label}: x={cluster_motion.x()}, y={cluster_motion.y()}"
+        )
         cluster_motions.append(cluster_motion)
     return cluster_motions
 
 
-def create_entities(polygons, velocities):
-    if polygons is None or len(polygons) == 0:
-        # Handle cases where data is invalid or empty
-        rospy.logwarn("No valid polygon data received.")
-        return []
+# def create_entities(polygons, velocities):
+#     if polygons is None or len(polygons) == 0:
+#         # Handle cases where data is invalid or empty
+#         rospy.logwarn("No valid polygon data received.")
+#         return []
 
-    radar_entities = []
-    for polygon, velocity in zip(polygons, velocities):
-        if not polygon.is_valid:
-            rospy.logwarn("Skipping non-Polygon entity.")
-            continue
+#     radar_entities = []
+#     for polygon, velocity in zip(polygons, velocities):
+#         if not polygon.is_valid:
+#             rospy.logwarn("Skipping non-Polygon entity.")
+#             continue
 
-        # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
-        centroid = polygon.centroid
-        x_center = centroid.x
-        y_center = centroid.y
+#         # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
+#         centroid = polygon.centroid
+#         x_center = centroid.x
+#         y_center = centroid.y
 
-        v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
-        transform = Transform2D.new_translation(v)
+#         v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+#         transform = Transform2D.new_translation(v)
 
-        # motion = Motion2D()
-        flags = Flags(is_collider=True)
-        e = Entity(
-            confidence=1,
-            priority=0.25,
-            shape=Polygon(polygon.coords),
-            transform=transform,
-            timestamp=rospy.Time.now(),
-            flags=flags,
-            motion=velocity,
-        )
-        radar_entities.append(e)
-    return radar_entities
+#         # motion = Motion2D()
+#         flags = Flags(is_collider=True)
+#         e = Entity(
+#             confidence=1,
+#             priority=0.25,
+#             shape=Polygon(polygon.coords),
+#             transform=transform,
+#             timestamp=rospy.Time.now(),
+#             flags=flags,
+#             motion=velocity,
+#         )
+#         radar_entities.append(e)
+#     return radar_entities
 
 
 # def entities_from_lidar_marker(self) -> List[Entity]:

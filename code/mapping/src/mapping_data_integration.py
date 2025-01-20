@@ -17,6 +17,7 @@ from mapping.msg import Map as MapMsg
 
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
+from shapely.geometry import Polygon as ShapelyPolygon
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -227,6 +228,116 @@ class MappingDataIntegrationNode(CompatibleNode):
             lidar_entities.append(e)
 
         return lidar_entities
+
+    def create_shapely_polygons_from_pointclouds(self, sensor) -> List[ShapelyPolygon]:
+        """
+        Erstellt ein Shapely-Polygon aus einer PointCloud2-Nachricht.
+
+        Args:
+            pointcloud_msg (PointCloud2): Die ROS PointCloud2 Nachricht.
+
+        Returns:
+            ShapelyPolygon: Das erstellte Shapely Polygon.
+        """
+
+        polygons = []
+        # unique_labels = np.unique(points_with_labels[:, -1])
+        pointclouds = self.cluster_data
+        for pointcloud2 in pointclouds:
+
+            points = []
+            for p in PointCloud2.read_points(
+                pointclouds, skip_nans=True, field_names=("x", "y")
+            ):
+                points.append((p[0], p[1]))  # Nimmt nur die x- und y-Koordinaten
+
+            # Überprüfen, ob genügend Punkte für ein Polygon vorhanden sind
+            if len(points) < 3:
+                raise ValueError("Ein Polygon benötigt mindestens 3 Punkte.")
+
+            # Optional: Erstelle den konvexen Hüllraum der Punkte
+            # from scipy.spatial import ConvexHull
+            # hull = ConvexHull(points)
+            # hull_points = [points[i] for i in hull.vertices]
+
+            # Erstelle das Shapely-Polygon
+            polygon = ShapelyPolygon(points)
+            polygons.append(polygon)
+        return polygons
+
+    # def entities_from_shapelyPolygons(self) -> List[Entity]:
+    #     data = self.sensor_data
+    #     if data is None or not hasattr(data, "markers") or data.markers is None:
+    #         # Handle cases where data or markers are invalid
+    #         rospy.logwarn("No valid marker data received.")
+    #         return []
+
+    #     radar_entities = []
+    #     for pointcloudcluster in data:
+    #         if marker.type != Marker.CUBE:
+    #             rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
+    #             continue
+    #         # Extract position (center of the cube) and calculate 2 meter offset
+    #         # because of radar positioning
+    #         x_center = marker.pose.position.x + 2
+    #         y_center = marker.pose.position.y
+
+    #         # Extract dimensions (scale gives the size of the cube)
+    #         width = marker.scale.x
+    #         length = marker.scale.y
+
+    #         # Create a shape and transform using the cube's data
+    #         shape = Rectangle(width, length)  # 2D rectangle for lidar data
+    #         v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+    #         transform = Transform2D.new_translation(v)
+
+    #         # Add entity to the list
+    #         flags = Flags(is_collider=True)
+    #         e = Entity(
+    #             confidence=1,
+    #             priority=0.25,
+    #             shape=shape,
+    #             transform=transform,
+    #             timestamp=marker.header.stamp,
+    #             flags=flags,
+    #         )
+    #         radar_entities.append(e)
+
+    #     return radar_entities
+
+    # def create_entities(polygons, velocities):
+    # if polygons is None or len(polygons) == 0:
+    #     # Handle cases where data is invalid or empty
+    #     rospy.logwarn("No valid polygon data received.")
+    #     return []
+
+    # radar_entities = []
+    # for polygon, velocity in zip(polygons, velocities):
+    #     if not polygon.is_valid:
+    #         rospy.logwarn("Skipping non-Polygon entity.")
+    #         continue
+
+    #     # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
+    #     centroid = polygon.centroid
+    #     x_center = centroid.x
+    #     y_center = centroid.y
+
+    #     v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+    #     transform = Transform2D.new_translation(v)
+
+    #     # motion = Motion2D()
+    #     flags = Flags(is_collider=True)
+    #     e = Entity(
+    #         confidence=1,
+    #         priority=0.25,
+    #         shape=Polygon(polygon.coords),
+    #         transform=transform,
+    #         timestamp=rospy.Time.now(),
+    #         flags=flags,
+    #         motion=velocity,
+    #     )
+    #     radar_entities.append(e)
+    # return radar_entities
 
     def create_hero_entity(self) -> Optional[Car]:
         if self.hero_speed is None:
