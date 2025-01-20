@@ -12,7 +12,7 @@ from mapping_common import entity
 
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString
 
 from mapping import msg
 
@@ -78,67 +78,58 @@ class Map:
     def get_entity_in_front(self) -> Optional[Entity]:
         """Returns the entity in front
 
-        Rudimentary implementation without shapely
+        Projects a polygon to simulate the road
+        Calculates the nearest entity on that polygon
         Returns:
             Optional[Entity]: Entity in front
+        This could be extended with a curved polygon
+        if curved roads become a problem in the future
         """
-        entities_in_front = []
 
-        for e in self.entities_without_hero():
+        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
+        # a coverage width of 1.2 meters should cover all cars and obstacles in our way
+        road_area = self.project_plane((0, -0.6), 80, 1.2)
+        road_entities = tree.query(road_area)
 
-            translation = e.transform.translation()
-            x = translation.x()
-            y = translation.y()
-
-            filter = entity.FlagFilter(is_collider=True)
-            if y < 0.25 and y > -0.25 and x > 2.1 and e.matches_filter(filter):
-                entities_in_front.append(e)
-
-        if len(entities_in_front) > 0:
+        if len(road_entities) > 0:
             return min(
-                entities_in_front,
-                key=lambda entity: entity.transform.translation().x(),
-            )
+                road_entities,
+                key=lambda e: e.entity.transform.translation().x(),
+            ).entity
         else:
             return None
 
     def get_entity_in_back(self) -> Optional[Entity]:
         """Returns the entity in back
 
-        Rudimentary implementation without shapely
+        Projects a polygon to simulate the road
+        Calculates the nearest entity on that polygon
         Returns:
             Optional[Entity]: Entity in back
         """
-        entities_in_back = []
 
-        for e in self.entities_without_hero():
+        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
+        # a coverage width of 1.2 meters should cover all cars and obstacles in our way
+        road_area = self.project_plane((0, -0.6), -80, 1.2)
+        road_entities = tree.query(road_area)
 
-            translation = e.transform.translation()
-            x = translation.x()
-            y = translation.y()
-
-            filter = entity.FlagFilter(is_collider=True)
-            if y < 0.25 and y > -0.25 and x < -2.1 and e.matches_filter(filter):
-                entities_in_back.append(e)
-
-        if len(entities_in_back) > 0:
+        if len(road_entities) > 0:
             return max(
-                entities_in_back,
-                key=lambda entity: entity.transform.translation().x(),
-            )
+                road_entities,
+                key=lambda e: e.entity.transform.translation().x(),
+            ).entity
         else:
             return None
 
-    def project_plane(start_point, size_x, size_y):
-
-        Projects a rectangular plane starting from (0, 0) forward in the x-direction.
+    def project_plane(self, start_point, size_x, size_y):
+        """Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
         Parameters:
         - size_x (float): Length of the plane along the x-axis.
         - size_y (float): Width of the plane along the y-axis.
 
         Returns:
-        - Polygon: A Shapely Polygon representing the plane.
+        - Polygon: A Shapely Polygon representing the plane."""
 
         x, y = start_point
 
@@ -147,21 +138,20 @@ class Map:
             (x + size_x, y),
             (x + size_x, y + size_y),
             (x, y + size_y),
-            (x, y)
+            (x, y),
         ]
 
         return Polygon(points)
 
-    def curve_to_polygon(points, width):
-
-        Creates a polygon with a specified width around a given curve.
+    def curve_to_polygon(self, points, width):
+        """Creates a polygon with a specified width around a given curve.
 
         Parameters:
         - points (list of tuple): A list of (x, y) coordinates representing the curve.
         - width (float): The width of the polygon along the curve.
 
         Returns:
-        - Polygon: A Shapely Polygon representing the widened curve.
+        - Polygon: A Shapely Polygon representing the widened curve."""
 
         if len(points) < 2:
             raise ValueError("At least two points are required to define a curve.")
@@ -172,27 +162,25 @@ class Map:
         curve = LineString(points)
 
         # Create a buffer around the curve to form a polygon with the given width
-        polygon = curve.buffer(width / 2, cap_style=1, join_style=2)
+        polygon = curve.buffer(width / 2, cap_style="round", join_style="round")
 
         return polygon
 
-    def get_entities_with_coverage(polygon, entities, coverage):
-
-        Returns a list of entities that have at least coverage % in the given polygon.
+    def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
+        """Returns a list of entities that have at least coverage % in the
+        given polygon.
 
         Parameters:
         - polygon (Polygon): A Shapely Polygon object representing the target area.
         - entities (list): A list of entities each having a Shapely shape.
 
         Returns:
-        - list: A list of entities that have at least coverage % in the polygon.
-
+        - list: A list of entities that have at least coverage % in the polygon."""
 
         collision_entities = []
 
-        for entity in entities:
-            shape = entity.getShapely()  # Get the Shapely shape of the entity,
-                            # might have to change this depending on integration
+        for ent in entities:
+            shape = ent.to_shapely().poly
 
             # Calculate intersection area
             intersection = polygon.intersection(shape)
@@ -200,7 +188,7 @@ class Map:
                 collision_entities.append(entity)
 
         return collision_entities
-    
+
     def build_tree(
         self,
         f: Optional[FlagFilter] = None,
