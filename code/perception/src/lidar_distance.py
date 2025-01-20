@@ -407,7 +407,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LID
     """
     # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
+    marker.header.frame_id = frame_id  # Reference frame for the marker
     marker.ns = "marker_lidar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
     marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
