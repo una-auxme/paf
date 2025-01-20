@@ -345,20 +345,6 @@ class VisionNode(CompatibleNode):
                 )
                 self.publish_pointcloud(clustered_points)
 
-                bounding_boxes = self.calculate_bounding_boxes(
-                    clustered_points, valid_class_indices
-                )
-
-                # Create a MarkerArray for visualization
-                marker_array = MarkerArray()
-                for label in bounding_boxes:
-                    marker = create_bounding_box_marker(
-                        label, bounding_boxes[label], frame_id="hero"
-                    )
-                    marker_array.markers.append(marker)
-
-                # Publish the MarkerArray for visualization
-                self.marker_visualization_vision_node_publisher.publish(marker_array)
             except Exception as e:
                 rospy.logerr(f"Error while processing point clusters: {e}")
 
@@ -486,56 +472,10 @@ class VisionNode(CompatibleNode):
 
         return clustered_points, valid_labels, valid_class_indices[selected_points_mask]
 
-    def calculate_bounding_boxes(self, clustered_points, cluster_labels):
-        """
-        Calculates axis-aligned bounding boxes (AABBs) for clustered points.
-
-        Parameters:
-            clustered_points (numpy structured array): Array of clustered points with
-            fields 'x', 'y', 'z'.
-            cluster_labels (numpy array): Array of cluster labels corresponding to each
-            point.
-
-        Returns:
-            bounding_boxes (dict): A dictionary where each key is a cluster label, and
-            the value is a dictionary:
-                {
-                    'min': (min_x, min_y, min_z),
-                    'max': (max_x, max_y, max_z)
-                }
-        """
-        bounding_boxes = {}
-
-        # Get unique cluster labels (excluding noise, label = -1)
-        unique_labels = set(cluster_labels)
-        if -1 in unique_labels:
-            unique_labels.remove(-1)  # Exclude noise
-
-        for label in unique_labels:
-            # Extract points belonging to the current cluster
-            cluster_points = clustered_points[cluster_labels == label]
-
-            # Calculate min and max for each axis
-            min_x, min_y, min_z = (
-                cluster_points["x"].min(),
-                cluster_points["y"].min(),
-                cluster_points["z"].min(),
-            )
-            max_x, max_y, max_z = (
-                cluster_points["x"].max(),
-                cluster_points["y"].max(),
-                cluster_points["z"].max(),
-            )
-
-            # Store bounding box as a dictionary
-            bounding_boxes[label] = min_x, max_x, min_y, max_y, min_z, max_z
-
-        return bounding_boxes
-
     def publish_pointcloud(self, combined_points):
         # Publish point cloud
         pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(combined_points)
-        pointcloud_msg.header.frame_id = "hero"
+        pointcloud_msg.header.frame_id = "hero/vision_clusters"
         pointcloud_msg.header.stamp = rospy.Time.now()
         self.pointcloud_publisher.publish(pointcloud_msg)
 
