@@ -3,6 +3,7 @@ from typing import List, Optional, Callable, Literal, Tuple
 
 import shapely
 from shapely import STRtree
+import shapely.plotting
 import numpy as np
 import numpy.typing as npt
 
@@ -12,6 +13,8 @@ from std_msgs.msg import Header
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from mapping import msg
+
+from nav.msgs import Path
 
 
 @dataclass
@@ -137,7 +140,17 @@ class Map:
                 return entity
         return None
 
-    def check_trajectory(self, Path) -> int:
+    def check_trajectory(self, local_path: Path) -> int:
+
+        trajectory_shapely_points = []
+        for pos in local_path.poses:
+            trajectory_shapely_points.append(
+                shapely.Point(pos.pose.position.x, pos.pose.position.y)
+            )
+        local_trajectory = shapely.LineString(trajectory_shapely_points)
+        local_trajectory.buffer(1.25, 3)
+        shapely.plotting.plot_line(local_trajectory)
+
         # given path is okay and is not colliding
         return 0
 
