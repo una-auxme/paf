@@ -137,6 +137,19 @@ class Map:
                 return entity
         return None
 
+    def check_trajectory(self, Path) -> int:
+        # given path is okay and is not colliding
+        return 0
+
+        # given path has not enough space to be executed
+        return 1
+
+        # given path crosses lane marking on the left
+        return 2
+
+        # given path crosses lane marking on the right
+        return 3
+
 
 @dataclass(init=False)
 class MapTree:
