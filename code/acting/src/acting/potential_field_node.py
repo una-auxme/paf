@@ -12,10 +12,11 @@ import ros_compatibility as roscomp
 import rospy
 from visualization_msgs.msg import Marker
 
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
+import tf2_ros
+from tf2_geometry_msgs import do_transform_pose
+from geometry_msgs.msg import TransformStamped
+from tf2_msgs import 
 from geometry_msgs.msg import PoseStamped
-from tf2_msgs.msg import TFMessage
 
 
 from scipy.ndimage import distance_transform_edt
@@ -41,8 +42,6 @@ class Potential_field_node(CompatibleNode):
         self.entities: list[Entity] = []
         self.potential_field_trajectory = Path()
         self.role_name = self.get_param("role_name", "ego_vehicle")
-
-        self.trajectory = Path()
 
         self.last_pub_time = rospy.get_time()
 
@@ -85,18 +84,9 @@ class Potential_field_node(CompatibleNode):
             qos_profile=1,
         )
 
-        self.tf_sub: Subscriber = self.new_subscription(
-            msg_type=TFMessage,
-            topic="/tf",
-            callback=self.__get_transforms,
-            qos_profile=1,
-        )
-
         # END ROS SETUP ###
 
     # CALLBACKS ###
-    def __get_transforms(self, data: TFMessage):
-        self.transforms = data.transforms
 
     def __get_entities(self, data: MapMsg):
         """
@@ -108,7 +98,7 @@ class Potential_field_node(CompatibleNode):
 
     def __get_trajectory(self, data: Path):
         # currently not used
-        self.trajectory: Path = data
+        self.trajectory = data
 
     # END CALLBACKS ###
 
@@ -147,16 +137,18 @@ class Potential_field_node(CompatibleNode):
                 continue
 
     def __get_local_trajectory(self):
-        buffer = Buffer()
-        listener = TransformListener(buffer)
+        tf_buffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tf_buffer)
 
+        trans: TransformStamped = tf_buffer.lookup_transform("hero", "global", rospy.Time())
         local_traj = Path()
         local_traj.header = rospy.Header()
         local_traj.header.stamp = rospy.Time.now()
         local_traj.header.frame_id = "hero"
         local_traj.poses = []
         for pose in self.trajectory.poses:
-            local_traj.poses.append(buffer.transform(pose, "hero"))
+            pose.position.z = 0
+            local_traj.poses.append(do_transform_pose(pose, trans))
         self.local_trajectory_pub.publish(local_traj)
 
     def __calculate_field(self):
@@ -284,7 +276,7 @@ class Potential_field_node(CompatibleNode):
             try:
                 self.__get_local_trajectory()
             except Exception as e:
-                self.logerr(f"Exception {e} caught, from POTENTIAL FIELD")
+                self.logerr(f"PF: Exception {e} caught, from POTENTIAL FIELD")
             # PLOTTING
             # self.save_image(
             #    self.entity_matrix_for_plotting, "/workspace/code/entity_matrix.png"
