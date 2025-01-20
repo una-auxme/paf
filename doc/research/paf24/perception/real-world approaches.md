@@ -30,7 +30,7 @@ Overall it was surprising, that:
 1. cars are equiped with way more sensors than might be expected
 2. it seems as if the leading car developers are focusing now on decreasing the amount of sensors to benefit from lower cost, rather than increasing the number to improve their driving and safety. [[the verge](https://www.theverge.com/2018/3/28/17172666/uber-self-driving-crash-sensor-lidar-email-ducey)]
 
-Also, it seems that thereassets is a trend of using computer vision instead of regular sensors, which is probably caused by the rising improvement in this sector in recent years.
+Also, it seems that there is a trend of using computer vision instead of regular sensors, which is probably caused by the rising improvement in this sector in recent years.
 
 ## Future research
 
