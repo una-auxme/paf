@@ -129,6 +129,10 @@ class Map:
         else:
             return None
 
+    def lane_free(self, right: bool) -> bool:
+
+        return True
+
     """def project_plane(start_point, size_x, size_y):
 
         Projects a rectangular plane starting from (0, 0) forward in the x-direction.

@@ -4,6 +4,9 @@ from std_msgs.msg import String
 import numpy as np
 from behaviors import behavior_speed as bs
 
+from mapping_common.map import Map
+from mapping import msg
+
 
 class LeaveParkingSpace(py_trees.behaviour.Behaviour):
     """
@@ -84,6 +87,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
         position = self.blackboard.get("/paf/hero/current_pos")
         speed = self.blackboard.get("/carla/hero/Speed")
+        data = self.blackboard.get("/paf/hero/mapping/init_data")
+
         if self.called is False:
             # calculate distance between start and current position
             if (
@@ -91,6 +96,10 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 and self.initPosition is not None
                 and speed is not None
             ):
+                map = Map.from_ros_msg(data)
+                free = map.lane_free(True)
+                rospy.loginfo(f"Lane free function: {map}")
+
                 startPos = np.array(
                     [position.pose.position.x, position.pose.position.y]
                 )
