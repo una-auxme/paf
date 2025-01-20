@@ -11,7 +11,6 @@ from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from std_msgs.msg import (
     Header,
     Float32MultiArray,
-    Int8MultiArray,
 )
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
@@ -22,7 +21,7 @@ from ultralytics.utils.ops import scale_masks
 from time import time_ns
 import ros_numpy
 from visualization_msgs.msg import MarkerArray
-from lidar_distance import create_bounding_box_marker
+from mapping.msg import PointcloudClusterArray
 
 
 class VisionNode(CompatibleNode):
