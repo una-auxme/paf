@@ -486,5 +486,12 @@ for t in _entity_supported_classes:
 
 @dataclass
 class ShapelyEntity:
+    """A Container containing both an entity and a shapely.Polygon
+    based on the entity's shape and transform
+
+    **IMPORTANT** If the entity is modified, the Polygon will
+    not automatically update itself and will contain outdated information.
+    """
+
     entity: Entity
     poly: shapely.Polygon

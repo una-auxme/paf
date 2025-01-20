@@ -5,6 +5,7 @@ from mapping_common.map import Map
 from mapping_common.transform import Transform2D, Vector2
 
 import test_entity
+import test_shape
 
 
 def test_circle_shapely():
@@ -21,6 +22,31 @@ def test_rectangle_shapely():
     poly = s.to_shapely(Transform2D.identity())
     bounds = poly.bounds
     assert bounds == (-2.0, -0.75, 2.0, 0.75)
+
+
+def test_polygon_to_shapely():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    bounds = poly.bounds
+    assert bounds == (1.0, 2.0, 5.0, 6.0)
+
+
+def test_polygon_from_shapely():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    s_conv = shape.Polygon.from_shapely(poly)
+
+    assert s == s_conv
+
+
+def test_polygon_to_from_shapely_centered():
+    s = test_shape.get_polygon()
+    poly = s.to_shapely(Transform2D.identity())
+    s_conv = shape.Polygon.from_shapely(poly, make_centered=True)
+    poly_conv = s_conv.to_shapely(Transform2D.identity())
+
+    assert poly.equals_exact(poly_conv, tolerance=0.0)
+    assert s_conv.offset.translation() == Vector2.new(3.0, 4.0)
 
 
 def test_car_shapely():
@@ -58,16 +84,16 @@ def get_test_entities() -> List[entity.Entity]:
     return entities
 
 
-def test_map_tree_nearby():
+def test_map_tree_nearest():
     entities = get_test_entities()
 
     map = Map(entities=entities)
     tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
     test_shape = shape.Circle(0.5).to_shapely(Transform2D.identity())
-    nearest = tree.nearest([test_shape])
+    nearest = tree.nearest(test_shape)
 
-    assert len(nearest) == 1
-    assert nearest[0].entity == entities[2]
+    assert nearest is not None
+    assert nearest.entity == entities[2]
 
 
 def test_map_tree_query():
@@ -76,7 +102,20 @@ def test_map_tree_query():
     map = Map(entities=entities)
     tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
     test_shape = shape.Rectangle(3.0, 1.0).to_shapely(Transform2D.identity())
-    query = tree.query([test_shape])
+    query = tree.query(test_shape)
 
     assert len(query) == 1
     assert query[0].entity == entities[2]
+
+
+def test_map_tree_query_nearest():
+    entities = get_test_entities()
+
+    map = Map(entities=entities)
+    tree = map.build_tree(f=entity.FlagFilter(is_collider=True))
+    test_shape = shape.Rectangle(1.0, 1.0).to_shapely(Transform2D.identity())
+    query = tree.query_nearest(test_shape)
+
+    assert len(query) == 1
+    assert query[0][0].entity == entities[2]
+    assert query[0][1] == 1.0
