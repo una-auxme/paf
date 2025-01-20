@@ -7,7 +7,7 @@ import torch
 import cv2
 from vision_node_helper import coco_to_carla, carla_colors
 from rospy.numpy_msg import numpy_msg
-from sensor_msgs.msg import PointCloud2, Image as ImageMsg
+from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import (
     Header,
     Float32MultiArray,
@@ -19,9 +19,8 @@ from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 import rospy
 from ultralytics.utils.ops import scale_masks
 from time import time_ns
-import ros_numpy
-from visualization_msgs.msg import MarkerArray
 from mapping.msg import PointcloudClusterArray
+from perception_utils import array_to_pointcloud_cluster_array
 
 
 class VisionNode(CompatibleNode):
@@ -89,7 +88,6 @@ class VisionNode(CompatibleNode):
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
-        self.setup_image_marker_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -147,7 +145,7 @@ class VisionNode(CompatibleNode):
         """
 
         self.pointcloud_publisher = self.new_publisher(
-            msg_type=PointCloud2,
+            msg_type=PointcloudClusterArray,
             topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
@@ -208,13 +206,6 @@ class VisionNode(CompatibleNode):
             qos_profile=1,
         )
 
-    def setup_image_marker_publishers(self):
-        self.marker_visualization_vision_node_publisher = rospy.Publisher(
-            rospy.get_param("~marker_topic", "/paf/hero/Image/Marker"),
-            MarkerArray,
-            queue_size=10,
-        )
-
     def handle_camera_image(self, image):
         """
         This function handles a new camera image and publishes the
@@ -229,13 +220,8 @@ class VisionNode(CompatibleNode):
             torch.cuda.empty_cache()
 
         if self.framework == "ultralytics":
-            timestamp1 = time_ns()
-
             vision_result = self.predict_ultralytics(
-                image, return_image=False, image_size=320
-            )
-            rospy.loginfo(
-                f"Segmentation mask processing took {(time_ns() - timestamp1) / 1e6} ms"
+                image, return_image=True, image_size=500
             )
         else:
             # As we will not use pytorch models this is to prevent errors
@@ -338,14 +324,17 @@ class VisionNode(CompatibleNode):
             lidar_array=self.lidar_array,
         )
         if valid_points is not None:
-            try:
-                clustered_points, valid_labels, valid_class_indices = (
-                    self.cluster_points(valid_points, class_indices)
+            clustered_points, cluster_indices, carla_classes_indices = (
+                self.cluster_points(valid_points, class_indices, carla_classes)
+            )
+            self.pointcloud_publisher.publish(
+                array_to_pointcloud_cluster_array(
+                    clustered_points,
+                    cluster_indices,
+                    object_class_array=carla_classes_indices,
+                    header_id="hero",
                 )
-                self.publish_pointcloud(clustered_points)
-
-            except Exception as e:
-                rospy.logerr(f"Error while processing point clusters: {e}")
+            )
 
         # proceed with traffic light detection
         # if 9 in output[0].boxes.cls:
@@ -412,7 +401,9 @@ class VisionNode(CompatibleNode):
 
         return combined_points, valid_indices[0]
 
-    def cluster_points(self, points, class_indices, eps=0.5, min_samples=2):
+    def cluster_points(
+        self, points, class_indices, carla_classes, eps=0.5, min_samples=2
+    ):
         """
         Clusters all points in the point cloud and determines the largest cluster for each segmentation class in one pass.
 
@@ -454,7 +445,7 @@ class VisionNode(CompatibleNode):
 
         # Map the largest cluster for each class
         largest_clusters = {}
-        for idx, (class_idx, cluster_label) in enumerate(unique_combinations):
+        for idx, (class_idx, _) in enumerate(unique_combinations):
             if (
                 class_idx not in largest_clusters
                 or counts[idx] > counts[largest_clusters[class_idx]]
@@ -467,16 +458,12 @@ class VisionNode(CompatibleNode):
             [largest_clusters[class_idx] for class_idx in largest_clusters],
         )
         clustered_points = valid_points[selected_points_mask]
-        valid_labels = list(largest_clusters.keys())
 
-        return clustered_points, valid_labels, valid_class_indices[selected_points_mask]
-
-    def publish_pointcloud(self, combined_points):
-        # Publish point cloud
-        pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(combined_points)
-        pointcloud_msg.header.frame_id = "hero/vision_clusters"
-        pointcloud_msg.header.stamp = rospy.Time.now()
-        self.pointcloud_publisher.publish(pointcloud_msg)
+        return (
+            clustered_points,
+            valid_class_indices[selected_points_mask],
+            carla_classes[valid_class_indices[selected_points_mask]],
+        )
 
     def publish_distance_output(
         self, valid_points, valid_points_from_mask, carla_classes
