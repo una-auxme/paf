@@ -2,6 +2,8 @@ from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
 
+import shapely
+
 from uuid import UUID, uuid4
 from genpy.rostime import Time, Duration
 from std_msgs.msg import Header
@@ -369,6 +371,9 @@ class Entity:
 
         return m
 
+    def to_shapely(self) -> "ShapelyEntity":
+        return ShapelyEntity(self, self.shape.to_shapely(self.transform))
+
 
 @dataclass(init=False)
 class Car(Entity):
@@ -513,3 +518,16 @@ _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()
     _entity_supported_classes_dict[t_name] = t
+
+
+@dataclass
+class ShapelyEntity:
+    """A Container containing both an entity and a shapely.Polygon
+    based on the entity's shape and transform
+
+    **IMPORTANT** If the entity is modified, the Polygon will
+    not automatically update itself and will contain outdated information.
+    """
+
+    entity: Entity
+    poly: shapely.Polygon

@@ -10,6 +10,7 @@ def get_transform():
 
 
 def get_car():
+    flags = entity.Flags(is_collider=True)
     return entity.Car(
         indicator=entity.Car.IndicatorState.LEFT,
         confidence=1.0,
@@ -17,6 +18,7 @@ def get_car():
         shape=get_shape(),
         transform=get_transform(),
         motion=get_motion(),
+        flags=flags,
     )
 
 
