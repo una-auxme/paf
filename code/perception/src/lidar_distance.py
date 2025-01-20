@@ -390,7 +390,7 @@ def generate_bounding_boxes(points_with_labels):
     return bounding_boxes
 
 
-def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
+def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LIDAR"):
     """
     Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
 

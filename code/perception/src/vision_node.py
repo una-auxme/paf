@@ -90,7 +90,7 @@ class VisionNode(CompatibleNode):
         self.setup_camera_publishers()
         self.setup_object_distance_publishers()
         self.setup_traffic_light_publishers()
-        self.setup_segmentation_mask_publishers()
+        self.setup_image_marker_publishers()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
 
@@ -209,17 +209,7 @@ class VisionNode(CompatibleNode):
             qos_profile=1,
         )
 
-    def setup_segmentation_mask_publishers(self):
-        """
-        sets up a publisher for segmentation masks found in the image
-        """
-
-        self.segmentation_mask_publisher = self.new_publisher(
-            msg_type=numpy_msg(Int8MultiArray),
-            topic=f"/paf/{self.role_name}/Center/segmentation_masks",
-            qos_profile=1,
-        )
-
+    def setup_image_marker_publishers(self):
         self.marker_visualization_vision_node_publisher = rospy.Publisher(
             rospy.get_param("~marker_topic", "/paf/hero/Image/Marker"),
             MarkerArray,
@@ -353,7 +343,7 @@ class VisionNode(CompatibleNode):
                 clustered_points, valid_labels, valid_class_indices = (
                     self.cluster_points(valid_points, class_indices)
                 )
-                # self.publish_pointcloud(clustered_points)
+                self.publish_pointcloud(clustered_points)
 
                 bounding_boxes = self.calculate_bounding_boxes(
                     clustered_points, valid_class_indices
@@ -362,7 +352,9 @@ class VisionNode(CompatibleNode):
                 # Create a MarkerArray for visualization
                 marker_array = MarkerArray()
                 for label in bounding_boxes:
-                    marker = create_bounding_box_marker(label, bounding_boxes[label])
+                    marker = create_bounding_box_marker(
+                        label, bounding_boxes[label], frame_id="hero"
+                    )
                     marker_array.markers.append(marker)
 
                 # Publish the MarkerArray for visualization
@@ -371,8 +363,8 @@ class VisionNode(CompatibleNode):
                 rospy.logerr(f"Error while processing point clusters: {e}")
 
         # proceed with traffic light detection
-        if 9 in output[0].boxes.cls:
-            self.process_traffic_lights(output[0], cv_image, image.header)
+        # if 9 in output[0].boxes.cls:
+        #    self.process_traffic_lights(output[0], cv_image, image.header)
 
         if return_image is False or scaled_masks is None:
             return None
@@ -437,72 +429,62 @@ class VisionNode(CompatibleNode):
 
     def cluster_points(self, points, class_indices, eps=0.5, min_samples=2):
         """
-        Clusters all points in the point cloud based on segmentation classes.
-        Returns only the largest cluster for each class.
+        Clusters all points in the point cloud and determines the largest cluster for each segmentation class in one pass.
 
         Parameters:
             points (numpy structured array): Array of points with fields 'x', 'y', 'z'.
             class_indices (numpy array): Array of segmentation mask indices for each point.
-            eps (float): Maximum distance between points to be considered in the same
-                        neighborhood.
+            eps (float): Maximum distance between points to be considered in the same neighborhood.
             min_samples (int): Minimum number of points to form a dense region (cluster).
 
         Returns:
-            clustered_points (numpy structured array): Points belonging to the largest cluster
-                                                    for each class index.
+            clustered_points (numpy structured array): Points belonging to the largest cluster for each class index.
             valid_labels (numpy array): Labels corresponding to each class index (one per class).
             valid_class_indices (numpy array): Class indices corresponding to the returned points.
         """
-        clustered_points_list = []
-        valid_labels_list = []
-        valid_class_indices_list = []
+        if points.size == 0:
+            return np.array([], dtype=points.dtype), [], []
 
-        unique_classes = np.unique(class_indices)
+        # Convert to a regular 2D array for clustering
+        xyz_points = np.vstack((points["x"], points["y"], points["z"])).T
 
-        for class_idx in unique_classes:
-            # Filter points belonging to the current class
-            class_mask = class_indices == class_idx
-            class_points = points[class_mask]
+        # Apply DBSCAN clustering to all points at once
+        db = DBSCAN(eps=eps, min_samples=min_samples)
+        cluster_labels = db.fit_predict(xyz_points)
 
-            if class_points.size == 0:
-                continue
+        # Combine class indices and cluster labels to identify unique groups
+        combined_labels = np.vstack((class_indices, cluster_labels)).T
 
-            # Convert to a regular 2D array for clustering
-            xyz_points = np.vstack(
-                (class_points["x"], class_points["y"], class_points["z"])
-            ).T
+        # Ignore noise points (cluster_label == -1)
+        valid_mask = cluster_labels != -1
+        valid_points = points[valid_mask]
+        valid_combined_labels = combined_labels[valid_mask]
+        valid_class_indices = class_indices[valid_mask]
 
-            # Apply DBSCAN clustering
-            db = DBSCAN(eps=eps, min_samples=min_samples)
-            labels = db.fit_predict(xyz_points)
+        # Find the largest cluster for each class
+        unique_combinations, inverse_indices = np.unique(
+            valid_combined_labels, axis=0, return_inverse=True
+        )
+        counts = np.bincount(inverse_indices)
 
-            # Identify the largest cluster for this class
-            unique_labels, counts = np.unique(labels, return_counts=True)
-            largest_cluster_label = (
-                unique_labels[np.argmax(counts)] if unique_labels.size > 0 else -1
-            )
+        # Map the largest cluster for each class
+        largest_clusters = {}
+        for idx, (class_idx, cluster_label) in enumerate(unique_combinations):
+            if (
+                class_idx not in largest_clusters
+                or counts[idx] > counts[largest_clusters[class_idx]]
+            ):
+                largest_clusters[class_idx] = idx
 
-            if largest_cluster_label == -1:  # Skip noise-only results
-                continue
+        # Extract points belonging to the largest cluster for each class
+        selected_points_mask = np.isin(
+            inverse_indices,
+            [largest_clusters[class_idx] for class_idx in largest_clusters],
+        )
+        clustered_points = valid_points[selected_points_mask]
+        valid_labels = list(largest_clusters.keys())
 
-            # Get points belonging to the largest cluster
-            largest_cluster_mask = labels == largest_cluster_label
-            largest_cluster_points = class_points[largest_cluster_mask]
-
-            # Append results
-            clustered_points_list.append(largest_cluster_points)
-            valid_labels_list.append(class_idx)  # Use the class index as the label
-            valid_class_indices_list.extend([class_idx] * len(largest_cluster_points))
-
-        # Concatenate results into arrays
-        if clustered_points_list:
-            clustered_points = np.concatenate(clustered_points_list)
-            valid_class_indices = np.array(valid_class_indices_list)
-        else:
-            clustered_points = np.array([], dtype=points.dtype)
-            valid_class_indices = np.array([])
-
-        return clustered_points, valid_labels_list, valid_class_indices
+        return clustered_points, valid_labels, valid_class_indices[selected_points_mask]
 
     def calculate_bounding_boxes(self, clustered_points, cluster_labels):
         """
