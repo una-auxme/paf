@@ -5,6 +5,7 @@ import numpy as np
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import PointCloud2, PointField
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import HDBSCAN
 from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
@@ -33,31 +34,31 @@ class RadarNode(CompatibleNode):
     def __init__(self):
 
         self.dbscan_eps = float(self.get_param("dbscan_eps", "0.4"))
-        self.dbscan_samples = int(self.get_param("dbscan_samples", "3"))
+        self.dbscan_samples = int(self.get_param("dbscan_samples", "5"))
 
         # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
         # Alternative: only one set of data
         self.sensor_data = {
-            "RADAR": None,
-            "RADAR2": None,
-            "RADAR3": None,
+            "RADAR0": None,
+            "RADAR1": None,
+            # "RADAR3": None,
         }
 
         # Sensor-Konfiguration: [X, Y, Z, Roll, Pitch, Jaw]
         self.sensor_config = {
-            "RADAR0": [2.0, 0.5, 0.7, 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, -0.5, 0.7, 0.0, 0.0, 0.0],
-            "RADAR2": [2.0, -1.5, 0.7, 0.0, 0.0, 0.0],
-            "RADAR3": [2.0, 1.5, 0.7, 0.0, 0.0, 0.0],
+            "RADAR0": [2.0, -1.5, 0.7],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 1.5, 0.7],  # , 0.0, 0.0, 0.0],
+            # "RADAR2": [2.0, -1.5, 0.7, 0.0, 0.0, 0.0],
+            # "RADAR3": [2.0, 1.5, 0.7, 0.0, 0.0, 0.0],
         }
-        self.transformation_matrix = {}
+        # self.transformation_matrix = {}
 
-        for sensor_name, config in self.sensor_config.items():
-            # Create transformation matrix
-            self.transformation_matrix[sensor_name] = self.get_transformation_matrix(
-                *config
-            )
+        # for sensor_name, config in self.sensor_config.items():
+        #    # Create transformation matrix
+        #    self.transformation_matrix[sensor_name] = self.get_transformation_matrix(
+        #        *config
+        #    )
 
         self.timer_interval = 0.1  # 0.1 seconds
 
@@ -269,10 +270,13 @@ class RadarNode(CompatibleNode):
 
         # Wende die Transformation an
         # transformation_matrix = self.get_transformation_matrix(*translation)
+        x, y, z = self.sensor_config[sensor_name]
         transformed_points = np.array(
             [
-                self.transform_point(point, self.transformation_matrix[sensor_name])
-                for point in data_array  # filtered_data
+                np.append(
+                    point[:3] + np.array([x, y, z]), point[3]
+                )  # Transformiere die ersten 3 Werte und füge den 4. hinzu
+                for point in data_array
             ]
         )
 
@@ -491,17 +495,17 @@ class RadarNode(CompatibleNode):
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR2"), PointCloud2, self.callback,)
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR3"), PointCloud2, self.callback,)
         rospy.Subscriber(
-            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR0"
+            "/carla/hero/RADAR0", PointCloud2, self.callback, callback_args="RADAR0"
         )
         rospy.Subscriber(
-            "/carla/hero/RADAR", PointCloud2, self.callback, callback_args="RADAR1"
+            "/carla/hero/RADAR1", PointCloud2, self.callback, callback_args="RADAR1"
         )
-        rospy.Subscriber(
+        """rospy.Subscriber(
             "/carla/hero/RADAR2", PointCloud2, self.callback, callback_args="RADAR2"
         )
         rospy.Subscriber(
             "/carla/hero/RADAR3", PointCloud2, self.callback, callback_args="RADAR3"
-        )
+        )"""
         rospy.Subscriber(
             "/clock",  # rospy.get_param("/clock_topic", "/clock"),
             Clock,
@@ -596,8 +600,14 @@ def cluster_data(data, eps=0.5, min_samples=3):
     if len(data) == 0:
         return {}
     scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(data)
-    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    # data_reduced = data[:, [0, 1, 3]]
+
+    data_reduced = data
+    data_reduced[:, 2] = 0
+    # data_scaled = scaler.fit_transform(data_reduced)
+
+    clustered_points = HDBSCAN(min_cluster_size=10).fit(data_reduced)
+    # clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
 
     return clustered_points
 

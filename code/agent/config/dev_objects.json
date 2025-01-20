@@ -127,13 +127,13 @@
           "id": "RADAR0",
           "spawn_point": {
             "x": 2.0,
-            "y": 0.5,
+            "y": 1.5,
             "z": 0.7,
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0
           },
-          "horizontal_fov": 15.0,
+          "horizontal_fov": 25.0,
           "vertical_fov": 1.0,
           "points_per_second": 1500,
           "range": 100.0
@@ -143,45 +143,13 @@
           "id": "RADAR1",
           "spawn_point": {
             "x": 2.0,
-            "y": -0.5,
-            "z": 0.7,
-            "roll": 0.0,
-            "pitch": 0.0,
-            "yaw": 0.0
-          },
-          "horizontal_fov": 15.0,
-          "vertical_fov": 1.0,
-          "points_per_second": 1500,
-          "range": 100.0
-        },
-        {
-          "type": "sensor.other.radar",
-          "id": "RADAR2",
-          "spawn_point": {
-            "x": 2.0,
-            "y": 1.5,
-            "z": 0.7,
-            "roll": 0.0,
-            "pitch": 0.0,
-            "yaw": 0.0
-          },
-          "horizontal_fov": 20.0,
-          "vertical_fov": 1.0,
-          "points_per_second": 1500,
-          "range": 100.0
-        },
-        {
-          "type": "sensor.other.radar",
-          "id": "RADAR3",
-          "spawn_point": {
-            "x": 2.0,
             "y": -1.5,
             "z": 0.7,
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0
           },
-          "horizontal_fov": 20.0,
+          "horizontal_fov": 25.0,
           "vertical_fov": 1.0,
           "points_per_second": 1500,
           "range": 100.0

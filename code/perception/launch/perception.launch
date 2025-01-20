@@ -96,8 +96,8 @@
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR0"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR1"/>
-    <param name="point_cloud_topic" value="/carla/hero/RADAR2"/>
-    <param name="point_cloud_topic" value="/carla/hero/RADAR3"/>
+    <!--<param name="point_cloud_topic" value="/carla/hero/RADAR2"/>
+    <param name="point_cloud_topic" value="/carla/hero/RADAR3"/>-->
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
     <param name="dbscan_eps" value="$(arg dbscan_eps)"/>
     <param name="dbscan_samples" value="$(arg dbscan_samples)"/>
