@@ -17,6 +17,10 @@ from mapping.msg import Map as MapMsg
 # clustering imports
 import numpy as np
 from sklearn.cluster import DBSCAN
+import cv2
+
+# debugging
+import time
 
 
 class lane_position(CompatibleNode):
@@ -118,7 +122,7 @@ class lane_position(CompatibleNode):
         and publishes them"""
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         stamp = ImageMsg.header.stamp
-
+        self.edge_detection(lanemask)
         positions, angles, confidences = self.process_lanemask(
             lanemask,
         )
@@ -126,14 +130,39 @@ class lane_position(CompatibleNode):
         lanemarkings = self.lanemarking_from_coordinates(
             positions, angles, confidences, stamp, predicted=False
         )
-        predicted_lanemarkings = self.predict_lanemarkings(
+        """predicted_lanemarkings = self.predict_lanemarkings(
             positions, angles, confidences, stamp
-        )
+        )"""
 
-        self.publish_Lanemarkings_map(lanemarkings + predicted_lanemarkings)
+        self.publish_Lanemarkings_map(lanemarkings)
+
+    def edge_detection(self, lanemask):
+        image = np.array(lanemask)
+        # Definiere einen Kernel für horizontale Linien
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_RECT, (50, 1)
+        )  # Breiter Kernel für horizontale Strukturen
+
+        # Erkenne horizontale Linien in der Maske
+        horizontal_lines = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+
+        # Entferne die horizontalen Linien aus der Lanemaske
+        updated_mask = image - horizontal_lines
+        ros_image = self.bridge.cv2_to_imgmsg(updated_mask)
+        self.label_image_publisher.publish(ros_image)
 
     def process_lanemask(self, lanemask):
-        """processes the lanemask to extract center position, angle and confidence
+
+        points = self.mask_lidarpoints(lanemask)
+        clusters = self.cluster_points(points)
+        positions, angles, deviations = self.get_lanemarking_position_and_angle(
+            clusters
+        )
+        confidences = self.determine_confidences(angles, clusters, deviations)
+        return positions, angles, confidences
+
+    """def process_lanemask(self, lanemask):
+        """ """processes the lanemask to extract center position, angle and confidence
         for each found lanemarking
 
         Args:
@@ -141,17 +170,33 @@ class lane_position(CompatibleNode):
 
 
         Returns:
-            _type_: _description_
-        """
+            position, angle and condifence of all lanemarkings"""
+    """
+
+        clustering_s = time.time()
         clustered_mask, labels = self.cluster_points(lanemask)
+        clustering_e = time.time()
+        mask_s = time.time()
         lidar_clusters, cluster_sizes = self.mask_lidarpoints(clustered_mask, labels)
+        mask_e = time.time()
+        label_s = time.time()
         self.publish_label_image(clustered_mask)
+        label_e = time.time()
+        lanemarking_s = time.time()
         positions, angles, deviations = self.get_lanemarking_position_and_angle(
             lidar_clusters, cluster_sizes
         )
+        lanemarking_e = time.time()
+        confidence_s = time.time()
         confidences = self.determine_confidences(angles, cluster_sizes, deviations)
+        confidence_e = time.time()
+        custering_time = clustering_e - clustering_s
+        mask_time = mask_e - mask_s
+        label_time = label_e - label_s
+        lanemarking_time = lanemarking_e - lanemarking_s
+        confidence_time = confidence_e - confidence_s
 
-        return positions, angles, confidences
+        return positions, angles, confidences"""
 
     def lanemarking_from_coordinates(
         self, positions, angles, confidences, stamp, predicted=False
@@ -269,7 +314,7 @@ class lane_position(CompatibleNode):
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
-    def determine_confidences(self, angles, cluster_sizes, linear_deviations):
+    def determine_confidences(self, angles, cluster_dict, linear_deviations):
         """determines a confidence for every found lanemarking.
         confidence score consists of:
             - Median Angle of the lanemarking to the others,
@@ -287,7 +332,8 @@ class lane_position(CompatibleNode):
             array with confidence scores
         """
         confidences = []
-
+        # Use map to get the lengths of the clusters and convert it to a list
+        cluster_sizes = list(map(lambda item: len(item[1]), cluster_dict.items()))
         median_angle_deviations = self.get_median_angle(angles)
         # calculate the confidence for each lanemarking
         for angle, cluster_size, deviation in zip(
@@ -325,16 +371,21 @@ class lane_position(CompatibleNode):
         median_angle_deviations = np.nanmedian(angle_diff, axis=1)
         return median_angle_deviations
 
-    def mask_lidarpoints(self, clustered_mask, labels):
-        """filters out all lidarpoints, that dont collide with the lane mask.
+    def mask_lidarpoints(self, lanemask):
+        points = self.dist_arrays[lanemask == 255]
+        points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
+        return points
+
+    """def mask_lidarpoints(self, clustered_mask, labels):
+        """ """filters out all lidarpoints, that dont collide with the lane mask.
 
         Args:
             clustered_mask: lanemask divided in clusters for each lanemarking
             labels: array with clustering labels
         Returns:
             lidar_clusters: arrays with all valid lidara points divided by clusters
-            cluster_sizes: size of the lanemask clusters in pixels
-        """
+            cluster_sizes: size of the lanemask clusters in pixels"""
+    """
         lidar_clusters = []
         cluster_sizes = []
         unique_labels = set(labels)
@@ -349,7 +400,7 @@ class lane_position(CompatibleNode):
             if len(points) != 0:
                 lidar_clusters.append(points)
                 cluster_sizes.append(size)
-        return lidar_clusters, cluster_sizes
+        return lidar_clusters, cluster_sizes"""
 
     def distance_array_handler(self, ImageMsg):
         dist_array = self.bridge.imgmsg_to_cv2(
@@ -357,8 +408,55 @@ class lane_position(CompatibleNode):
         )
         self.dist_arrays = dist_array
 
-    def get_lanemarking_position_and_angle(self, clusters, cluster_size):
-        """calculates position and angle of lanemarkings using linear regression
+    def get_lanemarking_position_and_angle(self, clusters):
+        """Processes clusters and calculates line fitting for each cluster
+        to extract lane markings."""
+        lanemarkings = []
+        angles = []
+        deviations = []
+
+        # Iterate through each cluster in the dictionary
+        for label, cluster in clusters.items():
+            y = cluster[:, 1]  # y-coordinates
+            x = cluster[:, 0]  # x-coordinates
+
+            # Skip clusters with fewer than 3 points
+            if len(x) < 3:
+                continue
+
+            # Fit a line (linear regression) to the points in the cluster
+            p, res = np.polyfit(x, y, deg=1, cov=True)
+
+            # Calculate the standard deviation of the fit
+            if np.ndim(res) == 2:
+                std_dev = np.sqrt(
+                    np.diag(res)
+                )  # Standard deviation from the covariance matrix
+            else:
+                std_dev = np.sqrt(
+                    res
+                )  # If covariance is a vector, take the square root
+
+            deviations.append(std_dev[0])  # Standard deviation of the slope
+
+            # Get the slope (m) of the line
+            m = p[0]
+
+            # Calculate the center of the cluster (mean of x and y coordinates)
+            center_y = np.mean(y)
+            center_x = np.mean(x)
+
+            # Calculate the angle of the line relative to the x-axis (in radians)
+            theta = np.arctan(m)
+
+            # Store the results for lanemarkings, angles, and deviations
+            angles.append(theta)
+            lanemarkings.append([center_x, center_y])
+
+        return lanemarkings, angles, deviations
+
+    """def get_lanemarking_position_and_angle(self, clusters):
+        """ """calculates position and angle of lanemarkings using linear regression
           on given lidar points
         inputs:
             -clusters: array with x and y coordinates of lidar points in clusters
@@ -368,8 +466,8 @@ class lane_position(CompatibleNode):
         outputs:
             -lanemarkings: x_center and y_center of all lanemarkings
             -angles: angles of all lanemarkings to the car heading
-            -deviations: standard deviations from polyfit (linear regression)
-        """
+            -deviations: standard deviations from polyfit (linear regression)"""
+    """
         # Berechnung der position und des winkels für jeden Cluster
         lanemarkings = []
         angles = []
@@ -395,10 +493,42 @@ class lane_position(CompatibleNode):
             angles.append(theta)
 
             lanemarkings.append([center_x, center_y])
-        return lanemarkings, angles, deviations
+        return lanemarkings, angles, deviations"""
 
-    def cluster_points(self, lanemask):
-        """clusters the lanemask to seperate the different lanemarkings
+    def cluster_points(self, points):
+
+        labels = []
+        try:
+            clustering = DBSCAN(
+                eps=self.epsilon, min_samples=self.min_samples, algorithm="ball_tree"
+            ).fit(
+                points
+            )  # HDBSCAN
+            labels = clustering.labels_
+        except Exception as e:
+            print(f"could not cluster given points: {str(e)}")
+
+        # Find the unique cluster labels (excluding -1 for outliers)
+        unique_labels = np.unique(labels)
+
+        # Dictionary to store clusters
+        clusters = {}
+
+        # Group points by their labels
+        for label in unique_labels:
+            # Extract all points that belong to the current label
+            cluster_points = points[labels == label]
+
+            # If the cluster is not the outlier cluster (-1), store it
+            if label != -1:
+                clusters[label] = cluster_points
+            else:
+                clusters["outliers"] = cluster_points  # Store outliers separately
+
+        return clusters
+
+    """ def cluster_points(self, lanemask):
+        """ """clusters the lanemask to seperate the different lanemarkings
 
         Args:
             lanemask: lanemask given by Lanedetection node
@@ -406,23 +536,31 @@ class lane_position(CompatibleNode):
         Returns:
             clustered_mask: arrays with size of lanemask filled with labels
             of the clustering
-            labels: arrary with the labels for all pixels
-        """
+            labels: arrary with the labels for all pixels"""
+    """
         labels = []
         clustering = []
+        points_s = time.time()
         points = np.argwhere(lanemask == 255)
         clustered_mask = np.zeros_like(lanemask, dtype=int)
+        points_e = time.time()
         try:
             # DBSCAN-Clustering
-            clustering = DBSCAN(eps=self.epsilon, min_samples=self.min_samples).fit(
-                points
-            )
+            cluster_s = time.time()
+            clustering = DBSCAN(
+                eps=self.epsilon, min_samples=self.min_samples, algorithm="ball_tree"
+            ).fit(points)
+            cluster_e = time.time()
             labels = clustering.labels_ + 1
+            mask_s = time.time()
             clustered_mask[points[:, 0], points[:, 1]] = labels
-
+            mask_e = time.time()
+            points_time = points_e - points_s
+            cluster_time = cluster_e - cluster_s
+            mask_time = mask_e - mask_s
         except Exception as e:
             print(f"could not cluster given points: {str(e)}")
-        return clustered_mask, labels
+        return clustered_mask, labels"""
 
     def predict_lanemarkings(self, centers, angles, confidences, stamp):
         """predicts new lanemarkings if a lanemarking angle is too steep
