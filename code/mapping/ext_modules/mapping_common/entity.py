@@ -374,6 +374,27 @@ class Entity:
     def to_shapely(self) -> "ShapelyEntity":
         return ShapelyEntity(self, self.shape.to_shapely(self.transform))
 
+    def is_mergeable_with(self, other: "Entity") -> bool:
+        """Returns if self should be merged/combined with other at all
+
+        Mainly used in the filtering steps of the intermediate layer map
+
+        Args:
+            other (Entity): Other entity to merge with
+
+        Returns:
+            bool: If self and other should be merged at all
+        """
+        if self.flags._is_collider is not other.flags._is_collider:
+            return False
+        if self.flags._is_lanemark is not other.flags._is_lanemark:
+            return False
+        if self.flags._is_stopmark is not other.flags._is_stopmark:
+            return False
+        if not (isinstance(self, type(other)) or isinstance(other, type(self))):
+            return False
+        return True
+
 
 @dataclass(init=False)
 class Car(Entity):

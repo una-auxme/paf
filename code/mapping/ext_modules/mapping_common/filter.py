@@ -16,11 +16,42 @@ class MapFilter:
     """Abstract base class for all mapping filters"""
 
     def filter(self, map: Map) -> Map:
+        """Filters the map.
+
+        Look into the class descripting for what the filter does
+
+        Args:
+            map (Map): _description_
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            Map: _description_
+        """
         raise NotImplementedError
 
 
 @dataclass
 class GrowthMergingFilter(MapFilter):
+    """Merges entities in the map with growing them
+
+    Basic (very simplified) function:
+    - Compares pairs of entities that are in the vicinity of each other
+    - For each pair:
+        - Checks if they are mergeable at all
+        - Grows their shape based on growth_distance
+            -> This is done in order to also catch small noisy entities
+            (outside) around a bigger entity
+        - Checks the min_merging_overlap_percent and min_merging_overlap_area
+            based on the intersection of the grown shapes
+        - -> Merge if at least one of them is true
+        - Creates a grown union for the merged entity
+        - Shrinks the union by growth_distance
+    - It then deletes all entities that got merged into another
+        and returns the resulting map
+    """
+
     growth_distance: float
     # Both checks ar OR-ed for merging
     min_merging_overlap_percent: float
@@ -101,12 +132,8 @@ class GrowthMergingFilter(MapFilter):
             else:
                 modified_entities[modified.uuid] = modified
 
-        # remove any modified_entities that are part of removed_entities
-        for uuid in removed_entities.keys():
-            if uuid in modified_entities:
-                del modified_entities[uuid]
         merged_entities: List[Entity] = []
-        # append the entities of the original map
+        # append the entities of the original map based on modifications and removals
         for entity in map.entities:
             if entity.uuid in removed_entities:
                 continue
@@ -115,9 +142,6 @@ class GrowthMergingFilter(MapFilter):
             else:
                 new_entry = entity
             merged_entities.append(new_entry)
-        # # append any modified entities that do not have uuids of the original map
-        # for entry in modified_entities.values():
-        #     merged_entities.append(entry)
 
         merged_map = Map(timestamp=map.timestamp, entities=merged_entities)
         return merged_map
@@ -129,7 +153,8 @@ def try_merge_pair(
         [Tuple[ShapelyEntity, ShapelyEntity]], Optional[Tuple[Transform2D, Shape2D]]
     ],
 ) -> Optional[Tuple[Entity, UUID]]:
-    # todo: Check if entity is even mergeable
+    if not pair[0].entity.is_mergeable_with(pair[1].entity):
+        return None
 
     merged_shape = shape_merge_fn(pair)
     if merged_shape is None:
@@ -153,6 +178,7 @@ def try_merge_pair(
         modified.motion = merge_entity.motion
     if modified.tracking_info is None:
         modified.tracking_info = merge_entity.tracking_info
+    modified.sensor_id += merge_entity.sensor_id
 
     return (modified, merge_entity.uuid)
 
