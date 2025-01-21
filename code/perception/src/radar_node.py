@@ -5,7 +5,8 @@ import numpy as np
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import PointCloud2, PointField
 from sklearn.cluster import DBSCAN
-from sklearn.cluster import HDBSCAN
+
+# from sklearn.cluster import HDBSCAN
 from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
@@ -13,11 +14,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Float32MultiArray
 from tf.transformations import quaternion_from_matrix
 
-import struct
-import numpy as np
-from math import radians, cos, sin
 from ros_compatibility.node import CompatibleNode
-import sensor_msgs.point_cloud2 as pc2
 
 import struct
 
@@ -55,11 +52,13 @@ class RadarNode(CompatibleNode):
 
     def time_check(self, time):
         """
-        Checks the current time and triggers data processing if the specified buffer time has elapsed.
+        Checks the current time and triggers data processing
+        if the specified buffer time has elapsed.
 
         Parameters:
         - time: ROS Time
-            A ROS time message containing the current time, with `secs` and `nsecs` attributes.
+            A ROS time message containing the current time,
+            with `secs` and `nsecs` attributes.
 
         Functionality:
         1. Verifies if data buffering is enabled using the `data_buffered` parameter.
@@ -67,12 +66,15 @@ class RadarNode(CompatibleNode):
         3. Updates the current time (`self.now`).
         4. If data collection has not started, exits the function.
         5. Initializes `self.previous_time` if it is set to 0.
-        6. Compares the elapsed time (`self.now - self.previous_time`) with the configured buffer time (`self.data_buffer_time`).
-        7. If the buffer time is exceeded, calls `process_data` to process sensor data and resets `self.previous_time`.
+        6. Compares the elapsed time (`self.now - self.previous_time`)
+           with the configured buffer time (`self.data_buffer_time`).
+        7. If the buffer time is exceeded, calls `process_data` to process sensor data
+           and resets `self.previous_time`.
 
         Returns:
         - None
-            The function manages its outputs through internal state updates and function calls.
+            The function manages its outputs through internal
+            state updates and function calls.
         """
 
         if not self.get_param("data_buffered", False):
@@ -144,12 +146,17 @@ class RadarNode(CompatibleNode):
 
         Functionality:
         1. Checks if data is buffered or from a single-data register.
-        2. Extracts and transforms points using `extract_points` for each sensor message.
+        2. Extracts and transforms points using `extract_points`
+           for each sensor message.
         3. Combines the points into a single dataset.
-        4. Performs clustering using the DBSCAN algorithm, with parameters `dbscan_eps` and `dbscan_samples`.
-        5. Creates a new PointCloud2 message with cluster labels and publishes it to a visualization topic.
-        6. Generates bounding boxes for the clustered points and publishes them as markers.
-        7. Publishes detailed cluster information, including cluster statistics and bounding box details.
+        4. Performs clustering using the DBSCAN algorithm, with parameters `dbscan_eps`
+           and `dbscan_samples`.
+        5. Creates a new PointCloud2 message with cluster labels and publishes it to a
+           visualization topic.
+        6. Generates bounding boxes for the clustered points and
+           publishes them as markers.
+        7. Publishes detailed cluster information, including cluster statistics and
+           bounding box details.
         8. Resets buffered and single-register sensor data after processing.
 
         Returns:
@@ -221,18 +228,21 @@ class RadarNode(CompatibleNode):
 
     def extract_points(self, msg, sensor_name):
         """
-        Extracts and transforms points from a ROS PointCloud2 message based on a specified sensor configuration.
+        Extracts and transforms points from a ROS PointCloud2 message based on
+          a specified sensor configuration.
 
         Parameters:
         - msg: sensor_msgs/PointCloud2
             The ROS PointCloud2 message containing the 3D points.
         - sensor_name: str
-            The name of the sensor, used to retrieve its transformation parameters from the sensor configuration.
+            The name of the sensor, used to retrieve its transformation parameters from
+            the sensor configuration.
 
         Returns:
         - np.ndarray
             A 2D array where each row represents a transformed point in the point cloud:
-            [x, y, z, Velocity]. Returns an empty array if the sensor name is not recognized.
+            [x, y, z, Velocity]. Returns an empty array if the sensor name is
+            not recognized.
         """
 
         if sensor_name not in self.sensor_config:
