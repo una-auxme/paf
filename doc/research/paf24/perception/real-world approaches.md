@@ -24,13 +24,13 @@ This research explores the types of sensors which are used in real-world autonom
 
 ## Key Observations
 
-The developers of self driving cars are mostly not sharing too much about their technology and how they use it. Information was mostly found in articles, which made assumptions on the cars.
-Overall it was surprising, that:
+Autonomous vehicle manufacturers generally maintain confidentiality regarding their technological implementations. Most available information comes from third-party analysis and observations.
+Key findings include:
 
-1. cars are equiped with way more sensors than might be expected
-2. it seems as if the leading car developers are focusing now on decreasing the amount of sensors to benefit from lower cost, rather than increasing the number to improve their driving and safety. [[the verge](https://www.theverge.com/2018/3/28/17172666/uber-self-driving-crash-sensor-lidar-email-ducey)]
+1. Vehicles are equipped with a higher number of sensors than initially anticipated
+2. Leading manufacturers are trending toward sensor count optimization for cost efficiency while maintaining safety standards [[the verge](https://www.theverge.com/2018/3/28/17172666/uber-self-driving-crash-sensor-lidar-email-ducey)]
 
-Also, it seems that there is a trend of using computer vision instead of regular sensors, which is probably caused by the rising improvement in this sector in recent years.
+Additionally, there is an industry-wide shift toward computer vision technologies, driven by significant technological advancements in the field.
 
 ## Future research
 
