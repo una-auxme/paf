@@ -293,11 +293,19 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def get_current_map_filters(self) -> List[MapFilter]:
         map_filters: List[MapFilter] = []
-        GrowthMergingFilter(
-            growth_distance=0.5,
-            min_merging_overlap_percent=0.5,
-            min_merging_overlap_area=0.5,
-        )
+
+        if self.get_param("~enable_merge_filter"):
+            map_filters.append(
+                GrowthMergingFilter(
+                    growth_distance=self.get_param("~merge_growth_distance"),
+                    min_merging_overlap_percent=self.get_param(
+                        "~min_merging_overlap_percent"
+                    ),
+                    min_merging_overlap_area=self.get_param(
+                        "~min_merging_overlap_area"
+                    ),
+                )
+            )
 
         return map_filters
 

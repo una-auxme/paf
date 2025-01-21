@@ -13,6 +13,11 @@
   <arg name="lidar_priority" default="0.25" />
   <arg name="lidar_discard_probability" default="0.9" />
 
+  <arg name="enable_merge_filter" default="True" />
+  <arg name="merge_growth_distance" default="0.3" />
+  <arg name="min_merging_overlap_percent" default="0.5" />
+  <arg name="min_merging_overlap_area" default="0.5" />
+
 
   <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration"
     output="screen">
@@ -30,6 +35,12 @@
     <param name="lidar_shape_radius" value="$(arg lidar_shape_radius)" />
     <param name="lidar_priority" value="$(arg lidar_priority)" />
     <param name="lidar_discard_probability" value="$(arg lidar_discard_probability)" />
+
+    <!-- Map filter configuration -->
+    <param name="enable_merge_filter" value="$(arg enable_merge_filter)" />
+    <param name="merge_growth_distance" value="$(arg merge_growth_distance)" />
+    <param name="min_merging_overlap_percent" value="$(arg min_merging_overlap_percent)" />
+    <param name="min_merging_overlap_area" value="$(arg min_merging_overlap_area)" />
   </node>
 
 </launch>
