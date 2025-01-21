@@ -111,6 +111,7 @@
     <param name="angle_normalization" value="25"/>
     <param name="size_normalization" value="5000"/>
     <param name="std_dev_normalization" value="0.1"/>
+    <param name="angle_prediction_threshold" value="5"/>
 
   </node>
 

@@ -46,10 +46,10 @@ class lane_position(CompatibleNode):
         self.min_samples = self.get_param(
             "min_samples_clustering"
         )  # min samples for clustering
-        self.angle_weigth = self.get_param(
-            "angle_weigth"
+        self.angle_weight = self.get_param(
+            "angle_weight"
         )  # weights for confidence calculation
-        self.size_weigth = self.get_param("size_weigth ")
+        self.size_weight = self.get_param("size_weight")
         self.std_dev_weight = self.get_param("std_dev_weight")
         self.angle_normalization = self.get_param(
             "angle_normalization"
@@ -60,6 +60,7 @@ class lane_position(CompatibleNode):
         self.std_dev_normalization = self.get_param(
             "std_dev_normalization"
         )  # max acceptable standard deviation in linearregression for normalization
+        self.angle_prediction_threshold = self.get_param("angle_prediction_threshold")
 
         self.setup_subscriptions()
         self.setup_publishers()
@@ -178,7 +179,7 @@ class lane_position(CompatibleNode):
             x, y = position
             transform = Transform2D.new_rotation_translation(angle, Vector2.new(x, y))
             shape = Rectangle(
-                width=self.line_width, length=self.line_length
+                width=self.line_width, length=self.line_length_to_y_axis(y, angle)
             )  # move to ros param
             style = Lanemarking.Style.SOLID
             flags = Flags(is_lanemark=True)
@@ -196,6 +197,23 @@ class lane_position(CompatibleNode):
             )
             entities.append(lanemarking)
         return entities
+
+    def line_length_to_y_axis(self, x, angle):
+        """
+        Calculates the total length of a line that is symmetric around (x, y)
+        and ends at the y-axis.
+        Args:
+        x: x-coordinate of the midpoint
+        angle: angle of the line in degrees
+        Returns: total length of the line
+        """
+
+        # Convert angle from degrees to radians
+        # theta = np.deg2rad(angle)
+
+        # Calculate the total length of the line
+        total_length = (2 * abs(x)) / abs(np.cos(angle))
+        return total_length
 
     def calc_position_indices(self, points):
         """gives each lanemarking a unique index, where 1 is the lane next to the car
@@ -283,8 +301,8 @@ class lane_position(CompatibleNode):
             normalized_std_dev = max(0, 1 - (deviation / self.std_dev_normalization))
 
             confidence = (
-                self.angle_weigth * normalized_angle
-                + self.size_weigth * normalized_size
+                self.angle_weight * normalized_angle
+                + self.size_weight * normalized_size
                 + self.std_dev_weight * normalized_std_dev
             )
             confidences.append(confidence)
@@ -304,7 +322,7 @@ class lane_position(CompatibleNode):
         angle_diff = np.abs(angles[:, None] - angles)
         # Set diagonal to np.nan, to ignore it while calculating the median
         np.fill_diagonal(angle_diff, np.nan)
-        median_angle_deviations = np.median(angle_diff, axis=1)
+        median_angle_deviations = np.nanmedian(angle_diff, axis=1)
         return median_angle_deviations
 
     def mask_lidarpoints(self, clustered_mask, labels):
@@ -324,8 +342,6 @@ class lane_position(CompatibleNode):
             if label == -1:
                 continue
             size = np.count_nonzero(clustered_mask == label)
-            """if size < self.confidence_treshold:
-                continue"""
             points_with_label = self.dist_arrays[clustered_mask == label]
             points = points_with_label[
                 ~np.all(points_with_label == [0.0, 0.0, 0.0], axis=1)
@@ -359,8 +375,6 @@ class lane_position(CompatibleNode):
         angles = []
         deviations = []
         for cluster in clusters:
-            """if cluster_size[index] < self.confidence_treshold:
-            continue"""
             y = cluster[:, 1]
             x = cluster[:, 0]
             if len(x) < 3:
