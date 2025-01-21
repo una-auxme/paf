@@ -1,6 +1,6 @@
 # Vision Node
 
-**Summary:** The Visison Node provides an adaptive interface that is able to perform object-detection and/or 
+**Summary:** The Visison Node provides an adaptive interface that is able to perform object-detection and/or
 image-segmentation.
 With the information of the object segmentation and the subscribed depth values the vision node calculates which
 lidar points are inside the segmented objects. Also with the segmented image parts of the object detection the traffic
@@ -17,7 +17,7 @@ light detection is implemented.
 
 ## Model overview
 
-The Vision-Node implements an interface for a lot of different models which can be specified in the perception launch 
+The Vision-Node implements an interface for a lot of different models which can be specified in the perception launch
 file.
 
 | Model                                 | Type         | Distance Calculation |
@@ -28,7 +28,7 @@ file.
 | yolo11m-seg                           | segmentation | yes    |
 | yolo11l-seg                           | segmentation | yes    |
 
-As only with segmentation masks the correct clusters of lidar points can be done, only segmentation models are 
+As only with segmentation masks the correct clusters of lidar points can be done, only segmentation models are
 implemented.
 
 ## How it works
@@ -37,7 +37,7 @@ The Vision-Node basically operates in multiple stages.
 
 1. Object-Detection
 2. Mapping the detected objects to the lidar points
-3. Clustering the LIDAR points to filter out points which are not part of the object (e.g. segmentation mask does not 
+3. Clustering the LIDAR points to filter out points which are not part of the object (e.g. segmentation mask does not
 match 100 percent to the car and a background lidar point was included in the cluster)
 4. Publishing the detected points to the distance_output for the collision check
 5. Traffic light detection if a traffic light was found in the image
@@ -45,7 +45,7 @@ match 100 percent to the car and a background lidar point was included in the cl
 
 ## 1. Object-Detection
 
-The objects are detected with a ultralytics YOLO model.
+The objects are detected with an ultralytics YOLO model.
 The detection would include the bounding boxes, the segmentation masks, the class confidence and also a tracking id.
 The tracking id could be used in the future to track objects in the intermediate layer.
 
@@ -56,12 +56,12 @@ the segmented objects.
 
 ## 3. Clustering
 
-As it is possible that the segmentation mask does not match 100 percent to the object, the vision node clusters the 
+As it is possible that the segmentation mask does not match 100 percent to the object, the vision node clusters the
 lidar points to filter out points which are not part of the object.
 
 ## 4. Collision Check
 
-The collision check receives all found points of all objects and uses these information for the collision check.
+The collision check receives all found points of all objects and uses this information for the collision check.
 
 ## 5. Traffic Light Detection
 
