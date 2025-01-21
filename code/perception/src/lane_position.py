@@ -19,9 +19,6 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 import cv2
 
-# debugging
-import time
-
 
 class lane_position(CompatibleNode):
     def __init__(self, name, **kwargs):
@@ -65,7 +62,10 @@ class lane_position(CompatibleNode):
             "std_dev_normalization"
         )  # max acceptable standard deviation in linearregression for normalization
         self.angle_prediction_threshold = self.get_param("angle_prediction_threshold")
-
+        self.confidence_threshold = self.get_param("confidence_threshold")
+        self.y_tolerance = self.get_param(
+            "y_tolerance"
+        )  # min distance that lanemarkings have to have, new lanemarkings within this distance are ignored
         self.setup_subscriptions()
         self.setup_publishers()
 
@@ -122,11 +122,10 @@ class lane_position(CompatibleNode):
         and publishes them"""
         lanemask = self.bridge.imgmsg_to_cv2(img_msg=ImageMsg, desired_encoding="8UC1")
         stamp = ImageMsg.header.stamp
-        self.edge_detection(lanemask)
+        lanemask = self.remove_horizontal_lines(lanemask)
         positions, angles, confidences = self.process_lanemask(
             lanemask,
         )
-
         lanemarkings = self.lanemarking_from_coordinates(
             positions, angles, confidences, stamp, predicted=False
         )
@@ -136,7 +135,7 @@ class lane_position(CompatibleNode):
 
         self.publish_Lanemarkings_map(lanemarkings)
 
-    def edge_detection(self, lanemask):
+    def remove_horizontal_lines(self, lanemask):
         image = np.array(lanemask)
         # Definiere einen Kernel für horizontale Linien
         kernel = cv2.getStructuringElement(
@@ -148,8 +147,10 @@ class lane_position(CompatibleNode):
 
         # Entferne die horizontalen Linien aus der Lanemaske
         updated_mask = image - horizontal_lines
+
         ros_image = self.bridge.cv2_to_imgmsg(updated_mask)
         self.label_image_publisher.publish(ros_image)
+        return updated_mask
 
     def process_lanemask(self, lanemask):
 
@@ -221,10 +222,12 @@ class lane_position(CompatibleNode):
         for position, position_index, angle, confidence in zip(
             positions, position_indices, angles, confidences
         ):
+            if confidence < self.confidence_threshold:
+                continue
             x, y = position
             transform = Transform2D.new_rotation_translation(angle, Vector2.new(x, y))
             shape = Rectangle(
-                width=self.line_width, length=self.line_length_to_y_axis(y, angle)
+                width=self.line_width, length=self.line_length
             )  # move to ros param
             style = Lanemarking.Style.SOLID
             flags = Flags(is_lanemark=True)
@@ -339,18 +342,27 @@ class lane_position(CompatibleNode):
         for angle, cluster_size, deviation in zip(
             median_angle_deviations, cluster_sizes, linear_deviations
         ):
-            # normalize all values so the maximum confidence is 1
-            normalized_angle = max(
-                0, 1 - (abs(angle) / np.deg2rad(self.angle_normalization))
-            )
-            normalized_size = min(1, cluster_size / self.size_normalization)
-            normalized_std_dev = max(0, 1 - (deviation / self.std_dev_normalization))
-
-            confidence = (
-                self.angle_weight * normalized_angle
-                + self.size_weight * normalized_size
-                + self.std_dev_weight * normalized_std_dev
-            )
+            # look for strong confidence violations
+            if (
+                deviation > self.std_dev_normalization / 2
+                or cluster_size < self.size_normalization / 2
+                or angle > self.angle_normalization / 2
+            ):
+                confidence = 0
+            else:
+                # normalize all values so the maximum confidence is 1
+                normalized_angle = max(
+                    0, 1 - (abs(angle) / np.deg2rad(self.angle_normalization))
+                )
+                normalized_size = min(1, cluster_size / self.size_normalization)
+                normalized_std_dev = max(
+                    0, 1 - (deviation / self.std_dev_normalization)
+                )
+                confidence = (
+                    self.angle_weight * normalized_angle
+                    + self.size_weight * normalized_size
+                    + self.std_dev_weight * normalized_std_dev
+                )
             confidences.append(confidence)
 
         return confidences
@@ -372,6 +384,8 @@ class lane_position(CompatibleNode):
         return median_angle_deviations
 
     def mask_lidarpoints(self, lanemask):
+        if len(self.dist_arrays) == 0:
+            return []
         points = self.dist_arrays[lanemask == 255]
         points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
         return points
@@ -437,18 +451,21 @@ class lane_position(CompatibleNode):
                     res
                 )  # If covariance is a vector, take the square root
 
-            deviations.append(std_dev[0])  # Standard deviation of the slope
-
             # Get the slope (m) of the line
             m = p[0]
 
             # Calculate the center of the cluster (mean of x and y coordinates)
             center_y = np.mean(y)
             center_x = np.mean(x)
-
+            # Check if this y-coordinate is within the tolerance of an existing lanemarking
+            if any(
+                abs(center_y - existing_y) <= self.y_tolerance
+                for _, existing_y in lanemarkings
+            ):
+                continue  # Skip this cluster if it is too close to an existing marking
             # Calculate the angle of the line relative to the x-axis (in radians)
             theta = np.arctan(m)
-
+            deviations.append(std_dev[0])  # Standard deviation of the slope
             # Store the results for lanemarkings, angles, and deviations
             angles.append(theta)
             lanemarkings.append([center_x, center_y])
