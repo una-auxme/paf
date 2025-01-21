@@ -7,6 +7,7 @@ project(mapping)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  sensor_msgs
   message_generation
   uuid_msgs
   geometry_msgs
@@ -36,6 +37,7 @@ add_message_files(
   TypeCar.msg
   TypeLanemarking.msg
   TypeTrafficLight.msg
+  ClusteredPointsArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -58,6 +60,7 @@ generate_messages(
   std_msgs
   uuid_msgs
   geometry_msgs
+  sensor_msgs
 )
 
 ################################################
