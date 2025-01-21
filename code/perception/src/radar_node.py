@@ -252,21 +252,16 @@ class RadarNode(CompatibleNode):
         # translation = sensor_config[sensor_name]
         data_array = pointcloud2_to_array(msg)
 
-        # Filter data with FOV of 1° not needed
-        # Filter data - not necessary anymore with Fov 1°
-        # filtered_data = filter_data(data_array, min_z=-0, max_z=2)
-
         # Transform data to change its frame
         x, y, z = self.sensor_config[sensor_name]
-        transformed_points = np.array(
-            [
-                np.append(point[:3] + np.array([x, y, z]), point[3])
-                for point in data_array
-            ]
-        )
+        # Use numpy broadcasting for better performance
+        translation = np.array([x, y, z])
+        transformed_points = np.column_stack((
+            data_array[:, :3] + translation,
+            data_array[:, 3]
+        ))
 
         return transformed_points
-
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
