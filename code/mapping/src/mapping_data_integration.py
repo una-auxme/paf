@@ -11,10 +11,9 @@ from typing import List, Optional
 
 from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
-from mapping_common.shape import Circle, Rectangle
+from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
-
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import Polygon as ShapelyPolygon
@@ -63,9 +62,15 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_cluster_entities_callback,
             qos_profile=1,
         )
+        # self.new_subscription(
+        #     topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+        #     msg_type=MapMsg,
+        #     callback=self.radar_cluster_entities_callback,
+        #     qos_profile=1,
+        # )
         self.new_subscription(
             topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
-            msg_type=MapMsg,
+            msg_type=ClusteredLidarPoints,
             callback=self.radar_cluster_entities_callback,
             qos_profile=1,
         )
@@ -94,7 +99,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_cluster_entities_callback(self, data: MapMsg):
         self.lidar_cluster_entities_data = data
 
-    def radar_cluster_entities_callback(self, data: MapMsg):
+    def radar_cluster_entities_callback(self, data: ClusteredLidarPoints):
         self.radar_cluster_entities_data = data
 
     def radar_marker_callback(self, data: MarkerArray):
@@ -229,9 +234,78 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
-    def create_shapely_polygons_from_pointclouds(self, sensor) -> List[ShapelyPolygon]:
+    def create_entities_from_clusters(self) -> List[Entity]:
+        clusterpointsarray = self.radar_cluster_entities_data.clusterPointsArray
+        indexarray = self.radar_cluster_entities_data.indexArray
+        motionarray = self.radar_cluster_entities_data.motionArray
+        objectclassarray = self.radar_cluster_entities_data.object_class
+        self.radar_cluster_entities_data = None
+
+        unique_labels = np.unique(indexarray)
+        entities = []
+
+        for label in unique_labels:
+            if label == -1:
+                # -1 kann für Rauschen oder ungültige Cluster stehen
+                continue
+
+            # Filtere Punkte für den aktuellen Cluster
+            cluster_points = clusterpointsarray[indexarray == label]
+
+            # Prüfe, ob genügend Punkte für ein Polygon vorhanden sind
+            if cluster_points.shape[0] < 3:
+                continue
+
+            # Erstelle ein Shapely-Polygon (nur x und y werden verwendet)
+            polygon = ShapelyPolygon(cluster_points[:, :2])
+
+            # Optional: Berechne die Bewegung (Motion)
+            motion = None
+            if motionarray is not None:
+                cluster_motion = motionarray[indexarray == label][0]
+                # avg_motion = np.mean(cluster_motion, axis=0)
+                motion = Motion2D(
+                    Vector2.new(cluster_motion[0], cluster_motion[1])
+                )  # Geschwindigkeit (x, y)
+
+            # Optional: Füge die Objektklasse hinzu
+            # object_class = None
+            # if objectclassarray is not None:
+            #     cluster_class = objectclassarray[indexarray == label]
+            #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste Klasse
+
+            if not polygon.is_valid:
+                rospy.logwarn("Skipping non-Polygon entity.")
+                continue
+
+            # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
+            centroid = polygon.centroid
+            x_center = centroid.x
+            y_center = centroid.y
+
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
+            transform = Transform2D.new_translation(v)
+
+            flags = Flags(is_collider=True)
+            # Erstelle die Entity
+            entity = Entity(
+                confidence=1,
+                priority=0.25,
+                shape=Polygon(polygon.coords),
+                transform=transform,
+                timestamp=rospy.Time.now(),
+                flags=flags,
+                motion=motion,
+            )
+            entities.append(entity)
+
+        return entities
+
+    def create_shapely_polygons_from_ClusteredPoints(
+        self, sensor
+    ) -> List[ShapelyPolygon]:
         """
-        Erstellt ein Shapely-Polygon aus einer PointCloud2-Nachricht.
+        Erstellt ein Shapely-Polygon aus einer ClusterPoints-Nachricht.
 
         Args:
             pointcloud_msg (PointCloud2): Die ROS PointCloud2 Nachricht.
@@ -304,6 +378,44 @@ class MappingDataIntegrationNode(CompatibleNode):
     #         radar_entities.append(e)
 
     #     return radar_entities
+
+    # def create_shapely_polygons_from_pointclouds(self, sensor) -> List[ShapelyPolygon]:
+    #     """
+    #     Erstellt ein Shapely-Polygon aus einer PointCloud2-Nachricht.
+
+    #     Args:
+    #         pointcloud_msg (PointCloud2): Die ROS PointCloud2 Nachricht.
+
+    #     Returns:
+    #         ShapelyPolygon: Das erstellte Shapely Polygon.
+    #     """
+
+    #     polygons = []
+    #     # unique_labels = np.unique(points_with_labels[:, -1])
+    #     pointclouds = self.cluster_data
+    #     for pointcloud2 in pointclouds:
+
+    #         points = []
+    #         for p in PointCloud2.read_points(
+    #             pointclouds, skip_nans=True, field_names=("x", "y")
+    #         ):
+    #             points.append((p[0], p[1]))  # Nimmt nur die x- und y-Koordinaten
+
+    #         # Überprüfen, ob genügend Punkte für ein Polygon vorhanden sind
+    #         if len(points) < 3:
+    #             raise ValueError("Ein Polygon benötigt mindestens 3 Punkte.")
+
+    #         # Optional: Erstelle den konvexen Hüllraum der Punkte
+    #         # from scipy.spatial import ConvexHull
+    #         # hull = ConvexHull(points)
+    #         # hull_points = [points[i] for i in hull.vertices]
+
+    #         # Erstelle das Shapely-Polygon
+    #         polygon = ShapelyPolygon(points)
+    #         polygons.append(polygon)
+    #     return polygons
+
+    #
 
     # def create_entities(polygons, velocities):
     # if polygons is None or len(polygons) == 0:
@@ -379,9 +491,10 @@ class MappingDataIntegrationNode(CompatibleNode):
         lidar_cluster_entities = (
             Map.from_ros_msg(self.lidar_cluster_entities_data).entities or []
         )
-        radar_cluster_entities = (
-            Map.from_ros_msg(self.radar_cluster_entities_data).entities or []
-        )
+        # radar_cluster_entities = (
+        #     Map.from_ros_msg(self.radar_cluster_entities_data).entities or []
+        # )
+        radar_cluster_entities = self.create_entities_from_clusters()
 
         stamp = rospy.get_rostime()
         map = Map(

@@ -13,7 +13,6 @@ from tf.transformations import quaternion_from_matrix
 from std_msgs.msg import Float32MultiArray
 import struct
 from shapely.geometry import Polygon as ShapelyPoloygon
-from mapping.msg import Map as MapMsg
 from mapping_common.entity import Entity, Flags, Motion2D
 from mapping_common.shape import Polygon
 from mapping_common.transform import Transform2D, Vector2
@@ -73,8 +72,18 @@ class RadarNode:
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        pointcloudArray = create_pointcloud2Array(points_with_labels)
+        # pointcloudArray = create_pointcloud2Array(points_with_labels)
+        header = Header()
+        header.stamp = rospy.Time.now()
+        header.frame_id = "hero/RADAR"
+        clusterPointsArray = points_with_labels[:, :3]
+        indexArray = points_with_labels[:, -1]
         motion2DArray = calculate_cluster_velocity(points_with_labels)
+        objectClass = None
+        ClusteredLidarPoints(
+            header, clusterPointsArray, indexArray, motion2DArray, objectClass
+        )
+        self.entity_radar_publisher(ClusteredLidarPoints)
         # call function to create PointCloudCluster msg to send to intermediate layer
         # (with PointCloudArray and Motion2DArray)
 
@@ -110,11 +119,11 @@ class RadarNode:
             MarkerArray,
             queue_size=10,
         )
-        # self.entity_radar_publisher = rospy.Publisher(
-        #     rospy.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
-        #     msg_type=MapMsg,
-        #     queue_size=10,
-        # )
+        self.entity_radar_publisher = rospy.Publisher(
+            rospy.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+            msg_type=ClusteredLidarPoints,
+            queue_size=10,
+        )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
