@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from copy import deepcopy
 from typing import List, Tuple, Optional, Callable
 from uuid import UUID
-from collections import deque
 
 import shapely
 
@@ -58,6 +57,7 @@ class GrowthMergingFilter(MapFilter):
     min_merging_overlap_area: float
     """Min overlap of the grown shapes in m2
     """
+    simplify_tolerance: float
 
     def filter(self, map: Map) -> Map:
         tree = map.build_tree()
@@ -102,12 +102,13 @@ class GrowthMergingFilter(MapFilter):
                     self.growth_distance,
                     self.min_merging_overlap_percent,
                     self.min_merging_overlap_area,
+                    self.simplify_tolerance,
                 ),
             )
             if merge_result is None:
                 continue
             (modified, removed_uuid) = merge_result
-            print(f"Merged {modified.uuid} and {removed_uuid}")
+            # print(f"Merged {modified.uuid} and {removed_uuid}")
             if modified.uuid != removed_uuid:
                 removed_entities[removed_uuid] = modified
             modified_entities[modified.uuid] = modified
@@ -189,6 +190,7 @@ def _grow_merge_pair(
     growth_distance: float,
     min_merging_overlap_percent: float,
     min_merging_overlap_area: float,
+    simplify_tolerance: float,
 ) -> Optional[Tuple[Transform2D, Shape2D]]:
     """Merges a pair of entities based on their shape
 
@@ -255,6 +257,7 @@ def _grow_merge_pair(
         merged_union = _grow_polygon(merged_union, -growth_distance)
         if merged_union is None:
             return None
+    merged_union = merged_union.simplify(simplify_tolerance, preserve_topology=True)
     shape = Polygon.from_shapely(merged_union, make_centered=True)
     transform = shape.offset
     shape.offset = Transform2D.identity()

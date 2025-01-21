@@ -304,6 +304,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                     min_merging_overlap_area=self.get_param(
                         "~min_merging_overlap_area"
                     ),
+                    simplify_tolerance=self.get_param("~polygon_simplify_tolerance"),
                 )
             )
 
