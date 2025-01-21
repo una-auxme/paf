@@ -72,21 +72,10 @@
     <param name="dbscan_min_samples" value="10" />
   </node>
 
-  <!-- <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
-    <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
-    <param name="range_topic" value="/carla/hero/RADAR_range"/>
-
-    <!- - Cluster configuration - ->
-    <param name="clustering_radar_z_min" value="-0.40" />
-    <param name="clustering_radar_z_max" value="2.0" />
-    <param name="dbscan_eps" value="0.4" />
-    <param name="dbscan_min_samples" value="3" />
-  </node>-->
-
   <node pkg="perception" type="debug_wrapper.py" name="radar_node" output="screen" args="--debug_node=radar_node.py --debug_port=53000">
     <param name="point_cloud_topic" value="/carla/hero/RADAR0"/>
     <param name="point_cloud_topic" value="/carla/hero/RADAR1"/>
-    <param name="dbscan_eps" value="0.4"/>
+    <param name="dbscan_eps" value="0.3"/>
     <param name="dbscan_samples" value="3"/>
     <param name="data_buffered" value="False"/>
     <param name="data_buffer_time" value="0.1"/>

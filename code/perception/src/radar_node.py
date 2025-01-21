@@ -109,7 +109,7 @@ class RadarNode(CompatibleNode):
             data: Point2Cloud message containing radar data
         """
 
-        self.dbscan_eps = float(self.get_param("~dbscan_eps", 0.4))
+        self.dbscan_eps = float(self.get_param("~dbscan_eps", 0.3))
         self.dbscan_samples = int(self.get_param("~dbscan_samples", 3))
         self.data_buffered = self.get_param("~data_buffered", False)
         self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
