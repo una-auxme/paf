@@ -9,6 +9,7 @@
   <depend>uuid_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>carla_msgs</depend>
+  <depend>sensor_msgs</depend>
   <!-- Use build_depend for packages you need at compile time: -->
   <build_depend>message_generation</build_depend>
   <build_depend>rospy</build_depend>

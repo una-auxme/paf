@@ -1,0 +1,3 @@
+sensor_msgs/PointCloud2 pointcloud
+Motion2D motion
+uint32 object_class
