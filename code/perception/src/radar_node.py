@@ -10,8 +10,8 @@ from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
-from geometry_msgs.msg import Point
-
+from tf.transformations import quaternion_from_matrix
+from std_msgs.msg import Float32MultiArray
 from tf.transformations import quaternion_from_matrix
 
 import struct
@@ -356,8 +356,12 @@ class RadarNode(CompatibleNode):
 
         dataarray = pointcloud2_to_array(data)
 
+        self.get_lead_vehicle_info(dataarray)
+
         # radar position z=0.7
-        dataarray = filter_data(dataarray, min_z=-0.40, max_z=2)
+        min_z = float(rospy.get_param("~clustering_radar_z_min", -0.40))
+        max_z = float(rospy.get_param("~clustering_radar_z_max", 2.0))
+        dataarray = filter_data(dataarray, min_z=min_z, max_z=max_z)
 
         ######### Transform filter_data ##########
         ##########################################
@@ -383,6 +387,9 @@ class RadarNode(CompatibleNode):
         ######### Transform filter_data end ##########
 
         clustered_data = cluster_data(transformed_points)  # dataarray)
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 3)
+        clustered_data = cluster_data(dataarray, eps, min_samples)
 
         # transformed_data = transform_data_to_2d(dataarray)
 
@@ -491,6 +498,21 @@ class RadarNode(CompatibleNode):
             String,
             queue_size=10,
         )
+        self.range_velocity_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~range_velocity_topic",
+                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
+            ),
+            Float32MultiArray,
+            queue_size=10,
+        )
+        self.lead_vehicle_marker_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
+            ),
+            Marker,
+            queue_size=10,
+        )
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR"), PointCloud2, self.callback,)
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR2"), PointCloud2, self.callback,)
         # rospy.Subscriber( rospy.get_param("~source_topic", "/carla/hero/RADAR3"), PointCloud2, self.callback,)
@@ -513,6 +535,66 @@ class RadarNode(CompatibleNode):
         )
 
         rospy.spin()
+
+    def get_lead_vehicle_info(self, radar_data):
+        """
+        Processes radar data to identify and publish information about the lead vehicle.
+
+        This function filters radar points to identify the closest point within a
+        specified region, representing the lead vehicle. It publishes the distance
+        and velocity of the lead vehicle as a `Float32MultiArray` message and also
+        visualizes the lead vehicle using a marker in RViz.
+
+        Args:
+            radar_data (np.ndarray): Radar data represented as a 2D NumPy array where
+                                    each row corresponds to a radar point with the
+                                    format [x, y, z, velocity].
+
+        Returns:
+            None: The function publishes data to relevant ROS topics and does not return
+            any value.
+        """
+
+        # radar is positioned at z = 0.7
+        radar_data = filter_data(
+            radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
+        )
+
+        lead_vehicle_info = Float32MultiArray()
+
+        # Handle the case where no valid radar points are found
+        if len(radar_data) == 0:
+            lead_vehicle_info.data = []
+            self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+            return
+
+        # Identify the closest point (lead vehicle candidate) based on the x-coordinate
+        closest_point = radar_data[np.argmin(radar_data[:, 0])]
+
+        lead_vehicle_info.data = [closest_point[0], closest_point[3]]
+
+        # Create a marker for visualizing the lead vehicle in RViz
+        marker = Marker()
+        marker.header.frame_id = "hero/RADAR"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "lead_vehicle_marker"
+        marker.id = 500
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.position.x = closest_point[0]
+        marker.pose.position.y = closest_point[1]
+        marker.pose.position.z = closest_point[2]
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+
+        self.lead_vehicle_marker_publisher.publish(marker)
+        self.range_velocity_radar_publisher.publish(lead_vehicle_info)
+        return
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -581,7 +663,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps=0.5, min_samples=3):
+def cluster_data(data, eps, min_samples):
     """
     Clusters the radar data using the DBSCAN algorithm
 
@@ -746,52 +828,29 @@ def generate_bounding_boxes(points_with_labels):
     return bounding_boxes
 
 
-def create_moving_bbox_marker(label, bbox):
-
-    return create_bounding_box_marker(label, bbox)
-
-
 def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     """
-    Creates an RViz Marker for visualizing a 3D bounding box.
-
-    This function generates a Marker object for RViz to visualize a 3D bounding box
-    based on the provided label and bounding box dimensions. The marker is
-    represented as a series of lines connecting the corners of the box.
+    Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
 
     Args:
-        label (int): The unique identifier for the cluster or object to which the
-        bounding box belongs. This label is used as the Marker ID.
-        bbox (tuple): A tuple containing the min and max coordinates of the bounding box
-                      in the format (x_min, x_max, y_min, y_max, z_min, z_max).
+        label (int): Unique identifier for the cluster or object.
+                     Used as the Marker ID.
+        bbox (tuple): Bounding box dimensions.
+                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): The type of bounding box ("aabb" or "obb").
 
     Returns:
-        Marker: A Marker object that can be published to RViz to display the
-        3D bounding box. The marker is of type LINE_LIST,
-        representing the edges of the bounding box.
+        Marker: A CUBE Marker object that can be published to RViz.
     """
-    # for 2d (top-down) boxes
-    # x_min, x_max, y_min, y_max = bbox
-
-    # for 3d boxes
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
+    # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero"  # /RADAR"
-    marker.header.stamp = rospy.Time.now()
-    marker.ns = "marker_radar"
-    marker.id = int(label)
-    marker.lifetime = rospy.Duration(0.15)
-    # marker.type = Marker.LINE_STRIP  # 2d boxes
-    # marker.type = Marker.LINE_LIST  # 3d boxes
-    # marker.action = Marker.ADD
+    marker.header.frame_id = "hero/RADAR"  # Reference frame for the marker
+    marker.ns = "marker_radar"  # Namespace to group related markers
+    marker.id = int(label)  # Use the label as the unique marker ID
+    marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
     marker.type = Marker.CUBE  # Use a cube for the bounding box
     marker.action = Marker.ADD  # Action to add or modify the marker
-    marker.scale.x = 0.1
-    marker.color.r = 1.0
-    marker.color.g = 1.0
-    marker.color.b = 0.0
-    marker.color.a = 1.0
 
     # Set marker color and opacity
     marker.color.r = 1.0  # Red

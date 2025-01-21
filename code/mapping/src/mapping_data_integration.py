@@ -5,18 +5,18 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import ros_numpy
 import rospy
-from visualization_msgs.msg import MarkerArray
-import random
+from visualization_msgs.msg import MarkerArray, Marker
 import numpy as np
 from typing import List, Optional
 
-from mapping_common.entity import Entity, Flags
+from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 
 from sensor_msgs.msg import PointCloud2
+from carla_msgs.msg import CarlaSpeedometer
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -29,7 +29,11 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
+    lidar_cluster_entities_data: Optional[List[Entity]] = None
+    radar_cluster_entities_data: Optional[List[Entity]] = None
+    radar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -40,11 +44,28 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
-
+        self.new_subscription(
+            topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
+            msg_type=CarlaSpeedometer,
+            callback=self.hero_speed_callback,
+            qos_profile=1,
+        )
         self.new_subscription(
             topic=self.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
             msg_type=MarkerArray,
             callback=self.lidar_marker_callback,
+            qos_profile=1,
+        )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Lidar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.lidar_cluster_entities_callback,
+            qos_profile=1,
+        )
+        self.new_subscription(
+            topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
+            msg_type=MapMsg,
+            callback=self.radar_cluster_entities_callback,
             qos_profile=1,
         )
 
@@ -60,11 +81,20 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
-        self.rate = 1.0 / 20.0
-        self.new_timer(self.rate, self.publish_new_map)
+        self.rate = self.get_param("~map_publish_rate", 20)
+        self.new_timer(1.0 / self.rate, self.publish_new_map)
+
+    def hero_speed_callback(self, data: CarlaSpeedometer):
+        self.hero_speed = data
 
     def lidar_marker_callback(self, data: MarkerArray):
         self.lidar_marker_data = data
+
+    def lidar_cluster_entities_callback(self, data: MapMsg):
+        self.lidar_cluster_entities_data = data
+
+    def radar_cluster_entities_callback(self, data: MapMsg):
+        self.radar_cluster_entities_data = data
 
     def radar_marker_callback(self, data: MarkerArray):
         self.radar_marker_data = data
@@ -80,17 +110,23 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         lidar_entities = []
         for marker in data.markers:
-            if not marker.points:
-                rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
+            if marker.type != Marker.CUBE:
+                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
+            # Extract position (center of the cube)
+            x_center = marker.pose.position.x
+            y_center = marker.pose.position.y
 
-            width, length = calculate_marker_width_length_2d(marker.points)
-            x_center, y_center = calculate_marker_center_2d(marker.points)
+            # Extract dimensions (scale gives the size of the cube)
+            width = marker.scale.x
+            length = marker.scale.y
 
-            shape = Rectangle(width, length)
-            v = Vector2.new(x_center, y_center)
+            # Create a shape and transform using the cube's data
+            shape = Rectangle(width, length)  # 2D rectangle for lidar data
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
             transform = Transform2D.new_translation(v)
 
+            # Add entity to the list
             flags = Flags(is_collider=True)
             e = Entity(
                 confidence=1,
@@ -113,23 +149,24 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         radar_entities = []
         for marker in data.markers:
-            if not marker.points:
-                rospy.logwarn(f"Skipping empty marker with ID: {marker.id}")
+            if marker.type != Marker.CUBE:
+                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
-            
-            # Transformation in das Koordinatensystem des Hero cars
-            points_array = np.array([[p.x, p.y, p.z] for p in marker.points])
-            points_array[:, 0] += 2
-            for i, p in enumerate(marker.points):
-                p.x, p.y, p.z = points_array[i]
-                
-            width, length = calculate_marker_width_length_2d(marker.points)
-            x_center, y_center = calculate_marker_center_2d(marker.points)
+            # Extract position (center of the cube) and calculate 2 meter offset
+            # because of radar positioning
+            x_center = marker.pose.position.x + 2
+            y_center = marker.pose.position.y
 
-            shape = Rectangle(width, length)
-            v = Vector2.new(x_center, y_center)
+            # Extract dimensions (scale gives the size of the cube)
+            width = marker.scale.x
+            length = marker.scale.y
+
+            # Create a shape and transform using the cube's data
+            shape = Rectangle(width, length)  # 2D rectangle for lidar data
+            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
             transform = Transform2D.new_translation(v)
 
+            # Add entity to the list
             flags = Flags(is_collider=True)
             e = Entity(
                 confidence=1,
@@ -149,21 +186,39 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         data = self.lidar_data
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        shape = Circle(0.15)
+        coordinates = coordinates.view(
+            (coordinates.dtype[0], len(coordinates.dtype.names))
+        )
+        shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
+        z_min = self.get_param("~lidar_z_min", -1.5)
+        z_max = self.get_param("~lidar_z_max", 1.0)
+        priority = self.get_param("~lidar_priority", 0.25)
+
+        # Ignore street level lidar points and stuff above
+        filtered_coordinates = coordinates[
+            np.bitwise_and(coordinates[:, 2] >= z_min, coordinates[:, 2] <= z_max)
+        ]
+        # Get rid of points because performance
+        coordinate_count = filtered_coordinates.shape[0]
+        sampled_coordinates = filtered_coordinates[
+            np.random.choice(
+                coordinate_count,
+                int(
+                    coordinate_count
+                    * (1.0 - self.get_param("~lidar_discard_probability", 0.9))
+                ),
+                replace=False,
+            ),
+            :,
+        ]
         lidar_entities = []
-        for x, y, z, intensity in coordinates:
-            if z < -1.5 or z > 1.0:
-                # Ignore street level lidar points and stuff above
-                continue
-            if random.random() < 0.9:
-                # Get rid of points because performance
-                continue
+        for x, y, z, intensity in sampled_coordinates:
             v = Vector2.new(x, y)
             transform = Transform2D.new_translation(v)
             flags = Flags(is_collider=True)
             e = Entity(
                 confidence=0.5 * intensity,
-                priority=0.25,
+                priority=priority,
                 shape=shape,
                 transform=transform,
                 timestamp=data.header.stamp,
@@ -173,74 +228,63 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
+    def create_hero_entity(self) -> Optional[Car]:
+        if self.hero_speed is None:
+            return None
+
+        motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
+        timestamp = self.hero_speed.header.stamp
+        # Shape based on https://www.motortrend.com/cars/
+        # lincoln/mkz/2020/specs/?trim=Base+Sedan
+        shape = Rectangle(
+            length=4.92506,
+            width=1.86436,
+            offset=Transform2D.new_translation(Vector2.new(0.0, 0.0)),
+        )
+        transform = Transform2D.identity()
+        flags = Flags(is_collider=True, is_hero=True)
+        hero = Car(
+            confidence=1.0,
+            priority=1.0,
+            shape=shape,
+            transform=transform,
+            timestamp=timestamp,
+            flags=flags,
+            motion=motion,
+        )
+        return hero
+
     def publish_new_map(self, timer_event=None):
-        # Make sure we have data for each dataset we are subscribed to
-        if self.lidar_data is None:
+        hero_car = self.create_hero_entity()
+        if hero_car is None:
             return
 
+        entities = []
+        entities.append(hero_car)
+
+        if self.lidar_marker_data is not None and self.get_param(
+            "~enable_lidar_marker"
+        ):
+            entities.extend(self.entities_from_lidar_marker())
+        if self.radar_marker_data is not None and self.get_param(
+            "~enable_radar_marker"
+        ):
+            entities.extend(self.entities_from_radar_marker())
+        if self.lidar_cluster_entities_data is not None and self.get_param(
+            "~enable_lidar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.lidar_cluster_entities_data).entities)
+        if self.radar_cluster_entities_data is not None and self.get_param(
+            "~enable_radar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
+        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
+            entities.extend(self.entities_from_lidar())
+
         stamp = rospy.get_rostime()
-        lidar_entities = self.entities_from_lidar_marker()
-        radar_entities = self.entities_from_radar_marker()
-        entities = lidar_entities + radar_entities
         map = Map(timestamp=stamp, entities=entities)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
-
-
-def calculate_marker_center_2d(points):
-    """
-    Calculates the center (x, y) of a 2D bounding box based on marker points.
-
-    Args:
-        points (list or numpy.ndarray): List of geometry_msgs/Point objects
-        or NumPy array.
-
-    Returns:
-        tuple: Center coordinates (x_center, y_center).
-    """
-    # Convert list of points to NumPy array if necessary
-    points_array = (
-        np.array([[p.x, p.y] for p in points])
-        if not isinstance(points, np.ndarray)
-        else points
-    )
-
-    # Calculate min and max values
-    x_min, x_max = np.min(points_array[:, 0]), np.max(points_array[:, 0])
-    y_min, y_max = np.min(points_array[:, 1]), np.max(points_array[:, 1])
-
-    # Calculate the center
-    x_center = (x_min + x_max) / 2
-    y_center = (y_min + y_max) / 2
-
-    return x_center, y_center
-
-
-def calculate_marker_width_length_2d(points):
-    """
-    Calculates the width and length of a 2D bounding box (x, y dimensions only).
-
-    Args:
-        points (list or numpy.ndarray): List or array of points with [x, y, z].
-
-    Returns:
-        tuple: Width and length of the bounding box.
-    """
-    # Convert to NumPy array if points is a list
-    points_array = (
-        np.array([[p.x, p.y] for p in points])
-        if not isinstance(points, np.ndarray)
-        else points
-    )
-
-    # Calculate width and length using min/max on x and y dimensions
-    x_min, x_max = np.min(points_array[:, 0]), np.max(points_array[:, 0])
-    y_min, y_max = np.min(points_array[:, 1]), np.max(points_array[:, 1])
-
-    width = x_max - x_min
-    length = y_max - y_min
-
-    return width, length
 
 
 if __name__ == "__main__":
