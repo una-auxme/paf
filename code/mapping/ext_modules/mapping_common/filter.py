@@ -7,7 +7,7 @@ import shapely
 import rospy
 
 from .map import Map
-from .entity import ShapelyEntity, Entity
+from .entity import ShapelyEntity, Entity, FlagFilter
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
 
@@ -163,10 +163,21 @@ def grow_merge_pair(
     min_merging_overlap_percent: float,
     min_merging_overlap_area: float,
 ) -> Optional[Tuple[Transform2D, Shape2D]]:
-    growns_maybe_none = [_grow_polygon(e.poly, growth_distance) for e in pair]
-    for g in growns_maybe_none:
-        if g is None:
-            return None
+    # The hero car must not grow.
+    # Otherwise an entity we crash into might be merged into the hero
+    grow_whitefilter = FlagFilter(is_hero=False, is_lanemark=False, is_stopmark=False)
+    needs_shrinking = False
+    if pair[0].entity.matches_filter(grow_whitefilter) and pair[
+        1
+    ].entity.matches_filter(grow_whitefilter):
+        growns_maybe_none = [_grow_polygon(e.poly, growth_distance) for e in pair]
+        for g in growns_maybe_none:
+            if g is None:
+                return None
+        needs_shrinking = True
+    else:
+        growns_maybe_none = [pair[0].poly, pair[1].poly]
+
     growns: List[shapely.Polygon] = growns_maybe_none
 
     areas = [e.area for e in growns]
@@ -188,13 +199,14 @@ def grow_merge_pair(
     ):
         return None
 
-    grown_union = shapely.union(growns[0], growns[1])
-    if not isinstance(grown_union, shapely.Polygon):
+    merged_union = shapely.union(growns[0], growns[1])
+    if not isinstance(merged_union, shapely.Polygon):
         return None
-    shrunk_union = _grow_polygon(grown_union, -growth_distance)
-    if shrunk_union is None:
-        return None
-    shape = Polygon.from_shapely(shrunk_union, make_centered=True)
+    if needs_shrinking:
+        merged_union = _grow_polygon(merged_union, -growth_distance)
+        if merged_union is None:
+            return None
+    shape = Polygon.from_shapely(merged_union, make_centered=True)
     transform = shape.offset
     shape.offset = Transform2D.identity()
     return (transform, shape)
