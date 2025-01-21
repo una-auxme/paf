@@ -227,8 +227,8 @@ class VisionNode(CompatibleNode):
             self.pointcloud_publisher.publish(clustered_lidar_points_msg)
 
         # proceed with traffic light detection
-        # if 9 in output[0].boxes.cls:
-        #    self.process_traffic_lights(output[0], cv_image, image.header)
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
 
         if return_image is False or scaled_masks is None:
             return None
