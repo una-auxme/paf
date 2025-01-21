@@ -33,5 +33,9 @@
     <include file="$(find mapping_visualization)/launch/visualization.launch">
     </include>
 
+    <!-- robot localization -->
+    <include file="$(find robot_localization)/launch/navsat_transform_template.launch">
+    </include>
+
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
 </launch>
