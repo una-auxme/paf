@@ -174,11 +174,16 @@ def try_merge_pair(
     modified.transform = transform
     modified.shape = shape
 
+    # Now we adjust/copy over any other attributes than shape and transform
     if modified.motion is None:
         modified.motion = merge_entity.motion
     if modified.tracking_info is None:
         modified.tracking_info = merge_entity.tracking_info
     modified.sensor_id += merge_entity.sensor_id
+    confidences: List[float] = [modified.confidence, merge_entity.confidence]
+    min_conf: float = min(confidences)
+    max_conf: float = max(confidences)
+    modified.confidence = min(1.0, max_conf + (min_conf * (1.0 - max_conf)))
 
     return (modified, merge_entity.uuid)
 
