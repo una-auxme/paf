@@ -36,30 +36,11 @@
 
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
-    <param name="side" value="Center" />
-    <param name="center" value="True" />
-    <param name="back" value="False" />
-    <param name="left" value="False" />
-    <param name="right" value="False" />
+    <param name="view_camera" value="False" />
+    <param name="camera_resolution" value="320"/>
 
-      <!--Object-Detection:
-      - frcnn_resnet50_fpn_v2
-      - frcnn_mobilenet_v3_large_320_fpn
-      - yolov8n
-      - yolov8s
-      - yolov8m
-      - yolov8l
-      - yolov8x
-      - yolo_nas_l
-      - yolo_nas_m
-      - yolo_nas_s
-      - rtdetr-l
-      - rtdetr-x
-      - sam_l
-      - FastSAM-x
-
-      Image-Segmentation:
-      - deeplabv3_resnet101
+      <!--
+        Image-Segmentation:
       - yolov8x-seg
       - yolo11n-seg
       - yolo11s-seg
