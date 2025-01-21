@@ -13,7 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
-from mapping.msg import Map as MapMsg, PointcloudClusterArray
+from mapping.msg import Map as MapMsg, PointcloudClusterArray, ClusteredLidarPoints
 
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
@@ -71,7 +71,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
         self.new_subscription(
             topic=self.get_param("~entity_topic", "/paf/hero/visualization_pointcloud"),
-            msg_type=PointcloudClusterArray,
+            msg_type=ClusteredLidarPoints,
             callback=self.radar_cluster_entities_callback,
             qos_profile=1,
         )
@@ -105,34 +105,29 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_cluster_entities_callback(self, data: MapMsg):
         self.lidar_cluster_entities_data = data
 
-    def radar_cluster_entities_callback(self, data: PointcloudClusterArray):
-        if data is None or not hasattr(data, "pointclouds"):
+    def radar_cluster_entities_callback(self, data: ClusteredLidarPoints):
+        if data is None or not hasattr(data, "clusterPointsArray"):
             rospy.logwarn("No valid cluster data received.")
             return
 
-        merged_points = []
-        header = None
-
-        for i, cloud in enumerate(data.pointclouds):
-            # Convert PointCloud2 to a list of points
-            points = list(
-                pc2.read_points(
-                    cloud.pointcloud, skip_nans=True, field_names=("x", "y", "z")
-                )
-            )
-            merged_points.extend(points)
-
-            # Use the header of the first pointcloud for the merged pointcloud
-            if i == 0:
-                header = cloud.pointcloud.header
-
-        if header is None:
-            rospy.logerr("No valid PointCloud2 data found!")
+        # Reshape the flattened clusterPointsArray into (N, 3) array
+        try:
+            points = np.array(data.clusterPointsArray).reshape(-1, 3)
+        except ValueError as e:
+            rospy.logerr(f"Error reshaping clusterPointsArray: {e}")
             return
 
-        # Create a new PointCloud2 message with merged points
-        merged_cloud = pc2.create_cloud_xyz32(header, merged_points)
+        if points.shape[0] == 0:
+            rospy.logwarn("Received empty clusterPointsArray.")
+            return
 
+        # Extract the header from the message
+        header = data.header
+
+        # Convert points to a PointCloud2 message
+        merged_cloud = pc2.create_cloud_xyz32(header, points.tolist())
+
+        # Publish the PointCloud2 message
         self.vision_node_pointcloud_publisher.publish(merged_cloud)
 
     def radar_marker_callback(self, data: MarkerArray):

@@ -8,19 +8,15 @@ import cv2
 from vision_node_helper import coco_to_carla, carla_colors
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from std_msgs.msg import (
-    Header,
-    Float32MultiArray,
-)
+from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
 import numpy as np
 from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
 import rospy
 from ultralytics.utils.ops import scale_masks
-from time import time_ns
-from mapping.msg import PointcloudClusterArray
-from perception_utils import array_to_pointcloud_cluster_array
+from mapping.msg import ClusteredLidarPoints
+from perception_utils import array_to_clustered_lidar_points
 
 
 class VisionNode(CompatibleNode):
@@ -61,76 +57,24 @@ class VisionNode(CompatibleNode):
         # general setup
         self.bridge = CvBridge()
         self.role_name = self.get_param("role_name", "hero")
-        self.side = self.get_param("side", "Center")
-        self.center = self.get_param("center")
-        self.back = self.get_param("back")
-        self.left = self.get_param("left")
-        self.right = self.get_param("right")
+        self.view_camera = self.get_param("view_camera")
+        self.camera_resolution = self.get_param("camera_resolution")
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.depth_images = []
         self.dist_array = None
         self.lidar_array = None
 
-        # publish / subscribe setup
-        if self.center:
-            self.setup_camera_subscriptions("Center")
-        if self.back:
-            self.setup_camera_subscriptions("Back")
-        if self.left:
-            self.setup_camera_subscriptions("Left")
-        if self.right:
-            self.setup_camera_subscriptions("Right")
+        self.setup_subscriber()
+        self.setup_publisher()
+        self.setup_model()
 
-        # self.setup_rainbow_subscription()
-        self.setup_dist_array_subscription()
-        self.setup_pointcloud_publisher()
-        self.setup_camera_publishers()
-        self.setup_object_distance_publishers()
-        self.setup_traffic_light_publishers()
-        self.image_msg_header = Header()
-        self.image_msg_header.frame_id = "segmented_image_frame"
-
-        # model setup
-        model_info = self.model_dict[self.get_param("model")]
-        self.model = model_info[0]
-        self.weights = model_info[1]
-        self.type = model_info[2]
-        self.framework = model_info[3]
-        self.save = True
-
-        # print configuration of Vision-Node
-        print("Vision Node Configuration:")
-        print("Device -> ", self.device)
-        print(f"Model -> {self.get_param('model')},")
-        print(f"Type -> {self.type}, Framework -> {self.framework}")
-
-        # ultralytics setup
-        if self.framework == "ultralytics":
-            self.model = self.model(self.weights)
-        else:
-            rospy.logerr("Framework not supported")
-
-    def setup_camera_subscriptions(self, side):
-        """
-        sets up a subscriber to the selected camera angle
-
-        Args:
-            side (String): Camera angle specified in launch file
-        """
-
+    def setup_subscriber(self):
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_camera_image,
-            topic=f"/carla/{self.role_name}/{side}/image",
+            topic=f"/carla/{self.role_name}/Center/image",
             qos_profile=1,
         )
-
-    def setup_dist_array_subscription(self):
-        """
-        sets up a subscription to the lidar
-        depth image of the selected camera angle
-        """
 
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
@@ -139,72 +83,53 @@ class VisionNode(CompatibleNode):
             qos_profile=1,
         )
 
-    def setup_pointcloud_publisher(self):
+    def setup_publisher(self):
         """
-        sets up a publisher for visualization pointcloud
+        sets up all publishers for the Vision-Node
         """
 
         self.pointcloud_publisher = self.new_publisher(
-            msg_type=PointcloudClusterArray,
+            msg_type=numpy_msg(ClusteredLidarPoints),
             topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
 
-    def setup_camera_publishers(self):
-        """
-        sets up a publisher to the selected camera angle
-        multiple publishers are used since the vision node could handle
-        multiple camera angles at the same time if enough
-        resources are available
-        """
-
-        if self.center:
-            self.publisher_center = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Center/segmented_image",
-                qos_profile=1,
-            )
-        if self.back:
-            self.publisher_back = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Back/segmented_image",
-                qos_profile=1,
-            )
-        if self.left:
-            self.publisher_left = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Left/segmented_image",
-                qos_profile=1,
-            )
-        if self.right:
-            self.publisher_right = self.new_publisher(
-                msg_type=numpy_msg(ImageMsg),
-                topic=f"/paf/{self.role_name}/Right/segmented_image",
-                qos_profile=1,
-            )
-
-    def setup_object_distance_publishers(self):
-        """
-        sets up a publisher to publish a list of objects
-        and their distances
-        """
+        self.publisher_center = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/segmented_image",
+            qos_profile=1,
+        )
 
         self.distance_publisher = self.new_publisher(
             msg_type=Float32MultiArray,
-            topic=f"/paf/{self.role_name}/{self.side}/object_distance",
+            topic=f"/paf/{self.role_name}/Center/object_distance",
             qos_profile=1,
         )
-
-    def setup_traffic_light_publishers(self):
-        """
-        sets up a publisher for traffic light detection
-        """
 
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
-            topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
+            topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
             qos_profile=1,
         )
+
+    def setup_model(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model_info = self.model_dict[self.get_param("model")]
+        self.model = model_info[0]
+        self.weights = model_info[1]
+        self.type = model_info[2]
+        self.framework = model_info[3]
+        self.save = True
+
+        print("Vision Node Configuration:")
+        print("Device -> ", self.device)
+        print(f"Model -> {self.get_param('model')},")
+        print(f"Type -> {self.type}, Framework -> {self.framework}")
+
+        if self.framework == "ultralytics":
+            self.model = self.model(self.weights)
+        else:
+            rospy.logerr("Framework not supported")
 
     def handle_camera_image(self, image):
         """
@@ -218,38 +143,17 @@ class VisionNode(CompatibleNode):
         # free up cuda memory
         if self.device == "cuda":
             torch.cuda.empty_cache()
+        vision_result = self.predict_ultralytics(
+            image, return_image=self.view_camera, image_size=self.camera_resolution
+        )
 
-        if self.framework == "ultralytics":
-            vision_result = self.predict_ultralytics(
-                image, return_image=True, image_size=500
-            )
-        else:
-            # As we will not use pytorch models this is to prevent errors
-            rospy.logerr("Framework not supported")
-            return
         if vision_result is None:
             return
+
         # publish vision result to rviz
         img_msg = self.bridge.cv2_to_imgmsg(vision_result, encoding="bgr8")
         img_msg.header = image.header
-
-        # publish img to corresponding angle topic
-        header_id = rospy.resolve_name(img_msg.header.frame_id)
-        if (
-            "Center" in header_id
-            or "Back" in header_id
-            or "Left" in header_id
-            or "Right" in header_id
-        ):
-            side = header_id.split("/")[2]
-            if side == "Center":
-                self.publisher_center.publish(img_msg)
-            if side == "Back":
-                self.publisher_back.publish(img_msg)
-            if side == "Left":
-                self.publisher_left.publish(img_msg)
-            if side == "Right":
-                self.publisher_right.publish(img_msg)
+        self.publisher_center.publish(img_msg)
 
     def handle_dist_array(self, dist_array):
         """
@@ -327,14 +231,12 @@ class VisionNode(CompatibleNode):
             clustered_points, cluster_indices, carla_classes_indices = (
                 self.cluster_points(valid_points, class_indices, carla_classes)
             )
-            self.pointcloud_publisher.publish(
-                array_to_pointcloud_cluster_array(
-                    clustered_points,
-                    cluster_indices,
-                    object_class_array=carla_classes_indices,
-                    header_id="hero",
-                )
+            clustered_lidar_points_msg = array_to_clustered_lidar_points(
+                clustered_points,
+                cluster_indices,
+                object_class_array=carla_classes_indices,
             )
+            self.pointcloud_publisher.publish(clustered_lidar_points_msg)
 
         # proceed with traffic light detection
         # if 9 in output[0].boxes.cls:
@@ -387,46 +289,42 @@ class VisionNode(CompatibleNode):
         # get the x, y, z values of the valid points
         valid_indices = np.nonzero(valid_points_from_mask)
         valid_points = lidar_array[valid_indices[1], valid_indices[2]]
-        combined_points = None
         if valid_points.size > 0:
-            combined_points = np.zeros(
-                valid_points.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4")]
-            )
-            combined_points["x"], combined_points["y"], combined_points["z"] = (
-                valid_points.T
-            )
             self.publish_distance_output(
                 valid_points, valid_points_from_mask, carla_classes
             )
 
-        return combined_points, valid_indices[0]
+        return valid_points, valid_indices[0]
 
     def cluster_points(
         self, points, class_indices, carla_classes, eps=0.5, min_samples=2
     ):
         """
-        Clusters all points in the point cloud and determines the largest cluster for each segmentation class in one pass.
+        Clusters all points in the point cloud and determines the largest cluster for
+        each segmentation class in one pass.
 
         Parameters:
             points (numpy structured array): Array of points with fields 'x', 'y', 'z'.
-            class_indices (numpy array): Array of segmentation mask indices for each point.
-            eps (float): Maximum distance between points to be considered in the same neighborhood.
-            min_samples (int): Minimum number of points to form a dense region (cluster).
+            class_indices (numpy array): Array of segmentation mask indices for each
+                point
+            eps (float): Maximum distance between points to be considered in the same
+                neighborhood
+            min_samples (int): Minimum number of points to form a dense region (cluster)
 
         Returns:
-            clustered_points (numpy structured array): Points belonging to the largest cluster for each class index.
-            valid_labels (numpy array): Labels corresponding to each class index (one per class).
-            valid_class_indices (numpy array): Class indices corresponding to the returned points.
+            clustered_points (numpy structured array): Points belonging to the largest
+                cluster for each class index.
+            valid_labels (numpy array): Labels corresponding to each class index (one
+                per class).
+            valid_class_indices (numpy array): Class indices corresponding to the
+                returned points.
         """
         if points.size == 0:
             return np.array([], dtype=points.dtype), [], []
 
-        # Convert to a regular 2D array for clustering
-        xyz_points = np.vstack((points["x"], points["y"], points["z"])).T
-
         # Apply DBSCAN clustering to all points at once
         db = DBSCAN(eps=eps, min_samples=min_samples)
-        cluster_labels = db.fit_predict(xyz_points)
+        cluster_labels = db.fit_predict(points)
 
         # Combine class indices and cluster labels to identify unique groups
         combined_labels = np.vstack((class_indices, cluster_labels)).T
