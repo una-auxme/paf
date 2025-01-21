@@ -18,16 +18,14 @@ class MapFilter:
     def filter(self, map: Map) -> Map:
         """Filters the map.
 
-        Look into the class descripting for what the filter does
+        Look into the class description for what the filter does
 
         Args:
-            map (Map): _description_
-
-        Raises:
-            NotImplementedError: _description_
+            map (Map): Map to filter
 
         Returns:
-            Map: _description_
+            Map: New map with filter applied.
+                Note that unmodified entities are NOT deepcopied.
         """
         raise NotImplementedError
 
@@ -81,9 +79,9 @@ class GrowthMergingFilter(MapFilter):
                         (uuid+shape) entity. Skipping pair."
                 )
                 continue
-            merge_result = try_merge_pair(
+            merge_result = _try_merge_pair(
                 pair,
-                lambda p: grow_merge_pair(
+                lambda p: _grow_merge_pair(
                     p,
                     self.growth_distance,
                     self.min_merging_overlap_percent,
@@ -147,12 +145,28 @@ class GrowthMergingFilter(MapFilter):
         return merged_map
 
 
-def try_merge_pair(
+def _try_merge_pair(
     pair: Tuple[ShapelyEntity, ShapelyEntity],
     shape_merge_fn: Callable[
         [Tuple[ShapelyEntity, ShapelyEntity]], Optional[Tuple[Transform2D, Shape2D]]
     ],
 ) -> Optional[Tuple[Entity, UUID]]:
+    """Tries to merge an entity-pair
+
+    Args:
+        pair (Tuple[ShapelyEntity, ShapelyEntity]): Pair of entities to merge
+        shape_merge_fn (Callable[ [Tuple[ShapelyEntity, ShapelyEntity]],
+            Optional[Tuple[Transform2D, Shape2D]] ]):
+                Dedicated merging function that merges the pair based on their shape
+                and then returns the transform and shape of the resulting merged entity.
+
+    Returns:
+        Optional[Tuple[Entity, UUID]]:
+            If no merging happened for whatever reason, returns None.
+            Otherwise the tuple contains the resulting merged entity
+            and the uuid of the entity that was merged into the other
+                (-> should be deleted in the map)
+    """
     if not pair[0].entity.is_mergeable_with(pair[1].entity):
         return None
 
@@ -188,14 +202,36 @@ def try_merge_pair(
     return (modified, merge_entity.uuid)
 
 
-def grow_merge_pair(
+def _grow_merge_pair(
     pair: Tuple[ShapelyEntity, ShapelyEntity],
     growth_distance: float,
     min_merging_overlap_percent: float,
     min_merging_overlap_area: float,
 ) -> Optional[Tuple[Transform2D, Shape2D]]:
+    """Merges a pair of entities based on their shape
+
+    Basic (very simplified) function:
+    - Grows their shape based on growth_distance
+    - Checks the min_merging_overlap_percent and min_merging_overlap_area
+        based on the intersection of the grown shapes
+    - -> Merge if at least one of them is true
+    - Creates a grown union for the merged entity
+    - Shrinks the union by growth_distance
+
+    Args:
+        pair (Tuple[ShapelyEntity, ShapelyEntity]): Pair of entities to merge
+        growth_distance (float)
+        min_merging_overlap_percent (float): Min overlap of the grown shapes in percent
+        min_merging_overlap_area (float): Min overlap of the grown shapes in m2
+
+    Returns:
+        Optional[Tuple[Transform2D, Shape2D]]:
+            If no merging happened for whatever reason, returns None.
+            Otherwise returns the transform and shape of the resulting merged entity
+    """
     # The hero car must not grow.
     # Otherwise an entity we crash into might be merged into the hero
+    # Growing lanemarks or stopmarks also makes little sense
     grow_whitefilter = FlagFilter(is_hero=False, is_lanemark=False, is_stopmark=False)
     needs_shrinking = False
     if pair[0].entity.matches_filter(grow_whitefilter) and pair[
