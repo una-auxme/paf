@@ -134,7 +134,7 @@
             "yaw": 0.0
           },
           "horizontal_fov": 25.0,
-          "vertical_fov": 1.0,
+          "vertical_fov": 0.1,
           "points_per_second": 1500,
           "range": 100.0
         },
@@ -150,7 +150,7 @@
             "yaw": 0.0
           },
           "horizontal_fov": 25.0,
-          "vertical_fov": 1.0,
+          "vertical_fov": 0.1,
           "points_per_second": 1500,
           "range": 100.0
         },

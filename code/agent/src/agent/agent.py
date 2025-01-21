@@ -95,7 +95,7 @@ class PAFAgent(ROS1Agent):
                 "pitch": 0.0,
                 "yaw": 0.0,
                 "horizontal_fov": 25,
-                "vertical_fov": 1,
+                "vertical_fov": 0.1,
             },
             {
                 "type": "sensor.other.radar",
@@ -107,7 +107,7 @@ class PAFAgent(ROS1Agent):
                 "pitch": 0.0,
                 "yaw": 0.0,
                 "horizontal_fov": 25,
-                "vertical_fov": 1,
+                "vertical_fov": 0.1,
             },
             {"type": "sensor.other.gnss", "id": "GPS", "x": 0.0, "y": 0.0, "z": 0.0},
             {

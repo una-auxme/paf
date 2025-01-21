@@ -182,6 +182,7 @@ class RadarNode(CompatibleNode):
         rospy.loginfo(f"Total combined points: {len(combined_points)}")
 
         combined_points = np.array(combined_points)
+        self.get_lead_vehicle_info(combined_points)
 
         # Cluster- und Bounding Box-Verarbeitung
         clustered_data = cluster_data(
@@ -330,9 +331,9 @@ class RadarNode(CompatibleNode):
         """
 
         # radar is positioned at z = 0.7
-        radar_data = filter_data(
-            radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
-        )
+        # radar_data = filter_data(
+        #    radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
+        # )
 
         lead_vehicle_info = Float32MultiArray()
 
@@ -349,7 +350,7 @@ class RadarNode(CompatibleNode):
 
         # Create a marker for visualizing the lead vehicle in RViz
         marker = Marker()
-        marker.header.frame_id = "hero/RADAR"
+        marker.header.frame_id = "hero"
         marker.header.stamp = rospy.Time.now()
         marker.ns = "lead_vehicle_marker"
         marker.id = 500
@@ -459,7 +460,7 @@ def cluster_data(data, eps, min_samples):
     # data_reduced = data[:, [0, 1, 3]]
 
     data_reduced = data
-    data_reduced[:, 2] = 0
+    data_reduced[:, 2] = 0.7
     data_scaled = scaler.fit_transform(data_reduced)
 
     # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
@@ -689,7 +690,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
 def create_min_max_markers(
     label,
     bbox,
-    frame_id="hero/RADAR",
+    frame_id="hero",
     min_color=(0.0, 1.0, 0.0, 1.0),
     max_color=(1.0, 0.0, 0.0, 1.0),
 ):
