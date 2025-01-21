@@ -222,14 +222,17 @@ class VisionNode(CompatibleNode):
         )
         if clustered_points is None or clustered_points.size == 0:
             return None
-        self.publish_distance_output(clustered_points, carla_classes_indices)
-        clustered_lidar_points_msg = array_to_clustered_points(
-            clustered_points,
-            cluster_indices,
-            object_class_array=carla_classes_indices,
-        )
-        self.pointcloud_publisher.publish(clustered_lidar_points_msg)
-
+        try:
+            self.publish_distance_output(clustered_points, carla_classes_indices)
+            clustered_lidar_points_msg = array_to_clustered_points(
+                clustered_points,
+                cluster_indices,
+                object_class_array=carla_classes_indices,
+            )
+            self.pointcloud_publisher.publish(clustered_lidar_points_msg)
+        except Exception as e:
+            rospy.logerr(f"Error in publishing pointcloud: {e}")
+            return None
         # proceed with traffic light detection
         if 9 in output[0].boxes.cls:
             self.process_traffic_lights(output[0], cv_image, image.header)

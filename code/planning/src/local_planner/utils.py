@@ -4,8 +4,6 @@ import math
 import carla
 import os
 
-import rospy
-
 
 """
 This file represents the utility functions for the local planner and other
