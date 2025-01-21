@@ -35,19 +35,7 @@ class VisionNode(CompatibleNode):
 
         # dictionary of pretrained models
         self.model_dict = {
-            "yolov8n": (YOLO, "yolov8n.pt", "detection", "ultralytics"),
-            "yolov8s": (YOLO, "yolov8s.pt", "detection", "ultralytics"),
-            "yolov8m": (YOLO, "yolov8m.pt", "detection", "ultralytics"),
-            "yolov8l": (YOLO, "yolov8l.pt", "detection", "ultralytics"),
-            "yolov8x": (YOLO, "yolov8x.pt", "detection", "ultralytics"),
-            "yolo_nas_l": (NAS, "yolo_nas_l.pt", "detection", "ultralytics"),
-            "yolo_nas_m": (NAS, "yolo_nas_m.pt", "detection", "ultralytics"),
-            "yolo_nas_s": (NAS, "yolo_nas_s.pt", "detection", "ultralytics"),
-            "rtdetr-l": (RTDETR, "rtdetr-l.pt", "detection", "ultralytics"),
-            "rtdetr-x": (RTDETR, "rtdetr-x.pt", "detection", "ultralytics"),
             "yolov8x-seg": (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
-            "sam_l": (SAM, "sam_l.pt", "detection", "ultralytics"),
-            "FastSAM-x": (FastSAM, "FastSAM-x.pt", "detection", "ultralytics"),
             "yolo11n-seg": (YOLO, "yolo11n-seg.pt", "segmentation", "ultralytics"),
             "yolo11s-seg": (YOLO, "yolo11s-seg.pt", "segmentation", "ultralytics"),
             "yolo11m-seg": (YOLO, "yolo11m-seg.pt", "segmentation", "ultralytics"),
