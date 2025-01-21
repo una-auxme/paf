@@ -30,8 +30,6 @@ class MappingDataIntegrationNode(CompatibleNode):
     (-> It buffers incoming sensor data slightly)
     """
 
-    map_filters: List[MapFilter]
-
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
@@ -41,14 +39,6 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
-
-        self.map_filters = [
-            GrowthMergingFilter(
-                growth_distance=0.5,
-                min_merging_overlap_percent=0.5,
-                min_merging_overlap_area=0.5,
-            )
-        ]
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
@@ -295,10 +285,21 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
-        for filter in self.map_filters:
+
+        for filter in self.get_current_map_filters():
             map = filter.filter(map)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
+
+    def get_current_map_filters(self) -> List[MapFilter]:
+        map_filters: List[MapFilter] = []
+        GrowthMergingFilter(
+            growth_distance=0.5,
+            min_merging_overlap_percent=0.5,
+            min_merging_overlap_area=0.5,
+        )
+
+        return map_filters
 
 
 if __name__ == "__main__":
