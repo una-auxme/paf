@@ -202,7 +202,7 @@ class VisionNode(CompatibleNode):
             return None
 
         carla_classes = np.array(coco_to_carla)[
-            output[0].boxes.cls.to(torch.int).numpy()  # type: ignore
+            output[0].boxes.cls.to(torch.int).cpu().numpy()  # type: ignore
         ]
 
         masks = torch.tensor(output[0].masks.data)
