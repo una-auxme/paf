@@ -255,11 +255,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         return hero
 
     def publish_new_map(self, timer_event=None):
-        entities = []
-
         hero_car = self.create_hero_entity()
-        if hero_car is not None:
-            entities.append(hero_car)
+        if hero_car is None:
+            return
+
+        entities = []
+        entities.append(hero_car)
 
         if self.lidar_marker_data is not None and self.get_param(
             "~enable_lidar_marker"
