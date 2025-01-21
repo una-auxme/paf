@@ -1,4 +1,4 @@
-# ClusteredLidarPoints.msg
+# ClusteredPointsArray.msg
 
 # Standard ROS message header
 std_msgs/Header header

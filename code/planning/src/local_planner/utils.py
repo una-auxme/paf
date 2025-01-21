@@ -197,11 +197,10 @@ def filter_vision_objects(float_array, oncoming):
     It contains the classId, the absolute Euclidean distance
     and 6 coordinates for upper left and lower right corner
     of the bounding box
+    This method will be obsolete with the intermediate layer soon but will be used
+    for now.
 
-    Array shape: [classID, EuclidDistance,
-                    UpperLeft(x,y,z), LowerRight(x,y,z)]
-                    --> TODO: Incorrect. class, x distance, y distance which does not
-                    make sense
+    Array shape: [n, 3] with (class, x,y)
 
     Args:
         data (ndarray): numpy array with vision objects

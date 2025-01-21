@@ -13,7 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
-from mapping.msg import Map as MapMsg, PointcloudClusterArray, ClusteredLidarPoints
+from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
@@ -70,8 +70,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
         self.new_subscription(
-            topic=self.get_param("~entity_topic", "/paf/hero/visualization_pointcloud"),
-            msg_type=ClusteredLidarPoints,
+            topic="/paf/hero/visualization_pointcloud",
+            msg_type=ClusteredPointsArray,
             callback=self.radar_cluster_entities_callback,
             qos_profile=1,
         )
@@ -105,7 +105,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_cluster_entities_callback(self, data: MapMsg):
         self.lidar_cluster_entities_data = data
 
-    def radar_cluster_entities_callback(self, data: ClusteredLidarPoints):
+    def radar_cluster_entities_callback(self, data: ClusteredPointsArray):
         if data is None or not hasattr(data, "clusterPointsArray"):
             rospy.logwarn("No valid cluster data received.")
             return

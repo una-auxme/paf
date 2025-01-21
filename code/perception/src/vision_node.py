@@ -12,10 +12,10 @@ from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
 import numpy as np
-from ultralytics import NAS, YOLO, RTDETR, SAM, FastSAM
+from ultralytics import YOLO
 import rospy
 from ultralytics.utils.ops import scale_masks
-from mapping.msg import ClusteredLidarPoints
+from mapping.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_lidar_points
 
 
@@ -77,7 +77,7 @@ class VisionNode(CompatibleNode):
         """
 
         self.pointcloud_publisher = self.new_publisher(
-            msg_type=numpy_msg(ClusteredLidarPoints),
+            msg_type=numpy_msg(ClusteredPointsArray),
             topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
