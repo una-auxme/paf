@@ -268,35 +268,33 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
-
-        # Make sure we have data for each dataset we are subscribed to
-        if (
-            self.lidar_marker_data is None
-            or hero_car is None
-            or self.radar_marker_data is None
-        ):
+        if hero_car is None:
             return
 
-        lidar_cluster_entities = (
-            []
-            if self.lidar_cluster_entities_data is None
-            else Map.from_ros_msg(self.lidar_cluster_entities_data).entities
-        )
-        radar_cluster_entities = (
-            []
-            if self.radar_cluster_entities_data is None
-            else Map.from_ros_msg(self.radar_cluster_entities_data).entities
-        )
+        entities = []
+        entities.append(hero_car)
+
+        if self.lidar_marker_data is not None and self.get_param(
+            "~enable_lidar_marker"
+        ):
+            entities.extend(self.entities_from_lidar_marker())
+        if self.radar_marker_data is not None and self.get_param(
+            "~enable_radar_marker"
+        ):
+            entities.extend(self.entities_from_radar_marker())
+        if self.lidar_cluster_entities_data is not None and self.get_param(
+            "~enable_lidar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.lidar_cluster_entities_data).entities)
+        if self.radar_cluster_entities_data is not None and self.get_param(
+            "~enable_radar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
+        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
+            entities.extend(self.entities_from_lidar())
 
         stamp = rospy.get_rostime()
-        map = Map(
-            timestamp=stamp,
-            entities=[hero_car]
-            + self.entities_from_lidar_marker()
-            + self.entities_from_radar_marker()
-            + lidar_cluster_entities
-            + radar_cluster_entities,
-        )
+        map = Map(timestamp=stamp, entities=entities)
         for filter in self.map_filters:
             map = filter.filter(map)
         msg = map.to_ros_msg()
