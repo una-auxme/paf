@@ -16,7 +16,7 @@ from ultralytics import YOLO
 import rospy
 from ultralytics.utils.ops import scale_masks
 from mapping.msg import ClusteredPointsArray
-from perception_utils import array_to_clustered_lidar_points
+from perception_utils import array_to_clustered_points
 
 
 class VisionNode(CompatibleNode):
@@ -219,7 +219,7 @@ class VisionNode(CompatibleNode):
             clustered_points, cluster_indices, carla_classes_indices = (
                 self.cluster_points(valid_points, class_indices, carla_classes)
             )
-            clustered_lidar_points_msg = array_to_clustered_lidar_points(
+            clustered_lidar_points_msg = array_to_clustered_points(
                 clustered_points,
                 cluster_indices,
                 object_class_array=carla_classes_indices,

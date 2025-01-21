@@ -1,8 +1,8 @@
-from mapping.msg import ClusteredLidarPoints
+from mapping.msg import ClusteredPointsArray
 import rospy
 
 
-def array_to_clustered_lidar_points(
+def array_to_clustered_points(
     points,
     point_indices,
     object_speed_array=None,
@@ -10,7 +10,7 @@ def array_to_clustered_lidar_points(
     header_id="hero",
 ):
     """
-    Convert the given points and point indices to a ClusteredLidarPoints message.
+    Convert the given points and point indices to a ClusteredPointsArray message.
 
     Args:
         points: numpy array with shape (N, 3)
@@ -20,10 +20,10 @@ def array_to_clustered_lidar_points(
         header_id: string
 
     Returns:
-        ClusteredLidarPoints message
+        ClusteredPointsArray message
     """
-    # Create the ClusteredLidarPoints message
-    clustered_lidar_points = ClusteredLidarPoints()
+    # Create the ClusteredPointsArray message
+    clustered_lidar_points = ClusteredPointsArray()
     clustered_lidar_points.header.frame_id = header_id
     clustered_lidar_points.header.stamp = rospy.Time.now()
 

@@ -88,6 +88,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
+        # Will be removed when the new function for entity creation is implemented
         self.vision_node_pointcloud_publisher = self.new_publisher(
             msg_type=PointCloud2,
             topic="/paf/hero/mapping/temporary_pointcloud",
@@ -314,6 +315,9 @@ class MappingDataIntegrationNode(CompatibleNode):
             entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
+        # Will be used when the new function for entity creation is implemented
+        # if self.get_param("enable_vision_points"):
+        #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)

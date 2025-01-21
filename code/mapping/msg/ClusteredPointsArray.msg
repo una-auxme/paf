@@ -4,7 +4,7 @@
 std_msgs/Header header
 
 # Array of 3D points
-float64[] clusterPointsArray  
+float64[] clusterPointsArray
 
 # Index array for points in clusters
 int32[] indexArray
