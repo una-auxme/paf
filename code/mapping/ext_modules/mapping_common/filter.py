@@ -62,7 +62,6 @@ class GrowthMergingFilter(MapFilter):
     def filter(self, map: Map) -> Map:
         tree = map.build_tree()
         query = tree.query_self(predicate="dwithin", distance=self.growth_distance)
-        query = deque(query)
 
         # Entities that will be removed out of the tree: Key: UUID,
         # Value: Entity it was merged with
@@ -71,7 +70,31 @@ class GrowthMergingFilter(MapFilter):
         modified_entities = dict()
 
         while len(query) > 0:
-            pair = query.popleft()
+            pair = query.pop()
+            uuid0 = pair[0].entity.uuid
+            uuid1 = pair[1].entity.uuid
+            if uuid0 == uuid1:
+                continue
+
+            if uuid0 in removed_entities and uuid1 in removed_entities:
+                continue
+            if uuid0 in removed_entities:
+                query.append((removed_entities[uuid0].to_shapely(), pair[1]))
+                continue
+            if uuid1 in removed_entities:
+                query.append((pair[0], removed_entities[uuid1].to_shapely()))
+                continue
+
+            if uuid0 in modified_entities and uuid1 in modified_entities:
+                pair = (
+                    modified_entities[uuid0].to_shapely(),
+                    modified_entities[uuid1].to_shapely(),
+                )
+            elif uuid0 in modified_entities:
+                pair = (modified_entities[uuid0].to_shapely(), pair[1])
+            elif uuid1 in modified_entities:
+                pair = (pair[0], modified_entities[uuid1].to_shapely())
+
             merge_result = _try_merge_pair(
                 pair,
                 lambda p: _grow_merge_pair(
@@ -85,47 +108,9 @@ class GrowthMergingFilter(MapFilter):
                 continue
             (modified, removed_uuid) = merge_result
             print(f"Merged {modified.uuid} and {removed_uuid}")
-            # We need to check if stuff we are merging was already
-            # affected by another merge
-            if removed_uuid in modified_entities:
-                # We want to remove an entity that has already been
-                #   modified by another merge
-                # -> Do not remove it and try to merge our modified result
-                #   with the other
-                query.append(
-                    (
-                        modified.to_shapely(),
-                        modified_entities.pop(removed_uuid).to_shapely(),
-                    )
-                )
-            elif modified.uuid != removed_uuid:
-                # If we don't need to merge with the removed_uuid again
-                # and the modified<->removed uuids are not the same
-                # -> Set this removed_uuid as removed
+            if modified.uuid != removed_uuid:
                 removed_entities[removed_uuid] = modified
-            if modified.uuid in removed_entities:
-                # The entity we want to use as base was already part of a merge
-                #   and was merged into another entity (removed)
-                # -> Unremove it and queue another merge with
-                #   the entity it was merged into
-                query.append(
-                    (
-                        modified.to_shapely(),
-                        removed_entities.pop(modified.uuid).to_shapely(),
-                    )
-                )
-            if modified.uuid in modified_entities:
-                # modified was already part of another merge
-                # -> Queue another merge between those two
-                # Note that this leads to duplicate uuids while the algorithm runs
-                query.append(
-                    (
-                        modified.to_shapely(),
-                        modified_entities.pop(modified.uuid).to_shapely(),
-                    )
-                )
-            else:
-                modified_entities[modified.uuid] = modified
+            modified_entities[modified.uuid] = modified
 
         merged_entities: List[Entity] = []
         # append the entities of the original map based on modifications and removals
