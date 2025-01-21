@@ -20,10 +20,15 @@ class MapFilter:
 
 
 @dataclass
-class MergingFilter(MapFilter):
-    # Grow merging:
+class GrowthMergingFilter(MapFilter):
     growth_distance: float
-    min_merging_overlap: float
+    # Both checks ar OR-ed for merging
+    min_merging_overlap_percent: float
+    """Min overlap of the grown shapes in percent
+    """
+    min_merging_overlap_area: float
+    """Min overlap of the grown shapes in m2
+    """
 
     def filter(self, map: Map) -> Map:
         tree = map.build_tree()
@@ -48,7 +53,10 @@ class MergingFilter(MapFilter):
             merge_result = try_merge_pair(
                 pair,
                 lambda p: grow_merge_pair(
-                    p, self.growth_distance, self.min_merging_overlap
+                    p,
+                    self.growth_distance,
+                    self.min_merging_overlap_percent,
+                    self.min_merging_overlap_area,
                 ),
             )
             if merge_result is None:
@@ -152,7 +160,8 @@ def try_merge_pair(
 def grow_merge_pair(
     pair: Tuple[ShapelyEntity, ShapelyEntity],
     growth_distance: float,
-    min_merging_overlap: float,
+    min_merging_overlap_percent: float,
+    min_merging_overlap_area: float,
 ) -> Optional[Tuple[Transform2D, Shape2D]]:
     growns_maybe_none = [_grow_polygon(e.poly, growth_distance) for e in pair]
     for g in growns_maybe_none:
@@ -173,7 +182,10 @@ def grow_merge_pair(
     # within the intersecting area.
     # Entities are only merged, if one of them at least
     # overlaps the other by min_merging_overlap.
-    if max(area_overlaps) < min_merging_overlap:
+    if (
+        max(area_overlaps) < min_merging_overlap_percent
+        and intersection.area < min_merging_overlap_area
+    ):
         return None
 
     grown_union = shapely.union(growns[0], growns[1])

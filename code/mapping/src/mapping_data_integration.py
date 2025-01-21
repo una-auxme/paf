@@ -13,7 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
-from mapping_common.filter import MapFilter, MergingFilter
+from mapping_common.filter import MapFilter, GrowthMergingFilter
 from mapping.msg import Map as MapMsg
 
 from sensor_msgs.msg import PointCloud2
@@ -23,7 +23,8 @@ from carla_msgs.msg import CarlaSpeedometer
 class MappingDataIntegrationNode(CompatibleNode):
     """Creates the initial map data frame based on all kinds of sensor data
 
-    Sends this map off to Filtering and other consumers (planning, acting)
+    It applies several filters to the map and
+    then sends it off to other consumers (planning, acting)
 
     This node sends the maps off at a fixed rate.
     (-> It buffers incoming sensor data slightly)
@@ -41,7 +42,13 @@ class MappingDataIntegrationNode(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        self.map_filters = [MergingFilter(growth_distance=0.5, min_merging_overlap=0.5)]
+        self.map_filters = [
+            GrowthMergingFilter(
+                growth_distance=0.5,
+                min_merging_overlap_percent=0.5,
+                min_merging_overlap_area=0.5,
+            )
+        ]
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
