@@ -1,0 +1,8 @@
+<launch>
+  <arg name="role_name" default="hero" />
+
+  <node pkg="filter_management" type="forward_topics.py" name="forward_topics" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+  </node>
+
+</launch>

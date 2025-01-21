@@ -37,5 +37,9 @@
     <include file="$(find robot_localization)/launch/navsat_transform_template.launch">
     </include>
 
+    <!-- filter management -->
+    <include file="$(find filter_management)/launch/filter_management.launch">
+    </include>
+
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />
 </launch>
