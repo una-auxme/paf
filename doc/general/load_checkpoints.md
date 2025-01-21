@@ -26,3 +26,4 @@
 |9.|routes_construction_sign2.xml| True
 |10.|routes_curve.xml| False
 |11.|routes_highway.xml| False
+|12.|routes_curve_right.xml| False
