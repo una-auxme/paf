@@ -4,6 +4,7 @@ from typing import List, Tuple, Optional, Callable
 from uuid import UUID
 
 import shapely
+import rospy
 
 from .map import Map
 from .entity import ShapelyEntity, Entity
@@ -29,13 +30,21 @@ class MergingFilter(MapFilter):
         query = tree.query_self(predicate="dwithin", distance=self.growth_distance)
 
         # Entities that will be removed out of the tree: Key: UUID,
-        # Value: UUID of the entity it was merged with
-        #   This UUID will be part of the modified_entities
+        # Value: Entity it was merged with
         removed_entities = dict()
         # Entities that are modified: Key: UUID, Value: Entity
         modified_entities = dict()
 
-        for pair in query:
+        while len(query) > 0:
+            pair = query.pop()
+            if pair[0].entity.uuid == pair[1].entity.uuid and pair[0].poly.equals(
+                pair[1].poly
+            ):
+                rospy.logerr(
+                    "MergingFilter: query contains a pair of the same \
+                        (uuid+shape) entity. Skipping pair."
+                )
+                continue
             merge_result = try_merge_pair(
                 pair,
                 lambda p: grow_merge_pair(
@@ -45,18 +54,62 @@ class MergingFilter(MapFilter):
             if merge_result is None:
                 continue
             (modified, removed_uuid) = merge_result
-            removed_entities[removed_uuid] = modified.uuid
-            modified_entities[modified.uuid] = modified
+            # We need to check if stuff we are merging was already
+            # affected by another merge
+            if removed_uuid in modified_entities:
+                # We want to remove an entity that has already been
+                #   modified by another merge
+                # -> Do not remove it and try to merge our modified result
+                #   with the other
+                query.append(
+                    (
+                        modified.to_shapely(),
+                        modified_entities.pop(removed_uuid).to_shapely(),
+                    )
+                )
+            elif modified.uuid != removed_uuid:
+                removed_entities[removed_uuid] = modified
+            if modified.uuid in removed_entities:
+                # The entity we want to use as base was already part of a merge
+                #   and was merged into another entity
+                # -> Unremove it and queue another merge with
+                #   the entity it was merged into
+                query.append(
+                    (
+                        modified.to_shapely(),
+                        removed_entities.pop(modified.uuid).to_shapely(),
+                    )
+                )
+            if modified.uuid in modified_entities:
+                # The entity was already part of another merge
+                # -> Queue another merge between those two
+                # Note that this leads to duplicate uuids while the algorithm runs
+                query.append(
+                    (
+                        modified.to_shapely(),
+                        modified_entities.pop(modified.uuid).to_shapely(),
+                    )
+                )
+            else:
+                modified_entities[modified.uuid] = modified
 
+        # remove any modified_entities that are part of removed_entities
+        for uuid in removed_entities.keys():
+            if uuid in modified_entities:
+                del modified_entities[uuid]
         merged_entities: List[Entity] = []
+        # append the entities of the original map
         for entity in map.entities:
             if entity.uuid in removed_entities:
                 continue
             if entity.uuid in modified_entities:
-                new_entry = modified_entities[entity.uuid]
+                new_entry = modified_entities.pop(entity.uuid)
             else:
                 new_entry = entity
             merged_entities.append(new_entry)
+        # # append any modified entities that do not have uuids of the original map
+        # for entry in modified_entities.values():
+        #     merged_entities.append(entry)
 
         merged_map = Map(timestamp=map.timestamp, entities=merged_entities)
         return merged_map
@@ -101,7 +154,12 @@ def grow_merge_pair(
     growth_distance: float,
     min_merging_overlap: float,
 ) -> Optional[Tuple[Transform2D, Shape2D]]:
-    growns = [_grow_polygon(e.poly, growth_distance) for e in pair]
+    growns_maybe_none = [_grow_polygon(e.poly, growth_distance) for e in pair]
+    for g in growns_maybe_none:
+        if g is None:
+            return None
+    growns: List[shapely.Polygon] = growns_maybe_none
+
     areas = [e.area for e in growns]
 
     intersection = shapely.intersection(growns[0], growns[1])
@@ -113,6 +171,8 @@ def grow_merge_pair(
     area_overlaps = [i_area / a for a in areas]
     # the bigger the area_fract, the more of a shape lies
     # within the intersecting area.
+    # Entities are only merged, if one of them at least
+    # overlaps the other by min_merging_overlap.
     if max(area_overlaps) < min_merging_overlap:
         return None
 
@@ -120,7 +180,7 @@ def grow_merge_pair(
     if not isinstance(grown_union, shapely.Polygon):
         return None
     shrunk_union = _grow_polygon(grown_union, -growth_distance)
-    if len(shrunk_union.exterior.coords) < 3:
+    if shrunk_union is None:
         return None
     shape = Polygon.from_shapely(shrunk_union, make_centered=True)
     transform = shape.offset
@@ -128,7 +188,7 @@ def grow_merge_pair(
     return (transform, shape)
 
 
-def _grow_polygon(p: shapely.Polygon, distance: float) -> shapely.Polygon:
+def _grow_polygon(p: shapely.Polygon, distance: float) -> Optional[shapely.Polygon]:
     """Grows or shrinks a polygon by a distance
 
     Args:
@@ -144,4 +204,9 @@ def _grow_polygon(p: shapely.Polygon, distance: float) -> shapely.Polygon:
     if shapely.is_ccw(exterior):
         distance = -distance
     grown = exterior.offset_curve(distance=distance)
-    return shapely.Polygon(grown.coords)
+    if len(grown.coords) < 3:
+        return None
+    poly = shapely.Polygon(grown.coords)
+    if not poly.is_valid:
+        return None
+    return poly
