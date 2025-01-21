@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from copy import deepcopy
 from typing import List, Tuple, Optional, Callable
 from uuid import UUID
+from collections import deque
 
 import shapely
-import rospy
 
 from .map import Map
 from .entity import ShapelyEntity, Entity, FlagFilter
@@ -62,6 +62,7 @@ class GrowthMergingFilter(MapFilter):
     def filter(self, map: Map) -> Map:
         tree = map.build_tree()
         query = tree.query_self(predicate="dwithin", distance=self.growth_distance)
+        query = deque(query)
 
         # Entities that will be removed out of the tree: Key: UUID,
         # Value: Entity it was merged with
@@ -70,15 +71,7 @@ class GrowthMergingFilter(MapFilter):
         modified_entities = dict()
 
         while len(query) > 0:
-            pair = query.pop()
-            if pair[0].entity.uuid == pair[1].entity.uuid and pair[0].poly.equals(
-                pair[1].poly
-            ):
-                rospy.logerr(
-                    "MergingFilter: query contains a pair of the same \
-                        (uuid+shape) entity. Skipping pair."
-                )
-                continue
+            pair = query.popleft()
             merge_result = _try_merge_pair(
                 pair,
                 lambda p: _grow_merge_pair(
@@ -91,6 +84,7 @@ class GrowthMergingFilter(MapFilter):
             if merge_result is None:
                 continue
             (modified, removed_uuid) = merge_result
+            print(f"Merged {modified.uuid} and {removed_uuid}")
             # We need to check if stuff we are merging was already
             # affected by another merge
             if removed_uuid in modified_entities:
@@ -105,10 +99,13 @@ class GrowthMergingFilter(MapFilter):
                     )
                 )
             elif modified.uuid != removed_uuid:
+                # If we don't need to merge with the removed_uuid again
+                # and the modified<->removed uuids are not the same
+                # -> Set this removed_uuid as removed
                 removed_entities[removed_uuid] = modified
             if modified.uuid in removed_entities:
                 # The entity we want to use as base was already part of a merge
-                #   and was merged into another entity
+                #   and was merged into another entity (removed)
                 # -> Unremove it and queue another merge with
                 #   the entity it was merged into
                 query.append(
@@ -118,7 +115,7 @@ class GrowthMergingFilter(MapFilter):
                     )
                 )
             if modified.uuid in modified_entities:
-                # The entity was already part of another merge
+                # modified was already part of another merge
                 # -> Queue another merge between those two
                 # Note that this leads to duplicate uuids while the algorithm runs
                 query.append(
