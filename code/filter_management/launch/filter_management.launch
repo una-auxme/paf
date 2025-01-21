@@ -5,4 +5,8 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
+  <node pkg="filter_management" type="create_odometry_msg.py" name="odometry_node" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+  </node>
+
 </launch>
