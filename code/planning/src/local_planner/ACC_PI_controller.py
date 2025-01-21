@@ -10,7 +10,7 @@ class ACC_PI_Controller:
     def __init__(self, Kp, Ki, T_gap, speed_limit):
         self.pid = PID(Kp, Ki, 0)
         self.T_gap = T_gap
-        self.pid.output_limits = (-10, speed_limit)
+        self.pid.output_limits = (-3, 3)
 
     def update(self, d, v_self, v_lead, speed_limit):
         """
@@ -50,25 +50,32 @@ def simulate_ACC_system():
     i = 0
     j = 0
 
-    # Example initial values
-    v_self = 10  # car's current speed in m/s
-    v_lead = 20  # Speed of the leading car in m/s
-    d = 10  # Current distance to the leading car in meters
+    v_self = 8  # car's current speed in m/s
+    v_lead = 11.11  # Speed of the leading car in m/s
+    d = 50  # Current distance to the leading car in meters
     delta_t = 0.05  # control loop rate in planning.launch
 
     for Kp in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2]:
         # Initialize the PI controller
         acc_controller = ACC_PI_Controller(Kp, Ki, T_gap, speed_limit)
         # Simulate updating the speed in a loop
+
+        # Example initial values
+        v_self = 10  # car's current speed in m/s
+        v_lead = 20  # Speed of the leading car in m/s
+        d = 5  # Current distance to the leading car in meters
+        delta_t = 0.05  # control loop rate in planning.launch
+
         d_list = [d]
         t_list = [0.0]
 
-        for _ in range(500):  # Simulate 10 steps
+        for _ in range(500):  # Simulate x steps
             new_speed, error = acc_controller.update(d, v_self, v_lead, speed_limit)
-            print(f"Desired Speed: {new_speed:.2f} m/s, Error: {error:.2f} m")
+            print(
+                f"Distance: {d}, Desired Speed: {new_speed:.2f} m/s, Error: {error:.2f} m"
+            )
 
-            # Update your car's speed and distance to the leading car (this would be
-            # a model in a real system)
+            # Update the car's speed and distance to the leading car
             v_self = new_speed  # Update the car's speed
             delta_d_self = v_self * delta_t
             delta_d_lead = v_lead * delta_t
@@ -77,6 +84,7 @@ def simulate_ACC_system():
             t_list.append(t_list[-1] + delta_t)
             # d = max(0, d - (v_self - v_lead))  # Update distance (simplified)
             time.sleep(delta_t)  # wait 10 ms
+            # v_self = new_speed
 
         ax = axes[i, j]
         ax.plot(t_list, d_list)
