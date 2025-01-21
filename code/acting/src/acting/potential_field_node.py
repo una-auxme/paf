@@ -3,6 +3,7 @@ from ros_compatibility.node import CompatibleNode
 
 from mapping.msg import Map as MapMsg
 from nav_msgs.msg import Path
+from std_msgs.msg import Float32
 
 from acting.entity import Entity
 from acting.map import Map
@@ -10,15 +11,18 @@ from acting.map import Map
 from rospy import Publisher, Subscriber
 import ros_compatibility as roscomp
 import rospy
+import tf.transformations
 from visualization_msgs.msg import Marker
 
 import tf2_ros
+import tf
 from tf2_geometry_msgs import do_transform_pose
 from geometry_msgs.msg import TransformStamped
-from tf2_msgs import 
+
+from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import PoseStamped
 
-
+from scipy.spatial.transform import Rotation
 from scipy.ndimage import distance_transform_edt
 import numpy as np
 from PIL import Image
@@ -42,6 +46,9 @@ class Potential_field_node(CompatibleNode):
         self.entities: list[Entity] = []
         self.potential_field_trajectory = Path()
         self.role_name = self.get_param("role_name", "ego_vehicle")
+
+        self.hero_transform = None
+        self.trajectory = None
 
         self.last_pub_time = rospy.get_time()
 
@@ -83,10 +90,51 @@ class Potential_field_node(CompatibleNode):
             callback=self.__get_trajectory,
             qos_profile=1,
         )
+        self.current_pos_sub: Subscriber = self.new_subscription(
+            msg_type=PoseStamped,
+            topic="/paf/hero/current_pos",
+            callback=self.__get_hero_pos,
+            qos_profile=1,
+        )
 
+        self.current_heading_sub: Subscriber = self.new_subscription(
+            msg_type=Float32,
+            topic="/paf/hero/current_heading",
+            callback=self.__get_hero_heading,
+            qos_profile=1,
+        )
         # END ROS SETUP ###
 
     # CALLBACKS ###
+
+    def __get_hero_pos(self, data: PoseStamped):
+        self.hero_pos = data
+        self.__calculate_hero_transform()
+
+    def __get_hero_heading(self, data: Float32):
+        self.hero_heading = data.data
+        self.__calculate_hero_transform()
+
+    def __calculate_hero_transform(self):
+        """
+        This function merges the heading and the position together, merges it and
+        calculates the inverse so it can transform the coordinate systems from global to hero
+        """
+        self.hero_transform = TransformStamped()
+
+        self.hero_transform.header.stamp = rospy.Time.now()
+        self.hero_transform.header.frame_id = "global"
+        self.hero_transform.child_frame_id = "hero"
+
+        self.hero_transform.transform.translation.x = self.hero_pos.pose.position.x
+        self.hero_transform.transform.translation.y = self.hero_pos.pose.position.y
+        self.hero_transform.transform.translation.z = -self.hero_pos.pose.position.z
+
+        rotation = Rotation.from_euler("z", self.hero_heading, degrees=False).as_quat()
+        self.hero_transform.transform.rotation.x = -rotation[0]
+        self.hero_transform.transform.rotation.y = -rotation[1]
+        self.hero_transform.transform.rotation.z = -rotation[2]
+        self.hero_transform.transform.rotation.w = rotation[3]
 
     def __get_entities(self, data: MapMsg):
         """
@@ -137,17 +185,19 @@ class Potential_field_node(CompatibleNode):
                 continue
 
     def __get_local_trajectory(self):
-        tf_buffer = tf2_ros.Buffer()
-        listener = tf2_ros.TransformListener(tf_buffer)
 
-        trans: TransformStamped = tf_buffer.lookup_transform("hero", "global", rospy.Time())
+        if self.hero_transform is None or self.trajectory is None:
+            return
+
+        trans = self.hero_transform
+
         local_traj = Path()
         local_traj.header = rospy.Header()
         local_traj.header.stamp = rospy.Time.now()
         local_traj.header.frame_id = "hero"
         local_traj.poses = []
         for pose in self.trajectory.poses:
-            pose.position.z = 0
+            pose.pose.position.z = 0
             local_traj.poses.append(do_transform_pose(pose, trans))
         self.local_trajectory_pub.publish(local_traj)
 
