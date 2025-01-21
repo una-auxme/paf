@@ -4,6 +4,8 @@ import math
 import carla
 import os
 
+import rospy
+
 
 """
 This file represents the utility functions for the local planner and other
@@ -220,16 +222,23 @@ def filter_vision_objects(float_array, oncoming):
     # Get cars that are on our lane
     if oncoming:
         cars_in_front = all_cars[
-            np.where(np.logical_and(all_cars[:, 2] >= 0.95, all_cars[:, 2] < 1.75))
+            np.where(np.logical_and(all_cars[:, 2] >= 0.90, all_cars[:, 2] < 1.75))
         ]
 
     else:
         cars_in_front = all_cars[
-            np.where(np.logical_and(all_cars[:, 2] < 0.95, all_cars[:, 2] > -0.95))
+            np.where(np.logical_and(all_cars[:, 2] < 0.90, all_cars[:, 2] > -0.90))
         ]
 
     if cars_in_front.size == 0:
         # no car in front
         return None
     # Return nearest car
-    return cars_in_front[np.argmin(cars_in_front[:, 1])]
+    min_object_in_front = cars_in_front[np.argmin(cars_in_front[:, 1])]
+    if oncoming:
+        # As the overtaking / cruising step does not work properly at the moment this
+        # is a workaround.
+        if min_object_in_front[1] > 9.0:
+            return None
+
+    return min_object_in_front

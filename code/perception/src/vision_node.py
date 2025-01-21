@@ -215,16 +215,20 @@ class VisionNode(CompatibleNode):
             distance_array=self.dist_array,
             lidar_array=self.lidar_array,
         )
-        if valid_points is not None:
-            clustered_points, cluster_indices, carla_classes_indices = (
-                self.cluster_points(valid_points, class_indices, carla_classes)
-            )
-            clustered_lidar_points_msg = array_to_clustered_points(
-                clustered_points,
-                cluster_indices,
-                object_class_array=carla_classes_indices,
-            )
-            self.pointcloud_publisher.publish(clustered_lidar_points_msg)
+        if valid_points is None or valid_points.size == 0:
+            return None
+        clustered_points, cluster_indices, carla_classes_indices = self.cluster_points(
+            valid_points, class_indices, carla_classes
+        )
+        if clustered_points is None or clustered_points.size == 0:
+            return None
+        self.publish_distance_output(clustered_points, carla_classes_indices)
+        clustered_lidar_points_msg = array_to_clustered_points(
+            clustered_points,
+            cluster_indices,
+            object_class_array=carla_classes_indices,
+        )
+        self.pointcloud_publisher.publish(clustered_lidar_points_msg)
 
         # proceed with traffic light detection
         if 9 in output[0].boxes.cls:
@@ -277,11 +281,6 @@ class VisionNode(CompatibleNode):
         # get the x, y, z values of the valid points
         valid_indices = np.nonzero(valid_points_from_mask)
         valid_points = lidar_array[valid_indices[1], valid_indices[2]]
-        if valid_points.size > 0:
-            self.publish_distance_output(
-                valid_points, valid_points_from_mask, carla_classes
-            )
-
         return valid_points, valid_indices[0]
 
     def cluster_points(
@@ -351,17 +350,12 @@ class VisionNode(CompatibleNode):
             carla_classes[valid_class_indices[selected_points_mask]],
         )
 
-    def publish_distance_output(
-        self, valid_points, valid_points_from_mask, carla_classes
-    ):
+    def publish_distance_output(self, points, carla_classes):
         """
         Publishes the distance output of the object detection
         """
-        # Direct calculation of distance output
-        mask_indices = np.argwhere(valid_points_from_mask)
-        classes_array = np.array(carla_classes)[mask_indices[:, 0]]
         distance_output = np.column_stack(
-            (classes_array, valid_points[:, 0], valid_points[:, 1])
+            (carla_classes, points[:, 0], points[:, 1])
         ).ravel()
 
         if distance_output.size > 0:
