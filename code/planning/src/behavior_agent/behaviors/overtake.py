@@ -206,8 +206,8 @@ class Approach(py_trees.behaviour.Behaviour):
         _dis = self.blackboard.get("/paf/hero/collision")
 
         # Intermediate layer map integration
-        data = self.blackboard.get("/paf/hero/mapping/init_data")
-        map = Map.from_ros_msg(data)
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map = Map.from_ros_msg(map_data)
 
         entity = map.get_entity_in_front()
         if entity is not None:
