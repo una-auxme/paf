@@ -14,7 +14,7 @@ from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from mapping import msg
 
-from nav.msgs import Path
+from nav_msgs.msg import Path
 
 
 @dataclass
@@ -149,7 +149,6 @@ class Map:
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
         local_trajectory.buffer(1.25, 3)
-        shapely.plotting.plot_line(local_trajectory)
 
         # given path is okay and is not colliding
         return 0
