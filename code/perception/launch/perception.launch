@@ -46,7 +46,7 @@
       - yolo11l-seg
       -->
 
-    <param name="model" value="yolo11n-seg" />
+    <param name="model" value="yolo11x-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">

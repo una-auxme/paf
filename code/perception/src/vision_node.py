@@ -18,6 +18,9 @@ from ultralytics.utils.ops import scale_masks
 from mapping.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
 
+from time import time_ns
+from copy import deepcopy
+
 
 class VisionNode(CompatibleNode):
     """
@@ -40,6 +43,7 @@ class VisionNode(CompatibleNode):
             "yolo11s-seg": (YOLO, "yolo11s-seg.pt", "segmentation", "ultralytics"),
             "yolo11m-seg": (YOLO, "yolo11m-seg.pt", "segmentation", "ultralytics"),
             "yolo11l-seg": (YOLO, "yolo11l-seg.pt", "segmentation", "ultralytics"),
+            "yolo11x-seg": (YOLO, "yolo11l-seg.pt", "segmentation", "ultralytics"),
         }
 
         # general setup
@@ -131,9 +135,13 @@ class VisionNode(CompatibleNode):
         # free up cuda memory
         if self.device == "cuda":
             torch.cuda.empty_cache()
+
+        time_start = time_ns()
         vision_result = self.predict_ultralytics(
             image, return_image=self.view_camera, image_size=self.camera_resolution
         )
+        time_delta = time_ns() - time_start
+        rospy.loginfo(f"runtime: {time_delta}")
 
         if vision_result is None:
             return
