@@ -51,6 +51,11 @@ class TestPath(CompatibleNode):
                 temp = PoseStamped()
                 temp.pose.position.x = i / 2
                 temp.pose.position.y = i * 0.2
+                temp.header.seq = i
+                temp.header.stamp = roscomp.ros_timestamp(
+                    self.get_time(), from_sec=True
+                )
+                temp.header.frame_id = "hero"
                 pose_stamps.append(temp)
 
             msg = Path()

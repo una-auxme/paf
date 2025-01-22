@@ -15,6 +15,9 @@ from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping import msg
 
 from nav_msgs.msg import Path
+from geometry_msgs.msg import Point
+from .transform import Point2
+from visualization_msgs.msg import MarkerArray, Marker
 
 
 @dataclass
@@ -141,7 +144,7 @@ class Map:
         return None
 
     def check_trajectory(self, local_path: Path) -> int:
-
+        """
         trajectory_shapely_points = []
         for pos in local_path.poses:
             trajectory_shapely_points.append(
@@ -149,6 +152,7 @@ class Map:
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
         local_trajectory.buffer(1.25, 3)
+        """
 
         # given path is okay and is not colliding
         return 0
