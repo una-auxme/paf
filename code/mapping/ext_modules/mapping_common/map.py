@@ -75,7 +75,7 @@ class Map:
             return self.entities[1:]
         return self.entities
 
-    def get_entity_in_front_or_back(self, in_front = True) -> Optional[Entity]:
+    def get_entity_in_front_or_back(self, in_front=True) -> Optional[Entity]:
         """Returns the first entity in front or back based on in_front
 
         Projects a polygon to simulate the road
@@ -99,17 +99,19 @@ class Map:
                 ).entity
             else:
                 return max(
-                road_entities,
-                key=lambda e: e.entity.transform.translation().x(),
-            ).entity
+                    road_entities,
+                    key=lambda e: e.entity.transform.translation().x(),
+                ).entity
         else:
             return None
 
     def project_plane(self, start_point, size_x, size_y):
-        """Projects a rectangular plane starting from start point forward in the x-direction.
+        """Projects a rectangular plane starting from start point
+        forward in the x-direction.
 
         Parameters:
-        - start_point(float, float): Starting point tuple from which the rectangle is constructed
+        - start_point(float, float): Starting point tuple from which
+        the rectangle is constructed
         - size_x (float): Length of the plane along the x-axis.
         - size_y (float): Width of the plane along the y-axis.
 
