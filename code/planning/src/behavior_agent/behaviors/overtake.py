@@ -86,19 +86,19 @@ class Ahead(py_trees.behaviour.Behaviour):
         obstacle_msg = self.blackboard.get("/paf/hero/collision")
         current_position = self.blackboard.get("/paf/hero/current_pos")
         current_heading = self.blackboard.get("/paf/hero/current_heading").data
-        data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
         speedometer = self.blackboard.get("/carla/hero/Speed")
         if speedometer is not None:
             current_speed = speedometer.speed
         else:
             rospy.logerr("Speed data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
-        if data is not None:
-            map = Map.from_ros_msg(data)
+        if map_data is not None:
+            map = Map.from_ros_msg(map_data)
         else:
             rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
-        entity = map.get_entity_in_front()
+        entity = map.get_entity_in_front_or_back(True)
 
         if obstacle_msg is None or current_position is None or current_heading is None:
             return py_trees.common.Status.FAILURE
@@ -107,6 +107,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             current_position.pose.position.y,
             current_position.pose.position.z,
         ]
+        collision_distance = obstacle_msg.data[0]
 
         if entity is not None:
             obstacle_distance = entity.transform.translation().x()
@@ -117,34 +118,29 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             return py_trees.common.Status.FAILURE
 
-        if obstacle_distance == np.Inf:
+        if collision_distance == np.Inf:
             return py_trees.common.Status.FAILURE
         # calculate approx collision position in global coords
         rotation_matrix = Rotation.from_euler("z", current_heading)
         # Apply current heading to absolute distance vector
         # and add to current position
         pos_moved_in_x_direction = current_position + rotation_matrix.apply(
-            np.array([obstacle_distance, 0, 0])
+            np.array([collision_distance, 0, 0])
         )
 
-        if np.linalg.norm(pos_moved_in_x_direction - current_position) < 1:
+        if np.linalg.norm(pos_moved_in_x_direction - current_position) < 0.5:
             # current collision is not near trajectory lane
             rospy.logerr("Obstacle is not near trajectory lane")
             return py_trees.common.Status.FAILURE
-
+        # increase counter when we get closer or when nearly stopped
         if (
-            (
-                obstacle_speed < 0.7
-                and obstacle_distance < 20
-                and obstacle_distance < self.old_obstacle_distance
-            )
-            or obstacle_speed < 0.7
-            and obstacle_distance < 15
-            and current_speed < 0.8
-        ):
+            obstacle_speed < 0.4
+            and obstacle_distance < 20
+            and obstacle_distance < self.old_obstacle_distance
+        ) or (obstacle_speed < 0.1 and obstacle_distance < 20 and current_speed < 0.1):
             self.counter_overtake += 1
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
-            if self.counter_overtake > 6:
+            if self.counter_overtake > 3:
                 self.ot_distance_pub.publish(obstacle_distance)
                 return py_trees.common.Status.SUCCESS
             self.old_obstacle_distance = obstacle_distance
@@ -172,7 +168,7 @@ class Approach(py_trees.behaviour.Behaviour):
     """
     This behaviour is executed when the ego vehicle is in close proximity of
     an object which needs to be overtaken and
-    behaviours.road_features.overtake_ahead is triggered.
+    overtake_ahead is triggered.
     It than handles the procedure for overtaking.
     """
 
@@ -243,7 +239,11 @@ class Approach(py_trees.behaviour.Behaviour):
 
         # Intermediate layer map integration
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-        map = Map.from_ros_msg(map_data)
+        if map_data is not None:
+            map = Map.from_ros_msg(map_data)
+        else:
+            rospy.logerr("Map data not avilable in Overtake")
+            return py_trees.common.Status.FAILURE
 
         entity = map.get_entity_in_front_or_back(True)
         if entity is not None:
@@ -260,14 +260,13 @@ class Approach(py_trees.behaviour.Behaviour):
 
         # slow down before overtake if blocked
         if self.ot_distance < 20.0:
-            data = None  # self.blackboard.get("/paf/hero/oncoming")
             oncoming = None
             if oncoming is not None:
                 # TODO add distance to oncoming traffic from map here
                 distance_oncoming = None
 
             else:
-                distance_oncoming = 60
+                distance_oncoming = self.clear_distance + 10
             if (
                 distance_oncoming is not None
                 and distance_oncoming > self.clear_distance
@@ -388,10 +387,14 @@ class Wait(py_trees.behaviour.Behaviour):
         """
 
         # Update distance to collison and distance for clear
-        data = self.blackboard.get("/paf/hero/mapping/init_data")
-        map = Map.from_ros_msg(data)
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        if map_data is not None:
+            map = Map.from_ros_msg(map_data)
+        else:
+            rospy.logerr("Map data not avilable in Overtake")
+            return py_trees.common.Status.FAILURE
 
-        entity = map.get_entity_in_front()
+        entity = map.get_entity_in_front_or_back(True)
         if entity is not None:
             rospy.loginfo(
                 f"Translation to car in front: {entity.transform.translation().x()},"
@@ -589,6 +592,7 @@ class Leave(py_trees.behaviour.Behaviour):
         Abort this subtree, if overtake distance is big enough
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
+        # TODO this check needs to be evaluated, not sure if it works
         global OVERTAKE_EXECUTING
         data = self.blackboard.get("/paf/hero/current_pos")
         self.current_pos = np.array([data.pose.position.x, data.pose.position.y])

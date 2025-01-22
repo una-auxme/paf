@@ -273,6 +273,8 @@ class MotionPlanning(CompatibleNode):
         Returns:
             None: The method updates the self.trajectory attribute with the new path.
         """
+        # add buffer to overtake distance so fully avoid obstacle
+        distance += 5
         currentwp = self.current_wp
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
