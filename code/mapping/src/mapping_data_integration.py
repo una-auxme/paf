@@ -10,15 +10,15 @@ import numpy as np
 from typing import List, Optional
 
 from mapping_common.entity import Entity, Flags, Car, Motion2D
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 from mapping.msg import ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
-import sensor_msgs.point_cloud2 as pc2
 from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.validation import make_valid
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -33,7 +33,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
-    lidar_cluster_entities_data: Optional[List[Entity]] = None
+    lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_marker_data: Optional[MarkerArray] = None
 
@@ -59,9 +59,11 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
         self.new_subscription(
-            topic=self.get_param("~entity_topic", "/paf/hero/Lidar/cluster_entities"),
-            msg_type=MapMsg,
-            callback=self.lidar_cluster_entities_callback,
+            topic=self.get_param(
+                "~clustered_points_lidar_topic", "/paf/hero/Lidar/clustered_points"
+            ),
+            msg_type=ClusteredPointsArray,
+            callback=self.lidar_clustered_points_callback,
             qos_profile=1,
         )
         # self.new_subscription(
@@ -91,12 +93,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
-        # Will be removed when the new function for entity creation is implemented
-        self.vision_node_pointcloud_publisher = self.new_publisher(
-            msg_type=PointCloud2,
-            topic="/paf/hero/mapping/temporary_pointcloud",
-            qos_profile=1,
-        )
+
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
 
@@ -106,8 +103,8 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_marker_callback(self, data: MarkerArray):
         self.lidar_marker_data = data
 
-    def lidar_cluster_entities_callback(self, data: MapMsg):
-        self.lidar_cluster_entities_data = data
+    def lidar_clustered_points_callback(self, data: ClusteredPointsArray):
+        self.lidar_clustered_points_data = data
 
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
         self.radar_clustered_points_data = data
@@ -244,12 +241,43 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
-    def create_entities_from_clusters(self) -> List[Entity]:
-        clusterpointsarray = self.radar_clustered_points_data.clusterPointsArray
-        indexarray = self.radar_clustered_points_data.indexArray
-        motionarray = self.radar_clustered_points_data.motionArray
-        # objectclassarray = self.radar_clustered_points_data.object_class
-        self.radar_clustered_points_data = None
+    def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
+        if sensortype == "radar":
+            clusterpointsarray = np.array(
+                self.radar_clustered_points_data.clusterPointsArray
+            )
+
+            # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
+            if len(clusterpointsarray) % 3 != 0:
+                raise ValueError(
+                    "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
+                )
+
+            # Umformen in (n, 3)
+            clusterpointsarray = clusterpointsarray.reshape(-1, 3)
+
+            indexarray = np.array(self.radar_clustered_points_data.indexArray)
+            motionarray = np.array(self.radar_clustered_points_data.motionArray)
+            # objectclassarray = self.radar_clustered_points_data.object_class
+            self.radar_clustered_points_data = None
+        else:
+            clusterpointsarray = np.array(
+                self.lidar_clustered_points_data.clusterPointsArray
+            )
+
+            # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
+            if len(clusterpointsarray) % 3 != 0:
+                raise ValueError(
+                    "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
+                )
+
+            # Umformen in (n, 3)
+            clusterpointsarray = clusterpointsarray.reshape(-1, 3)
+
+            indexarray = np.array(self.lidar_clustered_points_data.indexArray)
+            motionarray = np.array(self.lidar_clustered_points_data.motionArray)
+            # objectclassarray = self.radar_clustered_points_data.object_class
+            self.lidar_clustered_points_data = None
 
         unique_labels = np.unique(indexarray)
         entities = []
@@ -266,12 +294,17 @@ class MappingDataIntegrationNode(CompatibleNode):
             if cluster_points.shape[0] < 3:
                 continue
 
-            # Erstelle ein Shapely-Polygon (nur x und y werden verwendet)
-            polygon = ShapelyPolygon(cluster_points[:, :2])
+            cluster_points_xy = cluster_points[:, :2]
+
+            if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
+                # Füge den Startpunkt am Ende hinzu, um das Polygon zu schließen
+                cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
+
+            polygon = ShapelyPolygon(cluster_points)
 
             # Optional: Berechne die Bewegung (Motion)
             motion = None
-            if motionarray is not None:
+            if motionarray is not None and motionarray.size != 0:
                 cluster_motion = motionarray[indexarray == label][0]
                 # avg_motion = np.mean(cluster_motion, axis=0)
                 motion = Motion2D(
@@ -285,8 +318,10 @@ class MappingDataIntegrationNode(CompatibleNode):
             #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste Klasse
 
             if not polygon.is_valid:
-                rospy.logwarn("Skipping non-Polygon entity.")
-                continue
+                print("Repariere ungültiges Polygon...")
+                polygon = make_valid(polygon)
+                if not polygon.is_valid:
+                    continue
 
             # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
             centroid = polygon.centroid
@@ -297,11 +332,13 @@ class MappingDataIntegrationNode(CompatibleNode):
             transform = Transform2D.new_translation(v)
 
             flags = Flags(is_collider=True)
+
+            point2_list = [Point2.new(x, y) for x, y in cluster_points_xy]
             # Erstelle die Entity
             entity = Entity(
                 confidence=1,
                 priority=0.25,
-                shape=Polygon(polygon.coords),
+                shape=Polygon(point2_list),
                 transform=transform,
                 timestamp=rospy.Time.now(),
                 flags=flags,
@@ -503,14 +540,14 @@ class MappingDataIntegrationNode(CompatibleNode):
         #     "~enable_radar_marker"
         # ):
         #     entities.extend(self.entities_from_radar_marker())
-        # if self.lidar_cluster_entities_data is not None and self.get_param(
-        #     "~enable_lidar_cluster"
-        # ):
-        # entities.extend(self.create_entities_from_clusters())
+        if self.lidar_clustered_points_data is not None and self.get_param(
+            "~enable_lidar_cluster"
+        ):
+            entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
         if self.radar_clustered_points_data is not None and self.get_param(
             "~enable_radar_cluster"
         ):
-            entities.extend(self.create_entities_from_clusters())
+            entities.extend(self.create_entities_from_clusters(sensortype="radar"))
         # if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
         #     entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented

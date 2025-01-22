@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from perception_utils import array_to_clustered_points
 import rospy
 import ros_numpy
 import numpy as np
@@ -47,10 +48,6 @@ class RadarNode:
         min_samples = rospy.get_param("~dbscan_min_samples", 3)
         clustered_data = cluster_data(dataarray, eps, min_samples)
 
-        rospy.loginfo(
-            f"Radar coordinates: ['0 x']: {dataarray[0]} [1 y]: {dataarray[1]} [3 vel]: {dataarray[3]}"
-        )
-
         # transformed_data = transform_data_to_2d(dataarray)
 
         cloud = create_pointcloud2(dataarray, clustered_data.labels_)
@@ -77,24 +74,13 @@ class RadarNode:
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = "hero/RADAR"
-        clusterPointsArray = points_with_labels[:, :3]
+
+        clusterPointsNpArray = points_with_labels[:, :3]
         indexArray = points_with_labels[:, -1]
-        motion2DArray = calculate_cluster_velocity(points_with_labels)
-        objectClass = None
-        clusteredpoints = ClusteredPointsArray(
-            header, clusterPointsArray, indexArray, motion2DArray, objectClass
+        clusteredpoints = array_to_clustered_points(
+            clusterPointsNpArray, indexArray, header_id="hero/RADAR"
         )
         self.entity_radar_publisher.publish(clusteredpoints)
-
-        # call function to create PointCloudCluster msg to send to intermediate layer
-        # (with PointCloudArray and Motion2DArray)
-
-        # polygon_array = create_shapely_polygons(points_with_labels)
-        # velocities = calculate_cluster_velocity(points_with_labels)
-        # entities = create_entities(polygon_array, velocities)
-        # rospy.loginfo(f"Entities: velocities[0]: {str(velocities[0])}")
-
-        # self.entity_radar_publisher(entities)
 
         cluster_info = generate_cluster_info(
             clustered_data, dataarray, marker_array, bounding_boxes
@@ -564,8 +550,8 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
 
 def calculate_cluster_velocity(points_with_labels):
     cluster_motions = []
-    unique_labels = np.unique(points_with_labels[:, -1])
-    for label in unique_labels:
+    labels = points_with_labels[:, -1]
+    for label in labels:
         if label == -1:
             continue
         cluster_points = points_with_labels[points_with_labels[:, -1] == label]
@@ -583,21 +569,9 @@ def calculate_cluster_velocity(points_with_labels):
 
         # Skaliere Richtung mit Geschwindigkeit
         motion = avg_velocity * direction
-
-        rospy.loginfo(
-            f"Label {label}: avg_velocity={avg_velocity}, direction={direction}, motion={motion}"
-        )
-
-        v = Vector2.new(4.08816791e-05, 8.61750009e-07)
-        rospy.loginfo(
-            f"x: {v.x()}, y: {v.y()}"
-        )  # Sollte die erwarteten Werte ohne Fehler ausgeben
-
         cluster_motion = Vector2.new(motion[0], motion[1])
-        rospy.loginfo(
-            f"Cluster motion for label {label}: x={cluster_motion.x()}, y={cluster_motion.y()}"
-        )
         cluster_motions.append(cluster_motion)
+
     return cluster_motions
 
 
