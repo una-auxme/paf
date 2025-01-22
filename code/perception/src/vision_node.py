@@ -27,6 +27,8 @@ import asyncio
 import rospy
 from ultralytics.utils.ops import scale_masks
 
+from copy import deepcopy
+
 
 class VisionNode(CompatibleNode):
     """
@@ -83,6 +85,7 @@ class VisionNode(CompatibleNode):
             "yolo11s-seg": (YOLO, "yolo11s-seg.pt", "segmentation", "ultralytics"),
             "yolo11m-seg": (YOLO, "yolo11m-seg.pt", "segmentation", "ultralytics"),
             "yolo11l-seg": (YOLO, "yolo11l-seg.pt", "segmentation", "ultralytics"),
+            "yolo11x-seg": (YOLO, "yolo11x-seg.pt", "segmentation", "ultralytics"),
         }
 
         # general setup
@@ -446,7 +449,9 @@ class VisionNode(CompatibleNode):
 
         # proceed with traffic light detection
         if 9 in output[0].boxes.cls:
-            asyncio.run(self.process_traffic_lights(output[0], cv_image, image.header))
+            asyncio.run(
+                self.process_traffic_lights(output[0], cv_image, deepcopy(image.header))
+            )
 
         # draw bounding boxes and distance values on image
         c_boxes = torch.stack(c_boxes)
