@@ -1,48 +1,90 @@
-import rospy
-from nav.msgs import Path
-from geometry_msgs.msg import Pose, PoseStamped, Point
-from ros_compatibility.node import CompatibleNode
+#!/usr/bin/env python
 import ros_compatibility as roscomp
+import rospy
+from geometry_msgs.msg import PoseStamped
+from ros_compatibility.node import CompatibleNode
+from nav_msgs.msg import Path
+from mapping.msg import Map as MapMsg
+from mapping_common.map import Map
+import shapely
 
 
-class Test(CompatibleNode):
+class TestPath(CompatibleNode):
 
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.pub = rospy.Publisher("/test_trajectory", Path, queue_size=10)
+    def __init__(self):
+        """
+        This node handles the translation from the static main frame to the
+        moving hero frame. The hero frame always moves and rotates as the
+        ego vehicle does. The hero frame is used by sensors like the lidar.
+        Rviz also uses the hero frame. The main frame is used for planning.
+        """
+        super(TestPath, self).__init__("TestPath")
+        self.loginfo("TestPath node started")
+        self.local_trajectory = Path()
 
         self.publisher = self.new_publisher(
             msg_type=Path,
-            topic=self.get_param("~map_init_topic", "trajectory_test"),
+            topic="test_trajectory",
             qos_profile=1,
         )
 
-        # define how many times per second
-        # will the data be published
-        # let's say 10 times/second or 10Hz
-        self.rate = rospy.Rate(0.5)
-        # to keep publishing as long as the core is running
+        self.current_pos_subscriber = self.new_subscription(
+            Path,
+            "/test_trajectory",
+            self.callback,
+            qos_profile=1,
+        )
 
-        self.new_timer(1.0 / self.rate, self.publish_new_map)
+        self.new_subscription(
+            topic=self.get_param("~map_topic", "/paf/hero/mapping/init_data"),
+            msg_type=MapMsg,
+            callback=self.map_callback,
+            qos_profile=1,
+        )
 
-    def publish(self):
-        pose_stamps = []
-        for i in range(0, 10):
-            temp = PoseStamped()
-            temp.pose.position.x = i / 2
-            temp.pose.position.y = i * 0.2
-            pose_stamps.append(temp)
+    def run(self):
+        self.loginfo("TestPath node running")
 
-        data = pose_stamps
+        def loop(timer_event=None):
+            pose_stamps = []
+            for i in range(0, 10):
+                temp = PoseStamped()
+                temp.pose.position.x = i / 2
+                temp.pose.position.y = i * 0.2
+                pose_stamps.append(temp)
 
-        self.loginfo(data)
-        self.publisher.publish(data)
-        self.rate.sleep()
+            msg = Path()
+            msg.poses = pose_stamps
+            msg.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+            self.publisher.publish(msg)
+
+        self.new_timer(5, loop)
+        self.spin()
+
+    def callback(self, data: Path):
+        self.local_trajectory = data
+
+    def map_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
+        status = map.check_trajectory(self.local_trajectory)
+        self.loginfo("#Status trajectory check " + str(status))
+
+
+def main(args=None):
+    """
+    Main function starts the node
+    :param args:
+    """
+    roscomp.init("main_frame_publisher", args=args)
+
+    try:
+        node = TestPath()
+        node.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        roscomp.shutdown()
 
 
 if __name__ == "__main__":
-    name = "PatHTest"
-    roscomp.init(name)
-    node = Test(name)
-    node.spin()
+    main()
