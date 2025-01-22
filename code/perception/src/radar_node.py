@@ -17,6 +17,7 @@ from mapping_common.entity import Entity, Flags, Motion2D
 from mapping_common.shape import Polygon
 from mapping_common.transform import Transform2D, Vector2
 from typing import List
+from mapping.msg import ClusteredPointsArray
 
 
 class RadarNode:
@@ -80,10 +81,11 @@ class RadarNode:
         indexArray = points_with_labels[:, -1]
         motion2DArray = calculate_cluster_velocity(points_with_labels)
         objectClass = None
-        ClusteredLidarPoints(
+        clusteredpoints = ClusteredPointsArray(
             header, clusterPointsArray, indexArray, motion2DArray, objectClass
         )
-        self.entity_radar_publisher(ClusteredLidarPoints)
+        self.entity_radar_publisher.publish(clusteredpoints)
+
         # call function to create PointCloudCluster msg to send to intermediate layer
         # (with PointCloudArray and Motion2DArray)
 
@@ -120,8 +122,10 @@ class RadarNode:
             queue_size=10,
         )
         self.entity_radar_publisher = rospy.Publisher(
-            rospy.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
-            msg_type=ClusteredLidarPoints,
+            rospy.get_param(
+                "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
+            ),
+            ClusteredPointsArray,
             queue_size=10,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(

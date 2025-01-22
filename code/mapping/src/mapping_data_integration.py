@@ -13,7 +13,8 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
-from mapping.msg import Map as MapMsg, ClusteredPointsArray
+from mapping.msg import Map as MapMsg
+from mapping.msg import ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 import sensor_msgs.point_cloud2 as pc2
@@ -33,7 +34,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_marker_data: Optional[MarkerArray] = None
     lidar_cluster_entities_data: Optional[List[Entity]] = None
-    radar_cluster_entities_data: Optional[List[Entity]] = None
+    radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_marker_data: Optional[MarkerArray] = None
 
     def __init__(self, name, **kwargs):
@@ -70,15 +71,11 @@ class MappingDataIntegrationNode(CompatibleNode):
         #     qos_profile=1,
         # )
         self.new_subscription(
-            topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
-            msg_type=ClusteredLidarPoints,
-            callback=self.radar_cluster_entities_callback,
-            qos_profile=1,
-        )
-        self.new_subscription(
-            topic="/paf/hero/visualization_pointcloud",
+            topic=self.get_param(
+                "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
+            ),
             msg_type=ClusteredPointsArray,
-            callback=self.radar_cluster_entities_callback,
+            callback=self.radar_clustered_points_callback,
             qos_profile=1,
         )
 
@@ -112,8 +109,8 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_cluster_entities_callback(self, data: MapMsg):
         self.lidar_cluster_entities_data = data
 
-    def radar_cluster_entities_callback(self, data: ClusteredPointsArray):
-        self.radar_cluster_entities_data = data
+    def radar_clustered_points_callback(self, data: ClusteredPointsArray):
+        self.radar_clustered_points_data = data
 
     def radar_marker_callback(self, data: MarkerArray):
         self.radar_marker_data = data
@@ -248,11 +245,11 @@ class MappingDataIntegrationNode(CompatibleNode):
         return lidar_entities
 
     def create_entities_from_clusters(self) -> List[Entity]:
-        clusterpointsarray = self.radar_cluster_entities_data.clusterPointsArray
-        indexarray = self.radar_cluster_entities_data.indexArray
-        motionarray = self.radar_cluster_entities_data.motionArray
-        objectclassarray = self.radar_cluster_entities_data.object_class
-        self.radar_cluster_entities_data = None
+        clusterpointsarray = self.radar_clustered_points_data.clusterPointsArray
+        indexarray = self.radar_clustered_points_data.indexArray
+        motionarray = self.radar_clustered_points_data.motionArray
+        # objectclassarray = self.radar_clustered_points_data.object_class
+        self.radar_clustered_points_data = None
 
         unique_labels = np.unique(indexarray)
         entities = []
@@ -498,24 +495,24 @@ class MappingDataIntegrationNode(CompatibleNode):
         entities = []
         entities.append(hero_car)
 
-        if self.lidar_marker_data is not None and self.get_param(
-            "~enable_lidar_marker"
-        ):
-            entities.extend(self.entities_from_lidar_marker())
-        if self.radar_marker_data is not None and self.get_param(
-            "~enable_radar_marker"
-        ):
-            entities.extend(self.entities_from_radar_marker())
-        if self.lidar_cluster_entities_data is not None and self.get_param(
-            "~enable_lidar_cluster"
-        ):
-            entities.extend(self.create_entities_from_clusters())
-        if self.radar_cluster_entities_data is not None and self.get_param(
+        # if self.lidar_marker_data is not None and self.get_param(
+        #     "~enable_lidar_marker"
+        # ):
+        #     entities.extend(self.entities_from_lidar_marker())
+        # if self.radar_marker_data is not None and self.get_param(
+        #     "~enable_radar_marker"
+        # ):
+        #     entities.extend(self.entities_from_radar_marker())
+        # if self.lidar_cluster_entities_data is not None and self.get_param(
+        #     "~enable_lidar_cluster"
+        # ):
+        # entities.extend(self.create_entities_from_clusters())
+        if self.radar_clustered_points_data is not None and self.get_param(
             "~enable_radar_cluster"
         ):
-            entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
-        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
-            entities.extend(self.entities_from_lidar())
+            entities.extend(self.create_entities_from_clusters())
+        # if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
+        #     entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented
         # if self.get_param("enable_vision_points"):
         #    entities.extend(self.entities_from_vision_points())

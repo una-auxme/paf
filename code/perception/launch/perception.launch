@@ -65,7 +65,7 @@
     <param name="range_topic" value="/carla/hero/LIDAR_range"/>
 
     <!-- Cluster configuration -->
-    <param name="clustering_radar_z_min" value="-1.4" />
+    <param name="clustering_lidar_z_min" value="-1.4" />
     <param name="dbscan_eps" value="0.4" />
     <param name="dbscan_min_samples" value="10" />
   </node>
@@ -73,6 +73,7 @@
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
     <param name="range_topic" value="/carla/hero/RADAR_range"/>
+    <param name="clustered_points_radar_topic" value="/paf/hero/Radar/clustered_points"/>
 
     <!-- Cluster configuration -->
     <param name="clustering_radar_z_min" value="-0.40" />
