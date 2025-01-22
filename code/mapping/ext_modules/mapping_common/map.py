@@ -10,11 +10,15 @@ from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
 
-from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
-
-# from shapely.geometry import Polygon
+from mapping_common.entity import Entity, Flags, FlagFilter, ShapelyEntity
+from mapping_common.transform import Vector2, Transform2D
+from mapping_common.shape import Rectangle
+from shapely.geometry import Polygon
+from shapely import intersection
 
 from mapping import msg
+
+import rospy
 
 
 @dataclass
@@ -129,12 +133,65 @@ class Map:
         else:
             return None
 
-    def lane_free(self, right: bool) -> bool:
+    def is_lane_free(self, right_lane=False) -> bool:
+        """Returns if a lane left or right of our car is free.
 
+        Parameters:
+        - right_lane (bool): Checks the right lane instead
+        Returns:
+            bool: lane free
+        """
+        # checks which lane should be checked and set the multiplier for the lane entity translation(>0 = )
+        lane_pos = 1
+        if right_lane:
+            lane_pos = -1
+
+        # hero = self.hero()
+
+        # entities = self.entities_without_hero()
+
+        filter = FlagFilter()
+        filter.is_ignored = False
+        filter.is_hero = False
+        filter.is_lanemark = False
+        map_tree = self.build_tree(f=filter)
+
+        lane_box_shape = Rectangle(
+            length=20,
+            width=1.5,
+            offset=Transform2D.new_translation(Vector2.new(0.0, lane_pos * 2.2)),
+        )
+
+        # lane_box_shape_geo = self.project_plane(
+        #    start_point=(lane_pos * 2.2, 0), size_x=1.5, size_y=20
+        # )
+
+        lane_box_shape_geo = lane_box_shape.to_shapely()
+
+        # lane_box_entity = Entity(
+        #    confidence=100.0,
+        #    priority=100.0,
+        #    shape=lane_box_shape,
+        #    transform=Transform2D.identity(),
+        #    flags=Flags(is_ignored=True),
+        # )
+
+        lane_box_intersection_entities = map_tree.query(
+            geo=lane_box_shape_geo, predicate="intersects"
+        )
+
+        # rospy.loginfo(lane_box_intersection_entities)
+
+        # new_plane = self.project_plane((10, 10), 5, 5)
+        # rospy.loginfo(hero)
+
+        # if list with lane box intersection not empty -> lane NOT free
+        if lane_box_intersection_entities:
+            return False
         return True
 
-    """def project_plane(start_point, size_x, size_y):
-
+    def project_plane(self, start_point, size_x, size_y):
+        """
         Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
         Parameters:
@@ -143,7 +200,7 @@ class Map:
 
         Returns:
         - Polygon: A Shapely Polygon representing the plane.
-
+        """
         x, y = start_point
 
         points = [
@@ -151,10 +208,10 @@ class Map:
             (x + size_x, y),
             (x + size_x, y + size_y),
             (x, y + size_y),
-            (x, y)
+            (x, y),
         ]
 
-        return Polygon(points)"""
+        return Polygon(points)
 
     """def curve_to_polygon(points, width):
 

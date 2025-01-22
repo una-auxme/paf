@@ -5,7 +5,8 @@ import numpy as np
 from behaviors import behavior_speed as bs
 
 from mapping_common.map import Map
-from mapping import msg
+
+# from mapping import msg
 
 
 class LeaveParkingSpace(py_trees.behaviour.Behaviour):
@@ -24,7 +25,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
         super(LeaveParkingSpace, self).__init__(name)
         rospy.loginfo("LeaveParkingSpace started")
-        self.called = False
+        self.started = False
+        self.finished = False
 
     def setup(self, timeout):
         """
@@ -87,19 +89,15 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
         position = self.blackboard.get("/paf/hero/current_pos")
         speed = self.blackboard.get("/carla/hero/Speed")
-        data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
 
-        if self.called is False:
+        if not self.finished:
             # calculate distance between start and current position
             if (
                 position is not None
                 and self.initPosition is not None
                 and speed is not None
             ):
-                map = Map.from_ros_msg(data)
-                free = map.lane_free(True)
-                rospy.loginfo(f"Lane free function: {map}")
-
                 startPos = np.array(
                     [position.pose.position.x, position.pose.position.y]
                 )
@@ -110,13 +108,30 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                     ]
                 )
                 distance = np.linalg.norm(startPos - endPos)
-                if distance < 1 or speed.speed < 2:
-                    self.curr_behavior_pub.publish(bs.parking.name)
-                    self.initPosition = position
-                    return py_trees.common.Status.RUNNING
+
+                #left_lane_free = map.is_lane_free(right_lane=False)
+                #rospy.loginfo(f"Left lane free: {left_lane_free}")
+
+                if not self.started:
+                    map = Map.from_ros_msg(map_data)
+                    #rospy.loginfo(map.entities)
+                    if map.entities and map.is_lane_free(right_lane=False):
+                        rospy.loginfo("Left lane is now free. Starting unparking.")
+                        #self.started = True
+                    else:
+                        rospy.logerr_throttle_identical(5, "Left lane is blocked. Paused unparking.")
+
+                if self.started:
+                    if distance < 1 or speed.speed < 2:
+                        self.curr_behavior_pub.publish(bs.parking.name)
+                        self.initPosition = position
+                        return py_trees.common.Status.RUNNING
+                    else:
+                        self.finished = True
+                        return py_trees.common.Status.FAILURE
                 else:
-                    self.called = True
-                    return py_trees.common.Status.FAILURE
+                    return py_trees.common.Status.RUNNING  
+
             else:
                 self.initPosition = position
                 return py_trees.common.Status.RUNNING
