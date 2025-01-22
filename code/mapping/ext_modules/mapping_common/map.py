@@ -75,8 +75,8 @@ class Map:
             return self.entities[1:]
         return self.entities
 
-    def get_entity_in_front(self) -> Optional[Entity]:
-        """Returns the entity in front
+    def get_entity_in_front_or_back(self, in_front=True) -> Optional[Entity]:
+        """Returns the first entity in front or back based on in_front
 
         Projects a polygon to simulate the road
         Calculates the nearest entity on that polygon
@@ -85,46 +85,33 @@ class Map:
         This could be extended with a curved polygon
         if curved roads become a problem in the future
         """
-
+        length = 80 if in_front else -80
         tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
-        # a coverage width of 1.2 meters should cover all cars and obstacles in our way
-        road_area = self.project_plane((0, -0.6), 80, 1.2)
+        # a coverage width of 1.4 meters should cover all cars and obstacles in our way
+        road_area = self.project_plane((0, -0.7), length, 1.4)
         road_entities = tree.query(road_area)
 
         if len(road_entities) > 0:
-            return min(
-                road_entities,
-                key=lambda e: e.entity.transform.translation().x(),
-            ).entity
-        else:
-            return None
-
-    def get_entity_in_back(self) -> Optional[Entity]:
-        """Returns the entity in back
-
-        Projects a polygon to simulate the road
-        Calculates the nearest entity on that polygon
-        Returns:
-            Optional[Entity]: Entity in back
-        """
-
-        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
-        # a coverage width of 1.2 meters should cover all cars and obstacles in our way
-        road_area = self.project_plane((0, -0.6), -80, 1.2)
-        road_entities = tree.query(road_area)
-
-        if len(road_entities) > 0:
-            return max(
-                road_entities,
-                key=lambda e: e.entity.transform.translation().x(),
-            ).entity
+            if in_front:
+                return min(
+                    road_entities,
+                    key=lambda e: e.entity.transform.translation().x(),
+                ).entity
+            else:
+                return max(
+                    road_entities,
+                    key=lambda e: e.entity.transform.translation().x(),
+                ).entity
         else:
             return None
 
     def project_plane(self, start_point, size_x, size_y):
-        """Projects a rectangular plane starting from (0, 0) forward in the x-direction.
+        """Projects a rectangular plane starting from start point
+        forward in the x-direction.
 
         Parameters:
+        - start_point(float, float): Starting point tuple from which
+        the rectangle is constructed
         - size_x (float): Length of the plane along the x-axis.
         - size_y (float): Width of the plane along the y-axis.
 
@@ -185,7 +172,7 @@ class Map:
             # Calculate intersection area
             intersection = polygon.intersection(shape)
             if intersection.area / shape.area >= coverage:
-                collision_entities.append(entity)
+                collision_entities.append(ent)
 
         return collision_entities
 
