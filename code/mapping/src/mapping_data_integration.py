@@ -276,6 +276,20 @@ class MappingDataIntegrationNode(CompatibleNode):
             else Map.from_ros_msg(self.radar_cluster_entities_data).entities
         )
 
+        lane_box_entities = [
+            Entity(
+                confidence=1.0,
+                priority=1.0,
+                shape=Rectangle(
+                    length=20,
+                    width=1.5,
+                    offset=Transform2D.new_translation(Vector2.new(0.0, 2.2)),
+                ),
+                transform=Transform2D.identity(),
+                flags=Flags(is_ignored=True),
+            )
+        ]
+
         stamp = rospy.get_rostime()
         map = Map(
             timestamp=stamp,
@@ -283,7 +297,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             + self.entities_from_lidar_marker()
             + self.entities_from_radar_marker()
             + lidar_cluster_entities
-            + radar_cluster_entities,
+            + radar_cluster_entities
+            + lane_box_entities,
         )
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
