@@ -209,7 +209,7 @@ class Approach(py_trees.behaviour.Behaviour):
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
         map = Map.from_ros_msg(map_data)
 
-        entity = map.get_entity_in_front()
+        entity = map.get_entity_in_front_or_back(True)
         if entity is not None:
             rospy.loginfo(
                 f"Translation to car in front: {entity.transform.translation().x()},"
