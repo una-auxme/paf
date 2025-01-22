@@ -26,6 +26,7 @@ class OdometryNode(CompatibleNode):
         self.last_time = rospy.Time.now()
 
         self.role_name = self.get_param("role_name", "hero")
+        self.loop_rate = self.get_param("control_loop_rate", 0.05)
 
         # ROS Publishers and Subscribers
         self.odom_pub = self.new_publisher(Odometry, "example/odom", qos_profile=1)
@@ -75,7 +76,7 @@ class OdometryNode(CompatibleNode):
         odom = Odometry()
         odom.header.stamp = current_time
         odom.header.frame_id = "odom"
-        odom.child_frame_id = "base_link"
+        odom.child_frame_id = "hero"
 
         # Pose
         odom.pose.pose.position.x = self.x
@@ -94,7 +95,7 @@ class OdometryNode(CompatibleNode):
         tf = TransformStamped()
         tf.header.stamp = current_time
         tf.header.frame_id = "odom"
-        tf.child_frame_id = "base_link"
+        tf.child_frame_id = "hero"
         tf.transform.translation.x = self.x
         tf.transform.translation.y = self.y
         tf.transform.rotation.z = math.sin(self.yaw / 2.0)
@@ -103,7 +104,7 @@ class OdometryNode(CompatibleNode):
         self.tf_broadcaster.sendTransform(tf)
 
     def spin(self):
-        rate = rospy.Rate(50)  # 50 Hz
+        rate = rospy.Rate(self.loop_rate)  # 50 Hz
         while not rospy.is_shutdown():
             self.publish_odometry()
             rate.sleep()

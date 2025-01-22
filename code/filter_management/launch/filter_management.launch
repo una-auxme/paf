@@ -1,5 +1,6 @@
 <launch>
   <arg name="role_name" default="hero" />
+  <arg name="control_loop_rate" default="0.05" /> 
 
   <node pkg="filter_management" type="forward_topics.py" name="forward_topics" output="screen">
     <param name="role_name" value="$(arg role_name)" />
@@ -7,6 +8,7 @@
 
   <node pkg="filter_management" type="create_odometry_msg.py" name="odometry_node" output="screen">
     <param name="role_name" value="$(arg role_name)" />
+    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
   </node>
 
 </launch>

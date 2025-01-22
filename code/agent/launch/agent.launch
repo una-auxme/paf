@@ -37,8 +37,18 @@
     <include file="$(find robot_localization)/launch/navsat_transform_template.launch">
     </include>
 
-    <include file="$(find robot_localization)/launch/ekf_template.launch">
-    </include>
+    <!-- <include file="$(find robot_localization)/launch/ekf_template.launch">
+    </include> -->
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se" clear_params="true">
+        <rosparam command="load" file="$(find filter_management)/config/ekf_config.yaml" />
+
+        <!--  Placeholder for output topic remapping
+        <remap from="odometry/filtered" to=""/>
+        <remap from="accel/filtered" to=""/>
+        -->
+
+    </node>
 
     <!-- filter management -->
     <include file="$(find filter_management)/launch/filter_management.launch">
