@@ -16,6 +16,7 @@ from visualization_msgs.msg import Marker
 
 import tf2_ros
 import tf
+from tf import transformations as t
 from tf2_geometry_msgs import do_transform_pose
 from geometry_msgs.msg import TransformStamped
 
@@ -34,7 +35,7 @@ from acting.helper_functions import generate_path_from_trajectory
 DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_X", 10)
 DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
 RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
-FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 30)
+FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 25)
 SLOPE: int = rospy.get_param("potential_field_slope", 255)
 K_VALUE: float = rospy.get_param("potential_field_K", 0.009)
 MAX_GRADIENT_DESCENT_STEPS: int = rospy.get_param(
@@ -54,6 +55,11 @@ class Potential_field_node(CompatibleNode):
         self.trajectory = None
         self.hero_pos = None
         self.hero_heading = None
+        self.listener = tf.TransformListener()
+        self.local_trajectory = None
+
+        self.transformer = tf.Transformer()
+        rospy.sleep(1)
 
         self.last_pub_time = rospy.get_time()
 
@@ -96,12 +102,14 @@ class Potential_field_node(CompatibleNode):
             callback=self.__get_trajectory,
             qos_profile=1,
         )
+
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
             topic="/paf/hero/current_pos",
             callback=self.__get_hero_pos,
             qos_profile=1,
         )
+        """
 
         self.current_heading_sub: Subscriber = self.new_subscription(
             msg_type=Float32,
@@ -109,47 +117,12 @@ class Potential_field_node(CompatibleNode):
             callback=self.__get_hero_heading,
             qos_profile=1,
         )
+        """
         # END ROS SETUP ###
 
     # CALLBACKS ###
-
     def __get_hero_pos(self, data: PoseStamped):
         self.hero_pos = data
-        self.__calculate_hero_transform()
-
-    def __get_hero_heading(self, data: Float32):
-        self.hero_heading = data.data
-        self.__calculate_hero_transform()
-
-    def __calculate_hero_transform(self):
-        """
-        This function merges the heading and the position together, merges it and
-        calculates the inverse so it can transform the coordinate systems from global
-        to hero
-        """
-        if self.hero_pos is None or self.hero_heading is None:
-            return
-        self.hero_transform = TransformStamped()
-
-        self.hero_transform.header.stamp = rospy.Time.now()
-        self.hero_transform.header.frame_id = "global"
-        self.hero_transform.child_frame_id = "hero"
-
-        self.hero_transform.transform.translation.x = (
-            0  # -self.hero_pos.pose.position.x
-        )
-        self.hero_transform.transform.translation.y = (
-            0  # -self.hero_pos.pose.position.y
-        )
-        self.hero_transform.transform.translation.z = (
-            0  # -self.hero_pos.pose.position.z
-        )
-
-        rotation = Rotation.from_euler("z", self.hero_heading, degrees=False).as_quat()
-        self.hero_transform.transform.rotation.x = -rotation[0]
-        self.hero_transform.transform.rotation.y = -rotation[1]
-        self.hero_transform.transform.rotation.z = -rotation[2]
-        self.hero_transform.transform.rotation.w = rotation[3]
 
     def __get_entities(self, data: MapMsg):
         """
@@ -160,10 +133,85 @@ class Potential_field_node(CompatibleNode):
         self.entities = self.map.entities_without_hero()
 
     def __get_trajectory(self, data: Path):
-        # currently not used
         self.trajectory = data
 
     # END CALLBACKS ###
+
+    def __check_in_potential_field_horizon(self, pose: PoseStamped) -> bool:
+        position = pose.pose.position
+        if position.x < 0 or position.x > DISTANCE_THRESHOLD_X:
+            return False
+        if position.y < DISTANCE_THRESHOLD_Y or position.y > DISTANCE_THRESHOLD_Y:
+            return False
+        return True
+
+    def __get_closest_traj_point(self):
+        if self.local_trajectory is None or self.hero_pos is None:
+            return
+
+        self.loginfo(f"length before cleaning: {len(self.local_trajectory.poses)}")
+
+        self.local_trajectory.poses = [
+            pose
+            for pose in self.local_trajectory.poses
+            if self.__check_in_potential_field_horizon(pose)
+        ]
+
+        self.loginfo(f"length after cleaning: {len(self.local_trajectory.poses)}")
+
+    def __calculate_hero_transform(self):
+        """
+        This function merges the heading and the position together and
+        calculates the inverse so it can transform the coordinate systems from global
+        to hero
+        """
+        # if transformer.frameExists("global") and transformer.frameExists("hero"):
+
+        try:
+            self.listener.waitForTransform(
+                target_frame="hero",
+                source_frame="global",
+                time=rospy.Time(0),
+                timeout=rospy.Duration(nsecs=int(1e8)),
+            )
+        except Exception as e:
+            self.logerr(f"POTENTIAL_FIELD: transform lookup timeout {e}")
+            return
+
+        try:
+            (trans, rot) = self.listener.lookupTransform(
+                "hero", "global", rospy.Time(0)
+            )
+        except Exception as e:
+            self.logerr(f"lookup failed, {e}")
+            return
+        """
+        try:
+            self.hero_transform = t.concatenate_matrices(
+                t.translation_from_matrix(trans),
+                t.quaternion_matrix(rot),
+            )
+        except Exception as e:
+            self.logerr(f"setting up transform failed {e}")
+
+        return
+        """
+        self.hero_transform = TransformStamped()
+
+        self.hero_transform.header.stamp = rospy.Time.now()
+        self.hero_transform.header.frame_id = "global"
+        self.hero_transform.child_frame_id = "hero"
+
+        self.hero_transform.transform.translation.x = trans[0]
+        self.hero_transform.transform.translation.y = trans[1]
+        self.hero_transform.transform.translation.z = trans[2]
+
+        self.hero_transform.transform.rotation.x = rot[0]
+        self.hero_transform.transform.rotation.y = rot[1]
+        self.hero_transform.transform.rotation.z = rot[2]
+        self.hero_transform.transform.rotation.w = rot[3]
+
+        self.loginfo("TRANSFORMATION SUCCESS")
 
     def __filter_entities(self):
         """
@@ -212,9 +260,25 @@ class Potential_field_node(CompatibleNode):
         local_traj.header.frame_id = "hero"
         local_traj.poses = []
         for pose in self.trajectory.poses:
-            pose.pose.position.z = 0
-            local_traj.poses.append(do_transform_pose(pose, trans))
+            new_pose = PoseStamped()
+            new_pose.pose.position.x = (
+                self.hero_pos.pose.position.x - self.hero_pos.pose.position.x
+            )
+            new_pose.pose.position.y = (
+                self.hero_pos.pose.position.y - self.hero_pos.pose.position.y
+            )
+            new_pose.pose.position.z = 0
+            new_pose.pose.orientation.x = 0
+            new_pose.pose.orientation.y = 0
+            new_pose.pose.orientation.z = 0
+            new_pose.pose.orientation.w = 1
+
+            if self.__check_in_potential_field_horizon(new_pose):
+                local_traj.poses.append(new_pose)
+
         self.local_trajectory_pub.publish(local_traj)
+
+        self.local_trajectory = local_traj
 
     def __calculate_field(self):
         """
@@ -340,6 +404,10 @@ class Potential_field_node(CompatibleNode):
             self.__filter_entities()
 
             self.__calculate_field()
+
+            self.__calculate_hero_transform()
+
+            self.__get_closest_traj_point()
             try:
                 self.__get_local_trajectory()
             except Exception as e:

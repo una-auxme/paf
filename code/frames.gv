@@ -1,0 +1,15 @@
+digraph G {
+"hero" -> "hero/Left"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.900 ( 0.050 sec old)\nBuffer length: 0.300 sec\n"];
+"global" -> "hero"[label="Broadcaster: /MainFramePublisher\nAverage rate: 23.333 Hz\nMost recent transform: 8.950 ( 0.000 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/Back"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.900 ( 0.050 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/Right"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.900 ( 0.050 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/Center"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.900 ( 0.050 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/IMU"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.950 ( 0.000 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/RADAR"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.950 ( 0.000 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/GPS"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.950 ( 0.000 sec old)\nBuffer length: 0.300 sec\n"];
+"hero" -> "hero/LIDAR"[label="Broadcaster: /carla_ros_bridge\nAverage rate: 23.333 Hz\nMost recent transform: 8.950 ( 0.000 sec old)\nBuffer length: 0.300 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 8.950"[ shape=plaintext ] ;
+ }->"global";
+}
