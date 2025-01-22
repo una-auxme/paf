@@ -107,6 +107,12 @@ class MotionPlanning(CompatibleNode):
             self.__set_curr_behavior,
             qos_profile=1,
         )
+        self.ot_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"paf/{self.role_name}/overtake_distance",
+            self.__set_ot_distance,
+            qos_profile=1,
+        )
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/unchecked_emergency",
@@ -512,11 +518,11 @@ class MotionPlanning(CompatibleNode):
         """
         self.__curr_behavior = data.data
         if data.data == bs.ot_enter_init.name:
-            if np.isinf(self.__collision_point):
+            if np.isinf(self.__ot_distance):
                 self.__overtake_status = -1
                 self.overtake_success_pub.publish(self.__overtake_status)
                 return
-            self.change_trajectory(self.__collision_point)
+            self.change_trajectory(self.__ot_distance)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -529,6 +535,10 @@ class MotionPlanning(CompatibleNode):
     def __set_collision_point(self, data: Float32MultiArray):
         if data.data is not None:
             self.__collision_point = data.data[0]
+
+    def __set_ot_distance(self, data: Float32):
+        if data is not None:
+            self.__ot_distance = data.data
 
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
@@ -695,8 +705,8 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_overtake(self) -> float:
-        if (self.__collision_point is not None) and self.__collision_point != np.inf:
-            return self.__collision_point
+        if (self.__ot_distance is not None) and self.__ot_distance != np.inf:
+            return self.__ot_distance
         else:
             return 0.0
 
