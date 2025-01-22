@@ -4,8 +4,6 @@ import math
 import carla
 import os
 
-# import rospy
-
 
 """
 This file represents the utility functions for the local planner and other
@@ -199,9 +197,10 @@ def filter_vision_objects(float_array, oncoming):
     It contains the classId, the absolute Euclidean distance
     and 6 coordinates for upper left and lower right corner
     of the bounding box
+    This method will be obsolete with the intermediate layer soon but will be used
+    for now.
 
-    Array shape: [classID, EuclidDistance,
-                    UpperLeft(x,y,z), LowerRight(x,y,z)]
+    Array shape: [n, 3] with (class, x,y)
 
     Args:
         data (ndarray): numpy array with vision objects
@@ -216,26 +215,28 @@ def filter_vision_objects(float_array, oncoming):
         return None
     # Filter out all objects that are not cars, Persons, Bycicles,
     # Motorbikes, Busses or Trucks
-    all_cars = float_array[np.where(float_array[:, 0] <= 7)]
-    all_cars = all_cars[np.where(all_cars[:, 0] != 6)]
-    all_cars = all_cars[np.where(all_cars[:, 0] != 4)]
+    all_cars = float_array[(float_array[:, 0] != 0) & (float_array[:, 0] != 3)]
 
     # Get cars that are on our lane
     if oncoming:
-        cars_in_front = all_cars[np.where(all_cars[:, 2] > 0.3)]
-        if cars_in_front.size != 0:
-            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] < 1.3)]
+        cars_in_front = all_cars[
+            np.where(np.logical_and(all_cars[:, 2] >= 0.90, all_cars[:, 2] < 1.75))
+        ]
+
     else:
-        cars_in_front = all_cars[np.where(all_cars[:, 2] < 0.1)]
-        if cars_in_front.size != 0:
-            cars_in_front = cars_in_front[np.where(cars_in_front[:, 2] > -0.2)]
+        cars_in_front = all_cars[
+            np.where(np.logical_and(all_cars[:, 2] < 0.90, all_cars[:, 2] > -0.90))
+        ]
+
     if cars_in_front.size == 0:
         # no car in front
         return None
-    # Filter for potential recognition of ega vehicle front hood
-    filtered_cars_in_front = cars_in_front[np.where(cars_in_front[:, 1] > 0.7)]
-    if filtered_cars_in_front.size == 0:
-        # no car in front
-        return None
     # Return nearest car
-    return filtered_cars_in_front[np.argmin(filtered_cars_in_front[:, 1])]
+    min_object_in_front = cars_in_front[np.argmin(cars_in_front[:, 1])]
+    if oncoming:
+        # As the overtaking / cruising step does not work properly at the moment this
+        # is a workaround.
+        if min_object_in_front[1] > 9.0:
+            return None
+
+    return min_object_in_front

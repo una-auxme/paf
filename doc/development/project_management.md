@@ -50,4 +50,4 @@ Merge the pull request after:
 
 After merging, remember to delete the source branch to keep the repository clean.
 
->[!INFO] For more information about the review process, see [Review process](./review_guideline.md).
+>[!TIP] For more information about the review process, see [Review process](./review_guideline.md).

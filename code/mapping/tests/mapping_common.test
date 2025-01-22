@@ -1,0 +1,4 @@
+<launch>
+  <param name="test_module" value="$(find mapping)/tests/mapping_common"/>
+  <test test-name="mapping_common" pkg="ros_pytest" type="ros_pytest_runner"/>
+</launch>
