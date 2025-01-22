@@ -5,8 +5,8 @@ from mapping.msg import Map as MapMsg
 from nav_msgs.msg import Path
 from std_msgs.msg import Float32
 
-from acting.entity import Entity
-from acting.map import Map
+from mapping_common.entity import Entity
+from mapping_common.map import Map
 
 from rospy import Publisher, Subscriber
 import ros_compatibility as roscomp
@@ -31,13 +31,16 @@ from acting.helper_functions import generate_path_from_trajectory
 
 
 # PARAMETERS
-DISTANCE_THRESHOLD = 10
-RESOLUTION_SCALE = 10
-FORCE_FACTOR = 25
-SLOPE = 255
-K_VALUE = 0.009
-MAX_GRADIENT_DESCENT_STEPS = 40
-GRADIENT_FACTOR = 10
+DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_X", 10)
+DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
+RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
+FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 30)
+SLOPE: int = rospy.get_param("potential_field_slope", 255)
+K_VALUE: float = rospy.get_param("potential_field_K", 0.009)
+MAX_GRADIENT_DESCENT_STEPS: int = rospy.get_param(
+    "potential_field_max_gradient_descent_steps", 40
+)
+GRADIENT_FACTOR: int = rospy.get_param("potential_field_gradient_factor", 10)
 
 
 class Potential_field_node(CompatibleNode):
@@ -49,19 +52,22 @@ class Potential_field_node(CompatibleNode):
 
         self.hero_transform = None
         self.trajectory = None
+        self.hero_pos = None
+        self.hero_heading = None
 
         self.last_pub_time = rospy.get_time()
 
+        # open up entity matrix but just looking forward
         self.entity_matrix = np.zeros(
             (
-                2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
-                2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
+                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
+                2 * DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
             )
         )
 
         self.entity_matrix_midpoint = (
-            DISTANCE_THRESHOLD * RESOLUTION_SCALE,
-            DISTANCE_THRESHOLD * RESOLUTION_SCALE,
+            0,
+            DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
         )
 
         # ROS SETUP ###
@@ -118,17 +124,26 @@ class Potential_field_node(CompatibleNode):
     def __calculate_hero_transform(self):
         """
         This function merges the heading and the position together, merges it and
-        calculates the inverse so it can transform the coordinate systems from global to hero
+        calculates the inverse so it can transform the coordinate systems from global
+        to hero
         """
+        if self.hero_pos is None or self.hero_heading is None:
+            return
         self.hero_transform = TransformStamped()
 
         self.hero_transform.header.stamp = rospy.Time.now()
         self.hero_transform.header.frame_id = "global"
         self.hero_transform.child_frame_id = "hero"
 
-        self.hero_transform.transform.translation.x = self.hero_pos.pose.position.x
-        self.hero_transform.transform.translation.y = self.hero_pos.pose.position.y
-        self.hero_transform.transform.translation.z = -self.hero_pos.pose.position.z
+        self.hero_transform.transform.translation.x = (
+            0  # -self.hero_pos.pose.position.x
+        )
+        self.hero_transform.transform.translation.y = (
+            0  # -self.hero_pos.pose.position.y
+        )
+        self.hero_transform.transform.translation.z = (
+            0  # -self.hero_pos.pose.position.z
+        )
 
         rotation = Rotation.from_euler("z", self.hero_heading, degrees=False).as_quat()
         self.hero_transform.transform.rotation.x = -rotation[0]
@@ -156,8 +171,8 @@ class Potential_field_node(CompatibleNode):
         """
         self.entity_matrix = np.zeros(
             (
-                2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
-                2 * DISTANCE_THRESHOLD * RESOLUTION_SCALE,
+                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
+                2 * DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
             )
         )
         # fill in the entities into a matrix
@@ -209,10 +224,11 @@ class Potential_field_node(CompatibleNode):
             return
 
         # normalize the entity matrix to 0-255
-        self.entity_matrix = self.entity_matrix / np.max(self.entity_matrix) * 255
+        if np.max(self.entity_matrix) != 0:
+            self.entity_matrix = self.entity_matrix / np.max(self.entity_matrix) * 255
 
         # flip image verically and smooth out the values
-        distances = distance_transform_edt(np.flipud(self.entity_matrix) == 0)
+        distances = distance_transform_edt(self.entity_matrix == 0)
 
         # INTRODUCE A FORCE POINTING TO THE TOP OF THE IMAGE (TO MAKE THE CAR DRIVE)
         # slope distances matrix to the top of the image
@@ -225,7 +241,8 @@ class Potential_field_node(CompatibleNode):
         # smooth the values with exponential decay
         smoothed_values = np.exp(-K_VALUE * distances)
         # normalize smoothed values to 0-255
-        smoothed_values = smoothed_values / np.max(smoothed_values) * 255
+        if np.max(smoothed_values) != 0:
+            smoothed_values = smoothed_values / np.max(smoothed_values) * 255
         distances[distances == 0] = smoothed_values[distances == 0]
 
         gradient_x, gradient_y = np.gradient(smoothed_values)
