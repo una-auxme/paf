@@ -45,60 +45,22 @@
         },
         {
           "type": "sensor.camera.rgb",
-          "id": "Right",
+          "id": "Zoom",
           "spawn_point": {
             "x": 0.0,
             "y": 0.0,
             "z": 1.70,
             "roll": 0.0,
-            "pitch": 0.0,
-            "yaw": -90.0,
+            "pitch": 0.2,
+            "yaw": 0.0,
             "lens_circle_multiplier": 3.0,
             "lens_circle_falloff": 3.0,
             "chromatic_aberration_intensity": 0.5,
             "chromatic_aberration_offset": 0.0
           },
-          "image_size_x": 1280,
+          "image_size_x": 720,
           "image_size_y": 720,
-          "fov": 100
-        },
-        {
-          "type": "sensor.camera.rgb",
-          "id": "Left",
-          "spawn_point": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 1.70,
-            "roll": 0.0,
-            "pitch": 0.0,
-            "yaw": 90.0,
-            "lens_circle_multiplier": 3.0,
-            "lens_circle_falloff": 3.0,
-            "chromatic_aberration_intensity": 0.5,
-            "chromatic_aberration_offset": 0.0
-          },
-          "image_size_x": 1280,
-          "image_size_y": 720,
-          "fov": 100
-        },
-        {
-          "type": "sensor.camera.rgb",
-          "id": "Back",
-          "spawn_point": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 1.70,
-            "roll": 0.0,
-            "pitch": 0.0,
-            "yaw": 180.0,
-            "lens_circle_multiplier": 3.0,
-            "lens_circle_falloff": 3.0,
-            "chromatic_aberration_intensity": 0.5,
-            "chromatic_aberration_offset": 0.0
-          },
-          "image_size_x": 1280,
-          "image_size_y": 720,
-          "fov": 100
+          "fov": 30
         },
         {
           "type": "sensor.lidar.ray_cast",

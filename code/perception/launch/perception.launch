@@ -32,10 +32,28 @@
       -->
   </node>
 
-  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+  <!--<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">-->
+  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53000">
     <param name="role_name" value="$(arg role_name)" />
     <param name="view_camera" value="False" />
     <param name="camera_resolution" value="320"/>
+
+      <!--
+        Image-Segmentation:
+      - yolov8x-seg
+      - yolo11n-seg
+      - yolo11s-seg
+      - yolo11m-seg
+      - yolo11l-seg
+      -->
+
+    <param name="model" value="yolo11x-seg" />
+  </node>
+
+  <node pkg="perception" type="zoom_node.py" name="ZoomNode" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="view_camera" value="True" />
+    <param name="camera_resolution" value="720"/>
 
       <!--
         Image-Segmentation:
