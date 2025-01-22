@@ -28,7 +28,7 @@ class OdometryNode(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
 
         # ROS Publishers and Subscribers
-        self.odom_pub = self.new_publisher(Odometry, "/wheel/odometry", qos_profile=1)
+        self.odom_pub = self.new_publisher(Odometry, "example/odom", qos_profile=1)
 
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
