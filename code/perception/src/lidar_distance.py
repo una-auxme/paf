@@ -7,6 +7,8 @@ from lidar_filter_utility import bounding_box, remove_field_name
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
+from tf.transformations import quaternion_from_matrix
+from visualization_msgs.msg import Marker, MarkerArray
 
 # from mpl_toolkits.mplot3d import Axes3D
 # from itertools import combinations
@@ -60,14 +62,6 @@ class LidarDistance:
             ImageMsg,
             queue_size=10,
         )
-        self.dist_array_lidar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~image_distance_topic_cluster", "/paf/hero/dist_clustered"
-            ),
-            PointCloud2,
-            queue_size=10,
-        )
-        rospy.loginfo("dist_array_lidar_publisher successfully created.")
         self.dist_array_left_publisher = rospy.Publisher(
             rospy.get_param("~image_distance_topic", "/paf/hero/Left/dist_array"),
             ImageMsg,
@@ -76,6 +70,18 @@ class LidarDistance:
         self.dist_array_right_publisher = rospy.Publisher(
             rospy.get_param("~image_distance_topic", "/paf/hero/Right/dist_array"),
             ImageMsg,
+            queue_size=10,
+        )
+        self.dist_array_lidar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~image_distance_topic_cluster", "/paf/hero/dist_clustered"
+            ),
+            PointCloud2,
+            queue_size=10,
+        )
+        self.marker_visualization_lidar_publisher = rospy.Publisher(
+            rospy.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
+            MarkerArray,
             queue_size=10,
         )
 
@@ -92,42 +98,70 @@ class LidarDistance:
     def start_clustering(self, data):
         """
         Filters LiDAR point clouds, performs clustering,
-        and publishes the combined clusters.
+        generates bounding boxes, and publishes the results.
 
         :param data: LiDAR point clouds in ROS PointCloud2 format.
         """
 
-        # Filter point clouds to remove irrelevant data
+        # Convert PointCloud2 data to a NumPy structured array
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+
+        # Filter the point clouds to exclude irrelevant data
+        z_min = rospy.get_param("~clustering_lidar_z_min", -1.4)
         filtered_coordinates = coordinates[
             ~(
                 (coordinates["x"] >= -2)
-                & (coordinates["x"] <= 2)
+                & (coordinates["x"] <= 2)  # Exclude ego vehicle in x-axis
                 & (coordinates["y"] >= -1)
-                & (coordinates["y"] <= 1)
-            )  # Exclude points related to the ego vehicle
+                & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
+            )
             & (
-                coordinates["z"] > -1.7 + 0.05
-            )  # Minimum height in z to exclude the road
+                coordinates["z"] > z_min
+            )  # Exclude points below a certain height (street)
         ]
 
-        # Compute cluster data from the filtered coordinates
-        clustered_points = cluster_lidar_data_from_pointcloud(
-            coordinates=filtered_coordinates
+        # Perform clustering on the filtered coordinates
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 10)
+        clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
+            filtered_coordinates, eps, min_samples
         )
 
-        # Only store valid cluster data
+        # Extract x, y, z coordinates into a separate array
+        filtered_xyz = np.column_stack(
+            (
+                filtered_coordinates["x"],
+                filtered_coordinates["y"],
+                filtered_coordinates["z"],
+            )
+        )
+
+        # Combine coordinates with their cluster labels
+        cluster_labels = cluster_labels.reshape(-1, 1)
+        points_with_labels = np.hstack((filtered_xyz, cluster_labels))
+
+        bounding_boxes = generate_bounding_boxes(points_with_labels)
+
+        # Create a MarkerArray for visualization
+        marker_array = MarkerArray()
+        for label, bbox in bounding_boxes:
+            if label != -1:  # Ignore noise points (label = -1)
+                marker = create_bounding_box_marker(label, bbox)
+                marker_array.markers.append(marker)
+
+        # Publish the MarkerArray for visualization
+        self.marker_visualization_lidar_publisher.publish(marker_array)
+
+        # Store valid cluster data for combining
         if clustered_points:
             self.cluster_buffer.append(clustered_points)
         else:
             rospy.logwarn("No cluster data generated.")
 
-        # Combine clusters
+        # Combine clusters from the buffer
         combined_clusters = combine_clusters(self.cluster_buffer)
-
         self.cluster_buffer = []
 
-        # Publish the combined clusters
         self.publish_clusters(combined_clusters, data.header)
 
     def publish_clusters(self, combined_clusters, data_header):
@@ -316,6 +350,157 @@ class LidarDistance:
         return dist_array
 
 
+def generate_bounding_boxes(points_with_labels):
+    """
+    Generates axis-aligned bounding boxes (AABB) for clustered points.
+
+    This function calculates bounding boxes for each unique
+    cluster label in the input array.
+
+    Args:
+        points_with_labels (numpy.ndarray):
+            A 2D array of shape (N, 4), where each row contains:
+            - Coordinates (x, y, z) of a point
+            - Cluster label in the last column
+            Structure: [x, y, z, label]
+
+    Returns:
+        list:
+            A list of tuples. Each tuple contains:
+            - A cluster label (int/float)
+            - A bounding box (tuple): (x_min, x_max, y_min, y_max, z_min, z_max)
+    """
+    bounding_boxes = []
+
+    # Identify unique cluster labels
+    unique_labels = np.unique(points_with_labels[:, -1])
+
+    # Process each cluster label
+    for label in unique_labels:
+        if label == -1:  # Skip noise points (label = -1)
+            continue
+
+        # Extract points belonging to the current cluster
+        cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+
+        # Calculate the bounding box for the cluster
+        bbox = calculate_aabb(cluster_points)
+        bounding_boxes.append((label, bbox))
+
+    return bounding_boxes
+
+
+def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LIDAR"):
+    """
+    Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
+
+    Args:
+        label (int): Unique identifier for the cluster or object.
+                     Used as the Marker ID.
+        bbox (tuple): Bounding box dimensions.
+                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): The type of bounding box ("aabb" or "obb").
+
+    Returns:
+        Marker: A CUBE Marker object that can be published to RViz.
+    """
+    # Initialize the Marker object
+    marker = Marker()
+    marker.header.frame_id = frame_id  # Reference frame for the marker
+    marker.ns = "marker_lidar"  # Namespace to group related markers
+    marker.id = int(label)  # Use the label as the unique marker ID
+    marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
+    marker.type = Marker.CUBE  # Use a cube for the bounding box
+    marker.action = Marker.ADD  # Action to add or modify the marker
+
+    # Set marker color and opacity
+    marker.color.r = 1.0  # Red
+    marker.color.g = 0.5  # Green
+    marker.color.b = 0.5  # Blue
+    marker.color.a = 0.8  # Opacity
+
+    if bbox_type == "aabb":
+        x_min, x_max, y_min, y_max, z_min, z_max = bbox
+
+        # Calculate center and dimensions for AABB
+        center_x = (x_min + x_max) / 2.0
+        center_y = (y_min + y_max) / 2.0
+        center_z = (z_min + z_max) / 2.0
+
+        size_x = x_max - x_min
+        size_y = y_max - y_min
+        size_z = z_max - z_min
+
+        marker.pose.position.x = center_x
+        marker.pose.position.y = center_y
+        marker.pose.position.z = center_z
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = size_x
+        marker.scale.y = size_y
+        marker.scale.z = size_z
+
+    elif bbox_type == "obb":
+        center, dimensions, eigenvectors = bbox
+        width, length, height = dimensions
+
+        # Assign OBB parameters
+        marker.pose.position.x = center[0]
+        marker.pose.position.y = center[1]
+        marker.pose.position.z = center[2]
+
+        # Convert eigenvectors to quaternion
+        quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
+        marker.pose.orientation.x = quaternion[0]
+        marker.pose.orientation.y = quaternion[1]
+        marker.pose.orientation.z = quaternion[2]
+        marker.pose.orientation.w = quaternion[3]
+
+        marker.scale.x = width
+        marker.scale.y = length
+        marker.scale.z = height
+
+    else:
+        raise ValueError(f"Unsupported bbox_type: {bbox_type}")
+
+    return marker
+
+
+def calculate_aabb(cluster_points):
+    """
+    Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
+
+    This function computes the minimum and maximum values along each axis (x, y, z)
+    for a given set of 3D points, which defines the bounding box that contains
+    all points in the cluster.
+
+    Args:
+        cluster_points (numpy.ndarray):
+        A 2D array where each row represents a 3D point (x, y, z).
+        The array should have shape (N, 3) where N is the number of points.
+
+    Returns:
+        tuple: A tuple of the form (x_min, x_max, y_min, y_max, z_min, z_max),
+        which represents the axis-aligned bounding box (AABB) for the given
+        set of points. The values are the minimum and maximum coordinates
+        along the x, y, and z axes.
+    """
+
+    # for 3d boxes
+    x_min = np.min(cluster_points[:, 0])
+    x_max = np.max(cluster_points[:, 0])
+    y_min = np.min(cluster_points[:, 1])
+    y_max = np.max(cluster_points[:, 1])
+    z_min = np.min(cluster_points[:, 2])
+    z_max = np.max(cluster_points[:, 2])
+    return x_min, x_max, y_min, y_max, z_min, z_max
+
+
 def array_to_pointcloud2(points, header="hero/Lidar"):
     """
     Converts an array of points into a ROS PointCloud2 message.
@@ -384,7 +569,7 @@ def combine_clusters(cluster_buffer):
     return combined_points
 
 
-def cluster_lidar_data_from_pointcloud(coordinates, eps=0.3, min_samples=10):
+def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     """
     Performs clustering on LiDAR data using DBSCAN and returns the clusters.
 
@@ -422,7 +607,7 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps=0.3, min_samples=10):
 
     clusters = dict(clusters)
 
-    return clusters
+    return clusters, labels
 
 
 if __name__ == "__main__":
