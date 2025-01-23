@@ -100,7 +100,8 @@ class OdometryNode(CompatibleNode):
         odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
 
         # Velocity
-        odom.twist.twist.linear.x = v
+        odom.twist.twist.linear.x = v * math.cos(self.yaw)
+        odom.twist.twist.linear.y = v * math.sin(self.yaw)
         odom.twist.twist.angular.z = omega
 
         # Publish odometry message
