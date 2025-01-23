@@ -91,6 +91,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         speed = self.blackboard.get("/carla/hero/Speed")
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
 
+        #rospy.loginfo(type(map_data))
+
         if not self.finished:
             # calculate distance between start and current position
             if (
@@ -117,9 +119,9 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                     #rospy.loginfo(map.entities)
                     if map.entities and map.is_lane_free(right_lane=False):
                         rospy.loginfo("Left lane is now free. Starting unparking.")
-                        #self.started = True
+                        self.started = True
                     else:
-                        rospy.logerr_throttle_identical(5, "Left lane is blocked. Paused unparking.")
+                        rospy.logerr("Left lane is blocked. Paused unparking.")
 
                 if self.started:
                     if distance < 1 or speed.speed < 2:
