@@ -14,33 +14,33 @@ from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Float32MultiArray
 from tf.transformations import quaternion_from_matrix
 
-from ros_compatibility.node import CompatibleNode
-
 import struct
-
 from collections import defaultdict
-
-# from threading import Timer
 from rosgraph_msgs.msg import Clock
 
+from agent import PAFAgent
 
-class RadarNode(CompatibleNode):
+
+class RadarNode:
     """See doc/perception/radar_node.md on how to configure this node."""
 
     def __init__(self):
         # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
         # Alternative: only one set of data
-        self.sensor_data = {
-            "RADAR0": None,
-            "RADAR1": None,
-        }
+        self.sensor_data = {}
 
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
-        self.sensor_config = {
-            "RADAR0": [2.0, -1.5, 0.7],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, 1.5, 0.7],  # , 0.0, 0.0, 0.0],
-        }
+        self.sensor_config = {}
+
+
+        radar_configs = [
+            sensor for sensor in PAFAgent.sensors() if sensor["type"] == "sensor.other.radar"
+        ]
+        for radar in radar_configs:
+            self.sensor_config[radar["id"]] = [radar["x"], radar["y"], radar["z"]]
+            self.sensor_data[radar["id"]] = None
+            print(f"Position: Name={radar['id']} x={radar['x']}, y={radar['y']}, z={radar['z']}")
 
         self.timer_interval = 0.1  # 0.1 seconds
 
@@ -81,8 +81,7 @@ class RadarNode(CompatibleNode):
             return
 
         sec = time.clock.secs
-        nsec = time.clock.nsecs
-        nsec /= 1000000000
+        nsec = time.clock.nsecs / 1e9
 
         self.now = sec + nsec
 
@@ -121,7 +120,7 @@ class RadarNode(CompatibleNode):
 
         if sensor_name not in self.sensor_data:
             rospy.logwarn(f"Unknown sensor: {sensor_name}")
-            return
+            raise NotImplementedError
 
         # Save data either in buffer or in single register
         if self.data_buffered:
@@ -163,14 +162,12 @@ class RadarNode(CompatibleNode):
         - None
             The function handles all outputs via ROS publishers and logs.
         """
-        rospy.loginfo("Processing sensor data...")
         combined_points = []
 
         if self.data_buffered:
             # Check all data in buffer
             for sensor_name, messages in self.sensor_data_buffer.items():
                 for msg in messages:
-                    rospy.loginfo(f"Processing data from sensor: {sensor_name}")
                     points = self.extract_points(msg, sensor_name)
                     combined_points.extend(points)
             self.sensor_data_buffer.clear()
@@ -178,15 +175,13 @@ class RadarNode(CompatibleNode):
             # Check all data in single-data registers
             for sensor_name, msg in datasets.items():
                 if msg is not None:
-                    rospy.loginfo(f"Processing data from {sensor_name}")
                     points = self.extract_points(msg, sensor_name)
                     combined_points.extend(points)
 
         if not combined_points:
-            rospy.logwarn("No points to process!")
+            rospy.logwarn("No Radarpoints to process!")
             return
 
-        rospy.loginfo(f"Total combined points: {len(combined_points)}")
 
         combined_points = np.array(combined_points)
         self.get_lead_vehicle_info(combined_points)
@@ -207,20 +202,18 @@ class RadarNode(CompatibleNode):
 
         marker_array = MarkerArray()
         for label, bbox in bounding_boxes:
-            rospy.loginfo(f"Label: {label}, Bounding Box: {bbox}")
             marker = create_bounding_box_marker(
                 label, bbox, bbox_lifetime=self.data_buffer_time
             )
             # marker = create_moving_bbox_marker(label, bbox)
             marker_array.markers.append(marker)
 
-        rospy.loginfo(f"Publishing {len(marker_array.markers)} markers.")
         self.marker_visualization_radar_publisher.publish(marker_array)
 
         cluster_info = generate_cluster_info(
             clustered_data, combined_points, marker_array, bounding_boxes
         )
-        rospy.loginfo(f"Cluster Info: {cluster_info}")
+
         self.cluster_info_radar_publisher.publish(cluster_info)
 
         # Setze die gespeicherten Nachrichten zurück
@@ -257,11 +250,11 @@ class RadarNode(CompatibleNode):
         # Use numpy broadcasting for better performance
         translation = np.array([x, y, z])
         transformed_points = np.column_stack((
-            data_array[:, :3] + translation,
-            data_array[:, 3]
+            data_array[:, :3] + translation, data_array[:, 3]
         ))
 
         return transformed_points
+    
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
@@ -493,7 +486,7 @@ def create_pointcloud2(clustered_points, cluster_labels):
     """
     header = Header()
     header.stamp = rospy.Time.now()
-    header.frame_id = "hero"  # /RADAR"
+    header.frame_id = "hero"  
 
     points = []
     unique_labels = np.unique(cluster_labels)
@@ -625,7 +618,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
     """
     # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero"  # /RADAR"  # Reference frame for the marker
+    marker.header.frame_id = "hero"  # Reference frame for the marker
     marker.ns = "marker_radar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
     marker.lifetime = rospy.Duration(
