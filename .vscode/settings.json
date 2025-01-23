@@ -30,5 +30,6 @@
     "markdown.extension.toc.levels": "2..6",
     "markdown.extension.toc.updateOnSave": true,
     "markdown.extension.toc.unorderedList.marker": "-",
-    "markdown.extension.theming.decoration.renderTrailingSpace": true
+    "markdown.extension.theming.decoration.renderTrailingSpace": true,
+    "ros.distro": "noetic"
 }

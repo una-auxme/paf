@@ -77,6 +77,9 @@ class RadarNode:
 
         clusterPointsNpArray = points_with_labels[:, :3]
         indexArray = points_with_labels[:, -1]
+        valid_indices = indexArray != -1
+        clusterPointsNpArray = clusterPointsNpArray[valid_indices]
+        indexArray = indexArray[valid_indices]
         clusteredpoints = array_to_clustered_points(
             clusterPointsNpArray, indexArray, header_id="hero/RADAR"
         )

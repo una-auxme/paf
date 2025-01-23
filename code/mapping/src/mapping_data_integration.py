@@ -15,10 +15,15 @@ from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 from mapping.msg import ClusteredPointsArray
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, PointField
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import MultiPoint
 from shapely.validation import make_valid
+from shapely.validation import explain_validity
+
+
+# from shapely.validation import orient
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -91,6 +96,14 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
+            qos_profile=1,
+        )
+
+        self.cluster_points_publisher = self.new_publisher(
+            msg_type=PointCloud2,
+            topic=self.get_param(
+                "~cluster_points_topic", "/paf/hero/mapping/clusterpoints"
+            ),
             qos_profile=1,
         )
 
@@ -241,43 +254,54 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
+    def publish_cluster_points(self, cluster_points, frame_id="hero"):
+        """
+        Publishes the cluster points as a PointCloud2 message.
+        Args:
+            cluster_points: numpy array of shape (N, 3), where each row is [x, y, z]
+            frame_id: coordinate frame ID for the points
+        """
+        point_cloud_msg = PointCloud2()
+        point_cloud_msg.header.frame_id = frame_id
+        point_cloud_msg.header.stamp = rospy.Time.now()
+        point_cloud_msg.height = 1  # Unstructured point cloud
+        point_cloud_msg.width = len(cluster_points)
+        point_cloud_msg.is_dense = True
+        point_cloud_msg.is_bigendian = False
+        point_cloud_msg.fields = [
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+        ]
+        point_cloud_msg.point_step = 12  # 4 bytes * 3 fields
+        point_cloud_msg.row_step = point_cloud_msg.point_step * point_cloud_msg.width
+        point_cloud_msg.data = np.array(cluster_points, dtype=np.float32).tobytes()
+
+        self.cluster_points_publisher.publish(point_cloud_msg)
+
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
         if sensortype == "radar":
-            clusterpointsarray = np.array(
-                self.radar_clustered_points_data.clusterPointsArray
-            )
-
-            # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
-            if len(clusterpointsarray) % 3 != 0:
-                raise ValueError(
-                    "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
-                )
-
-            # Umformen in (n, 3)
-            clusterpointsarray = clusterpointsarray.reshape(-1, 3)
-
-            indexarray = np.array(self.radar_clustered_points_data.indexArray)
-            motionarray = np.array(self.radar_clustered_points_data.motionArray)
-            # objectclassarray = self.radar_clustered_points_data.object_class
+            data = self.radar_clustered_points_data
             self.radar_clustered_points_data = None
+        elif sensortype == "lidar":
+            data = self.lidar_clustered_points_data
+            self.lidar_clustered_points_data = None
         else:
-            clusterpointsarray = np.array(
-                self.lidar_clustered_points_data.clusterPointsArray
+            raise ValueError(f"Unbekannter Sensortyp: {sensortype}")
+
+        clusterpointsarray = np.array(data.clusterPointsArray)
+
+        # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
+        if len(clusterpointsarray) % 3 != 0:
+            raise ValueError(
+                "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
             )
 
-            # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
-            if len(clusterpointsarray) % 3 != 0:
-                raise ValueError(
-                    "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
-                )
+        # Umformen in (n, 3)
+        clusterpointsarray = clusterpointsarray.reshape(-1, 3)
 
-            # Umformen in (n, 3)
-            clusterpointsarray = clusterpointsarray.reshape(-1, 3)
-
-            indexarray = np.array(self.lidar_clustered_points_data.indexArray)
-            motionarray = np.array(self.lidar_clustered_points_data.motionArray)
-            # objectclassarray = self.radar_clustered_points_data.object_class
-            self.lidar_clustered_points_data = None
+        indexarray = np.array(data.indexArray)
+        motionarray = np.array(data.motionArray) if data.motionArray else None
 
         unique_labels = np.unique(indexarray)
         entities = []
@@ -285,28 +309,42 @@ class MappingDataIntegrationNode(CompatibleNode):
         for label in unique_labels:
             if label == -1:
                 # -1 kann für Rauschen oder ungültige Cluster stehen
+                rospy.logwarn("label -1")
                 continue
 
             # Filtere Punkte für den aktuellen Cluster
-            cluster_points = clusterpointsarray[indexarray == label]
+            cluster_mask = indexarray == label
+            cluster_points = clusterpointsarray[cluster_mask]
 
             # Prüfe, ob genügend Punkte für ein Polygon vorhanden sind
             if cluster_points.shape[0] < 3:
                 continue
 
+            # Extrahiere nur die XY-Koordinaten
             cluster_points_xy = cluster_points[:, :2]
-
             if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
                 # Füge den Startpunkt am Ende hinzu, um das Polygon zu schließen
                 cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
 
-            polygon = ShapelyPolygon(cluster_points)
+            # cluster_polygon = ShapelyPolygon(cluster_points_xy).convex_hull
+            try:
+                cluster_polygon = MultiPoint(cluster_points_xy)
+                rospy.loginfo(f"Cluster polygon: {cluster_polygon}")
+                cluster_polygon_hull = cluster_polygon.convex_hull
+                rospy.loginfo(f"Cluster polygon Convexhull: {cluster_polygon_hull}")
+                outer_polygon = ShapelyPolygon(cluster_polygon_hull.exterior.coords)
+
+                shape = Polygon.from_shapely(outer_polygon, make_centered=True)
+                rospy.loginfo(f"Convexhull coords: {cluster_polygon.coords}")
+                rospy.loginfo(f"Convexhull: {cluster_polygon}")
+            except Exception as e:
+                rospy.loginfo(f"Failed converting with error {e}")
+                continue
 
             # Optional: Berechne die Bewegung (Motion)
             motion = None
             if motionarray is not None and motionarray.size != 0:
                 cluster_motion = motionarray[indexarray == label][0]
-                # avg_motion = np.mean(cluster_motion, axis=0)
                 motion = Motion2D(
                     Vector2.new(cluster_motion[0], cluster_motion[1])
                 )  # Geschwindigkeit (x, y)
@@ -317,28 +355,28 @@ class MappingDataIntegrationNode(CompatibleNode):
             #     cluster_class = objectclassarray[indexarray == label]
             #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste Klasse
 
-            if not polygon.is_valid:
-                print("Repariere ungültiges Polygon...")
-                polygon = make_valid(polygon)
-                if not polygon.is_valid:
-                    continue
+            # if not polygon.is_valid:
+            # polygon = MultiPoint(cluster_points_xy).convex_hull
+            # rospy.logwarn("----------Invalid polygon------------------------------")
+            # rospy.logwarn(f"Grund: {explain_validity(polygon)}")
+            # print("Repariere ungültiges Polygon...")
+            # polygon = make_valid(polygon)
+            # if not polygon.is_valid:
+            #     continue
 
-            # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
-            centroid = polygon.centroid
-            x_center = centroid.x
-            y_center = centroid.y
+            transform = shape.offset
+            shape.offset = Transform2D.identity()
 
-            v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
-            transform = Transform2D.new_translation(v)
+            # transform = None
 
             flags = Flags(is_collider=True)
 
-            point2_list = [Point2.new(x, y) for x, y in cluster_points_xy]
+            # point2_list = [Point2.new(x, y) for x, y in cluster_points_xy]
             # Erstelle die Entity
             entity = Entity(
                 confidence=1,
                 priority=0.25,
-                shape=Polygon(point2_list),
+                shape=shape,
                 transform=transform,
                 timestamp=rospy.Time.now(),
                 flags=flags,
@@ -346,85 +384,9 @@ class MappingDataIntegrationNode(CompatibleNode):
             )
             entities.append(entity)
 
+        self.publish_cluster_points(clusterpointsarray)
+
         return entities
-
-    def create_shapely_polygons_from_ClusteredPoints(
-        self, sensor
-    ) -> List[ShapelyPolygon]:
-        """
-        Erstellt ein Shapely-Polygon aus einer ClusterPoints-Nachricht.
-
-        Args:
-            pointcloud_msg (PointCloud2): Die ROS PointCloud2 Nachricht.
-
-        Returns:
-            ShapelyPolygon: Das erstellte Shapely Polygon.
-        """
-
-        polygons = []
-        # unique_labels = np.unique(points_with_labels[:, -1])
-        pointclouds = self.cluster_data
-        for pointcloud2 in pointclouds:
-
-            points = []
-            for p in PointCloud2.read_points(
-                pointclouds, skip_nans=True, field_names=("x", "y")
-            ):
-                points.append((p[0], p[1]))  # Nimmt nur die x- und y-Koordinaten
-
-            # Überprüfen, ob genügend Punkte für ein Polygon vorhanden sind
-            if len(points) < 3:
-                raise ValueError("Ein Polygon benötigt mindestens 3 Punkte.")
-
-            # Optional: Erstelle den konvexen Hüllraum der Punkte
-            # from scipy.spatial import ConvexHull
-            # hull = ConvexHull(points)
-            # hull_points = [points[i] for i in hull.vertices]
-
-            # Erstelle das Shapely-Polygon
-            polygon = ShapelyPolygon(points)
-            polygons.append(polygon)
-        return polygons
-
-    # def entities_from_shapelyPolygons(self) -> List[Entity]:
-    #     data = self.sensor_data
-    #     if data is None or not hasattr(data, "markers") or data.markers is None:
-    #         # Handle cases where data or markers are invalid
-    #         rospy.logwarn("No valid marker data received.")
-    #         return []
-
-    #     radar_entities = []
-    #     for pointcloudcluster in data:
-    #         if marker.type != Marker.CUBE:
-    #             rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
-    #             continue
-    #         # Extract position (center of the cube) and calculate 2 meter offset
-    #         # because of radar positioning
-    #         x_center = marker.pose.position.x + 2
-    #         y_center = marker.pose.position.y
-
-    #         # Extract dimensions (scale gives the size of the cube)
-    #         width = marker.scale.x
-    #         length = marker.scale.y
-
-    #         # Create a shape and transform using the cube's data
-    #         shape = Rectangle(width, length)  # 2D rectangle for lidar data
-    #         v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
-    #         transform = Transform2D.new_translation(v)
-
-    #         # Add entity to the list
-    #         flags = Flags(is_collider=True)
-    #         e = Entity(
-    #             confidence=1,
-    #             priority=0.25,
-    #             shape=shape,
-    #             transform=transform,
-    #             timestamp=marker.header.stamp,
-    #             flags=flags,
-    #         )
-    #         radar_entities.append(e)
-
-    #     return radar_entities
 
     # def create_shapely_polygons_from_pointclouds(self, sensor) -> List[ShapelyPolygon]:
     #     """
@@ -461,42 +423,6 @@ class MappingDataIntegrationNode(CompatibleNode):
     #         polygon = ShapelyPolygon(points)
     #         polygons.append(polygon)
     #     return polygons
-
-    #
-
-    # def create_entities(polygons, velocities):
-    # if polygons is None or len(polygons) == 0:
-    #     # Handle cases where data is invalid or empty
-    #     rospy.logwarn("No valid polygon data received.")
-    #     return []
-
-    # radar_entities = []
-    # for polygon, velocity in zip(polygons, velocities):
-    #     if not polygon.is_valid:
-    #         rospy.logwarn("Skipping non-Polygon entity.")
-    #         continue
-
-    #     # Extrahiere das Zentrum des Polygons (Mittelpunktskoordinaten)
-    #     centroid = polygon.centroid
-    #     x_center = centroid.x
-    #     y_center = centroid.y
-
-    #     v = Vector2.new(x_center, y_center)  # 2D position in x-y plane
-    #     transform = Transform2D.new_translation(v)
-
-    #     # motion = Motion2D()
-    #     flags = Flags(is_collider=True)
-    #     e = Entity(
-    #         confidence=1,
-    #         priority=0.25,
-    #         shape=Polygon(polygon.coords),
-    #         transform=transform,
-    #         timestamp=rospy.Time.now(),
-    #         flags=flags,
-    #         motion=velocity,
-    #     )
-    #     radar_entities.append(e)
-    # return radar_entities
 
     def create_hero_entity(self) -> Optional[Car]:
         if self.hero_speed is None:
@@ -540,6 +466,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         #     "~enable_radar_marker"
         # ):
         #     entities.extend(self.entities_from_radar_marker())
+
         if self.lidar_clustered_points_data is not None and self.get_param(
             "~enable_lidar_cluster"
         ):
@@ -548,6 +475,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_radar_cluster"
         ):
             entities.extend(self.create_entities_from_clusters(sensortype="radar"))
+
         # if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
         #     entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented
