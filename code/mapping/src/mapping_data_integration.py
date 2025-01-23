@@ -326,6 +326,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_radar_cluster"
         ):
             entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
+        if self.lanemarkings is not None and self.get_param("~enable_lane_marker"):
+            entities.extend(self.lanemarkings)
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented
