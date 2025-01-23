@@ -14,7 +14,8 @@ from mapping_common.entity import Entity, Flags, FlagFilter, ShapelyEntity
 from mapping_common.transform import Vector2, Transform2D
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
-from shapely import intersection
+
+# from shapely import intersection
 
 from mapping import msg
 
@@ -142,7 +143,7 @@ class Map:
         #    start_point=(lane_pos * 2.2, 0), size_x=1.5, size_y=20
         # )
 
-        lane_box_shape_geo = lane_box_shape.to_shapely()
+        lane_box_shape_geo = lane_box_shape.to_shapely(Transform2D.identity())
 
         # lane_box_entity = Entity(
         #    confidence=100.0,
