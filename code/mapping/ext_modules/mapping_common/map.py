@@ -78,6 +78,37 @@ class Map:
             return self.entities[1:]
         return self.entities
 
+    def entities_in_area(self, diameter, only_in_front=True) -> List[Entity]:
+        """Returns the entities without the hero car
+
+        Only checks if the first entity is_hero
+
+        Returns:
+            List[Entity]: Entities without the hero car
+        """
+        entities = self.entities_without_hero()
+        entities_in_area = []
+
+        if only_in_front:
+            for entity in entities:
+                distance = np.sqrt(
+                    np.pow(entity.transform.translation().x, 2),
+                    np.pow(entity.transform.translation().y),
+                )
+                if entity.transform.translation().x() > 0 and distance < diameter:
+                    entities_in_area.append(entity)
+            return entities_in_area
+        else:
+            for entity in entities:
+                distance = np.sqrt(
+                    np.pow(entity.transform.translation().x, 2),
+                    np.pow(entity.transform.translation().y),
+                )
+                if distance < diameter:
+                    entities_in_area.append(entity)
+
+        return entities_in_area
+
     def build_tree(
         self,
         f: Optional[FlagFilter] = None,
@@ -145,26 +176,43 @@ class Map:
 
     def check_trajectory(self, local_path: Path) -> int:
         """
+        Checks the calculated local path on multiple conditions
+        return -1:  local_path is None
+        return 0:   Path has no obstacles / infringments
+        return 1:   Path is planned through a gap, which is too small for the car
+        return 2:   Path cuts the left lane marking
+        return 3:   Path cuts the right lane marking
+        """
+
+        # check if there is a local path
+        if local_path.poses is None:
+            return -1
+
+        # transform local path to shapely object
         trajectory_shapely_points = []
         for pos in local_path.poses:
             trajectory_shapely_points.append(
                 shapely.Point(pos.pose.position.x, pos.pose.position.y)
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
-        local_trajectory.buffer(1.25, 3)
-        """
+        local_trajectory = local_trajectory.buffer(1.25, 3)
+
+        # Check left lane
+        left_lane = self.lane_marking_left()
+        if not left_lane is None:
+            if shapely.intersection(left_lane.to_shapely().poly, local_trajectory):
+                # given path crosses lane marking on the left
+                return 2
+
+        # Check right lane
+        right_lane = self.lane_marking_right()
+        if not right_lane is None:
+            if shapely.intersection(right_lane.to_shapely().poly, local_trajectory):
+                # given path crosses lane marking on the right
+                return 3
 
         # given path is okay and is not colliding
         return 0
-
-        # given path has not enough space to be executed
-        return 1
-
-        # given path crosses lane marking on the left
-        return 2
-
-        # given path crosses lane marking on the right
-        return 3
 
 
 @dataclass(init=False)
