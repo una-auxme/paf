@@ -286,6 +286,8 @@ class MappingDataIntegrationNode(CompatibleNode):
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
             self.lidar_clustered_points_data = None
+        elif sensortype == "vision":
+            pass
         else:
             raise ValueError(f"Unbekannter Sensortyp: {sensortype}")
 
@@ -327,19 +329,13 @@ class MappingDataIntegrationNode(CompatibleNode):
                 cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
 
             # cluster_polygon = ShapelyPolygon(cluster_points_xy).convex_hull
-            try:
-                cluster_polygon = MultiPoint(cluster_points_xy)
-                rospy.loginfo(f"Cluster polygon: {cluster_polygon}")
-                cluster_polygon_hull = cluster_polygon.convex_hull
-                rospy.loginfo(f"Cluster polygon Convexhull: {cluster_polygon_hull}")
-                outer_polygon = ShapelyPolygon(cluster_polygon_hull.exterior.coords)
-
-                shape = Polygon.from_shapely(outer_polygon, make_centered=True)
-                rospy.loginfo(f"Convexhull coords: {cluster_polygon.coords}")
-                rospy.loginfo(f"Convexhull: {cluster_polygon}")
-            except Exception as e:
-                rospy.loginfo(f"Failed converting with error {e}")
+            cluster_polygon = MultiPoint(cluster_points_xy)
+            cluster_polygon_hull = cluster_polygon.convex_hull
+            if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                rospy.loginfo("Empty hull")
                 continue
+
+            shape = Polygon.from_shapely(cluster_polygon_hull, make_centered=True)
 
             # Optional: Berechne die Bewegung (Motion)
             motion = None
@@ -367,11 +363,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             transform = shape.offset
             shape.offset = Transform2D.identity()
 
-            # transform = None
-
             flags = Flags(is_collider=True)
 
-            # point2_list = [Point2.new(x, y) for x, y in cluster_points_xy]
             # Erstelle die Entity
             entity = Entity(
                 confidence=1,
@@ -479,8 +472,8 @@ class MappingDataIntegrationNode(CompatibleNode):
         # if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
         #     entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
+        if self.get_param("enable_vision_points"):
+            entities.extend(self.create_entities_from_clusters(sensortype="vision"))
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
         msg = map.to_ros_msg()
