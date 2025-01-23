@@ -5,22 +5,19 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 import ros_numpy
 import rospy
-from visualization_msgs.msg import MarkerArray, Marker
+from visualization_msgs.msg import Marker
 import numpy as np
 from typing import List, Optional
 
 from mapping_common.entity import Entity, Flags, Car, Motion2D
-from mapping_common.transform import Transform2D, Vector2, Point2
+from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 from mapping.msg import Map as MapMsg
 from mapping.msg import ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2, PointField
 from carla_msgs.msg import CarlaSpeedometer
-from shapely.geometry import Polygon as ShapelyPolygon
 from shapely.geometry import MultiPoint
-from shapely.validation import make_valid
-from shapely.validation import explain_validity
 
 
 # from shapely.validation import orient
@@ -37,10 +34,9 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
-    lidar_marker_data: Optional[MarkerArray] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
-    radar_marker_data: Optional[MarkerArray] = None
+    vision_clustered_points_data: Optional[ClusteredPointsArray] = None
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -67,12 +63,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
         self.new_subscription(
-            topic=self.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
-            msg_type=MarkerArray,
-            callback=self.lidar_marker_callback,
-            qos_profile=1,
-        )
-        self.new_subscription(
             topic=self.get_param(
                 "~clustered_points_lidar_topic", "/paf/hero/Lidar/clustered_points"
             ),
@@ -80,25 +70,20 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_clustered_points_callback,
             qos_profile=1,
         )
-        # self.new_subscription(
-        #     topic=self.get_param("~entity_topic", "/paf/hero/Radar/cluster_entities"),
-        #     msg_type=MapMsg,
-        #     callback=self.radar_cluster_entities_callback,
-        #     qos_profile=1,
-        # )
+        self.new_subscription(
+            topic=self.get_param(
+                "~clustered_points_vision_topic", "/paf/hero/visualization_pointcloud"
+            ),
+            msg_type=ClusteredPointsArray,
+            callback=self.vision_clustered_points_callback,
+            qos_profile=1,
+        )
         self.new_subscription(
             topic=self.get_param(
                 "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
             ),
             msg_type=ClusteredPointsArray,
             callback=self.radar_clustered_points_callback,
-            qos_profile=1,
-        )
-
-        self.new_subscription(
-            topic=self.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
-            msg_type=MarkerArray,
-            callback=self.radar_marker_callback,
             qos_profile=1,
         )
 
@@ -122,17 +107,14 @@ class MappingDataIntegrationNode(CompatibleNode):
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
 
-    def lidar_marker_callback(self, data: MarkerArray):
-        self.lidar_marker_data = data
-
     def lidar_clustered_points_callback(self, data: ClusteredPointsArray):
         self.lidar_clustered_points_data = data
 
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
         self.radar_clustered_points_data = data
 
-    def radar_marker_callback(self, data: MarkerArray):
-        self.radar_marker_data = data
+    def vision_clustered_points_callback(self, data: ClusteredPointsArray):
+        self.vision_clustered_points_data = data
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
@@ -292,6 +274,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.cluster_points_publisher.publish(point_cloud_msg)
 
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
+        data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
             self.radar_clustered_points_data = None
@@ -303,12 +286,16 @@ class MappingDataIntegrationNode(CompatibleNode):
         else:
             raise ValueError(f"Unbekannter Sensortyp: {sensortype}")
 
+        if data is None:
+            return []
+
         clusterpointsarray = np.array(data.clusterPointsArray)
 
         # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
         if len(clusterpointsarray) % 3 != 0:
             raise ValueError(
-                "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe die Datenquelle."
+                "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe \
+                die Datenquelle."
             )
 
         # Umformen in (n, 3)
@@ -346,8 +333,13 @@ class MappingDataIntegrationNode(CompatibleNode):
             if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
                 rospy.loginfo("Empty hull")
                 continue
+            if cluster_polygon_hull.geom_type == "LineString":
+                rospy.loginfo("LineString detected, skipping this cluster")
+                continue
 
-            shape = Polygon.from_shapely(cluster_polygon_hull, make_centered=True)
+            shape = Polygon.from_shapely(
+                cluster_polygon_hull, make_centered=True  # type: ignore
+            )
 
             # Optional: Berechne die Bewegung (Motion)
             motion = None
@@ -361,7 +353,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             # object_class = None
             # if objectclassarray is not None:
             #     cluster_class = objectclassarray[indexarray == label]
-            #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste Klasse
+            #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste
+            # Klasse
 
             # if not polygon.is_valid:
             # polygon = MultiPoint(cluster_points_xy).convex_hull
@@ -392,42 +385,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.publish_cluster_points(clusterpointsarray)
 
         return entities
-
-    # def create_shapely_polygons_from_pointclouds(self, sensor) -> List[ShapelyPolygon]:
-    #     """
-    #     Erstellt ein Shapely-Polygon aus einer PointCloud2-Nachricht.
-
-    #     Args:
-    #         pointcloud_msg (PointCloud2): Die ROS PointCloud2 Nachricht.
-
-    #     Returns:
-    #         ShapelyPolygon: Das erstellte Shapely Polygon.
-    #     """
-
-    #     polygons = []
-    #     # unique_labels = np.unique(points_with_labels[:, -1])
-    #     pointclouds = self.cluster_data
-    #     for pointcloud2 in pointclouds:
-
-    #         points = []
-    #         for p in PointCloud2.read_points(
-    #             pointclouds, skip_nans=True, field_names=("x", "y")
-    #         ):
-    #             points.append((p[0], p[1]))  # Nimmt nur die x- und y-Koordinaten
-
-    #         # Überprüfen, ob genügend Punkte für ein Polygon vorhanden sind
-    #         if len(points) < 3:
-    #             raise ValueError("Ein Polygon benötigt mindestens 3 Punkte.")
-
-    #         # Optional: Erstelle den konvexen Hüllraum der Punkte
-    #         # from scipy.spatial import ConvexHull
-    #         # hull = ConvexHull(points)
-    #         # hull_points = [points[i] for i in hull.vertices]
-
-    #         # Erstelle das Shapely-Polygon
-    #         polygon = ShapelyPolygon(points)
-    #         polygons.append(polygon)
-    #     return polygons
 
     def create_hero_entity(self) -> Optional[Car]:
         if self.hero_speed is None:
@@ -463,15 +420,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         entities = []
         entities.append(hero_car)
 
-        # if self.lidar_marker_data is not None and self.get_param(
-        #     "~enable_lidar_marker"
-        # ):
-        #     entities.extend(self.entities_from_lidar_marker())
-        # if self.radar_marker_data is not None and self.get_param(
-        #     "~enable_radar_marker"
-        # ):
-        #     entities.extend(self.entities_from_radar_marker())
-
         if self.lidar_clustered_points_data is not None and self.get_param(
             "~enable_lidar_cluster"
         ):
@@ -480,14 +428,16 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_radar_cluster"
         ):
             entities.extend(self.create_entities_from_clusters(sensortype="radar"))
+        if self.vision_clustered_points_data is not None and self.get_param(
+            "enable_vision_cluster"
+        ):
+            entities.extend(self.create_entities_from_clusters(sensortype="vision"))
 
         if self.lanemarkings is not None and self.get_param("~enable_lane_marker"):
             entities.extend(self.lanemarkings)
-        # if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
-        #     entities.extend(self.entities_from_lidar())
-        # Will be used when the new function for entity creation is implemented
-        if self.get_param("enable_vision_points"):
-            entities.extend(self.create_entities_from_clusters(sensortype="vision"))
+        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
+            entities.extend(self.entities_from_lidar())
+
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
         msg = map.to_ros_msg()
