@@ -17,30 +17,25 @@ from tf.transformations import quaternion_from_matrix
 import struct
 from collections import defaultdict
 from rosgraph_msgs.msg import Clock
+from ros_compatibility.node import CompatibleNode
 
-from agent import PAFAgent
 
-
-class RadarNode:
+class RadarNode(CompatibleNode):
     """See doc/perception/radar_node.md on how to configure this node."""
 
     def __init__(self):
         # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
         # Alternative: only one set of data
-        self.sensor_data = {}
-
+        self.sensor_data = {
+            "RADAR0": None,
+            "RADAR1": None,
+        }
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
-        self.sensor_config = {}
-
-
-        radar_configs = [
-            sensor for sensor in PAFAgent.sensors() if sensor["type"] == "sensor.other.radar"
-        ]
-        for radar in radar_configs:
-            self.sensor_config[radar["id"]] = [radar["x"], radar["y"], radar["z"]]
-            self.sensor_data[radar["id"]] = None
-            print(f"Position: Name={radar['id']} x={radar['x']}, y={radar['y']}, z={radar['z']}")
+        self.sensor_config = {
+            "RADAR0": [2.0, -1.5, 0.7],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 1.5, 0.7],  # , 0.0, 0.0, 0.0],
+        }
 
         self.timer_interval = 0.1  # 0.1 seconds
 
@@ -182,7 +177,6 @@ class RadarNode:
             rospy.logwarn("No Radarpoints to process!")
             return
 
-
         combined_points = np.array(combined_points)
         self.get_lead_vehicle_info(combined_points)
 
@@ -249,12 +243,12 @@ class RadarNode:
         x, y, z = self.sensor_config[sensor_name]
         # Use numpy broadcasting for better performance
         translation = np.array([x, y, z])
-        transformed_points = np.column_stack((
-            data_array[:, :3] + translation, data_array[:, 3]
-        ))
+        transformed_points = np.column_stack(
+            (data_array[:, :3] + translation, data_array[:, 3])
+        )
 
         return transformed_points
-    
+
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
@@ -486,7 +480,7 @@ def create_pointcloud2(clustered_points, cluster_labels):
     """
     header = Header()
     header.stamp = rospy.Time.now()
-    header.frame_id = "hero"  
+    header.frame_id = "hero"
 
     points = []
     unique_labels = np.unique(cluster_labels)
