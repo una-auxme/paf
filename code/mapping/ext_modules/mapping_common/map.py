@@ -153,6 +153,48 @@ class Map:
 
         return polygon
 
+    def get_obstacle_on_trajectory(
+        self, trajectory, hero_pos, hero_heading
+    ) -> Optional[Entity]:
+        """Calculates the closest entity on the given trajectory. Transforms
+        trajectory world coordinates into map coordinates based on hero position.
+
+        Args:
+            trajectory (np array of x,y tuples): A np array of
+            (x, y) coordinates representing the
+            planned trajectory.
+            hero_pos (x, y): The world coordinates of the hero car.
+            hero_heading (float): The current heading of the hero car.
+
+        Returns:
+            Optional[Entity]: The closest entity
+        """
+        translated = trajectory - np.array(hero_pos)
+
+        # Rotation matrix for counterclockwise rotation by -hero_heading
+        cos_h = np.cos(-hero_heading)
+        sin_h = np.sin(-hero_heading)
+        rotation_matrix = np.array([[cos_h, -sin_h], [sin_h, cos_h]])
+
+        # Apply rotation
+        local_coordinates = np.dot(translated, rotation_matrix.T).tolist()
+
+        curve = self.curve_to_polygon(local_coordinates, 1)
+
+        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
+        road_entities = tree.query(curve)
+
+        filtered_entities = [
+            ent for ent in road_entities if ent.entity.transform.translation().x() > 1
+        ]
+        if len(filtered_entities) > 0:
+            return min(
+                filtered_entities,
+                key=lambda e: e.entity.transform.translation().x(),
+            ).entity
+        else:
+            return None
+
     def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
         """Returns a list of entities that have at least coverage % in the
         given polygon.
