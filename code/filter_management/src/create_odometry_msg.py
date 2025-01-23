@@ -2,11 +2,13 @@
 
 import rospy
 from ros_compatibility.node import CompatibleNode
+import ros_compatibility as roscomp
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import tf2_ros
 import math
+import threading
 
 
 class OdometryNode(CompatibleNode):
@@ -27,6 +29,10 @@ class OdometryNode(CompatibleNode):
 
         self.role_name = self.get_param("role_name", "hero")
         self.loop_rate = self.get_param("control_loop_rate", 0.05)
+
+        self.steer_ang_init = False
+        self.speed_init = False
+        self.initialized = False
 
         # ROS Publishers and Subscribers
         self.odom_pub = self.new_publisher(Odometry, "/odometry/wheel", qos_profile=1)
@@ -53,9 +59,17 @@ class OdometryNode(CompatibleNode):
     def speed_callback(self, msg):
         self.speed = msg.speed
 
+        self.speed_init = True
+        if self.steer_ang_init:
+            self.initialized = True
+
     def steering_callback(self, msg):
         self.steering_angle = msg.steer  # [-1.0, 1.0]
         self.steering_angle *= self.max_steering_angle
+
+        self.steer_ang_init = True
+        if self.speed_init:
+            self.initialized = True
 
     def publish_odometry(self):
         current_time = rospy.Time.now()
@@ -103,15 +117,38 @@ class OdometryNode(CompatibleNode):
 
         self.tf_broadcaster.sendTransform(tf)
 
-    def spin(self):
-        rate = rospy.Rate(self.loop_rate)  # 50 Hz
-        while not rospy.is_shutdown():
-            self.publish_odometry()
-            rate.sleep()
+    def run(self):
+        # wait until Speedometer and steering angle msg are received
+        while not self.initialized:
+            rospy.sleep(1)
+        rospy.sleep(1)
+
+        self.loginfo("Odometry node started its loop!")
+
+        def loop():
+            while True:
+                self.publish_odometry()
+                rospy.sleep(self.loop_rate)
+
+        threading.Thread(target=loop).start()
+        self.spin()
+
+
+def main(args=None):
+    """
+    Main function starts the node
+    :param args:
+    """
+    roscomp.init("odometry_node", args=args)
+
+    try:
+        node = OdometryNode()
+        node.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        roscomp.shutdown()
 
 
 if __name__ == "__main__":
-    rospy.init_node("odometry_node")
-    node = OdometryNode()
-    rospy.loginfo("Odometry node started")
-    node.spin()
+    main()
