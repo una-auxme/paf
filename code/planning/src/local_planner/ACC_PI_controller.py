@@ -8,34 +8,27 @@ import matplotlib.pyplot as plt
 
 class ACC_PI_Controller:
     def __init__(self, Kp, Ki, T_gap, speed_limit):
-        self.pid = PID(Kp, Ki, 0)
-        self.T_gap = T_gap
-        self.pid.output_limits = (-3, 3)
 
-    def update(self, d, v_self, v_lead, speed_limit):
+        # self.pid = PID(Kp, Ki, 0)
+        # self.pid.output_limits = (-3, 3)
+        self.T_gap = T_gap
+        self.d_min = 2
+        self.k_i = Ki
+        self.k_p = Kp
+
+    def update(self, d_current, v_self, v_lead, speed_limit):
         """
         Update the desired speed based on the distance (d) to the leading car,
         the self speed (v_self), and the leading car's speed (v_lead).
         """
-        # Calculate the desired gap based on a time gap model
-        d_desired = self.T_gap * v_self
 
-        # Calculate the error in distance (gap)
-        error = d_desired - d
+        d_desired = self.d_min + self.T_gap * v_self
 
-        # Use the PI controller to compute the control signal (adjustment in speed)
-        speed_adjustment = self.pid(error)
+        v_desired = (
+            self.k_i * (d_current - d_desired) + self.k_p * (v_lead - v_self) + v_self
+        )
 
-        # Calculate the new speed (this might involve limiting speed for safety)
-        new_speed = v_self + speed_adjustment
-
-        # if new_speed > speed_limit:
-        #    new_speed = speed_limit
-
-        # Ensure that the car's speed doesn't exceed the speed of the leading car
-        # new_speed = min(new_speed, v_lead)
-
-        return new_speed, error
+        return v_desired
 
 
 def simulate_ACC_system():
@@ -50,10 +43,10 @@ def simulate_ACC_system():
     i = 0
     j = 0
 
-    v_self = 8  # car's current speed in m/s
-    v_lead = 11.11  # Speed of the leading car in m/s
-    d = 50  # Current distance to the leading car in meters
-    delta_t = 0.05  # control loop rate in planning.launch
+    v_self_init = 8
+    v_lead_init = 11.1
+    d_init = 50
+    delta_t = 0.05
 
     for Kp in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2]:
         # Initialize the PI controller
@@ -61,19 +54,16 @@ def simulate_ACC_system():
         # Simulate updating the speed in a loop
 
         # Example initial values
-        v_self = 10  # car's current speed in m/s
-        v_lead = 20  # Speed of the leading car in m/s
-        d = 5  # Current distance to the leading car in meters
-        delta_t = 0.05  # control loop rate in planning.launch
+        v_self = v_self_init  # car's current speed in m/s
+        v_lead = v_lead_init  # Speed of the leading car in m/s
+        d = d_init  # Current distance to the leading car in meters
 
         d_list = [d]
         t_list = [0.0]
 
         for _ in range(500):  # Simulate x steps
-            new_speed, error = acc_controller.update(d, v_self, v_lead, speed_limit)
-            print(
-                f"Distance: {d}, Desired Speed: {new_speed:.2f} m/s, Error: {error:.2f} m"
-            )
+            new_speed = acc_controller.update(d, v_self, v_lead, speed_limit)
+            print(f"Distance: {d}, Desired Speed: {new_speed:.2f} m/s")
 
             # Update the car's speed and distance to the leading car
             v_self = new_speed  # Update the car's speed
@@ -97,7 +87,8 @@ def simulate_ACC_system():
             i += 1
 
     fig.suptitle(
-        f"Simulation for v_lead = {v_lead}, v_self = {v_self}, d = {d}", fontsize=16
+        f"Simulation for v_lead = {v_lead_init}, v_self = {v_self_init}, d = {d_init}",
+        fontsize=16,
     )
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
