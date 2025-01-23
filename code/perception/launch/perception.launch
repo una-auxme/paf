@@ -2,6 +2,8 @@
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
 
+
+
   <!-- just for Debugging/ Optimizing purposes -> Uncomment to use and see plots -->
   <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
@@ -75,15 +77,14 @@
   </node> 
 
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
-    <param name="point_cloud_topic" value="/carla/hero/RADAR_filtered"/>
-    <param name="range_topic" value="/carla/hero/RADAR_range"/>
-
-    <!-- Cluster configuration -->
-    <param name="clustering_radar_z_min" value="-0.40" />
-    <param name="clustering_radar_z_max" value="2.0" />
-    <param name="dbscan_eps" value="0.4" />
-    <param name="dbscan_min_samples" value="3" />
+    <param name="point_cloud_topic_0" value="/carla/hero/RADAR0"/>
+    <param name="point_cloud_topic_1" value="/carla/hero/RADAR1"/>
+    <param name="dbscan_eps" value="0.3"/>
+    <param name="dbscan_samples" value="3"/>
+    <param name="data_buffered" value="False"/>
+    <param name="data_buffer_time" value="0.1"/>
   </node>
+
 
   <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
     <param name="epsilon_clustering" value="1.8"/><!--parameter to play with, if you want to fine-tune the performance-->
@@ -100,7 +101,6 @@
     <param name="line_length" value="15"/><!--minimum lanemarking size-->
     <param name="line_width" value="0.5"/><!--lanemarking width-->
   </node>
-
 
 </launch>
 
