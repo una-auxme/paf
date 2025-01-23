@@ -28,6 +28,8 @@ from scipy.ndimage import distance_transform_edt
 import numpy as np
 from PIL import Image
 
+import cv2
+
 from acting.helper_functions import generate_path_from_trajectory
 
 
@@ -36,6 +38,9 @@ DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_
 DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
 RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
 FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 25)
+LOCAL_TRAJECTORY_ATTR_FACTOR: int = rospy.get_param(
+    "potential_field_attraction_factor", 2
+)
 SLOPE: int = rospy.get_param("potential_field_slope", 255)
 K_VALUE: float = rospy.get_param("potential_field_K", 0.009)
 MAX_GRADIENT_DESCENT_STEPS: int = rospy.get_param(
@@ -57,6 +62,7 @@ class Potential_field_node(CompatibleNode):
         self.hero_heading = None
         self.listener = tf.TransformListener()
         self.local_trajectory = None
+        self.__local_trajectory_matrix = None
 
         self.transformer = tf.Transformer()
         rospy.sleep(1)
@@ -208,15 +214,36 @@ class Potential_field_node(CompatibleNode):
 
             if self.__check_in_potential_field_horizon(new_pose):
                 local_traj.poses.append(new_pose)
-                self.loginfo(
-                    f"pose {new_pose.pose.position} is in potential field horizon"
-                )
+                # self.loginfo(
+                #    f"pose {new_pose.pose.position} is in potential field horizon"
+                # )
 
         self.loginfo(f"transformed trajectory with {len(local_traj.poses)}")
 
         self.local_trajectory_pub.publish(local_traj)
 
         self.local_trajectory = local_traj
+
+    def __generate_local_trajectory_matrix(self):
+        matrix = np.zeros(
+            (
+                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
+                2 * DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
+            )
+        )
+        for i in range(len(self.local_trajectory.poses) - 1):
+            pt1 = [
+                self.local_trajectory.poses[i].position.x,
+                self.local_trajectory.poses[i].position.y,
+            ]
+            pt2 = [
+                self.local_trajectory.poses[i + 1].position.x,
+                self.local_trajectory.poses[i + 1].position.y,
+            ]
+            # Use cv2.line to draw a line between consecutive points
+            cv2.line(matrix, pt1, pt2, color=255, thickness=1)
+
+        self.__local_trajectory_matrix = matrix
 
     def __calculate_field(self):
         """
@@ -225,12 +252,16 @@ class Potential_field_node(CompatibleNode):
         if self.entity_matrix is None:
             return
 
+        if self.__local_trajectory_matrix is not None:
+            local_traj_matrix = self.__local_trajectory_matrix
+        else:
+            local_traj_matrix = np.zeros(self.entity_matrix.shape)
+
         # normalize the entity matrix to 0-255
         if np.max(self.entity_matrix) != 0:
             self.entity_matrix = self.entity_matrix / np.max(self.entity_matrix) * 255
 
-        # flip image verically and smooth out the values
-        distances = distance_transform_edt(self.entity_matrix == 0)
+        distances: np.ndarray = distance_transform_edt(self.entity_matrix == 0)
 
         # INTRODUCE A FORCE POINTING TO THE TOP OF THE IMAGE (TO MAKE THE CAR DRIVE)
         # slope distances matrix to the top of the image
@@ -239,13 +270,16 @@ class Potential_field_node(CompatibleNode):
         slope_array = np.tile(slope_array, (self.entity_matrix.shape[1], 1)).T
         distances += slope_array
 
+        local_traj_matrix: np.ndarray = distance_transform_edt(local_traj_matrix == 0)
+        local_traj_matrix = local_traj_matrix * LOCAL_TRAJECTORY_ATTR_FACTOR
+        pot_field_matrix = distances - local_traj_matrix
+
         # plot the updated trajectory
         # smooth the values with exponential decay
-        smoothed_values = np.exp(-K_VALUE * distances)
+        smoothed_values = np.exp(-K_VALUE * pot_field_matrix)
         # normalize smoothed values to 0-255
         if np.max(smoothed_values) != 0:
             smoothed_values = smoothed_values / np.max(smoothed_values) * 255
-        distances[distances == 0] = smoothed_values[distances == 0]
 
         gradient_x, gradient_y = np.gradient(smoothed_values)
 
