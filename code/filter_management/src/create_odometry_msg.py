@@ -29,7 +29,7 @@ class OdometryNode(CompatibleNode):
         self.loop_rate = self.get_param("control_loop_rate", 0.05)
 
         # ROS Publishers and Subscribers
-        self.odom_pub = self.new_publisher(Odometry, "example/odom", qos_profile=1)
+        self.odom_pub = self.new_publisher(Odometry, "/odometry/wheel", qos_profile=1)
 
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
