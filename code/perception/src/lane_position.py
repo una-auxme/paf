@@ -231,8 +231,11 @@ class lane_position(CompatibleNode):
         # theta = np.deg2rad(angle)
 
         # Calculate the total length of the line
-        line_length = abs(x / np.cos(angle)) * 2
-        length = max(line_length, self.line_length)
+        if np.isclose(np.cos(angle), 0):
+            length = self.line_length
+        else:
+            line_length = abs(x / np.cos(angle)) * 2
+            length = max(line_length, self.line_length)
         return length
 
     def calc_position_indices(self, points):
@@ -355,11 +358,20 @@ class lane_position(CompatibleNode):
         return median_angle_deviations
 
     def mask_lidarpoints(self, lanemask):
+        """masks lidar points with the lanemask and removes all points that aren't close to the ground
+
+        Args:
+            lanemask
+
+        Returns:
+            filtered lidar points [[x,y,z][x,y,z],...]
+        """
         if len(self.dist_arrays) == 0:
             return []
         points = self.dist_arrays[lanemask == 255]
         points = points[~np.all(points == [0.0, 0.0, 0.0], axis=1)]
-        return points
+        filtered_points = points[np.abs(points[:, 2] - (-1.7)) <= 0.15]
+        return filtered_points
 
     def distance_array_handler(self, ImageMsg):
         dist_array = self.bridge.imgmsg_to_cv2(
@@ -503,6 +515,6 @@ class lane_position(CompatibleNode):
 
 
 if __name__ == "__main__":
-    roscomp.init("lane_poistion_node")
-    node = lane_position("lane_poistion_node")
+    roscomp.init("lane_position_node")
+    node = lane_position("lane_position_node")
     node.run()
