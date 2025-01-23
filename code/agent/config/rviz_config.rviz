@@ -3,7 +3,9 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /MarkerArray1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 325
   - Class: rviz/Selection
@@ -62,7 +64,6 @@ Visualization Manager:
       Visibility:
         Grid: false
         Imu: false
-        Intermediate layer: true
         Lidar: false
         Lidar_filtered: false
         Path: true
@@ -95,14 +96,14 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 83.1390609741211
-        Min Value: -66.25593566894531
+        Max Value: 79.28296661376953
+        Min Value: -78.85533142089844
         Value: true
       Axis: X
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 150; 150; 150
-      Color Transformer: FlatColor
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -184,7 +185,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: ""
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -199,14 +200,42 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /paf/hero/mapping/marker_array
-      Name: Intermediate layer
+      Name: MarkerArray
       Namespaces:
         m: true
-      Queue Size: 2
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: ""
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2
+      Position Transformer: ""
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.05000000074505806
+      Style: Flat Squares
+      Topic: /paf/hero/mapping/temporary_pointcloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
     - Alpha: 1
       Buffer Length: 1
