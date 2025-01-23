@@ -187,9 +187,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             if marker.type != Marker.CUBE:
                 rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
-            # Extract position (center of the cube) and calculate 2 meter offset
-            # because of radar positioning
-            x_center = marker.pose.position.x + 2
+            # Extract position (center of the cube)
+            x_center = marker.pose.position.x
             y_center = marker.pose.position.y
 
             # Extract dimensions (scale gives the size of the cube)
