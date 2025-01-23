@@ -18,7 +18,8 @@ import tf2_ros
 import tf
 from tf import transformations as t
 from tf2_geometry_msgs import do_transform_pose
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Point
+from visualization_msgs.msg import MarkerArray
 
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import PoseStamped
@@ -37,7 +38,7 @@ from acting.helper_functions import generate_path_from_trajectory
 DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_X", 10)
 DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
 RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
-FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 25)
+FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 10)
 LOCAL_TRAJECTORY_ATTR_FACTOR: int = rospy.get_param(
     "potential_field_attraction_factor", 2
 )
@@ -96,6 +97,10 @@ class Potential_field_node(CompatibleNode):
 
         self.potential_field_trajectory_pub: Publisher = self.new_publisher(
             Path, "/paf/hero/potential_field_trajectory", 1
+        )
+
+        self.potential_field_marker_pub: Publisher = self.new_publisher(
+            MarkerArray, "/paf/hero/potential_field_markers", 1
         )
 
         self.local_trajectory_pub: Publisher = self.new_publisher(
@@ -214,9 +219,6 @@ class Potential_field_node(CompatibleNode):
 
             if self.__check_in_potential_field_horizon(new_pose):
                 local_traj.poses.append(new_pose)
-                # self.loginfo(
-                #    f"pose {new_pose.pose.position} is in potential field horizon"
-                # )
 
         self.loginfo(f"transformed trajectory with {len(local_traj.poses)}")
 
@@ -225,6 +227,9 @@ class Potential_field_node(CompatibleNode):
         self.local_trajectory = local_traj
 
     def __generate_local_trajectory_matrix(self):
+        if self.local_trajectory is None:
+            return
+
         matrix = np.zeros(
             (
                 DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
@@ -232,18 +237,49 @@ class Potential_field_node(CompatibleNode):
             )
         )
         for i in range(len(self.local_trajectory.poses) - 1):
-            pt1 = [
-                self.local_trajectory.poses[i].position.x,
-                self.local_trajectory.poses[i].position.y,
-            ]
-            pt2 = [
-                self.local_trajectory.poses[i + 1].position.x,
-                self.local_trajectory.poses[i + 1].position.y,
-            ]
+            pt1: cv2.typing.Point = (
+                int(self.local_trajectory.poses[i].pose.position.x * RESOLUTION_SCALE),
+                int(self.local_trajectory.poses[i].pose.position.y * RESOLUTION_SCALE),
+            )
+            pt2: cv2.typing.Point = (
+                int(
+                    self.local_trajectory.poses[i + 1].pose.position.x
+                    * RESOLUTION_SCALE
+                ),
+                int(
+                    self.local_trajectory.poses[i + 1].pose.position.y
+                    * RESOLUTION_SCALE
+                ),
+            )
+
             # Use cv2.line to draw a line between consecutive points
             cv2.line(matrix, pt1, pt2, color=255, thickness=1)
 
         self.__local_trajectory_matrix = matrix
+
+    def publish_potential_field_markers(self, matrix):
+        marker_array = MarkerArray()
+        for index, value in np.ndenumerate(matrix):
+            position = Point(
+                index[0] / RESOLUTION_SCALE, index[1] / RESOLUTION_SCALE, value[2] / 255
+            )
+            marker = Marker()
+            marker.header.frame_id = "hero"
+            marker.header.stamp = rospy.Time.now()
+            marker.ns = "markers"
+            marker.type = Marker.SPHERE  # You can choose other marker types
+            marker.action = Marker.ADD
+            marker.pose.position = position
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.color.a = 1.0  # Alpha (transparency)
+            marker.color.r = 1.0  # Red
+            marker.color.g = 0.0  # Green
+            marker.color.b = 0.0  # Blue
+            marker_array.markers.append(marker)
+
+        self.potential_field_marker_pub.publish(marker_array)
 
     def __calculate_field(self):
         """
@@ -251,6 +287,8 @@ class Potential_field_node(CompatibleNode):
         """
         if self.entity_matrix is None:
             return
+
+        self.__generate_local_trajectory_matrix()
 
         if self.__local_trajectory_matrix is not None:
             local_traj_matrix = self.__local_trajectory_matrix
@@ -280,6 +318,8 @@ class Potential_field_node(CompatibleNode):
         # normalize smoothed values to 0-255
         if np.max(smoothed_values) != 0:
             smoothed_values = smoothed_values / np.max(smoothed_values) * 255
+
+        self.publish_potential_field_markers(smoothed_values)
 
         gradient_x, gradient_y = np.gradient(smoothed_values)
 
