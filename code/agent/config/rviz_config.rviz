@@ -1,6 +1,6 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 70
+    Help Height: 78
     Name: Displays
     Property Tree Widget:
       Expanded:
@@ -115,7 +115,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 2
       Selectable: true
-      Size (Pixels): 1
+      Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
       Topic: /carla/hero/LIDAR
@@ -126,55 +126,27 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 12.452507972717285
-        Min Value: -0.33793050050735474
+        Max Value: 10
+        Min Value: -10
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 255; 100; 100
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
-      Name: Radar0
+      Name: Radar
       Position Transformer: XYZ
-      Queue Size: 10
+      Queue Size: 2
       Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.05000000074505806
-      Style: Flat Squares
-      Topic: /carla/hero/RADAR0
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 12.452507972717285
-        Min Value: -0.33793050050735474
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: Radar1
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.05000000074505806
-      Style: Flat Squares
-      Topic: /carla/hero/RADAR1
+      Size (Pixels): 5
+      Size (m): 0.009999999776482582
+      Style: Points
+      Topic: /carla/hero/RADAR
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -232,7 +204,7 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: false
+      Enabled: true
       Marker Topic: /paf/hero/mapping/marker_array
       Name: MarkerArray
       Namespaces:
@@ -295,7 +267,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.783294677734375
+      Distance: 22.39063835144043
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -303,9 +275,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -4.03520393371582
-        Y: 0.7698022127151489
-        Z: 2.1686148643493652
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
