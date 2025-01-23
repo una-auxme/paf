@@ -390,7 +390,7 @@ class lane_position(CompatibleNode):
         # Iterate through each cluster in the dictionary
         for label, cluster in clusters.items():
             # skip outliers
-            if label == "outlier":
+            if label == "outliers":
                 continue
 
             y = cluster[:, 1]  # y-coordinates
