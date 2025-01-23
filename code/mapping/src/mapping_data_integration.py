@@ -45,6 +45,15 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.lidar_callback,
             qos_profile=1,
         )
+        self.lanemarkings = None
+        self.new_subscription(
+            topic=self.get_param(
+                "~lanemarkings_init_topic", "/paf/hero/mapping/init_lanemarkings"
+            ),
+            msg_type=MapMsg,
+            callback=self.lanemarkings_callback,
+            qos_profile=1,
+        )
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
@@ -214,6 +223,10 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return radar_entities
 
+    def lanemarkings_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
+        self.lanemarkings = map.entities_without_hero()
+
     def entities_from_lidar(self) -> List[Entity]:
         if self.lidar_data is None:
             return []
@@ -312,6 +325,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_radar_cluster"
         ):
             entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
+        if self.lanemarkings is not None and self.get_param("~enable_lane_marker"):
+            entities.extend(self.lanemarkings)
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
         # Will be used when the new function for entity creation is implemented
