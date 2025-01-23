@@ -6,9 +6,10 @@ import ros_compatibility as roscomp
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
-import tf2_ros
 import math
 import threading
+
+# import tf2_ros
 
 
 class OdometryNode(CompatibleNode):
@@ -37,7 +38,7 @@ class OdometryNode(CompatibleNode):
         # ROS Publishers and Subscribers
         self.odom_pub = self.new_publisher(Odometry, "/odometry/wheel", qos_profile=1)
 
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
+        # self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
         self.speed_sub = self.new_subscription(
             CarlaSpeedometer,
@@ -106,7 +107,7 @@ class OdometryNode(CompatibleNode):
         self.odom_pub.publish(odom)
 
         # Publish TF
-        tf = TransformStamped()
+        """tf = TransformStamped()
         tf.header.stamp = current_time
         tf.header.frame_id = "odom"
         tf.child_frame_id = "hero"
@@ -115,7 +116,7 @@ class OdometryNode(CompatibleNode):
         tf.transform.rotation.z = math.sin(self.yaw / 2.0)
         tf.transform.rotation.w = math.cos(self.yaw / 2.0)
 
-        self.tf_broadcaster.sendTransform(tf)
+        self.tf_broadcaster.sendTransform(tf)"""
 
     def run(self):
         # wait until Speedometer and steering angle msg are received
