@@ -209,7 +209,7 @@ class Approach(py_trees.behaviour.Behaviour):
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
         map = Map.from_ros_msg(map_data)
 
-        entity = map.get_entity_in_front()
+        entity = map.get_entity_in_front_or_back(True)
 
         left_free = map.is_lane_free(right_lane=False)
         rospy.loginfo(f"OT: Left lane free: {left_free}")
