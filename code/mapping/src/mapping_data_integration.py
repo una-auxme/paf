@@ -19,6 +19,12 @@ from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 
 
+###################
+from nav_msgs.msg import Path
+
+###################
+
+
 class MappingDataIntegrationNode(CompatibleNode):
     """Creates the initial map data frame based on all kinds of sensor data
 
@@ -91,8 +97,22 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
+
+        ###################
+        self.local_trajectory = Path()
+        self.new_subscription(
+            topic="test_trajectory",
+            msg_type=Path,
+            callback=self.callback,
+            qos_profile=1,
+        )
+        ###################
+
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
+
+    def callback(self, data: Path):
+        self.local_trajectory = data
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
@@ -115,6 +135,19 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lanemarkings_callback(self, data: MapMsg):
         map = Map.from_ros_msg(data)
         self.lanemarkings = map.entities_without_hero()
+
+        self.loginfo(
+            "Trajectory check: " + str(map.check_trajectory(self.local_trajectory))
+        )
+        if map.check_trajectory(self.local_trajectory) is 2:
+            for lane in self.lanemarkings:
+                if lane.position_index == 1:
+                    lane.predicted = True
+
+        if map.check_trajectory(self.local_trajectory) is 3:
+            for lane in self.lanemarkings:
+                if lane.position_index == -1:
+                    lane.predicted = True
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
