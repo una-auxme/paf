@@ -358,7 +358,8 @@ class lane_position(CompatibleNode):
         return median_angle_deviations
 
     def mask_lidarpoints(self, lanemask):
-        """masks lidar points with the lanemask and removes all points that aren't close to the ground
+        """masks lidar points with the lanemask and removes all points,
+        that aren't close to the ground
 
         Args:
             lanemask
