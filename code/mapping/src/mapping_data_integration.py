@@ -304,7 +304,7 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
-        if hero_car is None or self.lanemarkings is None:
+        if hero_car is None:
             return
 
         entities = []

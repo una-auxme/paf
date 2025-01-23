@@ -152,8 +152,9 @@ class lane_position(CompatibleNode):
         return updated_mask
 
     def process_lanemask(self, lanemask):
-        """masks lidar points with given lanemask, then clusters the remaining lidar points,
-        calculates the center and angle for each cluster and calculates the confidences
+        """masks lidar points with given lanemask, then clusters the remaining lidar
+        points, calculates the center and angle for each cluster
+        and calculates the confidences
 
         Args:
             lanemask
@@ -407,7 +408,8 @@ class lane_position(CompatibleNode):
             center_y = np.mean(y)
             center_x = np.mean(x)
 
-            # Check if this y-coordinate is within the tolerance of an existing lanemarking
+            # Check if this y-coordinate is within the tolerance of an existing
+            # lanemarking
             if any(
                 abs(center_y - existing_y) <= self.y_tolerance
                 for _, existing_y in lanemarkings
@@ -433,7 +435,9 @@ class lane_position(CompatibleNode):
             )  # HDBSCAN
             labels = clustering.labels_
         except Exception as e:
-            print(f"could not cluster given points: {str(e)}")
+            rospy.logwarn(
+                f"could not cluster points for lane position calculation: {str(e)}"
+            )
 
         # Find the unique cluster labels (excluding -1 for outliers)
         unique_labels = np.unique(labels)
@@ -497,13 +501,8 @@ class lane_position(CompatibleNode):
         )
         return predicted_lanemarkings
 
-    def publish_label_image(self, clustered_mask):
-        image = self.label_to_rgb(clustered_mask)
-        ros_image = self.bridge.cv2_to_imgmsg(image)
-        self.label_image_publisher.publish(ros_image)
-
 
 if __name__ == "__main__":
-    roscomp.init("Lanedetection_node")
-    node = lane_position("Lanedetection_node")
+    roscomp.init("lane_poistion_node")
+    node = lane_position("lane_poistion_node")
     node.run()
