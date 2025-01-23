@@ -141,77 +141,9 @@ class Potential_field_node(CompatibleNode):
         position = pose.pose.position
         if position.x < 0 or position.x > DISTANCE_THRESHOLD_X:
             return False
-        if position.y < DISTANCE_THRESHOLD_Y or position.y > DISTANCE_THRESHOLD_Y:
+        if position.y < -DISTANCE_THRESHOLD_Y or position.y > DISTANCE_THRESHOLD_Y:
             return False
         return True
-
-    def __get_closest_traj_point(self):
-        if self.local_trajectory is None or self.hero_pos is None:
-            return
-
-        self.loginfo(f"length before cleaning: {len(self.local_trajectory.poses)}")
-
-        self.local_trajectory.poses = [
-            pose
-            for pose in self.local_trajectory.poses
-            if self.__check_in_potential_field_horizon(pose)
-        ]
-
-        self.loginfo(f"length after cleaning: {len(self.local_trajectory.poses)}")
-
-    def __calculate_hero_transform(self):
-        """
-        This function merges the heading and the position together and
-        calculates the inverse so it can transform the coordinate systems from global
-        to hero
-        """
-        # if transformer.frameExists("global") and transformer.frameExists("hero"):
-
-        try:
-            self.listener.waitForTransform(
-                target_frame="hero",
-                source_frame="global",
-                time=rospy.Time(0),
-                timeout=rospy.Duration(nsecs=int(1e8)),
-            )
-        except Exception as e:
-            self.logerr(f"POTENTIAL_FIELD: transform lookup timeout {e}")
-            return
-
-        try:
-            (trans, rot) = self.listener.lookupTransform(
-                "hero", "global", rospy.Time(0)
-            )
-        except Exception as e:
-            self.logerr(f"lookup failed, {e}")
-            return
-        """
-        try:
-            self.hero_transform = t.concatenate_matrices(
-                t.translation_from_matrix(trans),
-                t.quaternion_matrix(rot),
-            )
-        except Exception as e:
-            self.logerr(f"setting up transform failed {e}")
-
-        return
-        """
-        self.hero_transform = TransformStamped()
-
-        self.hero_transform.header.stamp = rospy.Time.now()
-        self.hero_transform.header.frame_id = "global"
-        self.hero_transform.child_frame_id = "hero"
-
-        self.hero_transform.transform.translation.x = trans[0]
-        self.hero_transform.transform.translation.y = trans[1]
-        self.hero_transform.transform.translation.z = trans[2]
-
-        self.hero_transform.transform.rotation.x = rot[0]
-        self.hero_transform.transform.rotation.y = rot[1]
-        self.hero_transform.transform.rotation.z = rot[2]
-        self.hero_transform.transform.rotation.w = rot[3]
-
-        self.loginfo("TRANSFORMATION SUCCESS")
 
     def __filter_entities(self):
         """
@@ -249,10 +181,10 @@ class Potential_field_node(CompatibleNode):
 
     def __get_local_trajectory(self):
 
-        if self.hero_transform is None or self.trajectory is None:
+        if self.trajectory is None or self.hero_pos is None:
             return
 
-        trans = self.hero_transform
+        self.loginfo(f"transforming trajectory with {len(self.trajectory.poses)}")
 
         local_traj = Path()
         local_traj.header = rospy.Header()
@@ -261,11 +193,12 @@ class Potential_field_node(CompatibleNode):
         local_traj.poses = []
         for pose in self.trajectory.poses:
             new_pose = PoseStamped()
-            new_pose.pose.position.x = (
-                self.hero_pos.pose.position.x - self.hero_pos.pose.position.x
+            new_pose.header.frame_id = "hero"
+            new_pose.pose.position.y = (  # not sure why it is swapped ?
+                pose.pose.position.x - self.hero_pos.pose.position.x
             )
-            new_pose.pose.position.y = (
-                self.hero_pos.pose.position.y - self.hero_pos.pose.position.y
+            new_pose.pose.position.x = -(
+                pose.pose.position.y - self.hero_pos.pose.position.y
             )
             new_pose.pose.position.z = 0
             new_pose.pose.orientation.x = 0
@@ -275,6 +208,11 @@ class Potential_field_node(CompatibleNode):
 
             if self.__check_in_potential_field_horizon(new_pose):
                 local_traj.poses.append(new_pose)
+                self.loginfo(
+                    f"pose {new_pose.pose.position} is in potential field horizon"
+                )
+
+        self.loginfo(f"transformed trajectory with {len(local_traj.poses)}")
 
         self.local_trajectory_pub.publish(local_traj)
 
@@ -405,13 +343,7 @@ class Potential_field_node(CompatibleNode):
 
             self.__calculate_field()
 
-            self.__calculate_hero_transform()
-
-            self.__get_closest_traj_point()
-            try:
-                self.__get_local_trajectory()
-            except Exception as e:
-                self.logerr(f"PF: Exception {e} caught, from POTENTIAL FIELD")
+            self.__get_local_trajectory()
             # PLOTTING
             # self.save_image(
             #    self.entity_matrix_for_plotting, "/workspace/code/entity_matrix.png"
