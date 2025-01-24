@@ -3,6 +3,7 @@ import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
 from behaviors import behavior_speed as bs
+from behaviors import intersection
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
@@ -172,10 +173,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                     "WAITING at intersection traffic light, no unstuck attempt"
                 )
                 self.stuck_timer = rospy.Time.now()
-        # rospy.loginfo(f"intersectopn light:
-        # {intersection.get_color(light_status_msg)}")
-        # rospy.loginfo(f"curr behavior: {curr_behavior}\nlight status:
-        # {intersection.get_color(light_status_msg)}\n{bs.int_wait.name}")
+        # rospy.loginfo(f"intersectopn light: {intersection.get_color(light_status_msg)}")
+        # rospy.loginfo(f"curr behavior: {curr_behavior}\nlight status: {intersection.get_color(light_status_msg)}\n{bs.int_wait.name}")
 
         # rospy.loginfo(target_speed.data)
 
