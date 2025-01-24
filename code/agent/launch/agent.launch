@@ -33,19 +33,6 @@
     <include file="$(find mapping_visualization)/launch/visualization.launch">
     </include>
 
-    <!-- robot localization -->
-    <rosparam command="load" file="$(find filter_management)/config/ekf_config.yaml" />
-
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true"/>
-
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_map" clear_params="true">
-        <remap from="odometry/filtered" to="odometry/filtered_map"/>
-    </node>
-
-    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
-        <remap from="odometry/filtered" to="odometry/filtered_map"/>
-    </node>
-
     <!-- filter management -->
     <include file="$(find filter_management)/launch/filter_management.launch">
     </include>
