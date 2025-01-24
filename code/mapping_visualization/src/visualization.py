@@ -54,7 +54,7 @@ class Visualization(CompatibleNode):
         marker_array.markers.append(self.create_deleteall_marker())
 
         marker_timestamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
-        for id, entity in enumerate(map.entities_without_hero()):
+        for id, entity in enumerate(map.entities):
             # TODO: filtering based on flags
             marker_array.markers.append(
                 self.create_marker_from_entity(id, entity, marker_timestamp)

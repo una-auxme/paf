@@ -37,8 +37,7 @@ add_message_files(
   TypeCar.msg
   TypeLanemarking.msg
   TypeTrafficLight.msg
-  PointcloudCluster.msg
-  PointcloudClusterArray.msg
+  ClusteredPointsArray.msg
 )
 
 ## Generate services in the 'srv' folder
