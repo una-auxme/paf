@@ -32,7 +32,8 @@ The following Chart displays the procedure and applied algorithms used to conver
 
 5. Determine confidence:
     A specially developed algrotihmus calculates the confidence of the lanemarkings. It takes into account the size of the clusters, the standard deviation of the linear regression and the angle to the other straight lines.
-    Score = normalized_angle x angle_weight + normalized_std_dev x std_dev_weight + normalized_clustersize x clustersize_weight
+
+    ***Score = normalized_angle x angle_weight + normalized_std_dev x std_dev_weight + normalized_clustersize x clustersize_weight***
 
     - **Explanation of Variables**:
         - **normalized_angle**: The normalized angle.
