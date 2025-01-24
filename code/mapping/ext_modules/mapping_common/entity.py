@@ -391,6 +391,10 @@ class Entity:
             return False
         if self.flags._is_stopmark is not other.flags._is_stopmark:
             return False
+        if self.flags._is_hero is not other.flags._is_hero:
+            # This limitation might be removed later if there are no rectangular
+            # clusters used anymore that might falsely overlap with the hero.
+            return False
         if not (isinstance(self, type(other)) or isinstance(other, type(self))):
             return False
         return True
