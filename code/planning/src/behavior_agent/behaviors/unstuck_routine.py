@@ -132,6 +132,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
         target_speed = self.blackboard.get("/paf/hero/target_velocity")
+        curr_behavior = self.blackboard.get("/paf/hero/curr_behavior")
+        # light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
 
         # check for None values and initialize if necessary
         if self.current_speed is None:
@@ -144,7 +146,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return True
 
         # check if vehicle is NOT stuck, v > 0.1
-        if self.current_speed.speed >= TRIGGER_STUCK_SPEED:
+        if (
+            self.current_speed.speed >= TRIGGER_STUCK_SPEED
+        ):  # or target_speed.data < TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
             self.wait_stuck_timer = rospy.Time.now()
 
@@ -152,6 +156,28 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             if target_speed.data >= TRIGGER_STUCK_SPEED:
                 # reset stuck timer
                 self.stuck_timer = rospy.Time.now()
+
+        rospy.loginfo(type(curr_behavior))
+
+        if curr_behavior is None or curr_behavior.data == bs.int_wait.name:
+            # reset stuck timer
+            self.stuck_timer = rospy.Time.now()
+            rospy.loginfo("Plannend waiting, reset stuck timer")
+
+        # check if waiting for red light --> NOT stuck
+        # rospy.loginfo(curr_behavior)
+        if curr_behavior is not None:
+            if curr_behavior.data == bs.int_wait.name:
+                rospy.loginfo(
+                    "WAITING at intersection traffic light, no unstuck attempt"
+                )
+                self.stuck_timer = rospy.Time.now()
+        # rospy.loginfo(f"intersectopn light:
+        # {intersection.get_color(light_status_msg)}")
+        # rospy.loginfo(f"curr behavior: {curr_behavior}\nlight status:
+        # {intersection.get_color(light_status_msg)}\n{bs.int_wait.name}")
+
+        # rospy.loginfo(target_speed.data)
 
         # update the stuck durations
         self.stuck_duration = rospy.Time.now() - self.stuck_timer
