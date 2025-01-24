@@ -16,10 +16,6 @@ The Lanedetection Node is responsible for detecting the Lane markings and drivea
    - **Type**: Image Message (ImageMsg)  
    - **Description**: Provides the center camera image.  
 
-2. **Center/dist_array**  
-   - **Type**: Distance Message (ImageMsg)
-   - **Description**: Contains distance data from Lidar mapped on the camera Image.
-
 ---
 
 ## **Processing Steps**
@@ -40,13 +36,6 @@ The Lanedetection Node is responsible for detecting the Lane markings and drivea
         - *Function*: Marks Lidar points that collide with the Lane Mask
         - *Output*: Lidar Points
 
- 2. **Distance Handler**
-    - *Function*: Saves the Distance from the Distance Message.
-    - *Ouput*: Distance Array
-
- 3. **Marker**
-    - *Function*: Marker Object that contains all settings for the highlighting of the Lidar Points.
-
 ---
 
 ## Outputs
@@ -58,7 +47,3 @@ The Lanedetection Node is responsible for detecting the Lane markings and drivea
 2. **Lane_detection_mask**  
    - **Type**: Image Message (ImageMsg)
    - **Description**: Contains the mask for all detected lane markings.
-
-3. **visualization_marker_array_lane**
-    - **Type**: MarkerArray
-    - - **Description**: Contains all Lidar points that collide with the lane mask.
