@@ -7,12 +7,16 @@ from std_msgs.msg import Float32
 
 from mapping_common.entity import Entity
 from mapping_common.map import Map
+from mapping_common.transform import Transform2D, Point2
 
 from rospy import Publisher, Subscriber
 import ros_compatibility as roscomp
 import rospy
 import tf.transformations
 from visualization_msgs.msg import Marker
+
+import math
+import time
 
 import tf2_ros
 import tf
@@ -120,7 +124,6 @@ class Potential_field_node(CompatibleNode):
             callback=self.__get_hero_pos,
             qos_profile=1,
         )
-        """
 
         self.current_heading_sub: Subscriber = self.new_subscription(
             msg_type=Float32,
@@ -128,12 +131,15 @@ class Potential_field_node(CompatibleNode):
             callback=self.__get_hero_heading,
             qos_profile=1,
         )
-        """
+
         # END ROS SETUP ###
 
     # CALLBACKS ###
     def __get_hero_pos(self, data: PoseStamped):
         self.hero_pos = data
+
+    def __get_hero_heading(self, data: Float32):
+        self.hero_heading = data
 
     def __get_entities(self, data: MapMsg):
         """
@@ -197,6 +203,8 @@ class Potential_field_node(CompatibleNode):
 
         self.loginfo(f"transforming trajectory with {len(self.trajectory.poses)}")
 
+        trans2d = Transform2D.new_rotation(self.hero_heading.data + math.pi / 2)
+
         local_traj = Path()
         local_traj.header = rospy.Header()
         local_traj.header.stamp = rospy.Time.now()
@@ -205,12 +213,15 @@ class Potential_field_node(CompatibleNode):
         for pose in self.trajectory.poses:
             new_pose = PoseStamped()
             new_pose.header.frame_id = "hero"
-            new_pose.pose.position.y = (  # not sure why it is swapped ?
-                pose.pose.position.x - self.hero_pos.pose.position.x
+
+            pose_point = Point2.new(
+                -(pose.pose.position.y - self.hero_pos.pose.position.y),
+                pose.pose.position.x - self.hero_pos.pose.position.x,
             )
-            new_pose.pose.position.x = -(
-                pose.pose.position.y - self.hero_pos.pose.position.y
-            )
+            pose_point: Point2 = trans2d * pose_point
+            new_pose.pose.position.y = pose_point.y()
+            new_pose.pose.position.x = pose_point.x()
+
             new_pose.pose.position.z = 0
             new_pose.pose.orientation.x = 0
             new_pose.pose.orientation.y = 0
@@ -261,7 +272,7 @@ class Potential_field_node(CompatibleNode):
         marker_array = MarkerArray()
         for index, value in np.ndenumerate(matrix):
             position = Point(
-                index[0] / RESOLUTION_SCALE, index[1] / RESOLUTION_SCALE, value[2] / 255
+                index[0] / RESOLUTION_SCALE, index[1] / RESOLUTION_SCALE, value
             )
             marker = Marker()
             marker.header.frame_id = "hero"
@@ -280,6 +291,7 @@ class Potential_field_node(CompatibleNode):
             marker_array.markers.append(marker)
 
         self.potential_field_marker_pub.publish(marker_array)
+        self.loginfo("potential_field_markers published")
 
     def __calculate_field(self):
         """
@@ -287,6 +299,8 @@ class Potential_field_node(CompatibleNode):
         """
         if self.entity_matrix is None:
             return
+
+        starttime = time.time()
 
         self.__generate_local_trajectory_matrix()
 
@@ -319,7 +333,7 @@ class Potential_field_node(CompatibleNode):
         if np.max(smoothed_values) != 0:
             smoothed_values = smoothed_values / np.max(smoothed_values) * 255
 
-        self.publish_potential_field_markers(smoothed_values)
+        # self.publish_potential_field_markers(smoothed_values)
 
         gradient_x, gradient_y = np.gradient(smoothed_values)
 
@@ -328,7 +342,7 @@ class Potential_field_node(CompatibleNode):
         num_steps = 0
         points: list[tuple[float]] = []
         plot_points: list[tuple[int]] = []
-        min_gradient_magnitude = 1e-4  # Add convergence threshold
+        min_gradient_magnitude = 1e-4
 
         x, y = self.entity_matrix_midpoint
         while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
@@ -338,12 +352,8 @@ class Potential_field_node(CompatibleNode):
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
                 gradient_magnitude = np.sqrt(dx * dx + dy * dy)
                 if gradient_magnitude < min_gradient_magnitude:
-                    self.loginfo(
-                        "Potential Field: Converged: gradient magnitude below threshold"
-                    )
                     finished = True
                     break
-
                 x -= int(dx)
                 y -= int(dy)
                 plot_points.append((x, y))
@@ -368,42 +378,7 @@ class Potential_field_node(CompatibleNode):
         # generate a path from the trajectory and publish
         self.potential_field_trajectory = generate_path_from_trajectory(points)
         self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
-        self.loginfo("potential field trajectory published")
-
-        self.last_pub_time = rospy.get_time()
-
-        return
-
-        # EVERYTHING HAPPENING WITH ENTYITY MATRIX FOR PLOTTING
-        self.entity_matrix_for_plotting = np.zeros(
-            (
-                self.entity_matrix.shape[0],
-                self.entity_matrix.shape[1],
-                3,
-            ),
-            dtype=np.uint8,
-        )
-
-        self.entity_matrix_for_plotting[:, :, 0] = np.flipud(self.entity_matrix)
-        self.entity_matrix_for_plotting[:, :, 2] = smoothed_values
-        for point in plot_points:
-            try:
-                self.entity_matrix_for_plotting[point[0], point[1], 1] = 255
-            except IndexError:
-                continue
-
-    def save_image(self, matrix: np.ndarray, path: str):
-        """
-        Saves an image from a matrix
-
-        Args:
-            matrix (np.ndarray): the matrix to save
-            path (str): the path to save the image
-        """
-        image = Image.fromarray(matrix)
-        image = image.convert("RGB")
-        image.save(path)
-        self.loginfo(f"Image saved at {path}")
+        self.loginfo(f"POTENTIAL_FIELD_PUBLISHED after time {time.time()-starttime}")
 
     def run(self):
         """
