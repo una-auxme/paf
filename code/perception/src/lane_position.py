@@ -433,7 +433,7 @@ class lane_position(CompatibleNode):
             deviations.append(std_dev[0])  # Standard deviation of the slope
             # Store the results for lanemarkings, angles, and deviations
             angles.append(theta)
-            center_coordinates.append([center_x, center_y])#
+            center_coordinates.append([center_x, center_y])
 
         return center_coordinates, angles, deviations
 
