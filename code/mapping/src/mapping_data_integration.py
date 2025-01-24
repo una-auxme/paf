@@ -139,12 +139,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.loginfo(
             "Trajectory check: " + str(map.check_trajectory(self.local_trajectory))
         )
-        if map.check_trajectory(self.local_trajectory) is 2:
+        if map.check_trajectory(self.local_trajectory) == 2:
             for lane in self.lanemarkings:
                 if lane.position_index == 1:
                     lane.predicted = True
 
-        if map.check_trajectory(self.local_trajectory) is 3:
+        if map.check_trajectory(self.local_trajectory) == 3:
             for lane in self.lanemarkings:
                 if lane.position_index == -1:
                     lane.predicted = True
@@ -334,7 +334,9 @@ class MappingDataIntegrationNode(CompatibleNode):
             + lidar_cluster_entities
             + radar_cluster_entities,
         )
+        map.entities = map.entities_in_area(10)
         msg = map.to_ros_msg()
+
         self.map_publisher.publish(msg)
 
 

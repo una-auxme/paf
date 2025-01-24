@@ -47,7 +47,7 @@ class TestPath(CompatibleNode):
             pos = PoseStamped()
             pos.header.stamp = rospy.Time.now()
             pos.header.frame_id = "hero"
-            curve = curve + 0.075 * i * random.uniform(0, 1)
+            curve = curve + 0.01 * i * random.uniform(0, 1)
             pos.pose.position.x = i
             pos.pose.position.y = curve * factor
             pos.pose.position.z = 0
