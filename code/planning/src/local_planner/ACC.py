@@ -11,7 +11,6 @@ from simple_pid import PID
 from utils import calculate_rule_of_thumb, interpolate_speed
 from typing import Optional
 from typing import List
-import ACC_PI_controller
 
 
 class ACC(CompatibleNode):
@@ -235,13 +234,10 @@ class ACC(CompatibleNode):
         """
 
         # PID controller
-        Kp = 1.0
-        Ki = 0.0
-        T_gap = 2 # unit: secornds
-
-        pid = ACC_PI_controller(Kp, Ki, T_gap)
-
-        pid.output_limits = (0, self.speed_limit)
+        Kp = 0.5
+        Ki = 1.5
+        T_gap = 2  # unit: seconds
+        d_min = 0
 
         def loop(timer_event=None):
             """
@@ -250,34 +246,41 @@ class ACC(CompatibleNode):
             """
 
             if (
-                # often none
                 self.leading_vehicle_distance is not None
-                # often none -> often does elif even if if-case is necessary
                 and self.leading_vehicle_speed is not None
                 and self.__current_velocity is not None
             ):
-                if self.leading_vehicle_speed < 0.0:
-                    acc_speed = 0.0
-                    self.velocity_pub.publish(acc_speed)
-
-                # If we have obstalce information,
-                # we can calculate the safe speed
-                safety_distance: float
-                safety_distance = calculate_rule_of_thumb(
-                    False, self.__current_velocity
-                )
-                if self.leading_vehicle_distance < safety_distance:
-                    pid.setpoint = safety_distance
-                    # can I set the setpoint to a distance?
-                    safe_speed = pid(self.__current_velocity)
-                    self.velocity_pub.publish(safe_speed)
-                else:
-                    # If safety distance is reached just hold current speed
-                    if self.__current_velocity < 1.0:
-                        safe_speed = 0
+                if (
+                    self.__current_velocity < 3
+                ):  # stop and go system for velocities between 0 m/s and 3 m/s = 10.8 km/h
+                    if self.leading_vehicle_distance > 10:
+                        desired_speed = 3
+                    elif self.leading_vehicle_distance > 5:
+                        desired_speed = 2
+                    elif self.leading_vehicle_distance > 2:
+                        desired_speed = 1
                     else:
-                        safe_speed = self.__current_velocity
-                    self.velocity_pub.publish(safe_speed)
+                        desired_speed = 0
+                else:  # system for velocities > 3 m/s  = 10.8 km/h
+                    desired_distance = d_min + T_gap * self.__current_velocity
+                    delta_d = self.leading_vehicle_distance - desired_distance
+                    delta_v = self.leading_vehicle_speed - self.__current_velocity
+                    speed_adjustment = Ki * delta_d + Kp * delta_v
+                    desired_speed = self.__current_velocity + speed_adjustment
+                    if desired_speed < 0:
+                        desired_speed = 0
+                    if (
+                        self.speed_limit is not None
+                        and desired_speed > self.speed_limit
+                    ):
+                        desired_speed = self.speed_limit
+
+                    # if self.__current_velocity < 1.0:
+                    #    desired_speed = 0
+                    # else:
+                    #    desired_speed = self.__current_velocity
+
+                self.velocity_pub.publish(desired_speed)
 
             elif self.speed_limit is not None:
                 # If we have no obstacle, we want to drive with the current
