@@ -3,7 +3,6 @@ import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
 from behaviors import behavior_speed as bs
-from behaviors import intersection
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
@@ -134,7 +133,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
         target_speed = self.blackboard.get("/paf/hero/target_velocity")
         curr_behavior = self.blackboard.get("/paf/hero/curr_behavior")
-        # light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
 
         # check for None values and initialize if necessary
         if self.current_speed is None:
@@ -147,9 +145,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return True
 
         # check if vehicle is NOT stuck, v > 0.1
-        if (
-            self.current_speed.speed >= TRIGGER_STUCK_SPEED
-        ):  # or target_speed.data < TRIGGER_STUCK_SPEED:
+        if self.current_speed.speed >= TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
             self.wait_stuck_timer = rospy.Time.now()
 
