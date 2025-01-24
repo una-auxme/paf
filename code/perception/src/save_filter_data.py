@@ -71,13 +71,6 @@ class SaveFilterData(CompatibleNode):
 
         self.time = 0.0
 
-        """self.previous_pos = []
-        self.pos_to_write = []
-        self.previous_imu = []
-        self.imu_to_write = []
-        self.previous_vel = []
-        self.vel_to_write = []
-        self.gt_to_write = []"""
         self.previous_nf_pos = []
         self.nf_pos_to_write = []
         self.previous_nf_heading = []
@@ -98,20 +91,23 @@ class SaveFilterData(CompatibleNode):
 
         # Subscriber
 
+        # Subscriber to the position estimate of the new filter
         self.nf_position_subscriber = self.new_subscription(
             PoseStamped,
-            "/paf/" + self.role_name + "/extended_kalman_pos",
+            "/paf/" + self.role_name + "/ekf_pos",
             self.save_nf_position,
             qos_profile=1,
         )
 
+        # Subscriber to the heading estimate of the new filter
         self.nf_heading_subscriber = self.new_subscription(
             Float32,
-            "/paf/" + self.role_name + "/extended_kalman_heading",
+            "/paf/" + self.role_name + "/ekf_heading",
             self.save_nf_heading,
             qos_profile=1,
         )
 
+        # Subscriber to the position estimate of the old filter
         self.of_position_subscriber = self.new_subscription(
             PoseStamped,
             "/paf/" + self.role_name + "/kalman_pos",
@@ -119,6 +115,7 @@ class SaveFilterData(CompatibleNode):
             qos_profile=1,
         )
 
+        # Subscriber to the heading estimate of the old filter
         self.of_heading_subscriber = self.new_subscription(
             Float32,
             "/paf/" + self.role_name + "/kalman_heading",

@@ -3,9 +3,9 @@
 import matplotlib.pyplot as plt
 from math import pi
 
-NEW_FILTER_FILE_NAME = "04"
-OLD_FILTER_FILE_NAME = "04"
-GT_FILE_NAME = "04"
+NEW_FILTER_FILE_NAME = "00"
+OLD_FILTER_FILE_NAME = "00"
+GT_FILE_NAME = "00"
 
 
 # open the file with the estimated positions of the new filter
