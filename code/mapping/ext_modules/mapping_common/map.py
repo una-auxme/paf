@@ -92,8 +92,8 @@ class Map:
         if only_in_front:
             for entity in entities:
                 distance = np.sqrt(
-                    np.pow(entity.transform.translation().x, 2),
-                    np.pow(entity.transform.translation().y),
+                    np.power(entity.transform.translation().x(), 2)
+                    + np.power(entity.transform.translation().y(), 2)
                 )
                 if entity.transform.translation().x() > 0 and distance < diameter:
                     entities_in_area.append(entity)
@@ -101,8 +101,8 @@ class Map:
         else:
             for entity in entities:
                 distance = np.sqrt(
-                    np.pow(entity.transform.translation().x, 2),
-                    np.pow(entity.transform.translation().y),
+                    np.power(entity.transform.translation().x(), 2)
+                    + np.power(entity.transform.translation().y(), 2)
                 )
                 if distance < diameter:
                     entities_in_area.append(entity)
@@ -195,7 +195,8 @@ class Map:
                 shapely.Point(pos.pose.position.x, pos.pose.position.y)
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
-        local_trajectory = local_trajectory.buffer(1.25, 3)
+        # widen the Linestring to an area representing the cars width
+        local_trajectory = local_trajectory.buffer(1, 3)
 
         # Check left lane
         left_lane = self.lane_marking_left()
