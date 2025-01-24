@@ -32,9 +32,6 @@ The Lanedetection Node is responsible for detecting the Lane markings and drivea
     - **Postprocessing**
         - *Function*: Refines the Lane Mask for better visualization and integration with Lidar data.
         - *Output*: Lane Mask
-    - **Map Lidar Points**
-        - *Function*: Marks Lidar points that collide with the Lane Mask
-        - *Output*: Lidar Points
 
 ---
 
