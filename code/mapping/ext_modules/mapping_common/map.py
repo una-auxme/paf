@@ -17,8 +17,6 @@ from shapely.geometry import Polygon, LineString
 
 from mapping import msg
 
-import rospy
-
 
 @dataclass
 class Map:
@@ -52,8 +50,6 @@ class Map:
 
     Note that this list might also include the hero car (as first element of this list)
     """
-
-    trans_len = 2.0
 
     def hero(self) -> Optional[Entity]:
         """Returns the entity of the hero car if it is the first element of the map

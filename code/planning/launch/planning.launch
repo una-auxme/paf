@@ -32,8 +32,7 @@
            <param name="distance_spawn_to_first_wp" value="100" />
     </node>
 
-    <!--<node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen"/>-->
-    <node pkg="planning" type="debug_wrapper.py" name="behavior_agent" output="screen" args="--debug_node=behavior_agent/behavior_tree.py --debug_port=53000 --debug_wait"/>
+    <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen"/>
     <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
 
     <node pkg="planning" type="RequestBehaviourChangeService.py" name="RequestBehaviourChangeService" output="screen">
