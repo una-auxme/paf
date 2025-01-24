@@ -11,6 +11,11 @@
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
   </node>
 
+  <node pkg="filter_management" type="split_odometry_msg.py" name="split_odometry_node" output="screen">
+    <param name="role_name" value="$(arg role_name)" />
+    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+  </node>
+
   <!-- robot localization -->
     <rosparam command="load" file="$(find filter_management)/config/ekf_config.yaml" />
 
