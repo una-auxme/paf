@@ -193,30 +193,34 @@ class Map:
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
         # widen the Linestring to an area representing the cars width
-        local_trajectory = local_trajectory.buffer(1, 3)
+        local_trajectory_buffer = local_trajectory.buffer(1, 3)
 
         # Check path collision with other entities
         obstacles = self.entities_in_area(10)
         for entity in obstacles:
             if (
-                shapely.intersection(entity.to_shapely().poly, local_trajectory)
+                shapely.intersection(entity.to_shapely().poly, local_trajectory_buffer)
                 and entity.flags._is_lanemark is False
             ):
                 return 1
 
         # decrease buffer size for lane checkking
-        local_trajectory = local_trajectory.buffer(0.5, 3)
+        local_trajectory_buffer = local_trajectory.buffer(0.5, 3)
         # Check left lane
         left_lane = self.lane_marking_left()
         if left_lane is not None:
-            if shapely.intersection(left_lane.to_shapely().poly, local_trajectory):
+            if shapely.intersection(
+                left_lane.to_shapely().poly, local_trajectory_buffer
+            ):
                 # given path crosses lane marking on the left
                 return 2
 
         # Check right lane
         right_lane = self.lane_marking_right()
         if right_lane is not None:
-            if shapely.intersection(right_lane.to_shapely().poly, local_trajectory):
+            if shapely.intersection(
+                right_lane.to_shapely().poly, local_trajectory_buffer
+            ):
                 # given path crosses lane marking on the right
                 return 3
 
