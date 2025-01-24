@@ -6,7 +6,7 @@
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     </node>
-    <node pkg="planning" type="debug_wrapper.py" name="ACC" output="screen" args="--debug_node=local_planner/ACC.py --debug_port=53000">
+    <node pkg="planning" type="ACC.py" name="ACC" output="screen">
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     </node>
@@ -14,10 +14,11 @@
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     </node> -->
-    <node pkg="planning" type="debug_wrapper.py" name="motion_planning.py" output="screen" args="--debug_node=local_planner/motion_planning.py --debug_port=53001">
+    <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     </node>
+  
     <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
            <param name="from_txt" value="True" />
            <param name="sampling_resolution" value="75.0" />
