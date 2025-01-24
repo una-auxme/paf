@@ -140,7 +140,7 @@ def quat_to_heading(quaternion):
     # ---------------------------------------------------------------
     # heading is positive in counter clockwise rotations
 
-    heading = theta
+    heading = -theta
 
     return heading
 
