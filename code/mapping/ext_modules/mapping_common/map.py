@@ -13,11 +13,7 @@ from std_msgs.msg import Header
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from mapping import msg
-
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Point
-from .transform import Point2
-from visualization_msgs.msg import MarkerArray, Marker
 
 
 @dataclass
@@ -179,7 +175,8 @@ class Map:
         Checks the calculated local path on multiple conditions
         return -1:  local_path is None
         return 0:   Path has no obstacles / infringments
-        return 1:   Path is planned through a gap, which is too small for the car
+        return 1:   Path is planned through a gap,
+                    which is too small for the car (without lanes)
         return 2:   Path cuts the left lane marking
         return 3:   Path cuts the right lane marking
         """
@@ -198,16 +195,27 @@ class Map:
         # widen the Linestring to an area representing the cars width
         local_trajectory = local_trajectory.buffer(1, 3)
 
+        # Check path collision with other entities
+        obstacles = self.entities_in_area(10)
+        for entity in obstacles:
+            if (
+                shapely.intersection(entity.to_shapely().poly, local_trajectory)
+                and entity.flags._is_lanemark is False
+            ):
+                return 1
+
+        # decrease buffer size for lane checkking
+        local_trajectory = local_trajectory.buffer(0.5, 3)
         # Check left lane
         left_lane = self.lane_marking_left()
-        if not left_lane is None:
+        if left_lane is not None:
             if shapely.intersection(left_lane.to_shapely().poly, local_trajectory):
                 # given path crosses lane marking on the left
                 return 2
 
         # Check right lane
         right_lane = self.lane_marking_right()
-        if not right_lane is None:
+        if right_lane is not None:
             if shapely.intersection(right_lane.to_shapely().poly, local_trajectory):
                 # given path crosses lane marking on the right
                 return 3
