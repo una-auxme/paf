@@ -330,7 +330,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
 
-        # lane_box_entities visualizes the shape and position of the lane box 
+        # lane_box_entities visualizes the shape and position of the lane box
         # which is used for lane_free function
         # lane_box_entities = [
         #    Entity(
