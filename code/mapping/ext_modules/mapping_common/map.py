@@ -10,12 +10,10 @@ from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
 
-from mapping_common.entity import Entity, Flags, FlagFilter, ShapelyEntity
+from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping_common.transform import Vector2, Transform2D
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
-
-# from shapely import intersection
 
 from mapping import msg
 
@@ -54,6 +52,8 @@ class Map:
 
     Note that this list might also include the hero car (as first element of this list)
     """
+
+    trans_len = 2.0
 
     def hero(self) -> Optional[Entity]:
         """Returns the entity of the hero car if it is the first element of the map
@@ -110,62 +110,70 @@ class Map:
         else:
             return None
 
-    def is_lane_free(self, right_lane=False) -> bool:
+    def is_lane_free(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+    ) -> bool:
         """Returns if a lane left or right of our car is free.
+        Right now, a rectangle shape of length lane_length placed
+        on the left or right side of the car with a transformation of lane_transform
+        in front or back. Checks if this rectangle lane box intersects with any
+        relevant entities.
+
+        Idea for later: using lanemark detection and if data is realiable form a
+        polygon for the lane within the detected lanes.
 
         Parameters:
-        - right_lane (bool): Checks the right lane instead
+        - right_lane (bool): If true, checks the right lane instead of the left lane
+        - lane_length (float): Sets the lane length that should be checked, in meters.
+          Default value is 20 meters.
+        - lane_transform (float): Transforms the checked lane box to the front (>0) or
+          back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+           from the car position -> same distance to the front and rear get checked
         Returns:
-            bool: lane free
+            bool: lane is free / not free
         """
-        # checks which lane should be checked and set the multiplier for the lane entity translation(>0 = )
+        # checks which lane should be checked and set the multiplier for
+        # the lane entity translation(>0 = left from car)
         lane_pos = 1
         if right_lane:
             lane_pos = -1
 
-        # hero = self.hero()
+        # lane length cannot be negative, as no rectangle with negative dimension exists
+        if lane_length < 0:
+            raise ValueError("Lane length cannot take a negative value.")
 
-        # entities = self.entities_without_hero()
-
+        # creates flag filter with filtered ignored, hero and lanemark entities
         filter = FlagFilter()
         filter.is_ignored = False
         filter.is_hero = False
         filter.is_lanemark = False
+
+        # build map STRtree from map with filter
         map_tree = self.build_tree(f=filter)
 
         lane_box_shape = Rectangle(
-            length=20,
+            length=lane_length,
             width=1.5,
-            offset=Transform2D.new_translation(Vector2.new(0.0, lane_pos * 2.2)),
+            offset=Transform2D.new_translation(
+                Vector2.new(lane_transform, lane_pos * 2.2)
+            ),
         )
 
-        # lane_box_shape_geo = self.project_plane(
-        #    start_point=(lane_pos * 2.2, 0), size_x=1.5, size_y=20
-        # )
+        # converts lane box Rectangle to a shapely Polygon
+        lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
 
-        lane_box_shape_geo = lane_box_shape.to_shapely(Transform2D.identity())
-
-        # lane_box_entity = Entity(
-        #    confidence=100.0,
-        #    priority=100.0,
-        #    shape=lane_box_shape,
-        #    transform=Transform2D.identity(),
-        #    flags=Flags(is_ignored=True),
-        # )
-
+        # creates intersection list of lane box with map entities
         lane_box_intersection_entities = map_tree.query(
-            geo=lane_box_shape_geo, predicate="intersects"
+            geo=lane_box_shapely, predicate="intersects"
         )
 
-        # rospy.loginfo(lane_box_intersection_entities)
-
-        # new_plane = self.project_plane((10, 10), 5, 5)
-        # rospy.loginfo(hero)
-
-        # if list with lane box intersection not empty -> lane NOT free
-        if lane_box_intersection_entities:
-            return False
-        return True
+        # if list with lane box intersection is empty --> lane is free
+        if not lane_box_intersection_entities:
+            return True
+        return False
 
     def project_plane(self, start_point, size_x, size_y):
         """
@@ -232,8 +240,8 @@ class Map:
             shape = ent.to_shapely().poly
 
             # Calculate intersection area
-            intersection = polygon.intersection(shape)
-            if intersection.area / shape.area >= coverage:
+            shapely_intersection = polygon.intersection(shape)
+            if shapely_intersection.area / shape.area >= coverage:
                 collision_entities.append(ent)
 
         return collision_entities

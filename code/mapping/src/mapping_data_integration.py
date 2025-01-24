@@ -315,21 +315,22 @@ class MappingDataIntegrationNode(CompatibleNode):
             entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
-        
-        lane_box_entities = [
-            Entity(
-                confidence=100.0,
-                priority=100.0,
-                shape=Rectangle(
-                    length=20,
-                    width=1.5,
-                    offset=Transform2D.new_translation(Vector2.new(0.0, 2.2)),
-                ),
-                transform=Transform2D.identity(),
-                flags=Flags(is_ignored=True),
-            )
-        ]
-        entities.extend(lane_box_entities)
+
+        # lane_box_entities visualizes the shape and position of the lane box which is used for lane_free function
+        # lane_box_entities = [
+        #    Entity(
+        #        confidence=100.0,
+        #        priority=100.0,
+        #        shape=Rectangle(
+        #            length=22.5,
+        #            width=1.5,
+        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
+        #        ),
+        #        transform=Transform2D.identity(),
+        #        flags=Flags(is_ignored=True),
+        #    )
+        # ]
+        # entities.extend(lane_box_entities)
 
         # Will be used when the new function for entity creation is implemented
         # if self.get_param("enable_vision_points"):

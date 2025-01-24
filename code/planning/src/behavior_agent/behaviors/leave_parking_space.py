@@ -91,14 +91,13 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         speed = self.blackboard.get("/carla/hero/Speed")
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
 
-        #rospy.loginfo(type(map_data))
-
         if not self.finished:
             # calculate distance between start and current position
             if (
                 position is not None
                 and self.initPosition is not None
                 and speed is not None
+                and map_data is not None
             ):
                 startPos = np.array(
                     [position.pose.position.x, position.pose.position.y]
@@ -111,18 +110,22 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 )
                 distance = np.linalg.norm(startPos - endPos)
 
-                #left_lane_free = map.is_lane_free(right_lane=False)
-                #rospy.loginfo(f"Left lane free: {left_lane_free}")
-
+                # checks if routine hasn't started yet
                 if not self.started:
                     map = Map.from_ros_msg(map_data)
-                    #rospy.loginfo(map.entities)
-                    if map.entities and map.is_lane_free(right_lane=False):
+                    # checks if the left lane of the car is free,
+                    # otherwise pause unparking
+                    if map.entities and map.is_lane_free(
+                        right_lane=False, lane_length=22.5, lane_transform=-5.0
+                    ):
                         rospy.loginfo("Left lane is now free. Starting unparking.")
                         self.started = True
                     else:
-                        rospy.logerr("Left lane is blocked. Paused unparking.")
+                        rospy.logerr_throttle(
+                            3, "Left lane is blocked. Paused unparking."
+                        )
 
+                # starting unparking if allowed (after left lane is free)
                 if self.started:
                     if distance < 1 or speed.speed < 2:
                         self.curr_behavior_pub.publish(bs.parking.name)
@@ -132,7 +135,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                         self.finished = True
                         return py_trees.common.Status.FAILURE
                 else:
-                    return py_trees.common.Status.RUNNING  
+                    return py_trees.common.Status.RUNNING
 
             else:
                 self.initPosition = position
