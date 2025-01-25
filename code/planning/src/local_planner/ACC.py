@@ -7,11 +7,13 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray
-from simple_pid import PID
-from utils import calculate_rule_of_thumb, interpolate_speed
 from typing import Optional
 from typing import List
+from typing import Tuple
+
 from mapping_common.map import Map
+
+from mapping.msg import Map as MapMsg
 
 
 class ACC(CompatibleNode):
@@ -22,6 +24,14 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__("ACC")
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", 1)
+
+        # Get Map
+        self.map_sub: Subscriber = self.new_subscription(
+            MapMsg,
+            f"/paf{self.role_name}/mapping/init_data",
+            self.__get_map,
+            qos_profile=1,
+        )
 
         # Get Unstuck flag and distance for unstuck routine
         self.unstuck_flag_sub: Subscriber = self.new_subscription(
@@ -106,20 +116,21 @@ class ACC(CompatibleNode):
             Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
 
+        # Map
+        self.__map: Optional[Map] = None
         # unstuck attributes
         self.__unstuck_flag: bool = False
         self.__unstuck_distance: float = -1
-
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: List[float] = []
         # Current Trajectory
         self.__trajectory: Optional[Path] = None
         # Current position
-        self.__current_position
+        self.__current_position: Optional[PoseStamped] = None
         # Current index from waypoint
         self.__current_wp_index: int = 0
         # Current heading
-        self.__current_heading
+        self.__current_heading: Optional[float] = None
         # Current speed
         self.__current_velocity: Optional[float] = None
         # Distance and speed from possible collsion object
@@ -134,6 +145,9 @@ class ACC(CompatibleNode):
         self.leading_vehicle_speed = None
 
         self.logdebug("ACC initialized")
+
+    def __get_map(self, data: MapMsg):
+        self.__map = Map.from_ros_msg(data)
 
     def __update_radar_data(self, data: Float32MultiArray):
         if not data.data or len(data.data) < 2:
@@ -224,7 +238,8 @@ class ACC(CompatibleNode):
             return
 
         agent = data.pose.position
-        self.__current_position = data.pose.position
+        if agent is not None:
+            self.__current_position = data
         # Get current waypoint
         current_wp = self.__trajectory.poses[self.__current_wp_index].pose.position
         # Get next waypoint
@@ -267,18 +282,27 @@ class ACC(CompatibleNode):
             publishes the desired speed to motion planning
             """
 
-            map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-            map = Map.from_ros_msg(map_data)
-            front_entity = Map.get_obstacle_on_trajectory(
-                map, self.__trajectory, self.__current_position, self.__current_heading
-            )
-            if front_entity is not None and self.leading_vehicle_distance is not None:
-                shapely_distance = Map.get_distance_to_entity_in_front(
-                    map, front_entity
+            # map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+            # map = Map.from_ros_msg(map_data)
+            if self.__map is not None:
+                front_entity = Map.get_obstacle_on_trajectory(
+                    self.__map,
+                    self.__trajectory,
+                    self.__current_position,
+                    self.__current_heading,
                 )
-                print(
-                    f"Shapely distance: {shapely_distance}, Radar distance: {self.leading_vehicle_distance}"
-                )
+                if (
+                    front_entity is not None
+                    and self.leading_vehicle_distance is not None
+                ):
+                    shapely_distance = Map.get_distance_to_entity_in_front(
+                        self.__map, front_entity
+                    )
+                    self.logdebug(f"shapely distance: {shapely_distance}")
+            # print(
+            #    f"Shapely distance: {shapely_distance}, Radar distance: {self.leading_vehicle_distance}"
+            # )
+            #    differences_distance = shapely_distance - self.leading_vehicle_distance
 
             if (
                 self.leading_vehicle_distance is not None
