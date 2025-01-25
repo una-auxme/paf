@@ -313,11 +313,11 @@ class ACC(CompatibleNode):
                     self.__current_velocity < 3
                 ):  # stop and go system for velocities between 0 m/s and 3 m/s = 10.8 km/h
                     if self.leading_vehicle_distance > 10:
-                        desired_speed = 3
+                        desired_speed = 5
                     elif self.leading_vehicle_distance > 5:
-                        desired_speed = 2
+                        desired_speed = 3
                     elif self.leading_vehicle_distance > 2:
-                        desired_speed = 1
+                        desired_speed = 2
                     else:
                         desired_speed = 0
                 else:  # system for velocities > 3 m/s  = 10.8 km/h
