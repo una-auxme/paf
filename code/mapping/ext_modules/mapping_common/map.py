@@ -9,7 +9,7 @@ import numpy.typing as npt
 from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
-
+from mapping_common.transform import Transform2D, Point2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from shapely.geometry import Polygon, LineString
@@ -154,7 +154,7 @@ class Map:
         return polygon
 
     def get_obstacle_on_trajectory(
-        self, trajectory, hero_pos, hero_heading
+        self, trajectory, hero_pos, hero_heading, width=1
     ) -> Optional[Entity]:
         """Calculates the closest entity on the given trajectory. Transforms
         trajectory world coordinates into map coordinates based on hero position.
@@ -165,21 +165,21 @@ class Map:
             planned trajectory.
             hero_pos (x, y): The world coordinates of the hero car.
             hero_heading (float): The current heading of the hero car.
+            width (float): The desired width of the curved polygon.
 
         Returns:
             Optional[Entity]: The closest entity
         """
         translated = trajectory - np.array(hero_pos)
-
+        translated_points = [Point2.new(p[0], p[1]) for p in translated]
         # Rotation matrix for counterclockwise rotation by -hero_heading
-        cos_h = np.cos(-hero_heading)
-        sin_h = np.sin(-hero_heading)
-        rotation_matrix = np.array([[cos_h, -sin_h], [sin_h, cos_h]])
-
+        rotation_matrix = Transform2D.new_rotation(-hero_heading)
         # Apply rotation
-        local_coordinates = np.dot(translated, rotation_matrix.T).tolist()
+        local_coordinates = [
+            ((rotation_matrix * p).to_shapely()) for p in translated_points
+        ]
 
-        curve = self.curve_to_polygon(local_coordinates, 1)
+        curve = self.curve_to_polygon(local_coordinates, width)
 
         tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
         road_entities = tree.query(curve)
