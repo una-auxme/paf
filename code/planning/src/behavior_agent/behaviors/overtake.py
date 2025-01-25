@@ -11,6 +11,12 @@ from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_
 from mapping_common.map import Map
 from shapely.geometry import Polygon
 
+import sys
+import os
+
+sys.path.append(os.path.abspath(sys.path[0] + "/.."))
+from local_planner.utils import convert_pose_to_array
+
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -83,9 +89,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the overtaking procedure
         """
 
-        obstacle_msg = self.blackboard.get("/paf/hero/collision")
-        current_position = self.blackboard.get("/paf/hero/current_pos")
-        current_heading = self.blackboard.get("/paf/hero/current_heading").data
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
         speedometer = self.blackboard.get("/carla/hero/Speed")
         if speedometer is not None:
@@ -98,16 +101,33 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
-        entity = map.get_entity_in_front_or_back(True)
 
-        if obstacle_msg is None or current_position is None or current_heading is None:
+        trajectory = self.blackboard.get("/paf/hero/trajectory")
+        current_wp = self.blackboard.get("/paf/hero/current_wp")
+        hero_pos = self.blackboard.get("/paf/hero/current_pos")
+        hero_heading = self.blackboard.get("/paf/hero/current_heading")
+        if (
+            trajectory is not None
+            and current_wp is not None
+            and hero_pos is not None
+            and hero_heading is not None
+        ):
+            hero_heading = hero_heading.data
+            current_wp = current_wp.data
+            hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
+            pose_list = trajectory.poses
+            pose_list = pose_list[int(current_wp) : int(current_wp) + 30]
+            collision_trajectory = convert_pose_to_array(pose_list)
+            entity = map.get_obstacle_on_trajectory(
+                collision_trajectory, hero_pos, hero_heading
+            )
+        else:
+            rospy.loginfo(
+                f"Something is none in overtake:"
+                f"{trajectory is None} {current_wp is None},"
+                f"{hero_pos is None} {hero_heading is None}"
+            )
             return py_trees.common.Status.FAILURE
-        current_position = [
-            current_position.pose.position.x,
-            current_position.pose.position.y,
-            current_position.pose.position.z,
-        ]
-        collision_distance = obstacle_msg.data[0]
 
         if entity is not None:
             obstacle_distance = entity.transform.translation().x()
@@ -118,29 +138,22 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             return py_trees.common.Status.FAILURE
 
-        if collision_distance == np.Inf:
+        # filter out false positives due to trajectory inconsistency
+        if (
+            entity.transform.translation().y() < -2.5
+            or entity.transform.translation().y() > 2.5
+        ):
             return py_trees.common.Status.FAILURE
-        # calculate approx collision position in global coords
-        rotation_matrix = Rotation.from_euler("z", current_heading)
-        # Apply current heading to absolute distance vector
-        # and add to current position
-        pos_moved_in_x_direction = current_position + rotation_matrix.apply(
-            np.array([collision_distance, 0, 0])
-        )
 
-        if np.linalg.norm(pos_moved_in_x_direction - current_position) < 0.5:
-            # current collision is not near trajectory lane
-            rospy.logerr("Obstacle is not near trajectory lane")
-            return py_trees.common.Status.FAILURE
         # increase counter when we get closer or when nearly stopped
         if (
             obstacle_speed < 0.4
-            and obstacle_distance < 20
+            and obstacle_distance < 18
             and obstacle_distance < self.old_obstacle_distance
-        ) or (obstacle_speed < 0.1 and obstacle_distance < 20 and current_speed < 0.1):
+        ) or (obstacle_speed < 0.1 and obstacle_distance < 18 and current_speed < 0.1):
             self.counter_overtake += 1
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
-            if self.counter_overtake > 3:
+            if self.counter_overtake > 4:
                 self.ot_distance_pub.publish(obstacle_distance)
                 return py_trees.common.Status.SUCCESS
             self.old_obstacle_distance = obstacle_distance
