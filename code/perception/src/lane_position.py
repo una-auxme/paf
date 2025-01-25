@@ -383,7 +383,7 @@ class lane_position(CompatibleNode):
     def get_lanemarking_position_and_angle(self, clusters):
         """Processes clusters and calculates line fitting for each cluster
         to extract lane markings."""
-        lanemarkings = []
+        center_coordinates = []
         angles = []
         deviations = []
 
@@ -425,7 +425,7 @@ class lane_position(CompatibleNode):
             # lanemarking
             if any(
                 abs(center_y - existing_y) <= self.y_tolerance
-                for _, existing_y in lanemarkings
+                for _, existing_y in center_coordinates
             ):
                 continue  # Skip this cluster if it is too close to an existing marking
             # Calculate the angle of the line relative to the x-axis (in radians)
@@ -433,12 +433,20 @@ class lane_position(CompatibleNode):
             deviations.append(std_dev[0])  # Standard deviation of the slope
             # Store the results for lanemarkings, angles, and deviations
             angles.append(theta)
-            lanemarkings.append([center_x, center_y])
+            center_coordinates.append([center_x, center_y])
 
-        return lanemarkings, angles, deviations
+        return center_coordinates, angles, deviations
 
     def cluster_points(self, points):
+        """clusters the lidar points with the DBSCAN algorithm
+        to separate the points according to lanemarkings
 
+        Args:
+            points: lidar points
+
+        Returns:
+            clusters: dict with all clusters (labels as keys)
+        """
         labels = []
         try:
             clustering = DBSCAN(
