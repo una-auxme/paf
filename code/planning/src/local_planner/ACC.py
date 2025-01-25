@@ -11,6 +11,7 @@ from simple_pid import PID
 from utils import calculate_rule_of_thumb, interpolate_speed
 from typing import Optional
 from typing import List
+from mapping_common.map import Map
 
 
 class ACC(CompatibleNode):
@@ -68,6 +69,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get current_heading
+        self.heading_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/current_heading",
+            self.__get_heading,
+            qos_profile=1,
+        )
+
         # Get approximated speed from obstacle in front
         self.approx_speed_sub = self.new_subscription(
             Float32MultiArray,
@@ -105,8 +114,12 @@ class ACC(CompatibleNode):
         self.__speed_limits_OD: List[float] = []
         # Current Trajectory
         self.__trajectory: Optional[Path] = None
+        # Current position
+        self.__current_position
         # Current index from waypoint
         self.__current_wp_index: int = 0
+        # Current heading
+        self.__current_heading
         # Current speed
         self.__current_velocity: Optional[float] = None
         # Distance and speed from possible collsion object
@@ -176,6 +189,14 @@ class ACC(CompatibleNode):
         """
         self.__current_velocity = float(data.speed)
 
+    def __get_heading(self, data: Float32):
+        """Recieve current heading
+
+        Args:
+            data (Float32): Current heading
+        """
+        self.__current_heading = float(data.data)
+
     def __set_trajectory(self, data: Path):
         """Recieve trajectory from global planner
 
@@ -203,6 +224,7 @@ class ACC(CompatibleNode):
             return
 
         agent = data.pose.position
+        self.__current_position = data.pose.position
         # Get current waypoint
         current_wp = self.__trajectory.poses[self.__current_wp_index].pose.position
         # Get next waypoint
@@ -244,6 +266,19 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
+
+            map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+            map = Map.from_ros_msg(map_data)
+            front_entity = Map.get_obstacle_on_trajectory(
+                map, self.__trajectory, self.__current_position, self.__current_heading
+            )
+            if front_entity is not None and self.leading_vehicle_distance is not None:
+                shapely_distance = Map.get_distance_to_entity_in_front(
+                    map, front_entity
+                )
+                print(
+                    f"Shapely distance: {shapely_distance}, Radar distance: {self.leading_vehicle_distance}"
+                )
 
             if (
                 self.leading_vehicle_distance is not None
