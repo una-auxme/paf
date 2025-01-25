@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 
+from ros_compatibility.node import CompatibleNode
+
+import rasterio.features
 import shapely
 from shapely import STRtree
 import numpy as np
@@ -13,6 +16,11 @@ from mapping_common import entity
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 
 from shapely.geometry import Polygon, LineString
+from shapely import MultiPolygon
+from cairosvg import svg2png
+import rasterio
+import cv2
+from cv2 import line
 
 from mapping import msg
 
@@ -218,6 +226,35 @@ class Map:
             List[Entity]: List of entities both filters were matching for
         """
         return [e for e in self.entities if _entity_matches_filter(e, f, filter_fn)]
+
+    def to_multi_poly_array(
+        self,
+        array_shape: Tuple[int, int],
+        resolution_scale: int,
+        parent_node: CompatibleNode,
+    ):
+        poly_array: np.ndarray = np.zeros(array_shape, dtype=np.uint8)
+        for entity_obj in self.entities_without_hero():
+            coords = [coords for coords in entity_obj.to_shapely().poly.exterior.coords]
+            for i in range(len(coords) - 1):
+                pt1: Tuple[int, int] = (
+                    int((array_shape[0] - coords[i][0]) * resolution_scale),
+                    int((array_shape[1] - coords[i][1]) * resolution_scale)
+                    + array_shape[1] // 2,
+                )
+                pt2: Tuple[int, int] = (
+                    int((array_shape[0] - coords[i + 1][0]) * resolution_scale),
+                    int((array_shape[1] - coords[i + 1][1]) * resolution_scale)
+                    + array_shape[1] // 2,  # shift 0 to the middle of the image
+                )
+
+                poly_array = line(
+                    img=poly_array, pt1=pt1, pt2=pt2, color=255, thickness=1
+                )
+
+        cv2.imwrite("/workspace/code/contourplot.png", poly_array)
+        parent_node.loginfo("contourplot saved")
+        return
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":

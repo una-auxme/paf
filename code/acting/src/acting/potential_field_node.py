@@ -42,16 +42,16 @@ from acting.helper_functions import generate_path_from_trajectory
 DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_X", 10)
 DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
 RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
-FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 10)
+FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 15)
 LOCAL_TRAJECTORY_ATTR_FACTOR: int = rospy.get_param(
     "potential_field_attraction_factor", 2
 )
 SLOPE: int = rospy.get_param("potential_field_slope", 255)
 K_VALUE: float = rospy.get_param("potential_field_K", 0.009)
 MAX_GRADIENT_DESCENT_STEPS: int = rospy.get_param(
-    "potential_field_max_gradient_descent_steps", 40
+    "potential_field_max_gradient_descent_steps", 100
 )
-GRADIENT_FACTOR: int = rospy.get_param("potential_field_gradient_factor", 10)
+GRADIENT_FACTOR: int = rospy.get_param("potential_field_gradient_factor", 6)
 
 
 class Potential_field_node(CompatibleNode):
@@ -147,6 +147,14 @@ class Potential_field_node(CompatibleNode):
         :param data: The received data
         """
         self.map = Map.from_ros_msg(data)
+        self.map.to_multi_poly_array(
+            (
+                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
+                DISTANCE_THRESHOLD_Y * 2 * RESOLUTION_SCALE,
+            ),
+            RESOLUTION_SCALE,
+            self,
+        )
         self.entities = self.map.entities_without_hero()
 
     def __get_trajectory(self, data: Path):
@@ -176,7 +184,7 @@ class Potential_field_node(CompatibleNode):
         for entity in self.entities:
             # try to filter out the car entities
             if (
-                abs(entity.transform.translation().x()) < 2
+                abs(entity.transform.translation().x()) < 3.5
                 and abs(entity.transform.translation().y()) < 2
             ):
                 continue
@@ -203,7 +211,7 @@ class Potential_field_node(CompatibleNode):
 
         self.loginfo(f"transforming trajectory with {len(self.trajectory.poses)}")
 
-        trans2d = Transform2D.new_rotation(self.hero_heading.data + math.pi / 2)
+        trans2d = Transform2D.new_rotation(-self.hero_heading.data + math.pi / 2)
 
         local_traj = Path()
         local_traj.header = rospy.Header()
@@ -350,10 +358,10 @@ class Potential_field_node(CompatibleNode):
             try:
                 dx = gradient_x[x, y] * GRADIENT_FACTOR
                 dy = gradient_y[x, y] * GRADIENT_FACTOR
-                gradient_magnitude = np.sqrt(dx * dx + dy * dy)
-                if gradient_magnitude < min_gradient_magnitude:
-                    finished = True
-                    break
+                # gradient_magnitude = np.sqrt(dx * dx + dy * dy)
+                # if gradient_magnitude < min_gradient_magnitude:
+                #    finished = True
+                #    break
                 x -= int(dx)
                 y -= int(dy)
                 plot_points.append((x, y))
@@ -361,7 +369,7 @@ class Potential_field_node(CompatibleNode):
                     (
                         # back to the original coordinates
                         -(x - self.entity_matrix_midpoint[0]) / RESOLUTION_SCALE,
-                        (y - self.entity_matrix_midpoint[1]) / RESOLUTION_SCALE,
+                        -(y - self.entity_matrix_midpoint[1]) / RESOLUTION_SCALE,
                     )
                 )
                 # Allow some backwards movement but limit it
@@ -374,10 +382,15 @@ class Potential_field_node(CompatibleNode):
                 finished = True
 
         if num_steps >= MAX_GRADIENT_DESCENT_STEPS:
-            self.loginfo("Warning: Maximum steps reached without convergence")
+            self.loginfo(
+                f"Warning: Maximum steps reached without convergence, last gradient: {dx,dy}"
+            )
         # generate a path from the trajectory and publish
-        self.potential_field_trajectory = generate_path_from_trajectory(points)
-        self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
+        if (
+            points[-1][0] > 2
+        ):  # only publish if its usable (sometime gets stuck around the origin)
+            self.potential_field_trajectory = generate_path_from_trajectory(points)
+            self.potential_field_trajectory_pub.publish(self.potential_field_trajectory)
         self.loginfo(f"POTENTIAL_FIELD_PUBLISHED after time {time.time()-starttime}")
 
     def run(self):
