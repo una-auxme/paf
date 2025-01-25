@@ -214,6 +214,7 @@ class Map:
         else:
             return None
 
+    # Has to be tested as soon as motion is available
     def get_velocity_of_vehicle_in_front_in_heading_direction(
         self, front_entity: Entity
     ) -> Optional[float]:
