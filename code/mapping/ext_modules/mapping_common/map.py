@@ -195,6 +195,47 @@ class Map:
         else:
             return None
 
+    def get_distance_to_entity_in_front(self, front_entity: Entity) -> Optional[float]:
+        """
+        Returns the distance to the entity in front in m.
+
+        Parameters:
+        - front_entity (Entity): Entity that is in front of the hero vehicle.
+
+        Returns:
+        - Optional[float]: Distance to the entity in front in m.
+        """
+
+        self_ent = self.hero()
+        if self_ent is not None:
+            front_ent_shapely = front_entity.to_shapely()
+            self_ent_shapely = self_ent.to_shapely()
+            return shapely.distance(front_ent_shapely.poly, self_ent_shapely.poly)
+        else:
+            return None
+
+    def get_velocity_of_vehicle_in_front_in_heading_direction(
+        self, front_entity: Entity
+    ) -> Optional[float]:
+        """
+        Returns the velocity of the entity in front in m/s.
+
+        Parameters:
+        - front_entity (Entity): Entity that is in front of the hero vehicle.
+
+        Returns:
+        - Optional[float]: Velocity of the entity in front in m/s.
+        """
+
+        if front_entity.motion is not None:
+            motion = front_entity.motion.linear_motion
+            global_motion = front_entity.transform * motion
+
+            velocity = global_motion.x()
+            return velocity
+        else:
+            return None
+
     def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
         """Returns a list of entities that have at least coverage % in the
         given polygon.
