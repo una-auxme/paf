@@ -193,7 +193,7 @@ class Map:
         entities_in_area = []
 
         if only_in_front:
-            for entity in entities:
+            for entry in entities:
                 distance = np.sqrt(
                     np.power(entity.transform.translation().x(), 2)
                     + np.power(entity.transform.translation().y(), 2)
@@ -202,7 +202,7 @@ class Map:
                     entities_in_area.append(entity)
             return entities_in_area
         else:
-            for entity in entities:
+            for entry in entities:
                 distance = np.sqrt(
                     np.power(entity.transform.translation().x(), 2)
                     + np.power(entity.transform.translation().y(), 2)
@@ -266,13 +266,13 @@ class Map:
         return msg.Map(header=header, entities=entities)
 
     def lane_marking_left(self) -> Entity:
-        for entity in self.entities:
+        for entry in self.entities:
             if entity.flags._is_lanemark is True and entity.position_index == 1:
                 return entity
         return None
 
     def lane_marking_right(self) -> Entity:
-        for entity in self.entities:
+        for entry in self.entities:
             if entity.flags._is_lanemark is True and entity.position_index == -1:
                 return entity
         return None
@@ -304,7 +304,7 @@ class Map:
 
         # Check path collision with other entities
         obstacles = self.entities_in_area(10)
-        for entity in obstacles:
+        for entry in obstacles:
             if (
                 shapely.intersection(entity.to_shapely().poly, local_trajectory_buffer)
                 and entity.flags._is_lanemark is False
