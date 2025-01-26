@@ -181,11 +181,11 @@ class Map:
 
         curve = self.curve_to_polygon(local_coordinates, width)
 
-        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
-        road_entities = tree.query(curve)
+        map_tree = self.build_tree(f=FlagFilter(is_collider=True, is_hero=False))
+        road_entities = map_tree.query(curve)
 
         filtered_entities = [
-            ent for ent in road_entities if ent.entity.transform.translation().x() > 1
+            ent for ent in road_entities if ent.entity.transform.translation().x() > 1.0
         ]
         if len(filtered_entities) > 0:
             return min(
