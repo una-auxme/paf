@@ -3,13 +3,12 @@ from std_msgs.msg import String, Float32
 
 import rospy
 import numpy as np
-
+import math
 from scipy.spatial.transform import Rotation
 
 from behaviors import behavior_speed as bs
 from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms
 from mapping_common.map import Map
-from shapely.geometry import Polygon
 
 import sys
 import os
@@ -90,12 +89,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         """
 
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-        speedometer = self.blackboard.get("/carla/hero/Speed")
-        if speedometer is not None:
-            current_speed = speedometer.speed
-        else:
-            rospy.logerr("Speed data not avilable in Overtake")
-            return py_trees.common.Status.FAILURE
+
         if map_data is not None:
             map = Map.from_ros_msg(map_data)
         else:
@@ -119,18 +113,20 @@ class Ahead(py_trees.behaviour.Behaviour):
             pose_list = pose_list[int(current_wp) : int(current_wp) + 30]
             collision_trajectory = convert_pose_to_array(pose_list)
             entity = map.get_obstacle_on_trajectory(
-                collision_trajectory, hero_pos, hero_heading
+                collision_trajectory, hero_pos, hero_heading, 1.4
             )
         else:
             rospy.loginfo(
-                f"Something is none in overtake:"
+                f"Something is none in overtake ahead:"
                 f"{trajectory is None} {current_wp is None},"
                 f"{hero_pos is None} {hero_heading is None}"
             )
             return py_trees.common.Status.FAILURE
 
         if entity is not None:
-            obstacle_distance = entity.transform.translation().x()
+            obstacle_distance = math.dist(
+                [0, 0], entity.transform.translation().point()._matrix.tolist()[:2]
+            )
             if entity.motion is not None:
                 obstacle_speed = entity.motion.linear_motion.length()
             else:
@@ -146,12 +142,9 @@ class Ahead(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.FAILURE
 
         # increase counter when we get closer or when nearly stopped
-        if (
-            obstacle_speed < 0.4
-            and obstacle_distance < 18
-            and obstacle_distance < self.old_obstacle_distance
-        ) or (obstacle_speed < 0.1 and obstacle_distance < 18 and current_speed < 0.1):
+        if obstacle_speed < 0.1 and obstacle_distance < 15:
             self.counter_overtake += 1
+            rospy.loginfo(f"Obstacle distance: {obstacle_distance}")
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
             if self.counter_overtake > 4:
                 self.ot_distance_pub.publish(obstacle_distance)
@@ -258,21 +251,43 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
 
-        entity = map.get_entity_in_front_or_back(True)
+        trajectory = self.blackboard.get("/paf/hero/trajectory")
+        current_wp = self.blackboard.get("/paf/hero/current_wp")
+        hero_pos = self.blackboard.get("/paf/hero/current_pos")
+        hero_heading = self.blackboard.get("/paf/hero/current_heading")
+        if (
+            trajectory is not None
+            and current_wp is not None
+            and hero_pos is not None
+            and hero_heading is not None
+        ):
+            hero_heading = hero_heading.data
+            current_wp = current_wp.data
+            hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
+            pose_list = trajectory.poses
+            pose_list = pose_list[int(current_wp) : int(current_wp) + 30]
+            collision_trajectory = convert_pose_to_array(pose_list)
+            entity = map.get_obstacle_on_trajectory(
+                collision_trajectory, hero_pos, hero_heading, 1.4
+            )
+        else:
+            rospy.loginfo(
+                f"Something is none in overtake approach:"
+                f"{trajectory is None} {current_wp is None},"
+                f"{hero_pos is None} {hero_heading is None}"
+            )
+            return py_trees.common.Status.FAILURE
+
         if entity is not None:
 
-            self.ot_distance = entity.transform.translation().x()
-            if entity.motion is None:
-                rospy.loginfo("Obstacle in front has no motion")
+            self.ot_distance = math.dist(
+                [0, 0], entity.transform.translation().point()._matrix.tolist()[:2]
+            )
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")
             OVERTAKE_EXECUTING = self.ot_distance
 
-        if np.isinf(self.ot_distance):
-            rospy.loginfo("OvertakeApproach: Abort")
-            return py_trees.common.Status.FAILURE
-
         # slow down before overtake if blocked
-        if self.ot_distance < 20.0:
+        if self.ot_distance < 15.0:
             oncoming = None
             if oncoming is not None:
                 # TODO add distance to oncoming traffic from map here
@@ -300,7 +315,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.logwarn("no speedometer connected")
             return py_trees.common.Status.RUNNING
 
-        if self.ot_distance > 20.0:
+        if self.ot_distance > 15.0:
             # too far
             rospy.loginfo(
                 f"Overtake Approach: still approaching obstacle, "
@@ -405,16 +420,6 @@ class Wait(py_trees.behaviour.Behaviour):
             map = Map.from_ros_msg(map_data)
         else:
             rospy.logerr("Map data not avilable in Overtake")
-            return py_trees.common.Status.FAILURE
-
-        entity = map.get_entity_in_front_or_back(True)
-        if entity is not None:
-            rospy.loginfo(
-                f"Translation to car in front: {entity.transform.translation().x()},"
-                f"{entity.transform.translation().y()}"
-            )
-        else:
-            rospy.logerr("No OBSTACLE in overtake wait")
             return py_trees.common.Status.FAILURE
 
         # TODO handle oncoming traffic with map
@@ -605,7 +610,6 @@ class Leave(py_trees.behaviour.Behaviour):
         Abort this subtree, if overtake distance is big enough
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
-        # TODO this check needs to be evaluated, not sure if it works
         global OVERTAKE_EXECUTING
         data = self.blackboard.get("/paf/hero/current_pos")
         self.current_pos = np.array([data.pose.position.x, data.pose.position.y])
