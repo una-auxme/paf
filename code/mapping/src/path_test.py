@@ -4,10 +4,7 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 from nav_msgs.msg import Path
-from mapping.msg import Map as MapMsg
-from mapping_common.map import Map
 import random
-import shapely
 
 
 class TestPath(CompatibleNode):

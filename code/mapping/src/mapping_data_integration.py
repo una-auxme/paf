@@ -55,7 +55,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
         self.lidar_data = None
->>>>>>>>> Temporary merge branch 2
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
