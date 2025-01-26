@@ -150,7 +150,6 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
 
-<<<<<<<<< Temporary merge branch 1
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
         if data is None or not hasattr(data, "markers") or data.markers is None:
