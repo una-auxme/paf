@@ -353,6 +353,7 @@ class MapTree:
     """
 
     _str_tree: STRtree
+    _tree_polys: List[shapely.Polygon]
     filtered_entities: List[ShapelyEntity]
     """Only the entities of this tree that weren't filtered out from the map.
 
@@ -382,7 +383,8 @@ class MapTree:
         """
         self.map = map
         self.filtered_entities = [e.to_shapely() for e in map.filtered(f, filter_fn)]
-        self._str_tree = STRtree(geoms=[e.poly for e in self.filtered_entities])
+        self._tree_polys = [e.poly for e in self.filtered_entities]
+        self._str_tree = STRtree(geoms=self._tree_polys)
 
     def _idxs_to_entity(self, idxs: npt.NDArray) -> List[ShapelyEntity]:
         return [self.filtered_entities[i] for i in idxs]
@@ -432,13 +434,13 @@ class MapTree:
         Args:
             geo (shapely.Geometry): The geometry to query with
             predicate (Optional[ Literal[ &quot;intersects&quot;, &quot;within&quot;,
-            &quot;contains&quot;, &quot;overlaps&quot;, &quot;crosses&quot;,
-            &quot;touches&quot;, &quot;covers&quot;, &quot;covered_by&quot;,
-            &quot;contains_properly&quot;, &quot;dwithin&quot;, ] ], optional):
-            Which interaction to filter for. Defaults to None.
+                &quot;contains&quot;, &quot;overlaps&quot;, &quot;crosses&quot;,
+                &quot;touches&quot;, &quot;covers&quot;, &quot;covered_by&quot;,
+                &quot;contains_properly&quot;, &quot;dwithin&quot;, ] ], optional):
+                Which interaction to filter for. Defaults to None.
             distance (Optional[float], optional):
-            Must only be set for the &quot;dwithin&quot; predicate
-            and controls its distance. Defaults to None.
+                Must only be set for the &quot;dwithin&quot; predicate
+                and controls its distance. Defaults to None.
 
         Returns:
             List[ShapelyEntity]: The List of queried entities in the tree
@@ -486,6 +488,59 @@ class MapTree:
         for idx, distance in zip(query[0], query[1]):
             result.append((self.filtered_entities[idx], distance))
         return result
+
+    def query_self(
+        self,
+        predicate: Optional[
+            Literal[
+                "intersects",
+                "within",
+                "contains",
+                "overlaps",
+                "crosses",
+                "touches",
+                "covers",
+                "covered_by",
+                "contains_properly",
+                "dwithin",
+            ]
+        ] = None,
+        distance: Optional[float] = None,
+    ) -> List[Tuple[ShapelyEntity, ShapelyEntity]]:
+        """Queries interactions between the shapes inside this tree.
+
+        Removes any self intersections and duplicate interaction pairs.
+
+        Args:
+            predicate (Optional[ Literal[ &quot;intersects&quot;, &quot;within&quot;,
+                &quot;contains&quot;, &quot;overlaps&quot;, &quot;crosses&quot;,
+                &quot;touches&quot;, &quot;covers&quot;, &quot;covered_by&quot;,
+                &quot;contains_properly&quot;, &quot;dwithin&quot;, ] ], optional):
+                Which interaction to filter for. Defaults to None.
+            distance (Optional[float], optional):
+                Must only be set for the &quot;dwithin&quot; predicate
+                and controls its distance. Defaults to None.
+
+        Returns:
+            List[Tuple[ShapelyEntity, ShapelyEntity]]:
+                Tuples of interacting entity pairs
+        """
+        query: npt.NDArray[np.int64] = self._str_tree.query(
+            self._tree_polys, predicate=predicate, distance=distance
+        )
+        # Remove invalid pairs like [0, 0] and duplicates like [1, 4]<->[4, 1]
+        filter = query[0] < query[1]
+        transposed = np.transpose(query)
+        deduplicated = transposed[filter]
+
+        results: List[Tuple[ShapelyEntity, ShapelyEntity]] = []
+        for pair in deduplicated:
+            entity_pair = (
+                self.filtered_entities[pair[0]],
+                self.filtered_entities[pair[1]],
+            )
+            results.append(entity_pair)
+        return results
 
 
 def _entity_matches_filter(
