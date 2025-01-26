@@ -30,7 +30,7 @@ class ACC(CompatibleNode):
         # Get Map
         self.map_sub: Subscriber = self.new_subscription(
             MapMsg,
-            f"/paf{self.role_name}/mapping/init_data",
+            f"/paf/{self.role_name}/mapping/init_data",
             self.__get_map,
             qos_profile=1,
         )
@@ -312,7 +312,7 @@ class ACC(CompatibleNode):
                 and self.__current_velocity is not None
             ):
                 if (
-                    self.__current_velocity < 3
+                    self.__current_velocity < 2
                 ):  # stop and go system for velocities between 0 m/s and 3 m/s = 10.8 km/h
                     if self.leading_vehicle_distance > 8:
                         desired_speed = 5
