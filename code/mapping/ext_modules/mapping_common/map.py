@@ -178,13 +178,16 @@ class Map:
 
         return collision_entities
 
-    def entities_in_area(self, diameter, only_in_front=True) -> List[Entity]:
-        """Returns the entities without the hero car
-
+    def entities_in_area(self, radius, only_in_front=True) -> List[Entity]:
+        """ Returns the entities without the hero car
+            in a given radius around the hero car.
+            Flag only_in_front decides if entities
+            behind the car, are returend too.
         Only checks if the first entity is_hero
 
         Returns:
-            List[Entity]: Entities without the hero car
+            List[Entity]: Entities in front and/or back of hero
+            without the hero car in given radius
         """
         entities = self.entities_without_hero()
         entities_in_area = []
@@ -195,7 +198,7 @@ class Map:
                     np.power(entity.transform.translation().x(), 2)
                     + np.power(entity.transform.translation().y(), 2)
                 )
-                if entity.transform.translation().x() > 0 and distance < diameter:
+                if entity.transform.translation().x() > 0 and distance < radius:
                     entities_in_area.append(entity)
             return entities_in_area
         else:
@@ -204,7 +207,7 @@ class Map:
                     np.power(entity.transform.translation().x(), 2)
                     + np.power(entity.transform.translation().y(), 2)
                 )
-                if distance < diameter:
+                if distance < radius:
                     entities_in_area.append(entity)
 
         return entities_in_area
