@@ -3,7 +3,6 @@
 
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
-from std_srvs.srv import SetBool, SetBoolRequest, SetBoolResponse
 from visualization_msgs.msg import Marker, MarkerArray
 from mapping.msg import Map as MapMsg
 

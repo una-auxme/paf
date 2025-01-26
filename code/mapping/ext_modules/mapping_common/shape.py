@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import shapely
-from shapely.ops import triangulate
 import math
-from copy import deepcopy
 
 import rospy
 from mapping import msg
@@ -240,7 +238,8 @@ class Polygon(Shape2D):
         m.scale.x = 1.0
         m.scale.y = 1.0
 
-        # First create the outline by creating quads (p1...p4) and splitting into triangles.
+        # First create the outline by creating quads (p1...p4)
+        # Then splitting into triangles.
         len_shape = len(self.points)
         for i in range(len_shape):
             i_nxt = (i + 1) % len_shape
@@ -256,9 +255,10 @@ class Polygon(Shape2D):
 
         # The following triangulizes the shape and adds them
         # This however works only for convex shapes which ours are not.
-        # See https://gis.stackexchange.com/questions/316697/delaunay-triangulation-algorithm-in-shapely-producing-erratic-result
-        # for a better solution. But might be very inefficient.
+        # https://gis.stackexchange.com/questions/316697/delaunay-triangulation-algorithm-in-shapely-producing-erratic-result
+        # Click link for a better solution. But might be very inefficient.
 
+        # from shapely.ops import triangulate
         # shap = self.to_shapely(Transform2D.identity())
         # triangles = triangulate(shap)
         #
