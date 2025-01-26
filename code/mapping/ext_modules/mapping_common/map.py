@@ -142,8 +142,11 @@ class Map:
             raise ValueError("Lane length cannot take a negative value.")
 
         # creates flag filter with filtered ignored, hero and lanemark entities
-        filter = FlagFilter(is_collider=True, is_hero=False, is_lanemark=False,
-                            is_ignored=False)
+        filter = FlagFilter()
+        filter.is_collder = True
+        filter.is_hero = False
+        filter.is_lanemark = False
+        filter.is_ignored = False
 
         # build map STRtree from map with filter
         map_tree = self.build_tree(f=filter)
