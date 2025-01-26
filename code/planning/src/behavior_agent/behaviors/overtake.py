@@ -27,7 +27,7 @@ Source: https://github.com/ll7/psaf2
 """
 
 
-# Varaible to determine the distance to overtake the object
+# Variable to determine the distance to overtake the object
 OVERTAKE_EXECUTING = 0
 
 
@@ -105,6 +105,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
 
+        # data preparation
         trajectory = self.blackboard.get("/paf/hero/trajectory")
         current_wp = self.blackboard.get("/paf/hero/current_wp")
         hero_pos = self.blackboard.get("/paf/hero/current_pos")
@@ -192,7 +193,7 @@ class Approach(py_trees.behaviour.Behaviour):
     This behaviour is executed when the ego vehicle is in close proximity of
     an object which needs to be overtaken and
     overtake_ahead is triggered.
-    It than handles the procedure for overtaking.
+    It then handles the procedure for overtaking.
     """
 
     def __init__(self, name):
@@ -258,7 +259,6 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if the overtake is aborted
         """
         global OVERTAKE_EXECUTING
-        # Update distance to collision object
 
         # Intermediate layer map integration
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
@@ -268,6 +268,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.logerr("Map data not available in Overtake")
             return py_trees.common.Status.FAILURE
 
+        # data preparation
         trajectory = self.blackboard.get("/paf/hero/trajectory")
         current_wp = self.blackboard.get("/paf/hero/current_wp")
         hero_pos = self.blackboard.get("/paf/hero/current_pos")
@@ -308,6 +309,7 @@ class Approach(py_trees.behaviour.Behaviour):
             rospy.loginfo(f"Overtake is free: {ot_free}")
             if ot_free:
                 self.ot_counter += 1
+                # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
                     rospy.loginfo("Overtake is free not slowing down!")
                     self.ot_distance_pub.publish(self.ot_distance)
@@ -321,6 +323,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.ot_counter = 0
                 rospy.loginfo("Overtake Approach: oncoming blocked slowing down")
                 self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
+        # obstacle is not relevant anymore
         elif self.ot_distance > 20.0:
             return py_trees.common.Status.FAILURE
 
