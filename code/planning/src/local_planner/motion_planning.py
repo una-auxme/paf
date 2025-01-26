@@ -19,6 +19,7 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
 from utils import (
     NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_OVERTAKE,
     convert_to_ms,
     spawn_car,
     convert_pose_to_array,
@@ -671,7 +672,7 @@ class MotionPlanning(CompatibleNode):
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
         v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
-        if stopline < TARGET_DISTANCE_TO_STOP:
+        if stopline < TARGET_DISTANCE_TO_STOP_OVERTAKE:
             v_stop = 0.0
 
         return v_stop

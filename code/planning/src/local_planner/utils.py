@@ -12,7 +12,8 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 """
 
 # Distance to stop in Intersection, Lanechange, Overtake
-TARGET_DISTANCE_TO_STOP = 5.0
+TARGET_DISTANCE_TO_STOP = 5
+TARGET_DISTANCE_TO_STOP_OVERTAKE = 3.5
 # Number of waypoints to be used for the overtaking maneuver
 NUM_WAYPOINTS = 7
 # Factor for linear interpolation of target speed values for the ACC
