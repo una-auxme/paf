@@ -220,5 +220,5 @@ class Lanedetection_node(CompatibleNode):
 if __name__ == "__main__":
     roscomp.init("Lanedetection_node")
     node = Lanedetection_node("Lanedetection_node")
-    node.run()
     print("Lanedetection_node started")
+    node.run()

@@ -13,16 +13,11 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
-from mapping.msg import Map as MapMsg
+from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
-
-
-###################
-from nav_msgs.msg import Path
-
-###################
+import sensor_msgs.point_cloud2 as pc2
 
 
 class MappingDataIntegrationNode(CompatibleNode):
@@ -60,6 +55,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
         self.lidar_data = None
+>>>>>>>>> Temporary merge branch 2
         self.new_subscription(
             topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
             msg_type=CarlaSpeedometer,
@@ -84,6 +80,12 @@ class MappingDataIntegrationNode(CompatibleNode):
             callback=self.radar_cluster_entities_callback,
             qos_profile=1,
         )
+        self.new_subscription(
+            topic="/paf/hero/visualization_pointcloud",
+            msg_type=ClusteredPointsArray,
+            callback=self.radar_cluster_entities_callback,
+            qos_profile=1,
+        )
 
         self.new_subscription(
             topic=self.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
@@ -97,17 +99,12 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
             qos_profile=1,
         )
-
-        ###################
-        self.local_trajectory = Path()
-        self.new_subscription(
-            topic="test_trajectory",
-            msg_type=Path,
-            callback=self.callback,
+        # Will be removed when the new function for entity creation is implemented
+        self.vision_node_pointcloud_publisher = self.new_publisher(
+            msg_type=PointCloud2,
+            topic="/paf/hero/mapping/temporary_pointcloud",
             qos_profile=1,
         )
-        ###################
-
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
 
@@ -123,8 +120,30 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_cluster_entities_callback(self, data: MapMsg):
         self.lidar_cluster_entities_data = data
 
-    def radar_cluster_entities_callback(self, data: MapMsg):
-        self.radar_cluster_entities_data = data
+    def radar_cluster_entities_callback(self, data: ClusteredPointsArray):
+        if data is None or not hasattr(data, "clusterPointsArray"):
+            rospy.logwarn("No valid cluster data received.")
+            return
+
+        # Reshape the flattened clusterPointsArray into (N, 3) array
+        try:
+            points = np.array(data.clusterPointsArray).reshape(-1, 3)
+        except ValueError as e:
+            rospy.logerr(f"Error reshaping clusterPointsArray: {e}")
+            return
+
+        if points.shape[0] == 0:
+            rospy.logwarn("Received empty clusterPointsArray.")
+            return
+
+        # Extract the header from the message
+        header = data.header
+
+        # Convert points to a PointCloud2 message
+        merged_cloud = pc2.create_cloud_xyz32(header, points.tolist())
+
+        # Publish the PointCloud2 message
+        self.vision_node_pointcloud_publisher.publish(merged_cloud)
 
     def radar_marker_callback(self, data: MarkerArray):
         self.radar_marker_data = data
@@ -132,23 +151,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
 
-    def lanemarkings_callback(self, data: MapMsg):
-        map = Map.from_ros_msg(data)
-        self.lanemarkings = map.entities_without_hero()
-
-        self.loginfo(
-            "Trajectory check: " + str(map.check_trajectory(self.local_trajectory))
-        )
-        if map.check_trajectory(self.local_trajectory) == 2:
-            for lane in self.lanemarkings:
-                if lane.position_index == 1:
-                    lane.predicted = True
-
-        if map.check_trajectory(self.local_trajectory) == 3:
-            for lane in self.lanemarkings:
-                if lane.position_index == -1:
-                    lane.predicted = True
-
+<<<<<<<<< Temporary merge branch 1
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
         if data is None or not hasattr(data, "markers") or data.markers is None:
@@ -199,9 +202,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             if marker.type != Marker.CUBE:
                 rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
-            # Extract position (center of the cube) and calculate 2 meter offset
-            # because of radar positioning
-            x_center = marker.pose.position.x + 2
+            # Extract position (center of the cube)
+            x_center = marker.pose.position.x
             y_center = marker.pose.position.y
 
             # Extract dimensions (scale gives the size of the cube)
@@ -226,6 +228,10 @@ class MappingDataIntegrationNode(CompatibleNode):
             radar_entities.append(e)
 
         return radar_entities
+
+    def lanemarkings_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
+        self.lanemarkings = map.entities_without_hero()
 
     def entities_from_lidar(self) -> List[Entity]:
         if self.lidar_data is None:
@@ -303,38 +309,38 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
-
-        # Make sure we have data for each dataset we are subscribed to
-        if (
-            self.lidar_data is None
-            or hero_car is None
-            or self.lanemarkings is None
-            or self.radar_marker_data is None
-        ):
+        if hero_car is None:
             return
 
-        lidar_cluster_entities = (
-            []
-            if self.lidar_cluster_entities_data is None
-            else Map.from_ros_msg(self.lidar_cluster_entities_data).entities
-        )
-        radar_cluster_entities = (
-            []
-            if self.radar_cluster_entities_data is None
-            else Map.from_ros_msg(self.radar_cluster_entities_data).entities
-        )
+        entities = []
+        entities.append(hero_car)
+
+        if self.lidar_marker_data is not None and self.get_param(
+            "~enable_lidar_marker"
+        ):
+            entities.extend(self.entities_from_lidar_marker())
+        if self.radar_marker_data is not None and self.get_param(
+            "~enable_radar_marker"
+        ):
+            entities.extend(self.entities_from_radar_marker())
+        if self.lidar_cluster_entities_data is not None and self.get_param(
+            "~enable_lidar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.lidar_cluster_entities_data).entities)
+        if self.radar_cluster_entities_data is not None and self.get_param(
+            "~enable_radar_cluster"
+        ):
+            entities.extend(Map.from_ros_msg(self.radar_cluster_entities_data).entities)
+        if self.lanemarkings is not None and self.get_param("~enable_lane_marker"):
+            entities.extend(self.lanemarkings)
+        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
+            entities.extend(self.entities_from_lidar())
+        # Will be used when the new function for entity creation is implemented
+        # if self.get_param("enable_vision_points"):
+        #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
-        map = Map(
-            timestamp=stamp,
-            entities=[hero_car]
-            + self.lanemarkings
-            + self.entities_from_lidar_marker()
-            + self.entities_from_radar_marker()
-            + lidar_cluster_entities
-            + radar_cluster_entities,
-        )
-        map.entities = map.entities_in_area(10)
+        map = Map(timestamp=stamp, entities=entities)
         msg = map.to_ros_msg()
 
         self.map_publisher.publish(msg)

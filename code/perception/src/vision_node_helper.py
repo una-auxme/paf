@@ -1,6 +1,3 @@
-from typing import List, Union
-
-
 # Carla-Farben
 carla_colors = [
     [0, 0, 0],  # 0: None
@@ -16,22 +13,6 @@ carla_colors = [
     [0, 0, 255],  # 10: Vehicles
     [102, 102, 156],  # 11: Walls
     [220, 220, 0],  # 12: TrafficSigns
-]
-
-carla_class_names = [
-    "None",  # 0
-    "Buildings",  # 1
-    "Fences",  # 2
-    "Other",  # 3
-    "Pedestrians",  # 4
-    "Poles",  # 5
-    "RoadLines",  # 6
-    "Roads",  # 7
-    "Sidewalks",  # 8
-    "Vegetation",  # 9
-    "Vehicles",  # 10
-    "Walls",  # 11
-    "TrafficSigns",  # 12
 ]
 
 # COCO-Klassen → Carla-Klassen Mapping
@@ -119,40 +100,3 @@ coco_to_carla = [
 ]
 
 COCO_CLASS_COUNT = 80
-
-
-def get_carla_color(coco_class: Union[int, float]) -> List[int]:
-    """Get the Carla color for a given COCO class.
-    Args:
-    coco_class: COCO class index (0-79)
-
-    Returns:
-    RGB color values for the corresponding Carla class
-
-    Raises:
-    ValueError: If coco_class is out of valid range
-    """
-    coco_idx = int(coco_class)
-    if not 0 <= coco_idx < COCO_CLASS_COUNT:
-        raise ValueError(f"Invalid COCO class index: {coco_idx}")
-    carla_class = coco_to_carla[coco_idx]
-    return carla_colors[carla_class]
-
-
-def get_carla_class_name(coco_class: Union[int, float]) -> str:
-    """Get the Carla class name for a given COCO class.
-    Args:
-        coco_class: COCO class index (0-79)
-
-    Returns:
-        Name of the corresponding Carla class
-
-    Raises:
-        ValueError: If coco_class is out of valid range
-    """
-    coco_idx = int(coco_class)
-
-    if not 0 <= coco_idx < COCO_CLASS_COUNT:
-        raise ValueError(f"Invalid COCO class index: {coco_idx}")
-    carla_class = coco_to_carla[coco_idx]
-    return carla_class_names[carla_class]

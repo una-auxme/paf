@@ -9,8 +9,11 @@ import numpy.typing as npt
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
+from mapping_common import entity
 
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
+
+from shapely.geometry import Polygon, LineString
 
 from mapping import msg
 from nav_msgs.msg import Path
@@ -73,6 +76,107 @@ class Map:
         if self.hero() is not None:
             return self.entities[1:]
         return self.entities
+
+    def get_entity_in_front_or_back(self, in_front=True) -> Optional[Entity]:
+        """Returns the first entity in front or back based on in_front
+
+        Projects a polygon to simulate the road
+        Calculates the nearest entity on that polygon
+        Returns:
+            Optional[Entity]: Entity in front
+        This could be extended with a curved polygon
+        if curved roads become a problem in the future
+        """
+        length = 80 if in_front else -80
+        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
+        # a coverage width of 1.4 meters should cover all cars and obstacles in our way
+        road_area = self.project_plane((0, -0.7), length, 1.4)
+        road_entities = tree.query(road_area)
+
+        if len(road_entities) > 0:
+            if in_front:
+                return min(
+                    road_entities,
+                    key=lambda e: e.entity.transform.translation().x(),
+                ).entity
+            else:
+                return max(
+                    road_entities,
+                    key=lambda e: e.entity.transform.translation().x(),
+                ).entity
+        else:
+            return None
+
+    def project_plane(self, start_point, size_x, size_y):
+        """Projects a rectangular plane starting from start point
+        forward in the x-direction.
+
+        Parameters:
+        - start_point(float, float): Starting point tuple from which
+        the rectangle is constructed
+        - size_x (float): Length of the plane along the x-axis.
+        - size_y (float): Width of the plane along the y-axis.
+
+        Returns:
+        - Polygon: A Shapely Polygon representing the plane."""
+
+        x, y = start_point
+
+        points = [
+            (x, y),
+            (x + size_x, y),
+            (x + size_x, y + size_y),
+            (x, y + size_y),
+            (x, y),
+        ]
+
+        return Polygon(points)
+
+    def curve_to_polygon(self, points, width):
+        """Creates a polygon with a specified width around a given curve.
+
+        Parameters:
+        - points (list of tuple): A list of (x, y) coordinates representing the curve.
+        - width (float): The width of the polygon along the curve.
+
+        Returns:
+        - Polygon: A Shapely Polygon representing the widened curve."""
+
+        if len(points) < 2:
+            raise ValueError("At least two points are required to define a curve.")
+        if width <= 0:
+            raise ValueError("Width must be a positive value.")
+
+        # Create a LineString from the given points
+        curve = LineString(points)
+
+        # Create a buffer around the curve to form a polygon with the given width
+        polygon = curve.buffer(width / 2, cap_style="round", join_style="round")
+
+        return polygon
+
+    def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
+        """Returns a list of entities that have at least coverage % in the
+        given polygon.
+
+        Parameters:
+        - polygon (Polygon): A Shapely Polygon object representing the target area.
+        - entities (list): A list of entities each having a Shapely shape.
+
+        Returns:
+        - list: A list of entities that have at least coverage % in the polygon."""
+
+        collision_entities = []
+
+        for ent in entities:
+            shape = ent.to_shapely().poly
+
+            # Calculate intersection area
+            intersection = polygon.intersection(shape)
+            if intersection.area / shape.area >= coverage:
+                collision_entities.append(ent)
+
+        return collision_entities
 
     def entities_in_area(self, diameter, only_in_front=True) -> List[Entity]:
         """Returns the entities without the hero car
