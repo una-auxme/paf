@@ -14,7 +14,7 @@ from typing import Tuple
 import utils
 
 from mapping_common.map import Map
-
+from mapping_common.entity import Entity
 from mapping.msg import Map as MapMsg
 
 
@@ -119,7 +119,7 @@ class ACC(CompatibleNode):
         )
 
         # Map
-        self.__map: Optional[Map] = None
+        self.map: Optional[Map] = None
         # unstuck attributes
         self.__unstuck_flag: bool = False
         self.__unstuck_distance: float = -1
@@ -149,7 +149,9 @@ class ACC(CompatibleNode):
         self.logdebug("ACC initialized")
 
     def __get_map(self, data: MapMsg):
-        self.__map = Map.from_ros_msg(data)
+        # seems to slow the ACC down so the loop is not executed any more
+        # self.map = Map.from_ros_msg(data)
+        return
 
     def __update_radar_data(self, data: Float32MultiArray):
         if not data.data or len(data.data) < 2:
@@ -272,39 +274,22 @@ class ACC(CompatibleNode):
         :return:
         """
 
-        # PID controller
+        # Parameters for the PI controller
         Kp = 0.5
         Ki = 1.5
         T_gap = 1.9  # unit: seconds
         d_min = 1
+
+        # Parameters for the stop and go system
+        # Ki_sg = 1.5
+        # T_gap_sg = 1.9  # unit: seconds
+        # d_min_sg = 3
 
         def loop(timer_event=None):
             """
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
-
-            # map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-            # map = Map.from_ros_msg(map_data)
-            if self.__map is not None:
-                front_entity = Map.get_obstacle_on_trajectory(
-                    self.__map,
-                    self.__trajectory,
-                    self.__current_position,
-                    self.__current_heading,
-                )
-                if (
-                    front_entity is not None
-                    and self.leading_vehicle_distance is not None
-                ):
-                    shapely_distance = Map.get_distance_to_entity_in_front(
-                        self.__map, front_entity
-                    )
-                    self.logdebug(f"shapely distance: {shapely_distance}")
-            # print(
-            #    f"Shapely distance: {shapely_distance}, Radar distance: {self.leading_vehicle_distance}"
-            # )
-            #    differences_distance = shapely_distance - self.leading_vehicle_distance
 
             if (
                 self.leading_vehicle_distance is not None
@@ -313,7 +298,9 @@ class ACC(CompatibleNode):
             ):
                 if (
                     self.__current_velocity < 2
-                ):  # stop and go system for velocities between 0 m/s and 3 m/s = 10.8 km/h
+                ):  # stop and go system for velocities between 0 m/s and 2 m/s
+                    # should use the P-controller below as soon as we get reasonable
+                    # radar data
                     if self.leading_vehicle_distance > 8:
                         desired_speed = 5
                     elif self.leading_vehicle_distance > 3:
@@ -322,6 +309,15 @@ class ACC(CompatibleNode):
                         desired_speed = 2
                     else:
                         desired_speed = 0
+
+                    # desired_distance = d_min_sg + T_gap_sg * self.__current_velocity
+                    # delta_d = self.leading_vehicle_distance - desired_distance
+                    # delta_v = self.leading_vehicle_speed - self.__current_velocity
+                    # speed_adjustment = Ki_sg * delta_d
+                    # desired_speed = self.__current_velocity + speed_adjustment
+                    # if desired_speed < 0:
+                    #    desired_speed = 0
+
                 else:  # system for velocities > 3 m/s  = 10.8 km/h
                     desired_distance = d_min + T_gap * self.__current_velocity
                     delta_d = self.leading_vehicle_distance - desired_distance
@@ -336,10 +332,6 @@ class ACC(CompatibleNode):
                     ):
                         desired_speed = self.speed_limit
 
-                    # if self.__current_velocity < 1.0:
-                    #    desired_speed = 0
-                    # else:
-                    #    desired_speed = self.__current_velocity
                 desired_speed = utils.interpolate_speed(
                     desired_speed, self.__current_velocity
                 )
