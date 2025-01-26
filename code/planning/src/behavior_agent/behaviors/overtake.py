@@ -29,6 +29,7 @@ Source: https://github.com/ll7/psaf2
 
 # Variable to determine the distance to overtake the object
 OVERTAKE_EXECUTING = 0
+OVERTAKE_FREE = False
 
 
 class Ahead(py_trees.behaviour.Behaviour):
@@ -120,7 +121,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             current_wp = current_wp.data
             hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
             pose_list = trajectory.poses
-            pose_list = pose_list[int(current_wp) : int(current_wp) + 30]
+            pose_list = pose_list[int(current_wp) : int(current_wp) + 20]
             collision_trajectory = convert_pose_to_array(pose_list)
             entity = map.get_obstacle_on_trajectory(
                 collision_trajectory, hero_pos, hero_heading, 1
@@ -237,9 +238,11 @@ class Approach(py_trees.behaviour.Behaviour):
         This initializes the overtaking distance to a default value.
         """
         rospy.loginfo("Approaching Overtake")
+        global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 35
+        self.clear_distance = 40
+        OVERTAKE_FREE = False
 
     def update(self):
         """
@@ -259,6 +262,7 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if the overtake is aborted
         """
         global OVERTAKE_EXECUTING
+        global OVERTAKE_FREE
 
         # Intermediate layer map integration
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
@@ -283,7 +287,7 @@ class Approach(py_trees.behaviour.Behaviour):
             current_wp = current_wp.data
             hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
             pose_list = trajectory.poses
-            pose_list = pose_list[int(current_wp) : int(current_wp) + 30]
+            pose_list = pose_list[int(current_wp) : int(current_wp) + 20]
             collision_trajectory = convert_pose_to_array(pose_list)
             entity = map.get_obstacle_on_trajectory(
                 collision_trajectory, hero_pos, hero_heading, 1.0
@@ -318,6 +322,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 else:
                     self.ot_distance_pub.publish(self.ot_distance)
                     self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
+                    OVERTAKE_FREE = True
                     return py_trees.common.Status.RUNNING
             else:
                 self.ot_counter = 0
@@ -424,7 +429,11 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
         """
-
+        global OVERTAKE_FREE
+        if OVERTAKE_FREE:
+            rospy.loginfo("Overtake is free!")
+            self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+            return py_trees.common.Status.SUCCESS
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
         if map_data is not None:
             map = Map.from_ros_msg(map_data)
