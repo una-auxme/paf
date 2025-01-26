@@ -154,7 +154,7 @@ class Map:
         return polygon
 
     def get_obstacle_on_trajectory(
-        self, trajectory, hero_pos, hero_heading, width=1
+        self, trajectory, hero_pos, hero_heading, width=1.0
     ) -> Optional[Entity]:
         """Calculates the closest entity on the given trajectory. Transforms
         trajectory world coordinates into map coordinates based on hero position.
