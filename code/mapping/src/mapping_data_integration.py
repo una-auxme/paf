@@ -107,9 +107,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
 
-    def callback(self, data: Path):
-        self.local_trajectory = data
-
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
 
