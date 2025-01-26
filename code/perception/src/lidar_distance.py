@@ -210,7 +210,7 @@ class LidarDistance:
         """
         # Define bounding box parameters based on focus direction
         bounding_box_params = {
-            "Center": {"max_x": np.inf, "min_x": 0.0, "min_z": -1.6},
+            "Center": {"max_x": np.inf, "min_x": 0.0, "min_z": -np.inf},
             "Back": {"max_x": 0.0, "min_x": -np.inf, "min_z": -1.6},
             "Left": {"max_y": np.inf, "min_y": 0.0, "min_z": -1.6},
             "Right": {"max_y": -0.0, "min_y": -np.inf, "min_z": -1.6},
@@ -390,7 +390,7 @@ def generate_bounding_boxes(points_with_labels):
     return bounding_boxes
 
 
-def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
+def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LIDAR"):
     """
     Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
 
@@ -407,7 +407,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb"):
     """
     # Initialize the Marker object
     marker = Marker()
-    marker.header.frame_id = "hero/LIDAR"  # Reference frame for the marker
+    marker.header.frame_id = frame_id  # Reference frame for the marker
     marker.ns = "marker_lidar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
     marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
