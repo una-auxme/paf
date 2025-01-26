@@ -10,8 +10,13 @@ from mapping.msg import Map as MapMsg
 from rospy import Publisher
 from rospy import Duration
 
-from mapping_common.entity import Entity
+from mapping_common.entity import Entity, FlagFilter
 from mapping_common.map import Map
+
+from mapping_visualization.cfg import MappingVisualizationConfig
+from dynamic_reconfigure.server import Server
+
+from typing import Optional
 
 MARKER_NAMESPACE: str = "map"
 
@@ -29,18 +34,6 @@ class Visualization(CompatibleNode):
             MarkerArray, "/paf/hero/mapping/marker_array", qos_profile=1
         )
 
-        self.filter_is_collider = False
-        self.filter_is_tracked = False
-        self.filter_is_stopmark = False
-        self.filter_is_lanemark = False
-        self.filter_is_ignored = False
-
-        self.new_service(SetBool, "vis/set_is_collider", self.set_is_collider_filter)
-        self.new_service(SetBool, "vis/set_is_tracked", self.set_is_tracked_filter)
-        self.new_service(SetBool, "vis/set_is_stopmark", self.set_is_stopmark_filter)
-        self.new_service(SetBool, "vis/set_is_lanemark", self.set_is_lanemark_filter)
-        self.new_service(SetBool, "vis/set_is_ignored", self.set_is_ignored_filter)
-
         self.new_subscription(
             topic=self.get_param("~map_topic", "/paf/hero/mapping/init_data"),
             msg_type=MapMsg,
@@ -48,14 +41,47 @@ class Visualization(CompatibleNode):
             qos_profile=1,
         )
 
+        self.value_map = {-1: False, 0: None, 1: True}
+        self.flag_motion: Optional[bool] = None
+        self.flag_collider: Optional[bool] = None
+        self.flag_tracked: Optional[bool] = None
+        self.flag_stopmark: Optional[bool] = None
+        self.flag_lanemark: Optional[bool] = None
+        self.flag_ignored: Optional[bool] = None
+        self.flag_hero: Optional[bool] = None
+
+        Server(MappingVisualizationConfig, self.dynamic_reconfigure_callback)
+
+    def dynamic_reconfigure_callback(self, config: "MappingVisualizationConfig", level):
+        self.flag_motion = self.value_map.get(config["flag_motion"])
+        self.flag_collider = self.value_map.get(config["flag_collider"])
+        self.flag_tracked = self.value_map.get(config["flag_tracked"])
+        self.flag_stopmark = self.value_map.get(config["flag_stopmark"])
+        self.flag_lanemark = self.value_map.get(config["flag_lanemark"])
+        self.flag_ignored = self.value_map.get(config["flag_ignored"])
+        self.flag_hero = self.value_map.get(config["flag_hero"])
+
+        return config
+
     def map_callback(self, data: MapMsg):
         map = Map.from_ros_msg(data)
+
         marker_array = MarkerArray()
         marker_array.markers.append(self.create_deleteall_marker())
 
         marker_timestamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+        filter = FlagFilter(
+            has_motion=self.flag_motion,
+            is_collider=self.flag_collider,
+            is_tracked=self.flag_tracked,
+            is_stopmark=self.flag_stopmark,
+            is_lanemark=self.flag_lanemark,
+            is_ignored=self.flag_ignored,
+            is_hero=self.flag_hero,
+        )
         for id, entity in enumerate(map.entities):
-            # TODO: filtering based on flags
+            if not entity.matches_filter(filter):
+                continue
             marker_array.markers.append(
                 self.create_marker_from_entity(id, entity, marker_timestamp)
             )
@@ -79,45 +105,6 @@ class Visualization(CompatibleNode):
         marker.lifetime = Duration.from_sec(2.0 / 20.0)
 
         return marker
-
-    def set_is_collider_filter(self, request: SetBoolRequest):
-        self.filter_is_collider = request.data
-        self.loginfo(f"Called collider {request.data}")
-
-        response = SetBoolResponse()
-        response.success = True
-        return response
-
-    def set_is_tracked_filter(self, request: SetBoolRequest):
-        self.filter_is_tracked = request.data
-        self.loginfo(f"Called tracked {request.data}")
-
-        response = SetBoolResponse()
-        response.success = True
-        return response
-
-    def set_is_stopmark_filter(self, request: SetBoolRequest):
-        self.filter_is_stopmark = request.data
-        self.loginfo(f"Called stopmark {request.data}")
-        response = SetBoolResponse()
-        response.success = True
-        return response
-
-    def set_is_lanemark_filter(self, request: SetBoolRequest):
-        self.filter_is_lanemark = request.data
-
-        self.loginfo(f"Called lanemark {request.data}")
-        response = SetBoolResponse()
-        response.success = True
-        return response
-
-    def set_is_ignored_filter(self, request: SetBoolRequest):
-        self.filter_is_ignored = request.data
-
-        self.loginfo(f"Called ignored {request.data}")
-        response = SetBoolResponse()
-        response.success = True
-        return response
 
 
 def main(args=None):

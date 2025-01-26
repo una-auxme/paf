@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import shapely
+from shapely.ops import triangulate
 import math
+from copy import deepcopy
 
 import rospy
 from mapping import msg
@@ -234,24 +236,39 @@ class Polygon(Shape2D):
     def to_marker(self, transform: Transform2D) -> Marker:
         """Convert to a visualization Marker for RViz."""
         m = super().to_marker(transform)
-        m.type = Marker.LINE_STRIP
-        m.scale.x = 0.05  # Line thickness
+        m.type = Marker.TRIANGLE_LIST
+        m.scale.x = 1.0
+        m.scale.y = 1.0
 
-        # Initialize m.points as an empty list
-        m.points = []
+        # First create the outline by creating quads (p1...p4) and splitting into triangles.
+        len_shape = len(self.points)
+        for i in range(len_shape):
+            i_nxt = (i + 1) % len_shape
+            p1 = Point(x=self.points[i].x(), y=self.points[i].y(), z=0.0)
+            p2 = Point(x=self.points[i].x(), y=self.points[i].y(), z=m.scale.z)
+            p3 = Point(x=self.points[i_nxt].x(), y=self.points[i_nxt].y(), z=0.0)
+            p4 = Point(x=self.points[i_nxt].x(), y=self.points[i_nxt].y(), z=m.scale.z)
 
-        # Transform and add points
-        for pt in self.points:
-            p = Point()
-            p.x = pt.x()
-            p.y = pt.y()
-            p.z = 0.0
-            m.points.append(p)
+            for p in [p1, p2, p3]:
+                m.points.append(p)
+            for p in [p3, p2, p4]:
+                m.points.append(p)
 
-        # Close the polygon loop
-        if len(m.points) > 0:
-            m.points.append(m.points[0])
+        # The following triangulizes the shape and adds them
+        # This however works only for convex shapes which ours are not.
+        # See https://gis.stackexchange.com/questions/316697/delaunay-triangulation-algorithm-in-shapely-producing-erratic-result
+        # for a better solution. But might be very inefficient.
 
+        # shap = self.to_shapely(Transform2D.identity())
+        # triangles = triangulate(shap)
+        #
+        # for i, triangle in enumerate(triangles, start=1):
+        #    for height in (0.0, 1.0):
+        #        for point in list(triangle.exterior.coords)[
+        #            :-1
+        #        ]:  # Remove the last duplicate point
+        #            x, y = point
+        #            m.points.append(Point(x=x, y=y, z=height))
         return m
 
     def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
