@@ -143,7 +143,7 @@ class Map:
 
         # creates flag filter with filtered ignored, hero and lanemark entities
         filter = FlagFilter()
-        filter.is_collder = True
+        filter.is_collider = True
         filter.is_hero = False
         filter.is_lanemark = False
         filter.is_ignored = False
