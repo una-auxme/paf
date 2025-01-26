@@ -11,6 +11,8 @@ from typing import Optional
 from typing import List
 from typing import Tuple
 
+import utils
+
 from mapping_common.map import Map
 
 from mapping.msg import Map as MapMsg
@@ -273,8 +275,8 @@ class ACC(CompatibleNode):
         # PID controller
         Kp = 0.5
         Ki = 1.5
-        T_gap = 2  # unit: seconds
-        d_min = 0
+        T_gap = 1.9  # unit: seconds
+        d_min = 1
 
         def loop(timer_event=None):
             """
@@ -312,11 +314,11 @@ class ACC(CompatibleNode):
                 if (
                     self.__current_velocity < 3
                 ):  # stop and go system for velocities between 0 m/s and 3 m/s = 10.8 km/h
-                    if self.leading_vehicle_distance > 10:
+                    if self.leading_vehicle_distance > 8:
                         desired_speed = 5
-                    elif self.leading_vehicle_distance > 5:
+                    elif self.leading_vehicle_distance > 3:
                         desired_speed = 3
-                    elif self.leading_vehicle_distance > 2:
+                    elif self.leading_vehicle_distance > 1:
                         desired_speed = 2
                     else:
                         desired_speed = 0
@@ -338,7 +340,9 @@ class ACC(CompatibleNode):
                     #    desired_speed = 0
                     # else:
                     #    desired_speed = self.__current_velocity
-
+                desired_speed = utils.interpolate_speed(
+                    desired_speed, self.__current_velocity
+                )
                 self.velocity_pub.publish(desired_speed)
 
             elif self.speed_limit is not None:
