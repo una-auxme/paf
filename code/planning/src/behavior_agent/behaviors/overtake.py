@@ -9,6 +9,8 @@ from scipy.spatial.transform import Rotation
 from behaviors import behavior_speed as bs
 from local_planner.utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms
 from mapping_common.map import Map
+from mapping_common.shape import Polygon
+from visualization_msgs.msg import Marker
 
 import sys
 import os
@@ -56,6 +58,9 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.blackboard = py_trees.blackboard.Blackboard()
         self.ot_distance_pub = rospy.Publisher(
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
+        )
+        self.ot_marker_pub = rospy.Publisher(
+            "/paf/hero/" "overtake_marker", Marker, queue_size=1
         )
         return True
 
@@ -133,6 +138,16 @@ class Ahead(py_trees.behaviour.Behaviour):
                 obstacle_speed = 0
         else:
             return py_trees.common.Status.FAILURE
+
+        # generate visualization marker for obstacle
+        ot_marker = entity.to_marker()
+        ot_marker.color.r = 1.0
+        ot_marker.color.g = 0
+        ot_marker.color.b = 0
+        ot_marker.header.frame_id = "hero"
+        ot_marker.header.stamp = rospy.Time.now()
+        ot_marker.lifetime = rospy.Duration(1)
+        self.ot_marker_pub.publish(ot_marker)
 
         # filter out false positives due to trajectory inconsistency
         if (
