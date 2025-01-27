@@ -179,7 +179,7 @@ class Map:
         return collision_entities
 
     def entities_in_area(self, radius, only_in_front=True) -> List[Entity]:
-        """ Returns the entities without the hero car
+        """Returns the entities without the hero car
             in a given radius around the hero car.
             Flag only_in_front decides if entities
             behind the car, are returend too.
@@ -265,31 +265,50 @@ class Map:
         header = Header(stamp=self.timestamp)
         return msg.Map(header=header, entities=entities)
 
-    def lane_marking_left(self) -> Entity:
+    def lane_marking_left(self) -> Optional[Entity]:
+        """
+                Returns:
+        +           Optional[Entity]: The left lane marking entity or None if not found
+        """
         for entry in self.entities:
             if entry.flags._is_lanemark is True and entry.position_index == 1:
                 return entry
         return None
 
-    def lane_marking_right(self) -> Entity:
+    def lane_marking_right(self) -> Optional[Entity]:
+        """
+                Returns:
+        +           Optional[Entity]: The right lane marking entity or None if not found
+        """
         for entry in self.entities:
             if entry.flags._is_lanemark is True and entry.position_index == -1:
                 return entry
         return None
 
+    # Class-level constants
+    VEHICLE_WIDTH_BUFFER = 1.0  # meters
+    LANE_CHECK_BUFFER = 0.5  # meters
+    OBSTACLE_DETECTION_RADIUS = 10.0  # meters
+
     def check_trajectory(self, local_path: Path) -> int:
         """
         Checks the calculated local path on multiple conditions
-        return -1:  local_path is None
-        return 0:   Path has no obstacles / infringments
-        return 1:   Path is planned through a gap,
-                    which is too small for the car (without lanes)
-        return 2:   Path cuts the left lane marking
-        return 3:   Path cuts the right lane marking
-        """
 
-        # check if there is a local path
-        if local_path.poses is None:
+        Args:
+            local_path (Path): The path to check
+
+        Returns:
+            int: Status code indicating the path's validity:
+                -1: local_path is None or empty
+                 0: Path has no obstacles/infringements
+                 1: Path planned through gap too small for car
+                 2: Path cuts left lane marking
+                 3: Path cuts right lane marking
+
+        Raises:
+            ValueError: If local_path.poses is empty
+        """
+        if local_path.poses is None or not local_path.poses:
             return -1
 
         # transform local path to shapely object
@@ -300,38 +319,33 @@ class Map:
             )
         local_trajectory = shapely.LineString(trajectory_shapely_points)
         # widen the Linestring to an area representing the cars width
-        local_trajectory_buffer = local_trajectory.buffer(1, 3)
+        local_trajectory_buffer = local_trajectory.buffer(self.VEHICLE_WIDTH_BUFFER, 3)
 
         # Check path collision with other entities
-        obstacles = self.entities_in_area(10)
+        obstacles = self.entities_in_area(self.OBSTACLE_DETECTION_RADIUS)
         for entry in obstacles:
-            if (
-                shapely.intersection(entry.to_shapely().poly, local_trajectory_buffer)
-                and entry.flags._is_lanemark is False
+            if not entry.flags._is_lanemark and shapely.intersection(
+                entry.to_shapely().poly, local_trajectory_buffer
             ):
                 return 1
 
-        # decrease buffer size for lane checkking
-        local_trajectory_buffer = local_trajectory.buffer(0.5, 3)
+        # decrease buffer size for lane checking
+        local_trajectory_buffer = local_trajectory.buffer(self.LANE_CHECK_BUFFER, 3)
+
         # Check left lane
         left_lane = self.lane_marking_left()
-        if left_lane is not None:
-            if shapely.intersection(
-                left_lane.to_shapely().poly, local_trajectory_buffer
-            ):
-                # given path crosses lane marking on the left
-                return 2
+        if left_lane is not None and shapely.intersection(
+            left_lane.to_shapely().poly, local_trajectory_buffer
+        ):
+            return 2
 
         # Check right lane
         right_lane = self.lane_marking_right()
-        if right_lane is not None:
-            if shapely.intersection(
-                right_lane.to_shapely().poly, local_trajectory_buffer
-            ):
-                # given path crosses lane marking on the right
-                return 3
+        if right_lane is not None and shapely.intersection(
+            right_lane.to_shapely().poly, local_trajectory_buffer
+        ):
+            return 3
 
-        # given path is okay and is not colliding
         return 0
 
 
