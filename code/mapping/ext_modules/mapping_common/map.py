@@ -9,9 +9,8 @@ import numpy.typing as npt
 from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
-
+from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
-from mapping_common.transform import Vector2, Transform2D
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
 
@@ -219,6 +218,48 @@ class Map:
         polygon = curve.buffer(width / 2, cap_style="round", join_style="round")
 
         return polygon
+
+    def get_obstacle_on_trajectory(
+        self, trajectory, hero_pos, hero_heading, width=1.0
+    ) -> Optional[Entity]:
+        """Calculates the closest entity on the given trajectory. Transforms
+        trajectory world coordinates into map coordinates based on hero position.
+
+        Args:
+            trajectory (np array of x,y tuples): A np array of
+            (x, y) coordinates representing the
+            planned trajectory.
+            hero_pos (x, y): The world coordinates of the hero car.
+            hero_heading (float): The current heading of the hero car.
+            width (float): The desired width of the curved polygon.
+
+        Returns:
+            Optional[Entity]: The closest entity
+        """
+        translated = trajectory - np.array(hero_pos)
+        translated_points = [Point2.new(p[0], p[1]) for p in translated]
+        # Rotation matrix for counterclockwise rotation by -hero_heading
+        rotation_matrix = Transform2D.new_rotation(-hero_heading)
+        # Apply rotation
+        local_coordinates = [
+            ((rotation_matrix * p).to_shapely()) for p in translated_points
+        ]
+
+        curve = self.curve_to_polygon(local_coordinates, width)
+
+        map_tree = self.build_tree(f=FlagFilter(is_collider=True, is_hero=False))
+        road_entities = map_tree.query(curve)
+
+        filtered_entities = [
+            ent for ent in road_entities if ent.entity.transform.translation().x() > 1.0
+        ]
+        if len(filtered_entities) > 0:
+            return min(
+                filtered_entities,
+                key=lambda e: e.entity.transform.translation().x(),
+            ).entity
+        else:
+            return None
 
     def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
         """Returns a list of entities that have at least coverage % in the
