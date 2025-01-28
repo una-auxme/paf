@@ -2,7 +2,7 @@
 import numpy as np
 import ros_compatibility as roscomp
 from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
@@ -126,9 +126,9 @@ class ACC(CompatibleNode):
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: List[float] = []
         # Current Trajectory
-        self.__trajectory: Optional[Path] = None
+        self.trajectory: Optional[Path] = None
         # Current position
-        self.__current_position: Optional[PoseStamped] = None
+        self.__current_position: Optional[Point] = None
         # Current index from waypoint
         self.__current_wp_index: int = 0
         # Current heading
@@ -150,8 +150,9 @@ class ACC(CompatibleNode):
 
     def __get_map(self, data: MapMsg):
         # seems to slow the ACC down so the loop is not executed any more
-        # self.map = Map.from_ros_msg(data)
-        return
+        if data is not None: 
+            self.map = Map.from_ros_msg(data)
+        # return 
 
     def __update_radar_data(self, data: Float32MultiArray):
         if not data.data or len(data.data) < 2:
@@ -221,7 +222,7 @@ class ACC(CompatibleNode):
         Args:
             data (Path): Trajectory path
         """
-        self.__trajectory = data
+        self.trajectory = data
 
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
         """Recieve speed limits from OpenDrive via global planner
@@ -238,16 +239,16 @@ class ACC(CompatibleNode):
         Args:
             data (PoseStamped): Current position from perception
         """
-        if len(self.__speed_limits_OD) < 1 or self.__trajectory is None:
+        if len(self.__speed_limits_OD) < 1 or self.trajectory is None:
             return
 
         agent = data.pose.position
         if agent is not None:
-            self.__current_position = data
+            self.__current_position = data.pose.position
         # Get current waypoint
-        current_wp = self.__trajectory.poses[self.__current_wp_index].pose.position
+        current_wp = self.trajectory.poses[self.__current_wp_index].pose.position
         # Get next waypoint
-        next_wp = self.__trajectory.poses[self.__current_wp_index + 1].pose.position
+        next_wp = self.trajectory.poses[self.__current_wp_index + 1].pose.position
         # distances from agent to current and next waypoint
         d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
         d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
@@ -290,6 +291,8 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
+            if (self.map is not None and self.trajectory is not None and self.__current_position is not None and self.__current_heading is not None): 
+                front_object = Map.get_obstacle_on_trajectory(self.map, self.trajectory, self.__current_position, self.__current_heading)
 
             if (
                 self.leading_vehicle_distance is not None
