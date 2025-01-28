@@ -223,7 +223,7 @@ class VisionNode(CompatibleNode):
         if clustered_points is None or clustered_points.size == 0:
             return None
         try:
-            # self.publish_distance_output(clustered_points, carla_classes_indices)
+            self.publish_distance_output(clustered_points, carla_classes_indices)
             clustered_lidar_points_msg = array_to_clustered_points(
                 clustered_points,
                 cluster_indices,
