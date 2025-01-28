@@ -1,6 +1,5 @@
 from leaderboard.autoagents.ros1_agent import ROS1Agent
 from leaderboard.autoagents.autonomous_agent import Track
-import math
 
 
 def get_entry_point():
