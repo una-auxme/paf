@@ -5,12 +5,12 @@ import time
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
-from rospy import Publisher, Subscriber
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32, String
 
 from dynamic_reconfigure.server import Server
 from control.cfg import ControllerConfig
+import rospy
 
 
 class VehicleController(CompatibleNode):
@@ -151,17 +151,12 @@ class VehicleController(CompatibleNode):
             self.message.hand_brake = False
             self.message.manual_gear_shift = False
 
-        self.message.header.stamp = roscomp.ros_timestamp(
-            self.get_time(), from_sec=True
-        )
+        self.message.header.stamp = rospy.get_rostime()
 
     def run(self):
         """Main loop of the node."""
         self.status_pub.publish(True)
         self.loginfo("VehicleController node running")
-        self.logwarn(
-            f"VehicleController node started with rate {self.control_loop_rate}"
-        )
 
         def spin_loop(timer_event=None):
             self.update_control_message()
