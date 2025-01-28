@@ -7,6 +7,8 @@ from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
 from rospy import Publisher, Subscriber
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32, String
+import time
+import rospy
 
 
 class VehicleController(CompatibleNode):
@@ -25,6 +27,7 @@ class VehicleController(CompatibleNode):
         self.loginfo("VehicleController node started")
         self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
         self.role_name = self.get_param("role_name", "ego_vehicle")
+        self.vehicle_controller_sleep = self.get_param("vehicle_controller_sleep", 0.05)
 
         self.__curr_behavior = None  # only unstuck behavior is relevant here
 
@@ -139,6 +142,10 @@ class VehicleController(CompatibleNode):
             :param timer_event: Timer event from ROS
             :return:
             """
+            rospy.loginfo(
+                f"VehicleController loop sleeping with {self.vehicle_controller_sleep}"
+            )
+            time.sleep(self.vehicle_controller_sleep)
             if self.__emergency:
                 # emergency is already handled in  __emergency_brake()
                 self.__emergency_brake(True)
