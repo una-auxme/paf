@@ -10,6 +10,8 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray
 from typing import Optional
 from typing import List
 from typing import Tuple
+from planning.cfg import ACCConfig
+from dynamic_reconfigure.server import Server
 
 import utils
 
@@ -146,13 +148,34 @@ class ACC(CompatibleNode):
         self.leading_vehicle_relative_speed = None
         self.leading_vehicle_speed = None
 
+        # Tunable values for the controllers
+        self.sg_Ki: float
+        self.sg_T_gap: float
+        self.sg_d_min: float
+        self.ct_Kp: float
+        self.ct_Ki: float
+        self.ct_T_gap: float
+        self.ct_d_min: float
+        Server(ACCConfig, self.dynamic_reconfigure_callback)
+
         self.logdebug("ACC initialized")
 
     def __get_map(self, data: MapMsg):
         # seems to slow the ACC down so the loop is not executed any more
-        if data is not None: 
+        if data is not None:
             self.map = Map.from_ros_msg(data)
-        # return 
+        # return
+
+    def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
+        self.sg_Ki = config["sg_Ki"]
+        self.sg_T_gap = config["sg_T_gap"]
+        self.sg_d_min = config["sg_d_min"]
+        self.ct_Kp = config["ct_Kp"]
+        self.ct_Ki = config["ct_Ki"]
+        self.ct_T_gap = config["ct_T_gap"]
+        self.ct_d_min = config["ct_d_min"]
+
+        return config
 
     def __update_radar_data(self, data: Float32MultiArray):
         if not data.data or len(data.data) < 2:
@@ -276,10 +299,10 @@ class ACC(CompatibleNode):
         """
 
         # Parameters for the PI controller
-        Kp = 0.5
-        Ki = 1.5
-        T_gap = 1.9  # unit: seconds
-        d_min = 1
+        Kp = self.ct_Kp  # 0.5
+        Ki = self.ct_Ki  # 1.5
+        T_gap = self.ct_T_gap  # 1.9
+        d_min = self.ct_d_min  # 1
 
         # Parameters for the stop and go system
         # Ki_sg = 1.5
@@ -291,8 +314,6 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
-            if (self.map is not None and self.trajectory is not None and self.__current_position is not None and self.__current_heading is not None): 
-                front_object = Map.get_obstacle_on_trajectory(self.map, self.trajectory, self.__current_position, self.__current_heading)
 
             if (
                 self.leading_vehicle_distance is not None
@@ -305,13 +326,13 @@ class ACC(CompatibleNode):
                     # should use the P-controller below as soon as we get reasonable
                     # radar data
                     if self.leading_vehicle_distance > 8:
-                        desired_speed = 5
+                        desired_speed = 6
                     elif self.leading_vehicle_distance > 3:
-                        desired_speed = 3
+                        desired_speed = 5
                     elif self.leading_vehicle_distance > 1:
-                        desired_speed = 2
+                        desired_speed = 4
                     else:
-                        desired_speed = 0
+                        desired_speed = 1
 
                     # desired_distance = d_min_sg + T_gap_sg * self.__current_velocity
                     # delta_d = self.leading_vehicle_distance - desired_distance
