@@ -4,7 +4,7 @@
 import py_trees
 import py_trees_ros
 
-from std_msgs.msg import Float32, Bool, Float32MultiArray, Int16
+from std_msgs.msg import Float32, Bool, Float32MultiArray, Int16, String
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
@@ -114,6 +114,11 @@ def create_node(role_name):
         {
             "name": f"/paf/{role_name}/current_wp",
             "msg": Float32,
+            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
+        },
+        {
+            "name": f"/paf/{role_name}/curr_behavior",
+            "msg": String,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
     ]
