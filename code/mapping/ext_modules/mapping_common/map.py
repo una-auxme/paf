@@ -9,9 +9,8 @@ import numpy.typing as npt
 from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
-from mapping_common.transform import Transform2D, Point2
+from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
-from mapping_common.transform import Vector2, Transform2D
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
 
@@ -143,9 +142,10 @@ class Map:
 
         # creates flag filter with filtered ignored, hero and lanemark entities
         filter = FlagFilter()
-        filter.is_ignored = False
+        filter.is_collider = True
         filter.is_hero = False
         filter.is_lanemark = False
+        filter.is_ignored = False
 
         # build map STRtree from map with filter
         map_tree = self.build_tree(f=filter)
@@ -154,7 +154,7 @@ class Map:
             length=lane_length,
             width=1.5,
             offset=Transform2D.new_translation(
-                Vector2.new(lane_transform, lane_pos * 2.2)
+                Vector2.new(lane_transform, lane_pos * 2.5)
             ),
         )
 
@@ -247,11 +247,11 @@ class Map:
 
         curve = self.curve_to_polygon(local_coordinates, width)
 
-        tree = self.build_tree(f=entity.FlagFilter(is_collider=True, is_hero=False))
-        road_entities = tree.query(curve)
+        map_tree = self.build_tree(f=FlagFilter(is_collider=True, is_hero=False))
+        road_entities = map_tree.query(curve)
 
         filtered_entities = [
-            ent for ent in road_entities if ent.entity.transform.translation().x() > 1
+            ent for ent in road_entities if ent.entity.transform.translation().x() > 1.0
         ]
         if len(filtered_entities) > 0:
             return min(
