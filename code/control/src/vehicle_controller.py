@@ -8,6 +8,9 @@ from rospy import Publisher, Subscriber
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32, String
 
+from dynamic_reconfigure.server import Server
+from control.cfg import ControllerConfig
+
 
 class VehicleController(CompatibleNode):
     """
@@ -123,6 +126,23 @@ class VehicleController(CompatibleNode):
         self._p_steer: float = 0.0
         self._s_steer: float = 0.0
 
+        self.MANUAL_OVERRIDE: bool
+        self.MANUAL_STEER: float
+        self.MANUAL_THROTTLE: float
+        self.STANLEY_OFF: bool
+
+        Server(ControllerConfig, self.dynamic_reconfigure_callback)
+
+        self.message = CarlaEgoVehicleControl()
+
+    def dynamic_reconfigure_callback(self, config: ControllerConfig, level):
+        self.MANUAL_STEER = config["manual_steer"]
+        self.MANUAL_THROTTLE = config["manual_throttle"]
+        self.MANUAL_OVERRIDE = config["manual_override_active"]
+        self.STANLEY_OFF = config["stanley_off"]
+        print(self.MANUAL_OVERRIDE)
+        return config
+
     def run(self):
         """
         Starts the main loop of the node and send a status msg.
@@ -139,34 +159,43 @@ class VehicleController(CompatibleNode):
             :param timer_event: Timer event from ROS
             :return:
             """
-            if self.__emergency:
+
+            if self.MANUAL_OVERRIDE:
+                self.message.reverse = self.MANUAL_THROTTLE < 0
+                self.message.throttle = self.MANUAL_THROTTLE
+                self.message.steer = self.MANUAL_STEER
+                self.message.hand_brake = False
+                self.message.gear = 1
+                self.message.brake = 0.0
+            elif self.__emergency:
                 # emergency is already handled in  __emergency_brake()
                 self.__emergency_brake(True)
-                return
-
-            # Velocities over 5 m/s = use Stanley, else use PurePuresuit
-            if self.__velocity > 5:
-                steer = self._s_steer
             else:
-                # while doing the unstuck routine we don't want to steer
-                if (
-                    self.__curr_behavior == "us_unstuck"
-                    or self.__curr_behavior == "us_stop"
-                ):
-                    steer = 0
+                # Velocities over 5 m/s = use Stanley, else use PurePuresuit
+                if not self.STANLEY_OFF and self.__velocity > 5:
+                    steer = self._s_steer
                 else:
-                    steer = self._p_steer
+                    # while doing the unstuck routine we don't want to steer
+                    if (
+                        self.__curr_behavior == "us_unstuck"
+                        or self.__curr_behavior == "us_stop"
+                    ):
+                        steer = 0
+                    else:
+                        steer = self._p_steer
 
-            message = CarlaEgoVehicleControl()
-            message.reverse = self.__reverse
-            message.hand_brake = False
-            message.manual_gear_shift = False
-            message.gear = 1
-            message.throttle = self.__throttle
-            message.brake = self.__brake
-            message.steer = steer
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
-            self.control_publisher.publish(message)
+                self.message.reverse = self.__reverse
+                self.message.hand_brake = False
+                self.message.manual_gear_shift = False
+                self.message.gear = 1
+                self.message.throttle = self.__throttle
+                self.message.brake = self.__brake
+                self.message.steer = steer
+
+            self.message.header.stamp = roscomp.ros_timestamp(
+                self.get_time(), from_sec=True
+            )
+            self.control_publisher.publish(self.message)
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
@@ -203,25 +232,22 @@ class VehicleController(CompatibleNode):
         """
         if not self.__emergency:
             return
-        message = CarlaEgoVehicleControl()
+
         if active:
-            message.throttle = 1
-            message.steer = 1
-            message.brake = 1
-            message.reverse = True
-            message.hand_brake = True
-            message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+            self.message.throttle = 1
+            self.message.steer = 1
+            self.message.brake = 1
+            self.message.reverse = True
+            self.message.hand_brake = True
+            self.message.manual_gear_shift = False
         else:
             self.__emergency = False
-            message.throttle = 0
-            message.steer = 0
-            message.brake = 1
-            message.reverse = False
-            message.hand_brake = False
-            message.manual_gear_shift = False
-            message.header.stamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
-        self.control_publisher.publish(message)
+            self.message.throttle = 0
+            self.message.steer = 0
+            self.message.brake = 1
+            self.message.reverse = False
+            self.message.hand_brake = False
+            self.message.manual_gear_shift = False
 
     def __get_velocity(self, data: CarlaSpeedometer) -> None:
         """

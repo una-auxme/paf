@@ -210,6 +210,10 @@ class Approach(py_trees.behaviour.Behaviour):
         map = Map.from_ros_msg(map_data)
 
         entity = map.get_entity_in_front_or_back(True)
+
+        left_free = map.is_lane_free(right_lane=False)
+        rospy.loginfo(f"OT: Left lane free: {left_free}")
+
         if entity is not None:
             rospy.loginfo(
                 f"Translation to car in front: {entity.transform.translation().x()},"
