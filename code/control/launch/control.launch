@@ -11,8 +11,7 @@
     necessary calculations are done and the vehicle controller is ready to send the next command to the carla simulator.
     Further information for a correct fix would be: https://carla.readthedocs.io/en/stable/configuring_the_simulation/
     -->
-    <arg name="vehicle_controller_sleep" default="0.05" />
-
+    <arg name="loop_sleep_time" default="0.1" />
 
     <node pkg="control" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
@@ -36,9 +35,9 @@
 
     <node pkg="control" type="vehicle_controller.py" name="vehicle_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+        <param name="loop_sleep_time" value="$(arg loop_sleep_time)" />
         <param name="role_name" value="$(arg role_name)" />
         <rosparam file="$(find control)/config/controller_config.yaml" command="load" />
-        <param name="vehicle_controller_sleep" value="$(arg vehicle_controller_sleep)" />
     </node>
 
 </launch>
