@@ -79,6 +79,8 @@ def get_test_entities() -> List[entity.Entity]:
         shape=shape.Rectangle(4.0, 0.2),
         transform=Transform2D.identity(),
         flags=entity.Flags(is_lanemark=True),
+        position_index=1,
+        predicted=False,
     )
     entities.append(lane)
     return entities

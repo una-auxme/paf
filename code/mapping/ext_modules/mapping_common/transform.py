@@ -360,6 +360,29 @@ class Transform2D:
             m = np.matmul(matrix, other._matrix)
             m = m / m[2]
             return Vector2(m)
+        if isinstance(other, shapely.Geometry):
+
+            def transform_shapely_point(
+                points: npt.NDArray[np.float64],
+            ) -> npt.NDArray[np.float64]:
+                assert (
+                    len(points.shape) == 2 and points.shape[1] == 2
+                ), "Coords must be 2 dimensional"
+                num_points = points.shape[0]
+                ones = np.ones(shape=(num_points, 1), dtype=np.float64)
+                points_homo = np.concatenate(
+                    (points, ones),
+                    axis=1,
+                )
+                points_homo = points_homo[:, None, :]
+                points_homo = np.transpose(points_homo, axes=(0, 2, 1))
+                transformed = np.matmul(self._matrix, points_homo)
+                transformed = np.transpose(transformed, axes=(0, 2, 1))
+                transformed = np.squeeze(transformed, 1)
+                transformed = transformed / transformed[:, 2, None]
+                return transformed[:, :2]
+
+            return shapely.transform(other, transformation=transform_shapely_point)
         raise TypeError(
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
         )

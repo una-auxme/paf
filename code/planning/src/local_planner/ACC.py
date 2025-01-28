@@ -5,17 +5,23 @@ from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
+import rospy
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray
+from visualization_msgs.msg import Marker, MarkerArray
 from typing import Optional
 from typing import List
 from typing import Tuple
 
 import utils
 
+from mapping_common import map
 from mapping_common.map import Map
-from mapping_common.entity import Entity
+from mapping_common.entity import Entity, FlagFilter
+from mapping_common.shape import Polygon
 from mapping.msg import Map as MapMsg
+
+MARKER_NAMESPACE: str = "acc"
 
 
 class ACC(CompatibleNode):
@@ -68,7 +74,7 @@ class ACC(CompatibleNode):
         # Get trajectory to determine current speed limit
         self.trajectory_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory_global",
+            f"/paf/{self.role_name}/trajectory",
             self.__set_trajectory,
             qos_profile=1,
         )
@@ -76,7 +82,7 @@ class ACC(CompatibleNode):
         # Get current position to determine current waypoint
         self.pose_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/current_pos",
+            topic=f"/paf/{self.role_name}/current_pos",
             callback=self.__current_position_callback,
             qos_profile=1,
         )
@@ -118,6 +124,11 @@ class ACC(CompatibleNode):
             Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
 
+        # Publish debugging marker
+        self.marker_publisher: Publisher = self.new_publisher(
+            MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
+        )
+
         # Map
         self.map: Optional[Map] = None
         # unstuck attributes
@@ -149,10 +160,7 @@ class ACC(CompatibleNode):
         self.logdebug("ACC initialized")
 
     def __get_map(self, data: MapMsg):
-        # seems to slow the ACC down so the loop is not executed any more
-        if data is not None: 
-            self.map = Map.from_ros_msg(data)
-        # return 
+        self.map = Map.from_ros_msg(data)
 
     def __update_radar_data(self, data: Float32MultiArray):
         if not data.data or len(data.data) < 2:
@@ -239,12 +247,10 @@ class ACC(CompatibleNode):
         Args:
             data (PoseStamped): Current position from perception
         """
+        self.__current_position = data.pose.position
         if len(self.__speed_limits_OD) < 1 or self.trajectory is None:
             return
 
-        agent = data.pose.position
-        if agent is not None:
-            self.__current_position = data.pose.position
         # Get current waypoint
         current_wp = self.trajectory.poses[self.__current_wp_index].pose.position
         # Get next waypoint
@@ -269,6 +275,19 @@ class ACC(CompatibleNode):
             self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
             self.speed_limit_publisher.publish(self.speed_limit)
 
+    def publish_debug_markers(self, m: List[Marker]):
+        marker_array = MarkerArray(
+            markers=[Marker(ns=MARKER_NAMESPACE, action=Marker.DELETEALL)]
+        )
+        for id, marker in enumerate(m):
+            marker.header.frame_id = "hero"
+            marker.header.stamp = rospy.get_rostime()
+            marker.ns = MARKER_NAMESPACE
+            marker.id = id
+            marker.lifetime = rospy.Duration.from_sec(2.0)
+            marker_array.markers.append(marker)
+        self.marker_publisher.publish(marker_array)
+
     def run(self):
         """
         Control loop
@@ -291,8 +310,28 @@ class ACC(CompatibleNode):
             Permanent checks if distance to a possible object is too small and
             publishes the desired speed to motion planning
             """
-            if (self.map is not None and self.trajectory is not None and self.__current_position is not None and self.__current_heading is not None): 
-                front_object = Map.get_obstacle_on_trajectory(self.map, self.trajectory, self.__current_position, self.__current_heading)
+            if (
+                self.map is not None
+                and self.trajectory is not None
+                and self.__current_position is not None
+                and self.__current_heading is not None
+            ):
+                # tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+                hero_transform = map.build_global_hero_transform(
+                    self.__current_position.x,
+                    self.__current_position.y,
+                    self.__current_heading,
+                )
+                collision_mask = map.build_centered_trajectory_shape(
+                    self.trajectory, hero_transform, max_length=100.0
+                )
+                mask_marker = Polygon.from_shapely(collision_mask).to_marker()
+                mask_marker.scale.z = 0.2
+                mask_marker.color.a = 0.5
+                mask_marker.color.r = 0
+                mask_marker.color.g = 1.0
+                mask_marker.color.b = 1.0
+                self.publish_debug_markers([mask_marker])
 
             if (
                 self.leading_vehicle_distance is not None
