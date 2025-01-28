@@ -1,7 +1,7 @@
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.2" />
-    <!--    
+    <!--
     HOTFIX:
     This sleep time is used for hotfix the carla timing problem
     The vehicle controller triggers the carla simulator and the carla simulator triggers the vehicle controller which results in the carla simulator
@@ -17,21 +17,27 @@
     <node pkg="control" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
+        <rosparam file="$(find control)/config/velocity_config.yaml" command="load" />
+
     </node>
 
     <node pkg="control" type="stanley_controller.py" name="stanley_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
+        <rosparam file="$(find control)/config/stanley_config.yaml" command="load" />
+
     </node>
 
     <node pkg="control" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
+        <rosparam file="$(find control)/config/pure_pursuit_config.yaml" command="load" />
     </node>
 
     <node pkg="control" type="vehicle_controller.py" name="vehicle_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
+        <rosparam file="$(find control)/config/controller_config.yaml" command="load" />
         <param name="vehicle_controller_sleep" value="$(arg vehicle_controller_sleep)" />
     </node>
 
