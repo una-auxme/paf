@@ -3,7 +3,7 @@ import rospy
 import ros_numpy
 import numpy as np
 from std_msgs.msg import String, Header
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sklearn.cluster import DBSCAN
 
 # from sklearn.cluster import HDBSCAN
@@ -33,8 +33,8 @@ class RadarNode(CompatibleNode):
         }
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
         self.sensor_config = {
-            "RADAR0": [2.0, -1.5, 0.7],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, 1.5, 0.7],  # , 0.0, 0.0, 0.0],
+            "RADAR0": [2.0, -1.5, 1],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 1.5, 1],  # , 0.0, 0.0, 0.0],
         }
 
         self.timer_interval = 0.1  # 0.1 seconds
@@ -91,6 +91,99 @@ class RadarNode(CompatibleNode):
             self.process_data(self.sensor_data)
             self.previous_time = 0
             return
+
+    def imu_callback(self, msg):
+        """Verarbeitet die IMU-Daten und extrahiert Pitch und Roll."""
+        # orientation_q = msg.orientation
+        # orientation_euler = tf.transformations.euler_from_quaternion(
+        #    [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        # )
+        # self.current_pitch = orientation_euler[1]  # Pitch
+        # self.current_roll = orientation_euler[0]  # Roll
+
+        """# Extrahiere IMU-Daten
+        accel_x = msg.linear_acceleration.x
+        accel_z = msg.linear_acceleration.z
+        gyro_y = msg.angular_velocity.y
+
+        # Zeitdifferenz berechnen
+        current_time = time.time()
+        delta_time = current_time - self.last_time
+        self.last_time = current_time
+
+        # Berechnung der Bewegungsbeschleunigung
+        total_acceleration = math.sqrt(accel_x**2 + accel_z**2)
+
+        # Wenn die Bewegungsbeschleunigung gering ist, auf die Gravitation verlassen
+        if total_acceleration < self.acceleration_threshold:
+            # Berechne den Pitch aus der Gravitation (Beschleunigungsmethode)
+            pitch_acc = math.atan2(accel_x, accel_z)
+            self.current_pitch = pitch_acc
+        else:
+            # Berechne den Pitch durch Integration der Gyroskopdaten
+            self.current_pitch += gyro_y * delta_time
+
+        # Save pitch and roll for debugging
+        self.pitch_buffer.append(self.current_pitch)
+        self.roll_buffer.append(self.current_roll)"""
+
+        accel_x = msg.linear_acceleration.x
+        accel_z = msg.linear_acceleration.z
+
+        # Verhindere Division durch Null
+        if accel_z == 0:
+            accel_z = 1e-6
+
+        # Berechne Pitch-Winkel (in Radiant)
+        self.current_pitch = -np.arctan2(accel_x, accel_z)
+        self.current_pitch *= 0.25
+
+    def filter_points(self, points):
+        """
+        Filtert Punkte aus einem PointCloud2 basierend auf Pitch,
+        Fahrzeughöhe und Distanz.
+
+        Parameter:
+        - pointcloud_msg: sensor_msgs/PointCloud2
+            Die eingehenden Radar-Punkte.
+
+        Rückgabe:
+        - sensor_msgs/PointCloud2
+            Gefilterte Radar-Punkte, bei denen keine Bodenreflexion vorliegt.
+        """
+
+        filtered_points = []
+        # radar_height = 0.7  # Höhe des Radars über dem Boden (in Metern)
+
+        # Berechnung der Schwellenwerte basierend auf Pitch
+        pitch_rad = self.current_pitch  # Pitch-Winkel in Radiant
+        pitch_slope = np.tan(pitch_rad)  # Steigung durch Pitch
+
+        # Filterlogik: Prüfe, ob der Punkt unterhalb der berechneten Bodenhöhe liegt
+        if points is None:
+            return
+
+        mask = points[:, 2] > points[:, 0] * pitch_slope - 0.2
+        rospy.loginfo(f"Filtering points count: {np.sum(mask)}")
+
+        filtered_points = points[mask]
+
+        """for point in points:
+            x, y, z = point[:3]  # Extrahiere die Koordinaten
+            ground_height_at_x = radar_height - (
+                x * pitch_slope
+            )  # Z-Höhe des Bodens bei Distanz X
+
+            if z > ground_height_at_x + self.z_tolerance:  # Toleranz für Filterung
+                filtered_points.append(
+                    point
+                )  # Punkt beibehalten, wenn er nicht am Boden liegt"""
+
+        # Konvertiere gefilterte Punkte zurück in PointCloud2
+        if filtered_points.size == 0:
+            return None
+        else:
+            return filtered_points
 
     def callback(self, data, sensor_name):
         """Collects data from radar sensors and calles process data function
@@ -171,7 +264,9 @@ class RadarNode(CompatibleNode):
             for sensor_name, msg in datasets.items():
                 if msg is not None:
                     points = self.extract_points(msg, sensor_name)
-                    combined_points.extend(points)
+                    break_filter_data = self.filter_points(points)
+                    if break_filter_data is not None:
+                        combined_points.extend(break_filter_data)
 
         if not combined_points:
             rospy.logwarn("No Radarpoints to process!")
@@ -299,6 +394,12 @@ class RadarNode(CompatibleNode):
             "/clock",
             Clock,
             self.time_check,
+        )
+
+        rospy.Subscriber(
+            "/carla/hero/IMU",
+            Imu,
+            self.imu_callback,
         )
 
         rospy.spin()
@@ -452,7 +553,7 @@ def cluster_data(data, eps, min_samples):
     # data_reduced = data[:, [0, 1, 3]]
 
     data_reduced = data
-    data_reduced[:, 2] = 0.7
+    data_reduced[:, 2] = 1
     data_scaled = scaler.fit_transform(data_reduced)
 
     # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)

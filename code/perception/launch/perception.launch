@@ -102,5 +102,12 @@
     <param name="line_width" value="0.5"/><!--lanemarking width-->
   </node>
 
+
+  <node pkg="perception" type="debug_wrapper.py" name="imu_filter" output="screen" args="--debug_node=imu_filter.py --debug_port=53000">
+    <param name="role_name" value="$(arg role_name)" />   
+    <param name="point_cloud_topic_0" value="/carla/hero/RADAR0"/>
+    <param name="point_cloud_topic_1" value="/carla/hero/RADAR1"/>
+  </node>
+
 </launch>
 

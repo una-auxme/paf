@@ -14,6 +14,8 @@ from coordinate_transformation import CoordinateTransformer
 from coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
 
+import rospy
+
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
@@ -177,6 +179,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
         ]
 
         heading = quat_to_heading(data_orientation_q)
+
+        rospy.loginfo(heading)
 
         # In the case of using "None" filter, the heading is
         # published as current heading, since it is not filtered
