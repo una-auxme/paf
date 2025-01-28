@@ -6,8 +6,6 @@ from std_msgs.msg import String, Float32
 import rospy
 import numpy as np
 
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-from local_planner.utils import convert_pose_to_array
 
 from behaviors import behavior_speed as bs
 from local_planner.utils import (
@@ -17,6 +15,9 @@ from local_planner.utils import (
 from mapping_common.map import Map
 from mapping_common.entity import Pedestrian
 from visualization_msgs.msg import Marker
+
+sys.path.append(os.path.abspath(sys.path[0] + "/.."))
+from local_planner.utils import convert_pose_to_array  # type: ignore # noqa: E402
 
 """
 Source: https://github.com/ll7/psaf2
