@@ -291,9 +291,10 @@ class MotionPlanning(CompatibleNode):
         else:
             selection = pose_list[
                 int(currentwp)
-                + int(distance / 2) : int(currentwp)
+                + min(2, int(distance / 2)) : int(currentwp)
                 + int(distance)
                 + NUM_WAYPOINTS
+                + 2
             ]
         waypoints = convert_pose_to_array(selection)
 
@@ -331,9 +332,9 @@ class MotionPlanning(CompatibleNode):
             )
         else:
             path.poses = (
-                pose_list[: int(currentwp) + int(distance / 2)]
+                pose_list[: int(currentwp) + min(2, int(distance / 2))]
                 + result
-                + pose_list[int(currentwp + distance + NUM_WAYPOINTS) :]
+                + pose_list[int(currentwp + distance + NUM_WAYPOINTS + 2) :]
             )
 
         self.trajectory = path
@@ -671,7 +672,7 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
-        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
+        v_stop = min(convert_to_ms(9.0), convert_to_ms(stopline / 1.4))
         if stopline < TARGET_DISTANCE_TO_STOP_OVERTAKE:
             v_stop = 0.0
 
@@ -697,7 +698,7 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_virtual_overtake(self) -> float:
         if (self.__ot_distance is not None) and self.__ot_distance != np.inf:
-            return self.__ot_distance
+            return self.__ot_distance - 2.5
         else:
             return 0.0
 
