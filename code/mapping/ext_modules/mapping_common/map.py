@@ -578,13 +578,20 @@ def build_centered_trajectory(
     global_trajectory: NavPath,
     global_hero_transform: Transform2D,
     max_length: Optional[float] = None,
+    current_wp_idx: int = 0,
+    max_wp_count: Optional[int] = None,
 ) -> Optional[shapely.LineString]:
     """Builds a local trajectory centered on the global_hero_pos
 
     Must not be used for navigating, but can be used for collision avoidance / acc
     """
     points = []
-    for pose in global_trajectory.poses:
+    poses_view = (
+        global_trajectory.poses[current_wp_idx:]
+        if max_wp_count is None
+        else global_trajectory.poses[current_wp_idx : current_wp_idx + max_wp_count]
+    )
+    for pose in poses_view:
         pose: Pose = pose.pose
         points.append(Point2.new(pose.position.x, pose.position.y).to_shapely())
     global_line = shapely.LineString(points)
@@ -603,6 +610,8 @@ def build_centered_trajectory_shape(
     global_hero_transform: Transform2D,
     width: float = 1.0,
     max_length: Optional[float] = None,
+    current_wp_idx: int = 0,
+    max_wp_count: Optional[int] = None,
 ) -> Optional[shapely.Polygon]:
     """Calculates the closest entity on the given trajectory. Transforms
     trajectory world coordinates into map coordinates based on hero position.
@@ -619,7 +628,11 @@ def build_centered_trajectory_shape(
         Optional[Entity]: The closest entity
     """
     line = build_centered_trajectory(
-        global_trajectory, global_hero_transform, max_length
+        global_trajectory,
+        global_hero_transform,
+        max_length,
+        current_wp_idx,
+        max_wp_count,
     )
     if line is None:
         return None

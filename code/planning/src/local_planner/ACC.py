@@ -343,7 +343,11 @@ class ACC(CompatibleNode):
                     self.__current_heading,
                 )
                 collision_mask = map.build_centered_trajectory_shape(
-                    self.trajectory, hero_transform, max_length=100.0
+                    self.trajectory,
+                    hero_transform,
+                    max_length=100.0,
+                    current_wp_idx=self.__current_wp_index,
+                    max_wp_count=200,
                 )
                 if collision_mask is not None:
                     mask_marker = Polygon.from_shapely(collision_mask).to_marker()
