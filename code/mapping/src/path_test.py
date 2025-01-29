@@ -4,6 +4,8 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from ros_compatibility.node import CompatibleNode
 from nav_msgs.msg import Path
+from mapping.msg import Map as MapMsg
+from mapping_common.map import Map
 import random
 
 
@@ -26,8 +28,15 @@ class TestPath(CompatibleNode):
             qos_profile=1,
         )
 
-        self.rate = 0.5
-        self.new_timer(0.5, self.generate_trajectory)
+        self.new_subscription(
+            topic=self.get_param("~map_topic", "/paf/hero/mapping/init_data"),
+            msg_type=MapMsg,
+            callback=self.map_callback,
+            qos_profile=1,
+        )
+
+        self.rate = self.get_param("~map_publish_rate", 20)
+        self.new_timer(1.0 / self.rate, self.generate_trajectory)
 
     def generate_trajectory(self, timer_event=None) -> Path:
         path_msg = Path()
@@ -53,6 +62,13 @@ class TestPath(CompatibleNode):
 
         self.local_trajectory = path_msg
         self.publisher.publish(path_msg)
+
+    def map_callback(self, data: MapMsg):
+        map = Map.from_ros_msg(data)
+
+        status = map.check_trajectory(self.local_trajectory)
+        if status == 1:
+            self.loginfo("Trajectory Check: 1")
 
 
 if __name__ == "__main__":
