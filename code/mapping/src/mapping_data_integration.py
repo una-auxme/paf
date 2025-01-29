@@ -111,6 +111,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.lidar_clustered_points_data = data
 
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
+        rospy.loginfo(f"radar data received in intermediate layer callback: {data}")
         self.radar_clustered_points_data = data
 
     def vision_clustered_points_callback(self, data: ClusteredPointsArray):
@@ -274,10 +275,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.cluster_points_publisher.publish(point_cloud_msg)
 
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
+        rospy.loginfo("Create entities in intermediate layer")
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
             self.radar_clustered_points_data = None
+            rospy.loginfo("radar data received in intermediate layer")
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
             self.lidar_clustered_points_data = None
@@ -303,9 +306,40 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         indexarray = np.array(data.indexArray)
         motionarray = np.array(data.motionArray) if data.motionArray else None
+        motion_array_converted = None
+
+        if motionarray is not None:
+            # rospy.loginfo("-----------------------------------------------")
+            # rospy.loginfo(f"Mapping type(motionArray[0] vorher: {type(motionarray[0])}")
+            rospy.loginfo(f"Mappingnode motionArray[0] vorher: {motionarray[0]}")
+            rospy.loginfo("Converting motion array")
+            motion_array_converted = [
+                Motion2D.from_ros_msg(motion_msg) for motion_msg in motionarray
+            ]
+            rospy.loginfo(
+                f"Mappingnode type(motionArray[0] nachher: {type(motion_array_converted[0])}"
+            )
+            # rospy.loginfo(
+            #     f"Datentyp motion array converted vorher: {type(motion_array_converted)}"
+            # ) # list
+            motion_array_converted = np.array(motion_array_converted)
+            # rospy.loginfo(
+            #     f"Datentyp motion array converted nachher: {type(motion_array_converted)}"
+            # ) # numpy.ndarray passt
+            # rospy.loginfo(
+            #     f"MappingnodemotionArray[0] nachher: {motion_array_converted[0]}"
+            # )
 
         unique_labels = np.unique(indexarray)
         entities = []
+
+        #     rospy.logwarn(f"MotionArraytype: {type(motionarray)}")
+        #     rospy.logwarn(f"MotionArray: {motionarray}")
+        #     rospy.logwarn(f"Converted type: {type(motion_array_converted)}")
+        #     rospy.logwarn(f"Converted array: {motion_array_converted}")
+
+        #     rospy.loginfo(f"MotionArraytype: {type(data.motionarray)}")
+        #     rospy.loginfo(f"MotionArray: {data.motionarray}")
 
         for label in unique_labels:
             if label == -1:
@@ -343,11 +377,41 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             # Optional: Berechne die Bewegung (Motion)
             motion = None
-            if motionarray is not None and motionarray.size != 0:
-                cluster_motion = motionarray[indexarray == label][0]
-                motion = Motion2D(
-                    Vector2.new(cluster_motion[0], cluster_motion[1])
-                )  # Geschwindigkeit (x, y)
+            if motion_array_converted is not None:
+                # rospy.loginfo(f"Len von indexarray: {len(indexarray)}")
+                # rospy.loginfo(f"Len von motionarray: {len(motionarray)}") #passt, beide gleich lang
+                # motion = motion_array_converted[0]
+                cluster_motion = motion_array_converted[indexarray == label]
+                motion = cluster_motion[0]
+                # rospy.loginfo("motion_array_converted und zugewiesen")
+                rospy.loginfo(
+                    f"motion_array_converted linear: {motion.angular_velocity}"
+                )
+            # rospy.loginfo(f"Len von indexarray: {len(indexarray)}")
+            # rospy.loginfo(f"Len von motionarray: {len(motion_array_converted)}")
+
+            # cluster_motion = motion_array_converted[indexarray == label]
+            # motion = cluster_motion[0]
+
+            # if cluster_motion.size > 0:
+            #     motion = cluster_motion[0]
+
+            # if motionarray is not None and motionarray.size != 0:
+            #     cluster_motion_data = motionarray[indexarray == label][0]
+            #     if len(cluster_motion_data) > 0:
+            #         cluster_motion = cluster_motion_data[0]
+            #         rospy.loginfo(
+            #             f"cluster_motion: {cluster_motion} for label: {label}"
+            #         )
+            #     else:
+            #         rospy.loginfo(f"no motion found for label: {label}")
+            # cluster_motion = motionarray[indexarray == label][0]
+            # rospy.loginfo(f"Nach cluster_motion: {cluster_motion}")
+            # test = Motion2D.from_ros_msg(cluster_motion)
+            # rospy.loginfo(f"test: {test}")
+            #     motion = Motion2D(
+            #         Vector2.new(cluster_motion[0], cluster_motion[1])
+            #     )  # Geschwindigkeit (x, y)
 
             # Optional: Füge die Objektklasse hinzu
             # object_class = None
@@ -413,6 +477,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         return hero
 
     def publish_new_map(self, timer_event=None):
+        rospy.loginfo("Publish new map() is running")
         hero_car = self.create_hero_entity()
         if hero_car is None:
             return
@@ -424,9 +489,11 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_lidar_cluster"
         ):
             entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
+        rospy.loginfo(f"radar data: {self.radar_clustered_points_data}")
         if self.radar_clustered_points_data is not None and self.get_param(
             "~enable_radar_cluster"
         ):
+            rospy.loginfo("Publish new map radar")
             entities.extend(self.create_entities_from_clusters(sensortype="radar"))
         if self.vision_clustered_points_data is not None and self.get_param(
             "enable_vision_cluster"

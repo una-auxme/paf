@@ -36,7 +36,7 @@ def array_to_clustered_points(
     # Populate the motionArray if object_speed_array is provided
     if object_speed_array is not None:
         clustered_points.motionArray = object_speed_array
-        rospy.logerr("Motion2D is not implemented")
+        # rospy.logerr("Motion2D is not implemented")
 
     # Populate the object_class if object_class_array is provided
     if object_class_array is not None:
