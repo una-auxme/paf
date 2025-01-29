@@ -67,8 +67,7 @@ class TestPath(CompatibleNode):
         map = Map.from_ros_msg(data)
 
         status = map.check_trajectory(self.local_trajectory)
-        if status == 1:
-            self.loginfo("Trajectory Check: 1")
+        self.loginfo("Trajectory Check: " + str(status))
 
 
 if __name__ == "__main__":
