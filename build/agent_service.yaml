@@ -38,6 +38,7 @@ services:
       #- ROUTE=/workspace/code/routes/routes_construction_sign.xml
       #- ROUTE=/workspace/code/routes/routes_construction_sign2.xml
       #- ROUTE=/workspace/code/routes/routes_curve.xml
+      #- ROUTE=/workspace/code/routes/routes_curve_right.xml
       #- ROUTE=/workspace/code/routes/routes_firetruck_crash.xml
       #- ROUTE=/workspace/code/routes/routes_intersection_pedestrian.xml
       #- ROUTE=/workspace/code/routes/routes_intersection_stop_sign.xml
