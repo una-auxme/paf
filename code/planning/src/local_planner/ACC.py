@@ -15,7 +15,8 @@ from typing import Tuple
 
 import utils
 
-from mapping_common import map
+import mapping_common.map
+import mapping_common.mask
 from mapping_common.map import Map
 from mapping_common.entity import Entity, FlagFilter
 from mapping_common.shape import Polygon
@@ -336,18 +337,19 @@ class ACC(CompatibleNode):
                 and self.__current_position is not None
                 and self.__current_heading is not None
             ):
-                # tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-                hero_transform = map.build_global_hero_transform(
+                tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+                hero_transform = mapping_common.map.build_global_hero_transform(
                     self.__current_position.x,
                     self.__current_position.y,
                     self.__current_heading,
                 )
-                collision_mask = map.build_centered_trajectory_shape(
+                collision_mask = mapping_common.mask.build_trajectory_shape(
                     self.trajectory,
                     hero_transform,
                     max_length=100.0,
                     current_wp_idx=self.__current_wp_index,
                     max_wp_count=200,
+                    centered=True,
                 )
                 if collision_mask is not None:
                     mask_marker = Polygon.from_shapely(collision_mask).to_marker()
@@ -356,7 +358,22 @@ class ACC(CompatibleNode):
                     mask_marker.color.r = 0
                     mask_marker.color.g = 1.0
                     mask_marker.color.b = 1.0
-                    self.publish_debug_markers([mask_marker])
+
+                    marker_list = [mask_marker]
+                    entity_result = tree.get_nearest_entity(
+                        collision_mask, self.map.hero().to_shapely()
+                    )
+                    if entity_result is not None:
+                        entity, distance = entity_result
+                        entity_marker = entity.entity.to_marker()
+                        entity_marker.scale.z = 0.2
+                        entity_marker.color.a = 0.5
+                        entity_marker.color.r = 1.0
+                        entity_marker.color.g = 0.0
+                        entity_marker.color.b = 0.0
+                        marker_list.append(entity_marker)
+
+                    self.publish_debug_markers(marker_list)
 
             if (
                 self.leading_vehicle_distance is not None
