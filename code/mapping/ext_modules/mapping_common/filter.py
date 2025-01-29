@@ -7,8 +7,8 @@ import shapely
 
 from .map import Map
 from .entity import ShapelyEntity, Entity, FlagFilter
-from .shape import Polygon, Shape2D
-from .transform import Transform2D
+from .shape import Polygon, Shape2D, Rectangle
+from .transform import Transform2D, Vector2
 
 
 class MapFilter:
@@ -27,6 +27,25 @@ class MapFilter:
                 Note that unmodified entities are NOT deepcopied.
         """
         raise NotImplementedError
+
+
+@dataclass
+class LaneIndexFilter(MapFilter):
+
+    def filter(self, map):
+        f = FlagFilter(is_lanemark=True)
+        lanemarkings = map.filtered(f)
+        check_box = Entity(
+            confidence=0,
+            priority=0,
+            shape=Rectangle(20, 0.1),
+            transform=Transform2D.new_rotation_translation(
+                1.5708, Vector2.new(0.0, 0.0)
+            ),
+        )
+        lanemarkings.append(check_box)
+        shapely.intersection_all(lanemarkings)
+        return map
 
 
 @dataclass
