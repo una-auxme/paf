@@ -10,4 +10,5 @@ TEST_THRESHOLD_AND_NAME = [
     [7, "routes_open_door", 100.0],
     [8, "routes_pedestrian_behind_bus", 100.0],
     [9, "routes_stop_sign_pedestrian_cross", 100.0],
+    [10, "bicycle", 100.0],
 ]
