@@ -36,4 +36,7 @@
     <param name="lidar_discard_probability" value="$(arg lidar_discard_probability)" />
   </node>
 
+  <node pkg="mapping" type="path_test.py" name="Local_Trajectory_Node" output="screen" />
+    <param name="map_publish_rate" value="$(arg map_publish_rate)" />
+
 </launch>
