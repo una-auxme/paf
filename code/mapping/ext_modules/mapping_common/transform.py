@@ -47,6 +47,11 @@ class Point2(_Coord2):
     def vector(self) -> "Vector2":
         return Vector2(self._matrix)
 
+    def vector_to(self, other: "Point2") -> "Vector2":
+        start = self.vector()
+        end = other.vector()
+        return end - start
+
     @staticmethod
     def new(x: float, y: float) -> "Point2":
         m = np.array([x, y, 1.0], dtype=np.float64)
@@ -116,7 +121,7 @@ class Vector2(_Coord2):
         zero = Vector2.zero()
         if self == zero:
             return zero
-        return Vector2(self._matrix / self.length())
+        return self / self.length()
 
     def angle_to(self, other: "Vector2") -> float:
         """Calculates the angle to *other*
@@ -195,6 +200,15 @@ class Vector2(_Coord2):
             return self.__mul__(other)
         raise TypeError(
             f"Unsupported operand types for *: '{type(self)}' and '{type(other)}'"
+        )
+
+    def __truediv__(self, other):
+        if isinstance(other, (float, int)):
+            matrix = self._matrix / other
+            matrix[2] = 1.0
+            return Vector2(matrix)
+        raise TypeError(
+            f"Unsupported operand types for /: '{type(self)}' and '{type(other)}'"
         )
 
     def __add__(self, other):

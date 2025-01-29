@@ -192,7 +192,7 @@ class Circle(Shape2D):
         shape_transform: Transform2D = self.offset
         if transform is not None:
             shape_transform = transform * shape_transform
-        p: Point2 = Point2.from_vector(shape_transform.translation())
+        p: Point2 = shape_transform.translation().point()
 
         outline_length = 2 * self.radius * math.pi
         segments = outline_length / CIRCLE_APPROXIMATION_LENGTH

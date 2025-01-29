@@ -71,6 +71,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get global trajectory to determine current speed limit
+        self.trajectory_global_sub: Subscriber = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory_global",
+            self.__set_trajectory_global,
+            qos_profile=1,
+        )
+
         # Get trajectory to determine current speed limit
         self.trajectory_sub: Subscriber = self.new_subscription(
             Path,
@@ -104,12 +112,12 @@ class ACC(CompatibleNode):
         )
 
         # Get distance to and velocity of leading vehicle from radar sensor
-        self.lead_vehicle_sub = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
-            self.__update_radar_data,
-            qos_profile=1,
-        )
+        # self.lead_vehicle_sub = self.new_subscription(
+        #     Float32MultiArray,
+        #     f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
+        #     self.__update_radar_data,
+        #     qos_profile=1,
+        # )
 
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
@@ -137,6 +145,7 @@ class ACC(CompatibleNode):
         # List of all speed limits, sorted by waypoint index
         self.__speed_limits_OD: List[float] = []
         # Current Trajectory
+        self.trajectory_global: Optional[Path] = None
         self.trajectory: Optional[Path] = None
         # Current position
         self.__current_position: Optional[Point] = None
@@ -224,8 +233,16 @@ class ACC(CompatibleNode):
         """
         self.__current_heading = float(data.data)
 
-    def __set_trajectory(self, data: Path):
+    def __set_trajectory_global(self, data: Path):
         """Recieve trajectory from global planner
+
+        Args:
+            data (Path): Trajectory path
+        """
+        self.trajectory_global = data
+
+    def __set_trajectory(self, data: Path):
+        """Recieve trajectory from motion planner
 
         Args:
             data (Path): Trajectory path
@@ -248,13 +265,16 @@ class ACC(CompatibleNode):
             data (PoseStamped): Current position from perception
         """
         self.__current_position = data.pose.position
-        if len(self.__speed_limits_OD) < 1 or self.trajectory is None:
+        if len(self.__speed_limits_OD) < 1 or self.trajectory_global is None:
             return
 
+        agent = self.__current_position
         # Get current waypoint
-        current_wp = self.trajectory.poses[self.__current_wp_index].pose.position
+        current_wp = self.trajectory_global.poses[self.__current_wp_index].pose.position
         # Get next waypoint
-        next_wp = self.trajectory.poses[self.__current_wp_index + 1].pose.position
+        next_wp = self.trajectory_global.poses[
+            self.__current_wp_index + 1
+        ].pose.position
         # distances from agent to current and next waypoint
         d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
         d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
@@ -284,7 +304,7 @@ class ACC(CompatibleNode):
             marker.header.stamp = rospy.get_rostime()
             marker.ns = MARKER_NAMESPACE
             marker.id = id
-            marker.lifetime = rospy.Duration.from_sec(2.0)
+            marker.lifetime = rospy.Duration.from_sec(0.5)
             marker_array.markers.append(marker)
         self.marker_publisher.publish(marker_array)
 
@@ -325,13 +345,14 @@ class ACC(CompatibleNode):
                 collision_mask = map.build_centered_trajectory_shape(
                     self.trajectory, hero_transform, max_length=100.0
                 )
-                mask_marker = Polygon.from_shapely(collision_mask).to_marker()
-                mask_marker.scale.z = 0.2
-                mask_marker.color.a = 0.5
-                mask_marker.color.r = 0
-                mask_marker.color.g = 1.0
-                mask_marker.color.b = 1.0
-                self.publish_debug_markers([mask_marker])
+                if collision_mask is not None:
+                    mask_marker = Polygon.from_shapely(collision_mask).to_marker()
+                    mask_marker.scale.z = 0.2
+                    mask_marker.color.a = 0.5
+                    mask_marker.color.r = 0
+                    mask_marker.color.g = 1.0
+                    mask_marker.color.b = 1.0
+                    self.publish_debug_markers([mask_marker])
 
             if (
                 self.leading_vehicle_distance is not None
