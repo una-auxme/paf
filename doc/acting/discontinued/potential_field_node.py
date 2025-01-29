@@ -47,7 +47,7 @@ the matrix, so we need to scale the resolution to have a better representation o
 entities in the environment.
 """
 
-LOOP_RATE: float = rospy.get_param("potential_field_loop_rate", 0.1)
+LOOP_RATE: float = rospy.get_param("potential_field_loop_rate", 0.4)
 
 RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
 # Factor to scale the forces in the potential field
@@ -316,6 +316,8 @@ class Potential_field_node(CompatibleNode):
 
         self.local_trajectory_pub.publish(local_traj)
 
+        self.loginfo("published trajectory")
+
         self.local_trajectory = local_traj
 
     def __generate_local_trajectory_matrix(self):
@@ -443,7 +445,6 @@ class Potential_field_node(CompatibleNode):
         num_steps = 0
         points: list[tuple[float]] = []  # List to store the points of the trajectory
         plot_points: list[tuple[int]] = []  # List to store the points for plotting
-        min_gradient_magnitude = 1e-4  # Minimum gradient magnitude to stop the descent
 
         x, y = (
             self.entity_matrix_midpoint
@@ -481,13 +482,14 @@ class Potential_field_node(CompatibleNode):
             """
             Loop function to be called periodically
             """
+            self.loginfo("potential_field: tick")
             self.__filter_entities()  # Filter the entities and update the entity matrix
-
-            # Calculate the potential field and update the trajectory
-            self.__calculate_field()
 
             # Transform the global trajectory to the local frame
             self.__get_local_trajectory()
+
+            # Calculate the potential field and update the trajectory
+            self.__calculate_field()
 
         self.new_timer(LOOP_RATE, loop)  # Set a timer to call the loop function
         self.spin()  # Keep the node running
