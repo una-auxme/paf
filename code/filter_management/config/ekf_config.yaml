@@ -38,7 +38,7 @@ ekf_local:
   odom0_differential: false
   odom0_relative: false
 
-  imu0: /carla/hero/IMU
+  imu0: imu/data
   imu0_config: [
       false, # x
       false, # y
@@ -119,7 +119,7 @@ ekf_global:
 
   odom0: wheel/odometry
   odom0_config: [
-      true, # x
+      true,  # x
       false, # y
       false, # z
       false, # roll
@@ -135,6 +135,7 @@ ekf_global:
       false, # ay
       false, # az
     ]
+    
   odom0_queue_size: 10
   odom0_nodelay: false
   odom0_differential: false
@@ -143,28 +144,28 @@ ekf_global:
   odom1: /odometry/gps
   odom1_config:
     [
-      true,
-      true,
-      true,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
+      true,  # x
+      true,  # y
+      true,  # z
+      false, # roll
+      false, # pitch
+      false, # yaw
+      false, # vx
+      false, # vy
+      false, # vz
+      false, # vroll
+      false, # vpitch
+      false, # vyaw
+      false, # ax
+      false, # ay
+      false, # az
     ]
   odom1_queue_size: 10
   odom1_nodelay: false
   odom1_differential: false
   odom1_relative: false
 
-  imu0: carla/hero/IMU
+  imu0: imu/data # with the "corrected covariance for yaw"
   imu0_config: [
       false, # x
       false, # y
@@ -192,21 +193,22 @@ ekf_global:
 
   process_noise_covariance:
     [
-      0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
-      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015
+    # x     y     z     roll  pitch yaw   vx     vy     vz    vroll vpitchvyaw  ax    ay    az    
+      0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,    # x 
+      0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,    # y
+      0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,    # z
+      0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,    # roll
+      0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,    # pitch
+      0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,    # yaw
+      0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,    # vx
+      0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,    # vy
+      0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,    # vz
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,    # vroll
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,    # vpitch
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,    # vyaw
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,    # ax
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,    # ay
+      0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015 # az
     ]
 
   initial_estimate_covariance:

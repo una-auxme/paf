@@ -4,7 +4,7 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Imu, NavSatFix
 
-"""This Node forward the IMU data to the navsat node. 
+"""This Node forward the IMU the other nodes
 The """
 
 
@@ -17,7 +17,7 @@ class ForwardIMU(CompatibleNode):
         """
         super().__init__("forward_imu")
 
-        self.imu_publisher = self.new_publisher(Imu, "/imu/dataa", qos_profile=10)
+        self.imu_publisher = self.new_publisher(Imu, "/imu/data", qos_profile=10)
         self.gps_publisher = self.new_publisher(NavSatFix, "/gps/fix", qos_profile=10)
 
         # Initialize the subscriber for the IMU data
@@ -40,7 +40,8 @@ class ForwardIMU(CompatibleNode):
         imu.header.frame_id = "hero"  # ??
         imu.linear_acceleration_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 1]
         imu.angular_velocity_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-        imu.orientation_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        imu.orientation_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 0]
+        # yaw is 100 % accurate
         self.imu_publisher.publish(imu)
         # doesnt work anyway
 

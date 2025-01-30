@@ -36,6 +36,8 @@ class GPSTransform(CompatibleNode):
 
         self.transfomer = CoordinateTransformer()
 
+        # self.new_timer(1 / 10.0, lambda _: self.process_data())  # Other might not work
+
     def process_data(self):
         if self.odometry is None or self.gps is None:
             return
