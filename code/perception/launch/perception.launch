@@ -76,7 +76,7 @@
     <param name="role_name" value="$(arg role_name)" />
   </node>
 
-  <node pkg="perception" type="debug_wrapper.py" name="radar_node" output="screen" args="--debug_node=radar_node.py --debug_port=53000">
+  <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic_0" value="/carla/hero/RADAR0"/>
     <param name="point_cloud_topic_1" value="/carla/hero/RADAR1"/>
     <param name="dbscan_eps" value="0.3"/>
