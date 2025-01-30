@@ -1,8 +1,8 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
-  <arg name="view_camera" default="False" />
-  <arg name="camera_resolution" default="320" />
+  <arg name="view_camera" default="True" />
+  <arg name="camera_resolution" default="640" />
 
 
 
@@ -36,7 +36,8 @@
       -->
   </node>
 
-  <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
+  <!--<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">-->
+  <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53000">
     <param name="role_name" value="$(arg role_name)" />
     <param name="view_camera" value="$(arg view_camera)" />
     <param name="camera_resolution" value="$(arg camera_resolution)"/>

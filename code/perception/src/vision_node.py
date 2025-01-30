@@ -180,17 +180,26 @@ class VisionNode(CompatibleNode):
             (cv image): visualization output for rvizw
         """
         scaled_masks = None
-        # preprocess image
+        # Convert ROS image message to OpenCV format
         cv_image = self.bridge.imgmsg_to_cv2(
             img_msg=image, desired_encoding="passthrough"
         )
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
-        # run model prediction
+        # Step 1: Double the image size
+        h, w = cv_image.shape[:2]  # Get original dimensions
+        new_h, new_w = h * 2, w * 2  # Double the size
+        cv_image = cv2.resize(cv_image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
-        output = self.model(
-            cv_image, half=True, verbose=False, imgsz=image_size  # type: ignore
-        )
+        # Step 2: Crop the center while keeping the aspect ratio
+        crop_x1 = (new_w - w) // 2
+        crop_x2 = crop_x1 + w
+        crop_y1 = (new_h - h) // 2
+        crop_y2 = crop_y1 + h
+        cropped_image = cv_image[crop_y1:crop_y2, crop_x1:crop_x2]
+
+        # Step 3: Run model prediction on the cropped image
+        output = self.model(cropped_image, half=True, verbose=False, imgsz=image_size)  # type: ignore
         if not (
             hasattr(output[0], "masks")
             and output[0].masks is not None
@@ -205,7 +214,7 @@ class VisionNode(CompatibleNode):
             output[0].boxes.cls.to(torch.int).cpu().numpy()  # type: ignore
         ]
 
-        masks = torch.tensor(output[0].masks.data)
+        masks = output[0].masks.data.clone().detach()
         scaled_masks = scale_masks(
             masks.unsqueeze(1), cv_image.shape[:2], True
         ).squeeze(1)
@@ -223,7 +232,7 @@ class VisionNode(CompatibleNode):
         if clustered_points is None or clustered_points.size == 0:
             return None
         try:
-            self.publish_distance_output(clustered_points, carla_classes_indices)
+            # self.publish_distance_output(clustered_points, carla_classes_indices)
             clustered_lidar_points_msg = array_to_clustered_points(
                 clustered_points,
                 cluster_indices,
@@ -242,7 +251,7 @@ class VisionNode(CompatibleNode):
 
         transposed_image = np.transpose(cv_image, (2, 0, 1))
         image_tensor = torch.tensor(transposed_image, dtype=torch.uint8)
-        masks_tensor = torch.tensor(scaled_masks > 0, dtype=torch.bool)
+        masks_tensor = scaled_masks.clone().detach().to(dtype=torch.bool)
 
         class_colors = np.array(carla_colors)[carla_classes].tolist()
         drawn_images = draw_segmentation_masks(
@@ -373,7 +382,7 @@ class VisionNode(CompatibleNode):
         )
         return abs_distance
 
-    async def process_traffic_lights(self, prediction, cv_image, image_header):
+    def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
