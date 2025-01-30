@@ -1,6 +1,8 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
+  <arg name="view_camera" default="False" />
+  <arg name="camera_resolution" default="320" />
 
 
 
@@ -22,7 +24,7 @@
     <param name="role_name" value="$(arg role_name)" />
     <param name="pos_filter" value="Kalman" />
     <param name="heading_filter" value="Kalman" />
-      <!--
+    <!--
         Position Filter values:
         - "Kalman" (Default)
         - "RunningAvg"
@@ -36,10 +38,10 @@
 
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
-    <param name="view_camera" value="False" />
-    <param name="camera_resolution" value="320"/>
+    <param name="view_camera" value="$(arg view_camera)" />
+    <param name="camera_resolution" value="$(arg camera_resolution)"/>
 
-      <!--
+    <!--
         Image-Segmentation:
       - yolov8x-seg
       - yolo11n-seg
@@ -74,7 +76,7 @@
 
   <node pkg="perception" type="Lanedetection_node.py" name="Lanedetection" output="screen">
     <param name="role_name" value="$(arg role_name)" />
-  </node> 
+  </node>
 
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
     <param name="point_cloud_topic_0" value="/carla/hero/RADAR0"/>
@@ -87,19 +89,32 @@
 
 
   <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
-    <param name="epsilon_clustering" value="1.8"/><!--parameter to play with, if you want to fine-tune the performance-->
-    <param name="min_samples_clustering" value="4"/><!--parameter to play with, if you want to fine-tune the performance-->
-    <param name="confidence_threshold" value="0.6"/><!--parameter to play with, if you want to fine-tune the performance-->
-    <param name="angle_weight" value="0.3"/><!--confidence calculation-->
-    <param name="size_weight" value="0.3"/><!--confidence calculation-->
-    <param name="std_dev_weight" value="0.4"/><!--confidence calculation-->
-    <param name="angle_normalization" value="25"/><!--confidence calculation-->
-    <param name="size_normalization" value="15"/><!--confidence calculation-->
-    <param name="std_dev_normalization" value="0.1"/><!--confidence calculation-->
-    <param name="angle_prediction_threshold" value="5"/><!--predictions currently disabled-->
-    <param name="y_tolerance" value="1.0"/><!--prevents multiple entities at same position (room for improvment)-->
-    <param name="line_length" value="15"/><!--minimum lanemarking size-->
-    <param name="line_width" value="0.5"/><!--lanemarking width-->
+    <param name="epsilon_clustering" value="1.8"/>
+    <!--parameter to play with, if you want to fine-tune the performance-->
+    <param name="min_samples_clustering" value="4"/>
+    <!--parameter to play with, if you want to fine-tune the performance-->
+    <param name="confidence_threshold" value="0.6"/>
+    <!--parameter to play with, if you want to fine-tune the performance-->
+    <param name="angle_weight" value="0.3"/>
+    <!--confidence calculation-->
+    <param name="size_weight" value="0.3"/>
+    <!--confidence calculation-->
+    <param name="std_dev_weight" value="0.4"/>
+    <!--confidence calculation-->
+    <param name="angle_normalization" value="25"/>
+    <!--confidence calculation-->
+    <param name="size_normalization" value="15"/>
+    <!--confidence calculation-->
+    <param name="std_dev_normalization" value="0.1"/>
+    <!--confidence calculation-->
+    <param name="angle_prediction_threshold" value="5"/>
+    <!--predictions currently disabled-->
+    <param name="y_tolerance" value="1.0"/>
+    <!--prevents multiple entities at same position (room for improvment)-->
+    <param name="line_length" value="15"/>
+    <!--minimum lanemarking size-->
+    <param name="line_width" value="0.5"/>
+    <!--lanemarking width-->
   </node>
 
 </launch>
