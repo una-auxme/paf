@@ -14,13 +14,27 @@ import rospy
 
 
 class VehicleController(CompatibleNode):
+    """
+    This node is responsible for collecting all data needed for the
+    vehicle_control_cmd and sending it.
+    The node also decides weather to use the stanley or pure pursuit
+    controller.
+    If the node receives an emergency msg, it will bring the vehicle to a stop
+    and send an emergency msg with data = False back, after the velocity of the
+    vehicle has reached 0.
+    INFO: Currently the loop of the node has a sleep command in it. The control
+    command triggers the carla simulator to render the next frame. If the loop
+    does not have the time to sleep the simulator will run as fast as the system
+    allows it to run. If your system is too slow to run with the 0.1 loop_sleep_time
+    you could slow it down by setting the loop_sleep_time to a higher value.
+    """
+
     def __init__(self):
         super(VehicleController, self).__init__("vehicle_controller")
         self.loginfo("VehicleController node started")
 
         # Configuration parameters
         self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
-        self.loop_sleep_time = self.get_param("loop_sleep_time", 0.1)
         self.role_name = self.get_param("role_name", "ego_vehicle")
 
         # State variables
@@ -159,6 +173,7 @@ class VehicleController(CompatibleNode):
         self.loginfo("VehicleController node running")
 
         def spin_loop(timer_event=None):
+            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.1)
             self.update_control_message()
             self.control_publisher.publish(self.message)
             time.sleep(self.loop_sleep_time)

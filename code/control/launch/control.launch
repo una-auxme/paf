@@ -1,6 +1,6 @@
 <launch>
     <arg name="role_name" default="hero" />
-    <arg name="control_loop_rate" default="0.2" />
+    <arg name="control_loop_rate" default="0.05" />
     <!--
     HOTFIX:
     This sleep time is used for hotfix the carla timing problem
