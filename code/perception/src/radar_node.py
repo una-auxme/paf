@@ -116,7 +116,7 @@ class RadarNode(CompatibleNode):
 
         self.acc_arrow_size = float(self.get_param("~accelerometer_arrow_size", 2.0))
         self.acc_factor = float(self.get_param("~accelerometer_factor", 0.05))
-        self.imu_debug = self.get_param("~imu_debug", True)
+        self.imu_debug = self.get_param("~imu_debug", False)
 
         self.accel_x_buffer.append(msg.linear_acceleration.x)
         self.accel_z_buffer.append(msg.linear_acceleration.z)
