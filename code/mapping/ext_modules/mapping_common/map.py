@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 
-from ros_compatibility.node import CompatibleNode
 
 import shapely
 from shapely import STRtree
@@ -18,7 +17,6 @@ from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
-import cv2
 from cv2 import line
 
 from mapping import msg
@@ -343,8 +341,10 @@ class Map:
         a numpy array
 
         Args:
-            area_to_incorporate (Tuple[int, int]): the area, in which the entities have to be plotted
-            resolution_scale (int): since the array has only integer indices, scale the array
+            area_to_incorporate (Tuple[int, int]): the area, in which the entities
+            have to be plotted
+            resolution_scale (int): since the array has only integer indices,
+            scale the array
 
         Returns:
             npt.NDArray: array with contours drawn in

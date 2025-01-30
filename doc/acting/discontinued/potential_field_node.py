@@ -16,7 +16,6 @@ import tf.transformations
 from visualization_msgs.msg import Marker
 
 import math
-import time
 
 import tf
 
@@ -30,9 +29,6 @@ from scipy.ndimage import distance_transform_edt
 import numpy as np
 
 import cv2
-
-from acting.helper_functions import generate_path_from_trajectory
-
 
 # PARAMETERS
 # Define the Horizon of the potential field
