@@ -69,7 +69,7 @@ class MainFramePublisher(CompatibleNode):
                 translation=position,
                 rotation=rotation,
                 time=rospy.Time.now(),
-                child="hero",
+                child="hero_old",
                 parent="global",
             )
 

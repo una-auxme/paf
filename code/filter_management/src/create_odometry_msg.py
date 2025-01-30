@@ -4,12 +4,15 @@ import rospy
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist, TransformStamped
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
 import threading
 
 # import tf2_ros
+
+from typing import Optional
 
 
 class OdometryNode(CompatibleNode):
@@ -21,6 +24,8 @@ class OdometryNode(CompatibleNode):
         self.max_steering_angle = math.atan(
             self.wheelbase / ((self.turning_cicle / 2) - self.width)
         )
+
+        self.imu: Optional[Imu] = None
 
         self.x = 0.0
         self.y = 0.0
@@ -36,7 +41,7 @@ class OdometryNode(CompatibleNode):
         self.initialized = False
 
         # ROS Publishers and Subscribers
-        self.odom_pub = self.new_publisher(Odometry, "/odometry/wheel", qos_profile=1)
+        self.odom_pub = self.new_publisher(Odometry, "/wheel/odometry", qos_profile=1)
 
         # self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
@@ -53,9 +58,16 @@ class OdometryNode(CompatibleNode):
             qos_profile=1,
         )
 
+        self.imu_sub = self.new_subscription(
+            Imu, "carla/hero/IMU", self.imu_callback, qos_profile=1
+        )
+
         # Variables to store inputs
         self.speed = 0.0
         self.steering_angle = 0.0
+
+    def imu_callback(self, msg: Imu):
+        self.imu = msg
 
     def speed_callback(self, msg):
         self.speed = msg.speed
@@ -73,9 +85,7 @@ class OdometryNode(CompatibleNode):
             self.initialized = True
 
     def publish_odometry(self):
-        current_time = rospy.Time.now()
-        dt = (current_time - self.last_time).to_sec()
-        self.last_time = current_time
+        dt = 1 / 20.0
 
         # Compute velocities
         v = self.speed
@@ -89,35 +99,100 @@ class OdometryNode(CompatibleNode):
 
         # Create Odometry message
         odom = Odometry()
-        odom.header.stamp = current_time
+        odom.header.stamp = rospy.Time.now()
         odom.header.frame_id = "odom"
         odom.child_frame_id = "hero"
 
+        cov_d = 1.0
         # Pose
-        odom.pose.pose.position.x = self.x
-        odom.pose.pose.position.y = self.y
-        odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
-        odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
+        # odom.pose.pose.position.x = self.x
+        # odom.pose.pose.position.y = self.y
+        # odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
+        # odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
+        odom.pose.covariance = [
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+        ]
 
         # Velocity
-        odom.twist.twist.linear.x = v * math.cos(self.yaw)
-        odom.twist.twist.linear.y = v * math.sin(self.yaw)
-        odom.twist.twist.angular.z = omega
+        # odom.twist.twist.linear.x = v * math.cos(self.yaw)
+        # odom.twist.twist.linear.y = v * math.sin(self.yaw)
+        # odom.twist.twist.angular.z = omega
+        odom.twist.covariance = [
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            cov_d,
+        ]
 
         # Publish odometry message
         self.odom_pub.publish(odom)
-
-        # Publish TF
-        """tf = TransformStamped()
-        tf.header.stamp = current_time
-        tf.header.frame_id = "odom"
-        tf.child_frame_id = "hero"
-        tf.transform.translation.x = self.x
-        tf.transform.translation.y = self.y
-        tf.transform.rotation.z = math.sin(self.yaw / 2.0)
-        tf.transform.rotation.w = math.cos(self.yaw / 2.0)
-
-        self.tf_broadcaster.sendTransform(tf)"""
 
     def run(self):
         # wait until Speedometer and steering angle msg are received
@@ -125,14 +200,8 @@ class OdometryNode(CompatibleNode):
             rospy.sleep(1)
         rospy.sleep(1)
 
-        self.loginfo("Odometry node started its loop!")
+        self.new_timer(1 / 20.0, lambda _: self.publish_odometry())
 
-        def loop():
-            while True:
-                self.publish_odometry()
-                rospy.sleep(self.loop_rate)
-
-        threading.Thread(target=loop).start()
         self.spin()
 
 

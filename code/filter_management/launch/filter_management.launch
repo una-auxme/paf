@@ -1,32 +1,61 @@
 <launch>
   <arg name="role_name" default="hero" />
-  <arg name="control_loop_rate" default="0.05" /> 
+  <arg name="control_loop_rate" default="0.05" />
 
-  <node pkg="filter_management" type="forward_topics.py" name="forward_topics" output="screen">
-    <param name="role_name" value="$(arg role_name)" />
+  <node
+    pkg="filter_management" type="forward_imu.py" name="forward_topics" output="screen">
   </node>
 
-  <node pkg="filter_management" type="create_odometry_msg.py" name="odometry_node" output="screen">
+  <node
+    pkg="filter_management" type="localization_init.py" name="localization_init" output="screen">
+  </node>
+
+  <node pkg="filter_management" type="create_odometry_msg.py" name="odometry_node"
+    output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
   </node>
 
-  <node pkg="filter_management" type="split_odometry_msg.py" name="split_odometry_node" output="screen">
+  <node
+    pkg="filter_management" type="split_odometry_msg.py" name="split_odometry_node"
+    output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
   </node>
 
   <!-- robot localization -->
-    <rosparam command="load" file="$(find filter_management)/config/ekf_config.yaml" />
+  <rosparam
+    command="load" file="$(find filter_management)/config/ekf_config.yaml" />
 
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true"/>
+  <node
+    pkg="robot_localization" type="ekf_localization_node" name="ekf_local" clear_params="true">
+    <remap from="/odometry/filtered" to="/odometry/filtered_local" />
+    <!-- navsat needs odom filtered from global ekf. Dont mess with that here.-->
+  </node>
 
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_map" clear_params="true">
-        <remap from="odometry/filtered" to="odometry/filtered_map"/>
-    </node>
+  <node
+    pkg="robot_localization" type="ekf_localization_node" name="ekf_global" clear_params="true">
+    <!--<rosparam
+    param="initial_state">[-706, -3649, 700,
+      0.0, 0.0, 1.57,
+      0.1, 0.2, 0.3,
+      0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0]</rosparam> -->
 
-    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
-        <remap from="odometry/filtered" to="odometry/filtered_map"/>
-    </node>
+  </node>
+  <node
+    pkg="filter_management" type="gps_transform.py" name="gps_transformation" output="screen">
+    <!-- substitute for navsat transform. navsat does utm we need wgs-->
+  </node>
+
+
+  <!-- 
+  This uses UTM Coordinates, we however use WGS coordinates... we'll write our own 
+  <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform">
+    <remap
+    from="/imu/data" to="/carla/hero/IMU" />
+  <rosparam param="datum">[0.0,0.0,0.0, global, odom]</rosparam>
+   <remap from="/gps/fix" to="/carla/hero/GPS" /> done in the forward 
+  </node>-->
 
 </launch>

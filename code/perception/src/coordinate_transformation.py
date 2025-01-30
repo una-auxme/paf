@@ -187,3 +187,8 @@ def quat_to_heading(quaternion):
 #    assert are_close(0.00000000, xEast)
 #    assert are_close(0.82903757, yNorth)
 #    assert are_close(0.55919291, zUp)
+
+if __name__ == "__main__":
+    c = CoordinateTransformer()
+    a = c.gnss_to_xyz(-0.0325, 0.00639, 364)
+    print(a)

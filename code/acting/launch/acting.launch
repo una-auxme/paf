@@ -10,10 +10,10 @@
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     </node>
 
-    <!-- <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
+    <node pkg="acting" type="MainFramePublisher.py" name="MainFramePublisher" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
-    </node> -->
+    </node> 
 
     <include file="$(find control)/launch/control.launch">
         <arg name="control_loop_rate" value="$(arg control_loop_rate)" />
