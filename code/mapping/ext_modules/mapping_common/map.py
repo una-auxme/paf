@@ -11,8 +11,6 @@ from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
 
-import numpy.typing as npt
-
 from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping_common.shape import Rectangle
