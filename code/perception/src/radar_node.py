@@ -754,19 +754,21 @@ def calculate_cluster_velocity(points_with_labels):
         cluster_points = points_with_labels[points_with_labels[:, -1] == label]
 
         avg_velocity = np.mean(cluster_points[:, 3])
-        avg_x = np.mean(cluster_points[:, 0])
-        avg_y = np.mean(cluster_points[:, 1])
+        # avg_x = np.mean(cluster_points[:, 0])
+        # avg_y = np.mean(cluster_points[:, 1])
 
         # Normalisiere die Richtung (x, y)
-        magnitude = np.sqrt(avg_x**2 + avg_y**2)
-        if magnitude == 0:
-            direction = np.array([0, 0])  # Keine Richtung
-        else:
-            direction = np.array([avg_x, avg_y]) / magnitude
+        # magnitude = np.sqrt(avg_x**2 + avg_y**2)
+        # if magnitude == 0:
+        #     direction = np.array([0, 0])  # Keine Richtung
+        # else:
+        #     direction = np.array([avg_x, avg_y]) / magnitude
 
         # Skaliere Richtung mit Geschwindigkeit
-        motion = avg_velocity * direction
-        cluster_motion = Vector2.new(motion[0], motion[1])
+        # motion = avg_velocity * direction
+        # motion = avg_velocity * avg_x
+        # cluster_motion = Vector2.new(motion[0], motion[1])
+        cluster_motion = Vector2.new(avg_velocity, 0.0)
         cluster_motions.append(Motion2D(cluster_motion, angular_velocity=0.0))
 
     motion_array = np.empty(len(points_with_labels), dtype=object)
