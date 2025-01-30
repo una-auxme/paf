@@ -84,6 +84,7 @@
     <param name="data_buffered" value="False"/>
     <param name="data_buffer_time" value="0.1"/>
     <param name="imu_debug" value="True"/>
+    <param name="accelerometer_arrow_size" value="2"/>
     <param name="accelerometer_factor" value="0.05"/>
   </node>
 

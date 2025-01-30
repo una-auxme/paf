@@ -102,7 +102,7 @@ class RadarNode(CompatibleNode):
         """Processes IMU messages to calculate the pitch angle and update visualization markers.
 
         Parameters:
-        - msg: sensor_msgs/Imu  
+        - msg: sensor_msgs/Imu
             Incoming IMU data with linear acceleration.
 
         Functionality:
@@ -114,14 +114,9 @@ class RadarNode(CompatibleNode):
         - None. The function updates internal states and publishes markers.
         """
 
-
-        #self.acc_arrow_size = float(self.get_param("~accelerometer_arrow_size", 2.0))
+        self.acc_arrow_size = float(self.get_param("~accelerometer_arrow_size", 2.0))
         self.acc_factor = float(self.get_param("~accelerometer_factor", 0.05))
-        self.imu_debug = self.get_param("~imu_debug", True) # Set to False after debugging!
-
-        # Debugging purposes
-        if self.imu_debug:
-            self.acc_arrow_size = 70.0
+        self.imu_debug = self.get_param("~imu_debug", True)
 
         self.accel_x_buffer.append(msg.linear_acceleration.x)
         self.accel_z_buffer.append(msg.linear_acceleration.z)
@@ -133,15 +128,6 @@ class RadarNode(CompatibleNode):
         # Calculate the average value of the last 5 measurements
         accel_x_avg = np.mean(self.accel_x_buffer)
         accel_z_avg = np.mean(self.accel_z_buffer)
-
-        """
-        # Data from accelerometer without buffering
-        accel_x = msg.linear_acceleration.x
-        accel_z = msg.linear_acceleration.z
-
-        # Verhindere Division durch Null
-        if accel_z == 0:
-            accel_z = 1e-6"""
 
         # Calculate pitch angle (in radians)
         self.current_pitch = -np.arctan2(accel_x_avg, accel_z_avg)
@@ -166,7 +152,7 @@ class RadarNode(CompatibleNode):
         arrow_marker.type = Marker.ARROW
         arrow_marker.action = Marker.ADD
 
-        arrow_marker.scale.x = acc_arrow_size  # arrowlength 
+        arrow_marker.scale.x = acc_arrow_size  # arrowlength
         arrow_marker.scale.y = 0.1  # arrow width
         arrow_marker.scale.z = 0.1  # arrow height
 
@@ -234,8 +220,8 @@ class RadarNode(CompatibleNode):
         filtered_out_points = []
 
         # Calculation of threshold values based on pitch
-        pitch_rad = self.current_pitch  # Pitch angle in radians
-        pitch_slope = np.tan(pitch_rad)  # Pitch through pitch
+        pitch_rad = self.current_pitch
+        pitch_slope = np.tan(pitch_rad)
 
         if points is None:
             return
@@ -684,41 +670,8 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
                 r, g, b = 128, 128, 128
             else:
                 r, g, b = colors[label]
-        else: 
+        else:
             r, g, b = 255, 0, 0
-            
-        rgb = struct.unpack("f", struct.pack("I", (r << 16) | (g << 8) | b))[0]
-        points.append([x, y, z, rgb])
-
-    fields = [
-        PointField("x", 0, PointField.FLOAT32, 1),
-        PointField("y", 4, PointField.FLOAT32, 1),
-        PointField("z", 8, PointField.FLOAT32, 1),
-        PointField("rgb", 12, PointField.FLOAT32, 1),
-    ]
-
-    return point_cloud2.create_cloud(header, fields, points)
-
-
-def create_pointcloud22(clustered_points):
-    """_summary_
-
-    Args:
-        clustered_points (dict): clustered points after dbscan
-        cluster_labels (_type_): _description_
-
-    Returns:
-        PointCloud2: pointcloud which can be published
-    """
-    header = Header()
-    header.stamp = rospy.Time.now()
-    header.frame_id = "hero"
-
-    points = []
-
-    for i, point in enumerate(clustered_points):
-        x, y, z, v = point
-        r, g, b = 255, 0, 0
 
         rgb = struct.unpack("f", struct.pack("I", (r << 16) | (g << 8) | b))[0]
         points.append([x, y, z, rgb])
