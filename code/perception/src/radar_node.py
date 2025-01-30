@@ -99,7 +99,8 @@ class RadarNode(CompatibleNode):
             return
 
     def imu_callback(self, msg):
-        """Processes IMU messages to calculate the pitch angle and update visualization markers.
+        """Processes IMU messages to calculate the pitch angle and
+           update visualization markers.
 
         Parameters:
         - msg: sensor_msgs/Imu
@@ -107,7 +108,8 @@ class RadarNode(CompatibleNode):
 
         Functionality:
         1. Buffers x and z linear acceleration values (last 5 messages).
-        2. Computes the pitch angle using the arctangent of the buffered values and applies a scaling factor.
+        2. Computes the pitch angle using the arctangent of the buffered values and
+           applies a scaling factor.
         3. Updates a visualization marker with the current pitch state.
 
         Return:
