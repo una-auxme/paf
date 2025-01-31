@@ -356,6 +356,13 @@ class MappingDataIntegrationNode(CompatibleNode):
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
 
+        lane_free, ent = map.is_lane_free_lanemarks()
+
+        if lane_free:
+            ent.confidence = 10000
+
+        entities.append(ent)
+
         for filter in self.get_current_map_filters():
             map = filter.filter(map)
         msg = map.to_ros_msg()

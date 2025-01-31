@@ -10,7 +10,7 @@ from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common import entity
 from mapping_common.transform import Transform2D, Point2, Vector2
-from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
+from mapping_common.entity import Entity, FlagFilter, Flags, ShapelyEntity
 from mapping_common.shape import Rectangle
 from shapely.geometry import Polygon, LineString
 
@@ -170,6 +170,29 @@ class Map:
         if not lane_box_intersection_entities:
             return True
         return False
+
+    def is_lane_free_lanemarks(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+    ) -> Tuple[bool, Entity]:
+
+        lane_box_shape = Rectangle(
+            length=lane_length,
+            width=1.5,
+            offset=Transform2D.new_translation(Vector2.new(lane_transform, 1 * 2.5)),
+        )
+
+        lane_box_entity = Entity(
+            confidence=10001.0,
+            priority=1.0,
+            shape=lane_box_shape,
+            transform=Transform2D.identity(),
+            flags=Flags(is_ignored=True),
+        )
+
+        return False, lane_box_entity
 
     def project_plane(self, start_point, size_x, size_y):
         """
