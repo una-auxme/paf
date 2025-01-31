@@ -176,7 +176,7 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> Tuple[bool, Entity, List]:
+    ) -> Tuple[int, Entity]:
 
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
@@ -205,8 +205,25 @@ class Map:
         lanemark_y_axis_intersection = map_tree.query(
             geo=y_axis_line, predicate="intersects"
         )
+        # Abort when not enough lane marks got detected
+        if len(lanemark_y_axis_intersection) < 2:
+            return -1, lane_box_entity
 
-        return False, lane_box_entity, lanemark_y_axis_intersection
+        # # Choose two lanes nearby car
+        # for ent in lanemark_y_axis_intersection:
+        #     if ent.entity.position_index == lane_transform * 1:
+        #         lane_close_hero = ent.entity
+        #     if ent.entity.position_index == lane_transform * 2:
+        #         lane_further_hero = ent.entity
+
+        # # Check if two lanes has a plausible angle to each pother
+        # close_rotation = lane_close_hero.transform.rotation()
+        # further_rotation = lane_further_hero.transform.rotation()
+
+        # if abs(close_rotation - further_rotation) > 0.35:  # ~20°
+        #     return 0, lane_box_entity
+
+        return 1, lane_box_entity
 
     def project_plane(self, start_point, size_x, size_y):
         """
