@@ -416,6 +416,22 @@ class Entity:
         velocity = global_motion.x()
         return velocity
 
+    def get_delta_forward_velocity_of(self, other: "Entity") -> Optional[float]:
+        if self.motion is None or other.motion is None:
+            return None
+
+        into_self_local = self.transform.inverse() * other.transform
+        other_motion_in_self_coords: Vector2 = (
+            into_self_local * other.motion.linear_motion
+        )
+        relative_motion = other_motion_in_self_coords - self.motion.linear_motion
+        return relative_motion.x()
+
+    def get_width(self) -> float:
+        local_poly = self.shape.to_shapely()
+        min_x, min_y, max_x, max_y = local_poly.bounds
+        return max_y - min_y
+
 
 @dataclass(init=False)
 class Car(Entity):

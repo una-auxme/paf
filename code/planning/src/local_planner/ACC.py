@@ -29,10 +29,38 @@ class ACC(CompatibleNode):
     """ACC (Adaptive Cruise Control) calculates and publishes the desired speed based on
     possible collisions, the current speed, the trajectory, and the speed limits."""
 
+    map: Optional[Map] = None
+    last_map_timestamp: Optional[rospy.Time] = None
+
+    # unstuck attributes
+    __unstuck_flag: bool = False
+    __unstuck_distance: float = -1
+    # List of all speed limits, sorted by waypoint index
+    __speed_limits_OD: List[float] = []
+    trajectory_global: Optional[Path] = None
+    trajectory: Optional[Path] = None
+    __current_position: Optional[Point] = None
+    # Current index from waypoint
+    __current_wp_index: int = 0
+    __current_heading: Optional[float] = None
+    speed_limit: Optional[float] = None  # m/s
+
     def __init__(self):
         super(ACC, self).__init__("ACC")
         self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 1)
+
+        # Map
+        # # Current speed
+        # self.__current_velocity: Optional[float] = None
+        # Distance and speed from possible collsion object
+        # self.obstacle_speed: Optional[float] = None
+        # # Obstacle distance
+        # self.obstacle_distance: Optional[float] = None
+        # Current speed limit
+        # Radar data
+        # self.leading_vehicle_distance = None
+        # self.leading_vehicle_relative_speed = None
+        # self.leading_vehicle_speed = None
 
         # Get Map
         self.map_sub: Subscriber = self.new_subscription(
@@ -57,12 +85,12 @@ class ACC(CompatibleNode):
         )
 
         # Get current speed
-        self.velocity_sub: Subscriber = self.new_subscription(
-            CarlaSpeedometer,
-            f"/carla/{self.role_name}/Speed",
-            self.__get_current_velocity,
-            qos_profile=1,
-        )
+        # self.velocity_sub: Subscriber = self.new_subscription(
+        #     CarlaSpeedometer,
+        #     f"/carla/{self.role_name}/Speed",
+        #     self.__get_current_velocity,
+        #     qos_profile=1,
+        # )
 
         # Get initial set of speed limits from global planner
         self.speed_limit_OD_sub: Subscriber = self.new_subscription(
@@ -105,12 +133,12 @@ class ACC(CompatibleNode):
         )
 
         # Get approximated speed from obstacle in front
-        self.approx_speed_sub = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/collision",
-            self.__collision_callback,
-            qos_profile=1,
-        )
+        # self.approx_speed_sub = self.new_subscription(
+        #     Float32MultiArray,
+        #     f"/paf/{self.role_name}/collision",
+        #     self.__collision_callback,
+        #     qos_profile=1,
+        # )
 
         # Get distance to and velocity of leading vehicle from radar sensor
         # self.lead_vehicle_sub = self.new_subscription(
@@ -138,69 +166,44 @@ class ACC(CompatibleNode):
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
         )
 
-        # Map
-        self.map: Optional[Map] = None
-        # unstuck attributes
-        self.__unstuck_flag: bool = False
-        self.__unstuck_distance: float = -1
-        # List of all speed limits, sorted by waypoint index
-        self.__speed_limits_OD: List[float] = []
-        # Current Trajectory
-        self.trajectory_global: Optional[Path] = None
-        self.trajectory: Optional[Path] = None
-        # Current position
-        self.__current_position: Optional[Point] = None
-        # Current index from waypoint
-        self.__current_wp_index: int = 0
-        # Current heading
-        self.__current_heading: Optional[float] = None
-        # Current speed
-        self.__current_velocity: Optional[float] = None
-        # Distance and speed from possible collsion object
-        self.obstacle_speed: Optional[float] = None
-        # Obstacle distance
-        self.obstacle_distance: Optional[float] = None
-        # Current speed limit
-        self.speed_limit: Optional[float] = None  # m/s
-        # Radar data
-        self.leading_vehicle_distance = None
-        self.leading_vehicle_relative_speed = None
-        self.leading_vehicle_speed = None
-
         self.logdebug("ACC initialized")
 
     def __get_map(self, data: MapMsg):
+        if self.map is not None:
+            last_time = self.map.timestamp
         self.map = Map.from_ros_msg(data)
 
-    def __update_radar_data(self, data: Float32MultiArray):
-        if not data.data or len(data.data) < 2:
-            # no distance and speed data of the leading vehicle is transferred
-            # (leading vehicle is very far away)
-            self.leading_vehicle_distance = None
-            self.leading_vehicle_relative_speed = None
-            self.leading_vehicle_speed = None
-        else:
-            self.leading_vehicle_distance = data.data[0]
-            self.leading_vehicle_relative_speed = data.data[1]
-            self.leading_vehicle_speed = (
-                self.__current_velocity + self.leading_vehicle_relative_speed
-            )
+        self.update_velocity()
 
-    def __collision_callback(self, data: Float32):
-        """Safe approximated speed form obstacle in front together with
-        timestamp when recieved.
-        Timestamp is needed to check wether we still have a vehicle in front
+    # def __update_radar_data(self, data: Float32MultiArray):
+    #     if not data.data or len(data.data) < 2:
+    #         # no distance and speed data of the leading vehicle is transferred
+    #         # (leading vehicle is very far away)
+    #         self.leading_vehicle_distance = None
+    #         self.leading_vehicle_relative_speed = None
+    #         self.leading_vehicle_speed = None
+    #     else:
+    #         self.leading_vehicle_distance = data.data[0]
+    #         self.leading_vehicle_relative_speed = data.data[1]
+    #         self.leading_vehicle_speed = (
+    #             self.__current_velocity + self.leading_vehicle_relative_speed
+    #         )
 
-        Args:
-            data (Float32): Speed from obstacle in front
-        """
-        if np.isinf(data.data[0]):
-            # If no obstacle is in front, we reset all values
-            self.obstacle_speed = None
-            self.obstacle_distance = None
-            return
-        self.obstacle_speed = data.data[1]
-        self.obstacle_distance = data.data[0]
+    # def __collision_callback(self, data: Float32):
+    #     """Safe approximated speed form obstacle in front together with
+    #     timestamp when recieved.
+    #     Timestamp is needed to check wether we still have a vehicle in front
+
+    #     Args:
+    #         data (Float32): Speed from obstacle in front
+    #     """
+    #     if np.isinf(data.data[0]):
+    #         # If no obstacle is in front, we reset all values
+    #         self.obstacle_speed = None
+    #         self.obstacle_distance = None
+    #         return
+    #     self.obstacle_speed = data.data[1]
+    #     self.obstacle_distance = data.data[0]
 
     def __get_unstuck_flag(self, data: Bool):
         """Set unstuck flag
@@ -218,13 +221,13 @@ class ACC(CompatibleNode):
         """
         self.__unstuck_distance = data.data
 
-    def __get_current_velocity(self, data: CarlaSpeedometer):
-        """Set current velocity
+    # def __get_current_velocity(self, data: CarlaSpeedometer):
+    #     """Set current velocity
 
-        Args:
-            data (CarlaSpeedometer): Current velocity from carla
-        """
-        self.__current_velocity = float(data.speed)
+    #     Args:
+    #         data (CarlaSpeedometer): Current velocity from carla
+    #     """
+    #     self.__current_velocity = float(data.speed)
 
     def __get_heading(self, data: Float32):
         """Recieve current heading
@@ -326,112 +329,138 @@ class ACC(CompatibleNode):
         # T_gap_sg = 1.9  # unit: seconds
         # d_min_sg = 3
 
-        def loop(timer_event=None):
-            """
-            Permanent checks if distance to a possible object is too small and
-            publishes the desired speed to motion planning
-            """
-            if (
-                self.map is not None
-                and self.trajectory is not None
-                and self.__current_position is not None
-                and self.__current_heading is not None
-            ):
-                tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-                hero_transform = mapping_common.map.build_global_hero_transform(
-                    self.__current_position.x,
-                    self.__current_position.y,
-                    self.__current_heading,
-                )
-                collision_mask = mapping_common.mask.build_trajectory_shape(
-                    self.trajectory,
-                    hero_transform,
-                    max_length=100.0,
-                    current_wp_idx=self.__current_wp_index,
-                    max_wp_count=200,
-                    centered=True,
-                )
-                if collision_mask is not None:
-                    mask_marker = Polygon.from_shapely(collision_mask).to_marker()
-                    mask_marker.scale.z = 0.2
-                    mask_marker.color.a = 0.5
-                    mask_marker.color.r = 0
-                    mask_marker.color.g = 1.0
-                    mask_marker.color.b = 1.0
-
-                    marker_list = [mask_marker]
-                    entity_result = tree.get_nearest_entity(
-                        collision_mask, self.map.hero().to_shapely()
-                    )
-                    if entity_result is not None:
-                        entity, distance = entity_result
-                        entity_marker = entity.entity.to_marker()
-                        entity_marker.scale.z = 0.2
-                        entity_marker.color.a = 0.5
-                        entity_marker.color.r = 1.0
-                        entity_marker.color.g = 0.0
-                        entity_marker.color.b = 0.0
-                        marker_list.append(entity_marker)
-
-                    self.publish_debug_markers(marker_list)
-
-            if (
-                self.leading_vehicle_distance is not None
-                and self.leading_vehicle_speed is not None
-                and self.__current_velocity is not None
-            ):
-                if (
-                    self.__current_velocity < 2
-                ):  # stop and go system for velocities between 0 m/s and 2 m/s
-                    # should use the P-controller below as soon as we get reasonable
-                    # radar data
-                    if self.leading_vehicle_distance > 8:
-                        desired_speed = 5
-                    elif self.leading_vehicle_distance > 3:
-                        desired_speed = 3
-                    elif self.leading_vehicle_distance > 1:
-                        desired_speed = 2
-                    else:
-                        desired_speed = 0
-
-                    # desired_distance = d_min_sg + T_gap_sg * self.__current_velocity
-                    # delta_d = self.leading_vehicle_distance - desired_distance
-                    # delta_v = self.leading_vehicle_speed - self.__current_velocity
-                    # speed_adjustment = Ki_sg * delta_d
-                    # desired_speed = self.__current_velocity + speed_adjustment
-                    # if desired_speed < 0:
-                    #    desired_speed = 0
-
-                else:  # system for velocities > 3 m/s  = 10.8 km/h
-                    desired_distance = d_min + T_gap * self.__current_velocity
-                    delta_d = self.leading_vehicle_distance - desired_distance
-                    delta_v = self.leading_vehicle_speed - self.__current_velocity
-                    speed_adjustment = Ki * delta_d + Kp * delta_v
-                    desired_speed = self.__current_velocity + speed_adjustment
-                    if desired_speed < 0:
-                        desired_speed = 0
-                    if (
-                        self.speed_limit is not None
-                        and desired_speed > self.speed_limit
-                    ):
-                        desired_speed = self.speed_limit
-
-                desired_speed = utils.interpolate_speed(
-                    desired_speed, self.__current_velocity
-                )
-                self.velocity_pub.publish(desired_speed)
-
-            elif self.speed_limit is not None:
-                # If we have no obstacle, we want to drive with the current
-                # speed limit
-                self.velocity_pub.publish(self.speed_limit)
-            else:
-                # If we don't have speed limits do not drive
-                # probably a problem accured in the global planner
-                self.velocity_pub.publish(0)
-
-        self.new_timer(self.control_loop_rate, loop)
         self.spin()
+
+    def update_velocity(self):
+        """
+        Permanent checks if distance to a possible object is too small and
+        publishes the desired speed to motion planning
+        """
+        if (
+            self.map is None
+            or self.trajectory is None
+            or self.__current_position is None
+            or self.__current_heading is None
+        ):
+            # We don't have the necessary data to drive safely
+            self.velocity_pub.publish(0)
+            return
+
+        hero = self.map.hero()
+        if hero is None or hero.motion is None:
+            # We currenly have no hero data.
+            # -> cannot drive safely
+            rospy.logerr("ACC: No hero with motion found in map!")
+            self.velocity_pub.publish(0)
+            return
+
+        tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        hero_transform = mapping_common.map.build_global_hero_transform(
+            self.__current_position.x,
+            self.__current_position.y,
+            self.__current_heading,
+        )
+        collision_mask = mapping_common.mask.build_trajectory_shape(
+            self.trajectory,
+            hero_transform,
+            max_length=100.0,
+            current_wp_idx=self.__current_wp_index,
+            max_wp_count=200,
+            centered=True,
+            width=max(1.0, hero.get_width()),
+        )
+        if collision_mask is None:
+            # We currenly have no valid path to check for collisions.
+            # -> cannot drive safely
+            rospy.logerr("ACC: Unable to build collision mask!")
+            self.velocity_pub.publish(0)
+            return
+
+        # TODO: Add small area in front of car to the collision mask
+
+        mask_marker = Polygon.from_shapely(collision_mask).to_marker()
+        mask_marker.scale.z = 0.2
+        mask_marker.color.a = 0.5
+        mask_marker.color.r = 0
+        mask_marker.color.g = 1.0
+        mask_marker.color.b = 1.0
+
+        marker_list = [mask_marker]
+        entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
+
+        current_velocity = hero.get_global_x_velocity() or 0.0
+        desired_speed: float = float("inf")
+        if entity_result is not None:
+            entity, distance = entity_result
+            entity_marker = entity.entity.to_marker()
+            entity_marker.scale.z = 0.2
+            entity_marker.color.a = 0.5
+            entity_marker.color.r = 1.0
+            entity_marker.color.g = 0.0
+            entity_marker.color.b = 0.0
+            marker_list.append(entity_marker)
+
+            lead_delta_velocity = (
+                hero.get_delta_forward_velocity_of(entity.entity) or -current_velocity
+            )
+            desired_speed = self.calculate_velocity_based_on_lead(
+                current_velocity, distance, lead_delta_velocity
+            )
+
+        if self.speed_limit is None:
+            desired_speed = min(5.0, desired_speed)
+        else:
+            # Max speed is the current speed limit
+            desired_speed = min(self.speed_limit, desired_speed)
+
+        delta_time: float = 0.1
+        if self.last_map_timestamp is not None:
+            delta = self.map.timestamp - self.last_map_timestamp
+            delta_time = delta.to_sec()
+        desired_speed = utils.interpolate_speed(
+            desired_speed, current_velocity, lerp_factor=1.0 * delta_time
+        )
+
+        self.velocity_pub.publish(desired_speed)
+        self.publish_debug_markers(marker_list)
+
+    def calculate_velocity_based_on_lead(
+        self, hero_velocity: float, lead_distance: float, delta_v: float
+    ) -> float:
+        desired_speed: float = float("inf")
+        if (
+            hero_velocity < 2
+        ):  # stop and go system for velocities between 0 m/s and 2 m/s
+            # should use the P-controller below as soon as we get reasonable
+            # radar data
+            if lead_distance > 8:
+                desired_speed = 5
+            elif lead_distance > 3:
+                desired_speed = 3
+            else:
+                desired_speed = (lead_distance - 0.5) / 4
+
+            # desired_distance = d_min_sg + T_gap_sg * hero_velocity
+            # delta_d = lead_distance - desired_distance
+            # delta_v = leading_vehicle_speed - hero_velocity
+            # speed_adjustment = Ki_sg * delta_d
+            # desired_speed = hero_velocity + speed_adjustment
+            # if desired_speed < 0:
+            #    desired_speed = 0
+
+        else:  # system for velocities > 3 m/s  = 10.8 km/h
+            Kp = self.get_param("~kp_cruise", 0.5)
+            Ki = self.get_param("~ki_cruise", 1.5)
+            T_gap = self.get_param("~t_gap_cruise", 1.9)  # unit: seconds
+            d_min = self.get_param("~d_min_cruise", 1)
+
+            desired_distance = d_min + T_gap * hero_velocity
+            delta_d = lead_distance - desired_distance
+            speed_adjustment = Ki * delta_d + Kp * delta_v
+            desired_speed = hero_velocity + speed_adjustment
+
+        desired_speed = max(desired_speed, 0.0)
+        return desired_speed
 
 
 if __name__ == "__main__":

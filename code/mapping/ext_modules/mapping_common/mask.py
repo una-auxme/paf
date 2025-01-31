@@ -132,6 +132,14 @@ def build_trajectory(
     clamped = clamp_line(global_line, hero_dist, end_dist)
     if clamped is None:
         return None
+
+    if centered:
+        rot_angle: float = global_hero_transform.rotation()
+        start_x, start_y = clamped.coords[0]
+        global_hero_transform = Transform2D.new_rotation_translation(
+            rot_angle, Vector2.new(start_x, start_y)
+        )
+
     return global_hero_transform.inverse() * clamped
 
 

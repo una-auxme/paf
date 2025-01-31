@@ -219,6 +219,11 @@ class MapTree:
     ) -> List[ShapelyEntity]:
         """Calculates which entities interact with *geo*
 
+        **IMPORTANT: The query might include false positives,
+        because the STRtree seems to only roughly check for intersections.
+        It includes all entities that MIGHT intersect with geo, but they
+        still need to be checked manually with shapely.intersects(a, b) afterwards!**
+
         More information here:
         https://shapely.readthedocs.io/en/stable/strtree.html#shapely.STRtree.query
 
@@ -419,7 +424,10 @@ class MapTree:
         return False
 
     def get_nearest_entity(
-        self, mask: shapely.Polygon, reference: ShapelyEntity, min_coverage: float = 0.0
+        self,
+        mask: shapely.Geometry,
+        reference: ShapelyEntity,
+        min_coverage: float = 0.0,
     ) -> Optional[Tuple[ShapelyEntity, float]]:
         query = self.get_overlapping_entities(mask, min_coverage)
 
@@ -430,7 +438,10 @@ class MapTree:
         return min(query_distances, key=lambda e: e[1])
 
     def get_overlapping_entities(
-        self, mask: shapely.Polygon, min_coverage_percent: float = 0.0
+        self,
+        mask: shapely.Geometry,
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
     ) -> List[ShapelyEntity]:
         """Returns a list of entities that have at least coverage % in the
         given polygon.
@@ -442,18 +453,26 @@ class MapTree:
         - list: A list of entities that have at least coverage % in the polygon."""
 
         query = self.query(mask)
-        if min_coverage_percent <= 0.0:
-            # Return instantly if we don't need to filter
-            return query
 
         collision_entities = []
 
         for ent in query:
             shape = ent.poly
+            shape_area: float = shape.area
+
+            if min_coverage_percent <= 0.0 and min_coverage_area <= 0.0:
+                # Check for intersection, because query only does it roughly
+                if shapely.intersects(mask, shape):
+                    collision_entities.append(ent)
+                continue
 
             # Calculate intersection area
-            shapely_intersection = mask.intersection(shape)
-            if shapely_intersection.area / shape.area >= min_coverage_percent:
+            shapely_intersection = shapely.intersection(mask, shape)
+            intersection_area: float = shapely_intersection.area
+            if (
+                intersection_area / shape_area >= min_coverage_percent
+                or intersection_area >= min_coverage_area
+            ):
                 collision_entities.append(ent)
 
         return collision_entities
