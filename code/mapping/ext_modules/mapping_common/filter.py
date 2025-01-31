@@ -32,6 +32,8 @@ class MapFilter:
 @dataclass
 class LaneIndexFilter(MapFilter):
 
+    max_distance_intersections = 0.8
+
     def filter(self, map):
         f = FlagFilter(is_lanemark=True)
         lanemarkings = map.filtered(f)
@@ -43,8 +45,24 @@ class LaneIndexFilter(MapFilter):
                 1.5708, Vector2.new(0.0, 0.0)
             ),
         )
-        lanemarkings.append(check_box)
-        shapely.intersection_all(lanemarkings)
+        # lanemarkings.append(check_box)
+        intersections = []
+        keep_entities = []
+        for marking in lanemarkings:
+            intersections.append(
+                shapely.intersection(
+                    check_box.to_shapely().poly, marking.to_shapely().poly
+                )
+            )
+        tree = map.build_tree(f=f)
+        for intersection in intersections:
+            if (
+                tree.query_nearest(intersection, all_matches=False)[0][1]
+                < self.max_distance_intersections
+            ):
+                continue
+            else:
+                keep_entities.append()
         return map
 
 
