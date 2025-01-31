@@ -350,7 +350,7 @@ class MapTree:
         """
         length = 80 if in_front else -80
         # a coverage width of 1.4 meters should cover all cars and obstacles in our way
-        road_area = mapping_common.mask.project_plane((0, -0.7), length, 1.4)
+        road_area = mapping_common.mask.project_plane(length, 1.4)
         road_entities = self.query(road_area)
 
         if len(road_entities) > 0:

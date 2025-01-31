@@ -14,6 +14,7 @@ from typing import List
 from typing import Tuple
 
 import utils
+import shapely
 
 import mapping_common.map
 import mapping_common.mask
@@ -170,7 +171,7 @@ class ACC(CompatibleNode):
 
     def __get_map(self, data: MapMsg):
         if self.map is not None:
-            last_time = self.map.timestamp
+            self.last_map_timestamp = self.map.timestamp
         self.map = Map.from_ros_msg(data)
 
         self.update_velocity()
@@ -353,6 +354,7 @@ class ACC(CompatibleNode):
             rospy.logerr("ACC: No hero with motion found in map!")
             self.velocity_pub.publish(0)
             return
+        hero_width = max(1.0, hero.get_width())
 
         tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
         hero_transform = mapping_common.map.build_global_hero_transform(
@@ -367,7 +369,7 @@ class ACC(CompatibleNode):
             current_wp_idx=self.__current_wp_index,
             max_wp_count=200,
             centered=True,
-            width=max(1.0, hero.get_width()),
+            width=hero_width,
         )
         if collision_mask is None:
             # We currenly have no valid path to check for collisions.
@@ -376,7 +378,9 @@ class ACC(CompatibleNode):
             self.velocity_pub.publish(0)
             return
 
-        # TODO: Add small area in front of car to the collision mask
+        # Add small area in front of car to the collision mask
+        front_rect = mapping_common.mask.project_plane(5.0, size_y=hero_width)
+        collision_mask = shapely.union(front_rect, collision_mask)
 
         mask_marker = Polygon.from_shapely(collision_mask).to_marker()
         mask_marker.scale.z = 0.2

@@ -181,7 +181,9 @@ def build_trajectory_shape(
     return curve
 
 
-def project_plane(start_point, size_x, size_y) -> shapely.Polygon:
+def project_plane(
+    size_x: float, size_y: float, start_point: Point2 = Point2.zero()
+) -> shapely.Polygon:
     """
     Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
@@ -194,7 +196,8 @@ def project_plane(start_point, size_x, size_y) -> shapely.Polygon:
     Returns:
     - Polygon: A Shapely Polygon representing the plane.
     """
-    x, y = start_point
+    x = start_point.x()
+    y = start_point.y() - size_y / 2.0
 
     points = [
         (x, y),
