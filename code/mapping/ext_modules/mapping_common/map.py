@@ -176,7 +176,13 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> Tuple[bool, Entity]:
+    ) -> Tuple[bool, Entity, List]:
+
+        # checks which lane should be checked and set the multiplier for
+        # the lane entity translation(>0 = left from car)
+        lane_pos = 1
+        if right_lane:
+            lane_pos = -1
 
         lane_box_shape = Rectangle(
             length=lane_length,
@@ -192,7 +198,15 @@ class Map:
             flags=Flags(is_ignored=True),
         )
 
-        return False, lane_box_entity
+        y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
+        lanemark_filter = FlagFilter(is_lanemark=True)
+        # build map STRtree from map with filter
+        map_tree = self.build_tree(f=lanemark_filter)
+        lanemark_y_axis_intersection = map_tree.query(
+            geo=y_axis_line, predicate="intersects"
+        )
+
+        return False, lane_box_entity, lanemark_y_axis_intersection
 
     def project_plane(self, start_point, size_x, size_y):
         """
