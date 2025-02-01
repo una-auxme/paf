@@ -2,7 +2,7 @@
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
   <arg name="view_camera" default="True" />
-  <arg name="camera_resolution" default="640" />
+  <arg name="camera_resolution" default="1280" />
 
 
 
@@ -38,6 +38,7 @@
 
   <!--<node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">-->
   <node pkg="perception" type="debug_wrapper.py" name="VisionNode" output="screen" args="--debug_node=vision_node.py --debug_port=53000">
+    <env name="CUDA_LAUNCH_BLOCKING" value="1"/>
     <param name="role_name" value="$(arg role_name)" />
     <param name="view_camera" value="$(arg view_camera)" />
     <param name="camera_resolution" value="$(arg camera_resolution)"/>
@@ -51,7 +52,7 @@
       - yolo11l-seg
       -->
 
-    <param name="model" value="yolo11n-seg" />
+    <param name="model" value="yolo11m-seg" />
   </node>
 
   <node pkg="perception" type="traffic_light_node.py" name="TrafficLightNode" output="screen">

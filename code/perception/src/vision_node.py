@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import copy
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from sklearn.cluster import DBSCAN
@@ -127,12 +128,12 @@ class VisionNode(CompatibleNode):
         Args:
             image (image msg): Image from camera scubscription
         """
-
-        # free up cuda memory
-        if self.device == "cuda":
-            torch.cuda.empty_cache()
         vision_result = self.predict_ultralytics(
-            image, return_image=self.view_camera, image_size=self.camera_resolution
+            image=image,
+            return_image=self.view_camera,
+            image_size=self.camera_resolution,
+            dist_array=copy.deepcopy(self.dist_array),
+            lidar_array=copy.deepcopy(self.lidar_array),
         )
 
         if vision_result is None:
@@ -155,16 +156,21 @@ class VisionNode(CompatibleNode):
         # callback function for lidar depth image
         # since frequency is lower than image frequency
         # the latest lidar image is saved
+        if dist_array is None or len(dist_array.data) == 0:
+            self.loginfo("No valid lidar data found")
+            return
         lidar_array = self.bridge.imgmsg_to_cv2(
             img_msg=dist_array, desired_encoding="passthrough"
         )
-        lidar_array_copy = np.copy(lidar_array)
+        lidar_array_copy = copy.deepcopy(lidar_array)
         # add camera height to the z-axis
         lidar_array_copy[..., 2] += 1.7
         self.lidar_array = lidar_array_copy
         self.dist_array = self.calculate_depth_values(lidar_array_copy)
 
-    def predict_ultralytics(self, image, return_image=True, image_size=640):
+    def predict_ultralytics(
+        self, image, dist_array, lidar_array, return_image=True, image_size=640
+    ):
         """
         This function takes in an image from a camera, predicts
         an ultralytics model on the image and looks for lidar points
@@ -186,28 +192,33 @@ class VisionNode(CompatibleNode):
         )
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
-        # Step 1: Double the image size
-        h, w = cv_image.shape[:2]  # Get original dimensions
-        new_h, new_w = h * 2, w * 2  # Double the size
-        cv_image = cv2.resize(cv_image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-
-        # Step 2: Crop the center while keeping the aspect ratio
-        crop_x1 = (new_w - w) // 2
-        crop_x2 = crop_x1 + w
-        crop_y1 = (new_h - h) // 2
-        crop_y2 = crop_y1 + h
-        cropped_image = cv_image[crop_y1:crop_y2, crop_x1:crop_x2]
-
-        # Step 3: Run model prediction on the cropped image
-        output = self.model(cropped_image, half=True, verbose=False, imgsz=image_size)  # type: ignore
-        if not (
-            hasattr(output[0], "masks")
-            and output[0].masks is not None
-            and hasattr(output[0], "boxes")
-            and output[0].boxes is not None
-            and self.dist_array is not None
-            and self.lidar_array is not None
+        output = self.model(
+            cv_image, half=True, verbose=False, imgsz=image_size  # type: ignore
+        )
+        if (
+            not hasattr(output[0], "masks")
+            or output[0].masks is None
+            or len(output[0].boxes) == 0
+            or not hasattr(output[0], "boxes")
+            or output[0].boxes is None
+            or len(output[0].boxes) == 0
         ):
+            self.loginfo("No masks or boxes found")
+            return None
+
+        # proceed with traffic light detection
+        if 9 in output[0].boxes.cls:
+            self.process_traffic_lights(output[0], cv_image, image.header)
+
+        if (
+            dist_array is None
+            or dist_array.size == 0
+            or lidar_array is None
+            or lidar_array.size == 0
+        ):
+            self.loginfo("No valid lidar data found")
+            self.loginfo(dist_array)
+            self.loginfo(lidar_array)
             return None
 
         carla_classes = np.array(coco_to_carla)[
@@ -220,31 +231,31 @@ class VisionNode(CompatibleNode):
         ).squeeze(1)
         valid_points, class_indices = self.process_segmentation_mask(
             scaled_masks.cpu().numpy(),
-            carla_classes=carla_classes,
-            distance_array=self.dist_array,
-            lidar_array=self.lidar_array,
+            distance_array=dist_array,
+            lidar_array=lidar_array,
         )
         if valid_points is None or valid_points.size == 0:
+            rospy.loginfo("No valid points found")
+            self.loginfo(valid_points)
+            self.loginfo(class_indices)
+            self.loginfo(carla_classes)
+            self.loginfo(dist_array)
+            self.loginfo(lidar_array)
+            self.loginfo(masks)
+            self.loginfo(scaled_masks)
             return None
         clustered_points, cluster_indices, carla_classes_indices = self.cluster_points(
             valid_points, class_indices, carla_classes
         )
         if clustered_points is None or clustered_points.size == 0:
             return None
-        try:
-            # self.publish_distance_output(clustered_points, carla_classes_indices)
-            clustered_lidar_points_msg = array_to_clustered_points(
-                clustered_points,
-                cluster_indices,
-                object_class_array=carla_classes_indices,
-            )
-            self.pointcloud_publisher.publish(clustered_lidar_points_msg)
-        except Exception as e:
-            rospy.logerr(f"Error in publishing pointcloud: {e}")
-            return None
-        # proceed with traffic light detection
-        if 9 in output[0].boxes.cls:
-            self.process_traffic_lights(output[0], cv_image, image.header)
+        # self.publish_distance_output(clustered_points, carla_classes_indices)
+        clustered_lidar_points_msg = array_to_clustered_points(
+            clustered_points,
+            cluster_indices,
+            object_class_array=carla_classes_indices,
+        )
+        self.pointcloud_publisher.publish(clustered_lidar_points_msg)
 
         if return_image is False or scaled_masks is None:
             return None
@@ -262,7 +273,7 @@ class VisionNode(CompatibleNode):
         return cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
     def process_segmentation_mask(
-        self, segmentation_array, carla_classes, distance_array, lidar_array
+        self, segmentation_array, distance_array, lidar_array
     ):
         # Only process the segmentation mask if the distance array is not None
         valid_distances_mask = distance_array > 0
