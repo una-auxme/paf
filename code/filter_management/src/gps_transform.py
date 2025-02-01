@@ -25,7 +25,7 @@ class GPSTransform(CompatibleNode):
         # Initialize the subscriber for the GPS data
         self.gps_subscriber = self.new_subscription(
             NavSatFix,
-            "/carla/hero/GPS",
+            "/gps/fix",
             self.gps_callback,
             qos_profile=10,
         )
@@ -36,22 +36,15 @@ class GPSTransform(CompatibleNode):
 
         self.transfomer = CoordinateTransformer()
 
-        # self.new_timer(1 / 10.0, lambda _: self.process_data())  # Other might not work
-
     def process_data(self):
         if self.odometry is None or self.gps is None:
             return
-        # Odometry is odometry_global and from global to hero. (we sent dom to heo).
-        # GPS is from global to gps
-        # Navsat publishes global to ''
-        # What do we want?
 
         out = Odometry()
         out.header = self.odometry.header
         out.header.frame_id = "global"
         out.child_frame_id = "hero"
 
-        out.pose = self.odometry.pose
         (
             out.pose.pose.position.x,
             out.pose.pose.position.y,
@@ -59,15 +52,10 @@ class GPSTransform(CompatibleNode):
         ) = self.transfomer.gnss_to_xyz(
             self.gps.latitude, self.gps.longitude, self.gps.altitude
         )
-        arr = [0.0 for _ in range(36)]
         for i in range(3):
+            out.pose.covariance[i + (i * 6)] = self.gps.position_covariance[i + (i * 3)]
 
-            arr[i + (i * 6)] = self.gps.position_covariance[i + (i * 3)]
-        out.pose.covariance = arr
-
-        out.twist = self.odometry.twist
         self.odometry_publisher.publish(out)
-
         self.odometry = None
         self.gps = None
 

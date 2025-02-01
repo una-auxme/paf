@@ -43,31 +43,10 @@
 
   <node
     pkg="robot_localization" type="ekf_localization_node" name="ekf_global" clear_params="true">
-    <!--<rosparam
-    param="initial_state">[-706, -3649, 700,
-      0.0, 0.0, 1.57,
-      0.1, 0.2, 0.3,
-      0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0]</rosparam> -->
-
   </node>
 
   <node
     pkg="filter_management" type="gps_transform.py" name="gps_transformation" output="screen">
     <!-- substitute for navsat transform. navsat does utm we need wgs-->
   </node>
-
-
-  <!--This
-  uses UTM Coordinates, we however use WGS coordinates... we'll write our own -->
-  <!--
-  <node
-    pkg="robot_localization" type="navsat_transform_node" name="navsat_transform">
-    <remap
-      from="/imu/data" to="/carla/hero/IMU" />
-    <rosparam param="datum">[0.0,0.0,0.0, global, odom]</rosparam>
-    <remap from="/gps/fix" to="/carla/hero/GPS" />
-  </node>
-  -->
-
 </launch>
