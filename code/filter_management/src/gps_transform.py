@@ -41,11 +41,15 @@ class GPSTransform(CompatibleNode):
     def process_data(self):
         if self.odometry is None or self.gps is None:
             return
-        """GPS Covariance is 0 here. Which covariance should we use??."""
+        # Odometry is odometry_global and from global to hero. (we sent dom to heo).
+        # GPS is from global to gps
+        # Navsat publishes global to ''
+        # What do we want?
+
         out = Odometry()
         out.header = self.odometry.header
         out.header.frame_id = "global"
-        out.child_frame_id = "odom"
+        out.child_frame_id = "hero"
 
         out.pose = self.odometry.pose
         (

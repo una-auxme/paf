@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Imu, NavSatFix
@@ -15,7 +15,7 @@ class ForwardIMU(CompatibleNode):
         Constructor / Setup
         :return:
         """
-        super().__init__("forward_imu")
+        super().__init__("sensor_covariance_fusion")
 
         self.imu_publisher = self.new_publisher(Imu, "/imu/data", qos_profile=10)
         self.gps_publisher = self.new_publisher(NavSatFix, "/gps/fix", qos_profile=10)
@@ -37,22 +37,20 @@ class ForwardIMU(CompatibleNode):
         )
 
     def imu_callback(self, imu: Imu):
-        imu.header.frame_id = "hero"  # ??
-        imu.linear_acceleration_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-        imu.angular_velocity_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-        imu.orientation_covariance = [1, 0, 0, 0, 1, 0, 0, 0, 0]
-        # yaw is 100 % accurate
+        # imu.header.frame_id = "hero"  #Reduces messages of unknown transform
+        imu.orientation_covariance = rospy.get_param("~imu_orientation")
+        imu.angular_velocity_covariance = rospy.get_param("~imu_angular_velocity")
+        imu.linear_acceleration_covariance = rospy.get_param("~imu_linear_acceleration")
         self.imu_publisher.publish(imu)
-        # doesnt work anyway
 
     def gps_callback(self, gps: NavSatFix):
-        gps.header.frame_id = "hero"
-        gps.position_covariance = [1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3]
+        # gps.header.frame_id = "hero"
+        gps.position_covariance = rospy.get_param("~gps_position")
         self.gps_publisher.publish(gps)
 
 
 def main(args=None):
-    roscomp.init("forward_imu", args=args)
+    roscomp.init("sensor_covariance_fusion", args=args)
 
     try:
         node = ForwardIMU()

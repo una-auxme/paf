@@ -103,93 +103,18 @@ class OdometryNode(CompatibleNode):
         odom.header.frame_id = "odom"
         odom.child_frame_id = "hero"
 
-        cov_d = 1.0
         # Pose
-        # odom.pose.pose.position.x = self.x
-        # odom.pose.pose.position.y = self.y
-        # odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
-        # odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
-        odom.pose.covariance = [
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-        ]
+        odom.pose.pose.position.x = self.x
+        odom.pose.pose.position.y = self.y
+        odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
+        odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
+        odom.pose.covariance = rospy.get_param("~pose_covariance")
 
         # Velocity
         # odom.twist.twist.linear.x = v * math.cos(self.yaw)
         # odom.twist.twist.linear.y = v * math.sin(self.yaw)
         # odom.twist.twist.angular.z = omega
-        odom.twist.covariance = [
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            cov_d,
-        ]
+        odom.twist.covariance = rospy.get_param("~twist_covariance")
 
         # Publish odometry message
         self.odom_pub.publish(odom)
@@ -210,7 +135,7 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init("odometry_node", args=args)
+    roscomp.init("odometry_fusion", args=args)
 
     try:
         node = OdometryNode()
