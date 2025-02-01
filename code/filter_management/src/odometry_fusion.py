@@ -9,16 +9,28 @@ from geometry_msgs.msg import Twist, TransformStamped
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
 import threading
-
+import numpy as np
 from transformations import euler_from_quaternion
 
 # import tf2_ros
 
 from typing import Optional
 
+from filter_management.cfg import OdometryCovarianceConfig
+from dynamic_reconfigure.server import Server
+
 
 class OdometryNode(CompatibleNode):
     def __init__(self):
+
+        self.__use_odometry_yaml_covariance: bool
+        self.__odometry_pose_covariance_translation: float
+        self.__odometry_pose_covariance_rotation: float
+        self.__odometry_twist_covariance_linear: float
+        self.__odometry_twist_covariance_angular: float
+
+        Server(OdometryCovarianceConfig, self.dynamic_reconfigure_callback)
+
         # Parameters
         self.wheelbase = 2.85  # our car: Lincoln MKZ 2020
         self.turning_cicle = 11.58
@@ -67,6 +79,22 @@ class OdometryNode(CompatibleNode):
         # Variables to store inputs
         self.speed = 0.0
         self.steering_angle = 0.0
+
+    def dynamic_reconfigure_callback(self, config: "OdometryCovariance", label):
+        self.__use_odometry_yaml_covariance = config["use_yaml_covariance_odometry"]
+        self.__odometry_pose_covariance_translation = config[
+            "odometry_pose_covariance_translation"
+        ]
+        self.__odometry_pose_covariance_rotation = config[
+            "odometry_pose_covariance_rotation"
+        ]
+        self.__odometry_twist_covariance_linear = config[
+            "odometry_twist_covariance_linear"
+        ]
+        self.__odometry_twist_covariance_angular = config[
+            "odometry_twist_covariance_angular"
+        ]
+        return config
 
     def imu_callback(self, msg: Imu):
         self.imu = msg
@@ -124,7 +152,16 @@ class OdometryNode(CompatibleNode):
         odom.twist.twist.linear.x = v * math.cos(self.yaw)
         odom.twist.twist.linear.y = v * math.sin(self.yaw)
         # odom.twist.twist.angular.z = omega
-        odom.twist.covariance = rospy.get_param("~twist_covariance")
+
+        if self.__use_odometry_yaml_covariance:
+            odom.twist.covariance = rospy.get_param("~twist_covariance")
+        else:
+            linear = np.diag(np.full(3, self.__odometry_twist_covariance_linear))
+            angular = np.diag(np.full(3, self.__odometry_twist_covariance_angular))
+            cov = np.zeros((6, 6), dtype=np.float32)
+            cov[:3, :3] = linear
+            cov[3:, 3:] = angular
+            odom.twist.covariance = list(cov.flatten())
 
         # Publish odometry message
         self.odom_pub.publish(odom)
