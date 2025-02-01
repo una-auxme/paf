@@ -24,7 +24,7 @@
 
 
   <node
-    pkg="filter_management" type="split_odometry_msg.py" name="split_odometry_node"
+    pkg="filter_management" type="current_state_publisher.py" name="current_state_publisher"
     output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />

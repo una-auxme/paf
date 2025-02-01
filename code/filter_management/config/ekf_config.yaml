@@ -17,14 +17,14 @@ ekf_local:
 
   odom0: wheel/odometry
   odom0_config: [
-      true, # x
+      false, # x
       false, # y
       false, #z
       false, # roll
       false, # pitch
       false, # yaw
-      false, # vx
-      false, # vy
+      true, # vx
+      true, # vy
       false, # vz
       false, # vroll
       false, # vpitch
@@ -119,14 +119,14 @@ ekf_global:
 
   odom0: wheel/odometry
   odom0_config: [
-      true,  # x
+      false,  # x
       false, # y
       false, # z
       false, # roll
       false, # pitch
       false, # yaw
-      false, # vx
-      false, # vy
+      true, # vx
+      true, # vy
       false, # vz
       false, # vroll
       false, # vpitch

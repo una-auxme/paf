@@ -37,10 +37,10 @@
     </include>
 
     <!-- filter management -->
-    <!-- 
+
     <include
         file="$(find filter_management)/launch/filter_management.launch">
-    </include> LAUNCH MANUAL FOR NOW TO TEST DIFFERENT CONFIGURATIONS-->
+    </include> <!-- LAUNCH MANUAL FOR NOW TO TEST DIFFERENT CONFIGURATIONS-->
 
     <node type="rviz"
         name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />

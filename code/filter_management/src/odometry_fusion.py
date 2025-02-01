@@ -10,6 +10,8 @@ from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
 import threading
 
+from transformations import euler_from_quaternion
+
 # import tf2_ros
 
 from typing import Optional
@@ -85,17 +87,17 @@ class OdometryNode(CompatibleNode):
             self.initialized = True
 
     def publish_odometry(self):
-        dt = 1 / 20.0
+        # dt = 1 / 20.0
 
         # Compute velocities
         v = self.speed
-        steering_angle = self.steering_angle
-        omega = v * math.tan(steering_angle) / self.wheelbase
+        # steering_angle = self.steering_angle
+        # omega = v * math.tan(steering_angle) / self.wheelbase
 
         # Update pose
-        self.x += v * math.cos(self.yaw) * dt
-        self.y += v * math.sin(self.yaw) * dt
-        self.yaw += omega * dt
+        # self.x += v * math.cos(self.yaw) * dt
+        # self.y += v * math.sin(self.yaw) * dt
+        # self.yaw += omega * dt
 
         # Create Odometry message
         odom = Odometry()
@@ -104,15 +106,23 @@ class OdometryNode(CompatibleNode):
         odom.child_frame_id = "hero"
 
         # Pose
-        odom.pose.pose.position.x = self.x
-        odom.pose.pose.position.y = self.y
-        odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
-        odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
-        odom.pose.covariance = rospy.get_param("~pose_covariance")
+        # odom.pose.pose.position.x = self.x
+        # odom.pose.pose.position.y = self.y
+        # odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
+        # odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
+        # odom.pose.covariance = rospy.get_param("~pose_covariance")
+
+        quat = (
+            self.imu.orientation.x,
+            self.imu.orientation.y,
+            self.imu.orientation.z,
+            self.imu.orientation.w,
+        )
+        _roll, _pitch, self.yaw = euler_from_quaternion(quat)
 
         # Velocity
-        # odom.twist.twist.linear.x = v * math.cos(self.yaw)
-        # odom.twist.twist.linear.y = v * math.sin(self.yaw)
+        odom.twist.twist.linear.x = v * math.cos(self.yaw)
+        odom.twist.twist.linear.y = v * math.sin(self.yaw)
         # odom.twist.twist.angular.z = omega
         odom.twist.covariance = rospy.get_param("~twist_covariance")
 

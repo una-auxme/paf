@@ -59,6 +59,11 @@ class GPSTransform(CompatibleNode):
         ) = self.transfomer.gnss_to_xyz(
             self.gps.latitude, self.gps.longitude, self.gps.altitude
         )
+        arr = [0.0 for _ in range(36)]
+        for i in range(3):
+
+            arr[i + (i * 6)] = self.gps.position_covariance[i + (i * 3)]
+        out.pose.covariance = arr
 
         out.twist = self.odometry.twist
         self.odometry_publisher.publish(out)
