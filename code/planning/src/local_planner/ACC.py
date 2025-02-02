@@ -362,34 +362,43 @@ class ACC(CompatibleNode):
             self.__current_position.y,
             self.__current_heading,
         )
-        collision_mask = mapping_common.mask.build_trajectory_shape(
+
+        front_mask_size = 7.5
+        trajectory_mask = mapping_common.mask.build_trajectory_shape(
             self.trajectory,
             hero_transform,
+            start_dist_from_hero=front_mask_size,
             max_length=100.0,
             current_wp_idx=self.__current_wp_index,
             max_wp_count=200,
             centered=True,
             width=hero_width,
         )
-        if collision_mask is None:
-            # We currenly have no valid path to check for collisions.
+        if trajectory_mask is None:
+            # We currently have no valid path to check for collisions.
             # -> cannot drive safely
             rospy.logerr("ACC: Unable to build collision mask!")
             self.velocity_pub.publish(0)
             return
 
         # Add small area in front of car to the collision mask
-        front_rect = mapping_common.mask.project_plane(5.0, size_y=hero_width)
-        collision_mask = shapely.union(front_rect, collision_mask)
+        front_rect = mapping_common.mask.project_plane(
+            front_mask_size, size_y=hero_width
+        )
+        collision_masks = [front_rect, trajectory_mask]
+        # collision_mask = shapely.GeometryCollection(collision_masks)
+        collision_mask = shapely.union_all(collision_masks)
 
-        mask_marker = Polygon.from_shapely(collision_mask).to_marker()
-        mask_marker.scale.z = 0.2
-        mask_marker.color.a = 0.5
-        mask_marker.color.r = 0
-        mask_marker.color.g = 1.0
-        mask_marker.color.b = 1.0
+        marker_list = []
+        for mask in collision_masks:
+            mask_marker = Polygon.from_shapely(mask).to_marker()
+            mask_marker.scale.z = 0.2
+            mask_marker.color.a = 0.5
+            mask_marker.color.r = 0
+            mask_marker.color.g = 1.0
+            mask_marker.color.b = 1.0
+            marker_list.append(mask_marker)
 
-        marker_list = [mask_marker]
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
         current_velocity = hero.get_global_x_velocity() or 0.0
@@ -411,19 +420,35 @@ class ACC(CompatibleNode):
                 current_velocity, distance, lead_delta_velocity
             )
 
+            marker_text = (
+                f"LeadDistance: {distance}\n"
+                + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
+                + f"DeltaV: {lead_delta_velocity}\n"
+                + f"RawACCSpeed: {desired_speed}"
+            )
+            text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
+            text_marker.pose.position.x = -2.0
+            text_marker.pose.position.y = 0.0
+            text_marker.scale.z = 0.3
+            text_marker.color.a = 1.0
+            text_marker.color.r = 1.0
+            text_marker.color.g = 1.0
+            text_marker.color.b = 1.0
+            marker_list.append(text_marker)
+
         if self.speed_limit is None:
             desired_speed = min(5.0, desired_speed)
         else:
             # Max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        delta_time: float = 0.1
-        if self.last_map_timestamp is not None:
-            delta = self.map.timestamp - self.last_map_timestamp
-            delta_time = delta.to_sec()
-        desired_speed = utils.interpolate_speed(
-            desired_speed, current_velocity, lerp_factor=1.0 * delta_time
-        )
+        # delta_time: float = 0.1
+        # if self.last_map_timestamp is not None:
+        #     delta = self.map.timestamp - self.last_map_timestamp
+        #     delta_time = delta.to_sec()
+        # desired_speed = utils.interpolate_speed(
+        #     desired_speed, current_velocity, lerp_factor=1.0 * delta_time
+        # )
 
         self.velocity_pub.publish(desired_speed)
         self.publish_debug_markers(marker_list)

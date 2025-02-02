@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 import shapely
 import shapely.ops
 import numpy as np
+import numpy.typing as npt
 import math
 
 from nav_msgs.msg import Path as NavPath
@@ -45,17 +46,17 @@ def split_line_at(
     if distance <= 0 or math.isclose(0.0, distance):
         return (None, line)
 
-    coords_array = np.array(line.coords)
-
-    coords_0: List[shapely.Point] = []
-    coords_1: List[shapely.Point] = []
+    coords_array: npt.NDArray[np.float64] = np.array(line.coords)
     current_dist: float = 0.0
-    coords_1_start_idx: int = 1
+    coords_0_start_idx: int = 0
+    coords_0_end_idx: int = len(line.coords) - 1
+    new_split_point: Optional[Point2] = None
+    coords_1_start_idx: int = len(line.coords) - 1
+    coords_1_end_idx: int = len(line.coords) - 1
     # First build the line before the split
     for idx in range(1, len(line.coords)):
         p0: Point2 = Point2.new(coords_array[idx - 1, 0], coords_array[idx - 1, 1])
         p1: Point2 = Point2.new(coords_array[idx, 0], coords_array[idx, 1])
-        coords_0.append(p0.to_shapely())
 
         v: Vector2 = p0.vector_to(p1)
         segment_length: float = v.length()
@@ -63,27 +64,41 @@ def split_line_at(
 
         if math.isclose(end_dist, distance):
             # Split point is p1
-            s_p = p1.to_shapely()
-            coords_0.append(s_p)
-            coords_1.append(s_p)
-            coords_1_start_idx = idx + 1
+            coords_0_end_idx = idx
+            coords_1_start_idx = idx
             break
         elif end_dist > distance:
             # Split point is between p0 and p1
             remaining_dist = distance - current_dist
-            p_s = p0 + (v.normalized() * remaining_dist)
-            s_p = p_s.to_shapely()
-            coords_0.append(s_p)
-            coords_1.append(s_p)
+            new_split_point = p0 + (v.normalized() * remaining_dist)
+            coords_0_end_idx = idx - 1
             coords_1_start_idx = idx
             break
         current_dist = end_dist
-    # Now build the line after the split
-    for idx in range(coords_1_start_idx, len(line.coords)):
-        coords_1.append(shapely.Point(coords_array[idx]))
 
-    line0 = shapely.LineString(coords_0) if len(coords_0) > 1 else None
-    line1 = shapely.LineString(coords_1) if len(coords_1) > 1 else None
+    line0 = None
+    if coords_0_start_idx < coords_0_end_idx:
+        coords0: npt.NDArray[np.float64] = coords_array[
+            coords_0_start_idx : coords_0_end_idx + 1
+        ]
+        if new_split_point is not None:
+            coords0 = np.concatenate(
+                (coords0, [[new_split_point.x(), new_split_point.y()]])
+            )
+        line0 = shapely.LineString(coords0)
+
+    # Now build the line after the split
+    line1 = None
+    if coords_1_start_idx < coords_1_end_idx:
+        coords1: npt.NDArray[np.float64] = coords_array[
+            coords_1_start_idx : coords_1_end_idx + 1
+        ]
+        if new_split_point is not None:
+            coords1 = np.concatenate(
+                ([[new_split_point.x(), new_split_point.y()]], coords1)
+            )
+        line1 = shapely.LineString(coords1)
+
     return (line0, line1)
 
 
@@ -99,7 +114,8 @@ def clamp_line(
         return None
     if end_distance is None:
         return after
-    before, _ = split_line_at(after, end_distance)
+    assert end_distance >= start_distance
+    before, _ = split_line_at(after, end_distance - start_distance)
     return before
 
 
@@ -147,6 +163,7 @@ def build_trajectory_shape(
     global_trajectory: NavPath,
     global_hero_transform: Transform2D,
     width: float = 1.0,
+    start_dist_from_hero: Optional[float] = 0.0,
     max_length: Optional[float] = None,
     current_wp_idx: int = 0,
     max_wp_count: Optional[int] = None,
@@ -176,6 +193,11 @@ def build_trajectory_shape(
     )
     if line is None:
         return None
+    if start_dist_from_hero is not None:
+        _, after = split_line_at(line, start_dist_from_hero)
+        if after is None:
+            return None
+        line = after
 
     curve = curve_to_polygon(line, width)
     return curve
