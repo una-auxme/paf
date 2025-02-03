@@ -194,7 +194,6 @@ class Map:
         lanemark_filter = FlagFilter(is_lanemark=True)
         # build map STRtree from map with filter
         lanemarks = self.filtered(lanemark_filter)
-        lanemarks[0].shape.to_shapely
         intersections = {}
         for lanemark in lanemarks:
             intersection = lanemark.shape.to_shapely(lanemark.transform).intersection(
