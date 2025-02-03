@@ -19,11 +19,8 @@ import struct
 from collections import defaultdict
 from rosgraph_msgs.msg import Clock
 from ros_compatibility.node import CompatibleNode
-from shapely.geometry import Polygon as ShapelyPoloygon
-from mapping_common.entity import Entity, Flags, Motion2D
-from mapping_common.shape import Polygon
-from mapping_common.transform import Transform2D, Vector2
-from typing import List
+from mapping_common.entity import Motion2D
+from mapping_common.transform import Vector2
 from mapping.msg import ClusteredPointsArray
 
 import tf
@@ -314,6 +311,7 @@ class RadarNode(CompatibleNode):
         - None
             The function handles all outputs via ROS publishers and logs.
         """
+
         combined_points = []
         combined_points_filtered_out = []
 
@@ -388,13 +386,7 @@ class RadarNode(CompatibleNode):
         motionArray = calculate_cluster_velocity(points_with_labels)
         motionArray = motionArray[valid_indices]
 
-        rospy.loginfo(f"Radarnode type(motionArray[0] vorher: {type(motionArray[0])}")
-        rospy.loginfo(f"Länge motionarray {len(motionArray)}")
-        rospy.loginfo(f"Länge indexarray {len(indexArray)}")
-        # rospy.loginfo(f"Radarnode motionArray[0] vorher: {motionArray[0]}")
         motionArray = [m.to_ros_msg() for m in motionArray]
-        rospy.loginfo(f"Radarnode type(motionArray[0] nachher: {type(motionArray[0])}")
-        rospy.loginfo(f"Radarnode motionArray nachher: {motionArray[0]}")
 
         clusteredpoints = array_to_clustered_points(
             clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
@@ -472,6 +464,7 @@ class RadarNode(CompatibleNode):
             ),
             ClusteredPointsArray,
             queue_size=10,
+            latch=True,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),

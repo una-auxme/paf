@@ -16,7 +16,7 @@ from mapping_common.map import Map
 from mapping_common.filter import MapFilter, GrowthMergingFilter
 from mapping.msg import Map as MapMsg
 from mapping.msg import ClusteredPointsArray
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 
@@ -113,7 +113,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.lidar_clustered_points_data = data
 
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
-        rospy.loginfo(f"radar data received in intermediate layer callback: {data}")
         self.radar_clustered_points_data = data
 
     def vision_clustered_points_callback(self, data: ClusteredPointsArray):
@@ -251,75 +250,36 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
-    def publish_cluster_points(self, cluster_points, frame_id="hero"):
-        """
-        Publishes the cluster points as a PointCloud2 message.
-        Args:
-            cluster_points: numpy array of shape (N, 3), where each row is [x, y, z]
-            frame_id: coordinate frame ID for the points
-        """
-        point_cloud_msg = PointCloud2()
-        point_cloud_msg.header.frame_id = frame_id
-        point_cloud_msg.header.stamp = rospy.Time.now()
-        point_cloud_msg.height = 1  # Unstructured point cloud
-        point_cloud_msg.width = len(cluster_points)
-        point_cloud_msg.is_dense = True
-        point_cloud_msg.is_bigendian = False
-        point_cloud_msg.fields = [
-            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
-            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
-            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
-        ]
-        point_cloud_msg.point_step = 12  # 4 bytes * 3 fields
-        point_cloud_msg.row_step = point_cloud_msg.point_step * point_cloud_msg.width
-        point_cloud_msg.data = np.array(cluster_points, dtype=np.float32).tobytes()
-
-        self.cluster_points_publisher.publish(point_cloud_msg)
-
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
-        rospy.loginfo("Create entities in intermediate layer")
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
             self.radar_clustered_points_data = None
-            rospy.loginfo("radar data received in intermediate layer")
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
             self.lidar_clustered_points_data = None
         elif sensortype == "vision":
-            pass
+            data = self.vision_clustered_points_data
+            self.vision_clustered_points_data = None
         else:
             raise ValueError(f"Unbekannter Sensortyp: {sensortype}")
 
         if data is None:
             return []
 
-        clusterpointsarray = np.array(data.clusterPointsArray)
-
-        # Überprüfen, ob die Länge des Arrays durch 3 teilbar ist
-        if len(clusterpointsarray) % 3 != 0:
-            raise ValueError(
-                "Die Länge von clusterPointsArray ist nicht durch 3 teilbar. Überprüfe \
-                die Datenquelle."
-            )
-
-        # Umformen in (n, 3)
-        clusterpointsarray = clusterpointsarray.reshape(-1, 3)
+        clusterpointsarray = np.array(data.clusterPointsArray).reshape(-1, 3)
 
         indexarray = np.array(data.indexArray)
-        motionarray = np.array(data.motionArray) if data.motionArray else None
-        motion_array_converted = None
 
-        if motionarray is not None:
-            motion_array_converted = [
-                Motion2D.from_ros_msg(motion_msg) for motion_msg in motionarray
-            ]
-
-            motion_array_converted = np.array(motion_array_converted)
+        motion_array_converted = (
+            np.array([Motion2D.from_ros_msg(m) for m in data.motionArray])
+            if data.motionArray
+            else None
+        )
 
         unique_labels = np.unique(indexarray)
-        entities = []
 
+        entities = []
         for label in unique_labels:
             if label == -1:
                 # -1 kann für Rauschen oder ungültige Cluster stehen
@@ -328,19 +288,16 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             # Filtere Punkte für den aktuellen Cluster
             cluster_mask = indexarray == label
-            cluster_points = clusterpointsarray[cluster_mask]
+            cluster_points_xy = clusterpointsarray[cluster_mask, :2]
 
             # Prüfe, ob genügend Punkte für ein Polygon vorhanden sind
-            if cluster_points.shape[0] < 3:
+            if cluster_points_xy.shape[0] < 3:
                 continue
 
-            # Extrahiere nur die XY-Koordinaten
-            cluster_points_xy = cluster_points[:, :2]
             if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
                 # Füge den Startpunkt am Ende hinzu, um das Polygon zu schließen
                 cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
 
-            # cluster_polygon = ShapelyPolygon(cluster_points_xy).convex_hull
             cluster_polygon = MultiPoint(cluster_points_xy)
             cluster_polygon_hull = cluster_polygon.convex_hull
             if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
@@ -354,15 +311,17 @@ class MappingDataIntegrationNode(CompatibleNode):
                 cluster_polygon_hull, make_centered=True  # type: ignore
             )
 
-            # Optional: Berechne die Bewegung (Motion)
+            transform = shape.offset
+            shape.offset = Transform2D.identity()
+
             motion = None
             if motion_array_converted is not None:
-                cluster_motion = motion_array_converted[indexarray == label]
-                motion = cluster_motion[0]
+                motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
                     motion_vector_hero = Vector2.forward() * self.hero_speed.speed
-                    relative_motion = motion.linear_motion - motion_vector_hero
-                    motion = Motion2D(relative_motion, angular_velocity=0.0)
+                    motion = Motion2D(
+                        motion.linear_motion - motion_vector_hero, angular_velocity=0.0
+                    )
 
                 # rospy.loginfo(
                 #     f"Relative motion: x={motion.linear_motion.x()}, y={motion.linear_motion.y()}, angular={motion.angular_velocity}"
@@ -374,9 +333,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             #     cluster_class = objectclassarray[indexarray == label]
             #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste
             # Klasse
-
-            transform = shape.offset
-            shape.offset = Transform2D.identity()
 
             flags = Flags(is_collider=True)
 
@@ -391,8 +347,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                 motion=motion,
             )
             entities.append(entity)
-
-        self.publish_cluster_points(clusterpointsarray)
 
         return entities
 
@@ -423,7 +377,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         return hero
 
     def publish_new_map(self, timer_event=None):
-        rospy.loginfo("Publish new map() is running")
         hero_car = self.create_hero_entity()
         if hero_car is None:
             return
@@ -435,11 +388,9 @@ class MappingDataIntegrationNode(CompatibleNode):
             "~enable_lidar_cluster"
         ):
             entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
-        rospy.loginfo(f"radar data: {self.radar_clustered_points_data}")
         if self.radar_clustered_points_data is not None and self.get_param(
             "~enable_radar_cluster"
         ):
-            rospy.loginfo("Publish new map radar")
             entities.extend(self.create_entities_from_clusters(sensortype="radar"))
         if self.vision_clustered_points_data is not None and self.get_param(
             "enable_vision_cluster"
