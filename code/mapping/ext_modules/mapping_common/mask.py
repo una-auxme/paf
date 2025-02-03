@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import shapely
 import shapely.ops
@@ -12,15 +12,16 @@ from mapping_common.transform import Transform2D, Point2, Vector2
 from shapely.geometry import Polygon, LineString
 
 
-def curve_to_polygon(line: shapely.LineString, width) -> shapely.Polygon:
-    """Creates a polygon with a specified width around a given curve.
+def curve_to_polygon(line: shapely.LineString, width: float) -> shapely.Polygon:
+    """Creates a polygon with a specified width around a given line.
 
-    Parameters:
-    - points (list of tuple): A list of (x, y) coordinates representing the curve.
-    - width (float): The width of the polygon along the curve.
+    Args:
+        line (shapely.LineString)
+        width (float): Width of the result
 
     Returns:
-    - Polygon: A Shapely Polygon representing the widened curve."""
+        shapely.Polygon
+    """
 
     if len(line.coords) < 2:
         raise ValueError("At least two points are required to define a curve.")
@@ -41,6 +42,17 @@ def curve_to_polygon(line: shapely.LineString, width) -> shapely.Polygon:
 def split_line_at(
     line: shapely.LineString, distance: float
 ) -> Tuple[Optional[LineString], Optional[LineString]]:
+    """Splits line at the given distance from the line start
+
+    Args:
+        line (shapely.LineString): Line to split
+        distance (float)
+
+    Returns:
+        Tuple[Optional[LineString], Optional[LineString]]:
+            (before, after) Tuple: Line before and after the split.
+            Either of them might be None depending on the split position.
+    """
     if len(line.coords) < 2:
         return (None, None)
     if distance <= 0 or math.isclose(0.0, distance):
@@ -107,6 +119,19 @@ def clamp_line(
     start_distance: float = 0.0,
     end_distance: Optional[float] = None,
 ) -> Optional[shapely.LineString]:
+    """Clamps line based on the two distances from the line start
+
+    Args:
+        line (shapely.LineString): Line to clamp
+        start_distance (float, optional):
+            Distance for the first cut from the line start point. Defaults to 0.0.
+        end_distance (Optional[float], optional):
+            Distance for the second cut from the original line start point.
+            If None only the starting section is cut off. Defaults to None.
+
+    Returns:
+        Optional[shapely.LineString]: None if the clamping leaves nothing
+    """
     if len(line.coords) < 2:
         return None
     _, after = split_line_at(line, start_distance)
@@ -127,10 +152,31 @@ def build_trajectory(
     max_wp_count: Optional[int] = None,
     centered: bool = False,
 ) -> Optional[shapely.LineString]:
-    """Builds a local trajectory centered on the global_hero_pos
+    """Builds a local trajectory line based on the global trajectory
+    the and global_hero_transform and returns it as line
 
-    Must not be used for navigating, but can be used for collision avoidance / acc
+    The global_hero_transform can be built with
+    mapping_common.map.build_global_hero_transform().
+
+    When centered is true, the trajectory start point will be centered onto (0, 0).
+    Centered mode must not be used for navigating,
+    but can be used for collision avoidance / acc.
+
+    Args:
+        global_trajectory (NavPath): NavPath trajectory in global coordinates
+        global_hero_transform (Transform2D): Global Transform2D of the hero
+        max_length (Optional[float], optional): Maximum length of the resulting line.
+            Defaults to None.
+        current_wp_idx (int, optional): Waypoint index for
+            very rough clamping of the NavPath. Defaults to 0.
+        max_wp_count (Optional[int], optional): Max waypoint index of the NavPath
+            for very rough clamping of the NavPath. Defaults to None.
+        centered (bool, optional): Centered mode. Defaults to False.
+
+    Returns:
+        Optional[shapely.LineString]: Local line based on the trajectory
     """
+
     points = []
     poses_view = (
         global_trajectory.poses[current_wp_idx:]
@@ -169,19 +215,25 @@ def build_trajectory_shape(
     max_wp_count: Optional[int] = None,
     centered: bool = False,
 ) -> Optional[shapely.Polygon]:
-    """Calculates the closest entity on the given trajectory. Transforms
-    trajectory world coordinates into map coordinates based on hero position.
+    """Builds a shape based on the global trajectory
+    the and global_hero_transform and returns it as Polygon
 
     Args:
-        trajectory (np array of x,y tuples): A np array of
-        (x, y) coordinates representing the
-        planned trajectory.
-        hero_pos (x, y): The world coordinates of the hero car.
-        hero_heading (float): The current heading of the hero car.
-        width (float): The desired width of the curved polygon.
+        global_trajectory (NavPath): NavPath trajectory in global coordinates
+        global_hero_transform (Transform2D): Global Transform2D of the hero
+        width (float, optional): Width of the trajectory shape. Defaults to 1.0.
+        start_dist_from_hero (Optional[float], optional):
+            Removes the first meters from the trajectory. Defaults to 0.0.
+        max_length (Optional[float], optional):
+            Maximum length of the resulting shape. Defaults to None.
+        current_wp_idx (int, optional): Waypoint index for
+            very rough clamping of the NavPath. Defaults to 0.
+        max_wp_count (Optional[int], optional): Max waypoint index of the NavPath
+            for very rough clamping of the NavPath. Defaults to None.
+        centered (bool, optional): Centered mode. Defaults to False.
 
     Returns:
-        Optional[Entity]: The closest entity
+        Optional[shapely.Polygon]: Local shape based on the trajectory
     """
     line = build_trajectory(
         global_trajectory,
@@ -210,10 +262,9 @@ def project_plane(
     Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
     Parameters:
-    - start_point(float, float): Starting point tuple from which
-    the rectangle is constructed
     - size_x (float): Length of the plane along the x-axis.
     - size_y (float): Width of the plane along the y-axis.
+    - start_point(Point2): Start point in the low y-center of the rectangle
 
     Returns:
     - Polygon: A Shapely Polygon representing the plane.

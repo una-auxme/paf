@@ -10,14 +10,14 @@
             wind_intensity="10.0" sun_azimuth_angle="-1.0" sun_altitude_angle="15.0" fog_density="2.0"/>
       </weathers>
       <waypoints>
-         <position x="983.5" y="5382.2" z="371"/> <!-- first scene, city, opening door-->
-         <position x="824.2" y="5575.3" z="371"/> <!--2 city, intersection-->
-         <position x="605.5" y="5575.5" z="370"/> <!--3 residential area -->
-         <position x="497.5" y="5718.3" z="368"/> <!--4 residential area -->
-         <position x="516.3" y="5897.4" z="364"/> 
-         <position x="355.1" y="6138.1" z="358"/> 
-         <position x="285.9" y="6127.4" z="358"/> 
-         <position x="213.5" y="6100.5" z="358"/> 
+         <position x="983.5" y="5382.2" z="371"/>
+         <position x="824.2" y="5575.3" z="371"/>
+         <position x="605.5" y="5575.5" z="370"/>
+         <position x="497.5" y="5718.3" z="368"/>
+         <position x="516.3" y="5897.4" z="364"/>
+         <position x="355.1" y="6138.1" z="358"/>
+         <position x="285.9" y="6127.4" z="358"/>
+         <position x="213.5" y="6100.5" z="358"/>
          <position x="-221.6" y="6100.7" z="358"/>
          <position x="-264.6" y="6019.4" z="360"/>
          <position x="-297.9" y="5816.4" z="366"/>

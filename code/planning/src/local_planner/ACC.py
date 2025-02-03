@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ros_compatibility as roscomp
 from geometry_msgs.msg import PoseStamped, Point
+import mapping_common.shape
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
@@ -16,6 +17,7 @@ import shapely
 
 import mapping_common.map
 import mapping_common.mask
+import mapping_common.entity
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.shape import Polygon
@@ -243,19 +245,6 @@ class ACC(CompatibleNode):
             self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
             self.speed_limit_publisher.publish(self.speed_limit)
 
-    def publish_debug_markers(self, m: List[Marker]):
-        marker_array = MarkerArray(
-            markers=[Marker(ns=MARKER_NAMESPACE, action=Marker.DELETEALL)]
-        )
-        for id, marker in enumerate(m):
-            marker.header.frame_id = "hero"
-            marker.header.stamp = rospy.get_rostime()
-            marker.ns = MARKER_NAMESPACE
-            marker.id = id
-            marker.lifetime = rospy.Duration.from_sec(0.5)
-            marker_array.markers.append(marker)
-        self.marker_publisher.publish(marker_array)
-
     def run(self):
         """
         Control loop
@@ -321,29 +310,19 @@ class ACC(CompatibleNode):
         # collision_mask = shapely.GeometryCollection(collision_masks)
         collision_mask = shapely.union_all(collision_masks)
 
-        marker_list = []
+        shape_markers = []
         for mask in collision_masks:
-            mask_marker = Polygon.from_shapely(mask).to_marker()
-            mask_marker.scale.z = 0.2
-            mask_marker.color.a = 0.5
-            mask_marker.color.r = 0
-            mask_marker.color.g = 1.0
-            mask_marker.color.b = 1.0
-            marker_list.append(mask_marker)
+            shape_markers.append((Polygon.from_shapely(mask), (0, 1.0, 1.0, 0.5)))
 
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
+        text_markers = []
+        entity_markers = []
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
         if entity_result is not None:
             entity, distance = entity_result
-            entity_marker = entity.entity.to_marker()
-            entity_marker.scale.z = 0.2
-            entity_marker.color.a = 0.5
-            entity_marker.color.r = 1.0
-            entity_marker.color.g = 0.0
-            entity_marker.color.b = 0.0
-            marker_list.append(entity_marker)
+            entity_markers.append((entity.entity, (1.0, 0.0, 0.0, 0.5)))
 
             lead_delta_velocity = (
                 hero.get_delta_forward_velocity_of(entity.entity) or -current_velocity
@@ -361,15 +340,17 @@ class ACC(CompatibleNode):
             text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
             text_marker.pose.position.x = -2.0
             text_marker.pose.position.y = 0.0
-            text_marker.scale.z = 0.3
-            text_marker.color.a = 1.0
-            text_marker.color.r = 1.0
-            text_marker.color.g = 1.0
-            text_marker.color.b = 1.0
-            marker_list.append(text_marker)
+            text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
 
         self.velocity_pub.publish(desired_speed)
-        self.publish_debug_markers(marker_list)
+
+        marker_array = mapping_common.entity.shape_debug_marker_array(
+            MARKER_NAMESPACE,
+            entities=entity_markers,
+            shapes=shape_markers,
+            markers=text_markers,
+        )
+        self.marker_publisher.publish(marker_array)
 
     def calculate_velocity_based_on_lead(
         self, hero_velocity: float, lead_distance: float, delta_v: float

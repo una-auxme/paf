@@ -218,7 +218,8 @@ class Approach(py_trees.behaviour.Behaviour):
 
         if entity is not None:
             rospy.loginfo(
-                f"Translation to car in front: {entity.entity.transform.translation().x()},"
+                f"Translation to car in front:"
+                f"{entity.entity.transform.translation().x()},"
                 f"{entity.entity.transform.translation().y()}"
             )
         if _dis is not None:
