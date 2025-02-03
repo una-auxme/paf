@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 
@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from genpy.rostime import Time, Duration
 from std_msgs.msg import Header
 import uuid_msgs.msg as uuid_msgs
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 import rospy
 
 from mapping_common.shape import Shape2D
@@ -602,3 +602,45 @@ class ShapelyEntity:
         """
 
         return shapely.distance(self.poly, other.poly)
+
+
+def shape_debug_marker_array(
+    namespace: str,
+    timestamp: Optional[rospy.Time] = None,
+    lifetime=rospy.Duration.from_sec(0.5),
+    entities: Optional[List[Tuple[Entity, Tuple[float, float, float, float]]]] = None,
+    shapes: Optional[List[Tuple[Shape2D, Tuple[float, float, float, float]]]] = None,
+    markers: Optional[List[Tuple[Marker, Tuple[float, float, float, float]]]] = None,
+) -> MarkerArray:
+    if entities is None:
+        entities = []
+    if shapes is None:
+        shapes = []
+    if markers is None:
+        markers = []
+    if timestamp is None:
+        timestamp = rospy.get_rostime()
+
+    for entity, color in entities:
+        marker = entity.to_marker()
+        markers.append((marker, color))
+    for shape, color in shapes:
+        marker = shape.to_marker()
+        markers.append((marker, color))
+    marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
+    for id, marker_color in enumerate(markers):
+        marker, color = marker_color
+        marker.header.frame_id = "hero"
+        marker.header.stamp = timestamp
+        marker.ns = namespace
+        marker.id = id
+        marker.lifetime = rospy.Duration.from_sec(0.5)
+        marker.scale.z = 0.3
+        r, g, b, a = color
+        marker.color.r = r
+        marker.color.g = g
+        marker.color.b = b
+        marker.color.a = a
+        marker_array.markers.append(marker)
+
+    return marker_array
