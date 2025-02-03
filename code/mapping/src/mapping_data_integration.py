@@ -19,6 +19,7 @@ from mapping.msg import ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
+import shapely
 
 
 # from shapely.validation import orient
@@ -303,8 +304,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
                 rospy.loginfo("Empty hull")
                 continue
-            if cluster_polygon_hull.geom_type == "LineString":
-                rospy.loginfo("LineString detected, skipping this cluster")
+            if not isinstance(cluster_polygon_hull, shapely.Polygon):
+                rospy.loginfo("Cluster is not polygon, continue")
                 continue
 
             shape = Polygon.from_shapely(
@@ -322,10 +323,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                     motion = Motion2D(
                         motion.linear_motion - motion_vector_hero, angular_velocity=0.0
                     )
-
-                # rospy.loginfo(
-                #     f"Relative motion: x={motion.linear_motion.x()}, y={motion.linear_motion.y()}, angular={motion.angular_velocity}"
-                # )
 
             # Optional: Füge die Objektklasse hinzu
             # object_class = None
