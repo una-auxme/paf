@@ -200,7 +200,10 @@ class Map:
                 y_axis_line
             )
             if not intersection.is_empty:
-                intersections[lanemark.uuid] = intersection
+                intersections[lanemark.uuid] = [
+                    intersection.centroid.x,
+                    intersection.centroid.y,
+                ]
         return intersections
 
     def project_plane(self, start_point, size_x, size_y):

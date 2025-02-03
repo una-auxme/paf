@@ -23,9 +23,9 @@
   
   <arg name="enable_lane_index_filter" default="True" />
 
-
-  <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration"
-    output="screen">
+  <node pkg="mapping" type="debug_wrapper.py" name="mapping_data_integration" output="screen" args="--debug_node=mapping_data_integration.py --debug_port=53000">
+  <!--<node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration"
+    output="screen">-->
     <param name="map_publish_rate" value="$(arg map_publish_rate)" />
     <param name="polygon_simplify_tolerance" value="$(arg polygon_simplify_tolerance)" />
 
