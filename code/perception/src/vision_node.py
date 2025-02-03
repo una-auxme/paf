@@ -9,7 +9,6 @@ import cv2
 from vision_node_helper import coco_to_carla, carla_colors
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
 import numpy as np
