@@ -307,7 +307,6 @@ class ACC(CompatibleNode):
             front_mask_size, size_y=hero_width
         )
         collision_masks = [front_rect, trajectory_mask]
-        # collision_mask = shapely.GeometryCollection(collision_masks)
         collision_mask = shapely.union_all(collision_masks)
 
         shape_markers = []
