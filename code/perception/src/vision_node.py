@@ -50,7 +50,6 @@ class VisionNode(CompatibleNode):
         self.camera_resolution = self.get_param("camera_resolution")
 
         self.depth_images = []
-        self.dist_array = None
         self.lidar_array = None
 
         self.setup_subscriber()
@@ -67,7 +66,7 @@ class VisionNode(CompatibleNode):
 
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
-            callback=self.handle_dist_array,
+            callback=self.handle_lidar_array,
             topic="/paf/hero/Center/dist_array",
             qos_profile=1,
         )
@@ -128,51 +127,37 @@ class VisionNode(CompatibleNode):
         Args:
             image (image msg): Image from camera scubscription
         """
-        rospy.loginfo("Received image, starting prediction")
         prediction = self.predict_ultralytics(
             image=image,
-            return_image=self.view_camera,
             image_size=self.camera_resolution,
-            dist_array=copy.deepcopy(self.dist_array),
             lidar_array=copy.deepcopy(self.lidar_array),
         )
-        rospy.loginfo("Prediction done")
 
         if self.view_camera and prediction is not None:
             (cv_image, scaled_masks, carla_classes) = prediction
             self.publish_image(cv_image, image.header, scaled_masks, carla_classes)
-        rospy.loginfo("Publishing done")
 
-    def handle_dist_array(self, dist_array):
+    def handle_lidar_array(self, lidar_array):
         """
         This function overwrites the current lidar depth image from
         the lidar distance node with the latest depth image.
         The function also calculates the depth values of the lidar
 
         Args:
-            dist_array (image msg): Depth image frim Lidar Distance Node
+            lidar_array (image msg): Depth image frim Lidar Distance Node
         """
-        rospy.loginfo("Received lidar depth image")
         # callback function for lidar depth image
         # since frequency is lower than image frequency
         # the latest lidar image is saved
-        if dist_array is None or len(dist_array.data) == 0:
-            rospy.logerr("No valid lidar data found")
-            return
         lidar_array = self.bridge.imgmsg_to_cv2(
-            img_msg=dist_array, desired_encoding="passthrough"
+            img_msg=lidar_array, desired_encoding="passthrough"
         )
         lidar_array_copy = copy.deepcopy(lidar_array)
         # add camera height to the z-axis
         lidar_array_copy[..., 2] += 1.7
         self.lidar_array = lidar_array_copy
-        rospy.loginfo("Calculating depth values")
-        self.dist_array = self.calculate_depth_values(lidar_array_copy)
-        rospy.loginfo("Depth values calculated")
 
-    def predict_ultralytics(
-        self, image, dist_array, lidar_array, return_image=True, image_size=640
-    ):
+    def predict_ultralytics(self, image, lidar_array, image_size=640):
         """
         This function takes in an image from a camera, predicts
         an ultralytics model on the image and looks for lidar points
@@ -187,15 +172,8 @@ class VisionNode(CompatibleNode):
         Returns:
             (cv image): visualization output for rvizw
         """
-        if (
-            dist_array is None
-            or dist_array.size == 0
-            or lidar_array is None
-            or lidar_array.size == 0
-        ):
+        if lidar_array is None or lidar_array.size == 0:
             rospy.logerr("No valid lidar data found")
-            self.loginfo(dist_array)
-            self.loginfo(lidar_array)
             return None
         scaled_masks = None
         cv_image = self.bridge.imgmsg_to_cv2(
@@ -238,18 +216,10 @@ class VisionNode(CompatibleNode):
             return None
         valid_points, class_indices = self.process_segmentation_mask(
             scaled_masks.cpu().numpy(),
-            distance_array=dist_array,
             lidar_array=lidar_array,
         )
         if valid_points is None or valid_points.size == 0:
             rospy.logerr("No valid points found")
-            self.loginfo(valid_points)
-            self.loginfo(class_indices)
-            self.loginfo(carla_classes)
-            self.loginfo(dist_array)
-            self.loginfo(lidar_array)
-            self.loginfo(masks)
-            self.loginfo(scaled_masks)
             return None
         clustered_points, cluster_indices, carla_classes_indices = self.cluster_points(
             valid_points, class_indices, carla_classes
@@ -298,11 +268,8 @@ class VisionNode(CompatibleNode):
         img_msg.header = image_header
         self.publisher_center.publish(img_msg)
 
-    def process_segmentation_mask(
-        self, segmentation_array, distance_array, lidar_array
-    ):
+    def process_segmentation_mask(self, segmentation_array, lidar_array):
         # Only process the segmentation mask if the distance array is not None
-        valid_distances_mask = distance_array > 0
         car_length = 4.9
         car_width = 1.86436
         # Filter out points that are not in the car and not on the road and are not zero
@@ -322,10 +289,9 @@ class VisionNode(CompatibleNode):
             & ~(lidar_array[..., 2] == 1.7)
         )
         lidar_filter_mask = ~car_filter_mask & road_filter_mask & zero_filter_mask
-        combined_mask = valid_distances_mask & lidar_filter_mask
         # tiled_mask holds all the valid points
         valid_points_from_mask = (
-            segmentation_array.astype(bool) & combined_mask[None, ...]
+            segmentation_array.astype(bool) & lidar_filter_mask[None, ...]
         )
         # get the x, y, z values of the valid points
         valid_indices = np.nonzero(valid_points_from_mask)
@@ -409,19 +375,6 @@ class VisionNode(CompatibleNode):
 
         if distance_output.size > 0:
             self.distance_publisher.publish(Float32MultiArray(data=distance_output))
-
-    def calculate_depth_values(self, dist_array):
-        """
-        Berechnet die Tiefenwerte basierend auf den Lidar-Daten
-        """
-        if dist_array is None or dist_array.shape[-1] < 3:
-            rospy.logerr("Invalid dist_array: None or shape mismatch")
-            return np.array([])
-        rospy.loginfo("Calculating depth values")
-        abs_distance = np.sqrt(
-            dist_array[..., 0] ** 2 + dist_array[..., 1] ** 2 + dist_array[..., 2] ** 2
-        )
-        return abs_distance
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
