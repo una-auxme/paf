@@ -12,7 +12,9 @@ from mapping_common import entity
 from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity, FlagFilter, Flags, ShapelyEntity
 from mapping_common.shape import Rectangle
+from mapping_common.shape import Polygon as MapPolygon
 from shapely.geometry import Polygon, LineString
+
 
 from mapping import msg
 
@@ -171,6 +173,23 @@ class Map:
             return True
         return False
 
+    def point_along_line_angle(self, x, y, angle, d) -> Point2:
+        """
+        Calculates a point along a straight line with a given angle and distance.
+
+        Parameters:
+        - x (float): x-coordinate of the original position
+        - y (float): y-coordinate of the original position
+        - angle (float): Angle of the straight line (in rad)
+        - d (float): Distance along the straight line (positive or negative)
+        Returns:
+            Tuple[int, int]: x-y-coordinates of new point
+        """
+        x_new = x + d * np.cos(angle)
+        y_new = y + d * np.sin(angle)
+
+        return Point2.new(x_new, y_new)
+
     def is_lane_free_lanemarks(
         self,
         right_lane: bool = False,
@@ -225,6 +244,71 @@ class Map:
         # Check if two lanes has a plausible angle to each pother
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
+
+        # use intersection of y-axis with lanemarks as helper coordinates for lane boxes
+        lane_box_intersection_close = y_axis_line.intersection(
+            lane_close_hero.shape.to_shapely(lane_close_hero.transform)
+        )
+        lane_box_center_close = [
+            lane_box_intersection_close.centroid.x,
+            lane_box_intersection_close.centroid.y,
+        ]
+        lane_box_intersection_further = y_axis_line.intersection(
+            lane_further_hero.shape.to_shapely(lane_further_hero.transform)
+        )
+        lane_box_center_further = [
+            lane_box_intersection_further.centroid.x,
+            lane_box_intersection_further.centroid.y,
+        ]
+
+        # Get half lane box length for calculating lane box shape
+        lane_length_half = lane_length / 2
+
+        # Calculating edge points of the lane box shape
+        lane_box_close_front = self.point_along_line_angle(
+            lane_box_center_close[0],
+            lane_box_center_close[1] + lane_pos * 1,
+            close_rotation,
+            lane_length_half,
+        )
+        lane_box_close_back = self.point_along_line_angle(
+            lane_box_center_close[0],
+            lane_box_center_close[1] + lane_pos * 1,
+            close_rotation,
+            -lane_length_half,
+        )
+        lane_box_further_front = self.point_along_line_angle(
+            lane_box_center_further[0],
+            lane_box_center_further[1] - lane_pos * 1,
+            further_rotation,
+            lane_length_half,
+        )
+        lane_box_further_back = self.point_along_line_angle(
+            lane_box_center_further[0],
+            lane_box_center_further[1] - lane_pos * 1,
+            further_rotation,
+            -lane_length_half,
+        )
+
+        lane_box_shape = MapPolygon(
+            [
+                lane_box_close_front,
+                lane_box_further_front,
+                lane_box_further_back,
+                lane_box_close_back,
+                lane_box_close_front,
+            ],
+            Transform2D.identity(),
+        )
+
+        lane_box_entity = Entity(
+            confidence=10001.0,
+            priority=1.0,
+            shape=lane_box_shape,
+            transform=Transform2D.identity(),
+            flags=Flags(is_ignored=True),
+        )
+
         print(f"angle between markings: {(close_rotation-further_rotation)}")
         if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
             return 0, lane_box_entity
