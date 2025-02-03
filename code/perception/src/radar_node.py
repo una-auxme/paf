@@ -320,9 +320,10 @@ class RadarNode(CompatibleNode):
             for sensor_name, messages in self.sensor_data_buffer.items():
                 for msg in messages:
                     points = self.extract_points(msg, sensor_name)
-                    break_filter_data, break_filter_out_data = self.filter_points(
-                        points
-                    )
+                    filter_result = self.filter_points(points)
+                    if filter_result is None:
+                        continue
+                    break_filter_data, break_filter_out_data = filter_result
                     if break_filter_data is not None:
                         combined_points.extend(break_filter_data)
                         combined_points_filtered_out.extend(break_filter_out_data)
@@ -332,9 +333,10 @@ class RadarNode(CompatibleNode):
             for sensor_name, msg in datasets.items():
                 if msg is not None:
                     points = self.extract_points(msg, sensor_name)
-                    break_filter_data, break_filter_out_data = self.filter_points(
-                        points
-                    )
+                    filter_result = self.filter_points(points)
+                    if filter_result is None:
+                        continue
+                    break_filter_data, break_filter_out_data = filter_result
                     if break_filter_data is not None:
                         combined_points.extend(break_filter_data)
                         combined_points_filtered_out.extend(break_filter_out_data)
