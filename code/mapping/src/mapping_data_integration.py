@@ -358,9 +358,6 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         for filter in self.get_current_map_filters():
             map = filter.filter(map)
-        # for debugging
-        f = FlagFilter(is_lanemark=True)
-        marks = map.filtered(f)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
