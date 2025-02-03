@@ -4,7 +4,7 @@ import rospy
 import ros_numpy
 import numpy as np
 from std_msgs.msg import String, Header
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sklearn.cluster import DBSCAN
 
 # from sklearn.cluster import HDBSCAN
@@ -26,6 +26,9 @@ from mapping_common.transform import Transform2D, Vector2
 from typing import List
 from mapping.msg import ClusteredPointsArray
 
+import tf
+from collections import deque
+
 
 class RadarNode(CompatibleNode):
     """See doc/perception/radar_node.md on how to configure this node."""
@@ -40,8 +43,8 @@ class RadarNode(CompatibleNode):
         }
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
         self.sensor_config = {
-            "RADAR0": [2.0, -1.5, 0.7],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, 1.5, 0.7],  # , 0.0, 0.0, 0.0],
+            "RADAR0": [2.0, -1.5, 1],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 1.5, 1],  # , 0.0, 0.0, 0.0],
         }
 
         self.timer_interval = 0.1  # 0.1 seconds
@@ -51,6 +54,9 @@ class RadarNode(CompatibleNode):
         self.current_time = 0
 
         self.datacollecting_started = False
+
+        self.accel_x_buffer = deque(maxlen=5)
+        self.accel_z_buffer = deque(maxlen=5)
 
     def time_check(self, time):
         """
@@ -98,6 +104,150 @@ class RadarNode(CompatibleNode):
             self.process_data(self.sensor_data)
             self.previous_time = 0
             return
+
+    def imu_callback(self, msg):
+        """Processes IMU messages to calculate the pitch angle and
+           update visualization markers.
+
+        Parameters:
+        - msg: sensor_msgs/Imu
+            Incoming IMU data with linear acceleration.
+
+        Functionality:
+        1. Buffers x and z linear acceleration values (last 5 messages).
+        2. Computes the pitch angle using the arctangent of the buffered values and
+           applies a scaling factor.
+        3. Updates a visualization marker with the current pitch state.
+
+        Return:
+        - None. The function updates internal states and publishes markers.
+        """
+
+        self.acc_arrow_size = float(self.get_param("~accelerometer_arrow_size", 2.0))
+        self.acc_factor = float(self.get_param("~accelerometer_factor", 0.05))
+        self.imu_debug = self.get_param("~imu_debug", False)
+
+        self.accel_x_buffer.append(msg.linear_acceleration.x)
+        self.accel_z_buffer.append(msg.linear_acceleration.z)
+
+        # Ensure that we have enough values (min. 5 measuring points)
+        if len(self.accel_x_buffer) < 5:
+            return
+
+        # Calculate the average value of the last 5 measurements
+        accel_x_avg = np.mean(self.accel_x_buffer)
+        accel_z_avg = np.mean(self.accel_z_buffer)
+
+        # Calculate pitch angle (in radians)
+        self.current_pitch = -np.arctan2(accel_x_avg, accel_z_avg)
+        self.current_pitch *= self.acc_factor
+
+        self.current_roll = 0.0
+
+        if self.imu_debug:
+            self.publish_ground_projection_marker(self.acc_arrow_size)
+
+    def publish_ground_projection_marker(self, acc_arrow_size):
+        """
+        Publishes markers to visualise the calculated floor height
+        and displays the current pitch angle as text in RViz.
+        """
+        # Arrow marker for the angle of inclination
+        arrow_marker = Marker()
+        arrow_marker.header.frame_id = "hero"
+        arrow_marker.header.stamp = rospy.Time.now()
+        arrow_marker.ns = "ground_filter"
+        arrow_marker.id = 1
+        arrow_marker.type = Marker.ARROW
+        arrow_marker.action = Marker.ADD
+
+        arrow_marker.scale.x = acc_arrow_size  # arrowlength
+        arrow_marker.scale.y = 0.1  # arrow width
+        arrow_marker.scale.z = 0.1  # arrow height
+
+        arrow_marker.color.r = 1.0
+        arrow_marker.color.g = 0.0
+        arrow_marker.color.b = 0.0
+        arrow_marker.color.a = 1.0
+
+        arrow_marker.pose.position.x = 2.0
+        arrow_marker.pose.position.y = 0.0
+        arrow_marker.pose.position.z = 1.0
+
+        # Orientation of the arrow based on pitch
+        quaternion = tf.transformations.quaternion_from_euler(
+            self.current_roll, self.current_pitch, 0
+        )
+        arrow_marker.pose.orientation.x = quaternion[0]
+        arrow_marker.pose.orientation.y = quaternion[1]
+        arrow_marker.pose.orientation.z = quaternion[2]
+        arrow_marker.pose.orientation.w = quaternion[3]
+
+        # Highlighter for the pitch angle
+        text_marker = Marker()
+        text_marker.header.frame_id = "hero"
+        text_marker.header.stamp = rospy.Time.now()
+        text_marker.ns = "ground_filter"
+        text_marker.id = 2
+        text_marker.type = Marker.TEXT_VIEW_FACING
+        text_marker.action = Marker.ADD
+
+        text_marker.scale.z = 0.5  # Textsize
+        text_marker.color.r = 0.0
+        text_marker.color.g = 1.0
+        text_marker.color.b = 0.0
+        text_marker.color.a = 1.0
+
+        # Text content: Pitch angle in degrees
+        pitch_in_degrees = np.rad2deg(self.current_pitch)
+        text_marker.text = f"Pitch: {pitch_in_degrees:.2f}°"
+
+        # Position des Textmarkers (oberhalb des Pfeils)
+        text_marker.pose.position.x = 0.0
+        text_marker.pose.position.y = 0.0
+        text_marker.pose.position.z = 2.0  # show over vehicle
+
+        # Publish the marker
+        self.marker_pub.publish(arrow_marker)
+        self.marker_pub.publish(text_marker)
+
+    def filter_points(self, points):
+        """
+        Filters points from a PointCloud2 based on pitch,
+        vehicle height and distance.
+
+        Parameters:
+        - pointcloud_msg: sensor_msgs/PointCloud2
+            The incoming radar points.
+
+        Return:
+        - sensor_msgs/PointCloud2
+            Filtered radar points for which there is no ground reflection.
+        """
+
+        filtered_points = []
+        filtered_out_points = []
+
+        # Calculation of threshold values based on pitch
+        pitch_rad = self.current_pitch
+        pitch_slope = np.tan(pitch_rad)
+
+        if points is None:
+            return
+
+        # Filter Mask: Check whether the point is below the calculated floor height
+        # plus a safety offset of 30cm
+        mask = points[:, 2] > points[:, 0] * pitch_slope - 0.3
+
+        filtered_points = points[mask]
+        filtered_out_points = points[~mask]
+
+        # return None if there are no points left
+        # else, return filtered points aswell as filtered out points
+        if filtered_points.size == 0:
+            return None
+        else:
+            return filtered_points, filtered_out_points
 
     def callback(self, data, sensor_name):
         """Collects data from radar sensors and calles process data function
@@ -165,36 +315,51 @@ class RadarNode(CompatibleNode):
             The function handles all outputs via ROS publishers and logs.
         """
         combined_points = []
+        combined_points_filtered_out = []
 
         if self.data_buffered:
             # Check all data in buffer
             for sensor_name, messages in self.sensor_data_buffer.items():
                 for msg in messages:
                     points = self.extract_points(msg, sensor_name)
-                    combined_points.extend(points)
+                    break_filter_data, break_filter_out_data = self.filter_points(
+                        points
+                    )
+                    if break_filter_data is not None:
+                        combined_points.extend(break_filter_data)
+                        combined_points_filtered_out.extend(break_filter_out_data)
             self.sensor_data_buffer.clear()
         else:
             # Check all data in single-data registers
             for sensor_name, msg in datasets.items():
                 if msg is not None:
                     points = self.extract_points(msg, sensor_name)
-                    combined_points.extend(points)
+                    break_filter_data, break_filter_out_data = self.filter_points(
+                        points
+                    )
+                    if break_filter_data is not None:
+                        combined_points.extend(break_filter_data)
+                        combined_points_filtered_out.extend(break_filter_out_data)
 
         if not combined_points:
             rospy.logwarn("No Radarpoints to process!")
             return
 
         combined_points = np.array(combined_points)
+        combined_points_filtered_out = np.array(combined_points_filtered_out)
         self.get_lead_vehicle_info(combined_points)
 
-        # Cluster- und Bounding Box-Verarbeitung
+        # Cluster and bounding box processing
         clustered_data = cluster_data(
             combined_points,
             eps=self.dbscan_eps,
             min_samples=self.dbscan_samples,
         )
-        cloud = create_pointcloud2(combined_points, clustered_data.labels_)
+        cloud = create_pointcloud2(combined_points, clustered_data.labels_, False)
         self.visualization_radar_publisher.publish(cloud)
+
+        cloud2 = create_pointcloud2(combined_points_filtered_out, None, True)
+        self.visualization_radar_publisher2.publish(cloud2)
 
         points_with_labels = np.hstack(
             (combined_points, clustered_data.labels_.reshape(-1, 1))
@@ -206,7 +371,6 @@ class RadarNode(CompatibleNode):
             marker = create_bounding_box_marker(
                 label, bbox, bbox_lifetime=self.data_buffer_time
             )
-            # marker = create_moving_bbox_marker(label, bbox)
             marker_array.markers.append(marker)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
@@ -244,7 +408,7 @@ class RadarNode(CompatibleNode):
 
         self.cluster_info_radar_publisher.publish(cluster_info)
 
-        # Setze die gespeicherten Nachrichten zurück
+        # Reset the saved messages
         self.sensor_data = {key: None for key in self.sensor_data}
 
     def extract_points(self, msg, sensor_name):
@@ -270,7 +434,6 @@ class RadarNode(CompatibleNode):
             rospy.logwarn(f"Unknown sensor: {sensor_name}")
             return np.array([])
 
-        # translation = sensor_config[sensor_name]
         data_array = pointcloud2_to_array(msg)
 
         # Transform data to change its frame
@@ -342,6 +505,20 @@ class RadarNode(CompatibleNode):
             self.time_check,
         )
 
+        rospy.Subscriber(
+            "/carla/hero/IMU",
+            Imu,
+            self.imu_callback,
+        )
+        self.visualization_radar_publisher2 = rospy.Publisher(
+            rospy.get_param("~visualisation_topic", "/paf/hero/Radar/Visualization2"),
+            PointCloud2,
+            queue_size=10,
+        )
+        self.marker_pub = rospy.Publisher(
+            "/paf/hero/Radar/IMU/ground_filter/debug_marker", Marker, queue_size=10
+        )
+
         rospy.spin()
 
     def get_lead_vehicle_info(self, radar_data):
@@ -363,10 +540,7 @@ class RadarNode(CompatibleNode):
             any value.
         """
 
-        # radar is positioned at z = 0.7
-        # radar_data = filter_data(
-        #    radar_data, max_x=20, min_y=-1, max_y=1, min_z=-0.45, max_z=0.8
-        # )
+        radar_data = filter_data(radar_data, max_x=20, min_y=-1, max_y=1)
 
         lead_vehicle_info = Float32MultiArray()
 
@@ -493,7 +667,7 @@ def cluster_data(data, eps, min_samples):
     # data_reduced = data[:, [0, 1, 3]]
 
     data_reduced = data
-    data_reduced[:, 2] = 0.7
+    data_reduced[:, 2] = 1
     data_scaled = scaler.fit_transform(data_reduced)
 
     # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
@@ -509,7 +683,7 @@ def generate_color_map(num_clusters):
     return colors
 
 
-def create_pointcloud2(clustered_points, cluster_labels):
+def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
     """_summary_
 
     Args:
@@ -524,17 +698,23 @@ def create_pointcloud2(clustered_points, cluster_labels):
     header.frame_id = "hero"
 
     points = []
-    unique_labels = np.unique(cluster_labels)
-    colors = generate_color_map(len(unique_labels))
+    colors = []
+
+    if filtered_out_points is False:
+        unique_labels = np.unique(cluster_labels)
+        colors = generate_color_map(len(unique_labels))
 
     for i, point in enumerate(clustered_points):
         x, y, z, v = point
-        label = cluster_labels[i]
+        if filtered_out_points is False:
+            label = cluster_labels[i]
 
-        if label == -1:
-            r, g, b = 128, 128, 128
+            if label == -1:
+                r, g, b = 128, 128, 128
+            else:
+                r, g, b = colors[label]
         else:
-            r, g, b = colors[label]
+            r, g, b = 255, 0, 0
 
         rgb = struct.unpack("f", struct.pack("I", (r << 16) | (g << 8) | b))[0]
         points.append([x, y, z, rgb])

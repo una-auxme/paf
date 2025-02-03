@@ -13,6 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
+from mapping_common.filter import MapFilter, GrowthMergingFilter
 from mapping.msg import Map as MapMsg
 from mapping.msg import ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2, PointField
@@ -26,7 +27,8 @@ from shapely.geometry import MultiPoint
 class MappingDataIntegrationNode(CompatibleNode):
     """Creates the initial map data frame based on all kinds of sensor data
 
-    Sends this map off to Filtering and other consumers (planning, acting)
+    It applies several filters to the map and
+    then sends it off to other consumers (planning, acting)
 
     This node sends the maps off at a fixed rate.
     (-> It buffers incoming sensor data slightly)
@@ -449,10 +451,53 @@ class MappingDataIntegrationNode(CompatibleNode):
         if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
             entities.extend(self.entities_from_lidar())
 
+        # lane_box_entities visualizes the shape and position of the lane box
+        # which is used for lane_free function
+        # lane_box_entities = [
+        #    Entity(
+        #        confidence=100.0,
+        #        priority=100.0,
+        #        shape=Rectangle(
+        #            length=22.5,
+        #            width=1.5,
+        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
+        #        ),
+        #        transform=Transform2D.identity(),
+        #        flags=Flags(is_ignored=True),
+        #    )
+        # ]
+        # entities.extend(lane_box_entities)
+
+        # Will be used when the new function for entity creation is implemented
+        # if self.get_param("enable_vision_points"):
+        #    entities.extend(self.entities_from_vision_points())
+
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
+
+        for filter in self.get_current_map_filters():
+            map = filter.filter(map)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
+
+    def get_current_map_filters(self) -> List[MapFilter]:
+        map_filters: List[MapFilter] = []
+
+        if self.get_param("~enable_merge_filter"):
+            map_filters.append(
+                GrowthMergingFilter(
+                    growth_distance=self.get_param("~merge_growth_distance"),
+                    min_merging_overlap_percent=self.get_param(
+                        "~min_merging_overlap_percent"
+                    ),
+                    min_merging_overlap_area=self.get_param(
+                        "~min_merging_overlap_area"
+                    ),
+                    simplify_tolerance=self.get_param("~polygon_simplify_tolerance"),
+                )
+            )
+
+        return map_filters
 
 
 if __name__ == "__main__":

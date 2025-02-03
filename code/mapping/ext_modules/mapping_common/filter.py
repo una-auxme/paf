@@ -64,9 +64,9 @@ class GrowthMergingFilter(MapFilter):
         query = tree.query_self(predicate="dwithin", distance=self.growth_distance)
 
         # Entities that will be removed out of the tree: Key: UUID,
-        # Value: Entity it was merged with
+        # Value: ShapelyEntity it was merged with
         removed_entities = dict()
-        # Entities that are modified: Key: UUID, Value: Entity
+        # Entities that are modified: Key: UUID, Value: ShapelyEntity
         modified_entities = dict()
 
         while len(query) > 0:
@@ -79,21 +79,21 @@ class GrowthMergingFilter(MapFilter):
             if uuid0 in removed_entities and uuid1 in removed_entities:
                 continue
             if uuid0 in removed_entities:
-                query.append((removed_entities[uuid0].to_shapely(), pair[1]))
+                query.append((removed_entities[uuid0], pair[1]))
                 continue
             if uuid1 in removed_entities:
-                query.append((pair[0], removed_entities[uuid1].to_shapely()))
+                query.append((pair[0], removed_entities[uuid1]))
                 continue
 
             if uuid0 in modified_entities and uuid1 in modified_entities:
                 pair = (
-                    modified_entities[uuid0].to_shapely(),
-                    modified_entities[uuid1].to_shapely(),
+                    modified_entities[uuid0],
+                    modified_entities[uuid1],
                 )
             elif uuid0 in modified_entities:
-                pair = (modified_entities[uuid0].to_shapely(), pair[1])
+                pair = (modified_entities[uuid0], pair[1])
             elif uuid1 in modified_entities:
-                pair = (pair[0], modified_entities[uuid1].to_shapely())
+                pair = (pair[0], modified_entities[uuid1])
 
             merge_result = _try_merge_pair(
                 pair,
@@ -109,9 +109,9 @@ class GrowthMergingFilter(MapFilter):
                 continue
             (modified, removed_uuid) = merge_result
             # print(f"Merged {modified.uuid} and {removed_uuid}")
-            if modified.uuid != removed_uuid:
+            if modified.entity.uuid != removed_uuid:
                 removed_entities[removed_uuid] = modified
-            modified_entities[modified.uuid] = modified
+            modified_entities[modified.entity.uuid] = modified
 
         merged_entities: List[Entity] = []
         # append the entities of the original map based on modifications and removals
@@ -119,9 +119,9 @@ class GrowthMergingFilter(MapFilter):
             if entity.uuid in removed_entities:
                 continue
             if entity.uuid in modified_entities:
-                new_entry = modified_entities.pop(entity.uuid)
+                new_entry: Entity = modified_entities.pop(entity.uuid).entity
             else:
-                new_entry = entity
+                new_entry: Entity = entity
             merged_entities.append(new_entry)
 
         merged_map = Map(timestamp=map.timestamp, entities=merged_entities)
@@ -131,15 +131,16 @@ class GrowthMergingFilter(MapFilter):
 def _try_merge_pair(
     pair: Tuple[ShapelyEntity, ShapelyEntity],
     shape_merge_fn: Callable[
-        [Tuple[ShapelyEntity, ShapelyEntity]], Optional[Tuple[Transform2D, Shape2D]]
+        [Tuple[ShapelyEntity, ShapelyEntity]],
+        Optional[Tuple[Transform2D, Shape2D, shapely.Polygon]],
     ],
-) -> Optional[Tuple[Entity, UUID]]:
+) -> Optional[Tuple[ShapelyEntity, UUID]]:
     """Tries to merge an entity-pair
 
     Args:
         pair (Tuple[ShapelyEntity, ShapelyEntity]): Pair of entities to merge
         shape_merge_fn (Callable[ [Tuple[ShapelyEntity, ShapelyEntity]],
-            Optional[Tuple[Transform2D, Shape2D]] ]):
+            Optional[Tuple[Transform2D, Shape2D, shapely.Polygon]] ]):
                 Dedicated merging function that merges the pair based on their shape
                 and then returns the transform and shape of the resulting merged entity.
 
@@ -156,7 +157,7 @@ def _try_merge_pair(
     merged_shape = shape_merge_fn(pair)
     if merged_shape is None:
         return None
-    (transform, shape) = merged_shape
+    (transform, shape, merged_poly) = merged_shape
 
     if pair[0].entity.priority >= pair[1].entity.priority:
         base_entity_idx = 0
@@ -182,7 +183,7 @@ def _try_merge_pair(
     max_conf: float = max(confidences)
     modified.confidence = min(1.0, max_conf + (min_conf * (1.0 - max_conf)))
 
-    return (modified, merge_entity.uuid)
+    return (ShapelyEntity(entity=modified, poly=merged_poly), merge_entity.uuid)
 
 
 def _grow_merge_pair(
@@ -191,7 +192,7 @@ def _grow_merge_pair(
     min_merging_overlap_percent: float,
     min_merging_overlap_area: float,
     simplify_tolerance: float,
-) -> Optional[Tuple[Transform2D, Shape2D]]:
+) -> Optional[Tuple[Transform2D, Shape2D, shapely.Polygon]]:
     """Merges a pair of entities based on their shape
 
     Basic (very simplified) function:
@@ -209,7 +210,7 @@ def _grow_merge_pair(
         min_merging_overlap_area (float): Min overlap of the grown shapes in m2
 
     Returns:
-        Optional[Tuple[Transform2D, Shape2D]]:
+        Optional[Tuple[Transform2D, Shape2D, shapely.Polygon]]:
             If no merging happened for whatever reason, returns None.
             Otherwise returns the transform and shape of the resulting merged entity
     """
@@ -261,7 +262,7 @@ def _grow_merge_pair(
     shape = Polygon.from_shapely(merged_union, make_centered=True)
     transform = shape.offset
     shape.offset = Transform2D.identity()
-    return (transform, shape)
+    return (transform, shape, merged_union)
 
 
 def _grow_polygon(p: shapely.Polygon, distance: float) -> Optional[shapely.Polygon]:
