@@ -225,6 +225,8 @@ class RadarNode(CompatibleNode):
         motionArray = motionArray[valid_indices]
 
         rospy.loginfo(f"Radarnode type(motionArray[0] vorher: {type(motionArray[0])}")
+        rospy.loginfo(f"Länge motionarray {len(motionArray)}")
+        rospy.loginfo(f"Länge indexarray {len(indexArray)}")
         # rospy.loginfo(f"Radarnode motionArray[0] vorher: {motionArray[0]}")
         motionArray = [m.to_ros_msg() for m in motionArray]
         rospy.loginfo(f"Radarnode type(motionArray[0] nachher: {type(motionArray[0])}")
@@ -746,40 +748,25 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
 
 
 def calculate_cluster_velocity(points_with_labels):
-    cluster_motions = []
-    labels = np.unique(points_with_labels[:, -1])
-    for label in labels:
-        if label == -1:
-            continue
-        cluster_points = points_with_labels[points_with_labels[:, -1] == label]
+    labels = points_with_labels[:, -1]
+    valid_mask = labels != -1  # Filtere gültige Labels
+    valid_points = points_with_labels[valid_mask]
 
-        avg_velocity = np.mean(cluster_points[:, 3])
-        # avg_x = np.mean(cluster_points[:, 0])
-        # avg_y = np.mean(cluster_points[:, 1])
+    unique_labels = np.unique(valid_points[:, -1])
 
-        # Normalisiere die Richtung (x, y)
-        # magnitude = np.sqrt(avg_x**2 + avg_y**2)
-        # if magnitude == 0:
-        #     direction = np.array([0, 0])  # Keine Richtung
-        # else:
-        #     direction = np.array([avg_x, avg_y]) / magnitude
+    # Berechne Durchschnittsgeschwindigkeit für jedes Cluster
+    avg_velocities = {
+        label: np.mean(valid_points[valid_points[:, -1] == label, 3])
+        for label in unique_labels
+    }
 
-        # Skaliere Richtung mit Geschwindigkeit
-        # motion = avg_velocity * direction
-        # motion = avg_velocity * avg_x
-        # cluster_motion = Vector2.new(motion[0], motion[1])
-        cluster_motion = Vector2.new(avg_velocity, 0.0)
-        cluster_motions.append(Motion2D(cluster_motion, angular_velocity=0.0))
+    # Weisen den Geschwindigkeitswerten die richtige Länge zu
+    motion_array = np.full(len(points_with_labels), None, dtype=object)
+    motion_array[valid_mask] = [
+        Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
+        for label in labels[valid_mask]
+    ]
 
-    motion_array = np.empty(len(points_with_labels), dtype=object)
-    for i, point in enumerate(points_with_labels):
-        label = point[-1]
-        if label == -1:
-            motion_array[i] = None
-        else:
-            motion_array[i] = cluster_motions[int(label)]
-
-    # return cluster_motions
     return motion_array
 
 

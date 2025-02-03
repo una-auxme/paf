@@ -309,50 +309,14 @@ class MappingDataIntegrationNode(CompatibleNode):
         motion_array_converted = None
 
         if motionarray is not None:
-            # rospy.loginfo("-----------------------------------------------")
-            # rospy.loginfo(f"Mapping type(motionArray[0] vorher: {type(motionarray[0])}")
-            rospy.loginfo(f"Mappingnode motionArray[0] vorher: {motionarray[0]}")
-            rospy.loginfo("Converting motion array")
             motion_array_converted = [
                 Motion2D.from_ros_msg(motion_msg) for motion_msg in motionarray
             ]
-            rospy.loginfo(
-                f"Mappingnode type(motionArray[0] nachher: {type(motion_array_converted[0])}"
-            )
-            # rospy.loginfo(
-            #     f"Mappingnode type(speed): {type(self.hero_speed)}"
-            # )  # carlaSpeedometer
-            # cluster_motion = motion_array_converted[indexarray == 0]
-            # motion = cluster_motion[0]
-            # rospy.loginfo(
-            #     f"Mappingnode type(motion.linear_motion): {type(motion.linear_motion)}"
-            # )
-            if self.hero_speed is not None:
-                motion_vector_hero = Vector2.forward() * self.hero_speed.speed
-                rospy.loginfo(
-                    f"Mappingnode type(speedvector): {type(motion_vector_hero)}"
-                )  # Vector2
-            # rospy.loginfo(
-            #     f"Datentyp motion array converted vorher: {type(motion_array_converted)}"
-            # ) # list
+
             motion_array_converted = np.array(motion_array_converted)
-            # rospy.loginfo(
-            #     f"Datentyp motion array converted nachher: {type(motion_array_converted)}"
-            # ) # numpy.ndarray passt
-            # rospy.loginfo(
-            #     f"MappingnodemotionArray[0] nachher: {motion_array_converted[0]}"
-            # )
 
         unique_labels = np.unique(indexarray)
         entities = []
-
-        #     rospy.logwarn(f"MotionArraytype: {type(motionarray)}")
-        #     rospy.logwarn(f"MotionArray: {motionarray}")
-        #     rospy.logwarn(f"Converted type: {type(motion_array_converted)}")
-        #     rospy.logwarn(f"Converted array: {motion_array_converted}")
-
-        #     rospy.loginfo(f"MotionArraytype: {type(data.motionarray)}")
-        #     rospy.loginfo(f"MotionArray: {data.motionarray}")
 
         for label in unique_labels:
             if label == -1:
@@ -391,65 +355,16 @@ class MappingDataIntegrationNode(CompatibleNode):
             # Optional: Berechne die Bewegung (Motion)
             motion = None
             if motion_array_converted is not None:
-                # rospy.loginfo(f"Len von indexarray: {len(indexarray)}")
-                # rospy.loginfo(f"Len von motionarray: {len(motionarray)}") #passt, beide gleich lang
-                # motion = motion_array_converted[0]
                 cluster_motion = motion_array_converted[indexarray == label]
                 motion = cluster_motion[0]
-                rospy.loginfo(
-                    f"Mappingnode type(motion.linear_motion): {type(motion.linear_motion)}"
-                )  # Vector2
-                # rospy.loginfo(f"type motion: {type(motion)}")  # Motion2D
-                # if self.hero_speed is not None:
                 if self.hero_speed is not None:
                     motion_vector_hero = Vector2.forward() * self.hero_speed.speed
                     relative_motion = motion.linear_motion - motion_vector_hero
-                    rospy.loginfo(
-                        f"Relative motion: x={relative_motion.x()}, y={relative_motion.y()}"
-                    )
                     motion = Motion2D(relative_motion, angular_velocity=0.0)
 
-                rospy.loginfo(
-                    f"Relative motion: x={motion.linear_motion.x()}, y={motion.linear_motion.y()}, angular={motion.angular_velocity}"
-                )
-
-                # motion.linear_velocity = motion.linear_velocity.__sub__(
-                #     motion_vector_hero
-                # )
-                # rospy.loginfo(f"type motion_vector_hero: {type(motion_vector_hero)}")
-                # rospy.loginfo(f"type motion_.linear: {type(motion.linear_velocity)}")
-                # rospy.loginfo("motion_array_converted und zugewiesen")
                 # rospy.loginfo(
-                #     f"motion_array_converted angular: {motion.angular_velocity}"
+                #     f"Relative motion: x={motion.linear_motion.x()}, y={motion.linear_motion.y()}, angular={motion.angular_velocity}"
                 # )
-                # rospy.loginfo(
-                #     f"motion_array_converted linear: {motion.linear_velocity.x}"
-                # )
-            # rospy.loginfo(f"Len von indexarray: {len(indexarray)}")
-            # rospy.loginfo(f"Len von motionarray: {len(motion_array_converted)}")
-
-            # cluster_motion = motion_array_converted[indexarray == label]
-            # motion = cluster_motion[0]
-
-            # if cluster_motion.size > 0:
-            #     motion = cluster_motion[0]
-
-            # if motionarray is not None and motionarray.size != 0:
-            #     cluster_motion_data = motionarray[indexarray == label][0]
-            #     if len(cluster_motion_data) > 0:
-            #         cluster_motion = cluster_motion_data[0]
-            #         rospy.loginfo(
-            #             f"cluster_motion: {cluster_motion} for label: {label}"
-            #         )
-            #     else:
-            #         rospy.loginfo(f"no motion found for label: {label}")
-            # cluster_motion = motionarray[indexarray == label][0]
-            # rospy.loginfo(f"Nach cluster_motion: {cluster_motion}")
-            # test = Motion2D.from_ros_msg(cluster_motion)
-            # rospy.loginfo(f"test: {test}")
-            #     motion = Motion2D(
-            #         Vector2.new(cluster_motion[0], cluster_motion[1])
-            #     )  # Geschwindigkeit (x, y)
 
             # Optional: Füge die Objektklasse hinzu
             # object_class = None
@@ -457,15 +372,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             #     cluster_class = objectclassarray[indexarray == label]
             #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste
             # Klasse
-
-            # if not polygon.is_valid:
-            # polygon = MultiPoint(cluster_points_xy).convex_hull
-            # rospy.logwarn("----------Invalid polygon------------------------------")
-            # rospy.logwarn(f"Grund: {explain_validity(polygon)}")
-            # print("Repariere ungültiges Polygon...")
-            # polygon = make_valid(polygon)
-            # if not polygon.is_valid:
-            #     continue
 
             transform = shape.offset
             shape.offset = Transform2D.identity()
