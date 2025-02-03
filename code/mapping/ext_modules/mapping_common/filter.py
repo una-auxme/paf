@@ -9,6 +9,7 @@ from .map import Map
 from .entity import ShapelyEntity, Entity, FlagFilter
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
+from rospy import loginfo
 
 
 class MapFilter:
@@ -53,7 +54,7 @@ class LaneIndexFilter(MapFilter):
         other_entities = map.filtered(other_f)
 
         intersections = map.get_lane_y_axis_intersections(direction="both")
-        y_values = [(uuid, intersections[uuid]) for uuid in intersections]
+        y_values = [(uuid, intersections[uuid][1]) for uuid in intersections]
         # separate negative and positive values
         positive_y = sorted(
             [(uuid, y) for uuid, y in y_values if y > 0], key=lambda x: x[1]
