@@ -622,7 +622,7 @@ class ShapelyEntity:
 def shape_debug_marker_array(
     namespace: str,
     timestamp: Optional[rospy.Time] = None,
-    lifetime: rospy.Duration = rospy.Duration.from_sec(0.5),
+    lifetime: Optional[rospy.Duration] = None,
     entities: Optional[List[Tuple[Entity, Tuple[float, float, float, float]]]] = None,
     shapes: Optional[List[Tuple[Shape2D, Tuple[float, float, float, float]]]] = None,
     markers: Optional[List[Tuple[Marker, Tuple[float, float, float, float]]]] = None,
@@ -637,7 +637,7 @@ def shape_debug_marker_array(
         namespace (str): Namespace of the markers
         timestamp (Optional[rospy.Time], optional): Timestamp of the markers.
             Defaults to None.
-        lifetime (rospy.Duration, optional): Lifetime of the markers.
+        lifetime (Optional[rospy.Duration], optional): Lifetime of the markers.
             Defaults to rospy.Duration.from_sec(0.5).
         entities (Optional[List[Tuple
             [Entity, Tuple[float, float, float, float]]]], optional):
@@ -652,6 +652,8 @@ def shape_debug_marker_array(
     Returns:
         MarkerArray: _description_
     """
+    if lifetime is None:
+        lifetime = rospy.Duration.from_sec(0.5)
     if entities is None:
         entities = []
     if shapes is None:

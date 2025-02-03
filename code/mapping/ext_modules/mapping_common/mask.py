@@ -256,7 +256,7 @@ def build_trajectory_shape(
 
 
 def project_plane(
-    size_x: float, size_y: float, start_point: Point2 = Point2.zero()
+    size_x: float, size_y: float, start_point: Optional[Point2] = None
 ) -> shapely.Polygon:
     """
     Projects a rectangular plane starting from (0, 0) forward in the x-direction.
@@ -264,11 +264,15 @@ def project_plane(
     Parameters:
     - size_x (float): Length of the plane along the x-axis.
     - size_y (float): Width of the plane along the y-axis.
-    - start_point(Point2): Start point in the low y-center of the rectangle
+    - start_point(Optional[Point2], optional):
+        Start point in the low y-center of the rectangle.
+        Default: Point2.zero()
 
     Returns:
     - Polygon: A Shapely Polygon representing the plane.
     """
+    if start_point is None:
+        start_point = Point2.zero()
     x = start_point.x()
     y = start_point.y() - size_y / 2.0
 
