@@ -120,6 +120,9 @@ class VisionNode(CompatibleNode):
         Args:
             image (image msg): Image from camera scubscription
         """
+        self.role_name = self.get_param("role_name", "hero")
+        self.view_camera = self.get_param("view_camera")
+        self.camera_resolution = self.get_param("camera_resolution")
         prediction = self.predict_ultralytics(
             image=image,
             image_size=self.camera_resolution,
@@ -186,7 +189,6 @@ class VisionNode(CompatibleNode):
             or output[0].boxes is None
             or len(output[0].boxes) == 0
         ):
-            rospy.logerr("No masks or boxes found")
             return None
         box_classes = output[0].boxes.cls.int().cpu().numpy()
         carla_classes = np.array(coco_to_carla)[box_classes]
@@ -212,7 +214,6 @@ class VisionNode(CompatibleNode):
             lidar_array=lidar_array,
         )
         if valid_points is None or valid_points.size == 0:
-            rospy.logerr("No valid points found")
             return None
         clustered_points, cluster_indices, carla_classes_indices = self.cluster_points(
             valid_points, class_indices, carla_classes
