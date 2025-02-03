@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import numpy as np
 import ros_compatibility as roscomp
-from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
@@ -11,17 +9,15 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray
 from visualization_msgs.msg import Marker, MarkerArray
 from typing import Optional
 from typing import List
-from typing import Tuple
 from planning.cfg import ACCConfig
 from dynamic_reconfigure.server import Server
 
-import utils
 import shapely
 
 import mapping_common.map
 import mapping_common.mask
 from mapping_common.map import Map
-from mapping_common.entity import Entity, FlagFilter
+from mapping_common.entity import FlagFilter
 from mapping_common.shape import Polygon
 from mapping.msg import Map as MapMsg
 
@@ -52,19 +48,6 @@ class ACC(CompatibleNode):
         super(ACC, self).__init__("ACC")
         self.role_name = self.get_param("role_name", "hero")
 
-        # Map
-        # # Current speed
-        # self.__current_velocity: Optional[float] = None
-        # Distance and speed from possible collsion object
-        # self.obstacle_speed: Optional[float] = None
-        # # Obstacle distance
-        # self.obstacle_distance: Optional[float] = None
-        # Current speed limit
-        # Radar data
-        # self.leading_vehicle_distance = None
-        # self.leading_vehicle_relative_speed = None
-        # self.leading_vehicle_speed = None
-
         # Get Map
         self.map_sub: Subscriber = self.new_subscription(
             MapMsg,
@@ -86,14 +69,6 @@ class ACC(CompatibleNode):
             self.__get_unstuck_distance,
             qos_profile=1,
         )
-
-        # Get current speed
-        # self.velocity_sub: Subscriber = self.new_subscription(
-        #     CarlaSpeedometer,
-        #     f"/carla/{self.role_name}/Speed",
-        #     self.__get_current_velocity,
-        #     qos_profile=1,
-        # )
 
         # Get initial set of speed limits from global planner
         self.speed_limit_OD_sub: Subscriber = self.new_subscription(
@@ -134,22 +109,6 @@ class ACC(CompatibleNode):
             self.__get_heading,
             qos_profile=1,
         )
-
-        # Get approximated speed from obstacle in front
-        # self.approx_speed_sub = self.new_subscription(
-        #     Float32MultiArray,
-        #     f"/paf/{self.role_name}/collision",
-        #     self.__collision_callback,
-        #     qos_profile=1,
-        # )
-
-        # Get distance to and velocity of leading vehicle from radar sensor
-        # self.lead_vehicle_sub = self.new_subscription(
-        #     Float32MultiArray,
-        #     f"/paf/{self.role_name}/Radar/lead_vehicle/range_velocity_array",
-        #     self.__update_radar_data,
-        #     qos_profile=1,
-        # )
 
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
@@ -198,36 +157,6 @@ class ACC(CompatibleNode):
 
         return config
 
-    # def __update_radar_data(self, data: Float32MultiArray):
-    #     if not data.data or len(data.data) < 2:
-    #         # no distance and speed data of the leading vehicle is transferred
-    #         # (leading vehicle is very far away)
-    #         self.leading_vehicle_distance = None
-    #         self.leading_vehicle_relative_speed = None
-    #         self.leading_vehicle_speed = None
-    #     else:
-    #         self.leading_vehicle_distance = data.data[0]
-    #         self.leading_vehicle_relative_speed = data.data[1]
-    #         self.leading_vehicle_speed = (
-    #             self.__current_velocity + self.leading_vehicle_relative_speed
-    #         )
-
-    # def __collision_callback(self, data: Float32):
-    #     """Safe approximated speed form obstacle in front together with
-    #     timestamp when recieved.
-    #     Timestamp is needed to check wether we still have a vehicle in front
-
-    #     Args:
-    #         data (Float32): Speed from obstacle in front
-    #     """
-    #     if np.isinf(data.data[0]):
-    #         # If no obstacle is in front, we reset all values
-    #         self.obstacle_speed = None
-    #         self.obstacle_distance = None
-    #         return
-    #     self.obstacle_speed = data.data[1]
-    #     self.obstacle_distance = data.data[0]
-
     def __get_unstuck_flag(self, data: Bool):
         """Set unstuck flag
 
@@ -243,14 +172,6 @@ class ACC(CompatibleNode):
             data (Float32): Unstuck distance
         """
         self.__unstuck_distance = data.data
-
-    # def __get_current_velocity(self, data: CarlaSpeedometer):
-    #     """Set current velocity
-
-    #     Args:
-    #         data (CarlaSpeedometer): Current velocity from carla
-    #     """
-    #     self.__current_velocity = float(data.speed)
 
     def __get_heading(self, data: Float32):
         """Recieve current heading
@@ -341,16 +262,6 @@ class ACC(CompatibleNode):
         :return:
         """
 
-        # Parameters for the PI controller
-        # Kp = self.ct_Kp  # 0.5
-        # Ki = self.ct_Ki  # 1.5
-        # T_gap = self.ct_T_gap  # 1.9
-        # d_min = self.ct_d_min  # 1
-
-        # Parameters for the stop and go system
-        # Ki_sg = 1.5
-        # T_gap_sg = 1.9  # unit: seconds
-        # d_min_sg = 3
         self.spin()
 
     def update_velocity(self):
@@ -463,15 +374,27 @@ class ACC(CompatibleNode):
     def calculate_velocity_based_on_lead(
         self, hero_velocity: float, lead_distance: float, delta_v: float
     ) -> float:
+        """Calculates the desired speed based on the distance and speed of the leading
+           vehicle using a PI controller.
+
+        Args:
+            hero_velocity (float): Own velocity (of the hero vehicle)
+            lead_distance (float): Distance to the leading vehicle
+            delta_v (float): Difference between velocity of the leading vehicle and own
+                velocity (negative if the own vehicle is faster than the leading
+                vehicle)
+
+        Returns:
+            float: Desired speed
+        """
         desired_speed: float = float("inf")
         if (
             hero_velocity < 2 and lead_distance < 2
-        ):  # stop and go system for velocities between 0 m/s and 2 m/s
-            # should use the P-controller below as soon as we get reasonable
-            # radar data
+        ):  # approaches the leading vehicle slowly until a distance of 0.5 m
             desired_speed = (lead_distance - 0.5) / 4
 
-        else:  # system for velocities > 3 m/s  = 10.8 km/h
+        else:
+            # PI controller which chooses the desired speed
             Kp = self.ct_Kp
             Ki = self.ct_Ki
             T_gap = self.ct_T_gap
@@ -482,12 +405,14 @@ class ACC(CompatibleNode):
             speed_adjustment = Ki * delta_d + Kp * delta_v
             desired_speed = hero_velocity + speed_adjustment
 
+            # desired speed should not be negative, only drive forward
             desired_speed = max(desired_speed, 0.0)
 
             if self.speed_limit is None:
+                # if no speed limit is available, drive 5 m/s max
                 desired_speed = min(5.0, desired_speed)
             else:
-                # Max speed is the current speed limit
+                # max speed is the current speed limit
                 desired_speed = min(self.speed_limit, desired_speed)
 
         return desired_speed
