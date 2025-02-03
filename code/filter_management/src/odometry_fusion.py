@@ -35,9 +35,10 @@ class OdometryNode(CompatibleNode):
         self.wheelbase = 2.85  # our car: Lincoln MKZ 2020
         self.turning_cicle = 11.58
         self.width = 1.86
-        self.max_steering_angle = math.atan(
-            self.wheelbase / ((self.turning_cicle / 2) - self.width)
-        )
+        # self.max_steering_angle = math.atan(
+        #    self.wheelbase / ((self.turning_cicle / 2) - self.width)
+        # )
+        self.max_steering_angle = np.deg2rad(70)
 
         self.imu: Optional[Imu] = None
 
