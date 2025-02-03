@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import List, Tuple, Optional, Callable
 from uuid import UUID
 
+import rospy
 import shapely
 
 from .map import Map
@@ -46,35 +47,38 @@ class LaneIndexFilter(MapFilter):
     """
 
     def filter(self, map):
+        try:
+            lanemark_f = FlagFilter(is_lanemark=True)
+            other_f = FlagFilter(is_lanemark=False)
+            lanemarkings = map.filtered(lanemark_f)
+            other_entities = map.filtered(other_f)
 
-        lanemark_f = FlagFilter(is_lanemark=True)
-        other_f = FlagFilter(is_lanemark=False)
-        lanemarkings = map.filtered(lanemark_f)
-        other_entities = map.filtered(other_f)
+            intersections = map.get_lane_y_axis_intersections(direction="both")
+            y_values = [(uuid, intersections[uuid][1]) for uuid in intersections]
+            # separate negative and positive values
+            positive_y = sorted(
+                [(uuid, y) for uuid, y in y_values if y > 0], key=lambda x: x[1]
+            )
+            negative_y = sorted(
+                [(uuid, y) for uuid, y in y_values if y < 0], key=lambda x: abs(x[1])
+            )
+            # creates a dictionary for the labels with uuid as keys
+            labels = {}
+            for i, (uuid, _) in enumerate(positive_y):
+                labels[uuid] = i + 1  # starts at 1
+            for i, (uuid, _) in enumerate(negative_y):
+                labels[uuid] = -(i + 1)  # starts at
+            # iterate through all Lanemark Entities and give it new position index
+            for lanemarking in lanemarkings:
+                lanemarking.position_index = labels.get(lanemarking.uuid, 0)
 
-        intersections = map.get_lane_y_axis_intersections(direction="both")
-        y_values = [(uuid, intersections[uuid][1]) for uuid in intersections]
-        # separate negative and positive values
-        positive_y = sorted(
-            [(uuid, y) for uuid, y in y_values if y > 0], key=lambda x: x[1]
-        )
-        negative_y = sorted(
-            [(uuid, y) for uuid, y in y_values if y < 0], key=lambda x: abs(x[1])
-        )
-        # creates a dictionary for the labels with uuid as keys
-        labels = {}
-        for i, (uuid, _) in enumerate(positive_y):
-            labels[uuid] = i + 1  # starts at 1
-        for i, (uuid, _) in enumerate(negative_y):
-            labels[uuid] = -(i + 1)  # starts at
-        # iterate through all Lanemark Entities and give it new position index
-        for lanemarking in lanemarkings:
-            lanemarking.position_index = labels.get(lanemarking.uuid, 0)
+            # insert all updated Lanemarks and non_lanemarking Entities
+            updated_map = Map(map.timestamp, other_entities + lanemarkings)
 
-        # insert all updated Lanemarks and non_lanemarking Entities
-        updated_map = Map(map.timestamp, other_entities + lanemarkings)
-
-        return updated_map
+            return updated_map
+        except Exception as e:
+            rospy.logwarn(f"Error in LaneIndexFilter: {e}")
+            return map  # Return original map on error
 
 
 @dataclass
