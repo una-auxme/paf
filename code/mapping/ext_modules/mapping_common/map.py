@@ -209,19 +209,25 @@ class Map:
         if len(lanemark_y_axis_intersection) < 2:
             return -1, lane_box_entity
 
-        # # Choose two lanes nearby car
-        # for ent in lanemark_y_axis_intersection:
-        #     if ent.entity.position_index == lane_transform * 1:
-        #         lane_close_hero = ent.entity
-        #     if ent.entity.position_index == lane_transform * 2:
-        #         lane_further_hero = ent.entity
+        lane_close_hero = None
+        lane_further_hero = None
 
-        # # Check if two lanes has a plausible angle to each pother
-        # close_rotation = lane_close_hero.transform.rotation()
-        # further_rotation = lane_further_hero.transform.rotation()
+        # Choose two lanes nearby car
+        for ent in lanemark_y_axis_intersection:
+            if ent.entity.position_index == lane_pos * 1:
+                lane_close_hero = ent.entity
+            if ent.entity.position_index == lane_pos * 2:
+                lane_further_hero = ent.entity
 
-        # if abs(close_rotation - further_rotation) > 0.35:  # ~20°
-        #     return 0, lane_box_entity
+        if lane_close_hero is None or lane_further_hero is None:
+            return -1, lane_box_entity
+
+        # Check if two lanes has a plausible angle to each pother
+        close_rotation = lane_close_hero.transform.rotation()
+        further_rotation = lane_further_hero.transform.rotation()
+        print(f"angle between markings: {(close_rotation-further_rotation)}")
+        if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
+            return 0, lane_box_entity
 
         return 1, lane_box_entity
 
