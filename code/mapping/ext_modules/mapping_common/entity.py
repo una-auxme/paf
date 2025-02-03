@@ -399,6 +399,39 @@ class Entity:
             return False
         return True
 
+    def get_global_x_velocity(self) -> Optional[float]:
+        """
+        Returns the global x velocity of the entity in in m/s.
+
+        Returns:
+        - Optional[float]: Velocity of the entity in front in m/s.
+        """
+
+        if self.motion is None:
+            return None
+
+        motion = self.motion.linear_motion
+        global_motion: Vector2 = self.transform * motion
+
+        velocity = global_motion.x()
+        return velocity
+
+    def get_delta_forward_velocity_of(self, other: "Entity") -> Optional[float]:
+        if self.motion is None or other.motion is None:
+            return None
+
+        into_self_local = self.transform.inverse() * other.transform
+        other_motion_in_self_coords: Vector2 = (
+            into_self_local * other.motion.linear_motion
+        )
+        relative_motion = other_motion_in_self_coords - self.motion.linear_motion
+        return relative_motion.x()
+
+    def get_width(self) -> float:
+        local_poly = self.shape.to_shapely()
+        min_x, min_y, max_x, max_y = local_poly.bounds
+        return max_y - min_y
+
 
 @dataclass(init=False)
 class Car(Entity):
@@ -556,3 +589,16 @@ class ShapelyEntity:
 
     entity: Entity
     poly: shapely.Polygon
+
+    def get_distance_to(self, other: "ShapelyEntity") -> float:
+        """
+        Returns the distance to the entity in front in m.
+
+        Parameters:
+        - front_entity (Entity): Entity that is in front of the hero vehicle.
+
+        Returns:
+        - Optional[float]: Distance to the entity in front in m.
+        """
+
+        return shapely.distance(self.poly, other.poly)
