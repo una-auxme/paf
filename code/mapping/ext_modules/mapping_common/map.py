@@ -175,7 +175,7 @@ class Map:
         """calculates the intersections of the lanemarks in lane_pos direction
 
         Args:
-            lane_pos (str): lanemarks on "left", "right" or "both" will be checked.
+            direction (str): lanemarks on "left", "right" or "both" will be checked.
             Other inputs will be ignored
 
         Returns:
