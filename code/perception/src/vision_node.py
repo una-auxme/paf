@@ -157,7 +157,7 @@ class VisionNode(CompatibleNode):
         # since frequency is lower than image frequency
         # the latest lidar image is saved
         if dist_array is None or len(dist_array.data) == 0:
-            self.loginfo("No valid lidar data found")
+            rospy.logerr("No valid lidar data found")
             return
         lidar_array = self.bridge.imgmsg_to_cv2(
             img_msg=dist_array, desired_encoding="passthrough"
@@ -193,7 +193,7 @@ class VisionNode(CompatibleNode):
             or lidar_array is None
             or lidar_array.size == 0
         ):
-            self.loginfo("No valid lidar data found")
+            rospy.logerr("No valid lidar data found")
             self.loginfo(dist_array)
             self.loginfo(lidar_array)
             return None
@@ -215,14 +215,14 @@ class VisionNode(CompatibleNode):
             or output[0].boxes is None
             or len(output[0].boxes) == 0
         ):
-            self.loginfo("No masks or boxes found")
+            rospy.logerr("No masks or boxes found")
             return None
         box_classes = output[0].boxes.cls.int().cpu().numpy()
         carla_classes = np.array(coco_to_carla)[box_classes]
         masks = output[0].masks.data.clone().detach().cpu()
         # check if the masks and box_classess size is correct
         if masks.size(0) != len(box_classes):
-            self.loginfo("Masks and box classes size mismatch")
+            rospy.logerr("Masks and box classes size mismatch")
             return None
 
         # proceed with traffic light detection
@@ -234,7 +234,7 @@ class VisionNode(CompatibleNode):
         ).squeeze(1)
         # check if the scaled masks are valid
         if scaled_masks is None or scaled_masks.size(0) == 0:
-            self.loginfo("No scaled masks found")
+            rospy.logerr("No scaled masks found")
             return None
         valid_points, class_indices = self.process_segmentation_mask(
             scaled_masks.cpu().numpy(),
@@ -242,7 +242,7 @@ class VisionNode(CompatibleNode):
             lidar_array=lidar_array,
         )
         if valid_points is None or valid_points.size == 0:
-            rospy.loginfo("No valid points found")
+            rospy.logerr("No valid points found")
             self.loginfo(valid_points)
             self.loginfo(class_indices)
             self.loginfo(carla_classes)
@@ -418,7 +418,6 @@ class VisionNode(CompatibleNode):
             rospy.logerr("Invalid dist_array: None or shape mismatch")
             return np.array([])
         rospy.loginfo("Calculating depth values")
-        rospy.loginfo(dist_array)
         abs_distance = np.sqrt(
             dist_array[..., 0] ** 2 + dist_array[..., 1] ** 2 + dist_array[..., 2] ** 2
         )
