@@ -262,7 +262,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             data = self.vision_clustered_points_data
             self.vision_clustered_points_data = None
         else:
-            raise ValueError(f"Unbekannter Sensortyp: {sensortype}")
+            raise ValueError(f"Unknown sensortype: {sensortype}")
 
         if data is None:
             return []
@@ -282,20 +282,20 @@ class MappingDataIntegrationNode(CompatibleNode):
         entities = []
         for label in unique_labels:
             if label == -1:
-                # -1 kann für Rauschen oder ungültige Cluster stehen
+                # -1 noise or invalid cluster
                 rospy.logwarn("label -1")
                 continue
 
-            # Filtere Punkte für den aktuellen Cluster
+            # Filter points for current cluster
             cluster_mask = indexarray == label
             cluster_points_xy = clusterpointsarray[cluster_mask, :2]
 
-            # Prüfe, ob genügend Punkte für ein Polygon vorhanden sind
+            # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
                 continue
 
             if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                # Füge den Startpunkt am Ende hinzu, um das Polygon zu schließen
+                # add startpoint to close polygon
                 cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
 
             cluster_polygon = MultiPoint(cluster_points_xy)
@@ -322,10 +322,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                     motion = Motion2D(
                         motion.linear_motion - motion_vector_hero, angular_velocity=0.0
                     )
-
-                # rospy.loginfo(
-                #     f"Relative motion: x={motion.linear_motion.x()}, y={motion.linear_motion.y()}, angular={motion.angular_velocity}"
-                # )
 
             # Optional: Füge die Objektklasse hinzu
             # object_class = None

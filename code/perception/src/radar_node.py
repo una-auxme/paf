@@ -373,7 +373,6 @@ class RadarNode(CompatibleNode):
 
         self.marker_visualization_radar_publisher.publish(marker_array)
 
-        # pointcloudArray = create_pointcloud2Array(points_with_labels)
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = "hero/RADAR"
@@ -922,18 +921,18 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
 
 def calculate_cluster_velocity(points_with_labels):
     labels = points_with_labels[:, -1]
-    valid_mask = labels != -1  # Filtere gültige Labels
+    valid_mask = labels != -1  # Filter indvalid labels
     valid_points = points_with_labels[valid_mask]
 
     unique_labels = np.unique(valid_points[:, -1])
 
-    # Berechne Durchschnittsgeschwindigkeit für jedes Cluster
+    # calculate average velocity for each cluster
     avg_velocities = {
         label: np.mean(valid_points[valid_points[:, -1] == label, 3])
         for label in unique_labels
     }
 
-    # Weisen den Geschwindigkeitswerten die richtige Länge zu
+    # Assign the correct length to the velocity values
     motion_array = np.full(len(points_with_labels), None, dtype=object)
     motion_array[valid_mask] = [
         Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
