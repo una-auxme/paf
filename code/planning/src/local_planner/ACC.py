@@ -457,20 +457,6 @@ class ACC(CompatibleNode):
             text_marker.color.b = 1.0
             marker_list.append(text_marker)
 
-        if self.speed_limit is None:
-            desired_speed = min(5.0, desired_speed)
-        else:
-            # Max speed is the current speed limit
-            desired_speed = min(self.speed_limit, desired_speed)
-
-        # delta_time: float = 0.1
-        # if self.last_map_timestamp is not None:
-        #     delta = self.map.timestamp - self.last_map_timestamp
-        #     delta_time = delta.to_sec()
-        # desired_speed = utils.interpolate_speed(
-        #     desired_speed, current_velocity, lerp_factor=1.0 * delta_time
-        # )
-
         self.velocity_pub.publish(desired_speed)
         self.publish_debug_markers(marker_list)
 
@@ -479,37 +465,31 @@ class ACC(CompatibleNode):
     ) -> float:
         desired_speed: float = float("inf")
         if (
-            hero_velocity < 2
+            hero_velocity < 2 and lead_distance < 2
         ):  # stop and go system for velocities between 0 m/s and 2 m/s
             # should use the P-controller below as soon as we get reasonable
             # radar data
-            if lead_distance > 8:
-                desired_speed = 5
-            elif lead_distance > 3:
-                desired_speed = 3
-            else:
-                desired_speed = (lead_distance - 0.5) / 4
-
-            # desired_distance = d_min_sg + T_gap_sg * hero_velocity
-            # delta_d = lead_distance - desired_distance
-            # delta_v = leading_vehicle_speed - hero_velocity
-            # speed_adjustment = Ki_sg * delta_d
-            # desired_speed = hero_velocity + speed_adjustment
-            # if desired_speed < 0:
-            #    desired_speed = 0
+            desired_speed = (lead_distance - 0.5) / 4
 
         else:  # system for velocities > 3 m/s  = 10.8 km/h
-            Kp = self.get_param("~kp_cruise", 0.5)
-            Ki = self.get_param("~ki_cruise", 1.5)
-            T_gap = self.get_param("~t_gap_cruise", 1.9)  # unit: seconds
-            d_min = self.get_param("~d_min_cruise", 1)
+            Kp = self.ct_Kp
+            Ki = self.ct_Ki
+            T_gap = self.ct_T_gap
+            d_min = self.ct_d_min
 
             desired_distance = d_min + T_gap * hero_velocity
             delta_d = lead_distance - desired_distance
             speed_adjustment = Ki * delta_d + Kp * delta_v
             desired_speed = hero_velocity + speed_adjustment
 
-        desired_speed = max(desired_speed, 0.0)
+            desired_speed = max(desired_speed, 0.0)
+
+            if self.speed_limit is None:
+                desired_speed = min(5.0, desired_speed)
+            else:
+                # Max speed is the current speed limit
+                desired_speed = min(self.speed_limit, desired_speed)
+
         return desired_speed
 
 
