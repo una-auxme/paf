@@ -107,51 +107,51 @@ class OdometryNode(CompatibleNode):
             self.initialized = True
 
     def steering_callback(self, msg):
-        self.steering_angle = msg.steer  # [-1.0, 1.0]
-        self.steering_angle *= self.max_steering_angle
+        # msg.steer: # [-1.0, 1.0]
+        self.steering_angle = self.max_steering_angle * msg.steer
 
         self.steer_ang_init = True
         if self.speed_init:
             self.initialized = True
 
     def publish_odometry(self):
-        # dt = 1 / 20.0
+        dt = 1 / 20.0
 
         # Compute velocities
         v = self.speed
-        # steering_angle = self.steering_angle
-        # omega = v * math.tan(steering_angle) / self.wheelbase
+        if self.steering_angle != 0:
+            turning_radius = -self.wheelbase / math.tan(self.steering_angle)
+            # neg sign because of ros conversion
+        else:
+            turning_radius = math.inf
+        # Calculate the change in orientation omeage based on velocity and turning radius
+        omega = v / turning_radius * dt
 
         # Update pose
-        # self.x += v * math.cos(self.yaw) * dt
-        # self.y += v * math.sin(self.yaw) * dt
-        # self.yaw += omega * dt
+        self.yaw += omega * dt
+        # Normalize theta to be between -pi and pi
+        self.yaw = (self.yaw + math.pi) % (2 * math.pi) - math.pi
 
         # Create Odometry message
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
         odom.header.frame_id = "odom"
         odom.child_frame_id = "hero"
+        odom.pose.pose.position.z = 0.0
 
-        # Pose
-        # odom.pose.pose.position.x = self.x
-        # odom.pose.pose.position.y = self.y
-        # odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
-        # odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
-        # odom.pose.covariance = rospy.get_param("~pose_covariance")
-
-        quat = (
-            self.imu.orientation.x,
-            self.imu.orientation.y,
-            self.imu.orientation.z,
-            self.imu.orientation.w,
-        )
-        _roll, _pitch, self.yaw = euler_from_quaternion(quat)
+        odom.pose.pose.orientation.z = math.sin(self.yaw / 2.0)
+        odom.pose.pose.orientation.w = math.cos(self.yaw / 2.0)
+        if self.__use_odometry_yaml_covariance:
+            odom.pose.covariance = rospy.get_param("~pose_covariance")
+        else:
+            pass
 
         # Velocity
-        odom.twist.twist.linear.x = v * math.cos(self.yaw)
-        odom.twist.twist.linear.y = v * math.sin(self.yaw)
-        # odom.twist.twist.angular.z = omega
+        odom.twist.twist.linear.x = v * math.cos(omega)
+        odom.twist.twist.linear.y = v * math.sin(omega)
+        odom.twist.twist.linear.z = 0
+
+        odom.twist.twist.angular.z = omega
 
         if self.__use_odometry_yaml_covariance:
             odom.twist.covariance = rospy.get_param("~twist_covariance")

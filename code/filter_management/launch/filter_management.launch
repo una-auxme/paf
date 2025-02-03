@@ -41,6 +41,7 @@
     <!-- navsat needs odom filtered from global ekf. Dont mess with that here.-->
   </node>
 
+
   <node
     pkg="robot_localization" type="ekf_localization_node" name="ekf_global" clear_params="true">
   </node>

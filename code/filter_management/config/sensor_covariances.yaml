@@ -26,9 +26,9 @@ sensor_covariance_fusion:
 
   gps_position:
     [
-      0.000005, 0,    0,     
-      0,    0.000005, 0,    
-      0,    0,   0.000005, 
+      1.0, 0,    0,     
+      0,    1.0, 0,    
+      0,    0,   1.0, 
 
     ]
 # maybe now 0.5 is okay, because odometry can do a lot
