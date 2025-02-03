@@ -88,12 +88,6 @@ class VisionNode(CompatibleNode):
             qos_profile=1,
         )
 
-        self.distance_publisher = self.new_publisher(
-            msg_type=Float32MultiArray,
-            topic=f"/paf/{self.role_name}/Center/object_distance",
-            qos_profile=1,
-        )
-
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
@@ -364,17 +358,6 @@ class VisionNode(CompatibleNode):
             valid_class_indices[selected_points_mask],
             carla_classes[valid_class_indices[selected_points_mask]],
         )
-
-    def publish_distance_output(self, points, carla_classes):
-        """
-        Publishes the distance output of the object detection
-        """
-        distance_output = np.column_stack(
-            (carla_classes, points[:, 0], points[:, 1])
-        ).ravel()
-
-        if distance_output.size > 0:
-            self.distance_publisher.publish(Float32MultiArray(data=distance_output))
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
