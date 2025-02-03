@@ -183,9 +183,9 @@ class Map:
             and coordinates as according entries
         """
         if direction == "left":
-            y_axis_line = LineString([[0, 0], [0, 1 * 8]])
+            y_axis_line = LineString([[0, 0], [0, 8]])
         elif direction == "right":
-            y_axis_line = LineString([[0, 0], [0, -1 * 8]])
+            y_axis_line = LineString([[0, 0], [0, -8]])
         elif direction == "both":
             y_axis_line = LineString([[0, -8], [0, 8]])
         else:

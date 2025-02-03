@@ -31,21 +31,49 @@ class MapFilter:
 
 @dataclass
 class LaneIndexFilter(MapFilter):
+    """Updates the Index of lanemark Entities if duplicates have been removed.
+
+    !!!Must be called after GrowthMergingFilter!!!
+
+    - Calculates the y coordinates of the intersection with y axis of each lanemarking.
+    - Gives position_index according to y position:
+        - 1 = lane next to the car on the left.
+        - 2 = second lanemark on the left.
+        - -1 = lane next to the car on the right.
+        - etc.
+
+    Then returns the updated map with all Entities
+    """
 
     def filter(self, map):
+
         lanemark_f = FlagFilter(is_lanemark=True)
         other_f = FlagFilter(is_lanemark=False)
         lanemarkings = map.filtered(lanemark_f)
         other_entities = map.filtered(other_f)
-        intersections = map.get_lane_y_axis_intersections(direction="both")
 
-        y_coordinates = [(uuid, intersections[uuid][1]) for uuid in intersections]
+        intersections = map.get_lane_y_axis_intersections(direction="both")
+        y_values = [(uuid, intersections[uuid][1]) for uuid in intersections]
+        # separate negative and positive values
+        positive_y = sorted(
+            [(uuid, y) for uuid, y in y_values if y > 0], key=lambda x: x[1]
+        )
+        negative_y = sorted(
+            [(uuid, y) for uuid, y in y_values if y < 0], key=lambda x: abs(x[1])
+        )
         labels = {}
-        for i, (uuid, y) in enumerate(y_coordinates):
-            labels[uuid] = (i + 1) * (abs(y) / y)
+        for i, (uuid, _) in enumerate(positive_y):
+            labels[uuid] = i + 1  # starts at 1
+        for i, (uuid, _) in enumerate(negative_y):
+            labels[uuid] = -(i + 1)  # starts at
+
+        # iterate through all Lanemark Entities and give it new position index
         for lanemarking in lanemarkings:
             lanemarking.position_index = labels.get(lanemarking.uuid, 0)
+
+        # insert all updated Lanemarks and non_lanemarking Entities
         updated_map = Map(map.timestamp, other_entities + lanemarkings)
+
         return updated_map
 
 
