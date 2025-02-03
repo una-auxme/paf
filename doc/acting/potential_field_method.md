@@ -11,6 +11,8 @@
 - [Current state](#current-state)
 - [Improvement suggestions](#improvement-suggestions)
 - [Further integration Problems](#further-integration-problems)
+- [Activating the Node](#activating-the-node)
+- [Visualizations in rviz](#visualizations-in-rviz)
 - [Sources](#sources)
 
 ## Why it was discontinued
@@ -64,6 +66,22 @@ It showed that the potential field method can be utilized to plan a path based o
   This is done by working with the index of the point in the point/pose list of the path message the car is currently at, which - in the case of the potential field trajectory - is always 0. Integrating the controller as it is into the potential field trajectory following did not work out of the box.
 - The ACC currently looks at the curve radius of the global trajectory to determine the speed with which the corner should be driven. The ACC will have to be adjusted in order to use the new trajectory
 - Due to the fickle behavior of the trajectory the steering angle in the controllers will be very fickle aswell which can lead to unexpected behavior of the car as a result.
+
+## Activating the Node
+
+uncomment the line in the [launch file](../../code/acting/launch/acting.launch)
+
+```json
+    <!-- <node pkg="acting" type="potential_field_node.py" name="potential_field_node" output="screen">
+    </node> -->
+
+    <node pkg="acting" type="potential_field_node.py" name="potential_field_node" output="screen">
+    </node>
+```
+
+## Visualizations in rviz
+
+- The resulting potential field trajectory is publishable in rviz by adding the ```/paf/hero/potential_field_trajectory``` topic.
 
 ## Sources
 

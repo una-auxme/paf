@@ -30,39 +30,6 @@ import numpy as np
 
 import cv2
 
-# PARAMETERS
-# Define the Horizon of the potential field
-# Distance threshold in the X direction for potential field calculations
-DISTANCE_THRESHOLD_X: int = rospy.get_param("potential_field_distance_threshold_X", 10)
-# Distance threshold in the Y direction for potential field calculations
-DISTANCE_THRESHOLD_Y: int = rospy.get_param("potential_field_distance_threshold_Y", 5)
-"""
-Scale factor for the resolution of the potential field since the entities have meters
-as units and the potential field is calculated in a grid. We need ints as indices for
-the matrix, so we need to scale the resolution to have a better representation of the
-entities in the environment.
-"""
-
-LOOP_RATE: float = rospy.get_param("potential_field_loop_rate", 0.4)
-
-RESOLUTION_SCALE: int = rospy.get_param("potential_field_resolution_scale", 10)
-# Factor to scale the forces in the potential field
-FORCE_FACTOR: int = rospy.get_param("potential_field_force_factor", 15)
-# Attraction factor for the local trajectory in the potential field
-LOCAL_TRAJECTORY_ATTR_FACTOR: int = rospy.get_param(
-    "potential_field_attraction_factor", 2
-)
-# Slope value used in potential field calculations
-SLOPE: int = rospy.get_param("potential_field_slope", 255)
-# K value used in potential field calculations. The K-value is used to smooth the field
-K_VALUE: float = rospy.get_param("potential_field_K", 0.009)
-# Maximum number of steps for gradient descent in potential field calculations
-MAX_GRADIENT_DESCENT_STEPS: int = rospy.get_param(
-    "potential_field_max_gradient_descent_steps", 100
-)
-# Factor to scale the gradient in potential field calculations
-GRADIENT_FACTOR: int = rospy.get_param("potential_field_gradient_factor", 6)
-
 
 class Potential_field_node(CompatibleNode):
     """
@@ -78,6 +45,48 @@ class Potential_field_node(CompatibleNode):
         """
         Constructor for the Potential_field_node
         """
+        # PARAMETERS
+        # Define the Horizon of the potential field
+        # Distance threshold in the X direction for potential field calculations
+        self.distance_threshold_x: int = rospy.get_param(
+            "potential_field_distance_threshold_X", 10
+        )
+        # Distance threshold in the Y direction for potential field calculations
+        self.distance_threshold_y: int = rospy.get_param(
+            "potential_field_distance_threshold_Y", 5
+        )
+        """
+        Scale factor for the resolution of the potential field since the entities have meters
+        as units and the potential field is calculated in a grid. We need ints as indices for
+        the matrix, so we need to scale the resolution to have a better representation of the
+        entities in the environment.
+        """
+
+        self.loop_rate: float = rospy.get_param("potential_field_loop_rate", 0.4)
+
+        self.resolution_scale: int = rospy.get_param(
+            "potential_field_resolution_scale", 10
+        )
+        # Factor to scale the forces in the potential field
+        self.force_factor: int = rospy.get_param("potential_field_force_factor", 15)
+        # Attraction factor for the local trajectory in the potential field
+        self.local_trajectory_attr_factor: int = rospy.get_param(
+            "potential_field_attraction_factor", 2
+        )
+        # Slope value used in potential field calculations
+        self.slope: int = rospy.get_param("potential_field_slope", 255)
+        # K value used in potential field calculations. The K-value is used to smooth
+        # the field
+        self.k_value: float = rospy.get_param("potential_field_K", 0.009)
+        # Maximum number of steps for gradient descent in potential field calculations
+        self.max_gradient_descent_steps: int = rospy.get_param(
+            "potential_field_max_gradient_descent_steps", 100
+        )
+        # Factor to scale the gradient in potential field calculations
+        self.gradient_factor: int = rospy.get_param(
+            "potential_field_gradient_factor", 6
+        )
+
         # Initialize the node
         self.entities: list[Entity] = []  # List to store entities in the environment
         self.potential_field_trajectory = (
@@ -107,17 +116,18 @@ class Potential_field_node(CompatibleNode):
         # Initialize the entity matrix to store information about entities
         self.entity_matrix = np.zeros(
             (
-                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,  # Number of rows in the matrix
+                self.distance_threshold_x
+                * self.resolution_scale,  # Number of rows in the matrix
                 2
-                * DISTANCE_THRESHOLD_Y
-                * RESOLUTION_SCALE,  # Number of columns in the matrix
+                * self.distance_threshold_y
+                * self.resolution_scale,  # Number of columns in the matrix
             )
         )
 
         # Midpoint of the entity matrix in the Y direction
         self.entity_matrix_midpoint = (
             0,
-            DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
+            self.distance_threshold_y * self.resolution_scale,
         )
 
         # ROS SETUP ###
@@ -196,10 +206,10 @@ class Potential_field_node(CompatibleNode):
         # to the mapping common package being cython compiled
         # self.map.to_multi_poly_array(
         #    (
-        #        DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
-        #        DISTANCE_THRESHOLD_Y * 2 * RESOLUTION_SCALE,
+        #        self.distance_threshold_x * self.resolution_scale,
+        #        self.distance_threshold_y * 2 * self.resolution_scale,
         #    ),
-        #    RESOLUTION_SCALE,
+        #    self.resolution_scale,
         #    self,
         # )
         self.entities = self.map.entities_without_hero()
@@ -221,9 +231,12 @@ class Potential_field_node(CompatibleNode):
             bool: returns true if it is within the potential field horizon
         """
         position = pose.pose.position
-        if position.x < 0 or position.x > DISTANCE_THRESHOLD_X:
+        if position.x < 0 or position.x > self.distance_threshold_x:
             return False
-        if position.y < -DISTANCE_THRESHOLD_Y or position.y > DISTANCE_THRESHOLD_Y:
+        if (
+            position.y < -self.distance_threshold_y
+            or position.y > self.distance_threshold_y
+        ):
             return False
         return True
 
@@ -233,8 +246,8 @@ class Potential_field_node(CompatibleNode):
         """
         self.entity_matrix = np.zeros(
             (
-                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
-                2 * DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
+                self.distance_threshold_x * self.resolution_scale,
+                2 * self.distance_threshold_y * self.resolution_scale,
             )
         )
         # fill in the entities into a matrix
@@ -248,11 +261,11 @@ class Potential_field_node(CompatibleNode):
 
             # fill the entity matrix with the entities
             x = (
-                int(entity.transform.translation().x() * RESOLUTION_SCALE)
+                int(entity.transform.translation().x() * self.resolution_scale)
                 + self.entity_matrix_midpoint[0]
             )
             y = (
-                int(entity.transform.translation().y() * RESOLUTION_SCALE)
+                int(entity.transform.translation().y() * self.resolution_scale)
                 + self.entity_matrix_midpoint[1]
             )
 
@@ -329,25 +342,31 @@ class Potential_field_node(CompatibleNode):
         # generate matrix
         matrix = np.zeros(
             (
-                DISTANCE_THRESHOLD_X * RESOLUTION_SCALE,
-                2 * DISTANCE_THRESHOLD_Y * RESOLUTION_SCALE,
+                self.distance_threshold_x * self.resolution_scale,
+                2 * self.distance_threshold_y * self.resolution_scale,
             )
         )
         # use cv2 to draw lines between the points, resulting in a matrix where indices
         # on the line are assigned the value 255
         for i in range(len(self.local_trajectory.poses) - 1):
             pt1: cv2.typing.Point = (
-                int(self.local_trajectory.poses[i].pose.position.x * RESOLUTION_SCALE),
-                int(self.local_trajectory.poses[i].pose.position.y * RESOLUTION_SCALE),
+                int(
+                    self.local_trajectory.poses[i].pose.position.x
+                    * self.resolution_scale
+                ),
+                int(
+                    self.local_trajectory.poses[i].pose.position.y
+                    * self.resolution_scale
+                ),
             )
             pt2: cv2.typing.Point = (
                 int(
                     self.local_trajectory.poses[i + 1].pose.position.x
-                    * RESOLUTION_SCALE
+                    * self.resolution_scale
                 ),
                 int(
                     self.local_trajectory.poses[i + 1].pose.position.y
-                    * RESOLUTION_SCALE
+                    * self.resolution_scale
                 ),
             )
 
@@ -367,7 +386,9 @@ class Potential_field_node(CompatibleNode):
         marker_array = MarkerArray()
         for index, value in np.ndenumerate(matrix):
             position = Point(
-                index[0] / RESOLUTION_SCALE, index[1] / RESOLUTION_SCALE, value
+                index[0] / self.resolution_scale,
+                index[1] / self.resolution_scale,
+                value,
             )
             marker = Marker()
             marker.header.frame_id = "hero"
@@ -414,19 +435,21 @@ class Potential_field_node(CompatibleNode):
 
         # Introduce a force pointing to the top of the image (to make the car drive)
         # Create a slope distances matrix to the top of the image
-        slope_array: np.ndarray = np.linspace(SLOPE, 0, self.entity_matrix.shape[0])
+        slope_array: np.ndarray = np.linspace(
+            self.slope, 0, self.entity_matrix.shape[0]
+        )
         # Make slope array same shape as distances
         slope_array = np.tile(slope_array, (self.entity_matrix.shape[1], 1)).T
         distances += slope_array
 
         # Calculate the distance transform of the local trajectory matrix
         local_traj_matrix: np.ndarray = distance_transform_edt(local_traj_matrix == 0)
-        local_traj_matrix = local_traj_matrix * LOCAL_TRAJECTORY_ATTR_FACTOR
+        local_traj_matrix = local_traj_matrix * self.local_trajectory_attr_factor
         # subtract the local trajectory
         # matrix from the distances matrix in order to apply an attractive potential
         pot_field_matrix = distances - local_traj_matrix
         # Smooth the values with exponential decay
-        smoothed_values = np.exp(-K_VALUE * pot_field_matrix)
+        smoothed_values = np.exp(-self.k_value * pot_field_matrix)
         # Normalize smoothed values to 0-255
         if np.max(smoothed_values) != 0:
             smoothed_values = smoothed_values / np.max(smoothed_values) * 255
@@ -445,11 +468,11 @@ class Potential_field_node(CompatibleNode):
         x, y = (
             self.entity_matrix_midpoint
         )  # Start from the midpoint of the entity matrix
-        while not finished and num_steps < MAX_GRADIENT_DESCENT_STEPS:
+        while not finished and num_steps < self.max_gradient_descent_steps:
             # Move along the gradient
             try:
-                dx = gradient_x[x, y] * GRADIENT_FACTOR
-                dy = gradient_y[x, y] * GRADIENT_FACTOR
+                dx = gradient_x[x, y] * self.gradient_factor
+                dy = gradient_y[x, y] * self.gradient_factor
                 # gradient_magnitude = np.sqrt(dx * dx + dy * dy)
                 # if gradient_magnitude < min_gradient_magnitude:
                 #    finished = True
@@ -458,7 +481,7 @@ class Potential_field_node(CompatibleNode):
                 y -= int(dy)
                 plot_points.append((x, y))  # Append the new point to the plot points
                 points.append(
-                    (x / RESOLUTION_SCALE, y / RESOLUTION_SCALE)
+                    (x / self.resolution_scale, y / self.resolution_scale)
                 )  # Append the new point to the trajectory points
                 num_steps += (
                     1  # Increment the number of steps for the finished condition
@@ -487,7 +510,7 @@ class Potential_field_node(CompatibleNode):
             # Calculate the potential field and update the trajectory
             self.__calculate_field()
 
-        self.new_timer(LOOP_RATE, loop)  # Set a timer to call the loop function
+        self.new_timer(self.loop_rate, loop)  # Set a timer to call the loop function
         self.spin()  # Keep the node running
 
 
