@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 
 import shapely
-import shapely.ops
 from shapely import STRtree
 import numpy as np
 import numpy.typing as npt
@@ -427,9 +426,29 @@ class MapTree:
         self,
         mask: shapely.Geometry,
         reference: ShapelyEntity,
-        min_coverage: float = 0.0,
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
     ) -> Optional[Tuple[ShapelyEntity, float]]:
-        query = self.get_overlapping_entities(mask, min_coverage)
+        """Returns the nearest entity to *reference* that have
+        at least coverage % or area in the mask geometry.
+
+        Args:
+            mask (shapely.Geometry): A Shapely Geometry object representing
+                the target area.
+            reference (ShapelyEntity): Entity for the nearest distance calculation
+            min_coverage_percent (float, optional): Defaults to 0.0.
+            min_coverage_area (float, optional): Defaults to 0.0.
+
+        Returns:
+            Optional[Tuple[ShapelyEntity, float]]:
+                A Tuple of (Nearest Entity, Distance to reference)
+        """
+
+        query = self.get_overlapping_entities(
+            mask,
+            min_coverage_percent=min_coverage_percent,
+            min_coverage_area=min_coverage_area,
+        )
 
         if len(query) <= 0:
             return None
@@ -443,14 +462,19 @@ class MapTree:
         min_coverage_percent: float = 0.0,
         min_coverage_area: float = 0.0,
     ) -> List[ShapelyEntity]:
-        """Returns a list of entities that have at least coverage % in the
-        given polygon.
+        """Returns a list of entities that have at least coverage % or area in the
+        mask geometry.
 
-        Parameters:
-        - polygon (Polygon): A Shapely Polygon object representing the target area.
+        Args:
+            mask (shapely.Geometry): A Shapely Geometry object representing
+                the target area.
+            min_coverage_percent (float, optional): Defaults to 0.0.
+            min_coverage_area (float, optional): Defaults to 0.0.
 
         Returns:
-        - list: A list of entities that have at least coverage % in the polygon."""
+            List[ShapelyEntity]: A list of entities that have at least
+                coverage % or area in the polygon
+        """
 
         query = self.query(mask)
 
@@ -493,12 +517,23 @@ def _entity_matches_filter(
 
 
 def build_global_hero_transform(x: float, y: float, heading: float) -> Transform2D:
+    """Builds a Transform2D representing the global position of the hero
+    based on its coordinates and heading
+
+    Args:
+        x (float): Global hero x coordinate
+        y (float): Global hero y coordinate
+        heading (float): hero heading
+
+    Returns:
+        Transform2D: Global hero Transform2D
+    """
     translation = Vector2.new(x, y)
     return Transform2D.new_rotation_translation(heading, translation)
 
 
 def lane_free_filter() -> FlagFilter:
-    """Creates the flag filter for the lane free check
+    """Creates the default flag filter for the lane free check
 
     Returns:
         FlagFilter

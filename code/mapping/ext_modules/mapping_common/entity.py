@@ -417,6 +417,17 @@ class Entity:
         return velocity
 
     def get_delta_forward_velocity_of(self, other: "Entity") -> Optional[float]:
+        """Calculates the delta velocity compared to other in the heading of self
+
+        - result > 0: other moves away from self
+        - result < 0: other moves nearer to self
+
+        Args:
+            other (Entity)
+
+        Returns:
+            Optional[float]: Delta velocity if both entities have one.
+        """
         if self.motion is None or other.motion is None:
             return None
 
@@ -428,6 +439,11 @@ class Entity:
         return relative_motion.x()
 
     def get_width(self) -> float:
+        """Returns the local width (y-bounds) of the entity
+
+        Returns:
+            float: width
+        """
         local_poly = self.shape.to_shapely()
         min_x, min_y, max_x, max_y = local_poly.bounds
         return max_y - min_y
@@ -591,14 +607,13 @@ class ShapelyEntity:
     poly: shapely.Polygon
 
     def get_distance_to(self, other: "ShapelyEntity") -> float:
-        """
-        Returns the distance to the entity in front in m.
+        """Returns the distance to other in m.
 
-        Parameters:
-        - front_entity (Entity): Entity that is in front of the hero vehicle.
+        Args:
+            other (ShapelyEntity)
 
         Returns:
-        - Optional[float]: Distance to the entity in front in m.
+            float: distance
         """
 
         return shapely.distance(self.poly, other.poly)
@@ -607,11 +622,36 @@ class ShapelyEntity:
 def shape_debug_marker_array(
     namespace: str,
     timestamp: Optional[rospy.Time] = None,
-    lifetime=rospy.Duration.from_sec(0.5),
+    lifetime: rospy.Duration = rospy.Duration.from_sec(0.5),
     entities: Optional[List[Tuple[Entity, Tuple[float, float, float, float]]]] = None,
     shapes: Optional[List[Tuple[Shape2D, Tuple[float, float, float, float]]]] = None,
     markers: Optional[List[Tuple[Marker, Tuple[float, float, float, float]]]] = None,
 ) -> MarkerArray:
+    """Build a MarkerArray for debugging based on several mapping_common types
+
+    All inputs are a list of tuples:
+        - Each Tuple contains an object and a color
+        - The color is a Tuple of (r, g, b, a)
+
+    Args:
+        namespace (str): Namespace of the markers
+        timestamp (Optional[rospy.Time], optional): Timestamp of the markers.
+            Defaults to None.
+        lifetime (rospy.Duration, optional): Lifetime of the markers.
+            Defaults to rospy.Duration.from_sec(0.5).
+        entities (Optional[List[Tuple
+            [Entity, Tuple[float, float, float, float]]]], optional):
+            Entities to visualize. Defaults to None.
+        shapes (Optional[List[Tuple
+            [Shape2D, Tuple[float, float, float, float]]]], optional):
+            Shapes to visualize. Defaults to None.
+        markers (Optional[List[Tuple[
+            Marker, Tuple[float, float, float, float]]]], optional):
+            Markers to visualize . Defaults to None.
+
+    Returns:
+        MarkerArray: _description_
+    """
     if entities is None:
         entities = []
     if shapes is None:
