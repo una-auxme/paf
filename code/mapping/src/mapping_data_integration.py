@@ -9,7 +9,7 @@ from visualization_msgs.msg import Marker
 import numpy as np
 from typing import List, Optional
 
-from mapping_common.entity import Entity, Flags, Car, Motion2D
+from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
@@ -278,6 +278,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             else None
         )
 
+        objectclassarray = np.array(data.object_class) if data.object_class else None
+
         unique_labels = np.unique(indexarray)
 
         entities = []
@@ -325,24 +327,41 @@ class MappingDataIntegrationNode(CompatibleNode):
                     )
 
             # Optional: Füge die Objektklasse hinzu
-            # object_class = None
-            # if objectclassarray is not None:
-            #     cluster_class = objectclassarray[indexarray == label]
-            #     object_class = np.unique(cluster_class)[0]  # Nimm die häufigste
-            # Klasse
+            object_class = None
+            if objectclassarray is not None:
+                object_class = objectclassarray[indexarray == label][0]
 
             flags = Flags(is_collider=True)
-
-            # Erstelle die Entity
-            entity = Entity(
-                confidence=1,
-                priority=0.25,
-                shape=shape,
-                transform=transform,
-                timestamp=rospy.Time.now(),
-                flags=flags,
-                motion=motion,
-            )
+            if object_class == 4:
+                entity = Pedestrian(
+                    confidence=1,
+                    priority=0.25,
+                    shape=shape,
+                    transform=transform,
+                    timestamp=rospy.Time.now(),
+                    flags=flags,
+                    motion=motion,
+                )
+            elif object_class == 10:
+                entity = Car(
+                    confidence=1,
+                    priority=0.25,
+                    shape=shape,
+                    transform=transform,
+                    timestamp=rospy.Time.now(),
+                    flags=flags,
+                    motion=motion,
+                )
+            else:
+                entity = Entity(
+                    confidence=1,
+                    priority=0.25,
+                    shape=shape,
+                    transform=transform,
+                    timestamp=rospy.Time.now(),
+                    flags=flags,
+                    motion=motion,
+                )
             entities.append(entity)
 
         return entities

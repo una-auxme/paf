@@ -6,7 +6,7 @@ from uuid import UUID
 import shapely
 
 from .map import Map
-from .entity import ShapelyEntity, Entity, FlagFilter
+from .entity import ShapelyEntity, Entity, FlagFilter, Car, Pedestrian
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
 
@@ -165,10 +165,24 @@ def _try_merge_pair(
     else:
         base_entity_idx = 1
         merge_entity_idx = 0
-    base_entity: Entity = pair[base_entity_idx].entity
-    merge_entity: Entity = pair[merge_entity_idx].entity
+
+    # Determine the most specific class for the merged entity
+    if isinstance(pair[merge_entity_idx].entity, Car) and not isinstance(
+        pair[base_entity_idx].entity, Car
+    ):
+        base_entity = pair[merge_entity_idx].entity
+        merge_entity = pair[base_entity_idx].entity
+    if isinstance(pair[merge_entity_idx].entity, Pedestrian) and not isinstance(
+        pair[base_entity_idx].entity, Pedestrian
+    ):
+        base_entity = pair[merge_entity_idx].entity
+        merge_entity = pair[base_entity_idx].entity
+    else:
+        base_entity = pair[base_entity_idx].entity
+        merge_entity = pair[merge_entity_idx].entity
 
     modified = deepcopy(base_entity)
+
     modified.transform = transform
     modified.shape = shape
 

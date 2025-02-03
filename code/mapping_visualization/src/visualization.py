@@ -10,7 +10,7 @@ from mapping.msg import Map as MapMsg
 from rospy import Publisher
 from rospy import Duration
 
-from mapping_common.entity import Entity
+from mapping_common.entity import Entity, Car, Pedestrian
 from mapping_common.map import Map
 
 MARKER_NAMESPACE: str = "map"
@@ -77,6 +77,20 @@ class Visualization(CompatibleNode):
         marker.ns = MARKER_NAMESPACE
         marker.id = id
         marker.lifetime = Duration.from_sec(2.0 / 20.0)
+        # color marker depending on class, if exists
+        if isinstance(entity, Car):
+            # [0, 0, 255],  # 10: Vehicles
+            marker.color.r = 0
+            marker.color.g = 0
+            marker.color.b = 255
+            marker.color.a = 1.0
+
+        elif isinstance(entity, Pedestrian):
+            # [220, 20, 60],  # 4: Pedestrians
+            marker.color.r = 220
+            marker.color.g = 20
+            marker.color.b = 60
+            marker.color.a = 1.0
 
         return marker
 
