@@ -56,10 +56,10 @@ class Potential_field_node(CompatibleNode):
             "potential_field_distance_threshold_Y", 5
         )
         """
-        Scale factor for the resolution of the potential field since the entities have meters
-        as units and the potential field is calculated in a grid. We need ints as indices for
-        the matrix, so we need to scale the resolution to have a better representation of the
-        entities in the environment.
+        Scale factor for the resolution of the potential field since the entities have
+        meters as units and the potential field is calculated in a grid. We need ints
+        as indices for the matrix, so we need to scale the resolution to have a better
+        representation of the entities in the environment.
         """
 
         self.loop_rate: float = rospy.get_param("potential_field_loop_rate", 0.4)
