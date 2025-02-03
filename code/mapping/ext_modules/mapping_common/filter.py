@@ -9,7 +9,6 @@ from .map import Map
 from .entity import ShapelyEntity, Entity, FlagFilter
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
-from rospy import loginfo
 
 
 class MapFilter:
