@@ -20,6 +20,8 @@
   <arg name="merge_growth_distance" default="0.3" />
   <arg name="min_merging_overlap_percent" default="0.5" />
   <arg name="min_merging_overlap_area" default="0.5" />
+  
+  <arg name="enable_lane_index_filter" default="True" />
 
 
   <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration"
@@ -47,6 +49,7 @@
     <param name="merge_growth_distance" value="$(arg merge_growth_distance)" />
     <param name="min_merging_overlap_percent" value="$(arg min_merging_overlap_percent)" />
     <param name="min_merging_overlap_area" value="$(arg min_merging_overlap_area)" />
+    <param name="enable_lane_index_filter" value="$(arg enable_lane_index_filter)" />
   </node>
 
 </launch>

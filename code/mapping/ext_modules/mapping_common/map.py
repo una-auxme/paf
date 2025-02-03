@@ -171,6 +171,39 @@ class Map:
             return True
         return False
 
+    def get_lane_y_axis_intersections(self, direction: str = "left") -> dict:
+        """calculates the intersections of the lanemarks in lane_pos direction
+
+        Args:
+            lane_pos (str): lanemarks on "left", "right" or "both" will be checked.
+            Other inputs will be ignored
+
+        Returns:
+            dict{uuid, coordinate}: dictionary with uuid of lanemark as keys
+            and coordinates as according entries
+        """
+        if direction == "left":
+            y_axis_line = LineString([[0, 0], [0, 1 * 8]])
+        elif direction == "right":
+            y_axis_line = LineString([[0, 0], [0, -1 * 8]])
+        elif direction == "both":
+            y_axis_line = LineString([[0, -8], [0, 8]])
+        else:
+            return {}
+        intersection = []
+        lanemark_filter = FlagFilter(is_lanemark=True)
+        # build map STRtree from map with filter
+        lanemarks = self.filtered(lanemark_filter)
+        lanemarks[0].shape.to_shapely
+        intersections = {}
+        for lanemark in lanemarks:
+            intersection = lanemark.shape.to_shapely(lanemark.transform).intersection(
+                y_axis_line
+            )
+            if not intersection.is_empty:
+                intersections[lanemark.uuid] = intersection
+        return intersections
+
     def project_plane(self, start_point, size_x, size_y):
         """
         Projects a rectangular plane starting from (0, 0) forward in the x-direction.

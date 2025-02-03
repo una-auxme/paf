@@ -6,7 +6,7 @@ from uuid import UUID
 import shapely
 
 from .map import Map
-from .entity import ShapelyEntity, Entity, FlagFilter
+from .entity import ShapelyEntity, Entity, FlagFilter, Lanemarking
 from .shape import Polygon, Shape2D, Rectangle
 from .transform import Transform2D, Vector2
 
@@ -32,38 +32,21 @@ class MapFilter:
 @dataclass
 class LaneIndexFilter(MapFilter):
 
-    max_distance_intersections = 0.8
-
     def filter(self, map):
-        f = FlagFilter(is_lanemark=True)
-        lanemarkings = map.filtered(f)
-        check_box = Entity(
-            confidence=0,
-            priority=0,
-            shape=Rectangle(20, 0.1),
-            transform=Transform2D.new_rotation_translation(
-                1.5708, Vector2.new(0.0, 0.0)
-            ),
-        )
-        # lanemarkings.append(check_box)
-        intersections = []
-        keep_entities = []
-        for marking in lanemarkings:
-            intersections.append(
-                shapely.intersection(
-                    check_box.to_shapely().poly, marking.to_shapely().poly
-                )
-            )
-        tree = map.build_tree(f=f)
-        for intersection in intersections:
-            if (
-                tree.query_nearest(intersection, all_matches=False)[0][1]
-                < self.max_distance_intersections
-            ):
-                continue
-            else:
-                keep_entities.append()
-        return map
+        lanemark_f = FlagFilter(is_lanemark=True)
+        other_f = FlagFilter(is_lanemark=False)
+        lanemarkings = map.filtered(lanemark_f)
+        other_entities = map.filtered(other_f)
+        intersections = map.get_lane_y_axis_intersections(direction="both")
+
+        y_coordinates = [(uuid, intersections[uuid][1]) for uuid in intersections]
+        labels = {}
+        for i, (uuid, y) in enumerate(y_coordinates):
+            labels[uuid] = (i + 1) * (abs(y) / y)
+        for lanemarking in lanemarkings:
+            lanemarking.position_index = labels.get(lanemarking.uuid, 0)
+        updated_map = Map(map.timestamp, other_entities + lanemarkings)
+        return updated_map
 
 
 @dataclass

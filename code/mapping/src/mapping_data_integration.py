@@ -13,7 +13,7 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Rectangle
 from mapping_common.map import Map
-from mapping_common.filter import MapFilter, GrowthMergingFilter
+from mapping_common.filter import MapFilter, GrowthMergingFilter, LaneIndexFilter
 from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
 from sensor_msgs.msg import PointCloud2
@@ -377,6 +377,8 @@ class MappingDataIntegrationNode(CompatibleNode):
                     simplify_tolerance=self.get_param("~polygon_simplify_tolerance"),
                 )
             )
+        if self.get_param("~enable_lane_index_filter"):
+            map_filters.append(LaneIndexFilter())
 
         return map_filters
 
