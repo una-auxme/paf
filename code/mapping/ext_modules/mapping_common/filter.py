@@ -56,13 +56,13 @@ class LaneIndexFilter(MapFilter):
         intersections = map.get_lane_y_axis_intersections(direction="both")
         y_values = [(uuid, intersections[uuid][1]) for uuid in intersections]
         # separate negative and positive values
-
         positive_y = sorted(
             [(uuid, y) for uuid, y in y_values if y > 0], key=lambda x: x[1]
         )
         negative_y = sorted(
             [(uuid, y) for uuid, y in y_values if y < 0], key=lambda x: abs(x[1])
         )
+        # creates a dictionary for the labels with uuid as keys
         labels = {}
         for i, (uuid, _) in enumerate(positive_y):
             labels[uuid] = i + 1  # starts at 1
