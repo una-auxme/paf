@@ -56,7 +56,7 @@ class Shape2D:
         type_name = type(self).__name__
         return msg.Shape2D(type_name=type_name, offset=self.offset.to_ros_msg())
 
-    def to_marker(self, transform: Transform2D) -> Marker:
+    def to_marker(self, transform: Optional[Transform2D] = None) -> Marker:
         """Creates an ROS marker based on this shape
 
         Args:
@@ -66,7 +66,9 @@ class Shape2D:
             Marker: ROS marker message
         """
         m = Marker()
-        shape_transform: Transform2D = transform * self.offset
+        shape_transform: Transform2D = self.offset
+        if transform is not None:
+            shape_transform = transform * shape_transform
         transl = shape_transform.translation()
 
         m.pose.position.x = transl.x()
@@ -82,7 +84,7 @@ class Shape2D:
         m.scale.z = 1.0
         return m
 
-    def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
+    def to_shapely(self, transform: Optional[Transform2D] = None) -> shapely.Polygon:
         """Creates a shapely.Polygon based on this shape
 
         Args:
@@ -129,7 +131,7 @@ class Rectangle(Shape2D):
         m.dimensions = [self.length, self.width]
         return m
 
-    def to_marker(self, transform: Transform2D) -> Marker:
+    def to_marker(self, transform: Optional[Transform2D] = None) -> Marker:
         m = super().to_marker(transform)
         m.type = Marker.CUBE
         m.scale.x = self.length
@@ -137,8 +139,10 @@ class Rectangle(Shape2D):
 
         return m
 
-    def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
-        shape_transform: Transform2D = transform * self.offset
+    def to_shapely(self, transform: Optional[Transform2D] = None) -> shapely.Polygon:
+        shape_transform: Transform2D = self.offset
+        if transform is not None:
+            shape_transform = transform * shape_transform
         half_length = self.length / 2.0
         half_width = self.width / 2.0
         # LeftBack, RightBack, RightFront, LeftFront
@@ -177,7 +181,7 @@ class Circle(Shape2D):
         m.dimensions = [self.radius]
         return m
 
-    def to_marker(self, transform: Transform2D) -> Marker:
+    def to_marker(self, transform: Optional[Transform2D] = None) -> Marker:
         m = super().to_marker(transform)
         m.type = Marker.CYLINDER
         m.scale.x = self.radius * 2.0
@@ -185,9 +189,11 @@ class Circle(Shape2D):
 
         return m
 
-    def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
-        shape_transform: Transform2D = transform * self.offset
-        p: Point2 = Point2.from_vector(shape_transform.translation())
+    def to_shapely(self, transform: Optional[Transform2D] = None) -> shapely.Polygon:
+        shape_transform: Transform2D = self.offset
+        if transform is not None:
+            shape_transform = transform * shape_transform
+        p: Point2 = shape_transform.translation().point()
 
         outline_length = 2 * self.radius * math.pi
         segments = outline_length / CIRCLE_APPROXIMATION_LENGTH
@@ -232,7 +238,7 @@ class Polygon(Shape2D):
         m.dimensions = dimensions
         return m
 
-    def to_marker(self, transform: Transform2D) -> Marker:
+    def to_marker(self, transform: Optional[Transform2D] = None) -> Marker:
         """Convert to a visualization Marker for RViz."""
         m = super().to_marker(transform)
         m.type = Marker.TRIANGLE_LIST
@@ -304,8 +310,11 @@ class Polygon(Shape2D):
         m.points.extend(bottom_array)
         return m
 
-    def to_shapely(self, transform: Transform2D) -> shapely.Polygon:
-        shape_transform: Transform2D = transform * self.offset
+    def to_shapely(self, transform: Optional[Transform2D] = None) -> shapely.Polygon:
+        shape_transform: Transform2D = self.offset
+        if transform is not None:
+            shape_transform = transform * shape_transform
+
         poly_points = [(shape_transform * p).to_shapely() for p in self.points]
         return shapely.Polygon(poly_points)
 
