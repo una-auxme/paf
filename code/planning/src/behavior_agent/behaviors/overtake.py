@@ -8,16 +8,22 @@ import numpy as np
 
 
 from behaviors import behavior_speed as bs
+import mapping_common.map
+import mapping_common.mask
+import mapping_common.entity
+from mapping_common.map import Map
+import shapely
+from mapping_common.entity import FlagFilter
+from mapping_common.entity import Pedestrian
+from visualization_msgs.msg import Marker
+import behavior_utils
+
+sys.path.append(os.path.abspath(sys.path[0] + "/.."))
+# from behavior_utils import get_hero_width, get_marker_arr_in_front
 from local_planner.utils import (
     NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
-)
-from mapping_common.map import Map
-from mapping_common.entity import Pedestrian
-from visualization_msgs.msg import Marker
-
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-from local_planner.utils import convert_pose_to_array  # type: ignore # noqa: E402
+)  # type: ignore # noqa: E402
 
 """
 Source: https://github.com/ll7/psaf2
@@ -115,14 +121,38 @@ class Ahead(py_trees.behaviour.Behaviour):
             and hero_pos is not None
             and hero_heading is not None
         ):
-            hero_heading = hero_heading.data
-            current_wp = current_wp.data
-            hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
-            pose_list = trajectory.poses
-            pose_list = pose_list[int(current_wp) : int(current_wp) + 25]
-            collision_trajectory = convert_pose_to_array(pose_list)
-            entity = map.get_obstacle_on_trajectory(
-                collision_trajectory, hero_pos, hero_heading, 1
+            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+            hero_transform = mapping_common.map.build_global_hero_transform(
+                hero_pos.pose.position.x,
+                hero_pos.pose.position.y,
+                hero_heading.data,
+            )
+            hero_width = 1.0  # get_hero_width(map)
+            front_mask_size = 2.5
+            trajectory_mask = mapping_common.mask.build_trajectory_shape(
+                trajectory,
+                hero_transform,
+                start_dist_from_hero=front_mask_size,
+                max_length=20.0,
+                current_wp_idx=int(current_wp.data),
+                max_wp_count=50,
+                centered=True,
+                width=hero_width,
+            )
+            if trajectory_mask is None:
+                # We currently have no valid path to check for collisions.
+                # -> cannot drive safely
+                rospy.logerr("Overtake ahead: Unable to build collision mask!")
+                return py_trees.common.Status.FAILURE
+            # Add small area in front of car to the collision mask
+            front_rect = mapping_common.mask.project_plane(
+                front_mask_size, size_y=hero_width
+            )
+            collision_masks = [front_rect, trajectory_mask]
+            collision_mask = shapely.union_all(collision_masks)
+
+            entity_result = tree.get_nearest_entity(
+                collision_mask, map.hero().to_shapely(), 0.5
             )
         else:
             rospy.loginfo(
@@ -132,9 +162,11 @@ class Ahead(py_trees.behaviour.Behaviour):
             )
             return py_trees.common.Status.FAILURE
 
-        if entity is not None:
+        if entity_result is not None:
             # apply small offset so that it matches the car's rear
-            obstacle_distance = entity.transform.translation().x() - 1.5
+            entity, distance = entity_result
+            entity = entity.entity
+            obstacle_distance = distance - 1.5
             if entity.motion is not None:
                 obstacle_speed = entity.motion.linear_motion.length()
             else:
@@ -286,27 +318,52 @@ class Approach(py_trees.behaviour.Behaviour):
             and hero_pos is not None
             and hero_heading is not None
         ):
-            hero_heading = hero_heading.data
-            current_wp = current_wp.data
-            hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
-            pose_list = trajectory.poses
-            pose_list = pose_list[int(current_wp) : int(current_wp) + 20]
-            collision_trajectory = convert_pose_to_array(pose_list)
-            entity = map.get_obstacle_on_trajectory(
-                collision_trajectory, hero_pos, hero_heading, 1.0
+            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+            hero_transform = mapping_common.map.build_global_hero_transform(
+                hero_pos.pose.position.x,
+                hero_pos.pose.position.y,
+                hero_heading.data,
+            )
+
+            front_mask_size = 1.5
+            trajectory_mask = mapping_common.mask.build_trajectory_shape(
+                trajectory,
+                hero_transform,
+                start_dist_from_hero=front_mask_size,
+                max_length=20.0,
+                current_wp_idx=int(current_wp.data),
+                max_wp_count=50,
+                centered=True,
+                width=1.0,  # get_hero_width(map),
+            )
+            if trajectory_mask is None:
+                # We currently have no valid path to check for collisions.
+                # -> cannot drive safely
+                rospy.logerr("Overtake ahead: Unable to build collision mask!")
+                return py_trees.common.Status.FAILURE
+
+            entity_result = tree.get_nearest_entity(
+                trajectory_mask, map.hero().to_shapely(), 0.5
             )
         else:
             rospy.loginfo(
-                f"Something is none in overtake approach:"
+                f"Something is none in overtake ahead:"
                 f"{trajectory is None} {current_wp is None},"
                 f"{hero_pos is None} {hero_heading is None}"
             )
             return py_trees.common.Status.FAILURE
 
-        if entity is not None:
-            self.ot_distance = entity.transform.translation().x() - 1.5
+        if entity_result is not None:
+            # apply small offset so that it matches the car's rear
+            entity, distance = entity_result
+            entity = entity.entity
+            self.ot_distance = distance - 1.5
             rospy.loginfo(f"Overtake distance: {self.ot_distance}")
             OVERTAKE_EXECUTING = self.ot_distance
+            if entity.motion is not None:
+                if entity.motion.linear_motion.length() > 1.0:
+                    rospy.loginfo("Overtake entity started moving, abort")
+                    return py_trees.common.Status.FAILURE
         else:
             return py_trees.common.Status.FAILURE
 
@@ -323,7 +380,7 @@ class Approach(py_trees.behaviour.Behaviour):
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             rospy.loginfo(f"Overtake Approach Distance: {self.ot_distance}")
-            ot_free = map.is_lane_free(False, self.clear_distance, 15)
+            ot_free = tree.is_lane_free(False, self.clear_distance, 15)
             rospy.loginfo(f"Overtake is free: {ot_free}")
             if ot_free:
                 self.ot_counter += 1
@@ -470,30 +527,53 @@ class Wait(py_trees.behaviour.Behaviour):
             and hero_pos is not None
             and hero_heading is not None
         ):
-            hero_heading = hero_heading.data
-            current_wp = current_wp.data
-            hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
-            pose_list = trajectory.poses
-            # here we only want to see if the obstacle is still there
-            pose_list = pose_list[int(current_wp) : int(current_wp) + 10]
-            collision_trajectory = convert_pose_to_array(pose_list)
-            entity = map.get_obstacle_on_trajectory(
-                collision_trajectory, hero_pos, hero_heading, 1.0
+            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+            hero_transform = mapping_common.map.build_global_hero_transform(
+                hero_pos.pose.position.x,
+                hero_pos.pose.position.y,
+                hero_heading.data,
+            )
+
+            front_mask_size = 1.0
+            trajectory_mask = mapping_common.mask.build_trajectory_shape(
+                trajectory,
+                hero_transform,
+                start_dist_from_hero=front_mask_size,
+                max_length=20.0,
+                current_wp_idx=int(current_wp.data),
+                max_wp_count=50,
+                centered=True,
+                width=1.0,  # get_hero_width(map),
+            )
+            if trajectory_mask is None:
+                # We currently have no valid path to check for collisions.
+                # -> cannot drive safely
+                rospy.logerr("Overtake ahead: Unable to build collision mask!")
+                return py_trees.common.Status.FAILURE
+
+            entity_result = tree.get_nearest_entity(
+                trajectory_mask, map.hero().to_shapely(), 0.5
             )
         else:
             rospy.loginfo(
-                f"Something is none in overtake approach:"
+                f"Something is none in overtake ahead:"
                 f"{trajectory is None} {current_wp is None},"
                 f"{hero_pos is None} {hero_heading is None}"
             )
             return py_trees.common.Status.FAILURE
 
-        # check if obstacle is still there
-        if entity is None:
+        if entity_result is not None:
+            entity, distance = entity_result
+            entity = entity.entity
+            if entity.motion is not None:
+                if entity.motion.linear_motion.length() > 1.0:
+                    rospy.loginfo("Overtake entity started moving, abort")
+                    return py_trees.common.Status.FAILURE
+        else:
             rospy.loginfo("Overtake osbtacle is gone, abort")
             return py_trees.common.Status.FAILURE
 
-        ot_free = map.is_lane_free(False, self.clear_distance, 15)
+        ot_free = tree.is_lane_free(False, self.clear_distance, 15)
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
