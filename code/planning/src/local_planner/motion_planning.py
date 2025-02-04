@@ -282,6 +282,8 @@ class MotionPlanning(CompatibleNode):
         """
         # add buffer to overtake distance so fully avoid obstacle
         currentwp = self.current_wp
+        if currentwp is None:
+            return
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
         if unstuck:
