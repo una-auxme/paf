@@ -69,7 +69,7 @@ It showed that the potential field method can be utilized to plan a path based o
 
 ## Activating the Node
 
-uncomment the line in the [launch file](../../code/acting/launch/acting.launch)
+uncomment the line in the [launch file](../../code/acting/launch/acting.launch) and move the [file](../acting/discontinued/potential_field_node.py) to the [acting folder](../../code/acting/src/acting/)
 
 ```json
     <!-- <node pkg="acting" type="potential_field_node.py" name="potential_field_node" output="screen">
