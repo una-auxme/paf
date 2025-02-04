@@ -11,7 +11,7 @@ import uuid_msgs.msg as uuid_msgs
 from visualization_msgs.msg import Marker, MarkerArray
 import rospy
 
-from mapping_common.shape import Shape2D
+from mapping_common.shape import Shape2D, MarkerStyle
 from mapping_common.transform import Vector2, Transform2D, Point2
 
 from mapping import msg
@@ -449,6 +449,15 @@ class Entity:
             # This limitation might be removed later if there are no rectangular
             # clusters used anymore that might falsely overlap with the hero.
             return False
+        if (
+            isinstance(self, Car)
+            and isinstance(other, Pedestrian)
+            or isinstance(self, Pedestrian)
+            and isinstance(other, Car)
+        ):
+            # Cars and pedestrians must get merged as a bicycle is detected
+            # as a car and a pedestrian at the same time.
+            return True
         if not (isinstance(self, type(other)) or isinstance(other, type(self))):
             return False
         return True
@@ -742,7 +751,7 @@ def shape_debug_marker_array(
         marker = entity.to_marker()
         markers.append((marker, color))
     for shape, color in shapes:
-        marker = shape.to_marker()
+        marker = shape.to_marker(marker_style=MarkerStyle.LINESTRING)
         markers.append((marker, color))
     marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
     for id, marker_color in enumerate(markers):
