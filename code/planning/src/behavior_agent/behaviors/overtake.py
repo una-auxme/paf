@@ -107,7 +107,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         if wp is not None:
             if wp.isStopLine and wp.distance < 20:
                 rospy.logerr("Not overtaking in intersection!")
-                return py_trees.common.Status.FAILURE
+                # return py_trees.common.Status.FAILURE
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
 
         if map_data is not None:
@@ -134,12 +134,12 @@ class Ahead(py_trees.behaviour.Behaviour):
                 hero_heading.data,
             )
             hero_width = behavior_utils.get_hero_width(map)
-            front_mask_size = 2.5
+            front_mask_size = 0.0
             trajectory_mask = mapping_common.mask.build_trajectory_shape(
                 trajectory,
                 hero_transform,
                 start_dist_from_hero=front_mask_size,
-                max_length=19.0,
+                max_length=18.0,
                 current_wp_idx=int(current_wp.data),
                 max_wp_count=50,
                 centered=True,
@@ -150,15 +150,10 @@ class Ahead(py_trees.behaviour.Behaviour):
                 # -> cannot drive safely
                 rospy.logerr("Overtake ahead: Unable to build collision mask!")
                 return py_trees.common.Status.FAILURE
-            # Add small area in front of car to the collision mask
-            front_rect = mapping_common.mask.project_plane(
-                front_mask_size, size_y=hero_width
-            )
-            collision_masks = [front_rect, trajectory_mask]
-            collision_mask = shapely.union_all(collision_masks)
+            collision_masks = [trajectory_mask]
 
             entity_result = tree.get_nearest_entity(
-                collision_mask, map.hero().to_shapely(), 0.35
+                trajectory_mask, map.hero().to_shapely(), 0.35
             )
         else:
             rospy.loginfo(
@@ -289,7 +284,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 40
+        self.clear_distance = 35
         OVERTAKE_FREE = False
 
     def update(self):
@@ -385,6 +380,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     return py_trees.common.Status.FAILURE
             else:
                 obstacle_speed = 0
+
             marker_arr = behavior_utils.get_marker_arr_in_front(
                 entity, distance, map.hero(), collision_masks
             )
@@ -515,6 +511,7 @@ class Wait(py_trees.behaviour.Behaviour):
         # slightly less distance since we have already stopped
         self.clear_distance = 35
         self.ot_counter = 0
+        self.ot_gone = 0
         return True
 
     def update(self):
@@ -598,11 +595,13 @@ class Wait(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.FAILURE
 
         if entity_result is not None:
+            self.ot_gone = 0
             entity, distance = entity_result
             entity = entity.entity
             OVERTAKE_EXECUTING = distance
             if entity.motion is not None:
                 obstacle_speed = entity.motion.linear_motion.length()
+                rospy.loginfo(f"Obstacle speed: {obstacle_speed}")
                 if obstacle_speed > 3.0:
                     rospy.loginfo("Overtake entity started moving, abort")
                     return py_trees.common.Status.FAILURE
@@ -613,13 +612,17 @@ class Wait(py_trees.behaviour.Behaviour):
             )
             self.marker_publisher.publish(marker_arr)
         else:
-            rospy.loginfo("Overtake osbtacle is gone, abort")
-            return py_trees.common.Status.FAILURE
-
-        if obstacle_speed < 0.5:
-            ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
-        else:
+            # using a counter to account for data inconsistencies
+            self.ot_gone += 1
+            if self.ot_gone > 3:
+                rospy.loginfo("Overtake osbtacle is gone, abort")
+                return py_trees.common.Status.FAILURE
+            return py_trees.common.Status.RUNNING
+        # bicycle handling
+        if obstacle_speed > 1.7 and obstacle_speed < 2.4:
             ot_free = tree.is_lane_free(False, 15.0, -4.0)
+        else:
+            ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
@@ -627,13 +630,11 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                if obstacle_speed < 0.5:
-                    self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
+                self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
                 return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Overtake still blocked")
-            if obstacle_speed < 0.5:
-                self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
+            self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
             self.ot_counter = 0
             return py_trees.common.Status.RUNNING
 
