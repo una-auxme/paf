@@ -676,7 +676,7 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_overtake()
         v_stop = min(convert_to_ms(9.0), convert_to_ms(stopline / 1.4))
         if stopline < TARGET_DISTANCE_TO_STOP_OVERTAKE:
-            v_stop = 0.0
+            v_stop = 2.5
 
         return v_stop
 

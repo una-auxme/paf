@@ -12,6 +12,14 @@ MARKER_NAMESPACE: str = "behaviortree"
 
 
 def get_hero_width(map: Map):
+    """Returns the hero width
+
+    Args:
+        map (Map): Intermediate layer map object
+
+    Returns:
+        float:  width of the hero
+    """
     hero = map.hero()
     if hero is None or hero.motion is None:
         # We currenly have no hero data.
@@ -22,9 +30,19 @@ def get_hero_width(map: Map):
 
 
 def get_marker_arr_in_front(entity, distance, hero, collision_masks):
+    """Generates a marker array for visualization. Used for obstacle in front scenarios.
+
+    Args:
+        entity (Entity): The entity in front
+        distance (float): Distance to the entity
+        hero (Entity): The hero car
+        collision_masks (Polygon Array): Array of polygon masks to visualize
+
+    Returns:
+        _type_: _description_
+    """
     text_markers = []
     entity_markers = []
-
     shape_markers = []
     for mask in collision_masks:
         shape_markers.append((Polygon.from_shapely(mask), (0, 1.0, 1.0, 0.5)))
