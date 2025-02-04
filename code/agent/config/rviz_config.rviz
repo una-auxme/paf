@@ -25,7 +25,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: Lidar
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -208,7 +208,7 @@ Visualization Manager:
       Marker Topic: /paf/hero/mapping/marker_array
       Name: MarkerArray
       Namespaces:
-        m: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1

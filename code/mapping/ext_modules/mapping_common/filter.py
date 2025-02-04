@@ -166,20 +166,8 @@ def _try_merge_pair(
         base_entity_idx = 1
         merge_entity_idx = 0
 
-    # Determine the most specific class for the merged entity
-    if isinstance(pair[merge_entity_idx].entity, Car) and not isinstance(
-        pair[base_entity_idx].entity, Car
-    ):
-        base_entity = pair[merge_entity_idx].entity
-        merge_entity = pair[base_entity_idx].entity
-    if isinstance(pair[merge_entity_idx].entity, Pedestrian) and not isinstance(
-        pair[base_entity_idx].entity, Pedestrian
-    ):
-        base_entity = pair[merge_entity_idx].entity
-        merge_entity = pair[base_entity_idx].entity
-    else:
-        base_entity = pair[base_entity_idx].entity
-        merge_entity = pair[merge_entity_idx].entity
+    base_entity = pair[base_entity_idx].entity
+    merge_entity = pair[merge_entity_idx].entity
 
     modified = deepcopy(base_entity)
 

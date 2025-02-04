@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import shapely
 import math
+import copy
 
 import rospy
 from mapping import msg
@@ -237,16 +238,33 @@ class Polygon(Shape2D):
         m.type = Marker.TRIANGLE_LIST
         m.scale.x = 1.0
         m.scale.y = 1.0
+        shape_object = self.to_shapely(Transform2D.identity())
+        shape_object = shape_object.normalize()
+        normalized_poly = Polygon.from_shapely(shape_object, make_centered=False)
 
         # First create the outline by creating quads (p1...p4)
         # Then splitting into triangles.
-        len_shape = len(self.points)
+        len_shape = len(normalized_poly.points)
         for i in range(len_shape):
             i_nxt = (i + 1) % len_shape
-            p1 = Point(x=self.points[i].x(), y=self.points[i].y(), z=0.0)
-            p2 = Point(x=self.points[i].x(), y=self.points[i].y(), z=m.scale.z)
-            p3 = Point(x=self.points[i_nxt].x(), y=self.points[i_nxt].y(), z=0.0)
-            p4 = Point(x=self.points[i_nxt].x(), y=self.points[i_nxt].y(), z=m.scale.z)
+            p1 = Point(
+                x=normalized_poly.points[i].x(), y=normalized_poly.points[i].y(), z=-0.5
+            )
+            p2 = Point(
+                x=normalized_poly.points[i].x(),
+                y=normalized_poly.points[i].y(),
+                z=0.5,
+            )
+            p3 = Point(
+                x=normalized_poly.points[i_nxt].x(),
+                y=normalized_poly.points[i_nxt].y(),
+                z=-0.5,
+            )
+            p4 = Point(
+                x=normalized_poly.points[i_nxt].x(),
+                y=normalized_poly.points[i_nxt].y(),
+                z=0.5,
+            )
 
             for p in [p1, p2, p3]:
                 m.points.append(p)
@@ -254,20 +272,36 @@ class Polygon(Shape2D):
                 m.points.append(p)
 
         # Close the top of the polygon
-        top_center = Point(x=0.0, y=0.0, z=m.scale.z)
-        for p in self.points:
+        top_center = Point(x=0.0, y=0.0, z=0.5)
+        for p in normalized_poly.points:
             top_center.x += p.x()
             top_center.y += p.y()
         top_center.x /= len_shape
         top_center.y /= len_shape
 
-        for i in range(len_shape):
-            i_nxt = (i + 1) % len_shape
-            p1 = Point(x=self.points[i].x(), y=self.points[i].y(), z=m.scale.z)
-            p2 = Point(x=self.points[i_nxt].x(), y=self.points[i_nxt].y(), z=m.scale.z)
+        top_array = []
+        # Close the top
+        for i in reversed(range(len_shape)):
+            i_nxt = (i - 1) % len_shape
+            p1 = Point(
+                x=normalized_poly.points[i].x(),
+                y=normalized_poly.points[i].y(),
+                z=0.5,
+            )
+            p2 = Point(
+                x=normalized_poly.points[i_nxt].x(),
+                y=normalized_poly.points[i_nxt].y(),
+                z=0.5,
+            )
             for p in [p1, p2, top_center]:
-                m.points.insert(0, p)
+                top_array.append(p)
 
+        bottom_array = list(reversed(copy.deepcopy(top_array)))
+        for p in bottom_array:
+            p.z = -0.5
+
+        m.points.extend(top_array)
+        m.points.extend(bottom_array)
         return m
 
     def to_shapely(self, transform: Transform2D) -> shapely.Polygon:

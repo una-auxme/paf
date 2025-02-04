@@ -323,7 +323,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                 if self.hero_speed is not None:
                     motion_vector_hero = Vector2.forward() * self.hero_speed.speed
                     motion = Motion2D(
-                        motion.linear_motion - motion_vector_hero, angular_velocity=0.0
+                        motion_vector_hero + motion.linear_motion, angular_velocity=0.0
                     )
 
             # Optional: Füge die Objektklasse hinzu
@@ -335,7 +335,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             if object_class == 4:
                 entity = Pedestrian(
                     confidence=1,
-                    priority=0.25,
+                    priority=0.9,
                     shape=shape,
                     transform=transform,
                     timestamp=rospy.Time.now(),
@@ -345,7 +345,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             elif object_class == 10:
                 entity = Car(
                     confidence=1,
-                    priority=0.25,
+                    priority=0.75,
                     shape=shape,
                     transform=transform,
                     timestamp=rospy.Time.now(),
