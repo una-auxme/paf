@@ -103,11 +103,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if there is nothing
                  to overtake.
         """
-        wp = self.blackboard.get("/paf/hero/waypoint_distance")
-        if wp is not None:
-            if wp.isStopLine and wp.distance < 20:
-                rospy.logerr("Not overtaking in intersection!")
-                # return py_trees.common.Status.FAILURE
+
         map_data = self.blackboard.get("/paf/hero/mapping/init_data")
 
         if map_data is not None:
