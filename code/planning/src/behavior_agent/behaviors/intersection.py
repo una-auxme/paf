@@ -5,6 +5,8 @@ from std_msgs.msg import String
 import rospy
 import sys
 import os
+import math
+from mapping_common.map import Map
 
 from behaviors import behavior_speed as bs
 
@@ -353,6 +355,33 @@ class Wait(py_trees.behaviour.Behaviour):
         rospy.loginfo("Wait Intersection")
         self.red_light_flag = False
         self.green_light_time = rospy.get_rostime()
+        self.over_stop_line = False
+        self.virtual_stopline_distance = 1
+        hero_pos = self.blackboard.get("/paf/hero/current_pos")
+        hero_heading = self.blackboard.get("/paf/hero/current_heading")
+        self.start_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
+        hero_heading = hero_heading.data
+        trajectory = self.blackboard.get("/paf/hero/trajectory")
+        current_wp = self.blackboard.get("/paf/hero/current_wp")
+        current_wp = current_wp.data
+        turning_point = trajectory.poses[int(current_wp) + 10].pose.position
+
+        x_direction = turning_point.x - hero_pos.pose.position.x
+        y_direction = turning_point.y - hero_pos.pose.position.y
+
+        cross = x_direction * math.sin(-hero_heading) - y_direction * math.cos(
+            -hero_heading
+        )
+
+        # intersection type to determine a left turn, right turn or driving straight
+        # 0 = straight, 1 = left, 2 = right
+
+        if cross > 0:
+            self.intersection_type = 1
+        elif cross < 0:
+            self.intersection_type = 2
+        else:
+            self.intersection_type = 0
         return True
 
     def update(self):
@@ -370,19 +399,20 @@ class Wait(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS, if the traffic light switched
                  to green or no traffic light is detected
         """
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        if map_data is not None:
+            map = Map.from_ros_msg(map_data)
+        else:
+            rospy.logerr("Map data not available in Overtake")
+            return py_trees.common.Status.FAILURE
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
-
+        hero_pos = self.blackboard.get("/paf/hero/current_pos")
+        hero_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
+        rospy.loginfo(f"Intersection turning: {self.intersection_type}")
         # TODO: ADD FEATURE Check if intersection is clear
-        lidar_data = None
         intersection_clear = True
-        if lidar_data is not None:
-            # if distance smaller than 10m, intersection is blocked
-            if lidar_data.data < 10.0:
-                intersection_clear = False
-            else:
-                intersection_clear = True
 
-        if light_status_msg is not None:
+        if light_status_msg is not None and self.over_stop_line is False:
             traffic_light_status = get_color(light_status_msg.state)
             if traffic_light_status == "red" or traffic_light_status == "yellow":
                 # Wait at traffic light
@@ -410,21 +440,37 @@ class Wait(py_trees.behaviour.Behaviour):
                     f"Driving through Intersection Light Status: {traffic_light_status}"
                 )
                 # Drive through intersection
+                self.over_stop_line = True
                 return py_trees.common.Status.SUCCESS
             else:
                 rospy.loginfo(
                     f"Light Status: {traffic_light_status}"
                     "-> No Traffic Light detected"
                 )
+                # remove this
+                return py_trees.common.Status.SUCCESS
 
-        # Check clear if no traffic light is detected
-        if not intersection_clear:
-            rospy.loginfo("Intersection blocked")
-            self.curr_behavior_pub.publish(bs.int_wait.name)
-            return py_trees.common.Status.RUNNING
+        if math.dist(hero_pos, self.start_pos) > self.virtual_stopline_distance:
+            # Check clear if no traffic light is detected
+            # Oncoming check
+            if self.intersection_type is 1:
+                intersection_clear = map.is_lane_free(False, 20, 15)
+            if self.intersection_type is 0:
+                # driving straight might need collision avoidance
+                intersection_clear = True
+            else:
+                intersection_clear = True
+            if not intersection_clear:
+                rospy.loginfo("Intersection blocked")
+                self.curr_behavior_pub.publish(bs.int_wait.name)
+                return py_trees.common.Status.RUNNING
+            else:
+                rospy.loginfo("Intersection clear")
+                return py_trees.common.Status.SUCCESS
         else:
-            rospy.loginfo("Intersection clear")
-            return py_trees.common.Status.SUCCESS
+            # drive towards virtual stopline in intersection
+            self.curr_behavior_pub.publish(bs.int_wait_to_stop.name)
+            return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """

@@ -25,6 +25,7 @@ int_app_green = Behavior("int_app_green", convert_to_ms(30.0))
 # Wait
 
 int_wait = Behavior("int_wait", 0)
+int_wait_to_stop = Behavior("int_wait_to_stop", convert_to_ms(4.0))
 
 # Enter
 

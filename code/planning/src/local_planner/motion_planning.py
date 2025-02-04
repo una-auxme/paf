@@ -592,6 +592,8 @@ class MotionPlanning(CompatibleNode):
             speed == bs.int_wait.speed
         elif behavior == bs.int_enter.name:
             speed = bs.int_enter.speed
+        elif behavior == bs.int_wait_to_stop.name:
+            speed = bs.int_wait_to_stop.speed
         elif behavior == bs.int_exit:
             speed = self.__get_speed_cruise()
 
