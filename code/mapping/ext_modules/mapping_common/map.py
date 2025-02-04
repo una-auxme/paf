@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 
 import shapely
-from shapely import STRtree
+from shapely import STRtree, LineString
 import numpy as np
 import numpy.typing as npt
 
@@ -73,6 +73,40 @@ class Map:
         if self.hero() is not None:
             return self.entities[1:]
         return self.entities
+
+    def get_lane_y_axis_intersections(self, direction: str = "left") -> dict:
+        """calculates the intersections of the lanemarks in lane_pos direction
+
+        Args:
+            direction (str): lanemarks on "left", "right" or "both" will be checked.
+            Other inputs will be ignored
+
+        Returns:
+            dict{uuid, coordinate}: dictionary with uuid of lanemark as keys
+            and coordinates as according entries
+        """
+        if direction == "left":
+            y_axis_line = LineString([[0, 0], [0, 8]])
+        elif direction == "right":
+            y_axis_line = LineString([[0, 0], [0, -8]])
+        elif direction == "both":
+            y_axis_line = LineString([[0, -8], [0, 8]])
+        else:
+            return {}
+        intersection = []
+        lanemark_filter = FlagFilter(is_lanemark=True)
+        lanemarks = self.filtered(lanemark_filter)
+        intersections = {}
+        for lanemark in lanemarks:
+            intersection = lanemark.shape.to_shapely(lanemark.transform).intersection(
+                y_axis_line
+            )
+            if not intersection.is_empty:
+                intersections[lanemark.uuid] = [
+                    intersection.centroid.x,
+                    intersection.centroid.y,
+                ]
+        return intersections
 
     def build_tree(
         self,
