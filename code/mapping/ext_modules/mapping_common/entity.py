@@ -676,7 +676,7 @@ def shape_debug_marker_array(
         marker.header.stamp = timestamp
         marker.ns = namespace
         marker.id = id
-        marker.lifetime = rospy.Duration.from_sec(0.5)
+        marker.lifetime = lifetime
         marker.scale.z = 0.3
         r, g, b, a = color
         marker.color.r = r
