@@ -76,9 +76,9 @@ class TestScenario(object):
 
         self.statistics_manager = statistics_manager
 
-        # This is the ROS1 bridge server instance. This is not encapsulated inside the 
+        # This is the ROS1 bridge server instance. This is not encapsulated inside the
         # ROS1 agent because the same
-        # instance is used on all the routes (i.e., the server is not 
+        # instance is used on all the routes (i.e., the server is not
         # restarted between routes). This is done
         # to avoid reconnection issues between the server and the roslibpy client.
         self._ros1_server = None
@@ -121,7 +121,8 @@ class TestScenario(object):
     def _signal_handler(self, signum, frame):
         """
         Terminate scenario ticking when receiving a signal interrupt.
-        Either the agent initialization watchdog is triggered, or the runtime one at scenario manager
+        Either the agent initialization watchdog is triggered, or the 
+        runtime one at scenario manager
         """
         if self._agent_watchdog and not self._agent_watchdog.get_status():
             raise RuntimeError(
@@ -597,7 +598,6 @@ def main():
         else:
             print(Fore.GREEN + "SUCCEED")
 
-        
         print(Fore.CYAN + "Pedestrian")
         if len(route_record.infractions["collisions_pedestrian"]) > 0:
             print(route_record.infractions["collisions_pedestrian"])
@@ -613,7 +613,7 @@ def main():
             flag = True
         else:
             print(Fore.GREEN + "SUCCEED")
-        
+
         print(Fore.CYAN + "other collisions:")
         if len(route_record.infractions["collisions_layout"]) > 0:
             print(route_record.infractions["collisions_layout"])
@@ -621,7 +621,7 @@ def main():
             flag = True
         else:
             print(Fore.GREEN + "SUCCEED")
-    
+
         print(Fore.CYAN + "Running Red light:")
         if len(route_record.infractions["red_light"]) > 0:
             print(route_record.infractions["red_light"])
@@ -637,7 +637,6 @@ def main():
             flag = True
         else:
             print(Fore.GREEN + "SUCCEED")
-
 
         flags.append(flag)
     print("check following checkpoint(s)")
