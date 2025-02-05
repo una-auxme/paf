@@ -173,7 +173,9 @@ class Map:
             return True
         return False
 
-    def point_along_line_angle(self, x, y, angle, d) -> Point2:
+    def point_along_line_angle(
+        self, x: float, y: float, angle: float, distance: float
+    ) -> Point2:
         """
         Calculates a point along a straight line with a given angle and distance.
 
@@ -181,12 +183,12 @@ class Map:
         - x (float): x-coordinate of the original position
         - y (float): y-coordinate of the original position
         - angle (float): Angle of the straight line (in rad)
-        - d (float): Distance along the straight line (positive or negative)
+        - distance (float): Distance along the straight line (positive or negative)
         Returns:
-            Tuple[int, int]: x-y-coordinates of new point
+            Point2(x,y): x-y-coordinates of new point as Point2
         """
-        x_new = x + d * np.cos(angle)
-        y_new = y + d * np.sin(angle)
+        x_new = x + distance * np.cos(angle)
+        y_new = y + distance * np.sin(angle)
 
         return Point2.new(x_new, y_new)
 
@@ -266,25 +268,25 @@ class Map:
 
         # Calculating edge points of the lane box shape
         lane_box_close_front = self.point_along_line_angle(
-            lane_box_center_close[0],
+            lane_box_center_close[0] + lane_transform,
             lane_box_center_close[1] + lane_pos * 1,
             close_rotation,
             lane_length_half,
         )
         lane_box_close_back = self.point_along_line_angle(
-            lane_box_center_close[0],
+            lane_box_center_close[0] + lane_transform,
             lane_box_center_close[1] + lane_pos * 1,
             close_rotation,
             -lane_length_half,
         )
         lane_box_further_front = self.point_along_line_angle(
-            lane_box_center_further[0],
+            lane_box_center_further[0] + lane_transform,
             lane_box_center_further[1] - lane_pos * 1,
             further_rotation,
             lane_length_half,
         )
         lane_box_further_back = self.point_along_line_angle(
-            lane_box_center_further[0],
+            lane_box_center_further[0] + lane_transform,
             lane_box_center_further[1] - lane_pos * 1,
             further_rotation,
             -lane_length_half,
