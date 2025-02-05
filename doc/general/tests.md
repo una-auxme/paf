@@ -15,14 +15,20 @@
 - code/test/run_test.py
 - code/test/index_dict.py
 
-## Create new test scenario
+## Definitions
 
-For creating a new scenario, the following must be considered:
+**route**: A predefined way the agent have to take.
 
-1. Create a new route in code/routes/test.xml. The routes always need a unique ID number that increments sequentially. To create a new scenario, refer to the documentation in create_new_checkpoint.md
-2. Create a separate .xml file that exactly reflects this scenario so that it can later be loaded as a checkpoint.
-3. Add the scenario to the map in the file doc/general/load_checkpoints.
-4. Add scenario to the list in code/test/index_dict.py. The structure of the list is as follows: ID number, scenario name, time allowed to complete the scenario.
+**scenario**: A predefined event the agent have to overcome that is triggered by a certain waypoint in the route.
+
+## Create new test route with scenario
+
+For creating a new route, the following must be considered:
+
+1. Create a new route in code/routes/test.xml. The routes always need a unique ID number that increments sequentially. To create a new scenario, refer to the documentation in [create_new_route.md](/doc/general/create_new_route.md)
+2. Create a separate .xml file that exactly reflects this route so that it can later be loaded as a checkpoint. Name the route after the scenario that will be triggered.
+3. Add the route to the map in the file doc/general/load_checkpoints.
+4. Add route to the list in code/test/index_dict.py. The structure of the list is as follows: ID number, scenario name, time allowed to complete the route.
 
 ## Start Test
 
@@ -41,4 +47,4 @@ Cyan: Name of the executed test
 
 - If failed, the error cause is displayed first, followed by FAILED in red text.
 
-At the end, a suggestion is given for which scenarios to review to understand where the errors occurred.
+At the end, a suggestion is given for which route to review to understand where the errors occurred.
