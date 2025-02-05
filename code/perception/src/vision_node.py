@@ -18,6 +18,9 @@ from ultralytics.utils.ops import scale_masks
 from mapping.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
 
+from dynamic_reconfigure.server import Server
+from perception.cfg import TrafficLightConfig
+
 
 class VisionNode(CompatibleNode):
     """
@@ -54,6 +57,20 @@ class VisionNode(CompatibleNode):
         self.setup_subscriber()
         self.setup_publisher()
         self.setup_model()
+
+        self.MIN_X: int
+        self.MAX_X: int
+        self.MAX_Y: int
+        self.MIN_PROB: float
+        Server(TrafficLightConfig, self.dynamic_reconfigure_callback)
+
+    def dynamic_reconfigure_callback(self, config: "TrafficLightConfig", level):
+        self.MIN_X = config["min_x"]
+        self.MAX_X = config["max_x"]
+        self.MAX_Y = config["max_y"]
+        self.MIN_PROB = config["min_prob"]
+
+        return config
 
     def setup_subscriber(self):
         self.new_subscription(
@@ -363,8 +380,10 @@ class VisionNode(CompatibleNode):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
-        max_y = 360  # middle of image
-        min_prob = 0.30
+        min_x = self.MIN_X
+        max_x = self.MAX_X
+        max_y = self.MAX_Y  # 360  # middle of image
+        min_prob = self.MIN_PROB  # 0.30
 
         for index in indices:
             box = prediction.boxes.cpu().data.numpy()[index]
@@ -375,10 +394,21 @@ class VisionNode(CompatibleNode):
             if (box[2] - box[0]) * 1.5 > box[3] - box[1]:
                 continue  # ignore horizontal boxes
 
-            if box[1] > max_y:
+            if box[1] < max_y:
                 continue
 
+            if box[0] < min_x:
+                continue
+
+            if box[2] > max_x:
+                continue
+
+            print(f"box: {box}")
+            print(
+                f"compare: {box[4] < min_prob} {(box[2] - box[0]) * 1.5 > box[3] - box[1]} {box[1] < max_y} {box[0] < min_x} {box[2] > max_x}"
+            )
             box = box[0:4].astype(int)
+            print(f"box nach astype(int): {box}")
             segmented = cv_image[box[1] : box[3], box[0] : box[2]]
 
             traffic_light_y_distance = box[1]
@@ -386,6 +416,7 @@ class VisionNode(CompatibleNode):
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
             traffic_light_image.header.frame_id = str(traffic_light_y_distance)
+            print("-------------- published ---------------------")
             self.traffic_light_publisher.publish(traffic_light_image)
 
     def run(self):
