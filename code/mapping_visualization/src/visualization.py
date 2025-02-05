@@ -9,11 +9,8 @@ from mapping.msg import Map as MapMsg
 
 from rospy import Publisher
 from rospy import Duration
-import rospy
 
-from mapping_common.entity import Entity, Car, Pedestrian
 from mapping_common.map import Map
-from mapping_common.transform import Point2
 
 MARKER_NAMESPACE: str = "map"
 

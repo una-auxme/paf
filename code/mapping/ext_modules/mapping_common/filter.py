@@ -7,7 +7,7 @@ import rospy
 import shapely
 
 from .map import Map
-from .entity import ShapelyEntity, Entity, FlagFilter, Car, Pedestrian
+from .entity import ShapelyEntity, Entity, FlagFilter
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
 
