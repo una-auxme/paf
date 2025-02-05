@@ -725,53 +725,6 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
     return point_cloud2.create_cloud(header, fields, points)
 
 
-def create_pointcloud2Array(points_with_labels):
-    """Erstellt mehrere PointCloud2-Nachrichten basierend auf Labels."""
-    pointclouds = []
-    unique_labels = np.unique(points_with_labels[:, -1])  # Letzte Spalte für Labels
-
-    for label in unique_labels:
-        if label == -1:  # Ignoriere -1 (z. B. Rauschen oder unklassifizierte Punkte)
-            continue
-
-        # Filtere Punkte mit dem aktuellen Label
-        cluster_points = points_with_labels[points_with_labels[:, -1] == label]
-
-        # Extrahiere nur die relevanten Spalten (x, y, z, intensität)
-        cluster_data = cluster_points[:, :3]
-
-        # Erstelle PointCloud2 für diesen Cluster
-        fields = [
-            PointField("x", 0, PointField.FLOAT32, 1),
-            PointField("y", 4, PointField.FLOAT32, 1),
-            PointField("z", 8, PointField.FLOAT32, 1),
-        ]
-        cloud_data = [tuple(point) for point in cluster_data]
-        pc = point_cloud2.create_cloud(None, fields, cloud_data)
-        pointclouds.append(pc)
-
-    return pointclouds
-
-
-def transform_data_to_2d(clustered_data):
-    """_summary_
-
-    Args:
-        clustered_data (np.ndarray): clustered 3d data points
-
-    Returns:
-        _np.ndarray: clustered points, every z value is set to 0
-    """
-
-    transformed_points = clustered_data
-    transformed_points[:, 0] = clustered_data[:, 0]
-    transformed_points[:, 1] = clustered_data[:, 1]
-    transformed_points[:, 2] = 0
-    transformed_points[:, 3] = clustered_data[:, 3]
-
-    return transformed_points
-
-
 def calculate_aabb(cluster_points):
     """
         Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
@@ -792,15 +745,6 @@ def calculate_aabb(cluster_points):
             along the x, y, and z axes.
     """
 
-    # for 2d (top-down) boxes
-    # x_min = np.min(cluster_points[:, 0])
-    # x_max = np.max(cluster_points[:, 0])
-    # y_min = np.min(cluster_points[:, 1])
-    # y_max = np.max(cluster_points[:, 1])
-    # rospy.loginfo(f"Bounding box: X({x_min}, {x_max}), Y({y_min}, {y_max})")
-    # return x_min, x_max, y_min, y_max
-
-    # for 3d boxes
     x_min = np.min(cluster_points[:, 0])
     x_max = np.max(cluster_points[:, 0])
     y_min = np.min(cluster_points[:, 1])
@@ -924,6 +868,24 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
 
 
 def calculate_cluster_velocity(points_with_labels):
+    """
+    Computes the average velocity for each labeled cluster and assigns it to each point.
+
+    Parameters:
+    - points_with_labels (numpy.ndarray): An array where each row represents a point
+      with its corresponding label in the last column. The fourth column (index 3)
+      contains the velocity values.
+
+    Returns:
+    - numpy.ndarray: An array of Motion2D objects where each entry corresponds to the
+      velocity of the cluster the point belongs to. Entries for invalid labels (-1) are
+        None.
+
+    Notes:
+    - Points with a label of -1 are considered invalid and excluded from velocity
+        computation.
+    - The output array has the same length as the input array.
+    """
     labels = points_with_labels[:, -1]
     valid_mask = labels != -1  # Filter indvalid labels
     valid_points = points_with_labels[valid_mask]
@@ -944,67 +906,6 @@ def calculate_cluster_velocity(points_with_labels):
     ]
 
     return motion_array
-
-
-# can be used for extra debugging
-def create_min_max_markers(
-    label,
-    bbox,
-    frame_id="hero",
-    min_color=(0.0, 1.0, 0.0, 1.0),
-    max_color=(1.0, 0.0, 0.0, 1.0),
-):
-    """
-    creates RViz-Markers for min- and max-points of a bounding box.
-
-    Args:
-        label (int): cluster-id (used as marker-ID in rviz).
-        bbox (tuple): min- and max-values of bounding box
-        (x_min, x_max, y_min, y_max, z_min, z_max).
-        frame_id (str): frame ID for markers
-        min_color (tuple): RGBA-value for min-point-marker
-        max_color (tuple): RGBA-value for max-point-marker
-
-    Returns:
-        tuple: pair of markers (min_marker, max_marker).
-    """
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
-    # min-point-marker
-    min_marker = Marker()
-    min_marker.header.frame_id = frame_id
-    min_marker.id = int(label * 10)
-    min_marker.type = Marker.SPHERE
-    min_marker.action = Marker.ADD
-    min_marker.scale.x = 0.2
-    min_marker.scale.y = 0.2
-    min_marker.scale.z = 0.2
-    min_marker.color.r = min_color[0]
-    min_marker.color.g = min_color[1]
-    min_marker.color.b = min_color[2]
-    min_marker.color.a = min_color[3]
-    min_marker.pose.position.x = x_min
-    min_marker.pose.position.y = y_min
-    min_marker.pose.position.z = z_min
-
-    # max-point-marker
-    max_marker = Marker()
-    max_marker.header.frame_id = frame_id
-    max_marker.id = int(label * 10 + 1)
-    max_marker.type = Marker.SPHERE
-    max_marker.action = Marker.ADD
-    max_marker.scale.x = 0.2
-    max_marker.scale.y = 0.2
-    max_marker.scale.z = 0.2
-    max_marker.color.r = max_color[0]
-    max_marker.color.g = max_color[1]
-    max_marker.color.b = max_color[2]
-    max_marker.color.a = max_color[3]
-    max_marker.pose.position.x = x_max
-    max_marker.pose.position.y = y_max
-    max_marker.pose.position.z = z_max
-
-    return min_marker, max_marker
 
 
 # generates string with label-id and cluster size, can be used for extra debugging
