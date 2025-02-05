@@ -13,7 +13,6 @@ import mapping_common.entity
 from mapping_common.map import Map
 import shapely
 from mapping_common.entity import FlagFilter
-from mapping_common.entity import Pedestrian
 from visualization_msgs.msg import Marker, MarkerArray
 from behaviors import behavior_utils
 
