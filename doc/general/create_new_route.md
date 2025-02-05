@@ -6,7 +6,6 @@
 
 The carla simulator have different scenario types you can work with, which are listed down below. The corresponding python files could be found [here](https://github.com/carla-simulator/scenario_runner/tree/master/srunner/scenarios)
 
-
 |                             Name |                                                                                                                                                                                                                                                                                                                                                                             Description                                                                                                                                                                                                                                                                                                                                                                             |
 | -------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 |                       actor_flow |                                                                                                                                                                                                                                                                       This class holds everything required for a scenario in which another vehicle runs a red light in front of the ego, forcing it to react. This vehicles are 'special' ones such as police cars,ambulances or firetrucks.                                                                                                                                                                                                                                                                        |
@@ -31,7 +30,6 @@ The carla simulator have different scenario types you can work with, which are l
 ## Create new route
 
 For creating a new route take this blueprint of a route: 
-
 ```
 <routes>
     <route id="0" town="Town12">
@@ -63,8 +61,7 @@ For creating a new route take this blueprint of a route:
 This example is from [routes_bicycle.xml](/code/routes/routes_bicycle.xml)
 
 To change it for your purpose you have to change the following:
+
 1. The id number at line 2
 2. The waypoints (they discribe where the agent have to go the first one is the spawnpoint of the agent) Tipp: place always only one waypoint at one road and place it on the right side of the road. To find the coordinates use this interactive [map](https://carla.readthedocs.io/en/latest/map_town12/)
 3. The scenario (You can change the scenario with one mentioned in the list) If the route is long enough you can add more than one scenario to a route.
-
-
