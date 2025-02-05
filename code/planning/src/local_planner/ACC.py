@@ -385,15 +385,15 @@ class ACC(CompatibleNode):
             speed_adjustment = Ki * delta_d + Kp * delta_v
             desired_speed = hero_velocity + speed_adjustment
 
-            # desired speed should not be negative, only drive forward
-            desired_speed = max(desired_speed, 0.0)
+        # desired speed should not be negative, only drive forward
+        desired_speed = max(desired_speed, 0.0)
 
-            if self.speed_limit is None:
-                # if no speed limit is available, drive 5 m/s max
-                desired_speed = min(5.0, desired_speed)
-            else:
-                # max speed is the current speed limit
-                desired_speed = min(self.speed_limit, desired_speed)
+        if self.speed_limit is None:
+            # if no speed limit is available, drive 5 m/s max
+            desired_speed = min(5.0, desired_speed)
+        else:
+            # max speed is the current speed limit
+            desired_speed = min(self.speed_limit, desired_speed)
 
         return desired_speed
 
