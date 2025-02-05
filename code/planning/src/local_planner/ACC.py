@@ -370,8 +370,8 @@ class ACC(CompatibleNode):
         desired_speed: float = float("inf")
         if (
             hero_velocity < 2 and lead_distance < 2
-        ):  # approaches the leading vehicle slowly until a distance of 0.5 m
-            desired_speed = (lead_distance - 0.5) / 4
+        ):  # approaches the leading vehicle slowly until a distance of 1 m
+            desired_speed = (lead_distance - 1) / 4
 
         else:
             # PI controller which chooses the desired speed
