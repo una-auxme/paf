@@ -55,6 +55,8 @@ class RadarNode(CompatibleNode):
         self.accel_x_buffer = deque(maxlen=5)
         self.accel_z_buffer = deque(maxlen=5)
 
+        self.current_pitch = 0.0
+
     def time_check(self, time):
         """
         Checks the current time and triggers data processing
