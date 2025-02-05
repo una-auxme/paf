@@ -1,17 +1,12 @@
 # Radar Node
 
-**Summary:** This page explains what the radar sensor does.
+**Summary:** This page explains what the radar node does.
 
-- [Radar offsets](#radar-offsets)
 - [Radar specification](#radar-specification)
 - [Radar data output for each detected point](#radar-data-output-for-each-detected-point)
-- [Todo](#todo)
-
-## Radar offsets
-
-- x: 2
-- y: 0
-- z: 0.7
+- [Radar sensors in our project](#radar-sensors-in-our-project)
+- [Data Processing](#data-processing)
+- [Clustering](#clustering)
 
 ## Radar specification
 
@@ -30,7 +25,43 @@
 - AzimuthAngle
 - ElevationAngle
 
-## Todo
+## Radar sensors in our project
 
-- Discuss further processing of radar data
-- Combine lidar, radar and camera data
+We currently use two radar sensors positioned at the front of the car. We chose this placement because it improves our ability to see around other vehicles, which is particularly useful in scenarios such as overtaking and making left turns.
+
+We decided against placing one of the radar sensors at the rear of the car, as this would leave only a single front-facing sensor in the middle, making it harder to detect objects around obstacles. Instead, we rely solely on LiDAR for detecting objects behind the vehicle.
+
+To optimize detection, we set the vertical field of view (FOV) to 0.1. This eliminates unnecessary points that would otherwise be directed straight at the ground or far above obstacles. As a result, we can make full use of the 1,500 points returned by the sensors.
+
+The sensor configuration can be adjusted in agent.py. The two radar sensors are currently set up as follows:
+
+Front-Right Radar (RADAR0)
+    "id": "RADAR0",
+    "x": 2.0,
+    "y": 1.5,
+    "z": 1,
+    "roll": 0.0,
+    "pitch": 0.0,
+    "yaw": 0.0,
+    "horizontal_fov": 25,
+    "vertical_fov": 0.1,
+
+Front-Left Radar (RADAR1)
+    "id": "RADAR1",
+    "x": 2.0,
+    "y": -1.5,
+    "z": 1,
+    "roll": 0.0,
+    "pitch": 0.0,
+    "yaw": 0.0,
+    "horizontal_fov": 25,
+    "vertical_fov": 0.1,
+
+## Data Processing
+
+TODO
+
+## Clustering
+
+Inside the radar node, DBSCAN is used to cluster radar points. Currently, we use x, y, and velocity for clustering, as this has yielded the best results. For each cluster, we calculate the average velocity and publish the clustered points, including the average velocity, to the intermediate layer.
+Additionally, the radar node contains multiple publishers that can be used for simple debugging or optimizing the clustering without relying on the intermediate layer.
