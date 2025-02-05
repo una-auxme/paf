@@ -217,10 +217,12 @@ def _try_merge_pair(
     else:
         base_entity_idx = 1
         merge_entity_idx = 0
-    base_entity: Entity = pair[base_entity_idx].entity
-    merge_entity: Entity = pair[merge_entity_idx].entity
+
+    base_entity = pair[base_entity_idx].entity
+    merge_entity = pair[merge_entity_idx].entity
 
     modified = deepcopy(base_entity)
+
     modified.transform = transform
     modified.shape = shape
 
