@@ -29,8 +29,9 @@ The carla simulator have different scenario types you can work with, which are l
 
 ## Create new route
 
-For creating a new route take this blueprint of a route: 
-```
+For creating a new route take this blueprint of a route:
+
+```xml
 <routes>
     <route id="0" town="Town12">
         <weathers>
