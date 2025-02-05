@@ -116,7 +116,7 @@ class MotionPlanning(CompatibleNode):
         )
         self.ot_distance_sub: Subscriber = self.new_subscription(
             Float32,
-            f"paf/{self.role_name}/overtake_distance",
+            f"/paf/{self.role_name}/overtake_distance",
             self.__set_ot_distance,
             qos_profile=1,
         )

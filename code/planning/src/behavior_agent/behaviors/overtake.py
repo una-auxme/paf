@@ -19,7 +19,7 @@ from behaviors import behavior_utils
 
 sys.path.append(os.path.abspath(sys.path[0] + "/.."))
 # from behavior_utils import get_hero_width, get_marker_arr_in_front
-from local_planner.utils import (
+from local_planner.utils import (  # type: ignore # noqa: E402
     NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
 )  # type: ignore # noqa: E402
@@ -160,7 +160,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.FAILURE
 
         if entity_result is not None:
-            # apply small offset so that it matches the car's rear
             entity, distance = entity_result
             entity = entity.entity
             obstacle_distance = distance
@@ -168,18 +167,17 @@ class Ahead(py_trees.behaviour.Behaviour):
                 obstacle_speed = entity.motion.linear_motion.length()
             else:
                 obstacle_speed = 0
-                marker_arr = behavior_utils.get_marker_arr_in_front(
-                    entity, obstacle_distance, map.hero(), collision_masks
-                )
-                self.marker_publisher.publish(marker_arr)
+            marker_arr = behavior_utils.get_marker_arr_in_front(
+                entity, obstacle_distance, map.hero(), collision_masks
+            )
+            self.marker_publisher.publish(marker_arr)
         else:
             return py_trees.common.Status.FAILURE
 
-        # filter out false positives due to trajectory inconsistency and pedestrians
+        # filter out false positives due to trajectory inconsistency
         if (
             entity.transform.translation().y() < -3.0
             or entity.transform.translation().y() > 3.0
-            or isinstance(entity, Pedestrian)
         ):
             return py_trees.common.Status.FAILURE
 
