@@ -8,7 +8,8 @@
 """
 CARLA Challenge Evaluator Routes
 
-Provisional code to evaluate Autonomous Agents for the CARLA Autonomous Driving challenge
+Provisional code to evaluate Autonomous Agents for the CARLA
+Autonomous Driving challenge
 """
 from __future__ import print_function
 
@@ -75,8 +76,10 @@ class TestScenario(object):
 
         self.statistics_manager = statistics_manager
 
-        # This is the ROS1 bridge server instance. This is not encapsulated inside the ROS1 agent because the same
-        # instance is used on all the routes (i.e., the server is not restarted between routes). This is done
+        # This is the ROS1 bridge server instance. This is not encapsulated inside the 
+        # ROS1 agent because the same
+        # instance is used on all the routes (i.e., the server is not 
+        # restarted between routes). This is done
         # to avoid reconnection issues between the server and the roslibpy client.
         self._ros1_server = None
 
@@ -89,7 +92,8 @@ class TestScenario(object):
         if dist.version != "leaderboard":
             if LooseVersion(dist.version) < LooseVersion("0.9.10"):
                 raise ImportError(
-                    "CARLA version 0.9.10.1 or newer required. CARLA version found: {}".format(
+                    "CARLA version 0.9.10.1 or newer required.\
+                          CARLA version found: {}".format(
                         dist
                     )
                 )
@@ -181,7 +185,8 @@ class TestScenario(object):
 
     def _setup_simulation(self, args):
         """
-        Prepares the simulation by getting the client, and setting up the world and traffic manager settings
+        Prepares the simulation by getting the client, and setting up the world and
+         traffic manager settings
         """
         client = carla.Client(args.host, args.port)
         if args.timeout:
@@ -223,7 +228,8 @@ class TestScenario(object):
 
     def _load_and_wait_for_world(self, args, town):
         """
-        Load a new CARLA world without changing the settings and provide data to CarlaDataProvider
+        Load a new CARLA world without changing the settings
+         and provide data to CarlaDataProvider
         """
         self.world = self.client.load_world(town, reset_settings=False)
 
@@ -412,13 +418,15 @@ class TestScenario(object):
 
         except Exception:
             print(
-                "\n\033[91mFailed to stop the scenario, the statistics might be empty:"
+                "\n\033[91mFailed to stop the scenario,\
+                  the statistics might be empty:"
             )
             print(f"\n{traceback.format_exc()}\033[0m")
 
             _, crash_message = FAILURE_MESSAGES["Simulation"]
 
-        # If the simulation crashed, stop the leaderboard, for the rest, move to the next route
+        # If the simulation crashed, stop the leaderboard,
+        # for the rest, move to the next route
         return crash_message == "Simulation crashed"
 
     def run(self, args):
