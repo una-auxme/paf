@@ -10,8 +10,8 @@
 4. Now Compose up the [docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml) file.
 
 ## Scenario Map
-The map shows the start points of the routes.
 
+The map shows the start points of the routes.
 ![Map](../assets/carla_map_checkpoints.jpg)
 
 | Checkpoint |                 Name                  | continues test route |
