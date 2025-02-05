@@ -11,6 +11,7 @@
 
 ## Scenario Map
 
+
 The map shows the start points of the routes.
 
 ![Map](../assets/carla_map_checkpoints.jpg)

@@ -15,8 +15,6 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 TARGET_DISTANCE_TO_STOP = 5.0
 # Number of waypoints to be used for the overtaking maneuver
 NUM_WAYPOINTS = 7
-# Factor for linear interpolation of target speed values for the ACC
-LERP_FACTOR = 0.5
 # Earth radius in meters for location_to_GPS
 EARTH_RADIUS_EQUA = 6378137.0
 
@@ -188,8 +186,10 @@ def spawn_car(distance):
     # vehicle2.set_autopilot(False)
 
 
-def interpolate_speed(speed_target, speed_current):
-    return (1 - LERP_FACTOR) * speed_current + LERP_FACTOR * speed_target
+def interpolate_speed(
+    speed_target: float, speed_current: float, lerp_factor: float
+) -> float:
+    return (1 - lerp_factor) * speed_current + lerp_factor * speed_target
 
 
 def filter_vision_objects(float_array, oncoming):
@@ -240,3 +240,20 @@ def filter_vision_objects(float_array, oncoming):
             return None
 
     return min_object_in_front
+
+
+def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
+    """Convert an array of PoseStamped objects to a numpy array of positions.
+
+    Args:
+        poses (np.ndarray): Array of PoseStamped objects.
+
+    Returns:
+        np.ndarray: Numpy array of shape (n, 2) containing the x and y positions.
+    """
+    result_array = np.empty((len(poses), 2))
+    for pose in range(len(poses)):
+        result_array[pose] = np.array(
+            [poses[pose].pose.position.x, poses[pose].pose.position.y]
+        )
+    return result_array
