@@ -319,6 +319,7 @@ class ACC(CompatibleNode):
         entity_markers = []
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
+        marker_text: str = ""
         if entity_result is not None:
             entity, distance = entity_result
             entity_markers.append((entity.entity, (1.0, 0.0, 0.0, 0.5)))
@@ -330,16 +331,25 @@ class ACC(CompatibleNode):
                 current_velocity, distance, lead_delta_velocity
             )
 
-            marker_text = (
+            marker_text += (
                 f"LeadDistance: {distance}\n"
                 + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
                 + f"DeltaV: {lead_delta_velocity}\n"
-                + f"RawACCSpeed: {desired_speed}"
+                + f"RawACCSpeed: {desired_speed}\n"
             )
-            text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
-            text_marker.pose.position.x = -2.0
-            text_marker.pose.position.y = 0.0
-            text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
+
+        if self.speed_limit is None:
+            # if no speed limit is available, drive 5 m/s max
+            desired_speed = min(5.0, desired_speed)
+        else:
+            # max speed is the current speed limit
+            desired_speed = min(self.speed_limit, desired_speed)
+
+        marker_text += f"Final ACC Speed: {desired_speed}\n"
+        text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
+        text_marker.pose.position.x = -2.0
+        text_marker.pose.position.y = 0.0
+        text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
 
         self.velocity_pub.publish(desired_speed)
 
@@ -387,13 +397,6 @@ class ACC(CompatibleNode):
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
-
-        if self.speed_limit is None:
-            # if no speed limit is available, drive 5 m/s max
-            desired_speed = min(5.0, desired_speed)
-        else:
-            # max speed is the current speed limit
-            desired_speed = min(self.speed_limit, desired_speed)
 
         return desired_speed
 
