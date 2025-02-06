@@ -141,20 +141,17 @@ class Map:
         Returns:
             bool: lane is free / not free
         """
-        match check_method:
-            case "rectangle":
-                return self.is_lane_free_rectangle(
-                    right_lane, lane_length, lane_transform
-                )[0]
-            case "lanemarking":
-                return self.is_lane_free_lanemarking(
-                    right_lane, lane_length, lane_transform
-                )[
-                    0
-                ]  # [0] to be removed when removing entity return
-            case "fallback":
-                pass
-            # case "trajectory": not implemented yet
+        if check_method == "rectangle":
+            return self.is_lane_free_rectangle(
+                right_lane, lane_length, lane_transform
+            )[0]
+        elif check_method == "lanemarking":
+            return self.is_lane_free_lanemarking(
+                right_lane, lane_length, lane_transform
+            )[0]  # [0] to be removed when removing entity return
+        elif check_method == "fallback":
+            pass
+        # elif check_method == "trajectory": not implemented yet
 
         return -1
 
