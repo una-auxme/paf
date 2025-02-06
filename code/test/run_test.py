@@ -121,7 +121,7 @@ class TestScenario(object):
     def _signal_handler(self, signum, frame):
         """
         Terminate scenario ticking when receiving a signal interrupt.
-        Either the agent initialization watchdog is triggered, or the 
+        Either the agent initialization watchdog is triggered, or the
         runtime one at scenario manager
         """
         if self._agent_watchdog and not self._agent_watchdog.get_status():
