@@ -1,6 +1,6 @@
 # How to load checkpoints
 
-**Summary:** This page provides instructions on how to load specific route in the Carla simulator to avoid having to wait for a specific event to occur.
+**Summary:** This page provides instructions on how to load specific a route in the Carla simulator to avoid having to wait for a specific event to occur.
 
 - [Instruction](#instruction)
 - [Scenario Map](#scenario-map)
