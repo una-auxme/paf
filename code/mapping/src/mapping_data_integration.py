@@ -22,6 +22,7 @@ from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
 
+import mapping_common.map
 
 # from shapely.validation import orient
 
@@ -441,16 +442,29 @@ class MappingDataIntegrationNode(CompatibleNode):
         #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
+
         map = Map(timestamp=stamp, entities=entities)
 
-        lane_free, ent = map.is_lane_free_lanemarking(
+        tree = map.build_tree(mapping_common.map.lane_free_filter())
+
+        lane_free, shape = tree.is_lane_free_lanemarking(
             lane_transform=10, right_lane=False
         )
-        # rospy.loginfo(str(lanemark_y_axis_intersection))
-        if lane_free:
-            ent.confidence = 10000
 
         if lane_free != -1:
+            shape2d = Polygon.from_shapely(shape)
+
+            ent = Entity(
+                confidence=10001.0,
+                priority=1.0,
+                shape=shape2d,
+                transform=Transform2D.identity(),
+                flags=Flags(is_ignored=True),
+            )
+
+            if lane_free:
+                ent.confidence = 10000
+
             entities.append(ent)
 
         for filter in self.get_current_map_filters():

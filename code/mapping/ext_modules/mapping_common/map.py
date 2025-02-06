@@ -8,9 +8,9 @@ import numpy.typing as npt
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
-from mapping_common.shape import Rectangle
+from mapping_common.shape import Rectangle, Polygon
 import mapping_common.mask
 
 import rospy
@@ -492,8 +492,9 @@ class MapTree:
         consider_motion: bool = True,
         coverage: float = 0.2,
     ) -> Tuple[int, Optional[shapely.Geometry]]:
-        """checks if a lane is free by using a ckeckbox thta is placed between two lane markings.
-        The lane is considered free if there are no colliding entities with the checkbox.
+        """checks if a lane is free by using a ckeckbox thta is placed between two lane
+        markings. The lane is considered free if there are no colliding entities with
+        the checkbox.
 
         Args:
             right_lane (bool, optional): _description_. Defaults to False.
@@ -526,9 +527,10 @@ class MapTree:
 
         # create y-axis line for intersection with lanemarks
         y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
-        lanemark_filter = FlagFilter(is_lanemark=True)
+        # build map STRtree from map with filter
+        lane_tree = self.map.build_tree(f=FlagFilter(is_lanemark=True))
         # get entities that intersect with the y-axis line
-        lanemark_y_axis_intersection = self.query(
+        lanemark_y_axis_intersection = lane_tree.query(
             geo=y_axis_line, predicate="intersects"
         )
         # Abort when not enough lane marks got detected
@@ -568,7 +570,7 @@ class MapTree:
             return -1, None
 
         # create the lane ckeckbox shape
-        lane_box_entity = self.create_lane_box(
+        lane_box = self.create_lane_box(
             y_axis_line,
             lane_close_hero,
             lane_further_hero,
@@ -578,13 +580,13 @@ class MapTree:
         )
         # get the colliding entities with the checkbox
         colliding_entities = self.get_checkbox_collisions(
-            lane_box_entity, coverage=coverage, account_motion=consider_motion
+            lane_box, coverage=coverage, account_motion=consider_motion
         )
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
-            return 1, lane_box_entity
+            return 1, lane_box
         else:
-            return 0, lane_box_entity
+            return 0, lane_box
 
     def point_along_line_angle(
         self, x: float, y: float, angle: float, distance: float
@@ -613,19 +615,20 @@ class MapTree:
         lane_pos: int,
         lane_length: float,
         lane_transform: float,
-    ) -> MapPolygon:
+    ) -> shapely.Geometry:
         """helper function to create a lane box entity
 
         Args:
             y_axis_line (LineString): check shape y-axis line
             lane_close_hero (Entity): the lane marking entity that is closer to the car
-            lane_further_hero (Entity): the lane marking entity that is further away from the car
+            lane_further_hero (Entity): the lane marking entity that is further away
+                from the car
             lane_pos (int): to check if the lane is on the left or right side of the car
             lane_length (float): length of the lane box
             lane_transform (float): transform of the lane box
 
         Returns:
-            lane_box_entity (Entity): created lane box entity
+            lane_box (Entity): created lane box entity
         """
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
@@ -675,7 +678,7 @@ class MapTree:
             -lane_length_half,
         )
 
-        lane_box_shape = MapPolygon(
+        lane_box_shape = Polygon(
             [
                 lane_box_close_front,
                 lane_box_further_front,
@@ -686,43 +689,50 @@ class MapTree:
             Transform2D.identity(),
         )
 
-        return lane_box_shape
+        return lane_box_shape.to_shapely()
 
     def get_checkbox_collisions(
-        self, checkbox_entity: Entity, coverage=0.2, account_motion=True
-    ) -> List[Entity]:
+        self, checkbox_shape: shapely.Geometry, coverage=0.2, account_motion=True
+    ) -> List[ShapelyEntity]:
         """checks for collisions within a checkbox entity
 
         Args:
-            checkbox_entity (Entity): The checkbox entity to check for collisions.
-            coverage (float, optional): to what degree the entity must be covered to be considered. Defaults to 0.2.
+            checkbox_shape (shapely.Geometry): The checkbox shape to check for
+                collisions.
+            coverage (float, optional): to what degree the entity must be covered to be
+                considered. Defaults to 0.2.
             account_motion (bool, optional): Take Motion into account? Defaults to True.
 
         Returns:
-            List[Entity]: returns List of entities that are colliding with the checkbox entity.
+            List[Entity]: returns List of entities that are colliding with the checkbox
+                entity.
         """
-        f_others = FlagFilter(is_collider=True, is_hero=False, is_ignored=False)
-        f_hero = FlagFilter(is_hero=False)
         # get entities that are colliding with the checkbox entity
-        colliding_entities = self.get_entities_with_coverage(
-            checkbox_entity.shape.to_shapely(checkbox_entity.transform),
-            self.filtered(f=f_others),
+        colliding_entities = self.get_overlapping_entities(
+            checkbox_shape,
             coverage,
         )
-        hero = self.filtered(f=f_hero)[0]
-        # if account_motion is True, only consider entities if there would be a collision within 3 secs
+
+        # return empty list if hero doesn't exist
+        hero = self.map.hero()
+        if hero is None:
+            return []
+
+        # if account_motion is True, only consider entities
+        # if there would be a collision within 3 secs
         if account_motion:
             relevant_entities = []
             for ent in colliding_entities:
-                if hero.motion and ent.motion:
+                if hero.motion and ent.entity.motion:
                     # calculate relative motion
                     relative_motion = (
                         hero.motion.linear_motion.length()
-                        - ent.motion.linear_motion.length()
+                        - ent.entity.motion.linear_motion.length()
                     )
                     # calculate distance in x direction
-                    distance_x = ent.transform.translation().x()
-                    # if the distance [m] / relative motion [m/s] is smaller than 3[s], the entity is relevant
+                    distance_x = ent.entity.transform.translation().x()
+                    # if the distance [m] / relative motion [m/s] is smaller than 3[s],
+                    # the entity is relevant
                     if distance_x / relative_motion < 3:
                         relevant_entities.append(ent)
             return relevant_entities
