@@ -395,7 +395,6 @@ class VisionNode(CompatibleNode):
 
         for index in indices:
             cv_height, cv_width = cv_image.shape[:2]
-            print(f"image height: {cv_height} --- width: {cv_width}")
 
             box = prediction.boxes.cpu().data.numpy()[index]
 
@@ -420,11 +419,7 @@ class VisionNode(CompatibleNode):
             if box[2] > max_x:
                 continue
 
-            print(
-                f"compare: {box[4] < min_prob} {(box[2] - box[0]) * 1.5 > box[3] - box[1]} {box[1] < max_y} {box[0] < min_x} {box[2] > max_x}"
-            )
             box = box[0:4].astype(int)
-            print(box)
             segmented = cv_image[box[1] : box[3], box[0] : box[2]]
 
             traffic_light_y_distance = box[1]
@@ -432,7 +427,6 @@ class VisionNode(CompatibleNode):
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
             traffic_light_image.header.frame_id = str(traffic_light_y_distance)
-            print("-------------- published ---------------------")
             self.traffic_light_publisher.publish(traffic_light_image)
 
     def run(self):
