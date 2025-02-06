@@ -25,7 +25,7 @@ import carla
 import signal
 from colorama import Fore
 from index_dict import TEST_THRESHOLD_AND_NAME
-from srunner.scenariomanager.carla_data_provider import *
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 from srunner.scenariomanager.timer import GameTime
 from srunner.scenariomanager.watchdog import Watchdog
 
@@ -165,6 +165,7 @@ class TestScenario(object):
                 self.agent_instance.destroy()
                 self.agent_instance = None
         except Exception as e:
+            print(e)
             print("\n\033[91mFailed to stop the agent:")
             print(f"\n{traceback.format_exc()}\033[0m")
 
