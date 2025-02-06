@@ -224,6 +224,15 @@ def plot_x_position():
         label="of x positions " + OLD_FILTER_FILE_NAME,
     )
     plt.plot(gt_time_stamps, gt_x_positions, label="gt x positions " + GT_FILE_NAME)
+
+    upper_limit = []
+    lower_limit = []
+    for i in range(len(gt_time_stamps)):
+        upper_limit.append(gt_x_positions[i] + 0.5)
+        lower_limit.append(gt_x_positions[i] - 0.5)
+    plt.plot(gt_time_stamps, upper_limit, color="red", linestyle="dashed")
+    plt.plot(gt_time_stamps, lower_limit, color="red", linestyle="dashed")
+
     plt.plot()
     plt.legend()
     plt.show()
@@ -241,6 +250,15 @@ def plot_y_position():
         label="of y positions " + OLD_FILTER_FILE_NAME,
     )
     plt.plot(gt_time_stamps, gt_y_positions, label="gt y positions " + GT_FILE_NAME)
+
+    upper_limit = []
+    lower_limit = []
+    for i in range(len(gt_time_stamps)):
+        upper_limit.append(gt_y_positions[i] + 0.5)
+        lower_limit.append(gt_y_positions[i] - 0.5)
+    plt.plot(gt_time_stamps, upper_limit, color="red", linestyle="dashed")
+    plt.plot(gt_time_stamps, lower_limit, color="red", linestyle="dashed")
+
     plt.plot()
     plt.legend()
     plt.show()
