@@ -29,6 +29,7 @@ class Ahead(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Ahead, self).__init__(name)
+        rospy.logerror("INIT Lane change!!!!!!!!!!!!!!!!!")
 
     def setup(self, timeout):
         """
@@ -43,6 +44,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
+        rospy.logerror("setup Lane change!!!!!!!!!!!!!!!!!")
         return True
 
     def initialise(self):
@@ -56,6 +58,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         lane change.
         """
         self.dist = 0
+        rospy.logerror("INITialisse Lane change!!!!!!!!!!!!!!!!!")
 
     def update(self):
         """
@@ -71,6 +74,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
+        rospy.logerror("update Lane change!!!!!!!!!!!!!!!!!")
         bb = self.blackboard.get("/paf/hero/lane_change_distance")
         if bb is None:
             return py_trees.common.Status.FAILURE
@@ -92,6 +96,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
+        rospy.logerror("terminate Lane change!!!!!!!!!!!!!!!!!")
         self.logger.debug(
             "  %s [Foo::terminate().terminate()][%s->%s]"
             % (self.name, self.status, new_status)
@@ -114,6 +119,7 @@ class Approach(py_trees.behaviour.Behaviour):
         """
         super(Approach, self).__init__(name)
         rospy.loginfo("Lane Change Approach started")
+        rospy.logerror("INIT Lane change!!!!!!!!!!!!!!!!!")
 
     def setup(self, timeout):
         """
@@ -131,6 +137,7 @@ class Approach(py_trees.behaviour.Behaviour):
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
+        rospy.logerror("setup Lane change!!!!!!!!!!!!!!!!!")
         return True
 
     def initialise(self):
@@ -143,6 +150,7 @@ class Approach(py_trees.behaviour.Behaviour):
         This initializes the variables needed to save information about the
         lane change.
         """
+        rospy.logerror("INITialise Lane change!!!!!!!!!!!!!!!!!")
         rospy.loginfo("Approaching Change")
         self.change_detected = False
         self.change_distance = np.inf
@@ -166,6 +174,7 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
+        rospy.logerror("update Lane change!!!!!!!!!!!!!!!!!")
         # Update stopline Info
         _dis = self.blackboard.get("/paf/hero/lane_change_distance")
         if _dis is not None:
@@ -239,6 +248,7 @@ class Approach(py_trees.behaviour.Behaviour):
             "  %s [Foo::terminate().terminate()][%s->%s]"
             % (self.name, self.status, new_status)
         )
+        rospy.logerror("debug Lane change!!!!!!!!!!!!!!!!!")
 
 
 class Wait(py_trees.behaviour.Behaviour):
