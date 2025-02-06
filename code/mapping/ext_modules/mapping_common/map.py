@@ -142,13 +142,15 @@ class Map:
             bool: lane is free / not free
         """
         if check_method == "rectangle":
-            return self.is_lane_free_rectangle(
-                right_lane, lane_length, lane_transform
-            )[0]
+            return self.is_lane_free_rectangle(right_lane, lane_length, lane_transform)[
+                0
+            ]
         elif check_method == "lanemarking":
             return self.is_lane_free_lanemarking(
                 right_lane, lane_length, lane_transform
-            )[0]  # [0] to be removed when removing entity return
+            )[
+                0
+            ]  # [0] to be removed when removing entity return
         elif check_method == "fallback":
             pass
         # elif check_method == "trajectory": not implemented yet
@@ -160,7 +162,7 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> Tuple[int, shapely.Geometry]:
+    ) -> Tuple[int, Optional[shapely.Geometry]]:
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
         lane_pos = 1
@@ -203,7 +205,7 @@ class Map:
         lane_transform: float = 0.0,
         consider_motion: bool = True,
         coverage: float = 0.2,
-    ) -> Tuple[int, shapely.Geometry]:
+    ) -> Tuple[int, Optional[shapely.Geometry]]:
         """checks if a lane is free by using a ckeckbox thta is placed between two lane markings.
         The lane is considered free if there are no colliding entities with the checkbox.
 
@@ -222,19 +224,19 @@ class Map:
             lane_pos = -1
 
         # create dummy lane box entity for visualization. Will be removed later
-        lane_box_shape = Rectangle(
-            length=lane_length,
-            width=1.5,
-            offset=Transform2D.new_translation(Vector2.new(lane_transform, 1 * 2.5)),
-        )
+        # lane_box_shape = Rectangle(
+        #    length=lane_length,
+        #    width=1.5,
+        #    offset=Transform2D.new_translation(Vector2.new(lane_transform, 1 * 2.5)),
+        # )
 
-        lane_box_entity = Entity(
-            confidence=10001.0,
-            priority=1.0,
-            shape=lane_box_shape,
-            transform=Transform2D.identity(),
-            flags=Flags(is_ignored=True),
-        )
+        # lane_box_entity = Entity(
+        #    confidence=10001.0,
+        #    priority=1.0,
+        #    shape=lane_box_shape,
+        #    transform=Transform2D.identity(),
+        #    flags=Flags(is_ignored=True),
+        # )
 
         # create y-axis line for intersection with lanemarks
         y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
@@ -248,10 +250,10 @@ class Map:
         # Abort when not enough lane marks got detected
         if len(lanemark_y_axis_intersection) < 2:
             rospy.logwarn(
-                "Lane free check: Didn't detect to lanes beside the car. \
+                "Lane free check: Didn't detect two lanes beside the car. \
                 Aborting check."
             )
-            return -1, lane_box_entity
+            return -1, None
 
         lane_close_hero = None
         lane_further_hero = None
@@ -268,21 +270,21 @@ class Map:
                 "Lane free check: Didn't find the right two lanes for check. \
                 Aborting check."
             )
-            return -1, lane_box_entity
+            return -1, None
 
         # Check if two lanes has a plausible angle to each pother
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
-        lanemark_angle = np.deg2rad(abs(close_rotation - further_rotation))
+        lanemark_angle = np.rad2deg(abs(close_rotation - further_rotation))
         if lanemark_angle > 5:  # before tried 20°
             rospy.logwarn(
                 f"Lane free check: Lanemarkings angle {lanemark_angle} too big, \
                 should be < 5°. Aborting check."
             )
-            return -1, lane_box_entity
+            return -1, None
 
-        # create the lane ckeckbox entity
-        lane_box_entity = self.create_lane_box_entity(
+        # create the lane ckeckbox shape
+        lane_box_entity = self.create_lane_box(
             y_axis_line,
             lane_close_hero,
             lane_further_hero,
@@ -319,7 +321,7 @@ class Map:
 
         return Point2.new(x_new, y_new)
 
-    def create_lane_box_entity(
+    def create_lane_box(
         self,
         y_axis_line: LineString,
         lane_close_hero: Entity,
@@ -327,7 +329,7 @@ class Map:
         lane_pos: int,
         lane_length: float,
         lane_transform: float,
-    ) -> Entity:
+    ) -> MapPolygon:
         """helper function to create a lane box entity
 
         Args:
@@ -400,14 +402,7 @@ class Map:
             Transform2D.identity(),
         )
 
-        lane_box_entity = Entity(
-            confidence=10001.0,
-            priority=1.0,
-            shape=lane_box_shape,
-            transform=Transform2D.identity(),
-            flags=Flags(is_ignored=True),
-        )
-        return lane_box_entity
+        return lane_box_shape
 
     def get_checkbox_collisions(
         self, checkbox_entity: Entity, coverage=0.2, account_motion=True
@@ -473,7 +468,7 @@ class Map:
             (x, y),
         ]
 
-        return Polygon(points)
+        return shapely.Polygon(points)
 
     def curve_to_polygon(self, points, width):
         """Creates a polygon with a specified width around a given curve.
