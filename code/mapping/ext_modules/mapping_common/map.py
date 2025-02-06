@@ -15,6 +15,8 @@ from mapping_common.shape import Rectangle
 from mapping_common.shape import Polygon as MapPolygon
 from shapely.geometry import Polygon, LineString
 
+import rospy
+
 
 from mapping import msg
 
@@ -112,7 +114,14 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> bool:
+        # lane_coverage: float = 0.75,
+        check_method: Literal[
+            "rectangle",
+            "lanemarking",
+            "fallback",
+            # "trajectory" not implemented yet
+        ] = "rectangle",
+    ) -> int:
         """Returns if a lane left or right of our car is free.
         Right now, a rectangle shape of length lane_length placed
         on the left or right side of the car with a transformation of lane_transform
@@ -132,22 +141,39 @@ class Map:
         Returns:
             bool: lane is free / not free
         """
+        match check_method:
+            case "rectangle":
+                return self.is_lane_free_rectangle(
+                    right_lane, lane_length, lane_transform
+                )
+            case "lanemarking":
+                return self.is_lane_free_lanemarking(
+                    right_lane, lane_length, lane_transform
+                )[
+                    0
+                ]  # [0] to be removed when removing entity return
+            case "fallback":
+                pass
+            # case "trajectory": not implemented yet
+
+        return -1
+
+    def is_lane_free_rectangle(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+    ) -> int:
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
         lane_pos = 1
         if right_lane:
             lane_pos = -1
 
-        # lane length cannot be negative, as no rectangle with negative dimension exists
-        if lane_length < 0:
-            raise ValueError("Lane length cannot take a negative value.")
-
         # creates flag filter with filtered ignored, hero and lanemark entities
-        filter = FlagFilter()
-        filter.is_collider = True
-        filter.is_hero = False
-        filter.is_lanemark = False
-        filter.is_ignored = False
+        filter = FlagFilter(
+            is_collider=True, is_hero=False, is_lanemark=False, is_ignored=False
+        )
 
         # build map STRtree from map with filter
         map_tree = self.build_tree(f=filter)
@@ -170,29 +196,10 @@ class Map:
 
         # if list with lane box intersection is empty --> lane is free
         if not lane_box_intersection_entities:
-            return True
-        return False
+            return 1
+        return 0
 
-    def point_along_line_angle(
-        self, x: float, y: float, angle: float, distance: float
-    ) -> Point2:
-        """
-        Calculates a point along a straight line with a given angle and distance.
-
-        Parameters:
-        - x (float): x-coordinate of the original position
-        - y (float): y-coordinate of the original position
-        - angle (float): Angle of the straight line (in rad)
-        - distance (float): Distance along the straight line (positive or negative)
-        Returns:
-            Point2(x,y): x-y-coordinates of new point as Point2
-        """
-        x_new = x + distance * np.cos(angle)
-        y_new = y + distance * np.sin(angle)
-
-        return Point2.new(x_new, y_new)
-
-    def is_lane_free_lanemarks(
+    def is_lane_free_lanemarking(
         self,
         right_lane: bool = False,
         lane_length: float = 20.0,
@@ -237,12 +244,16 @@ class Map:
         lanemark_filter = FlagFilter(is_lanemark=True)
         # build map STRtree from map with filter
         map_tree = self.build_tree(f=lanemark_filter)
-        #get entities that intersect with the y-axis line
+        # get entities that intersect with the y-axis line
         lanemark_y_axis_intersection = map_tree.query(
             geo=y_axis_line, predicate="intersects"
         )
         # Abort when not enough lane marks got detected
         if len(lanemark_y_axis_intersection) < 2:
+            rospy.logwarn(
+                "Lane free check: Didn't detect to lanes beside the car. \
+                Aborting check."
+            )
             return -1, lane_box_entity
 
         lane_close_hero = None
@@ -250,32 +261,76 @@ class Map:
 
         # Choose two lanes nearby car
         for ent in lanemark_y_axis_intersection:
-                if ent.entity.position_index == lane_pos * 1:
-                    lane_close_hero = ent.entity
-                if ent.entity.position_index == lane_pos * 2:
-                    lane_further_hero = ent.entity
+            if ent.entity.position_index == lane_pos * 1:
+                lane_close_hero = ent.entity
+            if ent.entity.position_index == lane_pos * 2:
+                lane_further_hero = ent.entity
 
         if lane_close_hero is None or lane_further_hero is None:
+            rospy.logwarn(
+                "Lane free check: Didn't find the right two lanes for check. \
+                Aborting check."
+            )
             return -1, lane_box_entity
 
         # Check if two lanes has a plausible angle to each pother
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
-        print(f"angle between markings: {(close_rotation-further_rotation)}")
-        if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
+        lanemark_angle = np.deg2rad(abs(close_rotation - further_rotation))
+        if lanemark_angle > 5:  # before tried 20°
+            rospy.logwarn(
+                f"Lane free check: Lanemarkings angle {lanemark_angle} too big, \
+                should be < 5°. Aborting check."
+            )
             return -1, lane_box_entity
-        
+
         # create the lane ckeckbox entity
-        lane_box_entity = self.create_lane_box_entity(y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform)
-        #get the colliding entities with the checkbox
-        colliding_entities = self.get_checkbox_collisions(lane_box_entity, coverage=coverage, account_motion=consider_motion)
-        #if there are colliding entities, the lane is not free
-        if len(colliding_entities) is not 0:
-            return 0, lane_box_entity
-        else:
+        lane_box_entity = self.create_lane_box_entity(
+            y_axis_line,
+            lane_close_hero,
+            lane_further_hero,
+            lane_pos,
+            lane_length,
+            lane_transform,
+        )
+        # get the colliding entities with the checkbox
+        colliding_entities = self.get_checkbox_collisions(
+            lane_box_entity, coverage=coverage, account_motion=consider_motion
+        )
+        # if there are colliding entities, the lane is not free
+        if not colliding_entities:
             return 1, lane_box_entity
-    
-    def create_lane_box_entity(self, y_axis_line:LineString, lane_close_hero:Entity, lane_further_hero:Entity, lane_pos:int, lane_length:float, lane_transform:float) ->Entity:
+        else:
+            return 0, lane_box_entity
+
+    def point_along_line_angle(
+        self, x: float, y: float, angle: float, distance: float
+    ) -> Point2:
+        """
+        Calculates a point along a straight line with a given angle and distance.
+
+        Parameters:
+        - x (float): x-coordinate of the original position
+        - y (float): y-coordinate of the original position
+        - angle (float): Angle of the straight line (in rad)
+        - distance (float): Distance along the straight line (positive or negative)
+        Returns:
+            Point2(x,y): x-y-coordinates of new point as Point2
+        """
+        x_new = x + distance * np.cos(angle)
+        y_new = y + distance * np.sin(angle)
+
+        return Point2.new(x_new, y_new)
+
+    def create_lane_box_entity(
+        self,
+        y_axis_line: LineString,
+        lane_close_hero: Entity,
+        lane_further_hero: Entity,
+        lane_pos: int,
+        lane_length: float,
+        lane_transform: float,
+    ) -> Entity:
         """helper function to create a lane box entity
 
         Args:
@@ -357,8 +412,10 @@ class Map:
         )
         return lane_box_entity
 
-    def get_checkbox_collisions(self, checkbox_entity:Entity, coverage = 0.2, account_motion = True) -> List[Entity]:
-        """ckecks for collisions within a checkbox entity
+    def get_checkbox_collisions(
+        self, checkbox_entity: Entity, coverage=0.2, account_motion=True
+    ) -> List[Entity]:
+        """checks for collisions within a checkbox entity
 
         Args:
             checkbox_entity (Entity): The checkbox entity to check for collisions.
@@ -370,25 +427,32 @@ class Map:
         """
         f_others = FlagFilter(is_collider=True, is_hero=False, is_ignored=False)
         f_hero = FlagFilter(is_hero=False)
-        #get entities that are colliding with the checkbox entity
-        colliding_entities = self.get_entities_with_coverage(checkbox_entity.shape.to_shapely(checkbox_entity.transform),self.filtered(f=f_others), coverage)
+        # get entities that are colliding with the checkbox entity
+        colliding_entities = self.get_entities_with_coverage(
+            checkbox_entity.shape.to_shapely(checkbox_entity.transform),
+            self.filtered(f=f_others),
+            coverage,
+        )
         hero = self.filtered(f=f_hero)[0]
-        #if account_motion is True, only consider entities if there would be a collision within 3 secs
+        # if account_motion is True, only consider entities if there would be a collision within 3 secs
         if account_motion:
             relevant_entities = []
             for ent in colliding_entities:
                 if hero.motion and ent.motion:
-                        #calculate relative motion
-                        relative_motion = hero.motion.linear_motion.length() - ent.motion.linear_motion.length()
-                        #calculate distance in x direction
-                        distance_x = ent.transform.translation().x()
-                        #if the distance [m] / relative motion [m/s] is smaller than 3[s], the entity is relevant
-                        if distance_x/relative_motion < 3:
-                            relevant_entities.append(ent)
+                    # calculate relative motion
+                    relative_motion = (
+                        hero.motion.linear_motion.length()
+                        - ent.motion.linear_motion.length()
+                    )
+                    # calculate distance in x direction
+                    distance_x = ent.transform.translation().x()
+                    # if the distance [m] / relative motion [m/s] is smaller than 3[s], the entity is relevant
+                    if distance_x / relative_motion < 3:
+                        relevant_entities.append(ent)
             return relevant_entities
         else:
             return colliding_entities
-        
+
     def project_plane(self, start_point, size_x, size_y):
         """
         Projects a rectangular plane starting from (0, 0) forward in the x-direction.
@@ -479,7 +543,9 @@ class Map:
         else:
             return None
 
-    def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage) -> List[Entity]:
+    def get_entities_with_coverage(
+        self, polygon, entities: List[Entity], coverage
+    ) -> List[Entity]:
         """Returns a list of entities that have at least coverage % in the
         given polygon.
 

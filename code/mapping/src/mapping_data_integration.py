@@ -356,7 +356,9 @@ class MappingDataIntegrationNode(CompatibleNode):
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
 
-        lane_free, ent = map.is_lane_free_lanemarks(lane_transform=10, right_lane=True)
+        lane_free, ent = map.is_lane_free_lanemarking(
+            lane_transform=10, right_lane=False
+        )
         # rospy.loginfo(str(lanemark_y_axis_intersection))
         if lane_free:
             ent.confidence = 10000
