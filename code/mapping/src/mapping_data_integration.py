@@ -117,6 +117,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
         """
         All currently used reconfigure options are querried dynamically.
+        If you want to directly react on the change uncomment the following lines.
         """
         # config["enable_merge_filter"]
         # config["merge_growth_distance"]
