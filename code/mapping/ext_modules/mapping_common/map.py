@@ -145,7 +145,7 @@ class Map:
             case "rectangle":
                 return self.is_lane_free_rectangle(
                     right_lane, lane_length, lane_transform
-                )
+                )[0]
             case "lanemarking":
                 return self.is_lane_free_lanemarking(
                     right_lane, lane_length, lane_transform
@@ -163,7 +163,7 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> int:
+    ) -> Tuple[int, shapely.Geometry]:
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
         lane_pos = 1
@@ -196,8 +196,8 @@ class Map:
 
         # if list with lane box intersection is empty --> lane is free
         if not lane_box_intersection_entities:
-            return 1
-        return 0
+            return 1, lane_box_shapely
+        return 0, lane_box_shapely
 
     def is_lane_free_lanemarking(
         self,
@@ -206,7 +206,7 @@ class Map:
         lane_transform: float = 0.0,
         consider_motion: bool = True,
         coverage: float = 0.2,
-    ) -> Tuple[int, Entity]:
+    ) -> Tuple[int, shapely.Geometry]:
         """checks if a lane is free by using a ckeckbox thta is placed between two lane markings.
         The lane is considered free if there are no colliding entities with the checkbox.
 
