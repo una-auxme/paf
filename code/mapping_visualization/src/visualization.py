@@ -48,6 +48,7 @@ class Visualization(CompatibleNode):
         self.flag_lanemark: Optional[bool] = None
         self.flag_ignored: Optional[bool] = None
         self.flag_hero: Optional[bool] = None
+        self.show_meta_markers: bool = True
 
         Server(MappingVisualizationConfig, self.dynamic_reconfigure_callback)
 
@@ -59,7 +60,7 @@ class Visualization(CompatibleNode):
         self.flag_lanemark = self.value_map.get(config["flag_lanemark"])
         self.flag_ignored = self.value_map.get(config["flag_ignored"])
         self.flag_hero = self.value_map.get(config["flag_hero"])
-
+        self.show_meta_markers = config["flag_show_meta_markers"]
         return config
 
     def map_callback(self, data: MapMsg):
@@ -69,6 +70,7 @@ class Visualization(CompatibleNode):
         marker_array.markers.append(self.create_deleteall_marker())
 
         marker_timestamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+        markers = []
         filter = FlagFilter(
             has_motion=self.flag_motion,
             is_collider=self.flag_collider,
@@ -78,12 +80,21 @@ class Visualization(CompatibleNode):
             is_ignored=self.flag_ignored,
             is_hero=self.flag_hero,
         )
-        for id, entity in enumerate(map.entities):
+        for entity in map.entities:
             if not entity.matches_filter(filter):
                 continue
-            marker_array.markers.append(
-                self.create_marker_from_entity(id, entity, marker_timestamp)
-            )
+            markers.append(entity.to_marker())
+            if not self.show_meta_markers:
+                continue
+            markers.extend(entity.get_meta_markers())
+
+        for id, marker in enumerate(markers):
+            marker.header.stamp = marker_timestamp
+            marker.header.frame_id = "hero"
+            marker.ns = MARKER_NAMESPACE
+            marker.id = id + 1000
+            marker.lifetime = Duration.from_sec(2 / 20.0)
+            marker_array.markers.append(marker)
 
         self.marker_publisher.publish(marker_array)
 
