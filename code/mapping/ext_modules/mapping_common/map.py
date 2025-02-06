@@ -205,6 +205,7 @@ class Map:
         if right_lane:
             lane_pos = -1
 
+        # create dummy lane box entity for visualization. Will be removed later
         lane_box_shape = Rectangle(
             length=lane_length,
             width=1.5,
@@ -219,10 +220,12 @@ class Map:
             flags=Flags(is_ignored=True),
         )
 
+        # create y-axis line for intersection with lanemarks
         y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
         lanemark_filter = FlagFilter(is_lanemark=True)
         # build map STRtree from map with filter
         map_tree = self.build_tree(f=lanemark_filter)
+        #get entities that intersect with the y-axis line
         lanemark_y_axis_intersection = map_tree.query(
             geo=y_axis_line, predicate="intersects"
         )
@@ -244,6 +247,23 @@ class Map:
             return -1, lane_box_entity
 
         # Check if two lanes has a plausible angle to each pother
+        close_rotation = lane_close_hero.transform.rotation()
+        further_rotation = lane_further_hero.transform.rotation()
+        print(f"angle between markings: {(close_rotation-further_rotation)}")
+        if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
+            return -1, lane_box_entity
+        
+        # create the lane box entity
+        self.create_lane_box_entity(y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform)
+        #get the colliding entities with the checkbox
+        colliding_entities = self.get_checkbox_collisions(lane_box_entity)
+        #if there are colliding entities, the lane is not free
+        if len(colliding_entities) is not 0:
+            return 0, lane_box_entity
+        else:
+            return 1, lane_box_entity
+    
+    def create_lane_box_entity(self, y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform):
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
 
@@ -310,13 +330,8 @@ class Map:
             transform=Transform2D.identity(),
             flags=Flags(is_ignored=True),
         )
+        return lane_box_entity
 
-        print(f"angle between markings: {(close_rotation-further_rotation)}")
-        if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
-            return -1, lane_box_entity
-        colliding_entities = self.get_checkbox_collisions(lane_box_entity)
-        return 1, lane_box_entity
-    
     def get_checkbox_collisions(self, checkbox_entity:Entity, coverage = 0.2, account_motion = True) -> List[Entity]:
         """ckecks for collisions within a checkbox entity
 
