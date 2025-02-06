@@ -35,29 +35,17 @@ To optimize detection, we set the vertical field of view (FOV) to 0.1. This elim
 
 The sensor configuration can be adjusted in agent.py. The two radar sensors are currently set up as follows:
 
-Front-Right Radar (RADAR0)
-
-- id: RADAR0
-- x: 2.0
-- y: 1.5
-- z: 1
-- roll: 0.0
-- pitch: 0.0
-- yaw: 0.0
-- horizontal_fov: 25
-- vertical_fov: 0.1
-
-Front-Left Radar (RADAR1)
-
-- id: RADAR1
-- x: 2.0
-- y: -1.5
-- z: 1
-- roll: 0.0
-- pitch: 0.0
-- yaw: 0.0
-- horizontal_fov: 25
-- vertical_fov: 0.1
+| ||Front-Right Radar||Front-Left Radar|
+|---||---||---|
+|id||RADAR0||RADAR1|
+|x||2.0||2.0|
+|y||1.5||-1.5|
+|z||1||1|
+|roll||0.0||0.0|
+|pitch||0.0||0.0|
+|yaw||0.0||0.0|
+|horizontal_fov||25||25|
+|vertical_fov||0.1||0.1|
 
 ## Data Processing
 
