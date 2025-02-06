@@ -7,7 +7,8 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray
-from utils import calculate_rule_of_thumb, interpolate_speed
+
+from local_planner.utils import calculate_rule_of_thumb, interpolate_speed
 
 
 class ACC(CompatibleNode):

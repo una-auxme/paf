@@ -1,12 +1,13 @@
 import py_trees
 import sys
 import os
+from typing import Optional
 from std_msgs.msg import String, Float32
 
 import rospy
 import numpy as np
 
-from behaviors import behavior_speed as bs
+
 import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
@@ -14,7 +15,9 @@ from mapping_common.map import Map
 import shapely
 from mapping_common.entity import FlagFilter
 from visualization_msgs.msg import Marker, MarkerArray
-from behaviors import behavior_utils
+
+from . import behavior_utils
+from . import behavior_speed as bs
 
 sys.path.append(os.path.abspath(sys.path[0] + "/.."))
 # from behavior_utils import get_hero_width, get_marker_arr_in_front
@@ -103,11 +106,12 @@ class Ahead(py_trees.behaviour.Behaviour):
                  to overtake.
         """
 
-        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        test_param = self.blackboard.get("test_param")
+        rospy.logwarn(f"Test param: {test_param}")
 
-        if map_data is not None:
-            map = Map.from_ros_msg(map_data)
-        else:
+        map: Optional[Map] = self.blackboard.get("map")
+
+        if map is None:
             rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
 
@@ -301,11 +305,10 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
 
         # Intermediate layer map integration
-        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-        if map_data is not None:
-            map = Map.from_ros_msg(map_data)
-        else:
-            rospy.logerr("Map data not available in Overtake")
+        map: Optional[Map] = self.blackboard.get("map")
+
+        if map is None:
+            rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
 
         # data preparation
@@ -528,11 +531,10 @@ class Wait(py_trees.behaviour.Behaviour):
             rospy.loginfo("Overtake is free!")
             self.curr_behavior_pub.publish(bs.ot_wait_free.name)
             return py_trees.common.Status.SUCCESS
-        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-        if map_data is not None:
-            map = Map.from_ros_msg(map_data)
-        else:
-            rospy.logerr("Map data not available in Overtake")
+        map: Optional[Map] = self.blackboard.get("map")
+
+        if map is None:
+            rospy.logerr("Map data not avilable in Overtake")
             return py_trees.common.Status.FAILURE
 
         # data preparation

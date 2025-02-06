@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 
-import functools
+from typing import Optional, Dict
+import sys
+
+import py_trees
+from py_trees.composites import Parallel, Selector, Sequence
 from py_trees.behaviours import Running
 import py_trees_ros
+
 import rospy
-import sys
-from behaviors import (
+import ros_compatibility as roscomp
+from ros_compatibility.node import CompatibleNode
+
+from behavior_agent.behaviors import (
     cruise,
     intersection,
     lane_change,
@@ -15,7 +22,10 @@ from behaviors import (
     topics2blackboard,
     unstuck_routine,
 )
-from py_trees.composites import Parallel, Selector, Sequence
+
+
+from planning.cfg import BEHAVIORConfig
+from dynamic_reconfigure.server import Server
 
 """
 Source: https://github.com/ll7/psaf2
@@ -110,6 +120,7 @@ def grow_a_tree(role_name):
         "Root",
         children=[
             topics2blackboard.create_node(role_name),
+            DynReconfigImportBehavior(),
             metarules,
             Running("Idle"),
         ],
@@ -117,31 +128,75 @@ def grow_a_tree(role_name):
     return root
 
 
-def shutdown(behaviour_tree):
-    behaviour_tree.interrupt()
+class DynReconfigImportBehavior(py_trees.Behaviour):
+    """Imports the config into the blackboard
+
+    Imports variables from the dynamic reconfigure config (config/behavior_config.yaml)
+    into the blackboard.
+    """
+
+    config: Optional[Dict] = None
+
+    def __init__(self, name="", *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
+        self.blackboard = py_trees.blackboard.Blackboard()
+        Server(BEHAVIORConfig, self.dynamic_reconfigure_callback)
+
+    def dynamic_reconfigure_callback(self, config: Dict, level):
+        self.config = config
+        return config
+
+    def update(self):
+        if self.config is None:
+            return py_trees.common.Status.FAILURE
+
+        for param in BEHAVIORConfig.config_description["parameters"]:
+            param_name = param["name"]
+            self.blackboard.set(param_name, self.config[param_name], overwrite=True)
+        return py_trees.common.Status.SUCCESS
+
+
+class BehaviorTree(CompatibleNode):
+
+    def __init__(self):
+        super().__init__("BehaviorTree")
+
+        role_name = self.get_param("~role_name", "hero")
+        root = grow_a_tree(role_name)
+        self.behavior_tree = py_trees_ros.trees.BehaviourTree(root)
+
+        if not self.behavior_tree.setup(timeout=15):
+            rospy.logerr("Behavior tree Setup failed.")
+            sys.exit(1)
+
+        rospy.loginfo("Behavior tree setup done.")
+
+        self.rate = self.get_param("~tick_rate", 5.3)
+        self.new_timer(1.0 / self.rate, self.tick_tree)
+
+    def tick_tree(self):
+        self.behavior_tree.tick()
+
+    def shutdown(self):
+        self.behavior_tree.interrupt()
 
 
 def main():
     """
     Entry point for the demo script.
     """
-    rospy.init_node("behavior_tree", anonymous=True)
-    role_name = rospy.get_param("~role_name", "hero")
-    root = grow_a_tree(role_name)
-    behaviour_tree = py_trees_ros.trees.BehaviourTree(root)
-    rospy.on_shutdown(functools.partial(shutdown, behaviour_tree))
+    roscomp.init("BehaviorTree")
 
-    if not behaviour_tree.setup(timeout=15):
-        rospy.logerr("Tree Setup failed")
-        sys.exit(1)
-    rospy.loginfo("tree setup worked")
-    r = rospy.Rate(5.3)
-    while not rospy.is_shutdown():
-        behaviour_tree.tick()
-        try:
-            r.sleep()
-        except rospy.ROSInterruptException:
-            pass
+    node = None
+    try:
+        node = BehaviorTree()
+        node.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if node is not None:
+            node.shutdown()
+        roscomp.shutdown()
 
 
 if __name__ == "__main__":

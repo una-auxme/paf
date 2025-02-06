@@ -11,7 +11,7 @@ dvclive==3.41.1
 ruamel.yaml==0.18.5
 scipy==1.10.1
 xmltodict==0.13.0
-py-trees==2.2.3
+py-trees==0.7.6 # This is the ros noetic version of py trees and cannot be updated with the current docker images
 numpy==1.23.5
 ultralytics==8.3.32
 scikit-learn>=0.18
