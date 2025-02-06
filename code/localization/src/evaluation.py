@@ -4,7 +4,6 @@
 This node publishes all relevant topics for the ekf node.
 """
 import os
-import csv
 import math
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -14,7 +13,6 @@ from std_msgs.msg import Float32, Header
 # from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 import rospy
-import threading
 import carla
 
 GPS_RUNNING_AVG_ARGS: int = 10

@@ -18,7 +18,7 @@ class CurrentStatePublisher(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.loop_rate = self.get_param("control_loop_rate", 0.05)
 
-        # Publishes current_pos depending on the filter used
+        # Publishes current_pos and current_heading from hero frame out of tf-graph
         self.position_publisher: Publisher = self.new_publisher(
             PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
         )
@@ -30,7 +30,7 @@ class CurrentStatePublisher(CompatibleNode):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        timer = self.new_timer(self.loop_rate, self.publish_heading)
+        self.new_timer(self.loop_rate, self.publish_heading)
 
     def publish_heading(self, timer_event):
         try:
@@ -59,7 +59,7 @@ class CurrentStatePublisher(CompatibleNode):
             self.loginfo(ex)
 
     def run(self):
-        self.loginfo("SplitOdometry node started its loop!")
+        self.loginfo("Started CurrentStatePublisher Node!")
         self.spin()
 
 

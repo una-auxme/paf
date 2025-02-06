@@ -30,16 +30,9 @@ class GPSTransform(CompatibleNode):
             qos_profile=10,
         )
 
-        self.odometry_subscriber = self.new_subscription(
-            Odometry, "odometry/filtered", self.odometry_callback, qos_profile=10
-        )
-
         self.transfomer = CoordinateTransformer()
 
     def process_data(self):
-        if self.gps is None:
-            return
-
         out = Odometry()
         out.header = self.gps.header
         out.header.frame_id = "global"
@@ -59,13 +52,7 @@ class GPSTransform(CompatibleNode):
 
     def gps_callback(self, gps: NavSatFix):
         self.gps = gps
-
         self.process_data()
-
-    def odometry_callback(self, odom: Odometry):
-        self.odometry = odom
-        if self.gps is not None:
-            self.process_data()
 
 
 def main(args=None):

@@ -27,7 +27,6 @@ class ForwardIMU(CompatibleNode):
         self.__imu_angular_velocity_covariance: float
         self.__imu_linear_acceleration_covariance_xy: float
         self.__imu_linear_acceleration_covariance_z: float
-
         Server(SensorCovarianceConfig, self.dynamic_reconfigure_callback)
 
         self.imu_publisher = self.new_publisher(Imu, "/imu/data", qos_profile=10)
@@ -67,7 +66,6 @@ class ForwardIMU(CompatibleNode):
         return config
 
     def imu_callback(self, imu: Imu):
-        # imu.header.frame_id = "hero"  #Reduces messages of unknown transform
         if self.__use_imu_yaml_covariance:
             imu.orientation_covariance = rospy.get_param("~imu_orientation")
             imu.angular_velocity_covariance = rospy.get_param("~imu_angular_velocity")
@@ -94,7 +92,6 @@ class ForwardIMU(CompatibleNode):
         self.imu_publisher.publish(imu)
 
     def gps_callback(self, gps: NavSatFix):
-        # gps.header.frame_id = "hero"
         if self.__use_gps_yaml_covariance:
             gps.position_covariance = rospy.get_param("~gps_position")
         else:
