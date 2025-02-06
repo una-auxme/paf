@@ -235,10 +235,10 @@ class Map:
 
         # Choose two lanes nearby car
         for ent in lanemark_y_axis_intersection:
-            if ent.entity.position_index == lane_pos * 1:
-                lane_close_hero = ent.entity
-            if ent.entity.position_index == lane_pos * 2:
-                lane_further_hero = ent.entity
+                if ent.entity.position_index == lane_pos * 1:
+                    lane_close_hero = ent.entity
+                if ent.entity.position_index == lane_pos * 2:
+                    lane_further_hero = ent.entity
 
         if lane_close_hero is None or lane_further_hero is None:
             return -1, lane_box_entity
@@ -313,10 +313,42 @@ class Map:
 
         print(f"angle between markings: {(close_rotation-further_rotation)}")
         if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
-            return 0, lane_box_entity
-
+            return -1, lane_box_entity
+        colliding_entities = self.get_checkbox_collisions(lane_box_entity)
         return 1, lane_box_entity
+    
+    def get_checkbox_collisions(self, checkbox_entity:Entity, coverage = 0.2, account_motion = True) -> List[Entity]:
+        """ckecks for collisions within a checkbox entity
 
+        Args:
+            checkbox_entity (Entity): The checkbox entity to check for collisions.
+            coverage (float, optional): to what degree the entity must be covered to be considered. Defaults to 0.2.
+            account_motion (bool, optional): Take Motion into account? Defaults to True.
+
+        Returns:
+            List[Entity]: returns List of entities that are colliding with the checkbox entity.
+        """
+        f_others = FlagFilter(is_collider=True, is_hero=False, is_ignored=False)
+        f_hero = FlagFilter(is_hero=False)
+        #get entities that are colliding with the checkbox entity
+        colliding_entities = self.get_entities_with_coverage(checkbox_entity.shape.to_shapely(checkbox_entity.transform),self.filtered(f=f_others), coverage)
+        hero = self.filtered(f=f_hero)[0]
+        #if account_motion is True, only consider entities if there would be a collision within 3 secs
+        if account_motion:
+            relevant_entities = []
+            for ent in colliding_entities:
+                if hero.motion and ent.motion:
+                        #calculate relative motion
+                        relative_motion = hero.motion.linear_motion.length() - ent.motion.linear_motion.length()
+                        #calculate distance in x direction
+                        distance_x = ent.transform.translation().x()
+                        #if the distance [m] / relative motion [m/s] is smaller than 3[s], the entity is relevant
+                        if distance_x/relative_motion < 3:
+                            relevant_entities.append(ent)
+            return relevant_entities
+        else:
+            return colliding_entities
+        
     def project_plane(self, start_point, size_x, size_y):
         """
         Projects a rectangular plane starting from (0, 0) forward in the x-direction.
@@ -407,7 +439,7 @@ class Map:
         else:
             return None
 
-    def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage):
+    def get_entities_with_coverage(self, polygon, entities: List[Entity], coverage) -> List[Entity]:
         """Returns a list of entities that have at least coverage % in the
         given polygon.
 
