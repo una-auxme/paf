@@ -1,6 +1,11 @@
-# Create a new scenario
+# Create a new route
+
+
 
 **Summary:** This page shows how to create a new route with scenarios that can be loaded later as a checkpoint or used for an automated test.
+
+- [Scenario types](#scenario-types)
+- [Create new route](#create-new-route)
 
 ## Scenario types
 
@@ -25,7 +30,8 @@ The carla simulator have different scenario types you can work with, which are l
 |                   parking_cut_in |                                                                                                                                                                                                                                                                                                               Parking cut in scenario synchronizes a vehicle that is parked at a side lane to cut in in front of the ego vehicle, forcing it to break                                                                                                                                                                                                                                                                                                               |
 |parking_exit | This class holds everything required for a scenario in which the ego would be teleported to the parking lane. Once the scenario is triggered, the OutsideRouteLanesTest will be deactivated since the ego is out of the driving lane. Then blocking vehicles will be generated in front of and behind the parking point. The ego need to exit from the parking lane and then merge into the driving lane. After the ego is {end_distance} meters away from the parking point, the OutsideRouteLanesTest will be activated and the scenario ends. Note 1: For route mode, this shall be the first scenario of the route. The trigger point shall be the first point of the route waypoints. Note 2: Make sure there are enough space for spawning blocking vehicles. |
 |              pedestrian_crossing |This class holds everything required for a group of natual pedestrians crossing the road. The ego vehicle is passing through a road, and encounters a group of pedestrians crossing the road.This is a single ego vehicle scenario. Notice that the initial pedestrian will walk from the start of the junction ahead to end_walker_flow_1.|
-|route_obstacles |This class holds everything required for a scenario in which there is an accident in front of the ego, forcing it to lane change. A police vehicle is located before two other cars that have been in an accident.                                                                                                                                                                                                                                                                          |vehicle_opens_door |This class holds everything required for a scenario in which another vehicle parked at the side lane opens the door, forcing the ego to lane change, invading the opposite lane|
+|route_obstacles |This class holds everything required for a scenario in which there is an accident in front of the ego, forcing it to lane change. A police vehicle is located before two other cars that have been in an accident.|
+|vehicle_opens_door |This class holds everything required for a scenario in which another vehicle parked at the side lane opens the door, forcing the ego to lane change, invading the opposite lane|
 
 ## Create new route
 

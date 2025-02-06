@@ -2,6 +2,9 @@
 
 **Summary:** This page provides instructions on how to load specific route in the Carla simulator to avoid having to wait for a specific event to occur.
 
+- [Instruction](#instruction)
+- [Scenario Map](#scenario-map)
+
 ## Instruction
 
 1. Go to the [agent_service.yaml](/build/agent_service.yaml) file in the build directory.
