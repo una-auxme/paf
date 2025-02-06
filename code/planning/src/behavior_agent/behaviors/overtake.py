@@ -1,6 +1,4 @@
 import py_trees
-import sys
-import os
 from typing import Optional
 from std_msgs.msg import String, Float32
 
@@ -19,12 +17,10 @@ from visualization_msgs.msg import Marker, MarkerArray
 from . import behavior_utils
 from . import behavior_speed as bs
 
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-# from behavior_utils import get_hero_width, get_marker_arr_in_front
-from local_planner.utils import (  # type: ignore # noqa: E402
+from local_planner.utils import (
     NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
-)  # type: ignore # noqa: E402
+)
 
 """
 Source: https://github.com/ll7/psaf2

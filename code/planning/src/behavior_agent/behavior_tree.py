@@ -174,7 +174,7 @@ class BehaviorTree(CompatibleNode):
         self.rate = self.get_param("~tick_rate", 5.3)
         self.new_timer(1.0 / self.rate, self.tick_tree)
 
-    def tick_tree(self):
+    def tick_tree(self, timer_event=None):
         self.behavior_tree.tick()
 
     def shutdown(self):
