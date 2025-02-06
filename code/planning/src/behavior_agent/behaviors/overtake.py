@@ -64,9 +64,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.ot_distance_pub = rospy.Publisher(
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
         )
-        self.ot_marker_pub = rospy.Publisher(
-            "/paf/hero/" "overtake_marker", Marker, queue_size=1
-        )
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
         )
@@ -180,16 +177,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         ):
             return py_trees.common.Status.FAILURE
 
-        # generate visualization marker for obstacle
-        ot_marker = entity.to_marker()
-        ot_marker.color.r = 1.0
-        ot_marker.color.g = 0
-        ot_marker.color.b = 0
-        ot_marker.header.frame_id = "hero"
-        ot_marker.header.stamp = rospy.Time.now()
-        ot_marker.lifetime = rospy.Duration(0.3)
-        self.ot_marker_pub.publish(ot_marker)
-
         # increase counter when something is blocking the path
         if obstacle_speed < 2.5 and obstacle_distance < 15:
             self.counter_overtake += 1
@@ -255,9 +242,6 @@ class Approach(py_trees.behaviour.Behaviour):
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.ot_marker_pub = rospy.Publisher(
-            "/paf/hero/" "overtake_marker", Marker, queue_size=1
-        )
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
         )
@@ -379,16 +363,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.marker_publisher.publish(marker_arr)
         else:
             return py_trees.common.Status.FAILURE
-
-        # generate visualization marker for obstacle
-        ot_marker = entity.to_marker()
-        ot_marker.color.r = 1.0
-        ot_marker.color.g = 0
-        ot_marker.color.b = 0
-        ot_marker.header.frame_id = "hero"
-        ot_marker.header.stamp = rospy.Time.now()
-        ot_marker.lifetime = rospy.Duration(0.3)
-        self.ot_marker_pub.publish(ot_marker)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
