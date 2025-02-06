@@ -286,22 +286,28 @@ def _grow_merge_pair(
 
     growns: List[shapely.Polygon] = growns_maybe_none
 
-    areas = [e.area for e in growns]
-
-    intersection = shapely.intersection(growns[0], growns[1])
-    if intersection.is_empty:
+    # Intersection of both grown shapes. Used for area check
+    grown_intersection = shapely.intersection(growns[0], growns[1])
+    if grown_intersection.is_empty:
         return None
-    if not isinstance(intersection, shapely.Polygon):
+    if not isinstance(grown_intersection, shapely.Polygon):
         return None
-    i_area = intersection.area
-    area_overlaps = [i_area / a for a in areas]
-    # the bigger the area_fract, the more of a shape lies
+    # Intersection of one grown and one original shape. Used for percentage check
+    g_o_intersections = [
+        shapely.intersection(growns[0], pair[1].poly),
+        shapely.intersection(growns[1], pair[0].poly),
+    ]
+    percentage_overlaps = [
+        g_o_intersections[0].area / pair[1].poly.area,
+        g_o_intersections[1].area / pair[0].poly.area,
+    ]
+    # the bigger the percentage_overlaps, the more of a shape lies
     # within the intersecting area.
     # Entities are only merged, if one of them at least
     # overlaps the other by min_merging_overlap.
     if (
-        max(area_overlaps) < min_merging_overlap_percent
-        and intersection.area < min_merging_overlap_area
+        max(percentage_overlaps) < min_merging_overlap_percent
+        and grown_intersection.area < min_merging_overlap_area
     ):
         return None
 
