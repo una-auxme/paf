@@ -275,7 +275,20 @@ class Map:
         else:
             return 1, lane_box_entity
     
-    def create_lane_box_entity(self, y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform):
+    def create_lane_box_entity(self, y_axis_line:LineString, lane_close_hero:Entity, lane_further_hero:Entity, lane_pos:int, lane_length:float, lane_transform:float) ->Entity:
+        """helper function to create a lane box entity
+
+        Args:
+            y_axis_line (LineString): check shape y-axis line
+            lane_close_hero (Entity): the lane marking entity that is closer to the car
+            lane_further_hero (Entity): the lane marking entity that is further away from the car
+            lane_pos (int): to check if the lane is on the left or right side of the car
+            lane_length (float): length of the lane box
+            lane_transform (float): transform of the lane box
+
+        Returns:
+            lane_box_entity (Entity): created lane box entity
+        """
         close_rotation = lane_close_hero.transform.rotation()
         further_rotation = lane_further_hero.transform.rotation()
 
