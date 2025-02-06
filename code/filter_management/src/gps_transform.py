@@ -37,11 +37,11 @@ class GPSTransform(CompatibleNode):
         self.transfomer = CoordinateTransformer()
 
     def process_data(self):
-        if self.odometry is None or self.gps is None:
+        if self.gps is None:
             return
 
         out = Odometry()
-        out.header = self.odometry.header
+        out.header = self.gps.header
         out.header.frame_id = "global"
         out.child_frame_id = "hero"
 
@@ -56,13 +56,11 @@ class GPSTransform(CompatibleNode):
             out.pose.covariance[i + (i * 6)] = self.gps.position_covariance[i + (i * 3)]
 
         self.odometry_publisher.publish(out)
-        self.odometry = None
-        self.gps = None
 
     def gps_callback(self, gps: NavSatFix):
         self.gps = gps
-        if self.odometry is not None:
-            self.process_data()
+
+        self.process_data()
 
     def odometry_callback(self, odom: Odometry):
         self.odometry = odom
