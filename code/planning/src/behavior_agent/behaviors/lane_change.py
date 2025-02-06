@@ -7,6 +7,9 @@ import rospy
 from . import behavior_speed as bs
 from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
 
+import mapping_common.map
+from mapping_common.map import Map
+
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -29,7 +32,6 @@ class Ahead(py_trees.behaviour.Behaviour):
          :param name: name of the behaviour
         """
         super(Ahead, self).__init__(name)
-        rospy.logerror("INIT Lane change!!!!!!!!!!!!!!!!!")
 
     def setup(self, timeout):
         """
@@ -44,7 +46,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         :return: True, as the set up is successful.
         """
         self.blackboard = py_trees.blackboard.Blackboard()
-        rospy.logerror("setup Lane change!!!!!!!!!!!!!!!!!")
         return True
 
     def initialise(self):
@@ -58,7 +59,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         lane change.
         """
         self.dist = 0
-        rospy.logerror("INITialisse Lane change!!!!!!!!!!!!!!!!!")
 
     def update(self):
         """
@@ -74,7 +74,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
-        rospy.logerror("update Lane change!!!!!!!!!!!!!!!!!")
         bb = self.blackboard.get("/paf/hero/lane_change_distance")
         if bb is None:
             return py_trees.common.Status.FAILURE
@@ -96,7 +95,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        rospy.logerror("terminate Lane change!!!!!!!!!!!!!!!!!")
         self.logger.debug(
             "  %s [Foo::terminate().terminate()][%s->%s]"
             % (self.name, self.status, new_status)
@@ -119,7 +117,6 @@ class Approach(py_trees.behaviour.Behaviour):
         """
         super(Approach, self).__init__(name)
         rospy.loginfo("Lane Change Approach started")
-        rospy.logerror("INIT Lane change!!!!!!!!!!!!!!!!!")
 
     def setup(self, timeout):
         """
@@ -137,7 +134,6 @@ class Approach(py_trees.behaviour.Behaviour):
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
-        rospy.logerror("setup Lane change!!!!!!!!!!!!!!!!!")
         return True
 
     def initialise(self):
@@ -150,7 +146,6 @@ class Approach(py_trees.behaviour.Behaviour):
         This initializes the variables needed to save information about the
         lane change.
         """
-        rospy.logerror("INITialise Lane change!!!!!!!!!!!!!!!!!")
         rospy.loginfo("Approaching Change")
         self.change_detected = False
         self.change_distance = np.inf
@@ -174,7 +169,7 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        rospy.logerror("update Lane change!!!!!!!!!!!!!!!!!")
+
         # Update stopline Info
         _dis = self.blackboard.get("/paf/hero/lane_change_distance")
         if _dis is not None:
@@ -183,20 +178,36 @@ class Approach(py_trees.behaviour.Behaviour):
             self.change_option = _dis.roadOption
             # rospy.loginfo(f"Change distance: {self.change_distance}")
 
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map = Map.from_ros_msg(map_data)
+        # checks if the left lane of the car is free,
+        # otherwise pause lane change
+        tree = map.build_tree(mapping_common.map.lane_free_filter())
+
         # calculate virtual stopline
         if self.change_distance != np.inf and self.change_detected:
             self.virtual_change_distance = self.change_distance
 
-            # TODO: ADD FEATURE Check for Traffic
-            distance_lidar = 20
-
-            if distance_lidar is not None and distance_lidar > 15.0:
+            if map.entities and tree.is_lane_free(
+                right_lane=False, lane_length=22.5, lane_transform=-5.0
+            ):
                 rospy.loginfo("Lane Change is free not slowing down!")
                 self.curr_behavior_pub.publish(bs.lc_app_free.name)
                 self.blocked = False
             else:
                 rospy.loginfo("Lane Change blocked slowing down")
                 self.blocked = True
+
+            # TODO: ADD FEATURE Check for Traffic
+            # distance_lidar = 20
+
+            # if distance_lidar is not None and distance_lidar > 15.0:
+            #     rospy.loginfo("Lane Change is free not slowing down!")
+            #     self.curr_behavior_pub.publish(bs.lc_app_free.name)
+            #     self.blocked = False
+            # else:
+            #     rospy.loginfo("Lane Change blocked slowing down")
+            #     self.blocked = True
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -248,7 +259,6 @@ class Approach(py_trees.behaviour.Behaviour):
             "  %s [Foo::terminate().terminate()][%s->%s]"
             % (self.name, self.status, new_status)
         )
-        rospy.logerror("debug Lane change!!!!!!!!!!!!!!!!!")
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -321,15 +331,32 @@ class Wait(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.SUCCESS
 
         # TODO: ADD FEATURE Check for Traffic
-        distance_lidar = 20
+        # distance_lidar = 20
+
+        # change_clear = False
+        # if distance_lidar is not None:
+        #     # if distance smaller than 15m, change is blocked
+        #     if distance_lidar < 15.0:
+        #         change_clear = False
+        #     else:
+        #         change_clear = True
+
+        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        map = Map.from_ros_msg(map_data)
+        # checks if the left lane of the car is free,
+        # otherwise pause lane change
+        tree = map.build_tree(mapping_common.map.lane_free_filter())
 
         change_clear = False
-        if distance_lidar is not None:
-            # if distance smaller than 15m, change is blocked
-            if distance_lidar < 15.0:
-                change_clear = False
-            else:
-                change_clear = True
+        if map.entities and tree.is_lane_free(
+            right_lane=False, lane_length=22.5, lane_transform=-5.0
+        ):
+            # rospy.loginfo("WAIT: Lane Change is free!")
+            change_clear = True
+        else:
+            # rospy.loginfo("Lane Change blocked slowing down")
+            change_clear = False
+
         if not change_clear:
             rospy.loginfo("Lane Change Wait: blocked")
             self.curr_behavior_pub.publish(bs.lc_wait.name)
