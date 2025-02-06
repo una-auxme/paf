@@ -152,6 +152,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.virtual_change_distance = np.inf
         self.curr_behavior_pub.publish(bs.lc_app_init.name)
         self.blocked = False
+        self.counter_lanefree = 0
 
     def update(self):
         """
@@ -192,22 +193,29 @@ class Approach(py_trees.behaviour.Behaviour):
                 right_lane=False, lane_length=22.5, lane_transform=-5.0
             ):
                 rospy.loginfo("Lane Change is free not slowing down!")
-                self.curr_behavior_pub.publish(bs.lc_app_free.name)
-                self.blocked = False
+                self.counter_lanefree += 1
+                if self.counter_lanefree > 1:
+                    self.curr_behavior_pub.publish(bs.lc_app_free.name)
+                    self.blocked = False
+                else:
+                    self.blocked = True
             else:
                 rospy.loginfo("Lane Change blocked slowing down")
                 self.blocked = True
+                self.counter_lanefree = 0
 
-            # TODO: ADD FEATURE Check for Traffic
-            # distance_lidar = 20
+        rospy.loginfo(f"Lane Change approach counter: {self.counter_lanefree}")
 
-            # if distance_lidar is not None and distance_lidar > 15.0:
-            #     rospy.loginfo("Lane Change is free not slowing down!")
-            #     self.curr_behavior_pub.publish(bs.lc_app_free.name)
-            #     self.blocked = False
-            # else:
-            #     rospy.loginfo("Lane Change blocked slowing down")
-            #     self.blocked = True
+        # TODO: ADD FEATURE Check for Traffic
+        # distance_lidar = 20
+
+        # if distance_lidar is not None and distance_lidar > 15.0:
+        #     rospy.loginfo("Lane Change is free not slowing down!")
+        #     self.curr_behavior_pub.publish(bs.lc_app_free.name)
+        #     self.blocked = False
+        # else:
+        #     rospy.loginfo("Lane Change blocked slowing down")
+        #     self.blocked = True
 
         # get speed
         speedometer = self.blackboard.get("/carla/hero/Speed")
@@ -302,6 +310,7 @@ class Wait(py_trees.behaviour.Behaviour):
         This just prints a state status message.
         """
         rospy.loginfo("Lane Change Wait")
+        self.counter_lanefree = 0
         return True
 
     def update(self):
@@ -351,11 +360,16 @@ class Wait(py_trees.behaviour.Behaviour):
         if map.entities and tree.is_lane_free(
             right_lane=False, lane_length=22.5, lane_transform=-5.0
         ):
-            # rospy.loginfo("WAIT: Lane Change is free!")
-            change_clear = True
+            self.counter_lanefree += 1
+            if self.counter_lanefree > 1:
+                # rospy.loginfo("WAIT: Lane Change is free!")
+                change_clear = True
         else:
             # rospy.loginfo("Lane Change blocked slowing down")
             change_clear = False
+            self.counter_lanefree = 0
+
+        rospy.loginfo(f"Lane Change wait counter: {self.counter_lanefree}")
 
         if not change_clear:
             rospy.loginfo("Lane Change Wait: blocked")

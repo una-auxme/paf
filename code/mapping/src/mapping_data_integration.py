@@ -428,7 +428,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                 shape=Rectangle(
                     length=22.5,
                     width=1.5,
-                    offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
+                    offset=Transform2D.new_translation(Vector2.new(-5, 2.2)),
                 ),
                 transform=Transform2D.identity(),
                 flags=Flags(is_ignored=True),
