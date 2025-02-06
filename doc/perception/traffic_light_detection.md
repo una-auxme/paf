@@ -2,18 +2,25 @@
 
 **Summary:** This page explains how traffic lights are detected and interpreted.
 
-- [Traffic Light Detection](#traffic-light-detection)
-  - [Vision Node](#vision-node)
-  - [TrafficLightNode](#trafficlightnode)
-    - [Attributes](#attributes)
-    - [Methods](#methods)
-    - [Functions](#functions)
-    - [Usage](#usage)
-  - [Filtering of images](#filtering-of-images)
-    - [1. Vision Node](#1-vision-node)
-    - [2. Traffic Light Node](#2-traffic-light-node)
+- [Vision Node](#vision-node)
+- [TrafficLightNode](#trafficlightnode)
+  - [Attributes](#attributes)
+  - [Methods](#methods)
+  - [Functions](#functions)
+  - [Usage](#usage)
+- [Filtering of images](#filtering-of-images)
+  - [1. Vision Node](#1-vision-node)
+  - [2. Traffic Light Node](#2-traffic-light-node)
 
 ## Vision Node
+
+Every incoming image of the "Center" camera gets processed by the ultralytics model.
+Every identified object receives a framing box with its categorization class attached.
+After that we iterate over all found boxes and proceed with `process_traffic_light()` for ones, that include an ID of 9, which identifies them as traffic lights.
+The function begins by building an array of indices including only the found traffic lights. This then get formatted depending on whether only one box or multiple got submitted.
+The function continues by iterating over said indices to receive the corresponding boxes from the prediction.
+These box arrays contain the coordinates of two corners, the confidence of the prediction and the ID again.
+Some exclusion criteria get checked after that
 
 For each analyzed image, it is checked whether an object with the ID=9 (traffic light) is detected.
 If that is the case, `process_traffic_lights()` is called which applies the bounding box of the predicition to cut out the found object (e.g. traffic light).
