@@ -408,13 +408,14 @@ class MapTree:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-        # lane_coverage: float = 0.75,
+        reduce_lane: float = 1.5,
         check_method: Literal[
             "rectangle",
             "lanemarking",
             "fallback",
             # "trajectory" not implemented yet
         ] = "rectangle",
+        coverage: float = 1.0,
     ) -> int:
         """Returns if a lane left or right of our car is free.
         Right now, a rectangle shape of length lane_length placed
@@ -436,17 +437,29 @@ class MapTree:
             bool: lane is free / not free
         """
         if check_method == "rectangle":
-            return self.is_lane_free_rectangle(right_lane, lane_length, lane_transform)[
-                0
-            ]
+            return self.is_lane_free_rectangle(
+                right_lane, lane_length, lane_transform, reduce_lane, coverage
+            )[0]
         elif check_method == "lanemarking":
             return self.is_lane_free_lanemarking(
-                right_lane, lane_length, lane_transform
+                right_lane, lane_length, lane_transform, reduce_lane, coverage
             )[
                 0
             ]  # [0] to be removed when removing entity return
         elif check_method == "fallback":
-            pass
+            lane_free_lanemarking = self.is_lane_free_lanemarking(
+                right_lane, lane_length, lane_transform, reduce_lane, coverage
+            )[0]
+
+            # return value of is_lane_free_lanemarking function of value is plausible
+            if lane_free_lanemarking >= 0:
+                return lane_free_lanemarking
+            # else use is_lane_free_rectangle function as fallback
+            else:
+                return self.is_lane_free_rectangle(
+                    right_lane, lane_length, lane_transform, reduce_lane, coverage
+                )[0]
+
         # elif check_method == "trajectory": not implemented yet
 
         return -1
@@ -456,16 +469,20 @@ class MapTree:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
+        reduce_lane: float = 1.5,
+        coverage: float = 1.0,
     ) -> Tuple[int, Optional[shapely.Geometry]]:
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
+        lane_width = 3.0
+
         lane_pos = 1
         if right_lane:
             lane_pos = -1
 
         lane_box_shape = Rectangle(
             length=lane_length,
-            width=1.5,
+            width=lane_width - reduce_lane,
             offset=Transform2D.new_translation(
                 Vector2.new(lane_transform, lane_pos * 2.5)
             ),
@@ -474,13 +491,14 @@ class MapTree:
         # converts lane box Rectangle to a shapely Polygon
         lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
 
-        # creates intersection list of lane box with map entities
-        lane_box_intersection_entities = self.query(
-            geo=lane_box_shapely, predicate="intersects"
+        # get entities that are colliding with the checkbox entity
+        colliding_entities = self.get_overlapping_entities(
+            lane_box_shapely,
+            coverage,
         )
 
         # if list with lane box intersection is empty --> lane is free
-        if not lane_box_intersection_entities:
+        if not colliding_entities:
             return 1, lane_box_shapely
         return 0, lane_box_shapely
 
@@ -489,7 +507,7 @@ class MapTree:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-        consider_motion: bool = True,
+        reduce_lane: float = 1.5,
         coverage: float = 0.2,
     ) -> Tuple[int, Optional[shapely.Geometry]]:
         """checks if a lane is free by using a ckeckbox thta is placed between two lane
@@ -509,21 +527,6 @@ class MapTree:
         lane_pos = 1
         if right_lane:
             lane_pos = -1
-
-        # create dummy lane box entity for visualization. Will be removed later
-        # lane_box_shape = Rectangle(
-        #    length=lane_length,
-        #    width=1.5,
-        #    offset=Transform2D.new_translation(Vector2.new(lane_transform, 1 * 2.5)),
-        # )
-
-        # lane_box_entity = Entity(
-        #    confidence=10001.0,
-        #    priority=1.0,
-        #    shape=lane_box_shape,
-        #    transform=Transform2D.identity(),
-        #    flags=Flags(is_ignored=True),
-        # )
 
         # create y-axis line for intersection with lanemarks
         y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
@@ -578,10 +581,17 @@ class MapTree:
             lane_length,
             lane_transform,
         )
-        # get the colliding entities with the checkbox
-        colliding_entities = self.get_checkbox_collisions(
-            lane_box, coverage=coverage, account_motion=consider_motion
+
+        if not shapely.is_valid(lane_box):
+            return -1, None
+
+        # get entities that are colliding with the checkbox entity
+        # TODO: when using motion detection check here
+        colliding_entities = self.get_overlapping_entities(
+            lane_box,
+            coverage,
         )
+
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
             return 1, lane_box
@@ -691,6 +701,7 @@ class MapTree:
 
         return lane_box_shape.to_shapely()
 
+    # use motion of entities for lane check, not implemented yet as its not finished
     def get_checkbox_collisions(
         self, checkbox_shape: shapely.Geometry, coverage=0.2, account_motion=True
     ) -> List[ShapelyEntity]:
