@@ -5,18 +5,13 @@ from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Twist, TransformStamped
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
-import threading
 import numpy as np
-from transformations import euler_from_quaternion
-
-# import tf2_ros
 
 from typing import Optional
 
-from filter_management.cfg import OdometryCovarianceConfig
+from localization.cfg import OdometryCovarianceConfig
 from dynamic_reconfigure.server import Server
 
 
@@ -81,7 +76,7 @@ class OdometryNode(CompatibleNode):
         self.speed = 0.0
         self.steering_angle = 0.0
 
-    def dynamic_reconfigure_callback(self, config: "OdometryCovariance", label):
+    def dynamic_reconfigure_callback(self, config: "OdometryCovarianceConfig", label):
         self.__use_odometry_yaml_covariance = config["use_yaml_covariance_odometry"]
         self.__odometry_pose_covariance_translation = config[
             "odometry_pose_covariance_translation"

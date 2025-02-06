@@ -36,11 +36,10 @@
     <include file="$(find mapping_visualization)/launch/visualization.launch">
     </include>
 
-    <!-- filter management -->
-
+    <!-- kalman localization with robot localization package -->
     <include
-        file="$(find filter_management)/launch/filter_management.launch">
-    </include> <!-- LAUNCH MANUAL FOR NOW TO TEST DIFFERENT CONFIGURATIONS-->
+        file="$(find localization)/launch/localization.launch">
+    </include>
 
     <node type="rviz"
         name="rviz" pkg="rviz" args="-d $(find agent)/config/rviz_config.rviz" />

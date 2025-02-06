@@ -4,19 +4,19 @@
 
 
   <rosparam
-    command="load" file="$(find filter_management)/config/sensor_covariances.yaml" />
+    command="load" file="$(find localization)/config/sensor_covariances.yaml" />
 
   <node
-    pkg="filter_management" type="sensor_covariance_fusion.py" name="sensor_covariance_fusion"
+    pkg="localization" type="sensor_covariance_fusion.py" name="sensor_covariance_fusion"
     output="screen">
   </node>
 
   <rosparam
-    command="load" file="$(find filter_management)/config/odometry_covariances.yaml" />
+    command="load" file="$(find localization)/config/odometry_covariances.yaml" />
 
 
   <node
-    pkg="filter_management" type="odometry_fusion.py" name="odometry_fusion"
+    pkg="localization" type="odometry_fusion.py" name="odometry_fusion"
     output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
@@ -24,7 +24,7 @@
 
 
   <node
-    pkg="filter_management" type="current_state_publisher.py" name="current_state_publisher"
+    pkg="localization" type="current_state_publisher.py" name="current_state_publisher"
     output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
@@ -33,7 +33,7 @@
 
   <!-- robot localization -->
   <rosparam
-    command="load" file="$(find filter_management)/config/ekf_config.yaml" />
+    command="load" file="$(find localization)/config/ekf_config.yaml" />
 
   <node
     pkg="robot_localization" type="ekf_localization_node" name="ekf_local" clear_params="true">
@@ -47,7 +47,7 @@
   </node>
 
   <node
-    pkg="filter_management" type="gps_transform.py" name="gps_transformation" output="screen">
+    pkg="localization" type="gps_transform.py" name="gps_transformation" output="screen">
     <!-- substitute for navsat transform. navsat does utm we need wgs-->
   </node>
 </launch>

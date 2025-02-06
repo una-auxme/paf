@@ -10,19 +10,21 @@ sensor_covariance_fusion:
 
   imu_angular_velocity: 
     [
-      0.001, 0,    0,     
-      0,    0.001, 0,    
-      0,    0,    0.001, 
+      1.0, 0,    0,     
+      0,    1.0, 0,    
+      0,    0,    1.0, 
 
     ]
+  # 0.001, 0.001, 0.001 (From std-dev)
 
   imu_linear_acceleration: 
     [
-      0.001, 0,    0,     
-      0,    0.001, 0,    
-      0,    0,    0.015, 
+      1.0, 0,    0,     
+      0,    1.0, 0,    
+      0,    0,    1.0, 
 
     ]
+  # 0.001, 0.001, 0.0015 (From std-dev)
 
   gps_position:
     [
@@ -31,7 +33,7 @@ sensor_covariance_fusion:
       0,    0,   1.0, 
 
     ]
-# maybe now 0.5 is okay, because odometry can do a lot
+
 
 #https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py
 # attributes['noise_alt_stddev'] = str(0.000005)

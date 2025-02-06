@@ -5,14 +5,10 @@ from rospy import Publisher
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 
-
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from std_msgs.msg import Float32
-import tf2_ros
-from transformations import euler_from_quaternion
 from scipy.spatial.transform import Rotation as R
-
-from acting.helper_functions import quaternion_to_heading
+import tf2_ros
 
 
 class CurrentStatePublisher(CompatibleNode):

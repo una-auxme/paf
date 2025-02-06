@@ -5,7 +5,7 @@ from ros_compatibility.node import CompatibleNode
 from sensor_msgs.msg import Imu, NavSatFix
 
 
-from filter_management.cfg import SensorCovarianceConfig
+from localization.cfg import SensorCovarianceConfig
 from dynamic_reconfigure.server import Server
 import numpy as np
 
@@ -87,9 +87,10 @@ class ForwardIMU(CompatibleNode):
                 np.full(3, self.__imu_linear_acceleration_covariance_xy)
             ).flatten()
 
-            imu.linear_acceleration_covariance[9] = (
+            imu.linear_acceleration_covariance[8] = (
                 self.__imu_linear_acceleration_covariance_z
             )
+
         self.imu_publisher.publish(imu)
 
     def gps_callback(self, gps: NavSatFix):
