@@ -68,5 +68,5 @@ This example is from [routes_bicycle.xml](/code/routes/routes_bicycle.xml)
 To change it for your purpose you have to change the following:
 
 1. The id number at line 2
-2. The waypoints (they discribe where the agent have to go the first one is the spawnpoint of the agent) Tipp: place always only one waypoint at one road and place it on the right side of the road. To find the coordinates use this interactive [map](https://carla.readthedocs.io/en/latest/map_town12/)
+2. The waypoints (They discribe where the agent has to go. The first one is the spawnpoint of the agent) Tip: Place always only one waypoint at one road and place it on the right side of the road. To find the coordinates use this interactive [map](https://carla.readthedocs.io/en/latest/map_town12/).
 3. The scenario (You can change the scenario with one mentioned in the list) If the route is long enough you can add more than one scenario to a route.
