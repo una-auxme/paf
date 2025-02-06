@@ -394,9 +394,11 @@ class Approach(py_trees.behaviour.Behaviour):
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             rospy.loginfo(f"Overtake Approach Distance: {self.ot_distance}")
-            ot_free = tree.is_lane_free(False, self.clear_distance, 15)
+            ot_free = tree.is_lane_free(
+                False, self.clear_distance, 15, check_method="lanemarking"
+            )
             rospy.loginfo(f"Overtake is free: {ot_free}")
-            if ot_free:
+            if ot_free == 1:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
@@ -613,10 +615,12 @@ class Wait(py_trees.behaviour.Behaviour):
             return py_trees.common.Status.RUNNING
         # bicycle handling
         if obstacle_speed > 1.7 and obstacle_speed < 2.4:
-            ot_free = tree.is_lane_free(False, 15.0, -4.0)
+            ot_free = tree.is_lane_free(False, 15.0, -4.0, check_method="lanemarking")
         else:
-            ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
-        if ot_free:
+            ot_free = tree.is_lane_free(
+                False, self.clear_distance, 15.0, check_method="lanemarking"
+            )
+        if ot_free == 1:
             self.ot_counter += 1
             if self.ot_counter > 3:
                 rospy.loginfo("Overtake is free!")
