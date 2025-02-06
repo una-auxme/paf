@@ -1,7 +1,5 @@
 # Create a new route
 
-
-
 **Summary:** This page shows how to create a new route with scenarios that can be loaded later as a checkpoint or used for an automated test.
 
 - [Scenario types](#scenario-types)
