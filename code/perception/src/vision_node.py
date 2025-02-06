@@ -21,6 +21,8 @@ from perception_utils import array_to_clustered_points
 from dynamic_reconfigure.server import Server
 from perception.cfg import TrafficLightConfig
 
+from copy import deepcopy
+
 
 class VisionNode(CompatibleNode):
     """
@@ -107,6 +109,12 @@ class VisionNode(CompatibleNode):
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
+            qos_profile=1,
+        )
+
+        self.traffic_light_raw = self.new_publisher(
+            msg_type=numpy_msg(ImageMsg),
+            topic=f"/paf/{self.role_name}/Center/raw_traffic_light",
             qos_profile=1,
         )
 
@@ -386,7 +394,16 @@ class VisionNode(CompatibleNode):
         min_prob = self.MIN_PROB  # 0.30
 
         for index in indices:
+            cv_height, cv_width = cv_image.shape[:2]
+            print(f"image height: {cv_height} --- width: {cv_width}")
+
             box = prediction.boxes.cpu().data.numpy()[index]
+
+            box2 = box[0:4].astype(int)
+            segmented2 = cv_image[box2[1] : box2[3], box2[0] : box2[2]]
+            raw_image = self.bridge.cv2_to_imgmsg(segmented2, encoding="rgb8")
+            raw_image.header = deepcopy(image_header)
+            self.traffic_light_raw.publish(raw_image)
 
             if box[4] < min_prob:
                 continue
@@ -394,7 +411,7 @@ class VisionNode(CompatibleNode):
             if (box[2] - box[0]) * 1.5 > box[3] - box[1]:
                 continue  # ignore horizontal boxes
 
-            if box[1] < max_y:
+            if box[3] > max_y:
                 continue
 
             if box[0] < min_x:
@@ -403,12 +420,11 @@ class VisionNode(CompatibleNode):
             if box[2] > max_x:
                 continue
 
-            print(f"box: {box}")
             print(
                 f"compare: {box[4] < min_prob} {(box[2] - box[0]) * 1.5 > box[3] - box[1]} {box[1] < max_y} {box[0] < min_x} {box[2] > max_x}"
             )
             box = box[0:4].astype(int)
-            print(f"box nach astype(int): {box}")
+            print(box)
             segmented = cv_image[box[1] : box[3], box[0] : box[2]]
 
             traffic_light_y_distance = box[1]
