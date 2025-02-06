@@ -197,8 +197,20 @@ class Map:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
+        consider_motion: bool = True,
+        coverage: float = 0.2,
     ) -> Tuple[int, Entity]:
+        """checks if a lane is free by using a ckeckbox thta is placed between two lane markings.
+        The lane is considered free if there are no colliding entities with the checkbox.
 
+        Args:
+            right_lane (bool, optional): _description_. Defaults to False.
+            lane_length (float, optional): _description_. Defaults to 20.0.
+            lane_transform (float, optional): _description_. Defaults to 0.0.
+
+        Returns:
+            Tuple[int, Entity]: _description_
+        """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
         lane_pos = 1
@@ -253,10 +265,10 @@ class Map:
         if abs(close_rotation - further_rotation) > 0.08:  # 0.35:  # ~20°
             return -1, lane_box_entity
         
-        # create the lane box entity
-        self.create_lane_box_entity(y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform)
+        # create the lane ckeckbox entity
+        lane_box_entity = self.create_lane_box_entity(y_axis_line, lane_close_hero, lane_further_hero, lane_pos, lane_length, lane_transform)
         #get the colliding entities with the checkbox
-        colliding_entities = self.get_checkbox_collisions(lane_box_entity)
+        colliding_entities = self.get_checkbox_collisions(lane_box_entity, coverage=coverage, account_motion=consider_motion)
         #if there are colliding entities, the lane is not free
         if len(colliding_entities) is not 0:
             return 0, lane_box_entity
