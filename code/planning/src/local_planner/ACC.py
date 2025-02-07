@@ -332,10 +332,10 @@ class ACC(CompatibleNode):
             )
 
             marker_text += (
-                f"LeadDistance: {distance}\n"
-                + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
-                + f"DeltaV: {lead_delta_velocity}\n"
-                + f"RawACCSpeed: {desired_speed}\n"
+                f"LeadDistance: {distance:.3f}\n"
+                + f"LeadXVelocity: {entity.entity.get_global_x_velocity():.3f}\n"
+                + f"DeltaV: {lead_delta_velocity:.3f}\n"
+                + f"RawACCSpeed: {desired_speed:.3f}\n"
             )
 
         if self.speed_limit is None:
@@ -345,7 +345,7 @@ class ACC(CompatibleNode):
             # max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"Final ACC Speed: {desired_speed}\n"
+        marker_text += f"Final ACC Speed: {desired_speed:.3f}\n"
         text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
         text_marker.pose.position.x = -2.0
         text_marker.pose.position.y = 0.0
