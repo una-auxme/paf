@@ -195,7 +195,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             self.counter_overtake += 1
             rospy.loginfo(f"Obstacle distance: {obstacle_distance}")
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
-            if self.counter_overtake > 4:
+            if self.counter_overtake > 20:
                 self.ot_distance_pub.publish(obstacle_distance)
                 return py_trees.common.Status.SUCCESS
             self.old_obstacle_distance = obstacle_distance
