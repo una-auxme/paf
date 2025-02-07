@@ -378,22 +378,22 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        if (
-            hero_velocity < 2 and lead_distance < 2
-        ):  # approaches the leading vehicle slowly until a distance of 1 m
-            desired_speed = (lead_distance - 1) / 4
+        # if (
+        #    hero_velocity < 2 and lead_distance < 2
+        # ):  # approaches the leading vehicle slowly until a distance of 1 m
+        #    desired_speed = (lead_distance - 1) / 4
 
-        else:
-            # PI controller which chooses the desired speed
-            Kp = self.ct_Kp
-            Ki = self.ct_Ki
-            T_gap = self.ct_T_gap
-            d_min = self.ct_d_min
+        # else:
+        # PI controller which chooses the desired speed
+        Kp = self.ct_Kp
+        Ki = self.ct_Ki
+        T_gap = self.ct_T_gap
+        d_min = self.ct_d_min
 
-            desired_distance = d_min + T_gap * hero_velocity
-            delta_d = lead_distance - desired_distance
-            speed_adjustment = Ki * delta_d + Kp * delta_v
-            desired_speed = hero_velocity + speed_adjustment
+        desired_distance = d_min + T_gap * hero_velocity
+        delta_d = lead_distance - desired_distance
+        speed_adjustment = Ki * delta_d + Kp * delta_v
+        desired_speed = hero_velocity + speed_adjustment
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
