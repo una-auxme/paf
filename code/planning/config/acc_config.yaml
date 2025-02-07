@@ -5,4 +5,4 @@ sg_d_min: 3
 ct_Kp: 0.5
 ct_Ki: 1.2
 ct_T_gap: 1.9
-ct_d_min: 1
+ct_d_min: 1.6
