@@ -51,7 +51,7 @@ def bounding_box(
 def remove_field_name(a, name):
     """Removes a column from a structured numpy array
 
-    :param a: structured numoy array
+    :param a: structured numpy array
     :param name: name of the column to remove
     :return: structured numpy array without column
     """

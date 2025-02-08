@@ -120,5 +120,9 @@
     <param name="line_width" value="0.5"/>
     <!--lanemarking width-->
   </node>
+  
+  <node pkg="perception" type="opencv_lane_detection.py" name="LaneDetection" output="screen">
+  </node>
 
 </launch>
+
