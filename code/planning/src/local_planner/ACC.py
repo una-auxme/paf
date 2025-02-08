@@ -6,7 +6,7 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Bool, Float32, Float32MultiArray
+from std_msgs.msg import Bool, Float32, Float32MultiArray, String
 from visualization_msgs.msg import Marker, MarkerArray
 from typing import Optional
 from typing import List
@@ -45,6 +45,7 @@ class ACC(CompatibleNode):
     __current_wp_index: int = 0
     __current_heading: Optional[float] = None
     speed_limit: Optional[float] = None  # m/s
+    __curr_behavior: Optional[str] = None
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -112,6 +113,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get current behavior
+        self.curr_behavior_sub: Subscriber = self.new_subscription(
+            String,
+            f"/paf/{self.role_name}/curr_behavior",
+            self.__set_curr_behavior,
+            qos_profile=1,
+        )
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
@@ -176,7 +185,7 @@ class ACC(CompatibleNode):
         self.__unstuck_distance = data.data
 
     def __get_heading(self, data: Float32):
-        """Recieve current heading
+        """Receive current heading
 
         Args:
             data (Float32): Current heading
@@ -192,12 +201,20 @@ class ACC(CompatibleNode):
         self.trajectory_global = data
 
     def __set_trajectory(self, data: Path):
-        """Recieve trajectory from motion planner
+        """Receive trajectory from motion planner
 
         Args:
             data (Path): Trajectory path
         """
         self.trajectory = data
+
+    def __set_curr_behavior(self, data: String):
+        """Receive the current behavior of the vehicle.
+
+        Args:
+            data (String): Current behavior
+        """
+        self.__curr_behavior = data.data
 
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
         """Recieve speed limits from OpenDrive via global planner
@@ -345,7 +362,7 @@ class ACC(CompatibleNode):
             # max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"Final ACC Speed: {desired_speed:.3f}\n"
+        marker_text += f"FinalACCSpeed: {desired_speed:.3f}\n"
         text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
         text_marker.pose.position.x = -2.0
         text_marker.pose.position.y = 0.0
@@ -378,22 +395,30 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        # if (
-        #    hero_velocity < 2 and lead_distance < 2
-        # ):  # approaches the leading vehicle slowly until a distance of 1 m
-        #    desired_speed = (lead_distance - 1) / 4
-
-        # else:
-        # PI controller which chooses the desired speed
-        Kp = self.ct_Kp
-        Ki = self.ct_Ki
-        T_gap = self.ct_T_gap
         d_min = self.ct_d_min
 
-        desired_distance = d_min + T_gap * hero_velocity
-        delta_d = lead_distance - desired_distance
-        speed_adjustment = Ki * delta_d + Kp * delta_v
-        desired_speed = hero_velocity + speed_adjustment
+        # if we want to overtake, we need to keep some distance to the obstacle
+        if self.__curr_behavior == "ot_wait_stopped":
+            desired_speed = 0.0
+            return desired_speed
+
+        if hero_velocity < 2 and lead_distance < (
+            d_min + 2
+        ):  # approaches the leading vehicle slowly until a distance of d_min
+
+            desired_speed = (lead_distance - d_min) / 4
+
+        else:
+            # PI controller which chooses the desired speed
+            Kp = self.ct_Kp
+            Ki = self.ct_Ki
+            T_gap = self.ct_T_gap
+            d_min = self.ct_d_min
+
+            desired_distance = d_min + T_gap * hero_velocity
+            delta_d = lead_distance - desired_distance
+            speed_adjustment = Ki * delta_d + Kp * delta_v
+            desired_speed = hero_velocity + speed_adjustment
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
