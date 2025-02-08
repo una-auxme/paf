@@ -16,7 +16,7 @@ TARGET_DISTANCE_TO_STOP = 5
 TARGET_DISTANCE_TO_STOP_OVERTAKE = 7
 # Number of waypoints to be used for the overtaking maneuver
 NUM_WAYPOINTS = 8
-NUM_WAYPOINTS_BICYCLE = 17
+NUM_WAYPOINTS_BICYCLE = 20
 # Earth radius in meters for location_to_GPS
 EARTH_RADIUS_EQUA = 6378137.0
 
