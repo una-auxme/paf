@@ -8,7 +8,6 @@ import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from perception.msg import TrafficLightState
-from std_msgs.msg import Int16
 from cv_bridge import CvBridge
 from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (  # noqa: E501
     TrafficLightInference,
@@ -59,7 +58,10 @@ class TrafficLightNode(CompatibleNode):
         )
 
     def auto_invalidate_state(self):
-        """sets the traffic light state to 0 when no new images where received during the last 2 seconds"""
+        """
+        sets the traffic light state to 0 when no new images where received
+        during the last 2 seconds
+        """
         while True:
             sleep(1)
 
