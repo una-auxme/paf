@@ -521,9 +521,9 @@ class MapTree:
         )
         lane_mask = shapely.union_all([lane_box_shapely, lane_box_shape_tilted_shapely])
         # creates intersection list of lane box with map entities
-        lane_box_intersection_entities = self.query(
-            geo=lane_mask, predicate="intersects"
-        )
+        lane_box_intersection_entities = self.query(geo=lane_mask)
+        if not lane_box_intersection_entities:
+            return True
         for entity in lane_box_intersection_entities:
             if entity.entity.motion:
                 rospy.loginfo(
@@ -531,9 +531,7 @@ class MapTree:
                 )
             else:
                 rospy.loginfo("Lane box entity has no motion")
-        # if list with lane box intersection is empty --> lane is free
-        # if not lane_box_intersection_entities:
-        #   return True
+
         enities_with_motion = [
             entity
             for entity in lane_box_intersection_entities
@@ -545,7 +543,7 @@ class MapTree:
             rospy.loginfo(f"Entity motion: {entity.entity.motion.linear_motion.x()}")
             delta_v = hero.get_delta_forward_velocity_of(entity.entity)
             rospy.loginfo(f"Entity delta forward: {delta_v}")
-        # if all entities drive forward (away from us) the lane can be considered free
+        # if all entities drive forward (away from us) or don't move the lane can be considered free
         return all(
             hero.get_delta_forward_velocity_of(entity.entity) > -0.5
             for entity in enities_with_motion

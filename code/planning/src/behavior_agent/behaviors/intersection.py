@@ -390,7 +390,7 @@ class Wait(py_trees.behaviour.Behaviour):
         trajectory_point = trajectory.poses[int(current_wp) + 10].pose.position
         self.stop_sign_detected = False
         self.stop_distance = np.inf
-        self.oncoming_distance = 48.0
+        self.oncoming_distance = 45.0
 
         # Update stopline Info
         _dis = self.blackboard.get("/paf/hero/waypoint_distance")
@@ -546,18 +546,22 @@ class Wait(py_trees.behaviour.Behaviour):
         ):
             self.curr_behavior_pub.publish(bs.int_wait.name)
             intersection_clear = tree.is_lane_free_int(
-                hero, False, self.oncoming_distance, 30.0, 0.0
+                hero, False, self.oncoming_distance, 35.0, 0.0
             )
-            if intersection_clear:
+            if intersection_clear == 2:
                 self.oncoming_counter += 1
                 rospy.loginfo(
                     f"Intersection wait oncoming counter: {self.oncoming_counter}"
                 )
-                if self.oncoming_counter > 1:
+                #  with a higher tick rate or faster corner driving this should be increased
+                if self.oncoming_counter > 2:
                     self.curr_behavior_pub.publish(bs.int_enter.name)
                     return py_trees.common.Status.SUCCESS
                 else:
                     return py_trees.common.Status.RUNNING
+            elif intersection_clear == 1:
+                rospy.loginfo("Intersection oncoming fully clear proceed!")
+                return py_trees.common.Status.SUCCESS
             else:
                 self.oncoming_counter = 0
                 rospy.loginfo("Intersection Wait oncoming is blocked!")
