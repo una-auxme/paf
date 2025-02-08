@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+
+"""
+Carla publishes the IMU and GPS Data without covariances.
+
+We have to decide on clever values and add them to the data.
+This node reads a param file (sensor_covariances.yaml) and listens to topics.
+
+When a message is received the covariance is added and the data is sent out again.
+"""
+
 import rospy
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -10,7 +20,7 @@ from dynamic_reconfigure.server import Server
 import numpy as np
 
 
-class ForwardIMU(CompatibleNode):
+class SensorCovarianceFusion(CompatibleNode):
 
     def __init__(self):
         """
@@ -29,6 +39,7 @@ class ForwardIMU(CompatibleNode):
         self.__imu_linear_acceleration_covariance_z: float
         Server(SensorCovarianceConfig, self.dynamic_reconfigure_callback)
 
+        # The publishers (topic names have to coincide with ekf_config.yaml)
         self.imu_publisher = self.new_publisher(Imu, "/imu/data", qos_profile=10)
         self.gps_publisher = self.new_publisher(NavSatFix, "/gps/fix", qos_profile=10)
 
@@ -40,8 +51,8 @@ class ForwardIMU(CompatibleNode):
             qos_profile=1,
         )
 
-        # Initialize the subscriber for the IMU data
-        self.imu_subscriber = self.new_subscription(
+        # Initialize the subscriber for the Gps data
+        self.gps_subscriber = self.new_subscription(
             NavSatFix,
             "/carla/hero/GPS",
             self.gps_callback,
@@ -66,6 +77,11 @@ class ForwardIMU(CompatibleNode):
         return config
 
     def imu_callback(self, imu: Imu):
+        """An IMU message is received.
+
+        Adds covariances and sends out again.
+        """
+
         if self.__use_imu_yaml_covariance:
             imu.orientation_covariance = rospy.get_param("~imu_orientation")
             imu.angular_velocity_covariance = rospy.get_param("~imu_angular_velocity")
@@ -92,6 +108,10 @@ class ForwardIMU(CompatibleNode):
         self.imu_publisher.publish(imu)
 
     def gps_callback(self, gps: NavSatFix):
+        """GPS data is received.
+
+        Add covariances and sent out again.
+        """
         if self.__use_gps_yaml_covariance:
             gps.position_covariance = rospy.get_param("~gps_position")
         else:
@@ -106,7 +126,7 @@ def main(args=None):
     roscomp.init("sensor_covariance_fusion", args=args)
 
     try:
-        node = ForwardIMU()
+        node = SensorCovarianceFusion()
         node.spin()
     except KeyboardInterrupt:
         pass

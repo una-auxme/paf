@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
 """
-This node publishes all relevant topics for the ekf node.
+######### !!!!!!!!!! WARNING !!!!!!!!!!!!!!! ##########
+
+This Node is currently not in use and in a non functional state.
+Do not use this node unless you know what to do and how to use it.
+
+######### !!!!!!!!!! WARNING !!!!!!!!!!!!!!! ##########
 """
 import os
 import math

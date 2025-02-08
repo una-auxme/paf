@@ -36,8 +36,8 @@ class OdometryNode(CompatibleNode):
         self.initialized: bool = False
 
         # Input buffer
-        self.speed: float = 0.0
-        self.steering_angle: float = 0.0
+        self.speed: float = 0.0  # Speed in meters/second
+        self.steering_angle: float = 0.0  # Steering angle in radians
 
         # ROS Publishers and Subscribers
         self.odom_pub = self.new_publisher(Odometry, "/wheel/odometry", qos_profile=1)
@@ -71,52 +71,76 @@ class OdometryNode(CompatibleNode):
         ]
         return config
 
-    def speed_callback(self, msg):
+    def speed_callback(self, msg: CarlaSpeedometer):
+        """Saves carlas reported speed in a buffer.
+
+        Callback to carlas /Speed topic.
+
+        Args:
+            msg (CarlaSpeedometer): The Carla Speed message.
+        """
         self.speed = msg.speed
 
         self.speed_init = True
         if self.steer_ang_init:
             self.initialized = True
 
-    def steering_callback(self, msg):
-        # msg.steer: # [-1.0, 1.0]
-        self.steering_angle = self.max_steering_angle * msg.steer
+    def steering_callback(self, msg: CarlaEgoVehicleControl):
+        """Saves the steering angle we sent to carla in a buffer.
+
+        The steering input is in the field .steer of the message.
+        It is in the range between [-1.0, 1.0].
+        We have to know our vehicle in order to calculate the true angle.
+
+        Args:
+            msg (CarlaEgoVehicleControl): The vehicle info message we receive.
+        """
+        #
+        self.steering_angle = MAX_STEERING_ANGLE_MKZ_2020 * msg.steer
 
         self.steer_ang_init = True
         if self.speed_init:
             self.initialized = True
 
     def publish_odometry(self):
+        """Calculate and publish odometry data from our buffered values.
+
+        This gets called with our loop rate.
+        It uses the buffered messages, calculates the odometry and publishes
+        this data to our output topic.
+        """
+
         dt = self.loop_rate
-        v = self.speed
+        velocity = self.speed
+        steering_angle = self.steering_angle
 
         # Calculate the change in orientation omega
         # based on velocity and turning radius
         if self.steering_angle != 0:
-            turning_radius = -self.wheelbase / math.tan(self.steering_angle)
+            turning_radius = -WHEELBASE_MKZ_2020 / math.tan(steering_angle)
             # neg sign because of ros conversion
         else:
             turning_radius = math.inf
-        omega = v / turning_radius * dt
+        omega = velocity / turning_radius * dt
 
         # Calculate hero based velocities
-        vx = v * math.cos(omega)
-        vy = v * math.sin(omega)
+        vx = velocity * math.cos(omega)
+        vy = velocity * math.sin(omega)
 
         # Create Odometry message from calculated data.
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
         odom.header.frame_id = "odom"
-        odom.child_frame_id = "hero"
+        odom.child_frame_id = self.role_name
         odom.pose.pose.position.z = 0.0
 
-        # These are disabled in ekf_config.yaml
+        # The pose message is disabled in ekf_config.yaml
         if self.__use_odometry_yaml_covariance:
             odom.pose.covariance = rospy.get_param("~pose_covariance")
         else:
             pass
 
-        # Velocity
+        # The velocity (twist) must be set. (Angular x, y are also disabled.)
         odom.twist.twist.linear.x = vx
         odom.twist.twist.linear.y = vy
         odom.twist.twist.linear.z = 0
