@@ -38,6 +38,7 @@ class TrafficLightNode(CompatibleNode):
         self.setup_traffic_light_publishers()
 
     def setup_camera_subscriptions(self):
+        """receives images and runs handel_camera_image"""
         self.new_subscription(
             msg_type=numpy_msg(ImageMsg),
             callback=self.handle_camera_image,
@@ -46,29 +47,19 @@ class TrafficLightNode(CompatibleNode):
         )
 
     def setup_traffic_light_publishers(self):
+        # publishes current state of traffic light
         self.traffic_light_publisher = self.new_publisher(
             msg_type=TrafficLightState,
             topic=f"/paf/{self.role_name}/{self.side}/traffic_light_state",
             qos_profile=1,
         )
-
-        self.traffic_light_distance_publisher = self.new_publisher(
-            msg_type=Int16,
-            topic=f"/paf/{self.role_name}/{self.side}" + "/traffic_light_y_distance",
-            qos_profile=1,
-        )
-
+        # publishes a debug visualization of the current state
         self.marker_pub = rospy.Publisher(
             "/paf/hero/TrafficLight/state/debug_marker", Marker, queue_size=10
         )
 
-        self.traffic_light_masked = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
-            topic=f"/paf/{self.role_name}/Center/masked_traffic_light",
-            qos_profile=1,
-        )
-
     def auto_invalidate_state(self):
+        """sets the traffic light state to 0 when no new images where received during the last 2 seconds"""
         while True:
             sleep(1)
 
@@ -81,14 +72,13 @@ class TrafficLightNode(CompatibleNode):
                 self.traffic_light_publisher.publish(msg)
                 if self.visual_debug:
                     traffic_light_visualization(self, msg.state)
-                self.traffic_light_distance_publisher.publish(Int16(0))
                 self.last_info_time = None
 
     def handle_camera_image(self, image):
-        distance = int(image.header.frame_id)
-
+        # calculates the current state of the traffic light
         cv2_image = self.bridge.imgmsg_to_cv2(image)
         rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+        # apply a NN on the image to determine state
         result, data = self.classifier(cv2_image)
 
         if (
@@ -98,14 +88,11 @@ class TrafficLightNode(CompatibleNode):
             or data[0][3] > 1e-10
         ):
             return  # too uncertain, may not be a traffic light
-
-        if not is_front(self, rgb_image):
+        # checks if the traffic light has correct orientation
+        if not is_front(rgb_image):
             return  # not a front facing traffic light
 
-        # mask_image = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-        traffic_light_image = self.bridge.cv2_to_imgmsg(rgb_image, encoding="rgb8")
-        self.traffic_light_masked.publish(traffic_light_image)
-
+        # current state gets published until a new state is received
         state = result if result in [1, 2, 4] else 0
         if self.last_state == state:
             # 1: Green, 2: Red, 4: Yellow, 0: Unknown
@@ -114,10 +101,6 @@ class TrafficLightNode(CompatibleNode):
             if self.visual_debug:
                 traffic_light_visualization(self, state)
             self.traffic_light_publisher.publish(msg)
-
-            if distance is not None:
-                # https://photo.stackexchange.com/questions/12434/how-do-i-calculate-the-distance-of-an-object-in-a-photo
-                self.traffic_light_distance_publisher.publish(Int16(distance))
         else:
             self.last_state = state
 
@@ -130,7 +113,7 @@ class TrafficLightNode(CompatibleNode):
 
 
 def traffic_light_visualization(self, state):
-    print("i want to publish")
+    # pulishes a debug visualization of the current state
     text_marker = Marker()
     text_marker.header.frame_id = "hero"
     text_marker.header.stamp = rospy.Time.now()
@@ -190,7 +173,7 @@ def get_light_mask(image):
     return mask
 
 
-def is_front(self, image):
+def is_front(image):
     mask = get_light_mask(image)
 
     # Find contours in the thresholded image, use only the largest one

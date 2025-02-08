@@ -398,12 +398,6 @@ class VisionNode(CompatibleNode):
 
             box = prediction.boxes.cpu().data.numpy()[index]
 
-            box2 = box[0:4].astype(int)
-            segmented2 = cv_image[box2[1] : box2[3], box2[0] : box2[2]]
-            raw_image = self.bridge.cv2_to_imgmsg(segmented2, encoding="rgb8")
-            raw_image.header = deepcopy(image_header)
-            self.traffic_light_raw.publish(raw_image)
-
             if box[4] < min_prob:
                 continue
 
@@ -422,11 +416,8 @@ class VisionNode(CompatibleNode):
             box = box[0:4].astype(int)
             segmented = cv_image[box[1] : box[3], box[0] : box[2]]
 
-            traffic_light_y_distance = box[1]
-
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
-            traffic_light_image.header.frame_id = str(traffic_light_y_distance)
             self.traffic_light_publisher.publish(traffic_light_image)
 
     def run(self):
