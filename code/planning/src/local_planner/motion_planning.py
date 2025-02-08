@@ -16,10 +16,17 @@ from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from scipy.spatial.transform import Rotation
 from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
-from utils import NUM_WAYPOINTS, TARGET_DISTANCE_TO_STOP, convert_to_ms, spawn_car
+from utils import (
+    NUM_WAYPOINTS,
+    TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_OVERTAKE,
+    convert_to_ms,
+    spawn_car,
+    convert_pose_to_array,
+)
 
 sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
-from behaviours import behavior_speed as bs  # type: ignore # noqa: E402
+from behaviors import behavior_speed as bs  # type: ignore # noqa: E402
 
 # from scipy.spatial._kdtree import KDTree
 
@@ -41,6 +48,7 @@ class MotionPlanning(CompatibleNode):
 
         # TODO: add type hints
         self.target_speed = 0.0
+        self.target_velocity_selector = "not selected"
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
@@ -106,6 +114,12 @@ class MotionPlanning(CompatibleNode):
             self.__set_curr_behavior,
             qos_profile=1,
         )
+        self.ot_distance_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/overtake_distance",
+            self.__set_ot_distance,
+            qos_profile=1,
+        )
         self.emergency_sub: Subscriber = self.new_subscription(
             Bool,
             f"/paf/{self.role_name}/unchecked_emergency",
@@ -160,6 +174,10 @@ class MotionPlanning(CompatibleNode):
         )
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/target_velocity", qos_profile=1
+        )
+
+        self.velocity_selector_pub: Publisher = self.new_publisher(
+            String, f"/paf/{self.role_name}/target_velocity_selector", qos_profile=1
         )
 
         # TODO move up to subscribers
@@ -262,7 +280,10 @@ class MotionPlanning(CompatibleNode):
         Returns:
             None: The method updates the self.trajectory attribute with the new path.
         """
+        # add buffer to overtake distance so fully avoid obstacle
         currentwp = self.current_wp
+        if currentwp is None:
+            return
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
         if unstuck:
@@ -272,11 +293,12 @@ class MotionPlanning(CompatibleNode):
         else:
             selection = pose_list[
                 int(currentwp)
-                + int(distance / 2) : int(currentwp)
+                + min(2, int(distance / 2)) : int(currentwp)
                 + int(distance)
                 + NUM_WAYPOINTS
+                + 2
             ]
-        waypoints = self.convert_pose_to_array(selection)
+        waypoints = convert_pose_to_array(selection)
 
         if unstuck is True:
             offset = np.array([unstuck_x_offset, 0, 0])
@@ -312,9 +334,9 @@ class MotionPlanning(CompatibleNode):
             )
         else:
             path.poses = (
-                pose_list[: int(currentwp) + int(distance / 2)]
+                pose_list[: int(currentwp) + min(2, int(distance / 2))]
                 + result
-                + pose_list[int(currentwp + distance + NUM_WAYPOINTS) :]
+                + pose_list[int(currentwp + distance + NUM_WAYPOINTS + 2) :]
             )
 
         self.trajectory = path
@@ -343,7 +365,7 @@ class MotionPlanning(CompatibleNode):
             list: A list of lists, where each sublist contains 2D points that form a
                 corner.
         """
-        coords = self.convert_pose_to_array(np.array(self.trajectory.poses))
+        coords = convert_pose_to_array(np.array(self.trajectory.poses))
 
         # TODO: refactor by using numpy functions
         x_values = np.array([point[0] for point in coords])
@@ -444,23 +466,6 @@ class MotionPlanning(CompatibleNode):
         else:
             return self.__get_speed_cruise()
 
-    @staticmethod
-    def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
-        """Convert an array of PoseStamped objects to a numpy array of positions.
-
-        Args:
-            poses (np.ndarray): Array of PoseStamped objects.
-
-        Returns:
-            np.ndarray: Numpy array of shape (n, 2) containing the x and y positions.
-        """
-        result_array = np.empty((len(poses), 2))
-        for pose in range(len(poses)):
-            result_array[pose] = np.array(
-                [poses[pose].pose.position.x, poses[pose].pose.position.y]
-            )
-        return result_array
-
     def __check_emergency(self, data: Bool):
         """If an emergency stop is needed first check if we are
         in parking behavior. If we are ignore the emergency stop.
@@ -478,15 +483,22 @@ class MotionPlanning(CompatibleNode):
         Updates the target velocity based on the current behavior and ACC velocity and
         overtake status and publishes it. The unit of the velocity is m/s.
         """
-
         be_speed = self.get_speed_by_behavior(behavior)
         if behavior == bs.parking.name or self.__overtake_status == 1:
             self.target_speed = be_speed
         else:
             corner_speed = self.get_cornering_speed()
             self.target_speed = min(be_speed, acc_speed, corner_speed)
+            if self.target_speed == acc_speed:
+                self.target_velocity_selector = "acc_speed"
+                # be speed is sometimes equals acc speed (in case of cruise behaviour)
+            elif self.target_speed == be_speed:
+                self.target_velocity_selector = "be_speed"
+            elif self.target_speed == corner_speed:
+                self.target_velocity_selector = "corner_speed"
         # self.target_speed = min(self.target_speed, 8)
         self.velocity_pub.publish(self.target_speed)
+        self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
         # self.speed_list.append(self.target_speed)
 
@@ -500,11 +512,11 @@ class MotionPlanning(CompatibleNode):
         """
         self.__curr_behavior = data.data
         if data.data == bs.ot_enter_init.name:
-            if np.isinf(self.__collision_point):
+            if np.isinf(self.__ot_distance):
                 self.__overtake_status = -1
                 self.overtake_success_pub.publish(self.__overtake_status)
                 return
-            self.change_trajectory(self.__collision_point)
+            self.change_trajectory(self.__ot_distance)
 
     def __set_stopline(self, data: Waypoint) -> float:
         if data is not None:
@@ -517,6 +529,10 @@ class MotionPlanning(CompatibleNode):
     def __set_collision_point(self, data: Float32MultiArray):
         if data.data is not None:
             self.__collision_point = data.data[0]
+
+    def __set_ot_distance(self, data: Float32):
+        if data is not None:
+            self.__ot_distance = data.data
 
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
@@ -658,9 +674,9 @@ class MotionPlanning(CompatibleNode):
 
     def __calc_speed_to_stop_overtake(self) -> float:
         stopline = self.__calc_virtual_overtake()
-        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
-        if stopline < TARGET_DISTANCE_TO_STOP:
-            v_stop = 0.0
+        v_stop = min(convert_to_ms(9.0), convert_to_ms(stopline / 1.4))
+        if stopline < TARGET_DISTANCE_TO_STOP_OVERTAKE:
+            v_stop = 2.5
 
         return v_stop
 
@@ -683,8 +699,8 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_overtake(self) -> float:
-        if (self.__collision_point is not None) and self.__collision_point != np.inf:
-            return self.__collision_point
+        if (self.__ot_distance is not None) and self.__ot_distance != np.inf:
+            return self.__ot_distance - 2.5
         else:
             return 0.0
 
@@ -705,6 +721,7 @@ class MotionPlanning(CompatibleNode):
                 self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
+                self.velocity_selector_pub.publish("not selected")
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()
