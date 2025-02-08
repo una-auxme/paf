@@ -18,7 +18,7 @@ from ultralytics.utils.ops import scale_masks
 from mapping.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
 from dynamic_reconfigure.server import Server
-from perception.cfg import VisionConfig
+from perception.cfg import TrafficLightConfig
 
 
 class VisionNode(CompatibleNode):
@@ -37,11 +37,11 @@ class VisionNode(CompatibleNode):
 
         # dictionary of pretrained models
         self.model_dict = {
-            "yolov8x-seg": (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
-            "yolo11n-seg": (YOLO, "yolo11n-seg.pt", "segmentation", "ultralytics"),
-            "yolo11s-seg": (YOLO, "yolo11s-seg.pt", "segmentation", "ultralytics"),
+            # "yolov8x-seg": (YOLO, "yolov8x-seg.pt", "segmentation", "ultralytics"),
+            # "yolo11n-seg": (YOLO, "yolo11n-seg.pt", "segmentation", "ultralytics"),
+            # "yolo11s-seg": (YOLO, "yolo11s-seg.pt", "segmentation", "ultralytics"),
             "yolo11m-seg": (YOLO, "yolo11m-seg.pt", "segmentation", "ultralytics"),
-            "yolo11l-seg": (YOLO, "yolo11l-seg.pt", "segmentation", "ultralytics"),
+            # "yolo11l-seg": (YOLO, "yolo11l-seg.pt", "segmentation", "ultralytics"),
         }
 
         # general setup
@@ -61,9 +61,9 @@ class VisionNode(CompatibleNode):
         self.MAX_X: int
         self.MAX_Y: int
         self.MIN_PROB: float
-        Server(VisionConfig, self.dynamic_reconfigure_callback)
+        Server(TrafficLightConfig, self.dynamic_reconfigure_callback)
 
-    def dynamic_reconfigure_callback(self, config: "VisionConfig", level):
+    def dynamic_reconfigure_callback(self, config: "TrafficLightConfig", level):
         # sets the defined variables dynamically
         self.MIN_X = config["min_x"]
         self.MAX_X = config["max_x"]
