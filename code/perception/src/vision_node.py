@@ -17,11 +17,8 @@ import rospy
 from ultralytics.utils.ops import scale_masks
 from mapping.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
-
 from dynamic_reconfigure.server import Server
-from perception.cfg import TrafficLightConfig
-
-from copy import deepcopy
+from perception.cfg import VisionConfig
 
 
 class VisionNode(CompatibleNode):
@@ -64,14 +61,14 @@ class VisionNode(CompatibleNode):
         self.MAX_X: int
         self.MAX_Y: int
         self.MIN_PROB: float
-        Server(TrafficLightConfig, self.dynamic_reconfigure_callback)
+        Server(VisionConfig, self.dynamic_reconfigure_callback)
 
-    def dynamic_reconfigure_callback(self, config: "TrafficLightConfig", level):
+    def dynamic_reconfigure_callback(self, config: "VisionConfig", level):
+        # sets the defined variables dynamically
         self.MIN_X = config["min_x"]
         self.MAX_X = config["max_x"]
         self.MAX_Y = config["max_y"]
         self.MIN_PROB = config["min_prob"]
-
         return config
 
     def setup_subscriber(self):
@@ -109,12 +106,6 @@ class VisionNode(CompatibleNode):
         self.traffic_light_publisher = self.new_publisher(
             msg_type=numpy_msg(ImageMsg),
             topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
-            qos_profile=1,
-        )
-
-        self.traffic_light_raw = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
-            topic=f"/paf/{self.role_name}/Center/raw_traffic_light",
             qos_profile=1,
         )
 
@@ -385,19 +376,24 @@ class VisionNode(CompatibleNode):
         )
 
     def process_traffic_lights(self, prediction, cv_image, image_header):
+        # calculates, if a detected traffic light is plausible
+        # gathers the indices of the bounding boxes of possible traffic lights
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
+        # set the dynamic values
         min_x = self.MIN_X
         max_x = self.MAX_X
         max_y = self.MAX_Y  # 360  # middle of image
         min_prob = self.MIN_PROB  # 0.30
 
+        # calculate on every bounding box
         for index in indices:
+            # get size of the original image
             cv_height, cv_width = cv_image.shape[:2]
-
+            # get the values of the current bounding box
             box = prediction.boxes.cpu().data.numpy()[index]
-
+            # calculate values about plausability
             if box[4] < min_prob:
                 continue
 
@@ -414,10 +410,12 @@ class VisionNode(CompatibleNode):
                 continue
 
             box = box[0:4].astype(int)
+            # crop image
             segmented = cv_image[box[1] : box[3], box[0] : box[2]]
 
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
+            # publish cropped traffic light image to the topic
             self.traffic_light_publisher.publish(traffic_light_image)
 
     def run(self):

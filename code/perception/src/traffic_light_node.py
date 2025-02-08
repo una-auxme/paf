@@ -30,7 +30,7 @@ class TrafficLightNode(CompatibleNode):
         self.classifier = TrafficLightInference(self.get_param("model", ""))
         self.last_info_time: datetime = None
         self.last_state = None
-        self.visual_debug = True
+        self.visual_debug = self.get_param("tfs_debug", False)
         threading.Thread(target=self.auto_invalidate_state).start()
 
         # publish / subscribe setup
