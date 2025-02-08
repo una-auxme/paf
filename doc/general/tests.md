@@ -24,7 +24,7 @@ The test shouldn't take longer than 2 minutes per route (with 3 waypoints). So t
 
 **route**: A predefined way the agent has to take.
 
-**scenario**: A predefined event the agent have to overcome that is triggered by a certain waypoint in the route.
+**scenario**: A predefined event the agent has to overcome that is triggered by a certain waypoint in the route.
 
 ## Create new test route with scenario
 
