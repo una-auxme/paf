@@ -147,6 +147,7 @@ class ACC(CompatibleNode):
         self.ct_Ki: float
         self.ct_T_gap: float
         self.ct_d_min: float
+        self.acceleration_factor: float
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
         self.logdebug("ACC initialized")
@@ -165,6 +166,7 @@ class ACC(CompatibleNode):
         self.ct_Ki = config["ct_Ki"]
         self.ct_T_gap = config["ct_T_gap"]
         self.ct_d_min = config["ct_d_min"]
+        self.acceleration_factor = config["acceleration_factor"]
 
         return config
 
@@ -300,8 +302,14 @@ class ACC(CompatibleNode):
             self.__current_position.y,
             self.__current_heading,
         )
+        if (
+            self.__curr_behavior == "ot_wait_stopped"
+            or self.__curr_behavior == "ot_app_blocked"
+        ):
+            front_mask_size = 5.5
+        else:
+            front_mask_size = 7.5
 
-        front_mask_size = 7.5
         trajectory_mask = mapping_common.mask.build_trajectory_shape(
             self.trajectory,
             hero_transform,
@@ -349,10 +357,10 @@ class ACC(CompatibleNode):
             )
 
             marker_text += (
-                f"LeadDistance: {distance:.3f}\n"
-                + f"LeadXVelocity: {entity.entity.get_global_x_velocity():.3f}\n"
-                + f"DeltaV: {lead_delta_velocity:.3f}\n"
-                + f"RawACCSpeed: {desired_speed:.3f}\n"
+                f"LeadDistance: {distance}\n"
+                + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
+                + f"DeltaV: {lead_delta_velocity}\n"
+                + f"RawACCSpeed: {desired_speed}\n"
             )
 
         if self.speed_limit is None:
@@ -398,7 +406,7 @@ class ACC(CompatibleNode):
         d_min = self.ct_d_min
 
         # if we want to overtake, we need to keep some distance to the obstacle
-        if self.__curr_behavior == "ot_wait_stopped":
+        if self.__curr_behavior == "ot_wait_stopped" and delta_v < 0.4:
             desired_speed = 0.0
             return desired_speed
 
@@ -418,6 +426,9 @@ class ACC(CompatibleNode):
             desired_distance = d_min + T_gap * hero_velocity
             delta_d = lead_distance - desired_distance
             speed_adjustment = Ki * delta_d + Kp * delta_v
+            # we want to accelerate more slowly
+            if speed_adjustment > 0:
+                speed_adjustment *= self.acceleration_factor
             desired_speed = hero_velocity + speed_adjustment
 
         # desired speed should not be negative, only drive forward
