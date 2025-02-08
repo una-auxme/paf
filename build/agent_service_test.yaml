@@ -30,7 +30,7 @@ services:
       - ROS_HOSTNAME=agent
       - XDG_RUNTIME_DIR=/tmp/runtime-carla
       - DEBUG_WRAPPER_DEFAULT_HOST=0.0.0.0
-      - ROUTE=/workspace/code/routes/routes_simple.xml
+      - ROUTE=/workspace/code/routes/test.xml
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # if you change the volume here also change the copy command
