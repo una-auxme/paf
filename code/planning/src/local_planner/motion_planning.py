@@ -18,6 +18,7 @@ from scipy.spatial.transform import Rotation
 from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
 from utils import (
     NUM_WAYPOINTS,
+    NUM_WAYPOINTS_BICYCLE,
     TARGET_DISTANCE_TO_STOP,
     TARGET_DISTANCE_TO_STOP_INTERSECTION,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
@@ -74,6 +75,7 @@ class MotionPlanning(CompatibleNode):
         self.unstuck_distance = None
         self.unstuck_overtake_flag = False
         self.init_overtake_pos = None
+        self.__ot_bicycle = False
         # Subscriber
         self.test_sub = self.new_subscription(
             Float32, f"/paf/{self.role_name}/spawn_car", spawn_car, qos_profile=1
@@ -165,6 +167,13 @@ class MotionPlanning(CompatibleNode):
             Float32,
             f"/paf/{self.role_name}/unstuck_distance",
             self.__set_unstuck_distance,
+            qos_profile=1,
+        )
+
+        self.ot_bicycle_sub: Subscriber = self.new_subscription(
+            Bool,
+            f"/paf/{self.role_name}/ot_bicycle",
+            self.__set_ot_bicycle,
             qos_profile=1,
         )
 
@@ -281,7 +290,10 @@ class MotionPlanning(CompatibleNode):
         Returns:
             None: The method updates the self.trajectory attribute with the new path.
         """
-        # add buffer to overtake distance so fully avoid obstacle
+        if self.__ot_bicycle:
+            waypoints_num = NUM_WAYPOINTS_BICYCLE
+        else:
+            waypoints_num = NUM_WAYPOINTS
         currentwp = self.current_wp
         if currentwp is None:
             return
@@ -289,14 +301,14 @@ class MotionPlanning(CompatibleNode):
         unstuck_x_offset = 3  # could need adjustment with better steering
         if unstuck:
             selection = pose_list[
-                int(currentwp) - 2 : int(currentwp) + int(distance) + 2 + NUM_WAYPOINTS
+                int(currentwp) - 2 : int(currentwp) + int(distance) + 2 + waypoints_num
             ]
         else:
             selection = pose_list[
                 int(currentwp)
                 + min(2, int(distance / 2)) : int(currentwp)
                 + int(distance)
-                + NUM_WAYPOINTS
+                + waypoints_num
                 + 2
             ]
         waypoints = convert_pose_to_array(selection)
@@ -331,13 +343,13 @@ class MotionPlanning(CompatibleNode):
             path.poses = (
                 pose_list[: int(currentwp) - 2]
                 + result
-                + pose_list[int(currentwp) + int(distance) + 2 + NUM_WAYPOINTS :]
+                + pose_list[int(currentwp) + int(distance) + 2 + waypoints_num :]
             )
         else:
             path.poses = (
                 pose_list[: int(currentwp) + min(2, int(distance / 2))]
                 + result
-                + pose_list[int(currentwp + distance + NUM_WAYPOINTS + 2) :]
+                + pose_list[int(currentwp + distance + waypoints_num + 2) :]
             )
 
         self.trajectory = path
@@ -544,6 +556,10 @@ class MotionPlanning(CompatibleNode):
         if data is not None:
             self.__ot_distance = data.data
 
+    def __set_ot_bicycle(self, data: Bool):
+        if data is not None:
+            self.__ot_bicycle = data.data
+
     def get_speed_by_behavior(self, behavior: str) -> float:
         speed = 0.0
         split = "_"
@@ -647,10 +663,10 @@ class MotionPlanning(CompatibleNode):
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_app_free.name:
             speed = self.__calc_speed_to_stop_overtake()
-        elif behavior == bs.ot_wait_stopped.name:
-            speed = bs.ot_wait_stopped.speed
+        elif behavior == bs.ot_wait.name:
+            speed = bs.ot_wait.speed
         elif behavior == bs.ot_wait_free.name:
-            speed == self.__get_speed_cruise()
+            speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_init.name:
             speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_slow.name:

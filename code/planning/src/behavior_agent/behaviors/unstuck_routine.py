@@ -157,9 +157,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         wait_behaviors = [
             bs.int_wait.name,
             bs.lc_wait.name,
-            bs.ot_wait_stopped,
-            bs.int_app_init,
-            bs.int_app_to_stop,
+            bs.ot_wait.name,
+            bs.int_app_init.name,
+            bs.int_app_to_stop.name,
         ]
 
         # when no curr_behavior (before unparking lane free) or
