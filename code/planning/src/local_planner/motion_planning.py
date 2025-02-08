@@ -289,8 +289,6 @@ class MotionPlanning(CompatibleNode):
         Returns:
             None: The method updates the self.trajectory attribute with the new path.
         """
-        # add buffer to overtake distance so fully avoid obstacle
-        rospy.loginfo(f"OVERTAKE TYPE: {self.__ot_bicycle}")
         if self.__ot_bicycle:
             waypoints_num = NUM_WAYPOINTS_BICYCLE
         else:
@@ -511,8 +509,6 @@ class MotionPlanning(CompatibleNode):
             elif self.target_speed == corner_speed:
                 self.target_velocity_selector = "corner_speed"
         # self.target_speed = min(self.target_speed, 8)
-        rospy.loginfo(f"TARGET SPEED: {self.target_speed}")
-        rospy.loginfo(f"TARGET VELOCITY SELECTOR: {self.target_velocity_selector}")
         self.velocity_pub.publish(self.target_speed)
         self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
@@ -651,7 +647,6 @@ class MotionPlanning(CompatibleNode):
 
     def __get_speed_overtake(self, behavior: str) -> float:
         speed = 0.0
-        rospy.loginfo(f"{behavior}")
         if behavior == bs.ot_app_blocked.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_app_free.name:
