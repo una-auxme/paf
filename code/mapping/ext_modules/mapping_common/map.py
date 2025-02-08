@@ -15,6 +15,8 @@ import mapping_common.mask
 
 from mapping import msg
 
+import rospy
+
 
 @dataclass
 class Map:
@@ -455,6 +457,99 @@ class MapTree:
         if not lane_box_intersection_entities:
             return True
         return False
+
+    def is_lane_free_int(
+        self,
+        hero: Entity,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform_x: float = 0.0,
+        lane_transform_y: float = 0.0,
+    ) -> bool:
+        """Returns if a lane left or right of our car is free.
+        Right now, a rectangle shape of length lane_length placed
+        on the left or right side of the car with a transformation of lane_transform
+        in front or back. Checks if this rectangle lane box intersects with any
+        relevant entities.
+
+        Idea for later: using lanemark detection and if data is realiable form a
+        polygon for the lane within the detected lanes.
+
+        Parameters:
+        - right_lane (bool): If true, checks the right lane instead of the left lane
+        - lane_length (float): Sets the lane length that should be checked, in meters.
+          Default value is 20 meters.
+        - lane_transform (float): Transforms the checked lane box to the front (>0) or
+          back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+           from the car position -> same distance to the front and rear get checked
+        Returns:
+            bool: lane is free / not free
+        """
+        # checks which lane should be checked and set the multiplier for
+        # the lane entity translation(>0 = left from car)
+        lane_pos = 1
+        if right_lane:
+            lane_pos = -1
+
+        # lane length cannot be negative, as no rectangle with negative dimension exists
+        if lane_length < 0:
+            raise ValueError("Lane length cannot take a negative value.")
+
+        lane_box_shape = Rectangle(
+            length=lane_length,
+            width=11.0,
+            offset=Transform2D.new_translation(
+                Vector2.new(lane_transform_x, lane_pos * lane_transform_y)
+            ),
+        )
+        lane_box_shape_tilted = Rectangle(
+            length=(lane_length / 2.0) + 1.5,
+            width=12.0,
+            offset=Transform2D.new_rotation_translation(
+                -0.45,
+                Vector2.new(
+                    lane_transform_x + lane_length / 3.0,
+                    lane_pos * (lane_transform_y - 4.0),
+                ),
+            ),
+        )
+
+        # converts lane box Rectangle to a shapely Polygon
+        lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
+        lane_box_shape_tilted_shapely = lane_box_shape_tilted.to_shapely(
+            Transform2D.identity()
+        )
+        lane_mask = shapely.union_all([lane_box_shapely, lane_box_shape_tilted_shapely])
+        # creates intersection list of lane box with map entities
+        lane_box_intersection_entities = self.query(
+            geo=lane_mask, predicate="intersects"
+        )
+        for entity in lane_box_intersection_entities:
+            if entity.entity.motion:
+                rospy.loginfo(
+                    f"Lane box motion: {entity.entity.motion.linear_motion.x()}"
+                )
+            else:
+                rospy.loginfo("Lane box entity has no motion")
+        # if list with lane box intersection is empty --> lane is free
+        # if not lane_box_intersection_entities:
+        #   return True
+        enities_with_motion = [
+            entity
+            for entity in lane_box_intersection_entities
+            if entity.entity.motion is not None
+        ]
+        if not enities_with_motion:
+            return True
+        for entity in enities_with_motion:
+            rospy.loginfo(f"Entity motion: {entity.entity.motion.linear_motion.x()}")
+            delta_v = hero.get_delta_forward_velocity_of(entity.entity)
+            rospy.loginfo(f"Entity delta forward: {delta_v}")
+        # if all entities drive forward (away from us) the lane can be considered free
+        return all(
+            hero.get_delta_forward_velocity_of(entity.entity) > -0.5
+            for entity in enities_with_motion
+        )
 
     def get_nearest_entity(
         self,

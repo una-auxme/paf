@@ -19,6 +19,7 @@ from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
 from utils import (
     NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_INTERSECTION,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
     convert_to_ms,
     spawn_car,
@@ -437,7 +438,7 @@ class MotionPlanning(CompatibleNode):
             if dist < 8:  # lane_change
                 return 8
             elif dist < 25:
-                return 4
+                return 5.5
             elif dist < 50:
                 return 7
             else:
@@ -486,6 +487,7 @@ class MotionPlanning(CompatibleNode):
         be_speed = self.get_speed_by_behavior(behavior)
         if behavior == bs.parking.name or self.__overtake_status == 1:
             self.target_speed = be_speed
+            self.target_velocity_selector = "be_speed"
         else:
             corner_speed = self.get_cornering_speed()
             self.target_speed = min(be_speed, acc_speed, corner_speed)
@@ -497,6 +499,14 @@ class MotionPlanning(CompatibleNode):
             elif self.target_speed == corner_speed:
                 self.target_velocity_selector = "corner_speed"
         # self.target_speed = min(self.target_speed, 8)
+        if math.isinf(self.target_speed) or self.target_speed is None:
+            self.target_velocity_selector = "speed_limit"
+            if self.speed_limit:
+                self.target_speed = self.speed_limit
+            else:
+                self.target_speed = 5.0
+        rospy.loginfo(f"SPEED TARGET: {self.target_speed}")
+        rospy.loginfo(f"SPEED ORIGIN: {self.target_velocity_selector}")
         self.velocity_pub.publish(self.target_speed)
         self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
@@ -653,11 +663,11 @@ class MotionPlanning(CompatibleNode):
         return self.__acc_speed
 
     def __calc_speed_to_stop_intersection(self) -> float:
-        target_distance = TARGET_DISTANCE_TO_STOP
+        target_distance = TARGET_DISTANCE_TO_STOP_INTERSECTION
         stopline = self.__calc_virtual_stopline()
 
         # calculate speed needed for stopping
-        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 0.8))
+        v_stop = max(convert_to_ms(10), convert_to_ms(stopline / 2.0))
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
         if stopline < target_distance:
@@ -691,9 +701,9 @@ class MotionPlanning(CompatibleNode):
     def __calc_virtual_stopline(self) -> float:
         if self.__stopline[0] != np.inf and self.__stopline[1]:
             stopline = self.__stopline[0]
-            if self.traffic_light_y_distance < 250 and stopline > 10:
-                return 10
-            elif self.traffic_light_y_distance < 180 and stopline > 7:
+            # if self.traffic_light_y_distance < 250 and stopline > 10:
+            #   return stopline
+            if self.traffic_light_y_distance < 7 or stopline < 7:
                 return 0.0
             else:
                 return stopline
