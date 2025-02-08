@@ -5,4 +5,6 @@ sg_d_min: 3
 ct_Kp: 0.5
 ct_Ki: 1.2
 ct_T_gap: 1.9
-ct_d_min: 1.6
+ct_d_min: 0.7
+
+acceleration_factor: 0.1
