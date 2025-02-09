@@ -458,38 +458,32 @@ class MapTree:
             return True
         return False
 
-    def is_lane_free_int(
+    def is_lane_free_intersection(
         self,
         hero: Entity,
-        right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform_x: float = 0.0,
         lane_transform_y: float = 0.0,
     ) -> bool:
-        """Returns if a lane left or right of our car is free.
-        Right now, a rectangle shape of length lane_length placed
-        on the left or right side of the car with a transformation of lane_transform
-        in front or back. Checks if this rectangle lane box intersects with any
+        """Returns True if the opposing lane of our car is free.
+        Checks if a Polygon lane box intersects with any
         relevant entities.
 
-        Idea for later: using lanemark detection and if data is realiable form a
-        polygon for the lane within the detected lanes.
+        This is only meant to be used in intersections. Ignores entities
+        that are not moving towards the hero. Adds a tilted rectangle to the
+        collision mask to account for the hero car not standing straight.
 
         Parameters:
-        - right_lane (bool): If true, checks the right lane instead of the left lane
         - lane_length (float): Sets the lane length that should be checked, in meters.
           Default value is 20 meters.
-        - lane_transform (float): Transforms the checked lane box to the front (>0) or
+        - lane_transform_x (float): Transforms the checked lane box to the front (>0) or
           back (<0) of the car, in meters. Default is 0 meter so the lane box originates
            from the car position -> same distance to the front and rear get checked
+        - lane_transform_y (float): Transforms the checked lane box to the left(>0) or
+          right(<0)
         Returns:
             bool: lane is free / not free
         """
-        # checks which lane should be checked and set the multiplier for
-        # the lane entity translation(>0 = left from car)
-        lane_pos = 1
-        if right_lane:
-            lane_pos = -1
 
         # lane length cannot be negative, as no rectangle with negative dimension exists
         if lane_length < 0:
@@ -499,7 +493,7 @@ class MapTree:
             length=lane_length,
             width=11.0,
             offset=Transform2D.new_translation(
-                Vector2.new(lane_transform_x, lane_pos * lane_transform_y)
+                Vector2.new(lane_transform_x, lane_transform_y)
             ),
         )
         lane_box_shape_tilted = Rectangle(
@@ -509,18 +503,18 @@ class MapTree:
                 -0.45,
                 Vector2.new(
                     lane_transform_x + lane_length / 3.0,
-                    lane_pos * (lane_transform_y - 4.0),
+                    (lane_transform_y - 4.0),
                 ),
             ),
         )
 
-        # converts lane box Rectangle to a shapely Polygon
+        # converts lane boxes to a shapely Polygon
         lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
         lane_box_shape_tilted_shapely = lane_box_shape_tilted.to_shapely(
             Transform2D.identity()
         )
         lane_mask = shapely.union_all([lane_box_shapely, lane_box_shape_tilted_shapely])
-        # creates intersection list of lane box with map entities
+        # creates intersection list of lane mask with map entities
         lane_box_intersection_entities = self.query(geo=lane_mask)
         if not lane_box_intersection_entities:
             return True

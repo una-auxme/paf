@@ -450,7 +450,7 @@ class MotionPlanning(CompatibleNode):
             if dist < 8:  # lane_change
                 return 8
             elif dist < 25:
-                return 5.5
+                return 5
             elif dist < 50:
                 return 7
             else:
@@ -681,10 +681,14 @@ class MotionPlanning(CompatibleNode):
         stopline = self.__calc_virtual_stopline()
 
         # calculate speed needed for stopping
-        v_stop = max(convert_to_ms(10), convert_to_ms(stopline / 2.0))
+        v_stop = max(convert_to_ms(10.0), convert_to_ms(stopline / 1.7))
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
         if stopline < target_distance:
+            v_stop = convert_to_ms(6.0)
+        if stopline < 2.5:
+            v_stop = convert_to_ms(3.0)
+        if stopline < 1.0:
             v_stop = 0.0
         return v_stop
 
@@ -717,7 +721,7 @@ class MotionPlanning(CompatibleNode):
             stopline = self.__stopline[0]
             # if self.traffic_light_y_distance < 250 and stopline > 10:
             #   return stopline
-            if self.traffic_light_y_distance < 7 or stopline < 7:
+            if self.traffic_light_y_distance < 7:
                 return 0.0
             else:
                 return stopline

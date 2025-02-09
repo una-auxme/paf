@@ -27,7 +27,7 @@ int_app_red = Behavior("int_app_red", convert_to_ms(17.0))
 # Wait
 
 int_wait = Behavior("int_wait", 0)
-int_wait_to_stop = Behavior("int_wait_to_stop", convert_to_ms(5.0))
+int_wait_to_stop = Behavior("int_wait_to_stop", convert_to_ms(10.0))
 
 # Enter
 
