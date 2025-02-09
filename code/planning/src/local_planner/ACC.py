@@ -304,7 +304,9 @@ class ACC(CompatibleNode):
         )
         if (
             self.__curr_behavior == "ot_wait_stopped"
+            or self.__curr_behavior == "ot_wait_free"
             or self.__curr_behavior == "ot_app_blocked"
+            or self.__curr_behavior == "ot_leave"
         ):
             front_mask_size = 5.5
         else:
@@ -370,7 +372,7 @@ class ACC(CompatibleNode):
             # max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"FinalACCSpeed: {desired_speed:.3f}\n"
+        marker_text += f"FinalACCSpeed: {desired_speed}\n"
         text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
         text_marker.pose.position.x = -2.0
         text_marker.pose.position.y = 0.0
@@ -406,7 +408,11 @@ class ACC(CompatibleNode):
         d_min = self.ct_d_min
 
         # if we want to overtake, we need to keep some distance to the obstacle
-        if self.__curr_behavior == "ot_wait_stopped" and delta_v < 0.4:
+        if (
+            self.__curr_behavior == "ot_wait_free"
+            and delta_v < 2
+            and lead_distance < 6 * d_min
+        ):
             desired_speed = 0.0
             return desired_speed
 
@@ -427,7 +433,7 @@ class ACC(CompatibleNode):
             delta_d = lead_distance - desired_distance
             speed_adjustment = Ki * delta_d + Kp * delta_v
             # we want to accelerate more slowly
-            if speed_adjustment > 0:
+            if hero_velocity > 1 and speed_adjustment > 0:
                 speed_adjustment *= self.acceleration_factor
             desired_speed = hero_velocity + speed_adjustment
 
