@@ -31,7 +31,7 @@ The test shouldn't take longer than 2 minutes per route (with 3 waypoints). So t
 For creating a new route, the following must be considered:
 
 1. Create a new route in code/routes/test.xml. The routes always need a unique ID number that increments sequentially. To create a new route, refer to the documentation in [create_new_route.md](/doc/general/create_new_route.md)
-2. Create a separate .xml file that exactly reflects this route so that it can later be loaded as a checkpoint. Name the route after the scenario that will be triggered.
+2. Create a separate .xml and copy the route you created into the file, so that it can be loaded later as a checkpoint. Name the route after the scenario that will be triggered.
 3. Add the route to the map in the file doc/general/[load_checkpoints](/doc/general/load_checkpoints.md).
 4. Add route to the list in code/test/index_dict.py. The structure of the list is as follows: ID number, scenario name, time allowed to complete the route.
 
