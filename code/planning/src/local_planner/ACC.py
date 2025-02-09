@@ -159,9 +159,6 @@ class ACC(CompatibleNode):
         self.update_velocity()
 
     def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        self.sg_Ki = config["sg_Ki"]
-        self.sg_T_gap = config["sg_T_gap"]
-        self.sg_d_min = config["sg_d_min"]
         self.ct_Kp = config["ct_Kp"]
         self.ct_Ki = config["ct_Ki"]
         self.ct_T_gap = config["ct_T_gap"]
@@ -419,7 +416,6 @@ class ACC(CompatibleNode):
         if hero_velocity < 2 and lead_distance < (
             d_min + 2
         ):  # approaches the leading vehicle slowly until a distance of d_min
-
             desired_speed = (lead_distance - d_min) / 4
 
         else:
