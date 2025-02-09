@@ -12,7 +12,7 @@ import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
 import shapely
-from mapping_common.entity import FlagFilter
+from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import Marker, MarkerArray
 from behaviors import behavior_utils
 
@@ -191,7 +191,14 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.ot_marker_pub.publish(ot_marker)
 
         # increase counter when something is blocking the path
-        if obstacle_speed < 2.5 and obstacle_distance < 15:
+        if (
+            (
+                obstacle_speed > 1.7
+                and obstacle_speed < 2.5
+                and not isinstance(entity, Car)
+            )
+            or (obstacle_speed < 1.0)
+        ) and obstacle_distance < 15:
             self.counter_overtake += 1
             rospy.loginfo(f"Obstacle distance: {obstacle_distance}")
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
@@ -383,7 +390,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.marker_publisher.publish(marker_arr)
         else:
             return py_trees.common.Status.FAILURE
-
         # generate visualization marker for obstacle
         ot_marker = entity.to_marker()
         ot_marker.color.r = 1.0
@@ -398,7 +404,11 @@ class Approach(py_trees.behaviour.Behaviour):
         if self.ot_distance < 15.0:
             rospy.loginfo(f"Overtake Approach Distance: {self.ot_distance}")
             # bicycle handling
-            if obstacle_speed > 1.7 and obstacle_speed < 2.5:
+            if (
+                obstacle_speed > 1.7
+                and obstacle_speed < 2.5
+                and not isinstance(entity, Car)
+            ):
                 self.ot_bicycle_pub.publish(True)
                 ot_free = tree.is_lane_free(False, 12.0, -6.0)
             else:
@@ -624,7 +634,11 @@ class Wait(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.FAILURE
             return py_trees.common.Status.RUNNING
         # bicycle handling
-        if obstacle_speed > 1.7 and obstacle_speed < 2.5:
+        if (
+            obstacle_speed > 1.7
+            and obstacle_speed < 2.5
+            and not isinstance(entity, Car)
+        ):
             self.ot_bicycle_pub.publish(True)
             ot_free = tree.is_lane_free(False, 12.0, -6.0)
         else:
