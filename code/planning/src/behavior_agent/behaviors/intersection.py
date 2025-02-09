@@ -5,7 +5,6 @@ from std_msgs.msg import String
 import rospy
 import sys
 import os
-import math
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Transform2D, Point2
@@ -100,7 +99,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             dist = bb.distance
             isIntersection = bb.isStopLine
-        if dist < 30 and isIntersection:
+        if dist < 33 and isIntersection:
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.FAILURE
@@ -229,6 +228,9 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             self.virtual_stopline_distance = 0.0
         target_distance = TARGET_DISTANCE_TO_STOP_INTERSECTION
+        rospy.loginfo(
+            f"Intersection Approach stopline distance: {self.virtual_stopline_distance}"
+        )
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
         if (
@@ -266,7 +268,7 @@ class Approach(py_trees.behaviour.Behaviour):
             # too far
             rospy.loginfo("Intersection still approaching")
             return py_trees.common.Status.RUNNING
-        elif ((self.virtual_stopline_distance < 1.3)) and (self.stopping):
+        elif ((self.virtual_stopline_distance < 1.5)) and (self.stopping):
             # stopped
             self.curr_behavior_pub.publish(bs.int_wait.name)
             rospy.loginfo("Intersection Approach: stopping")
@@ -469,7 +471,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
         self.curr_behavior_pub.publish(bs.int_wait.name)
         intersection_clear = tree.is_lane_free_intersection(
-            hero, False, self.oncoming_distance, 35.0, 0.0
+            hero, self.oncoming_distance, 35.0, 0.0
         )
         if intersection_clear:
             self.oncoming_counter += 1
