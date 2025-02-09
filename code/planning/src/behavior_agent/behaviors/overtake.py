@@ -650,7 +650,7 @@ class Wait(py_trees.behaviour.Behaviour):
             self.ot_counter += 1
             if self.ot_counter > 3:
                 rospy.loginfo("Overtake is free!")
-                self.curr_behavior_pub.publish(bs.ot_enter_init.name)
+                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 return py_trees.common.Status.SUCCESS
             else:
                 return py_trees.common.Status.RUNNING
