@@ -68,8 +68,6 @@ ot_app_free = Behavior("ot_app_free", -1)
 
 # Wait
 
-ot_wait_stopped = Behavior("ot_wait_stopped", 3.0)
-
 ot_wait_free = Behavior("ot_wait_free", -1)
 
 # Enter

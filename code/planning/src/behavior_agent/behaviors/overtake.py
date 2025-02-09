@@ -1,7 +1,7 @@
 import py_trees
 import sys
 import os
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Bool
 
 import rospy
 import numpy as np
@@ -12,7 +12,7 @@ import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
 import shapely
-from mapping_common.entity import FlagFilter
+from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import Marker, MarkerArray
 from behaviors import behavior_utils
 
@@ -191,7 +191,14 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.ot_marker_pub.publish(ot_marker)
 
         # increase counter when something is blocking the path
-        if obstacle_speed < 2.5 and obstacle_distance < 15:
+        if (
+            (
+                obstacle_speed > 1.7
+                and obstacle_speed < 2.5
+                and not isinstance(entity, Car)
+            )
+            or (obstacle_speed < 1.0)
+        ) and obstacle_distance < 15:
             self.counter_overtake += 1
             rospy.loginfo(f"Obstacle distance: {obstacle_distance}")
             rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
@@ -260,6 +267,9 @@ class Approach(py_trees.behaviour.Behaviour):
         )
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
+        )
+        self.ot_bicycle_pub = rospy.Publisher(
+            "/paf/hero/" "ot_bicycle", Bool, queue_size=1
         )
         return True
 
@@ -368,7 +378,7 @@ class Approach(py_trees.behaviour.Behaviour):
             OVERTAKE_EXECUTING = self.ot_distance
             if entity.motion is not None:
                 obstacle_speed = entity.motion.linear_motion.length()
-                if obstacle_speed > 3.0:
+                if obstacle_speed > 2.7:
                     rospy.loginfo("Overtake entity started moving, abort")
                     return py_trees.common.Status.FAILURE
             else:
@@ -380,7 +390,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.marker_publisher.publish(marker_arr)
         else:
             return py_trees.common.Status.FAILURE
-
         # generate visualization marker for obstacle
         ot_marker = entity.to_marker()
         ot_marker.color.r = 1.0
@@ -394,7 +403,17 @@ class Approach(py_trees.behaviour.Behaviour):
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             rospy.loginfo(f"Overtake Approach Distance: {self.ot_distance}")
-            ot_free = tree.is_lane_free(False, self.clear_distance, 15)
+            # bicycle handling
+            if (
+                obstacle_speed > 1.7
+                and obstacle_speed < 2.5
+                and not isinstance(entity, Car)
+            ):
+                self.ot_bicycle_pub.publish(True)
+                ot_free = tree.is_lane_free(False, 12.0, -6.0)
+            else:
+                self.ot_bicycle_pub.publish(False)
+                ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
             rospy.loginfo(f"Overtake is free: {ot_free}")
             if ot_free:
                 self.ot_counter += 1
@@ -487,6 +506,9 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
+        )
+        self.ot_bicycle_pub = rospy.Publisher(
+            "/paf/hero/" "ot_bicycle", Bool, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
@@ -608,26 +630,31 @@ class Wait(py_trees.behaviour.Behaviour):
             # using a counter to account for data inconsistencies
             self.ot_gone += 1
             if self.ot_gone > 3:
-                rospy.loginfo("Overtake osbtacle is gone, abort")
+                rospy.loginfo("Overtake obstacle is gone, abort")
                 return py_trees.common.Status.FAILURE
             return py_trees.common.Status.RUNNING
         # bicycle handling
-        if obstacle_speed > 1.7 and obstacle_speed < 2.4:
-            ot_free = tree.is_lane_free(False, 15.0, -4.0)
+        if (
+            obstacle_speed > 1.7
+            and obstacle_speed < 2.5
+            and not isinstance(entity, Car)
+        ):
+            self.ot_bicycle_pub.publish(True)
+            ot_free = tree.is_lane_free(False, 12.0, -6.0)
         else:
+            self.ot_bicycle_pub.publish(False)
             ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
+        self.curr_behavior_pub.publish(bs.ot_wait_free.name)
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
                 rospy.loginfo("Overtake is free!")
-                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+                self.curr_behavior_pub.publish(bs.ot_enter_init.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
                 return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Overtake still blocked")
-            self.curr_behavior_pub.publish(bs.ot_wait_stopped.name)
             self.ot_counter = 0
             return py_trees.common.Status.RUNNING
 
