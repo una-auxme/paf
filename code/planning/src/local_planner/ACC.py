@@ -140,13 +140,10 @@ class ACC(CompatibleNode):
         )
 
         # Tunable values for the controllers
-        self.sg_Ki: float
-        self.sg_T_gap: float
-        self.sg_d_min: float
-        self.ct_Kp: float
-        self.ct_Ki: float
-        self.ct_T_gap: float
-        self.ct_d_min: float
+        self.Kp: float
+        self.Ki: float
+        self.T_gap: float
+        self.d_min: float
         self.acceleration_factor: float
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
@@ -159,10 +156,10 @@ class ACC(CompatibleNode):
         self.update_velocity()
 
     def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        self.ct_Kp = config["ct_Kp"]
-        self.ct_Ki = config["ct_Ki"]
-        self.ct_T_gap = config["ct_T_gap"]
-        self.ct_d_min = config["ct_d_min"]
+        self.Kp = config["Kp"]
+        self.Ki = config["Ki"]
+        self.T_gap = config["T_gap"]
+        self.d_min = config["d_min"]
         self.acceleration_factor = config["acceleration_factor"]
 
         return config
@@ -402,7 +399,7 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        d_min = self.ct_d_min
+        d_min = self.d_min
 
         # if we want to overtake, we need to keep some distance to the obstacle
         if (
@@ -420,10 +417,10 @@ class ACC(CompatibleNode):
 
         else:
             # PI controller which chooses the desired speed
-            Kp = self.ct_Kp
-            Ki = self.ct_Ki
-            T_gap = self.ct_T_gap
-            d_min = self.ct_d_min
+            Kp = self.Kp
+            Ki = self.Ki
+            T_gap = self.T_gap
+            d_min = self.d_min
 
             desired_distance = d_min + T_gap * hero_velocity
             delta_d = lead_distance - desired_distance
