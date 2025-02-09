@@ -640,11 +640,12 @@ class Wait(py_trees.behaviour.Behaviour):
             and not isinstance(entity, Car)
         ):
             self.ot_bicycle_pub.publish(True)
+            self.curr_behavior_pub.publish(bs.ot_wait_bicycle.name)
             ot_free = tree.is_lane_free(False, 12.0, -6.0)
         else:
             self.ot_bicycle_pub.publish(False)
+            self.curr_behavior_pub.publish(bs.ot_wait_free.name)
             ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
-        self.curr_behavior_pub.publish(bs.ot_wait_free.name)
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
