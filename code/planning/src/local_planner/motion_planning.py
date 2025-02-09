@@ -682,10 +682,12 @@ class MotionPlanning(CompatibleNode):
         if v_stop > bs.int_app_init.speed:
             v_stop = bs.int_app_init.speed
         if stopline < target_distance:
-            v_stop = convert_to_ms(7.0)
+            v_stop = convert_to_ms(7.5)
+        if stopline < 4.5:
+            v_stop = convert_to_ms(5.0)
+        if stopline < 3.5:
+            v_stop = convert_to_ms(3.0)
         if stopline < 2.5:
-            v_stop = convert_to_ms(3.5)
-        if stopline < 1.5:
             v_stop = 0.0
         return v_stop
 
@@ -714,7 +716,7 @@ class MotionPlanning(CompatibleNode):
             return 0.0
 
     def __calc_virtual_stopline(self) -> float:
-        if self.__stopline[0] != np.inf and self.__stopline[1]:
+        if self.__stopline[0] != np.inf:  # and self.__stopline[1]:
             stopline = self.__stopline[0]
             return stopline
         else:

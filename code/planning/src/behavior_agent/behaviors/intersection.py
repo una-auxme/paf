@@ -99,7 +99,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             dist = bb.distance
             isIntersection = bb.isStopLine
-        if dist < 33 and isIntersection:
+        if dist < 40 and isIntersection:
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.FAILURE
@@ -268,7 +268,7 @@ class Approach(py_trees.behaviour.Behaviour):
             # too far
             rospy.loginfo("Intersection still approaching")
             return py_trees.common.Status.RUNNING
-        elif ((self.virtual_stopline_distance < 1.5)) and (self.stopping):
+        elif ((self.virtual_stopline_distance < 2.5)) and (self.stopping):
             # stopped
             self.curr_behavior_pub.publish(bs.int_wait.name)
             rospy.loginfo("Intersection Approach: stopping")
