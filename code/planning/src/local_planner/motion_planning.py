@@ -659,6 +659,8 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_app_free.name:
             speed = self.__calc_speed_to_stop_overtake()
         elif behavior == bs.ot_wait_free.name:
+            speed = bs.ot_wait_free.speed
+        elif behavior == bs.ot_wait_bicycle.name:
             speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_init.name:
             speed = self.__get_speed_cruise()
