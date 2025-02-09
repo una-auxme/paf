@@ -157,7 +157,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         wait_behaviors = [
             bs.int_wait.name,
             bs.lc_wait.name,
-            bs.ot_wait.name,
+            bs.ot_wait_free.name,
             bs.int_app_init.name,
             bs.int_app_to_stop.name,
         ]

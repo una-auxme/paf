@@ -630,18 +630,17 @@ class Wait(py_trees.behaviour.Behaviour):
         else:
             self.ot_bicycle_pub.publish(False)
             ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
+        self.curr_behavior_pub.publish(bs.ot_wait_free.name)
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
                 rospy.loginfo("Overtake is free!")
-                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+                self.curr_behavior_pub.publish(bs.ot_enter_init.name)
                 return py_trees.common.Status.SUCCESS
             else:
-                self.curr_behavior_pub.publish(bs.ot_wait.name)
                 return py_trees.common.Status.RUNNING
         else:
             rospy.loginfo("Overtake still blocked")
-            self.curr_behavior_pub.publish(bs.ot_wait.name)
             self.ot_counter = 0
             return py_trees.common.Status.RUNNING
 
