@@ -21,6 +21,7 @@ from behavior_agent.behaviors import (
     overtake,
     topics2blackboard,
     unstuck_routine,
+    debug_markers,
 )
 
 
@@ -119,9 +120,11 @@ def grow_a_tree(role_name):
     root = Parallel(
         "Root",
         children=[
+            debug_markers.DebugMarkerBlackboardSetupBehavior(),
             topics2blackboard.create_node(role_name),
             DynReconfigImportBehavior(),
             metarules,
+            debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),
         ],
     )
@@ -137,8 +140,8 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
 
     config: Optional[Dict] = None
 
-    def __init__(self, name="", *args, **kwargs):
-        super().__init__(name, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(type(self).__name__, *args, **kwargs)
         self.blackboard = py_trees.blackboard.Blackboard()
         Server(BEHAVIORConfig, self.dynamic_reconfigure_callback)
 
@@ -152,7 +155,9 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
 
         for param in BEHAVIORConfig.config_description["parameters"]:
             param_name = param["name"]
-            self.blackboard.set(param_name, self.config[param_name], overwrite=True)
+            self.blackboard.set(
+                f"/params/{param_name}", self.config[param_name], overwrite=True
+            )
         return py_trees.common.Status.SUCCESS
 
 

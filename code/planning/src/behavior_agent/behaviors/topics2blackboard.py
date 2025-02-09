@@ -14,11 +14,13 @@ from mapping_common.map import Map
 from mock.msg import Stop_sign
 from perception.msg import Waypoint, LaneChange, TrafficLightState
 
+BLACKBOARD_MAP_ID = "/import/map"
+
 
 class ImportMapBehavior(py_trees.Behaviour):
 
-    def __init__(self, name="", *args, **kwargs):
-        super().__init__(name, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(type(self).__name__, *args, **kwargs)
 
         self.blackboard = py_trees.blackboard.Blackboard()
 
@@ -29,7 +31,7 @@ class ImportMapBehavior(py_trees.Behaviour):
             return py_trees.common.Status.FAILURE
 
         map = Map.from_ros_msg(map_msg)
-        self.blackboard.set("map", map, overwrite=True)
+        self.blackboard.set(BLACKBOARD_MAP_ID, map, overwrite=True)
         return py_trees.common.Status.SUCCESS
 
 
