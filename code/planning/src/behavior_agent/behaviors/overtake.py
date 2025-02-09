@@ -5,7 +5,6 @@ from std_msgs.msg import String, Float32
 import rospy
 import numpy as np
 
-
 import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
