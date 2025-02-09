@@ -15,8 +15,6 @@ import mapping_common.mask
 
 from mapping import msg
 
-import rospy
-
 
 @dataclass
 class Map:
@@ -518,13 +516,6 @@ class MapTree:
         lane_box_intersection_entities = self.query(geo=lane_mask)
         if not lane_box_intersection_entities:
             return True
-        for entity in lane_box_intersection_entities:
-            if entity.entity.motion:
-                rospy.loginfo(
-                    f"Lane box motion: {entity.entity.motion.linear_motion.x()}"
-                )
-            else:
-                rospy.loginfo("Lane box entity has no motion")
 
         enities_with_motion = [
             entity
@@ -533,10 +524,6 @@ class MapTree:
         ]
         if not enities_with_motion:
             return True
-        for entity in enities_with_motion:
-            rospy.loginfo(f"Entity motion: {entity.entity.motion.linear_motion.x()}")
-            delta_v = hero.get_delta_forward_velocity_of(entity.entity)
-            rospy.loginfo(f"Entity delta forward: {delta_v}")
         # if all entities drive forward (away from us) or don't move the lane can be considered free
         return all(
             hero.get_delta_forward_velocity_of(entity.entity) > -0.5

@@ -459,7 +459,6 @@ class MotionPlanning(CompatibleNode):
         distance_corner = 0
         for i in range(len(corner) - 1):
             distance_corner += euclid_dist(corner[i], corner[i + 1])
-        # self.loginfo(distance_corner)
 
         if self.__in_corner:
             distance_end = euclid_dist(pos, corner[0])
@@ -486,9 +485,7 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (Bool): True if emergency stop detected by collision check
         """
-        # self.loginfo("Emergency stop detected")
         if not self.__curr_behavior == bs.parking.name:
-            # self.loginfo("Emergency stop detected and executed")
             self.emergency_pub.publish(data)
 
     def update_target_speed(self, acc_speed, behavior):
@@ -517,8 +514,6 @@ class MotionPlanning(CompatibleNode):
                 self.target_speed = self.speed_limit
             else:
                 self.target_speed = 5.0
-        rospy.loginfo(f"SPEED TARGET: {self.target_speed}")
-        rospy.loginfo(f"SPEED ORIGIN: {self.target_velocity_selector}")
         self.velocity_pub.publish(self.target_speed)
         self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")

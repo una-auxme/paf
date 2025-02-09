@@ -228,10 +228,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.virtual_stopline_distance = self.stop_distance
         else:
             self.virtual_stopline_distance = 0.0
-        rospy.loginfo(
-            f"TRAFFIC LIGHT DISTANCE: {self.traffic_light_distance},"
-            f"STOPLINE DISTANCE: {self.virtual_stopline_distance}"
-        )
         target_distance = TARGET_DISTANCE_TO_STOP_INTERSECTION
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
@@ -428,7 +424,6 @@ class Wait(py_trees.behaviour.Behaviour):
             traffic_light_status = "No traffic light message"
         if light_status_msg is not None and self.over_stop_line is False:
             traffic_light_status = get_color(light_status_msg.state)
-            rospy.loginfo(f"Int wait light: {traffic_light_status}")
             if traffic_light_status == "red" or traffic_light_status == "yellow":
                 # Wait at traffic light
                 self.red_light_flag = True
