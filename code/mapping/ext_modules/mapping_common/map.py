@@ -524,7 +524,7 @@ class MapTree:
         ]
         if not enities_with_motion:
             return True
-        # if all entities drive forward (away from us) or don't move the lane can be considered free
+        # if all entities drive forward or don't move the lane can be considered free
         return all(
             hero.get_delta_forward_velocity_of(entity.entity) > -0.5
             for entity in enities_with_motion
