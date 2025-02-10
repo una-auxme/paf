@@ -539,7 +539,7 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much a entitiy must collide with the
+            coverage (float, optional): how much an entity must collide with the
             checkbox in percent. Defaults to 1.0.
 
         Returns:
@@ -549,6 +549,10 @@ class MapTree:
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
         lane_width = 3.0
+
+        # cannot reduce lane checkbox more than 3 meters as then there is no checkbox
+        # left to check
+        reduce_lane = min(reduce_lane, 3.0)
 
         lane_pos = 1
         if right_lane:
@@ -595,7 +599,7 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much a entitiy must collide with the
+            coverage (float, optional): how much an entity must collide with the
             checkbox in percent. Defaults to 1.0.
 
         Returns:
@@ -660,6 +664,7 @@ class MapTree:
             lane_pos,
             lane_length,
             lane_transform,
+            reduce_lane,
         )
 
         if not shapely.is_valid(lane_box):
@@ -705,6 +710,7 @@ class MapTree:
         lane_pos: int,
         lane_length: float,
         lane_transform: float,
+        reduce_lane: float,
     ) -> shapely.Geometry:
         """helper function to create a lane box entity
 
@@ -716,6 +722,7 @@ class MapTree:
             lane_pos (int): to check if the lane is on the left or right side of the car
             lane_length (float): length of the lane box
             lane_transform (float): transform of the lane box
+            reduce_lane (float): reduce the lane
 
         Returns:
             lane_box (Geometry): created lane box shape
@@ -739,31 +746,36 @@ class MapTree:
             lane_box_intersection_further.centroid.y,
         ]
 
+        # get width of the lane box for checking if reduce_lane parameter
+        # is fitting for this width. if not, reduce reduce_lane parameter
+        lane_box_width = abs(lane_box_center_close[1] - lane_box_center_further[1])
+        reduce_lane = min(reduce_lane, lane_box_width)
+
         # Get half lane box length for calculating lane box shape
         lane_length_half = lane_length / 2
 
         # Calculating edge points of the lane box shape
         lane_box_close_front = self.point_along_line_angle(
             lane_box_center_close[0] + lane_transform,
-            lane_box_center_close[1] + lane_pos * 1,
+            lane_box_center_close[1] + lane_pos * reduce_lane / 2,
             close_rotation,
             lane_length_half,
         )
         lane_box_close_back = self.point_along_line_angle(
             lane_box_center_close[0] + lane_transform,
-            lane_box_center_close[1] + lane_pos * 1,
+            lane_box_center_close[1] + lane_pos * reduce_lane / 2,
             close_rotation,
             -lane_length_half,
         )
         lane_box_further_front = self.point_along_line_angle(
             lane_box_center_further[0] + lane_transform,
-            lane_box_center_further[1] - lane_pos * 1,
+            lane_box_center_further[1] - lane_pos * reduce_lane / 2,
             further_rotation,
             lane_length_half,
         )
         lane_box_further_back = self.point_along_line_angle(
             lane_box_center_further[0] + lane_transform,
-            lane_box_center_further[1] - lane_pos * 1,
+            lane_box_center_further[1] - lane_pos * reduce_lane / 2,
             further_rotation,
             -lane_length_half,
         )
