@@ -25,6 +25,9 @@ import shapely
 
 # from shapely.validation import orient
 
+from mapping.cfg import MappingIntegrationConfig
+from dynamic_reconfigure.server import Server
+
 
 class MappingDataIntegrationNode(CompatibleNode):
     """Creates the initial map data frame based on all kinds of sensor data
@@ -105,8 +108,21 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
 
+        Server(MappingIntegrationConfig, self.dynamic_reconfigure_callback)
+
         self.rate = self.get_param("~map_publish_rate", 20)
         self.new_timer(1.0 / self.rate, self.publish_new_map)
+
+    def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
+        """
+        All currently used reconfigure options are querried dynamically.
+        If you want to directly react on the change uncomment the following lines.
+        """
+        # config["enable_merge_filter"]
+        # config["merge_growth_distance"]
+        # config["min_merging_overlap_percent"]
+        # config["min_merging_overlap_area"]
+        return config
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
