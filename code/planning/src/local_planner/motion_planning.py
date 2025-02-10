@@ -49,7 +49,7 @@ class MotionPlanning(CompatibleNode):
 
         # TODO: add type hints
         self.target_speed = 0.0
-        self.target_velocity_selector = "not selected"
+        self.target_velocity_selector = "not_selected"
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
@@ -523,7 +523,7 @@ class MotionPlanning(CompatibleNode):
                     self.target_velocity_selector = "corner_speed"
             else:
                 self.target_speed = 0.0
-                self.target_velocity_selector = "not selected"
+                self.target_velocity_selector = "not_selected"
 
         self.velocity_pub.publish(self.target_speed)
         self.velocity_selector_pub.publish(self.target_velocity_selector)
@@ -751,7 +751,7 @@ class MotionPlanning(CompatibleNode):
                 self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
-                self.velocity_selector_pub.publish("not selected")
+                self.velocity_selector_pub.publish("not_selected")
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

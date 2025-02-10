@@ -44,8 +44,8 @@ class ACC(CompatibleNode):
     # Current index from waypoint
     __current_wp_index: int = 0
     __current_heading: Optional[float] = None
-    speed_limit: Optional[float] = None  # m/s
     __curr_behavior: Optional[str] = None
+    speed_limit: Optional[float] = None  # m/s
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -296,12 +296,9 @@ class ACC(CompatibleNode):
             self.__current_position.y,
             self.__current_heading,
         )
-        if (
-            self.__curr_behavior == "ot_wait_stopped"
-            or self.__curr_behavior == "ot_wait_free"
-            or self.__curr_behavior == "ot_app_blocked"
-            or self.__curr_behavior == "ot_leave"
-        ):
+
+        front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
+        if self.__curr_behavior in front_mask_reduce_behaviours:
             front_mask_size = 5.5
         else:
             front_mask_size = 7.5
