@@ -599,8 +599,8 @@ class MapTree:
             checkbox in percent. Defaults to 1.0.
 
         Returns:
-            Tuple[int, Optional[shapely.Geometry]]: return if lane is free (-1 = error/invalid,
-            0 = not free, 1 = free) and the checkbox shape
+            Tuple[int, Optional[shapely.Geometry]]: return if lane is free
+            (-1 = error/invalid, 0 = not free, 1 = free) and the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
