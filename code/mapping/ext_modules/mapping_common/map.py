@@ -17,7 +17,6 @@ import mapping_common.mask
 
 import rospy
 
-
 from mapping import msg
 
 
@@ -473,9 +472,12 @@ class MapTree:
     ) -> int:
         """Returns if a lane left or right of our car is free.
         There are three check methods available:
-            - rectangle: checks if the lane is free by using a checkbox with size and positoin according to inputs
-            - lanemarking: checks if the lane is free by using a checkbox that is placed between two lane markings
-            - fallback: uses lanemarking as default and falls back to rectangle if lanemarking is not plausible
+            - rectangle: checks if the lane is free by using a checkbox with size
+            and position according to inputs
+            - lanemarking: checks if the lane is free by using a checkbox that is
+            placed between two lane markings
+            - fallback: uses lanemarking as default and falls back to rectangle if
+            lanemarking is not plausible
 
         Parameters:
         - right_lane (bool): If true, checks the right lane instead of the left lane
@@ -486,9 +488,10 @@ class MapTree:
            from the car position -> same distance to the front and rear get checked
         - reduce_lane (float): Reduces the lane width that should be checked, in meters.
             Default value is 1.5 meters.
-        - check_method (str): The method to check if the lane is free. Default is "rectangle".
+        - check_method (str): The method to check if the lane is free.
+        Default is "rectangle".
         Returns:
-            bool: lane is free / not free
+            int:  lane free (-1 = error/invalid, 0 = not free, 1 = free)
         """
         if check_method == "rectangle":
             return self.is_lane_free_rectangle(
@@ -526,17 +529,22 @@ class MapTree:
         reduce_lane: float = 1.5,
         coverage: float = 1.0,
     ) -> Tuple[int, Optional[shapely.Geometry]]:
-        """checks if the lane is free by using a checkbox with size and position according to inputs
+        """checks if the lane is free by using a checkbox with size and position
+        according to inputs
 
         Args:
-            right_lane (bool, optional): if true checks for free lane on the right side. Defaults to False.
+            right_lane (bool, optional): if true checks for free lane on the right side.
+            Defaults to False.
             lane_length (float, optional): length of the checkbox. Defaults to 20.0.
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
-            reduce_lane (float, optional): impacts the width of checkbox (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much a entitiy must collide with the checkbox in percent. Defaults to 1.0.
+            reduce_lane (float, optional): impacts the width of checkbox
+            (= width - reduce_lane). Defaults to 1.5.
+            coverage (float, optional): how much a entitiy must collide with the
+            checkbox in percent. Defaults to 1.0.
 
         Returns:
-            Tuple[int, Optional[shapely.Geometry]]: return true or false if lane is free and the checkbox shape
+            Tuple[int, Optional[shapely.Geometry]]: return if lane is free
+            (0 = not free, 1 = free) and the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
@@ -574,21 +582,25 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        coverage: float = 0.2,
+        coverage: float = 1.0,
     ) -> Tuple[int, Optional[shapely.Geometry]]:
-        """checks if a lane is free by using a ckeckbox that is placed between two lane
+        """checks if a lane is free by using a checkbox that is placed between two lane
         markings. The lane is considered free if there are no colliding entities with
         the checkbox.
 
         Args:
-            right_lane (bool, optional): if true checks for free lane on the right side. Defaults to False.
+            right_lane (bool, optional): if true checks for free lane on the right side.
+            Defaults to False.
             lane_length (float, optional): length of the checkbox. Defaults to 20.0.
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
-            reduce_lane (float, optional): impacts the width of checkbox (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much a entitiy must collide with the checkbox in percent. Defaults to 1.0.
+            reduce_lane (float, optional): impacts the width of checkbox
+            (= width - reduce_lane). Defaults to 1.5.
+            coverage (float, optional): how much a entitiy must collide with the
+            checkbox in percent. Defaults to 1.0.
 
         Returns:
-            Tuple[int, Entity]: return true or false if lane is free and the checkbox shape
+            Tuple[int, Optional[shapely.Geometry]]: return if lane is free (-1 = error/invalid,
+            0 = not free, 1 = free) and the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
@@ -812,7 +824,7 @@ class MapTree:
                     distance_x = ent.entity.transform.translation().x()
                     # if the distance [m] / relative motion [m/s] is smaller than 3[s],
                     # the entity is relevant
-                    if distance_x / relative_motion < 3:
+                    if relative_motion != 0 and distance_x / relative_motion < 3:
                         relevant_entities.append(ent)
             return relevant_entities
         else:

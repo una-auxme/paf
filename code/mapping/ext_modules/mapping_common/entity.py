@@ -362,22 +362,10 @@ class Entity:
         """
         m = self.shape.to_marker(self.transform)
 
-        if self.confidence == 10000:
-            m.color.a = 0.5
-            m.color.r = 0
-            m.color.g = 1
-            m.color.b = 0
-        elif self.confidence == 10001:
-            m.color.a = 0.5
-            m.color.r = 1
-            m.color.g = 0
-            m.color.b = 0
-        else:
-            m.color.a = 0.5
-            m.color.r = 128
-            m.color.g = 128
-            m.color.b = 128
-
+        m.color.r = 1
+        m.color.g = 1
+        m.color.b = 1
+        m.color.a = 0.5
         m.pose.position.z = m.scale.z / 2.0
         return m
 
