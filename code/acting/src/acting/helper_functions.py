@@ -13,6 +13,7 @@ from geometry_msgs.msg import PoseStamped
 from tf.transformations import euler_from_quaternion
 from nav_msgs.msg import Path
 from scipy.spatial.transform import Rotation
+import rospy
 
 
 def vectors_to_angle_abs(x1: float, y1: float, x2: float, y2: float) -> float:
@@ -81,7 +82,7 @@ def quaternion_to_heading(x: float, y: float, z: float, w: float) -> float:
     return rot_euler[2]
 
 
-def heading_to_quaternion(heading: float) -> (float, float, float, float):
+def heading_to_quaternion(heading: float) -> Tuple[float, float, float, float]:
     """
     Translates euler heading to quaternion
     :param heading: euler heading
@@ -260,3 +261,22 @@ def interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5):
 
     route = route + [orig_route[-1]]
     return route
+
+
+def generate_path_from_trajectory(trajectory) -> Path:
+    path_msg = Path()
+    path_msg.header = rospy.Header()
+    path_msg.header.stamp = rospy.Time.now()
+    path_msg.header.frame_id = "hero"
+    path_msg.poses = []
+    for wp in trajectory:
+        pos = PoseStamped()
+        pos.header.stamp = rospy.Time.now()
+        pos.header.frame_id = "hero"
+        pos.pose.position.x = wp[0]
+        pos.pose.position.y = wp[1]
+        pos.pose.position.z = 0
+        pos.pose.orientation.w = 1
+        path_msg.poses.append(pos)
+
+    return path_msg
