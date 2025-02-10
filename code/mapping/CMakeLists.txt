@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   uuid_msgs
   geometry_msgs
+  dynamic_reconfigure
 )
 
 
@@ -66,6 +67,10 @@ generate_messages(
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
+
+generate_dynamic_reconfigure_options(
+  config/mapping.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
