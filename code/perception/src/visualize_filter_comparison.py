@@ -213,8 +213,13 @@ for line in gt_lines:
     gt_headings.append(heading_in_rad)
 
 
+<<<<<<< HEAD
 def plot_x_position():
     plt.subplot(321)
+=======
+def plot_x_position(subplotId):
+    plt.subplot(subplotId)
+>>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
     plt.title("Filtervergleich X-Position")
     plt.plot(
         nf_pos_time_stamps,
@@ -227,6 +232,7 @@ def plot_x_position():
         of_x_positions,
         label="of x positions " + OLD_FILTER_FILE_NAME,
         color="orange",
+<<<<<<< HEAD
     )
     plt.plot(
         gt_time_stamps,
@@ -302,7 +308,82 @@ def plot_x_position():
     plt.legend()
     plot_y_position()
     plt.show()
+=======
+    )
+    plt.plot(
+        gt_time_stamps,
+        gt_x_positions,
+        label="gt x positions " + GT_FILE_NAME,
+        color="green",
+    )
 
+    upper_limit = []
+    lower_limit = []
+    for i in range(len(gt_time_stamps)):
+        upper_limit.append(gt_x_positions[i] + 0.5)
+        lower_limit.append(gt_x_positions[i] - 0.5)
+    plt.plot(
+        gt_time_stamps,
+        upper_limit,
+        color="red",
+        linestyle="dashed",
+        label="upper limit",
+    )
+    plt.plot(
+        gt_time_stamps,
+        lower_limit,
+        color="red",
+        linestyle="dashed",
+        label="lower limit",
+    )
+    plt.legend()
+>>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
+
+def plot_x_error(subplotId):
+    plt.subplot(subplotId)
+    plt.title("Fehler X-Position")
+    gt_x_small = []
+    index = 0
+    for j in range(len(nf_x_positions)):
+        for i in range(0, len(gt_time_stamps)):
+            if gt_time_stamps[i] == nf_pos_time_stamps[j]:
+                index = i
+                break
+        gt_x_small.append(gt_x_positions[index])
+
+    diff = np.abs(np.subtract(gt_x_small, nf_x_positions))
+    print("MSE NF X-Pos: " + str(np.square(diff.mean())))
+    plt.plot(nf_pos_time_stamps, diff, color="blue", label="Error NF X-Pos")
+
+    gt_x_small = []
+    index = 0
+    for j in range(len(of_x_positions)):
+        for i in range(0, len(gt_time_stamps)):
+            if gt_time_stamps[i] == of_pos_time_stamps[j]:
+                index = i
+                break
+        gt_x_small.append(gt_x_positions[index])
+    diff = np.abs(np.subtract(gt_x_small, of_x_positions))
+    print("MSE OF X-Pos: " + str(np.square(diff.mean())))
+    plt.plot(of_pos_time_stamps, diff, color="orange", label="Error OF X-Pos")
+
+    limit = []
+    for i in range(0, len(nf_pos_time_stamps)):
+        limit.append(0.5)
+    plt.plot(
+        nf_pos_time_stamps,
+        limit,
+        color="red",
+        linestyle="dashed",
+        label="Accepted error",
+    )
+    plt.legend()
+
+def plot_gt_heading(subplotId):
+    plt.subplot(subplotId)
+    plt.title("Heading GT")
+    plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
+    plt.legend()
 
 def plot_y_position():
     plt.subplot(322)
@@ -318,6 +399,7 @@ def plot_y_position():
         of_y_positions,
         label="of y positions " + OLD_FILTER_FILE_NAME,
         color="orange",
+<<<<<<< HEAD
     )
     plt.plot(
         gt_time_stamps,
@@ -391,8 +473,78 @@ def plot_y_position():
     plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
     plt.legend()
     plt.show()
+=======
+    )
+    plt.plot(
+        gt_time_stamps,
+        gt_y_positions,
+        label="gt y positions " + GT_FILE_NAME,
+        color="green",
+    )
+>>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
 
+    upper_limit = []
+    lower_limit = []
+    for i in range(len(gt_time_stamps)):
+        upper_limit.append(gt_y_positions[i] + 0.5)
+        lower_limit.append(gt_y_positions[i] - 0.5)
+    plt.plot(
+        gt_time_stamps,
+        upper_limit,
+        color="red",
+        linestyle="dashed",
+        label="upper limit",
+    )
+    plt.plot(
+        gt_time_stamps,
+        lower_limit,
+        color="red",
+        linestyle="dashed",
+        label="lower limit",
+    )
+    plt.legend()
+    
+def plot_y_error(subplotId):
+    plt.subplot(subplotId)
+    plt.title("Fehler Y-Position")
+    gt_y_small = []
+    index = 0
+    for j in range(len(nf_y_positions)):
+        for i in range(0, len(gt_time_stamps)):
+            if gt_time_stamps[i] == nf_pos_time_stamps[j]:
+                index = i
+                break
+        gt_y_small.append(gt_y_positions[index])
 
+    diff = np.abs(np.subtract(gt_y_small, nf_y_positions))
+    print("MSE NF Y-Pos: " + str(np.square(diff.mean())))
+    plt.plot(nf_pos_time_stamps, diff, color="blue", label="Error NF Y-Pos")
+
+    gt_y_small = []
+    index = 0
+    for j in range(len(of_y_positions)):
+        for i in range(0, len(gt_time_stamps)):
+            if gt_time_stamps[i] == of_pos_time_stamps[j]:
+                index = i
+                break
+        gt_y_small.append(gt_y_positions[index])
+    diff = np.abs(np.subtract(gt_y_small, of_y_positions))
+    print("MSE OF Y-Pos: " + str(np.square(diff.mean())))
+    plt.plot(of_pos_time_stamps, diff, color="orange", label="Error OF Y-Pos")
+
+    limit = []
+    for i in range(0, len(nf_pos_time_stamps)):
+        limit.append(0.5)
+    plt.plot(
+        nf_pos_time_stamps,
+        limit,
+        color="red",
+       linestyle="dashed",
+        label="Accepted error",
+    )
+    plt.legend()
+
+'''
 def plot_z_position():
     plt.plot(
         nf_pos_time_stamps,
@@ -407,7 +559,6 @@ def plot_z_position():
     plt.plot(gt_time_stamps, gt_z_positions, label="gt z positions " + GT_FILE_NAME)
     plt.plot()
     plt.legend()
-    plt.show()
 
 
 def plot_heading():
@@ -420,10 +571,20 @@ def plot_heading():
     plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
     plt.plot()
     plt.legend()
-    plt.show()
+'''
 
 
+<<<<<<< HEAD
 plot_x_position()
 # plot_y_position()
 # plot_z_position()
 # plot_heading()
+=======
+plot_x_position(321)
+plot_x_error(323)
+plot_gt_heading(325)
+plot_x_position(322)
+plot_x_error(324)
+plot_gt_heading(326)
+plt.show()
+>>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
