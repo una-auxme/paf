@@ -6,7 +6,7 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Bool, Float32, Float32MultiArray
+from std_msgs.msg import Bool, Float32, Float32MultiArray, String
 from visualization_msgs.msg import Marker, MarkerArray
 from typing import Optional
 from typing import List
@@ -44,6 +44,7 @@ class ACC(CompatibleNode):
     # Current index from waypoint
     __current_wp_index: int = 0
     __current_heading: Optional[float] = None
+    __curr_behavior: Optional[str] = None
     speed_limit: Optional[float] = None  # m/s
 
     def __init__(self):
@@ -112,6 +113,14 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get current behavior
+        self.curr_behavior_sub: Subscriber = self.new_subscription(
+            String,
+            f"/paf/{self.role_name}/curr_behavior",
+            self.__set_curr_behavior,
+            qos_profile=1,
+        )
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
@@ -131,13 +140,11 @@ class ACC(CompatibleNode):
         )
 
         # Tunable values for the controllers
-        self.sg_Ki: float
-        self.sg_T_gap: float
-        self.sg_d_min: float
-        self.ct_Kp: float
-        self.ct_Ki: float
-        self.ct_T_gap: float
-        self.ct_d_min: float
+        self.Kp: float
+        self.Ki: float
+        self.T_gap: float
+        self.d_min: float
+        self.acceleration_factor: float
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
         self.logdebug("ACC initialized")
@@ -149,13 +156,11 @@ class ACC(CompatibleNode):
         self.update_velocity()
 
     def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        self.sg_Ki = config["sg_Ki"]
-        self.sg_T_gap = config["sg_T_gap"]
-        self.sg_d_min = config["sg_d_min"]
-        self.ct_Kp = config["ct_Kp"]
-        self.ct_Ki = config["ct_Ki"]
-        self.ct_T_gap = config["ct_T_gap"]
-        self.ct_d_min = config["ct_d_min"]
+        self.Kp = config["Kp"]
+        self.Ki = config["Ki"]
+        self.T_gap = config["T_gap"]
+        self.d_min = config["d_min"]
+        self.acceleration_factor = config["acceleration_factor"]
 
         return config
 
@@ -176,7 +181,7 @@ class ACC(CompatibleNode):
         self.__unstuck_distance = data.data
 
     def __get_heading(self, data: Float32):
-        """Recieve current heading
+        """Receive current heading
 
         Args:
             data (Float32): Current heading
@@ -192,12 +197,20 @@ class ACC(CompatibleNode):
         self.trajectory_global = data
 
     def __set_trajectory(self, data: Path):
-        """Recieve trajectory from motion planner
+        """Receive trajectory from motion planner
 
         Args:
             data (Path): Trajectory path
         """
         self.trajectory = data
+
+    def __set_curr_behavior(self, data: String):
+        """Receive the current behavior of the vehicle.
+
+        Args:
+            data (String): Current behavior
+        """
+        self.__curr_behavior = data.data
 
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
         """Recieve speed limits from OpenDrive via global planner
@@ -284,7 +297,12 @@ class ACC(CompatibleNode):
             self.__current_heading,
         )
 
-        front_mask_size = 7.5
+        front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
+        if self.__curr_behavior in front_mask_reduce_behaviours:
+            front_mask_size = 5.5
+        else:
+            front_mask_size = 7.5
+
         trajectory_mask = mapping_common.mask.build_trajectory_shape(
             self.trajectory,
             hero_transform,
@@ -319,6 +337,7 @@ class ACC(CompatibleNode):
         entity_markers = []
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
+        marker_text: str = ""
         if entity_result is not None:
             entity, distance = entity_result
             entity_markers.append((entity.entity, (1.0, 0.0, 0.0, 0.5)))
@@ -330,16 +349,25 @@ class ACC(CompatibleNode):
                 current_velocity, distance, lead_delta_velocity
             )
 
-            marker_text = (
+            marker_text += (
                 f"LeadDistance: {distance}\n"
                 + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
                 + f"DeltaV: {lead_delta_velocity}\n"
-                + f"RawACCSpeed: {desired_speed}"
+                + f"RawACCSpeed: {desired_speed}\n"
             )
-            text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
-            text_marker.pose.position.x = -2.0
-            text_marker.pose.position.y = 0.0
-            text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
+
+        if self.speed_limit is None:
+            # if no speed limit is available, drive 5 m/s max
+            desired_speed = min(5.0, desired_speed)
+        else:
+            # max speed is the current speed limit
+            desired_speed = min(self.speed_limit, desired_speed)
+
+        marker_text += f"FinalACCSpeed: {desired_speed}\n"
+        text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
+        text_marker.pose.position.x = -2.0
+        text_marker.pose.position.y = 0.0
+        text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
 
         self.velocity_pub.publish(desired_speed)
 
@@ -368,32 +396,39 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
+        d_min = self.d_min
+
+        # if we want to overtake, we need to keep some distance to the obstacle
         if (
-            hero_velocity < 2 and lead_distance < 2
-        ):  # approaches the leading vehicle slowly until a distance of 0.5 m
-            desired_speed = (lead_distance - 0.5) / 4
+            self.__curr_behavior == "ot_wait_free"
+            and delta_v < 2
+            and lead_distance < 6 * d_min
+        ):
+            desired_speed = 0.0
+            return desired_speed
+
+        if hero_velocity < 2 and lead_distance < (
+            d_min + 2
+        ):  # approaches the leading vehicle slowly until a distance of d_min
+            desired_speed = (lead_distance - d_min) / 4
 
         else:
             # PI controller which chooses the desired speed
-            Kp = self.ct_Kp
-            Ki = self.ct_Ki
-            T_gap = self.ct_T_gap
-            d_min = self.ct_d_min
+            Kp = self.Kp
+            Ki = self.Ki
+            T_gap = self.T_gap
+            d_min = self.d_min
 
             desired_distance = d_min + T_gap * hero_velocity
             delta_d = lead_distance - desired_distance
             speed_adjustment = Ki * delta_d + Kp * delta_v
+            # we want to accelerate more slowly
+            if hero_velocity > 1 and speed_adjustment > 0:
+                speed_adjustment *= self.acceleration_factor
             desired_speed = hero_velocity + speed_adjustment
 
-            # desired speed should not be negative, only drive forward
-            desired_speed = max(desired_speed, 0.0)
-
-            if self.speed_limit is None:
-                # if no speed limit is available, drive 5 m/s max
-                desired_speed = min(5.0, desired_speed)
-            else:
-                # max speed is the current speed limit
-                desired_speed = min(self.speed_limit, desired_speed)
+        # desired speed should not be negative, only drive forward
+        desired_speed = max(desired_speed, 0.0)
 
         return desired_speed
 
