@@ -213,13 +213,8 @@ for line in gt_lines:
     gt_headings.append(heading_in_rad)
 
 
-<<<<<<< HEAD
 def plot_x_position():
     plt.subplot(321)
-=======
-def plot_x_position(subplotId):
-    plt.subplot(subplotId)
->>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
     plt.title("Filtervergleich X-Position")
     plt.plot(
         nf_pos_time_stamps,
@@ -232,7 +227,6 @@ def plot_x_position(subplotId):
         of_x_positions,
         label="of x positions " + OLD_FILTER_FILE_NAME,
         color="orange",
-<<<<<<< HEAD
     )
     plt.plot(
         gt_time_stamps,
@@ -308,36 +302,7 @@ def plot_x_position(subplotId):
     plt.legend()
     plot_y_position()
     plt.show()
-=======
-    )
-    plt.plot(
-        gt_time_stamps,
-        gt_x_positions,
-        label="gt x positions " + GT_FILE_NAME,
-        color="green",
-    )
 
-    upper_limit = []
-    lower_limit = []
-    for i in range(len(gt_time_stamps)):
-        upper_limit.append(gt_x_positions[i] + 0.5)
-        lower_limit.append(gt_x_positions[i] - 0.5)
-    plt.plot(
-        gt_time_stamps,
-        upper_limit,
-        color="red",
-        linestyle="dashed",
-        label="upper limit",
-    )
-    plt.plot(
-        gt_time_stamps,
-        lower_limit,
-        color="red",
-        linestyle="dashed",
-        label="lower limit",
-    )
-    plt.legend()
->>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
 
 def plot_x_error(subplotId):
     plt.subplot(subplotId)
@@ -379,11 +344,13 @@ def plot_x_error(subplotId):
     )
     plt.legend()
 
+
 def plot_gt_heading(subplotId):
     plt.subplot(subplotId)
     plt.title("Heading GT")
     plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
     plt.legend()
+
 
 def plot_y_position():
     plt.subplot(322)
@@ -399,7 +366,6 @@ def plot_y_position():
         of_y_positions,
         label="of y positions " + OLD_FILTER_FILE_NAME,
         color="orange",
-<<<<<<< HEAD
     )
     plt.plot(
         gt_time_stamps,
@@ -473,15 +439,6 @@ def plot_y_position():
     plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
     plt.legend()
     plt.show()
-=======
-    )
-    plt.plot(
-        gt_time_stamps,
-        gt_y_positions,
-        label="gt y positions " + GT_FILE_NAME,
-        color="green",
-    )
->>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
 
     upper_limit = []
     lower_limit = []
@@ -503,7 +460,8 @@ def plot_y_position():
         label="lower limit",
     )
     plt.legend()
-    
+
+
 def plot_y_error(subplotId):
     plt.subplot(subplotId)
     plt.title("Fehler Y-Position")
@@ -539,12 +497,13 @@ def plot_y_error(subplotId):
         nf_pos_time_stamps,
         limit,
         color="red",
-       linestyle="dashed",
+        linestyle="dashed",
         label="Accepted error",
     )
     plt.legend()
 
-'''
+
+"""
 def plot_z_position():
     plt.plot(
         nf_pos_time_stamps,
@@ -571,20 +530,10 @@ def plot_heading():
     plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
     plt.plot()
     plt.legend()
-'''
+"""
 
 
-<<<<<<< HEAD
 plot_x_position()
 # plot_y_position()
 # plot_z_position()
 # plot_heading()
-=======
-plot_x_position(321)
-plot_x_error(323)
-plot_gt_heading(325)
-plot_x_position(322)
-plot_x_error(324)
-plot_gt_heading(326)
-plt.show()
->>>>>>> 6177994ed40a4ceccb3977d1e13cb79091a0bf27
