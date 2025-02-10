@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 
+
 import shapely
 from shapely import STRtree, LineString
 import numpy as np
@@ -11,6 +12,7 @@ from std_msgs.msg import Header
 from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping_common.shape import Rectangle, Polygon
+from cv2 import line
 import mapping_common.mask
 
 import rospy
@@ -153,6 +155,58 @@ class Map:
             List[Entity]: List of entities both filters were matching for
         """
         return [e for e in self.entities if _entity_matches_filter(e, f, filter_fn)]
+
+    def to_multi_poly_array(
+        self,
+        area_to_incorporate: Tuple[int, int],
+        resolution_scale: int,
+    ) -> npt.NDArray:
+        """Takes the entities without hero of the map and draws the contours onto
+        a numpy array
+
+        Args:
+            area_to_incorporate (Tuple[int, int]): the area, in which the entities
+            have to be plotted
+            resolution_scale (int): since the array has only integer indices,
+            scale the array
+
+        Returns:
+            npt.NDArray: array with contours drawn in
+        """
+
+        # scale the array with respect to the desired resolution scale
+        # e.G if the resolution scale is 10 one entry in the array is 10 cm
+        # if the resolution scale is 100, one entry is 1 cm
+        array_shape = (
+            area_to_incorporate[0] * resolution_scale,
+            area_to_incorporate[1] * resolution_scale,
+        )
+        # initialize the array
+        poly_array: np.ndarray = np.zeros(array_shape, dtype=np.uint8)
+        for entity_obj in self.entities_without_hero():
+            coords = [coords for coords in entity_obj.to_shapely().poly.exterior.coords]
+
+            # draw the lines for every entity onto the array
+            # note: the hero car is at x=0, and y=array_shape//2
+            # this is done in order to keep some sort of "coordinate system"
+
+            for i in range(len(coords) - 1):
+                pt1: Tuple[int, int] = (
+                    int((array_shape[0] - coords[i][0]) * resolution_scale),
+                    int((array_shape[1] - coords[i][1]) * resolution_scale)
+                    + array_shape[1] // 2,
+                )
+                pt2: Tuple[int, int] = (
+                    int((array_shape[0] - coords[i + 1][0]) * resolution_scale),
+                    int((array_shape[1] - coords[i + 1][1]) * resolution_scale)
+                    + array_shape[1] // 2,  # shift 0 to the middle of the image
+                )
+
+                # draw the line onto the array
+                poly_array = line(
+                    img=poly_array, pt1=pt1, pt2=pt2, color=255, thickness=1
+                )
+        return poly_array
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
