@@ -1,5 +1,5 @@
 import py_trees
-from typing import Optional
+from typing import Optional, Tuple, List
 from std_msgs.msg import String, Float32
 
 import rospy
@@ -9,12 +9,14 @@ import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
+from mapping_common.entity import ShapelyEntity
 import shapely
 from mapping_common.entity import FlagFilter
 from visualization_msgs.msg import Marker, MarkerArray
 
 from . import behavior_utils
 from . import behavior_speed as bs
+from .topics2blackboard import BLACKBOARD_MAP_ID
 
 from local_planner.utils import (
     NUM_WAYPOINTS,
@@ -24,6 +26,75 @@ from local_planner.utils import (
 """
 Source: https://github.com/ll7/psaf2
 """
+
+
+def calculate_obstacle(
+    blackboard: py_trees.blackboard.Blackboard,
+    map: Map,
+    front_mask_size: float,
+    trajectory_check_length: float,
+) -> Tuple[Optional[Tuple[ShapelyEntity, float]], List]:
+    # data preparation
+    trajectory = blackboard.get("/paf/hero/trajectory")
+    current_wp = blackboard.get("/paf/hero/current_wp")
+    hero_pos = blackboard.get("/paf/hero/current_pos")
+    hero_heading = blackboard.get("/paf/hero/current_heading")
+    if (
+        trajectory is not None
+        and current_wp is not None
+        and hero_pos is not None
+        and hero_heading is not None
+    ):
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        hero_transform = mapping_common.map.build_global_hero_transform(
+            hero_pos.pose.position.x,
+            hero_pos.pose.position.y,
+            hero_heading.data,
+        )
+        hero_width = behavior_utils.get_hero_width(map)
+        front_mask_size = front_mask_size
+        trajectory_mask = mapping_common.mask.build_trajectory_shape(
+            trajectory,
+            hero_transform,
+            start_dist_from_hero=front_mask_size,
+            max_length=trajectory_check_length,
+            current_wp_idx=int(current_wp.data),
+            max_wp_count=int(trajectory_check_length * 2),
+            centered=True,
+            width=hero_width,
+        )
+        if trajectory_mask is None:
+            # We currently have no valid path to check for collisions.
+            # -> cannot drive safely
+            rospy.logerr("Overtake ahead: Unable to build collision mask!")
+            return py_trees.common.Status.FAILURE
+        collision_masks = [trajectory_mask]
+
+        entity_result = tree.get_nearest_entity(
+            trajectory_mask, map.hero().to_shapely(), 0.35
+        )
+    else:
+        rospy.loginfo(
+            f"Something is none in overtake ahead:"
+            f"{trajectory is None} {current_wp is None},"
+            f"{hero_pos is None} {hero_heading is None}"
+        )
+        return py_trees.common.Status.FAILURE
+
+    if entity_result is not None:
+        entity, distance = entity_result
+        entity = entity.entity
+        obstacle_distance = distance
+        if entity.motion is not None:
+            obstacle_speed = entity.motion.linear_motion.length()
+        else:
+            obstacle_speed = 0
+        marker_arr = behavior_utils.get_marker_arr_in_front(
+            entity, obstacle_distance, map.hero(), collision_masks
+        )
+        self.marker_publisher.publish(marker_arr)
+    else:
+        return py_trees.common.Status.FAILURE
 
 
 # Variable to determine the distance to overtake the object
@@ -98,10 +169,10 @@ class Ahead(py_trees.behaviour.Behaviour):
                  to overtake.
         """
 
-        test_param = self.blackboard.get("test_param")
+        test_param = self.blackboard.get("/params/test_param")
         rospy.logwarn(f"Test param: {test_param}")
 
-        map: Optional[Map] = self.blackboard.get("map")
+        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
 
         if map is None:
             rospy.logerr("Map data not avilable in Overtake")
@@ -284,7 +355,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
 
         # Intermediate layer map integration
-        map: Optional[Map] = self.blackboard.get("map")
+        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
 
         if map is None:
             rospy.logerr("Map data not avilable in Overtake")
@@ -500,7 +571,7 @@ class Wait(py_trees.behaviour.Behaviour):
             rospy.loginfo("Overtake is free!")
             self.curr_behavior_pub.publish(bs.ot_wait_free.name)
             return py_trees.common.Status.SUCCESS
-        map: Optional[Map] = self.blackboard.get("map")
+        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
 
         if map is None:
             rospy.logerr("Map data not avilable in Overtake")
