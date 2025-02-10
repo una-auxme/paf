@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from perception_utils import array_to_clustered_points
 import rospy
 import ros_numpy
 import numpy as np
@@ -18,6 +19,9 @@ import struct
 from collections import defaultdict
 from rosgraph_msgs.msg import Clock
 from ros_compatibility.node import CompatibleNode
+from mapping_common.entity import Motion2D
+from mapping_common.transform import Vector2
+from mapping.msg import ClusteredPointsArray
 
 import tf
 from collections import deque
@@ -50,6 +54,8 @@ class RadarNode(CompatibleNode):
 
         self.accel_x_buffer = deque(maxlen=5)
         self.accel_z_buffer = deque(maxlen=5)
+
+        self.current_pitch = 0.0
 
     def time_check(self, time):
         """
@@ -307,6 +313,7 @@ class RadarNode(CompatibleNode):
         - None
             The function handles all outputs via ROS publishers and logs.
         """
+
         combined_points = []
         combined_points_filtered_out = []
 
@@ -315,9 +322,10 @@ class RadarNode(CompatibleNode):
             for sensor_name, messages in self.sensor_data_buffer.items():
                 for msg in messages:
                     points = self.extract_points(msg, sensor_name)
-                    break_filter_data, break_filter_out_data = self.filter_points(
-                        points
-                    )
+                    filter_result = self.filter_points(points)
+                    if filter_result is None:
+                        continue
+                    break_filter_data, break_filter_out_data = filter_result
                     if break_filter_data is not None:
                         combined_points.extend(break_filter_data)
                         combined_points_filtered_out.extend(break_filter_out_data)
@@ -327,9 +335,10 @@ class RadarNode(CompatibleNode):
             for sensor_name, msg in datasets.items():
                 if msg is not None:
                     points = self.extract_points(msg, sensor_name)
-                    break_filter_data, break_filter_out_data = self.filter_points(
-                        points
-                    )
+                    filter_result = self.filter_points(points)
+                    if filter_result is None:
+                        continue
+                    break_filter_data, break_filter_out_data = filter_result
                     if break_filter_data is not None:
                         combined_points.extend(break_filter_data)
                         combined_points_filtered_out.extend(break_filter_out_data)
@@ -367,6 +376,26 @@ class RadarNode(CompatibleNode):
             marker_array.markers.append(marker)
 
         self.marker_visualization_radar_publisher.publish(marker_array)
+
+        header = Header()
+        header.stamp = rospy.Time.now()
+        header.frame_id = "hero/RADAR"
+
+        clusterPointsNpArray = points_with_labels[:, :3]
+        indexArray = points_with_labels[:, -1]
+        valid_indices = indexArray != -1
+        clusterPointsNpArray = clusterPointsNpArray[valid_indices]
+        indexArray = indexArray[valid_indices]
+        motionArray = calculate_cluster_velocity(points_with_labels)
+        motionArray = motionArray[valid_indices]
+
+        motionArray = [m.to_ros_msg() for m in motionArray]
+
+        clusteredpoints = array_to_clustered_points(
+            clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
+        )
+
+        self.entity_radar_publisher.publish(clusteredpoints)
 
         cluster_info = generate_cluster_info(
             clustered_data, combined_points, marker_array, bounding_boxes
@@ -431,6 +460,14 @@ class RadarNode(CompatibleNode):
             rospy.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
             MarkerArray,
             queue_size=10,
+        )
+        self.entity_radar_publisher = rospy.Publisher(
+            rospy.get_param(
+                "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
+            ),
+            ClusteredPointsArray,
+            queue_size=10,
+            latch=True,
         )
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
@@ -688,25 +725,6 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
     return point_cloud2.create_cloud(header, fields, points)
 
 
-def transform_data_to_2d(clustered_data):
-    """_summary_
-
-    Args:
-        clustered_data (np.ndarray): clustered 3d data points
-
-    Returns:
-        _np.ndarray: clustered points, every z value is set to 0
-    """
-
-    transformed_points = clustered_data
-    transformed_points[:, 0] = clustered_data[:, 0]
-    transformed_points[:, 1] = clustered_data[:, 1]
-    transformed_points[:, 2] = 0
-    transformed_points[:, 3] = clustered_data[:, 3]
-
-    return transformed_points
-
-
 def calculate_aabb(cluster_points):
     """
         Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
@@ -727,15 +745,6 @@ def calculate_aabb(cluster_points):
             along the x, y, and z axes.
     """
 
-    # for 2d (top-down) boxes
-    # x_min = np.min(cluster_points[:, 0])
-    # x_max = np.max(cluster_points[:, 0])
-    # y_min = np.min(cluster_points[:, 1])
-    # y_max = np.max(cluster_points[:, 1])
-    # rospy.loginfo(f"Bounding box: X({x_min}, {x_max}), Y({y_min}, {y_max})")
-    # return x_min, x_max, y_min, y_max
-
-    # for 3d boxes
     x_min = np.min(cluster_points[:, 0])
     x_max = np.max(cluster_points[:, 0])
     y_min = np.min(cluster_points[:, 1])
@@ -858,65 +867,45 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
     return marker
 
 
-# can be used for extra debugging
-def create_min_max_markers(
-    label,
-    bbox,
-    frame_id="hero",
-    min_color=(0.0, 1.0, 0.0, 1.0),
-    max_color=(1.0, 0.0, 0.0, 1.0),
-):
+def calculate_cluster_velocity(points_with_labels):
     """
-    creates RViz-Markers for min- and max-points of a bounding box.
+    Computes the average velocity for each labeled cluster and assigns it to each point.
 
-    Args:
-        label (int): cluster-id (used as marker-ID in rviz).
-        bbox (tuple): min- and max-values of bounding box
-        (x_min, x_max, y_min, y_max, z_min, z_max).
-        frame_id (str): frame ID for markers
-        min_color (tuple): RGBA-value for min-point-marker
-        max_color (tuple): RGBA-value for max-point-marker
+    Parameters:
+    - points_with_labels (numpy.ndarray): An array where each row represents a point
+      with its corresponding label in the last column. The fourth column (index 3)
+      contains the velocity values.
 
     Returns:
-        tuple: pair of markers (min_marker, max_marker).
+    - numpy.ndarray: An array of Motion2D objects where each entry corresponds to the
+      velocity of the cluster the point belongs to. Entries for invalid labels (-1) are
+        None.
+
+    Notes:
+    - Points with a label of -1 are considered invalid and excluded from velocity
+        computation.
+    - The output array has the same length as the input array.
     """
-    x_min, x_max, y_min, y_max, z_min, z_max = bbox
+    labels = points_with_labels[:, -1]
+    valid_mask = labels != -1  # Filter indvalid labels
+    valid_points = points_with_labels[valid_mask]
 
-    # min-point-marker
-    min_marker = Marker()
-    min_marker.header.frame_id = frame_id
-    min_marker.id = int(label * 10)
-    min_marker.type = Marker.SPHERE
-    min_marker.action = Marker.ADD
-    min_marker.scale.x = 0.2
-    min_marker.scale.y = 0.2
-    min_marker.scale.z = 0.2
-    min_marker.color.r = min_color[0]
-    min_marker.color.g = min_color[1]
-    min_marker.color.b = min_color[2]
-    min_marker.color.a = min_color[3]
-    min_marker.pose.position.x = x_min
-    min_marker.pose.position.y = y_min
-    min_marker.pose.position.z = z_min
+    unique_labels = np.unique(valid_points[:, -1])
 
-    # max-point-marker
-    max_marker = Marker()
-    max_marker.header.frame_id = frame_id
-    max_marker.id = int(label * 10 + 1)
-    max_marker.type = Marker.SPHERE
-    max_marker.action = Marker.ADD
-    max_marker.scale.x = 0.2
-    max_marker.scale.y = 0.2
-    max_marker.scale.z = 0.2
-    max_marker.color.r = max_color[0]
-    max_marker.color.g = max_color[1]
-    max_marker.color.b = max_color[2]
-    max_marker.color.a = max_color[3]
-    max_marker.pose.position.x = x_max
-    max_marker.pose.position.y = y_max
-    max_marker.pose.position.z = z_max
+    # calculate average velocity for each cluster
+    avg_velocities = {
+        label: np.mean(valid_points[valid_points[:, -1] == label, 3])
+        for label in unique_labels
+    }
 
-    return min_marker, max_marker
+    # Assign the correct length to the velocity values
+    motion_array = np.full(len(points_with_labels), None, dtype=object)
+    motion_array[valid_mask] = [
+        Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
+        for label in labels[valid_mask]
+    ]
+
+    return motion_array
 
 
 # generates string with label-id and cluster size, can be used for extra debugging
