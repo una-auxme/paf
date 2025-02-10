@@ -10,7 +10,7 @@
 
 ## Time
 
-The test shouldn't take longer than 2 minutes per route (with 3 waypoints). So the test with 11 routes (as of 06.02.25) shouldn't take longe than 22 minutes. In the event that the agent gets stuck, the test may take longer because Carla needs a certain amount of time until it aborts the simulation
+The test shouldn't take longer than 2 minutes per route (with 3 waypoints). So the test with 11 routes (as of 06.02.25) shouldn't take longer than 22 minutes. In the event that the agent gets stuck, the test may take longer because Carla needs a certain amount of time until it aborts the simulation
 
 ## Required files
 

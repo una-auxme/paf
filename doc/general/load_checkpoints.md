@@ -9,7 +9,7 @@
 
 1. Go to the [agent_service.yaml](/build/agent_service.yaml) file in the build directory.
 2. Comment out the standard leaderboard route if it is in. ('''- ROUTE=/opt/leaderboard/data/routes_devtest.xml''' ln:32)
-3. Comment in your specific route you want. The specific route start at line 34. (the name describes the emerging scenario in the route)
+3. Comment in your specific route you want. The specific routes start at line 34. (the name describes the emerging scenario in the route)
 4. Now Compose up the [docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml) file.
 
 ## Scenario Map
