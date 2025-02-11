@@ -99,7 +99,9 @@ def calculate_obstacle(
 
     if entity_result is not None:
         entity, distance = entity_result
-        add_debug_marker(debug_marker(entity.entity, color=OVERTAKE_MARKER_COLOR))
+        add_debug_marker(
+            debug_marker(entity.entity, color=OVERTAKE_MARKER_COLOR, scale_z=0.3)
+        )
         return (entity, distance)
     else:
         return None

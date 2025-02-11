@@ -62,8 +62,13 @@ def debug_marker(
     ) = color
     if scale_z:
         marker.scale.z = scale_z
+    elif marker.scale.z == 0.0:
+        if marker.type == Marker.TEXT_VIEW_FACING:
+            marker.scale.z = 0.3
+        else:
+            marker.scale.z = 1.0
 
-    return Marker
+    return marker
 
 
 def get_marker_msg(self):

@@ -338,7 +338,7 @@ class ACC(CompatibleNode):
         if entity_result is not None:
             entity, distance = entity_result
             debug_markers.append(
-                debug_marker(entity.entity, color=(1.0, 0.0, 0.0, 0.5))
+                debug_marker(entity.entity, color=(1.0, 0.0, 0.0, 0.5), scale_z=0.3)
             )
 
             lead_delta_velocity = (
