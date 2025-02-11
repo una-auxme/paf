@@ -1,8 +1,6 @@
-sg_Ki: 1.5
-sg_T_gap: 1.9
-sg_d_min: 3
+Kp: 0.5
+Ki: 1.2
+T_gap: 1.9
+d_min: 0.7
 
-ct_Kp: 0.0
-ct_Ki: 1.2
-ct_T_gap: 1.9
-ct_d_min: 0.6
+acceleration_factor: 0.1
