@@ -11,71 +11,68 @@ from visualization_msgs.msg import Marker, MarkerArray
 from tf.transformations import quaternion_from_euler
 
 
-class DebugMarker:
-    _marker: Marker
+def debug_marker(
+    base: Any,
+    frame_id: Optional[str] = "hero",
+    position_z: Optional[float] = None,
+    transform: Optional[Transform2D] = None,
+    offset: Optional[Vector2] = None,
+    color: Optional[Tuple[float, float, float, float]] = None,
+    scale_z: Optional[float] = None,
+) -> Marker:
+    if isinstance(base, Entity):
+        marker = base.to_marker()
+    elif isinstance(base, Shape2D):
+        marker = base.to_marker(marker_style=MarkerStyle.LINESTRING)
+    elif isinstance(base, shapely.Polygon):
+        shape2d = Polygon.from_shapely(base)
+        marker = shape2d.to_marker(marker_style=MarkerStyle.LINESTRING)
+    elif isinstance(base, Marker):
+        marker = base
+    elif isinstance(base, str):
+        marker = Marker(type=Marker.TEXT_VIEW_FACING, text=base)
+    else:
+        raise TypeError(f"Unsupported debug marker base type: '{type(base)}'")
 
-    def __init__(
-        self,
-        base: Any,
-        frame_id: Optional[str] = "hero",
-        position_z: Optional[float] = None,
-        transform: Optional[Transform2D] = None,
-        offset: Optional[Vector2] = None,
-        color: Optional[Tuple[float, float, float, float]] = None,
-        scale_z: Optional[float] = None,
-    ):
-        if isinstance(base, Entity):
-            marker = base.to_marker()
-        elif isinstance(base, Shape2D):
-            marker = base.to_marker(marker_style=MarkerStyle.LINESTRING)
-        elif isinstance(base, shapely.Polygon):
-            shape2d = Polygon.from_shapely(base)
-            marker = shape2d.to_marker(marker_style=MarkerStyle.LINESTRING)
-        elif isinstance(base, Marker):
-            marker = base
-        elif isinstance(base, str):
-            marker = Marker(type=Marker.TEXT_VIEW_FACING, text=base)
-        else:
-            raise TypeError(f"Unsupported debug marker base type: '{type(base)}'")
+    if frame_id:
+        marker.header.frame_id = frame_id
+    if position_z:
+        marker.pose.position.z = position_z
+    if transform:
+        transl = transform.translation()
 
-        if frame_id:
-            marker.header.frame_id = frame_id
-        if position_z:
-            marker.pose.position.z = position_z
-        if transform:
-            transl = transform.translation()
-
-            marker.pose.position.x = transl.x()
-            marker.pose.position.y = transl.y()
-            (
-                marker.pose.orientation.x,
-                marker.pose.orientation.y,
-                marker.pose.orientation.z,
-                marker.pose.orientation.w,
-            ) = quaternion_from_euler(0, 0, transform.rotation())
-        if offset:
-            marker.pose.position.x += offset.x()
-            marker.pose.position.y += offset.y()
-        if color is None:
-            color = (0.5, 0.5, 0.5, 0.5)
+        marker.pose.position.x = transl.x()
+        marker.pose.position.y = transl.y()
         (
-            marker.color.r,
-            marker.color.g,
-            marker.color.b,
-            marker.color.a,
-        ) = color
-        if scale_z:
-            marker.scale.z = scale_z
+            marker.pose.orientation.x,
+            marker.pose.orientation.y,
+            marker.pose.orientation.z,
+            marker.pose.orientation.w,
+        ) = quaternion_from_euler(0, 0, transform.rotation())
+    if offset:
+        marker.pose.position.x += offset.x()
+        marker.pose.position.y += offset.y()
+    if color is None:
+        color = (0.5, 0.5, 0.5, 0.5)
+    (
+        marker.color.r,
+        marker.color.g,
+        marker.color.b,
+        marker.color.a,
+    ) = color
+    if scale_z:
+        marker.scale.z = scale_z
 
-        self._marker = marker
+    return Marker
 
-    def get_marker_msg(self):
-        return self._marker
+
+def get_marker_msg(self):
+    return self._marker
 
 
 def debug_marker_array(
     namespace: str,
-    markers: List[DebugMarker],
+    markers: List[Marker],
     timestamp: Optional[rospy.Time] = None,
     lifetime: Optional[rospy.Duration] = None,
 ) -> MarkerArray:
@@ -111,7 +108,6 @@ def debug_marker_array(
 
     marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
     for id, marker in enumerate(markers):
-        marker = marker.get_marker_msg()
         marker.header.stamp = timestamp
         marker.ns = namespace
         marker.id = id

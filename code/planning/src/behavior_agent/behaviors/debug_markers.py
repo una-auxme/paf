@@ -1,13 +1,13 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from dataclasses import dataclass, field
 
-from mapping_common.markers import DebugMarker, debug_marker_array
+from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2
 
 import py_trees
 
 import rospy
-from visualization_msgs.msg import MarkerArray
+from visualization_msgs.msg import MarkerArray, Marker
 
 MARKER_NAMESPACE: str = "behavior_tree"
 
@@ -19,9 +19,9 @@ DEBUG_INFO_DICT_ID: str = "/debug/tree_info"
 _info_error_msg = f"Blackboard entry {DEBUG_INFO_DICT_ID} is not properly set up"
 
 
-def add_debug_marker(m: DebugMarker):
+def add_debug_marker(m: Marker):
     blackboard = py_trees.blackboard.Blackboard()
-    marker_list: Optional[List[DebugMarker]] = blackboard.get(DEBUG_MARKER_LIST_ID)
+    marker_list: Optional[List[Marker]] = blackboard.get(DEBUG_MARKER_LIST_ID)
     if marker_list is None:
         rospy.logwarn(_marker_error_msg)
         return
@@ -48,8 +48,7 @@ def add_debug_entry(
 
 
 def debug_status(
-    name: str,
-    status: py_trees.common.Status,
+    name: str, status: py_trees.common.Status, reason: Optional[str] = None
 ) -> py_trees.common.Status:
     blackboard = py_trees.blackboard.Blackboard()
     info_dict: Optional[Dict[str, BehaviorDebugInfo]] = blackboard.get(
@@ -61,9 +60,9 @@ def debug_status(
 
     if name in info_dict:
         info: BehaviorDebugInfo = info_dict[name]
-        info.status = status
+        info.status = (status, reason)
     else:
-        info = BehaviorDebugInfo(status=status)
+        info = BehaviorDebugInfo(status=(status, reason))
         info_dict[name] = info
 
     return status
@@ -71,11 +70,16 @@ def debug_status(
 
 @dataclass
 class BehaviorDebugInfo:
-    status: Optional[py_trees.common.Status] = None
+    status: Optional[Tuple[py_trees.common.Status, Optional[str]]] = None
+    """Tuple: (Status, Reason (optional))
+    """
     entries: List[str] = field(default_factory=list)
 
     def to_string(self, name: str) -> str:
-        status_str = "???" if self.status is None else self.status.name
+        status_str = "???"
+        if self.status is not None:
+            status, reason = self.status
+            status_str = f"{status} - {reason}"
         result: str = f"{name}: {status_str}"
         for e in self.entries:
             result += f"\n  - {e}"
@@ -102,34 +106,34 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/behavior_tree/debug_markers", MarkerArray, queue_size=1
         )
+        self.info_publisher = rospy.Publisher(
+            "/paf/hero/behavior_tree/info_marker", Marker, queue_size=1
+        )
 
     def update(self):
-        result_markers = []
-
-        marker_list: Optional[List[DebugMarker]] = self.blackboard.get(
-            DEBUG_MARKER_LIST_ID
-        )
+        marker_list: Optional[List[Marker]] = self.blackboard.get(DEBUG_MARKER_LIST_ID)
         if marker_list is None:
             rospy.logwarn(_marker_error_msg)
         else:
-            result_markers.extend(marker_list)
+            marker_array = debug_marker_array(MARKER_NAMESPACE, marker_list)
+            self.marker_publisher.publish(marker_array)
 
         info_dict: Optional[Dict[str, BehaviorDebugInfo]] = self.blackboard.get(
             DEBUG_INFO_DICT_ID
         )
+
+        info_text = "Behavior Tree Overview:"
         if info_dict is None:
             rospy.logwarn(_info_error_msg)
         else:
             for name, info in info_dict.items():
-                result_markers.append(
-                    DebugMarker(
-                        info.to_string(name),
-                        position_z=-2.0,
-                        offset=Vector2.new(-2.0, 0.0),
-                        color=(1.0, 1.0, 1.0, 1.0),
-                    )
-                )
+                info_text += f"\n{info.to_string(name)}"
+        info_marker = debug_marker(
+            info_text,
+            position_z=-2.0,
+            offset=Vector2.new(-2.0, 0.0),
+            color=(1.0, 1.0, 1.0, 1.0),
+        )
+        self.info_publisher.publish(info_marker)
 
-        marker_array = debug_marker_array(MARKER_NAMESPACE, result_markers)
-        self.marker_publisher.publish(marker_array)
         return py_trees.common.Status.SUCCESS

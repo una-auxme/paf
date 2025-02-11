@@ -21,7 +21,7 @@ import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
-from mapping_common.markers import DebugMarker
+from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2
 from mapping.msg import Map as MapMsg
 
@@ -326,9 +326,9 @@ class ACC(CompatibleNode):
         collision_masks = [front_rect, trajectory_mask]
         collision_mask = shapely.union_all(collision_masks)
 
-        debug_markers: List[DebugMarker] = []
+        debug_markers: List[Marker] = []
         for mask in collision_masks:
-            debug_markers.append(DebugMarker(mask, color=(0, 1.0, 1.0, 0.5)))
+            debug_markers.append(debug_marker(mask, color=(0, 1.0, 1.0, 0.5)))
 
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
@@ -337,7 +337,9 @@ class ACC(CompatibleNode):
         marker_text: str = ""
         if entity_result is not None:
             entity, distance = entity_result
-            debug_markers.append(DebugMarker(entity.entity, color=(1.0, 0.0, 0.0, 0.5)))
+            debug_markers.append(
+                debug_marker(entity.entity, color=(1.0, 0.0, 0.0, 0.5))
+            )
 
             lead_delta_velocity = (
                 hero.get_delta_forward_velocity_of(entity.entity) or -current_velocity
@@ -352,13 +354,6 @@ class ACC(CompatibleNode):
                 + f"DeltaV: {lead_delta_velocity}\n"
                 + f"RawACCSpeed: {desired_speed}\n"
             )
-            debug_markers.append(
-                DebugMarker(
-                    marker_text,
-                    color=(1.0, 1.0, 1.0, 1.0),
-                    offset=Vector2.new(-2.0, 0.0),
-                )
-            )
 
         if self.speed_limit is None:
             # if no speed limit is available, drive 5 m/s max
@@ -368,16 +363,17 @@ class ACC(CompatibleNode):
             desired_speed = min(self.speed_limit, desired_speed)
 
         marker_text += f"FinalACCSpeed: {desired_speed}\n"
-        text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
-        text_marker.pose.position.x = -2.0
-        text_marker.pose.position.y = 0.0
-        text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
+        debug_markers.append(
+            debug_marker(
+                marker_text,
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=Vector2.new(-2.0, 0.0),
+            )
+        )
 
         self.velocity_pub.publish(desired_speed)
 
-        marker_array = mapping_common.markers.debug_marker_array(
-            MARKER_NAMESPACE, debug_markers
-        )
+        marker_array = debug_marker_array(MARKER_NAMESPACE, debug_markers)
         self.marker_publisher.publish(marker_array)
 
     def calculate_velocity_based_on_lead(
