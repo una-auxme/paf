@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-from datetime import datetime
-import threading
-from time import sleep
 from ros_compatibility.node import CompatibleNode
 import ros_compatibility as roscomp
 from rospy.numpy_msg import numpy_msg
@@ -27,10 +24,10 @@ class TrafficLightNode(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.side = self.get_param("side", "Center")
         self.classifier = TrafficLightInference(self.get_param("model", ""))
-        self.last_info_time: datetime = None
-        self.last_state = None
+        self.last_info_time = rospy.get_rostime()
         self.visual_debug = self.get_param("tfs_debug", False)
-        threading.Thread(target=self.auto_invalidate_state).start()
+        self.traffic_light_msg = TrafficLightState()
+        self.traffic_light_msg.state = 0
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -57,25 +54,6 @@ class TrafficLightNode(CompatibleNode):
             "/paf/hero/TrafficLight/state/debug_marker", Marker, queue_size=10
         )
 
-    def auto_invalidate_state(self):
-        """
-        sets the traffic light state to 0 when no new images where received
-        during the last 2 seconds
-        """
-        while True:
-            sleep(1)
-
-            if self.last_info_time is None:
-                continue
-
-            if (datetime.now() - self.last_info_time).total_seconds() >= 2:
-                msg = TrafficLightState()
-                msg.state = 0
-                self.traffic_light_publisher.publish(msg)
-                if self.visual_debug:
-                    traffic_light_visualization(self, msg.state)
-                self.last_info_time = None
-
     def handle_camera_image(self, image):
         # calculates the current state of the traffic light
         cv2_image = self.bridge.imgmsg_to_cv2(image)
@@ -94,67 +72,69 @@ class TrafficLightNode(CompatibleNode):
         if not is_front(rgb_image):
             return  # not a front facing traffic light
 
-        # current state gets published until a new state is received
+        # 1: Green, 2: Red, 4: Yellow other values (back or side of traffic light) are
+        # interpreted as unknown
         state = result if result in [1, 2, 4] else 0
-        if self.last_state == state:
-            # 1: Green, 2: Red, 4: Yellow, 0: Unknown
-            msg = TrafficLightState()
-            msg.state = state
-            if self.visual_debug:
-                traffic_light_visualization(self, state)
-            self.traffic_light_publisher.publish(msg)
-        else:
-            self.last_state = state
-
-        # Automatically invalidates state (state=0) in auto_invalidate_state()
+        self.traffic_light_msg.state = state
         if state != 0:
-            self.last_info_time = datetime.now()
+            self.last_info_time = rospy.get_rostime()
 
     def run(self):
+        def loop(timer_event=None):
+            # check if the last state was received more than 2 seconds ago
+            if (
+                self.last_info_time + rospy.Duration(2) < rospy.get_rostime()
+                and self.traffic_light_msg.state != 0
+            ):
+                self.traffic_light_msg.state = 0
+            self.traffic_light_publisher.publish(self.traffic_light_msg)
+            if self.visual_debug:
+                self.traffic_light_visualization(self.traffic_light_msg.state)
+
+        self.new_timer(0.05, loop)
         self.spin()
 
+    def traffic_light_visualization(self, state):
+        # pulishes a debug visualization of the current state
+        text_marker = Marker()
+        text_marker.header.frame_id = "hero"
+        text_marker.header.stamp = rospy.Time.now()
+        text_marker.ns = "traffic_light"
+        text_marker.id = 1
+        text_marker.type = Marker.TEXT_VIEW_FACING
+        text_marker.action = Marker.ADD
 
-def traffic_light_visualization(self, state):
-    # pulishes a debug visualization of the current state
-    text_marker = Marker()
-    text_marker.header.frame_id = "hero"
-    text_marker.header.stamp = rospy.Time.now()
-    text_marker.ns = "traffic_light"
-    text_marker.id = 1
-    text_marker.type = Marker.TEXT_VIEW_FACING
-    text_marker.action = Marker.ADD
+        text_marker.scale.z = 0.5  # Textsize
+        if state == 0:
+            text_marker.text = "TLS: Unknown"
+            text_marker.color.r = 0.0
+            text_marker.color.g = 0.0
+            text_marker.color.b = 0.0
+        if state == 1:
+            text_marker.text = "TLS: Green"
+            text_marker.color.r = 0.0
+            text_marker.color.g = 1.0
+            text_marker.color.b = 0.0
+        if state == 2:
+            text_marker.text = "TLS: Red"
+            text_marker.color.r = 1.0
+            text_marker.color.g = 0.0
+            text_marker.color.b = 0.0
+        if state == 4:
+            text_marker.text = "TLS: Yellow"
+            text_marker.color.r = 1.0
+            text_marker.color.g = 1.0
+            text_marker.color.b = 0.0
 
-    text_marker.scale.z = 0.5  # Textsize
-    if state == 0:
-        text_marker.text = "TLS: Unknown"
-        text_marker.color.r = 0.0
-        text_marker.color.g = 0.0
-        text_marker.color.b = 0.0
-    if state == 1:
-        text_marker.text = "TLS: Green"
-        text_marker.color.r = 0.0
-        text_marker.color.g = 1.0
-        text_marker.color.b = 0.0
-    if state == 2:
-        text_marker.text = "TLS: Red"
-        text_marker.color.r = 1.0
-        text_marker.color.g = 0.0
-        text_marker.color.b = 0.0
-    if state == 4:
-        text_marker.text = "TLS: Yellow"
-        text_marker.color.r = 1.0
-        text_marker.color.g = 1.0
-        text_marker.color.b = 0.0
+        text_marker.color.a = 1.0
 
-    text_marker.color.a = 1.0
+        # Position of the marker
+        text_marker.pose.position.x = 0.0
+        text_marker.pose.position.y = 0.0
+        text_marker.pose.position.z = 2.0  # show over vehicle
 
-    # Position des Textmarkers (oberhalb des Pfeils)
-    text_marker.pose.position.x = 0.0
-    text_marker.pose.position.y = 0.0
-    text_marker.pose.position.z = 2.0  # show over vehicle
-
-    # Publish the marker
-    self.marker_pub.publish(text_marker)
+        # Publish the marker
+        self.marker_pub.publish(text_marker)
 
 
 def get_light_mask(image):
