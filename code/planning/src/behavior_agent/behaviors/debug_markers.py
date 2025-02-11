@@ -30,7 +30,7 @@ def add_debug_marker(m: Marker):
 
 
 def add_debug_entry(
-    name: str,
+    behavior_name: str,
     entry: str,
 ):
     blackboard = py_trees.blackboard.Blackboard()
@@ -39,16 +39,16 @@ def add_debug_entry(
         rospy.logwarn(_info_error_msg)
         return
 
-    if name in info_dict:
-        info: BehaviorDebugInfo = info_dict[name]
+    if behavior_name in info_dict:
+        info: BehaviorDebugInfo = info_dict[behavior_name]
         info.entries.append(entry)
     else:
         info = BehaviorDebugInfo(entries=[entry])
-        info_dict[name] = info
+        info_dict[behavior_name] = info
 
 
 def debug_status(
-    name: str, status: py_trees.common.Status, reason: Optional[str] = None
+    behavior_name: str, status: py_trees.common.Status, reason: Optional[str] = None
 ) -> py_trees.common.Status:
     blackboard = py_trees.blackboard.Blackboard()
     info_dict: Optional[Dict[str, BehaviorDebugInfo]] = blackboard.get(
@@ -58,12 +58,12 @@ def debug_status(
         rospy.logwarn(_info_error_msg)
         return status
 
-    if name in info_dict:
-        info: BehaviorDebugInfo = info_dict[name]
+    if behavior_name in info_dict:
+        info: BehaviorDebugInfo = info_dict[behavior_name]
         info.status = (status, reason)
     else:
         info = BehaviorDebugInfo(status=(status, reason))
-        info_dict[name] = info
+        info_dict[behavior_name] = info
 
     return status
 
