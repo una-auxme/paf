@@ -79,7 +79,10 @@ class BehaviorDebugInfo:
         status_str = "???"
         if self.status is not None:
             status, reason = self.status
-            status_str = f"{status} - {reason}"
+            if reason is None:
+                status_str = status.name
+            else:
+                status_str = f"{status.name}: {reason}"
         result: str = f"{name}: {status_str}"
         for e in self.entries:
             result += f"\n  - {e}"

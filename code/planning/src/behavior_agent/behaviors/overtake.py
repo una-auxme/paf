@@ -19,7 +19,7 @@ from std_msgs.msg import Bool
 
 from . import behavior_speed as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
-from .debug_markers import add_debug_marker, debug_status
+from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 
 from local_planner.utils import (
     NUM_WAYPOINTS,
@@ -52,12 +52,13 @@ def calculate_obstacle(
         or hero_pos is None
         or hero_heading is None
     ):
-        rospy.loginfo(
-            f"Something is None in overtake ahead:"
-            f"trajectory: {trajectory is not None}, current_wp: {current_wp is None},"
-            f"hero_pos: {hero_pos is None}, hero_heading: {hero_heading is None}"
+        return debug_status(
+            behavior_name,
+            Status.FAILURE,
+            f"Something is True==None:"
+            f"trajectory: {trajectory is None}, current_wp: {current_wp is None},"
+            f"hero_pos: {hero_pos is None}, hero_heading: {hero_heading is None}",
         )
-        return py_trees.common.Status.FAILURE
 
     hero: Optional[Entity] = tree.map.hero()
     if hero is None:
@@ -85,8 +86,9 @@ def calculate_obstacle(
     if trajectory_mask is None:
         # We currently have no valid path to check for collisions.
         # -> cannot drive safely
-        rospy.logerr("Overtake ahead: Unable to build collision mask!")
-        return py_trees.common.Status.FAILURE
+        return debug_status(
+            behavior_name, Status.FAILURE, "Unable to build collision mask!"
+        )
     collision_masks = [trajectory_mask]
     collision_mask = shapely.union_all(collision_masks)
 
@@ -215,7 +217,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             entity.transform.translation().y() < -3.0
             or entity.transform.translation().y() > 3.0
         ):
-            return py_trees.common.Status.FAILURE
+            return debug_status(self.name, Status.FAILURE, "Obstacle filtered out")
 
         # increase counter when something is blocking the path
         if (
@@ -227,15 +229,17 @@ class Ahead(py_trees.behaviour.Behaviour):
             or (obstacle_speed < 1.0)
         ) and obstacle_distance < 15:
             self.counter_overtake += 1
-            rospy.loginfo(f"Obstacle distance: {obstacle_distance}")
-            rospy.loginfo("Overtake counter: " + str(self.counter_overtake))
+            add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
+            add_debug_entry(self.name, f"Overtake counter: {self.counter_overtake}")
             if self.counter_overtake > 4:
                 self.ot_distance_pub.publish(obstacle_distance)
-                return py_trees.common.Status.SUCCESS
+                return debug_status(
+                    self.name, Status.SUCCESS, "Overtake counter big enough"
+                )
             self.old_obstacle_distance = obstacle_distance
-            return py_trees.common.Status.RUNNING
+            return debug_status(self.name, Status.RUNNING, "Wait for overtake counter")
         else:
-            return py_trees.common.Status.FAILURE
+            return debug_status(self.name, Status.FAILURE, "Obstacle distance too big")
 
     def terminate(self, new_status):
         """
@@ -356,15 +360,15 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             obstacle_speed = 0
 
-        rospy.loginfo(f"Overtake distance: {self.ot_distance}")
+        add_debug_entry(self.name, f"Overtake distance: {self.ot_distance}")
         OVERTAKE_EXECUTING = self.ot_distance
         if obstacle_speed > 2.7:
-            rospy.loginfo("Overtake entity started moving, abort")
-            return py_trees.common.Status.FAILURE
+            return debug_status(
+                self.name, Status.FAILURE, "Overtake entity started moving"
+            )
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
-            rospy.loginfo(f"Overtake Approach Distance: {self.ot_distance}")
             # bicycle handling
             if (
                 obstacle_speed > 1.7
@@ -376,46 +380,49 @@ class Approach(py_trees.behaviour.Behaviour):
             else:
                 self.ot_bicycle_pub.publish(False)
                 ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
-            rospy.loginfo(f"Overtake is free: {ot_free}")
+            add_debug_entry(self.name, f"Overtake free?: {ot_free}")
             if ot_free:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
-                    rospy.loginfo("Overtake is free not slowing down!")
+                    add_debug_entry(self.name, "Overtake is free not slowing down!")
                     self.ot_distance_pub.publish(self.ot_distance)
                     self.curr_behavior_pub.publish(bs.ot_app_free.name)
                     # bool to skip Wait since oncoming is free
                     OVERTAKE_FREE = True
-                    return py_trees.common.Status.SUCCESS
+                    return debug_status(self.name, Status.SUCCESS, "Overtake free")
                 else:
                     self.ot_distance_pub.publish(self.ot_distance)
                     self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
-                    return py_trees.common.Status.RUNNING
+                    return debug_status(
+                        self.name,
+                        Status.RUNNING,
+                        f"Overtake free count: {self.ot_counter}",
+                    )
             else:
                 self.ot_counter = 0
                 self.ot_distance_pub.publish(self.ot_distance)
-                rospy.loginfo("Overtake Approach: oncoming blocked slowing down")
+                add_debug_entry(
+                    self.name, "Overtake Approach: oncoming blocked slowing down"
+                )
                 self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
-        # obstacle is not relevant anymore
-        elif self.ot_distance > 20.0:
-            return py_trees.common.Status.FAILURE
 
-        if self.ot_distance > 15.0:
-            # too far
-            rospy.loginfo(
-                f"Overtake Approach: still approaching obstacle, "
-                f"distance: {self.ot_distance}"
-            )
-            return py_trees.common.Status.RUNNING
-        elif self.ot_distance < TARGET_DISTANCE_TO_STOP_OVERTAKE:
-            # stopping
-            rospy.loginfo("Overtake Approach: stopping behind obstacle")
+        elif self.ot_distance > 20.0:
+            return debug_status(self.name, Status.FAILURE, "Obstacle too far away")
+
+        if self.ot_distance < TARGET_DISTANCE_TO_STOP_OVERTAKE:
             self.ot_distance_pub.publish(self.ot_distance)
             self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
-            return py_trees.common.Status.SUCCESS
+            return debug_status(
+                self.name, Status.SUCCESS, "Overtake Approach: stopping behind obstacle"
+            )
         else:
-            # still approaching
-            return py_trees.common.Status.RUNNING
+            return debug_status(
+                self.name,
+                Status.RUNNING,
+                f"Overtake Approach: still approaching obstacle, "
+                f"distance: {self.ot_distance}",
+            )
 
     def terminate(self, new_status):
         """
@@ -463,9 +470,6 @@ class Wait(py_trees.behaviour.Behaviour):
         self.ot_distance_pub = rospy.Publisher(
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
         )
-        self.marker_publisher = rospy.Publisher(
-            "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
-        )
         self.ot_bicycle_pub = rospy.Publisher(
             "/paf/hero/" "ot_bicycle", Bool, queue_size=1
         )
@@ -506,9 +510,10 @@ class Wait(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         global OVERTAKE_EXECUTING
         if OVERTAKE_FREE:
-            rospy.loginfo("Overtake is free!")
             self.curr_behavior_pub.publish(bs.ot_wait_free.name)
-            return py_trees.common.Status.SUCCESS
+            return debug_status(
+                self.name, py_trees.common.Status.SUCCESS, "Overtake free"
+            )
 
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
@@ -531,8 +536,9 @@ class Wait(py_trees.behaviour.Behaviour):
             # using a counter to account for data inconsistencies
             self.ot_gone += 1
             if self.ot_gone > 3:
-                rospy.loginfo("Overtake obstacle is gone, abort")
-                return py_trees.common.Status.FAILURE
+                return debug_status(
+                    self.name, py_trees.common.Status.FAILURE, "Obstacle gone"
+                )
             return py_trees.common.Status.RUNNING
 
         entity, distance = obstacle
@@ -545,10 +551,9 @@ class Wait(py_trees.behaviour.Behaviour):
 
         self.ot_gone = 0
         OVERTAKE_EXECUTING = distance
-        rospy.loginfo(f"Obstacle speed: {obstacle_speed}")
+        add_debug_entry(self.name, f"Obstacle speed: {obstacle_speed}")
         if obstacle_speed > 3.0:
-            rospy.loginfo("Overtake entity started moving, abort")
-            return py_trees.common.Status.FAILURE
+            return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
         # bicycle handling
         if (
@@ -566,15 +571,15 @@ class Wait(py_trees.behaviour.Behaviour):
         if ot_free:
             self.ot_counter += 1
             if self.ot_counter > 3:
-                rospy.loginfo("Overtake is free!")
                 self.curr_behavior_pub.publish(bs.ot_wait_free.name)
-                return py_trees.common.Status.SUCCESS
+                return debug_status(self.name, Status.SUCCESS, "Overtake free")
             else:
-                return py_trees.common.Status.RUNNING
+                return debug_status(
+                    self.name, Status.RUNNING, f"Overtake free count: {self.ot_counter}"
+                )
         else:
-            rospy.loginfo("Overtake still blocked")
             self.ot_counter = 0
-            return py_trees.common.Status.RUNNING
+            return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
         """
@@ -652,18 +657,14 @@ class Enter(py_trees.behaviour.Behaviour):
         status = self.blackboard.get("/paf/hero/overtake_success")
         if status is not None:
             if status.data == 1:
-                rospy.loginfo("Overtake Enter: Trajectory planned")
-                return py_trees.common.Status.SUCCESS
+                return debug_status(self.name, Status.SUCCESS, "Trajectory planned")
             elif status.data == 0:
                 self.curr_behavior_pub.publish(bs.ot_enter_slow.name)
-                rospy.loginfo("Overtake Enter: Slowing down")
-                return py_trees.common.Status.RUNNING
+                return debug_status(self.name, Status.RUNNING, "Slowing down")
             else:
-                rospy.loginfo("Overtake Enter: Abort")
-                return py_trees.common.Status.FAILURE
+                return debug_status(self.name, Status.FAILURE, "Abort")
         else:
-            rospy.loginfo("Overtake Enter: Waiting for status update")
-            return py_trees.common.Status.RUNNING
+            return debug_status(self.name, Status.RUNNING, "Waiting for status update")
 
     def terminate(self, new_status):
         """
@@ -741,10 +742,10 @@ class Leave(py_trees.behaviour.Behaviour):
         self.current_pos = np.array([data.pose.position.x, data.pose.position.y])
         distance = np.linalg.norm(self.first_pos - self.current_pos)
         if distance > OVERTAKE_EXECUTING + NUM_WAYPOINTS:
-            rospy.loginfo(f"Overtake executed: {self.current_pos}")
-            return py_trees.common.Status.FAILURE
+            rospy.loginfo(f"Overtake finished: {self.current_pos}")
+            return debug_status(self.name, Status.SUCCESS, "Overtake finished")
         else:
-            return py_trees.common.Status.RUNNING
+            return debug_status(self.name, Status.RUNNING)
 
     def terminate(self, new_status):
         """
