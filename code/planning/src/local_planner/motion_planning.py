@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# import tf.transformations
 import math
-import os
-import sys
 from typing import List, Optional
 
 import numpy as np
@@ -28,8 +25,6 @@ from local_planner.utils import (
     convert_pose_to_array,
 )
 from behavior_agent.behaviors import behavior_speed as bs
-
-# from scipy.spatial._kdtree import KDTree
 
 
 UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
