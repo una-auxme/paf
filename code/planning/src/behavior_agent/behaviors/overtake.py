@@ -55,8 +55,8 @@ def calculate_obstacle(
         return debug_status(
             behavior_name,
             Status.FAILURE,
-            f"Something is True==None:"
-            f"trajectory: {trajectory is None}, current_wp: {current_wp is None},"
+            f"Something is True==None: "
+            f"trajectory: {trajectory is None}, current_wp: {current_wp is None}, "
             f"hero_pos: {hero_pos is None}, hero_heading: {hero_heading is None}",
         )
 
@@ -743,7 +743,7 @@ class Leave(py_trees.behaviour.Behaviour):
         distance = np.linalg.norm(self.first_pos - self.current_pos)
         if distance > OVERTAKE_EXECUTING + NUM_WAYPOINTS:
             rospy.loginfo(f"Overtake finished: {self.current_pos}")
-            return debug_status(self.name, Status.SUCCESS, "Overtake finished")
+            return debug_status(self.name, Status.FAILURE, "Overtake finished")
         else:
             return debug_status(self.name, Status.RUNNING)
 
