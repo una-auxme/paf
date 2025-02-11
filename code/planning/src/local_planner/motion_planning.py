@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # import tf.transformations
 import math
-from typing import List
+import os
+import sys
+from typing import List, Optional
+
 import numpy as np
 
 import ros_compatibility as roscomp
@@ -46,7 +49,7 @@ class MotionPlanning(CompatibleNode):
 
         # TODO: add type hints
         self.target_speed = 0.0
-        self.target_velocity_selector = "not selected"
+        self.target_velocity_selector = "not_selected"
         self.__curr_behavior = None
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
@@ -429,7 +432,9 @@ class MotionPlanning(CompatibleNode):
 
         return filtered_list
 
-    def get_cornering_speed(self):
+    def get_cornering_speed(self) -> Optional[float]:
+        if len(self.__corners) < 1:
+            return None
         corner = self.__corners[0]
         pos = self.current_pos[:2]
 
@@ -493,19 +498,33 @@ class MotionPlanning(CompatibleNode):
         overtake status and publishes it. The unit of the velocity is m/s.
         """
         be_speed = self.get_speed_by_behavior(behavior)
-        if behavior == bs.parking.name or self.__overtake_status == 1:
+        if behavior == bs.parking.name:  # or self.__overtake_status == 1:
             self.target_speed = be_speed
+            self.target_velocity_selector = "be_speed"
         else:
             corner_speed = self.get_cornering_speed()
-            self.target_speed = min(be_speed, acc_speed, corner_speed)
-            if self.target_speed == acc_speed:
-                self.target_velocity_selector = "acc_speed"
-                # be speed is sometimes equals acc speed (in case of cruise behaviour)
-            elif self.target_speed == be_speed:
-                self.target_velocity_selector = "be_speed"
-            elif self.target_speed == corner_speed:
-                self.target_velocity_selector = "corner_speed"
-        # self.target_speed = min(self.target_speed, 8)
+            speed_list = []
+            if be_speed is not None:
+                speed_list.append(be_speed)
+            if acc_speed is not None:
+                speed_list.append(acc_speed)
+            if corner_speed is not None:
+                speed_list.append(corner_speed)
+
+            if len(speed_list) > 0:
+                self.target_speed = min(speed_list)
+                if self.target_speed == acc_speed:
+                    self.target_velocity_selector = "acc_speed"
+                    # be speed is sometimes equals acc speed (in case of cruise
+                    # behaviour)
+                elif self.target_speed == be_speed:
+                    self.target_velocity_selector = "be_speed"
+                elif self.target_speed == corner_speed:
+                    self.target_velocity_selector = "corner_speed"
+            else:
+                self.target_speed = 0.0
+                self.target_velocity_selector = "not_selected"
+
         self.velocity_pub.publish(self.target_speed)
         self.velocity_selector_pub.publish(self.target_velocity_selector)
         # self.logerr(f"Speed: {self.target_speed}")
@@ -734,7 +753,7 @@ class MotionPlanning(CompatibleNode):
                 self.update_target_speed(self.__acc_speed, self.__curr_behavior)
             else:
                 self.velocity_pub.publish(0.0)
-                self.velocity_selector_pub.publish("not selected")
+                self.velocity_selector_pub.publish("not_selected")
 
         self.new_timer(self.control_loop_rate, loop)
         self.spin()

@@ -11,7 +11,10 @@
       </weathers>
         <waypoints>
         <position x="-825.2" y="6354.6" z="370.5"/>
-        <position x="-1139.7" y=" 6475.6" z="371"/>
+        <position x="-1139.7" y="6475.6" z="371"/>
+        <position x="-1645.9" y="6469.3" z="371.0"/>
+        <position x="-1918.7" y="6521.0" z="371.0"/>
+        <position x="-2165.8" y="6429.3" z="371.0"/>
         </waypoints>
         <scenarios>
         </scenarios>
