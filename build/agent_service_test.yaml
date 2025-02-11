@@ -1,0 +1,48 @@
+services:
+  agent:
+    build:
+      dockerfile: build/docker/agent/Dockerfile
+      context: ../
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
+    init: true
+    tty: true
+    shm_size: 2gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all"
+              capabilities: [ gpu ]
+    # executes default command specified in agent Dockerfile
+    # build/docker/agent/Dockerfile
+    logging:
+      driver: "local"
+    environment:
+      - DISPLAY
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_MASTER_URI=http://roscore:11311
+      - CARLA_SIM_HOST=carla-simulator
+      - ROS_HOSTNAME=agent
+      - XDG_RUNTIME_DIR=/tmp/runtime-carla
+      - DEBUG_WRAPPER_DEFAULT_HOST=0.0.0.0
+      - ROUTE=/workspace/code/routes/test.xml
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # if you change the volume here also change the copy command
+      # in ``build/docker/agent/Dockerfile
+      - ../:/workspace
+      # mount git config for dvc
+      - ../.gitconfig:/home/carla/.gitconfig
+      - ../:/workspace/
+    networks:
+      - carla
+      - ros
+
+networks:
+  carla:
+  ros:
