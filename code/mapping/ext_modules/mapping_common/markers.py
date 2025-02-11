@@ -20,6 +20,30 @@ def debug_marker(
     color: Optional[Tuple[float, float, float, float]] = None,
     scale_z: Optional[float] = None,
 ) -> Marker:
+    """Creates a marker based on *base*
+
+    Args:
+        base (Any): Currently supported: Entity, Shape2D, shapely.Polygon, Marker, str
+        frame_id (Optional[str], optional): Defaults to "hero".
+        position_z (Optional[float], optional): Defaults to None.
+            If None, the z position of base will be used.
+        transform (Optional[Transform2D], optional): Defaults to None.
+            If None, the transform of base will be used.
+        offset (Optional[Vector2], optional): Offset Vector.
+            Added to the position of the marker. Defaults to None.
+        color (Optional[Tuple[float, float, float, float]], optional):
+            (r, g, b, a) color tuple. Defaults to (0.5, 0.5, 0.5, 0.5).
+        scale_z (Optional[float], optional): Defaults to None.
+            If None, the scale of base will be used.
+                If the scale.z of base is also 0.0,
+                the scale will be set to 1.0 (and 0.3 for str)
+
+    Raises:
+        TypeError: If the type of base is unsupported
+
+    Returns:
+        Marker
+    """
     if isinstance(base, Entity):
         marker = base.to_marker()
     elif isinstance(base, Shape2D):
@@ -81,27 +105,15 @@ def debug_marker_array(
     timestamp: Optional[rospy.Time] = None,
     lifetime: Optional[rospy.Duration] = None,
 ) -> MarkerArray:
-    """Build a MarkerArray for debugging based on several mapping_common types
-
-    All inputs are a list of tuples:
-        - Each Tuple contains an object and a color
-        - The color is a Tuple of (r, g, b, a)
+    """Builds a MArkerArray based on *markers*
 
     Args:
         namespace (str): Namespace of the markers
-        timestamp (Optional[rospy.Time], optional): Timestamp of the markers.
-            Defaults to None.
-        lifetime (Optional[rospy.Duration], optional): Lifetime of the markers.
-            Defaults to rospy.Duration.from_sec(0.5).
-        entities (Optional[List[Tuple
-            [Entity, Tuple[float, float, float, float]]]], optional):
-            Entities to visualize. Defaults to None.
-        shapes (Optional[List[Tuple
-            [Shape2D, Tuple[float, float, float, float]]]], optional):
-            Shapes to visualize. Defaults to None.
-        markers (Optional[List[Tuple[
-            Marker, Tuple[float, float, float, float]]]], optional):
-            Markers to visualize . Defaults to None.
+        markers (List[Marker])
+        timestamp (Optional[rospy.Time], optional): Timestamp of all markers.
+            Defaults to None. If None, the current ros time will be used
+        lifetime (Optional[rospy.Duration], optional): Marker lifetime.
+        Defaults to 0.5.
 
     Returns:
         MarkerArray: _description_
