@@ -326,17 +326,19 @@ class Approach(py_trees.behaviour.Behaviour):
                 and not isinstance(entity, Car)
             ):
                 self.ot_bicycle_pub.publish(True)
-                ot_free = tree.is_lane_free(
+                ot_free, ot_mask = tree.is_lane_free(
                     right_lane=False,
                     lane_length=12.0,
                     lane_transform=-6.0,
                     check_method="lanemarking",
-                )[0]
+                )
             else:
                 self.ot_bicycle_pub.publish(False)
-                ot_free = tree.is_lane_free(False, self.clear_distance, 15.0)
+                ot_free, ot_mask = tree.is_lane_free(False, self.clear_distance, 15.0)
+            if isinstance(ot_mask, shapely.Polygon):
+                add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
             add_debug_entry(self.name, f"Overtake free?: {ot_free}")
-            if ot_free:
+            if ot_free is LaneFreeState.FREE:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
@@ -478,21 +480,25 @@ class Wait(py_trees.behaviour.Behaviour):
         ):
             self.ot_bicycle_pub.publish(True)
             self.curr_behavior_pub.publish(bs.ot_wait_bicycle.name)
-            ot_free = tree.is_lane_free(
+            ot_free, ot_mask = tree.is_lane_free(
                 right_lane=False,
                 lane_length=12.0,
                 lane_transform=-6.0,
                 check_method="lanemarking",
-            )[0]
+            )
         else:
             self.ot_bicycle_pub.publish(False)
             self.curr_behavior_pub.publish(bs.ot_wait_free.name)
-            ot_free = tree.is_lane_free(
+            ot_free, ot_mask = tree.is_lane_free(
                 right_lane=False,
                 lane_length=self.clear_distance,
                 lane_transform=15.0,
                 check_method="lanemarking",
-            )[0]
+            )
+
+        if isinstance(ot_mask, shapely.Polygon):
+            add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
+        add_debug_entry(self.name, f"Overtake free?: {ot_free}")
         if ot_free is LaneFreeState.FREE:
             self.ot_counter += 1
             if self.ot_counter > 3:
