@@ -13,14 +13,24 @@ from visualization_msgs.msg import MarkerArray, Marker
 MARKER_NAMESPACE: str = "behavior_tree"
 
 DEBUG_MARKER_LIST_ID: str = "/debug/markers"
+"""Blackboard: Contains a list of queued markers for visualization
+"""
 _marker_error_msg: str = (
     f"Blackboard entry {DEBUG_MARKER_LIST_ID} is not properly set up"
 )
 DEBUG_INFO_DICT_ID: str = "/debug/tree_info"
+"""Blackboard: Contains a dict of key: *Behavior name* and value: *BehaviorDebugInfo*
+"""
 _info_error_msg = f"Blackboard entry {DEBUG_INFO_DICT_ID} is not properly set up"
 
 
 def add_debug_marker(m: Marker):
+    """Queues a marker for visualization.
+
+    Can be used in any behavior that is called between the
+    DebugMarkerBlackboardSetupBehavior and the
+    DebugMarkerBlackboardPublishBehavior
+    """
     blackboard = py_trees.blackboard.Blackboard()
     marker_list: Optional[List[Marker]] = blackboard.get(DEBUG_MARKER_LIST_ID)
     if marker_list is None:
@@ -34,6 +44,13 @@ def add_debug_entry(
     behavior_name: str,
     entry: str,
 ):
+    """Adds a debug message entry for a behavior
+
+    Args:
+        behavior_name (str): Name of the behavior the message belongs to.
+            Recommended: Inside the Behavior, use *self.name*
+        entry (str): Debug entry
+    """
     blackboard = py_trees.blackboard.Blackboard()
     info_dict: Optional[Dict] = blackboard.get(DEBUG_INFO_DICT_ID)
     if info_dict is None:
@@ -51,6 +68,20 @@ def add_debug_entry(
 def debug_status(
     behavior_name: str, status: py_trees.common.Status, reason: Optional[str] = None
 ) -> py_trees.common.Status:
+    """Updates debug status information for a behavior
+
+    Recommended usage: When returning a status from the behavior *update()* function,
+    WRAP the status return with this function
+
+    Args:
+        behavior_name (str): Name of the behavior the status belongs to.
+            Recommended: Inside the Behavior, use *self.name*
+        status (py_trees.common.Status): New behavior status
+        reason (Optional[str], optional): Why this status was entered. Defaults to None.
+
+    Returns:
+        py_trees.common.Status: _description_
+    """
     blackboard = py_trees.blackboard.Blackboard()
     info_dict: Optional[Dict[str, BehaviorDebugInfo]] = blackboard.get(
         DEBUG_INFO_DICT_ID
@@ -71,10 +102,14 @@ def debug_status(
 
 @dataclass(init=False)
 class BehaviorDebugInfo:
+    """Status and debug entries for a behavior"""
+
     status: Optional[Tuple[py_trees.common.Status, Optional[str]]]
     """Tuple: (Status, Reason (optional))
     """
     entries: List[str] = field(default_factory=list)
+    """List of debug messages
+    """
 
     def __init__(
         self,
@@ -83,6 +118,7 @@ class BehaviorDebugInfo:
     ):
         self.entries = [] if entries is None else entries
         self.status = status
+        # Used for sorting the entries in the visualization
         self._sys_creation_time = time.time_ns()
 
     def to_string(self, name: str) -> str:
@@ -100,6 +136,9 @@ class BehaviorDebugInfo:
 
 
 class DebugMarkerBlackboardSetupBehavior(py_trees.Behaviour):
+    """Sets up an empty list/dict for the *DEBUG_MARKER_LIST_ID* and
+    *DEBUG_INFO_DICT_ID* in the blackboard
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(type(self).__name__, *args, **kwargs)
@@ -112,6 +151,9 @@ class DebugMarkerBlackboardSetupBehavior(py_trees.Behaviour):
 
 
 class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
+    """Reads the markers and debug entries from *DEBUG_MARKER_LIST_ID* and
+    *DEBUG_INFO_DICT_ID* inside the blackboard and publishes them into ROS/RViz
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(type(self).__name__, *args, **kwargs)

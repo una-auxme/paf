@@ -136,6 +136,8 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
 
     Imports variables from the dynamic reconfigure config (config/behavior_config.yaml)
     into the blackboard.
+
+    Parameters are available as "/params/*parameter_name*"
     """
 
     config: Optional[Dict] = None

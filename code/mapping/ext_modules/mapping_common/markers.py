@@ -113,10 +113,10 @@ def debug_marker_array(
         timestamp (Optional[rospy.Time], optional): Timestamp of all markers.
             Defaults to None. If None, the current ros time will be used
         lifetime (Optional[rospy.Duration], optional): Marker lifetime.
-        Defaults to 0.5.
+            Defaults to 0.5.
 
     Returns:
-        MarkerArray: _description_
+        MarkerArray
     """
     if lifetime is None:
         lifetime = rospy.Duration.from_sec(0.5)

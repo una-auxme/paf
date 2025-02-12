@@ -18,6 +18,9 @@ BLACKBOARD_MAP_ID = "/import/map"
 
 
 class ImportMapBehavior(py_trees.Behaviour):
+    """Converts the /paf/hero/mapping/init_data from the Blackboard into
+    the Map type and puts it into the blackboard at *BLACKBOARD_MAP_ID*
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(type(self).__name__, *args, **kwargs)
