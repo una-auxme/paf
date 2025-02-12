@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# import BehaviourEnum
+
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber, Publisher

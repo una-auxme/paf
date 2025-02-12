@@ -29,6 +29,7 @@ catkin_python_setup()
 
 generate_dynamic_reconfigure_options(
   config/ACC.cfg
+  config/BEHAVIOR.cfg
 )
 
 ################################################

@@ -157,6 +157,9 @@ def build_trajectory(
     """Builds a local trajectory line based on the global trajectory
     the and global_hero_transform and returns it as line
 
+    The returned line starts at the nearest position (of the trajectory)
+    to the global_hero_transform
+
     The global_hero_transform can be built with
     mapping_common.map.build_global_hero_transform().
 
@@ -217,8 +220,11 @@ def build_trajectory_shape(
     max_wp_count: Optional[int] = None,
     centered: bool = False,
 ) -> Optional[shapely.Polygon]:
-    """Builds a shape based on the global trajectory
-    the and global_hero_transform and returns it as Polygon
+    """Builds a local trajectory shape based on the global trajectory
+    the and global_hero_transform
+
+    The returned shape starts at the nearest position (of the trajectory)
+    to the global_hero_transform
 
     Args:
         global_trajectory (NavPath): NavPath trajectory in global coordinates

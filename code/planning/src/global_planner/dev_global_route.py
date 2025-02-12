@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+
 import rospy
 import tf.transformations
 import ros_compatibility as roscomp

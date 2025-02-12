@@ -114,6 +114,7 @@ add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/filter.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/markers.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mask.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/shape.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/transform.c
@@ -121,6 +122,7 @@ add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/filter.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.html
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/markers.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mask.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/shape.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/transform.html

@@ -2,7 +2,8 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
-from behaviors import behavior_speed as bs
+
+from . import behavior_speed as bs
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)

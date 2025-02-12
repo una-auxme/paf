@@ -9,9 +9,34 @@ from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from mapping.msg import Map as MapMsg
+from mapping_common.map import Map
 
 from mock.msg import Stop_sign
 from perception.msg import Waypoint, LaneChange, TrafficLightState
+
+BLACKBOARD_MAP_ID = "/import/map"
+
+
+class ImportMapBehavior(py_trees.Behaviour):
+    """Converts the /paf/hero/mapping/init_data from the Blackboard into
+    the Map type and puts it into the blackboard at *BLACKBOARD_MAP_ID*
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(type(self).__name__, *args, **kwargs)
+
+        self.blackboard = py_trees.blackboard.Blackboard()
+
+    def update(self):
+        map_data_topic = "/paf/hero/mapping/init_data"
+        map_msg = self.blackboard.get(map_data_topic)
+        if map_msg is None:
+            return py_trees.common.Status.FAILURE
+
+        map = Map.from_ros_msg(map_msg)
+        self.blackboard.set(BLACKBOARD_MAP_ID, map, overwrite=True)
+        return py_trees.common.Status.SUCCESS
+
 
 """
 Source: https://github.com/ll7/psaf2
@@ -134,4 +159,7 @@ def create_node(role_name):
                 clearing_policy=topic["clearing-policy"],
             )
         )
+
+    topics2blackboard.add_child(ImportMapBehavior())
+
     return topics2blackboard

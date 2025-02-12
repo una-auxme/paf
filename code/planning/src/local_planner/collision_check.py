@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-# import rospy
 import numpy as np
 import rospy
 
-# import tf.transformations
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from rospy import Subscriber
@@ -12,7 +10,8 @@ from carla_msgs.msg import CarlaSpeedometer  # , CarlaWorldInfo
 
 from std_msgs.msg import Float32, Float32MultiArray
 from std_msgs.msg import Bool
-from utils import filter_vision_objects, calculate_rule_of_thumb
+
+from local_planner.utils import filter_vision_objects, calculate_rule_of_thumb
 
 
 class CollisionCheck(CompatibleNode):

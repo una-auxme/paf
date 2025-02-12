@@ -2,12 +2,10 @@ import py_trees
 import rospy
 from std_msgs.msg import String
 import numpy as np
-from behaviors import behavior_speed as bs
+from . import behavior_speed as bs
 
 import mapping_common.map
 from mapping_common.map import Map, LaneFreeState
-
-# from mapping import msg
 
 
 class LeaveParkingSpace(py_trees.behaviour.Behaviour):

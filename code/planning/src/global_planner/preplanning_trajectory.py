@@ -3,7 +3,7 @@ from math import cos, degrees, sin
 from typing import Tuple
 from xml.etree import ElementTree as eTree
 
-import help_functions
+from global_planner import help_functions
 
 # Check small distance between two points
 SMALL_DIST = 0.001
