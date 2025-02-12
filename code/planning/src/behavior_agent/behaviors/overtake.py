@@ -41,6 +41,26 @@ def calculate_obstacle(
     trajectory_check_length: float,
     overlap_percent: float,
 ) -> Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
+    """Calculates if there is an obstacle in front
+
+    Args:
+        behavior_name (str): Name of the behavior using the function.
+            Input self.name here
+        tree (MapTree): Filtered map tree for querying entities
+        blackboard (py_trees.blackboard.Blackboard): Blackboard for fetching data
+        front_mask_size (float): Length of the static box collision mask in front
+        trajectory_check_length (float): Length of the trajectory collision mask
+        overlap_percent (float):
+            How much of an entity has to be inside the collision mask
+
+    Returns:
+        Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
+            - If the function fails to create a valid result: Returns a Status
+            - If the function succeeds:
+                - If there is an obstacle: Returns the entity and
+                  its distance to the hero
+                - No obstacle: None
+    """
     # data preparation
     trajectory = blackboard.get("/paf/hero/trajectory")
     current_wp = blackboard.get("/paf/hero/current_wp")

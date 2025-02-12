@@ -95,10 +95,6 @@ def debug_marker(
     return marker
 
 
-def get_marker_msg(self):
-    return self._marker
-
-
 def debug_marker_array(
     namespace: str,
     markers: List[Marker],
