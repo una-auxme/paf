@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
-
+from enum import Enum
 
 import shapely
 from shapely import STRtree, LineString
@@ -15,7 +15,20 @@ from mapping_common.shape import Rectangle
 from cv2 import line
 import mapping_common.mask
 
+import rospy
+
 from mapping import msg
+
+
+class LaneFreeState(Enum):
+    FREE = 1
+    BLOCKED = 0
+    MISSING_LANEMARK_ERR = -1
+    LANEMARK_ANGLE_ERR = -2
+    SHAPE_ERR = -3
+
+    def is_error(self):
+        return self.value < 0
 
 
 @dataclass
@@ -459,15 +472,24 @@ class MapTree:
         right_lane: bool = False,
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
-    ) -> bool:
+        reduce_lane: float = 1.5,
+        check_method: Literal[
+            "rectangle",
+            "lanemarking",
+            "fallback",
+            # "trajectory" not implemented yet
+        ] = "rectangle",
+        coverage: float = 1.0,
+        lane_angle: float = 5.0,
+    ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """Returns if a lane left or right of our car is free.
-        Right now, a rectangle shape of length lane_length placed
-        on the left or right side of the car with a transformation of lane_transform
-        in front or back. Checks if this rectangle lane box intersects with any
-        relevant entities.
-
-        Idea for later: using lanemark detection and if data is realiable form a
-        polygon for the lane within the detected lanes.
+        There are three check methods available:
+            - rectangle: checks if the lane is free by using a checkbox with size
+            and position according to inputs
+            - lanemarking: checks if the lane is free by using a checkbox that is
+            placed between two lane markings
+            - fallback: uses lanemarking as default and falls back to rectangle if
+            lanemarking is not plausible
 
         Parameters:
         - right_lane (bool): If true, checks the right lane instead of the left lane
@@ -476,22 +498,100 @@ class MapTree:
         - lane_transform (float): Transforms the checked lane box to the front (>0) or
           back (<0) of the car, in meters. Default is 0 meter so the lane box originates
            from the car position -> same distance to the front and rear get checked
+        - reduce_lane (float): Reduces the lane width that should be checked, in meters.
+            Default value is 1.5 meters.
+        - check_method (str): The method to check if the lane is free.
+        - lane_angle (float, optional): sets how many degrees the lanes may be skewed
+            in relation to each other that the check get executed. Defaults to 5.0 °,
+            only used for lanemarking method.
+
+        Default is "rectangle".
         Returns:
-            bool: lane is free / not free
+            Tuple[LaneFreeState, Optional[shapely.Geometry]]:
+            return LaneFreeState and if available the checkbox shape
+        """
+        if check_method == "rectangle":
+            return self.is_lane_free_rectangle(
+                right_lane=right_lane,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                coverage=coverage,
+            )
+        elif check_method == "lanemarking":
+            return self.is_lane_free_lanemarking(
+                right_lane=right_lane,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                coverage=coverage,
+                lane_angle=lane_angle,
+            )
+        elif check_method == "fallback":
+            lane_free_state, lane_check_shape = self.is_lane_free_lanemarking(
+                right_lane=right_lane,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                coverage=coverage,
+                lane_angle=lane_angle,
+            )
+
+            # return value of is_lane_free_lanemarking function of value is plausible
+            if not lane_free_state.is_error():
+                return lane_free_state, lane_check_shape
+
+            # use is_lane_free_rectangle function as fallback
+            return self.is_lane_free_rectangle(
+                right_lane=right_lane,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                coverage=coverage,
+            )
+
+        # check_method == "trajectory": not implemented yet
+
+    def is_lane_free_rectangle(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+        reduce_lane: float = 1.5,
+        coverage: float = 1.0,
+    ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
+        """checks if the lane is free by using a checkbox with size and position
+        according to inputs
+
+        Args:
+            right_lane (bool, optional): if true checks for free lane on the right side.
+            Defaults to False.
+            lane_length (float, optional): length of the checkbox. Defaults to 20.0.
+            lane_transform (float, optional): offset in x direction. Defaults to 0.0.
+            reduce_lane (float, optional): impacts the width of checkbox
+            (= width - reduce_lane). Defaults to 1.5.
+            coverage (float, optional): how much an entity must collide with the
+            checkbox in percent. Defaults to 1.0.
+
+        Returns:
+            Tuple[LaneFreeState, Optional[shapely.Geometry]]:
+            return LaneFreeState and if available the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
+        lane_width = 3.0
+
+        # cannot reduce lane checkbox more than 3 meters as then there is no checkbox
+        # left to check
+        reduce_lane = min(reduce_lane, 3.0)
+
         lane_pos = 1
         if right_lane:
             lane_pos = -1
 
-        # lane length cannot be negative, as no rectangle with negative dimension exists
-        if lane_length < 0:
-            raise ValueError("Lane length cannot take a negative value.")
-
         lane_box_shape = Rectangle(
             length=lane_length,
-            width=1.5,
+            width=lane_width - reduce_lane,
             offset=Transform2D.new_translation(
                 Vector2.new(lane_transform, lane_pos * 2.5)
             ),
@@ -500,15 +600,116 @@ class MapTree:
         # converts lane box Rectangle to a shapely Polygon
         lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
 
-        # creates intersection list of lane box with map entities
-        lane_box_intersection_entities = self.query(
-            geo=lane_box_shapely, predicate="intersects"
+        # get entities that are colliding with the checkbox entity
+        colliding_entities = self.get_overlapping_entities(
+            lane_box_shapely,
+            coverage,
         )
 
         # if list with lane box intersection is empty --> lane is free
-        if not lane_box_intersection_entities:
-            return True
-        return False
+        if not colliding_entities:
+            return LaneFreeState.FREE, lane_box_shapely
+        return LaneFreeState.BLOCKED, lane_box_shapely
+
+    def is_lane_free_lanemarking(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+        reduce_lane: float = 1.5,
+        coverage: float = 1.0,
+        lane_angle: float = 5.0,
+    ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
+        """checks if a lane is free by using a checkbox that is placed between two lane
+        markings. The lane is considered free if there are no colliding entities with
+        the checkbox.
+
+        Args:
+            right_lane (bool, optional): if true checks for free lane on the right side.
+            Defaults to False.
+            lane_length (float, optional): length of the checkbox. Defaults to 20.0.
+            lane_transform (float, optional): offset in x direction. Defaults to 0.0.
+            reduce_lane (float, optional): impacts the width of checkbox
+            (= width - reduce_lane). Defaults to 1.5.
+            coverage (float, optional): how much an entity must collide with the
+            checkbox in percent. Defaults to 1.0.
+            lane_angle (float, optional): sets how many degrees the lanes may be skewed
+            in relation to each other that the check get executed. Defaults to 5.0 °
+
+        Returns:
+            Tuple[LaneFreeState, Optional[shapely.Geometry]]: return if lane is free
+            and the checkbox shape
+        """
+        # checks which lane should be checked and set the multiplier for
+        # the lane entity translation(>0 = left from car)
+        lane_pos = 1
+        if right_lane:
+            lane_pos = -1
+
+        # create y-axis line for intersection with lanemarks
+        y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
+        # build map STRtree from map with filter
+        lane_tree = self.map.build_tree(f=FlagFilter(is_lanemark=True))
+        # get entities that intersect with the y-axis line
+        lanemark_y_axis_intersection = lane_tree.query(
+            geo=y_axis_line, predicate="intersects"
+        )
+        # Abort when not enough lane marks got detected
+        if len(lanemark_y_axis_intersection) < 2:
+            return LaneFreeState.MISSING_LANEMARK_ERR, None
+
+        lane_close_hero = None
+        lane_further_hero = None
+
+        # Choose two lanes nearby car
+        for ent in lanemark_y_axis_intersection:
+            if ent.entity.position_index == lane_pos * 1:
+                lane_close_hero = ent.entity
+            if ent.entity.position_index == lane_pos * 2:
+                lane_further_hero = ent.entity
+
+        if lane_close_hero is None or lane_further_hero is None:
+            return LaneFreeState.MISSING_LANEMARK_ERR, None
+
+        # Check if two lanes has a plausible angle to each pother
+        close_rotation = lane_close_hero.transform.rotation()
+        further_rotation = lane_further_hero.transform.rotation()
+        lanemark_angle = np.rad2deg(abs(close_rotation - further_rotation))
+        if lanemark_angle > lane_angle:
+            rospy.logwarn(
+                f"Lane free check: Lanemarkings angle {lanemark_angle} too big, \
+                should be < {lane_angle}°. Aborting check."
+            )
+            return LaneFreeState.LANEMARK_ANGLE_ERR, None
+
+        # create the lane ckeckbox shape
+        lane_box = mapping_common.mask.create_lane_box(
+            y_axis_line,
+            lane_close_hero,
+            lane_further_hero,
+            lane_pos,
+            lane_length,
+            lane_transform,
+            reduce_lane,
+        )
+
+        if not shapely.is_valid(lane_box):
+            return LaneFreeState.SHAPE_ERR, None
+
+        # get entities that are colliding with the checkbox entity
+        # TODO: motion detection check could be done here also,
+        # deprecated function could be found in commit
+        # d6d246fe181d6c60a1de33e578f2d4a47cb05ed4
+        colliding_entities = self.get_overlapping_entities(
+            lane_box,
+            coverage,
+        )
+
+        # if there are colliding entities, the lane is not free
+        if not colliding_entities:
+            return LaneFreeState.FREE, lane_box
+        else:
+            return LaneFreeState.BLOCKED, lane_box
 
     def get_nearest_entity(
         self,
