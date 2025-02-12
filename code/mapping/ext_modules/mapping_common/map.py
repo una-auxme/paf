@@ -697,7 +697,9 @@ class MapTree:
             return LaneFreeState.SHAPE_ERR, None
 
         # get entities that are colliding with the checkbox entity
-        # TODO: when using motion detection check here
+        # TODO: motion detection check could be done here also,
+        # deprecated function could be found in commit
+        # d6d246fe181d6c60a1de33e578f2d4a47cb05ed4
         colliding_entities = self.get_overlapping_entities(
             lane_box,
             coverage,
@@ -708,55 +710,6 @@ class MapTree:
             return LaneFreeState.FREE, lane_box
         else:
             return LaneFreeState.BLOCKED, lane_box
-
-    # use motion of entities for lane check, not implemented yet as its not finished
-    def get_checkbox_collisions(
-        self, checkbox_shape: shapely.Geometry, coverage=0.2, account_motion=True
-    ) -> List[ShapelyEntity]:
-        """checks for collisions within a checkbox entity
-
-        Args:
-            checkbox_shape (shapely.Geometry): The checkbox shape to check for
-                collisions.
-            coverage (float, optional): to what degree the entity must be covered to be
-                considered. Defaults to 0.2.
-            account_motion (bool, optional): Take Motion into account? Defaults to True.
-
-        Returns:
-            List[Entity]: returns List of entities that are colliding with the checkbox
-                entity.
-        """
-        # get entities that are colliding with the checkbox entity
-        colliding_entities = self.get_overlapping_entities(
-            checkbox_shape,
-            coverage,
-        )
-
-        # return empty list if hero doesn't exist
-        hero = self.map.hero()
-        if hero is None:
-            return []
-
-        # if account_motion is True, only consider entities
-        # if there would be a collision within 3 secs
-        if account_motion:
-            relevant_entities = []
-            for ent in colliding_entities:
-                if hero.motion and ent.entity.motion:
-                    # calculate relative motion
-                    relative_motion = (
-                        hero.motion.linear_motion.length()
-                        - ent.entity.motion.linear_motion.length()
-                    )
-                    # calculate distance in x direction
-                    distance_x = ent.entity.transform.translation().x()
-                    # if the distance [m] / relative motion [m/s] is smaller than 3[s],
-                    # the entity is relevant
-                    if relative_motion != 0 and distance_x / relative_motion < 3:
-                        relevant_entities.append(ent)
-            return relevant_entities
-        else:
-            return colliding_entities
 
     def get_nearest_entity(
         self,
