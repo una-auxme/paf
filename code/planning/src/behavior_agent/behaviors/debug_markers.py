@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Tuple
 from dataclasses import dataclass, field
+import time
 
 from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2
@@ -68,12 +69,21 @@ def debug_status(
     return status
 
 
-@dataclass
+@dataclass(init=False)
 class BehaviorDebugInfo:
-    status: Optional[Tuple[py_trees.common.Status, Optional[str]]] = None
+    status: Optional[Tuple[py_trees.common.Status, Optional[str]]]
     """Tuple: (Status, Reason (optional))
     """
     entries: List[str] = field(default_factory=list)
+
+    def __init__(
+        self,
+        status: Optional[Tuple[py_trees.common.Status, Optional[str]]] = None,
+        entries: Optional[List[str]] = None,
+    ):
+        self.entries = [] if entries is None else entries
+        self.status = status
+        self._sys_creation_time = time.time_ns()
 
     def to_string(self, name: str) -> str:
         status_str = "???"
@@ -129,7 +139,9 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
         if info_dict is None:
             rospy.logwarn(_info_error_msg)
         else:
-            for name, info in info_dict.items():
+            info_items = list(info_dict.items())
+            info_items.sort(key=lambda i: i[1]._sys_creation_time)
+            for name, info in info_items:
                 info_text += f"\n{info.to_string(name)}"
         info_marker = debug_marker(
             info_text,
