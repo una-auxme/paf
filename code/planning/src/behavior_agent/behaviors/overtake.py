@@ -141,27 +141,9 @@ class Ahead(py_trees.behaviour.Behaviour):
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. A good rule of thumb is to only
-        include the initialisation relevant for being able to insert this
-        behaviour in a tree for offline rendering to dot graphs.
-
-         :param name: name of the behaviour
-        """
         super(Ahead, self).__init__(name)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.blackboard = py_trees.blackboard.Blackboard()
         self.ot_distance_pub = rospy.Publisher(
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
@@ -172,13 +154,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
-        """
-        When is this called?
-            The first time your behaviour is ticked and anytime the status is
-            not RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-        """
         # Counter for detecting overtake situation
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
@@ -186,13 +161,6 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-        Every time your behaviour is ticked.
-        What to do here?
-            - Triggering, checking, monitoring. Anything...but do not block!
-            - Set a feedback message
-            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-
         Gets the current distance and speed to object in front.
         Increases a counter to overtake if there is a obstacle.
         :return: py_trees.common.Status.SUCCESS, if the counter crosses a
@@ -262,15 +230,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.FAILURE, "Obstacle distance too big")
 
     def terminate(self, new_status):
-        """
-        When is this called?
-        Whenever your behaviour switches to a non-running state.
-            - SUCCESS || FAILURE : your behaviour's work cycle has finished
-            - INVALID : a higher priority branch has interrupted, or shutting
-            down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
         pass
 
 
@@ -283,26 +242,10 @@ class Approach(py_trees.behaviour.Behaviour):
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. Other one-time initialisation
-        requirements should be met via the setup() method.
-         :param name: name of the behaviour
-        """
         super(Approach, self).__init__(name)
         rospy.loginfo("Init -> Overtake Behavior: Approach")
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the current behavior publisher.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
@@ -317,12 +260,6 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         """
-        When is this called?
-        The first time your behaviour is ticked and anytime the status is not
-        RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-
         This initializes the overtaking distance to a default value.
         """
         rospy.loginfo("Approaching Overtake")
@@ -334,13 +271,6 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-        Every time your behaviour is ticked.
-        What to do here?
-            - Triggering, checking, monitoring. Anything...but do not block!
-            - Set a feedback message
-            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-
         Gets the current distance to overtake, the current oncoming lane status and the
         distance to collsion object. Slows down until stopped
         or oncoming clear.
@@ -445,15 +375,6 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
     def terminate(self, new_status):
-        """
-        When is this called?
-        Whenever your behaviour switches to a non-running state.
-            - SUCCESS || FAILURE : your behaviour's work cycle has finished
-            - INVALID : a higher priority branch has interrupted, or shutting
-            down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
         pass
 
 
@@ -465,25 +386,9 @@ class Wait(py_trees.behaviour.Behaviour):
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. Other one-time initialisation
-        requirements should be met via the setup() method.
-         :param name: name of the behaviour
-        """
         super(Wait, self).__init__(name)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the current behavior publisher.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
@@ -497,14 +402,6 @@ class Wait(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
-        """
-        When is this called?
-            The first time your behaviour is ticked and anytime the status is
-            not RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-        This just prints a state status message.
-        """
         rospy.loginfo("Waiting for Overtake")
         # slightly less distance since we have already stopped
         self.clear_distance = 35
@@ -514,13 +411,6 @@ class Wait(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-            Every time your behaviour is ticked.
-        What to do here?
-           - Triggering, checking, monitoring. Anything...but do not block!
-           - Set a feedback message
-           - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-
         Waits behind the road object until map function lane free check
         return True.
 
@@ -602,15 +492,6 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
-        """
-        When is this called?
-            Whenever your behaviour switches to a non-running state.
-           - SUCCESS || FAILURE : your behaviour's work cycle has finished
-           - INVALID : a higher priority branch has interrupted, or shutting
-           down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
         pass
 
 
@@ -621,25 +502,9 @@ class Enter(py_trees.behaviour.Behaviour):
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. Other one-time initialisation
-        requirements should be met via the setup() method.
-        :param name: name of the behaviour
-        """
         super(Enter, self).__init__(name)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the current behavior publisher.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
@@ -648,12 +513,6 @@ class Enter(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         """
-        When is this called?
-            The first time your behaviour is ticked and anytime the status is
-            not RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-
         This prints a state status message and publishes the behavior to
         trigger the replanning
         """
@@ -662,13 +521,6 @@ class Enter(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-            Every time your behaviour is ticked.
-        What to do here?
-           - Triggering, checking, monitoring. Anything...but do not block!
-           - Set a feedback message
-           - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-
         Waits for motion_planner to finish the new trajectory.
         :return: py_trees.common.Status.RUNNING,
                  py_trees.common.Status.SUCCESS,
@@ -687,15 +539,6 @@ class Enter(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.RUNNING, "Waiting for status update")
 
     def terminate(self, new_status):
-        """
-        When is this called?
-           Whenever your behaviour switches to a non-running state.
-          - SUCCESS || FAILURE : your behaviour's work cycle has finished
-          - INVALID : a higher priority branch has interrupted, or shutting
-          down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
         pass
 
 
@@ -706,25 +549,9 @@ class Leave(py_trees.behaviour.Behaviour):
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. Other one-time initialisation
-        requirements should be met via the setup() method.
-        :param name: name of the behaviour
-        """
         super(Leave, self).__init__(name)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the current behavior publisher.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
@@ -732,14 +559,6 @@ class Leave(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
-        """
-        When is this called?
-            The first time your behaviour is ticked and anytime the status is
-            not RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-        This prints a state status message and publishes the behavior
-        """
         self.curr_behavior_pub.publish(bs.ot_leave.name)
         data = self.blackboard.get("/paf/hero/current_pos")
         self.first_pos = np.array([data.pose.position.x, data.pose.position.y])
@@ -748,12 +567,6 @@ class Leave(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-            Every time your behaviour is ticked.
-        What to do here?
-           - Triggering, checking, monitoring. Anything...but do not block!
-           - Set a feedback message
-           - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         Abort this subtree, if overtake distance is big enough
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
@@ -768,13 +581,4 @@ class Leave(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.RUNNING)
 
     def terminate(self, new_status):
-        """
-        When is this called?
-           Whenever your behaviour switches to a non-running state.
-          - SUCCESS || FAILURE : your behaviour's work cycle has finished
-          - INVALID : a higher priority branch has interrupted, or shutting
-          down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
         pass
