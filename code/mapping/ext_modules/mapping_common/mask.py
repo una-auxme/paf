@@ -9,7 +9,9 @@ import math
 from nav_msgs.msg import Path as NavPath
 from geometry_msgs.msg import Pose
 from mapping_common.transform import Transform2D, Point2, Vector2
-from shapely.geometry import Polygon, LineString
+from mapping_common.entity import Entity
+from mapping_common.shape import Polygon
+from shapely.geometry import LineString
 
 
 def curve_to_polygon(line: shapely.LineString, width: float) -> shapely.Polygon:
@@ -284,4 +286,113 @@ def project_plane(
         (x, y),
     ]
 
-    return Polygon(points)
+    return shapely.Polygon(points)
+
+
+def point_along_line_angle(x: float, y: float, angle: float, distance: float) -> Point2:
+    """
+    Calculates a point along a straight line with a given angle and distance.
+
+    Parameters:
+    - x (float): x-coordinate of the original position
+    - y (float): y-coordinate of the original position
+    - angle (float): Angle of the straight line (in rad)
+    - distance (float): Distance along the straight line (positive or negative)
+    Returns:
+        Point2(x,y): x-y-coordinates of new point as Point2
+    """
+    x_new = x + distance * np.cos(angle)
+    y_new = y + distance * np.sin(angle)
+
+    return Point2.new(x_new, y_new)
+
+
+def create_lane_box(
+    y_axis_line: LineString,
+    lane_close_hero: Entity,
+    lane_further_hero: Entity,
+    lane_pos: int,
+    lane_length: float,
+    lane_transform: float,
+    reduce_lane: float,
+) -> shapely.Geometry:
+    """helper function to create a lane box entity
+
+    Args:
+        y_axis_line (LineString): check shape y-axis line
+        lane_close_hero (Entity): the lane marking entity that is closer to the car
+        lane_further_hero (Entity): the lane marking entity that is further away
+            from the car
+        lane_pos (int): to check if the lane is on the left or right side of the car
+        lane_length (float): length of the lane box
+        lane_transform (float): transform of the lane box
+        reduce_lane (float): reduce the lane
+
+    Returns:
+        lane_box (Geometry): created lane box shape
+    """
+    close_rotation = lane_close_hero.transform.rotation()
+    further_rotation = lane_further_hero.transform.rotation()
+
+    # use intersection of y-axis with lanemarks as helper coordinates for lane boxes
+    lane_box_intersection_close = y_axis_line.intersection(
+        lane_close_hero.shape.to_shapely(lane_close_hero.transform)
+    )
+    lane_box_center_close = [
+        lane_box_intersection_close.centroid.x,
+        lane_box_intersection_close.centroid.y,
+    ]
+    lane_box_intersection_further = y_axis_line.intersection(
+        lane_further_hero.shape.to_shapely(lane_further_hero.transform)
+    )
+    lane_box_center_further = [
+        lane_box_intersection_further.centroid.x,
+        lane_box_intersection_further.centroid.y,
+    ]
+
+    # get width of the lane box for checking if reduce_lane parameter
+    # is fitting for this width. if not, reduce reduce_lane parameter
+    lane_box_width = abs(lane_box_center_close[1] - lane_box_center_further[1])
+    reduce_lane = min(reduce_lane, lane_box_width)
+
+    # Get half lane box length for calculating lane box shape
+    lane_length_half = lane_length / 2
+
+    # Calculating edge points of the lane box shape
+    lane_box_close_front = point_along_line_angle(
+        lane_box_center_close[0] + lane_transform,
+        lane_box_center_close[1] + lane_pos * reduce_lane / 2,
+        close_rotation,
+        lane_length_half,
+    )
+    lane_box_close_back = point_along_line_angle(
+        lane_box_center_close[0] + lane_transform,
+        lane_box_center_close[1] + lane_pos * reduce_lane / 2,
+        close_rotation,
+        -lane_length_half,
+    )
+    lane_box_further_front = point_along_line_angle(
+        lane_box_center_further[0] + lane_transform,
+        lane_box_center_further[1] - lane_pos * reduce_lane / 2,
+        further_rotation,
+        lane_length_half,
+    )
+    lane_box_further_back = point_along_line_angle(
+        lane_box_center_further[0] + lane_transform,
+        lane_box_center_further[1] - lane_pos * reduce_lane / 2,
+        further_rotation,
+        -lane_length_half,
+    )
+
+    lane_box_shape = Polygon(
+        [
+            lane_box_close_front,
+            lane_box_further_front,
+            lane_box_further_back,
+            lane_box_close_back,
+            lane_box_close_front,
+        ],
+        Transform2D.identity(),
+    )
+
+    return lane_box_shape.to_shapely()
