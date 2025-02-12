@@ -116,7 +116,7 @@ def calculate_obstacle(
         add_debug_marker(debug_marker(mask, color=OVERTAKE_MARKER_COLOR))
 
     entity_result = tree.get_nearest_entity(
-        collision_mask, hero.to_shapely(), overlap_percent
+        collision_mask, hero.to_shapely(), min_coverage_percent=overlap_percent
     )
 
     if entity_result is not None:
@@ -168,9 +168,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if there is nothing
                  to overtake.
         """
-
-        test_param = self.blackboard.get("/params/test_param")
-        rospy.logwarn(f"Test param: {test_param}")
 
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
@@ -266,7 +263,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 35
+        self.clear_distance = 55
         OVERTAKE_FREE = False
 
     def update(self):
@@ -334,7 +331,12 @@ class Approach(py_trees.behaviour.Behaviour):
                 )
             else:
                 self.ot_bicycle_pub.publish(False)
-                ot_free, ot_mask = tree.is_lane_free(False, self.clear_distance, 15.0)
+                ot_free, ot_mask = tree.is_lane_free(
+                    right_lane=False,
+                    lane_length=self.clear_distance,
+                    lane_transform=15.0,
+                    check_method="lanemarking",
+                )
             if isinstance(ot_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
             add_debug_entry(self.name, f"Overtake free?: {ot_free}")
@@ -411,7 +413,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Waiting for Overtake")
         # slightly less distance since we have already stopped
-        self.clear_distance = 35
+        self.clear_distance = 55
         self.ot_counter = 0
         self.ot_gone = 0
         return True

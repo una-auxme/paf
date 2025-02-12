@@ -6,6 +6,7 @@ import shapely
 from shapely import STRtree, LineString
 import numpy as np
 import numpy.typing as npt
+import math
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
@@ -603,7 +604,7 @@ class MapTree:
         # get entities that are colliding with the checkbox entity
         colliding_entities = self.get_overlapping_entities(
             lane_box_shapely,
-            coverage,
+            min_coverage_percent=coverage,
         )
 
         # if list with lane box intersection is empty --> lane is free
@@ -702,7 +703,7 @@ class MapTree:
         # d6d246fe181d6c60a1de33e578f2d4a47cb05ed4
         colliding_entities = self.get_overlapping_entities(
             lane_box,
-            coverage,
+            min_coverage_percent=coverage,
         )
 
         # if there are colliding entities, the lane is not free
@@ -748,8 +749,8 @@ class MapTree:
     def get_overlapping_entities(
         self,
         mask: shapely.Geometry,
-        min_coverage_percent: float = 0.0,
-        min_coverage_area: float = 0.0,
+        min_coverage_percent: Optional[float] = None,
+        min_coverage_area: Optional[float] = None,
     ) -> List[ShapelyEntity]:
         """Returns a list of entities that have at least coverage % or area in the
         mask geometry.
@@ -757,8 +758,8 @@ class MapTree:
         Args:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
-            min_coverage_percent (float, optional): Defaults to 0.0.
-            min_coverage_area (float, optional): Defaults to 0.0.
+            min_coverage_percent (float, optional): Defaults to None.
+            min_coverage_area (float, optional): Defaults to None.
 
         Returns:
             List[ShapelyEntity]: A list of entities that have at least
@@ -773,7 +774,7 @@ class MapTree:
             shape = ent.poly
             shape_area: float = shape.area
 
-            if min_coverage_percent <= 0.0 and min_coverage_area <= 0.0:
+            if min_coverage_percent is None and min_coverage_area is None:
                 # Check for intersection, because query only does it roughly
                 if shapely.intersects(mask, shape):
                     collision_entities.append(ent)
@@ -782,9 +783,13 @@ class MapTree:
             # Calculate intersection area
             shapely_intersection = shapely.intersection(mask, shape)
             intersection_area: float = shapely_intersection.area
+            if math.isclose(intersection_area, 0.0):
+                continue
             if (
-                intersection_area / shape_area >= min_coverage_percent
-                or intersection_area >= min_coverage_area
+                min_coverage_percent is not None
+                and intersection_area / shape_area >= min_coverage_percent
+            ) or (
+                min_coverage_area is not None and intersection_area >= min_coverage_area
             ):
                 collision_entities.append(ent)
 

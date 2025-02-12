@@ -9,6 +9,7 @@ import py_trees
 
 import rospy
 from visualization_msgs.msg import MarkerArray, Marker
+from std_msgs.msg import String
 
 MARKER_NAMESPACE: str = "behavior_tree"
 
@@ -177,7 +178,16 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
             DEBUG_INFO_DICT_ID
         )
 
-        info_text = "Behavior Tree Overview:"
+        current_behavior_topic_msg: Optional[String] = self.blackboard.get(
+            "/paf/hero/curr_behavior"
+        )
+        current_behavior_topic = (
+            "None"
+            if current_behavior_topic_msg is None
+            else current_behavior_topic_msg.data
+        )
+        info_text = f"Behavior from curr_behavior topic: {current_behavior_topic}\n\
+        Behavior Tree Overview:"
         if info_dict is None:
             rospy.logwarn(_info_error_msg)
         else:
