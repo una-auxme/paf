@@ -123,7 +123,7 @@ class BehaviorDebugInfo:
         self._sys_creation_time = time.time_ns()
 
     def to_string(self, name: str) -> str:
-        status_str = "???"
+        status_str = "UNKNOWN"
         if self.status is not None:
             status, reason = self.status
             if reason is None:
