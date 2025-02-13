@@ -348,11 +348,15 @@ class ACC(CompatibleNode):
                 current_velocity, distance, lead_delta_velocity
             )
 
+            lead_x_velocity = entity.entity.get_global_x_velocity()
+            lead_x_velocity_str = (
+                "None" if lead_x_velocity is None else f"{lead_x_velocity:6.4f}"
+            )
             marker_text += (
-                f"LeadDistance: {distance}\n"
-                + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
-                + f"DeltaV: {lead_delta_velocity}\n"
-                + f"RawACCSpeed: {desired_speed}\n"
+                f"LeadDistance: {distance:7.4f}\n"
+                + f"LeadXVelocity: {lead_x_velocity_str}\n"
+                + f"DeltaV: {lead_delta_velocity:6.4f}\n"
+                + f"RawACCSpeed: {desired_speed:6.4f}\n"
             )
 
         if self.speed_limit is None:
@@ -362,7 +366,7 @@ class ACC(CompatibleNode):
             # max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"FinalACCSpeed: {desired_speed}\n"
+        marker_text += f"FinalACCSpeed: {desired_speed:6.4f}\n"
         debug_markers.append(
             debug_marker(
                 marker_text,
