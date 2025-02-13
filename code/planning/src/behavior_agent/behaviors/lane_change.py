@@ -4,6 +4,8 @@ from std_msgs.msg import String
 
 import rospy
 
+from carla import RoadOption
+
 from . import behavior_speed as bs
 from local_planner.utils import TARGET_DISTANCE_TO_STOP, convert_to_ms
 
@@ -17,88 +19,48 @@ Source: https://github.com/ll7/psaf2
 
 class Ahead(py_trees.behaviour.Behaviour):
     """
-    This behaviour checkes wheather there is an lane change in front of the
+    This behaviour checks whether there is a lane change in front of the
     ego vehicle or not and triggers the rest of the decision tree handling the
-     lane change.
+    lane change.
     """
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. A good rule of thumb is to only
-        include the initialisation relevant for being able to insert this
-        behaviour in a tree for offline rendering to dot graphs.
-        Other one-time initialisation requirements should be met via the
-        setup() method.
-         :param name: name of the behaviour
-        """
         super(Ahead, self).__init__(name)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics and the target speed publisher.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as the set up is successful.
-        """
         self.blackboard = py_trees.blackboard.Blackboard()
         return True
 
     def initialise(self):
-        """
-        When is this called?
-            The first time your behaviour is ticked and anytime the status is
-            not RUNNING thereafter.
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-        This initializes the variables needed to save information about the
-        lane change.
-        """
         self.dist = 0
 
     def update(self):
         """
-        When is this called?
-        Every time your behaviour is ticked.
-        What to do here?
-            - Triggering, checking, monitoring. Anything...but do not block!
-            - Set a feedback message
-            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         Gets the current distance to the next lane change.
         :return: py_trees.common.Status.SUCCESS, if the vehicle is within range
-                    of the lane change
+                 of the lane change
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
-        bb = self.blackboard.get("/paf/hero/lane_change_distance")
-        if bb is None:
+
+        lane_change_distance = self.blackboard.get("/paf/hero/lane_change_distance")
+        if lane_change_distance is None:
             return py_trees.common.Status.FAILURE
         else:
-            dist = bb.distance
-            isIntersection = bb.isLaneChange
-        if dist < 30 and isIntersection:
+            distance = lane_change_distance.distance
+            is_lane_change = lane_change_distance.isLaneChange
+            rospy.logerr(f"road option: {lane_change_distance.roadOption}")
+            rospy.logerr(
+                f"RoadOption.CHANGELANELEFT: {RoadOption.CHANGELANELEFT} \n"
+                f"RoadOption.CHANGELANERIGHT: {RoadOption.CHANGELANERIGHT}"
+            )
+        if distance < 30 and is_lane_change:
             return py_trees.common.Status.SUCCESS
         else:
             return py_trees.common.Status.FAILURE
 
     def terminate(self, new_status):
-        """
-        When is this called?
-        Whenever your behaviour switches to a non-running state.
-            - SUCCESS || FAILURE : your behaviour's work cycle has finished
-            - INVALID : a higher priority branch has interrupted, or shutting
-            down
-        writes a status message to the console when the behaviour terminates
-        :param new_status: new state after this one is terminated
-        """
-        self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]"
-            % (self.name, self.status, new_status)
-        )
+        pass
 
 
 class Approach(py_trees.behaviour.Behaviour):
