@@ -6,7 +6,8 @@ from std_msgs.msg import String
 import rospy
 import numpy as np
 
-from carla import RoadOption
+import carla
+from agents.navigation.local_planner import RoadOption
 
 import mapping_common.map
 import mapping_common.entity
@@ -61,12 +62,13 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             change_distance = lane_change_distance.distance
             change_detected = lane_change_distance.isLaneChange
-            # rospy.logerr(f"road option: {lane_change_distance.roadOption}")
-            # rospy.logerr(
-            #    f"RoadOption.CHANGELANELEFT: {RoadOption.CHANGELANELEFT} \n"
-            #    f"RoadOption.CHANGELANERIGHT: {RoadOption.CHANGELANERIGHT}"
+            # add_debug_entry(
+            #    self.name,
+            #    f"road option: {lane_change_distance.roadOption} "
+            #    f"RoadOption.CHANGELANELEFT: {RoadOption.CHANGELANELEFT} "
+            #    f"RoadOption.CHANGELANERIGHT: {RoadOption.CHANGELANERIGHT} ",
             # )
-        if change_distance < 30 and change_detected:
+        if change_detected and change_distance < 30:
             return debug_status(self.name, Status.SUCCESS, "Lane change ahead")
         else:
             return debug_status(self.name, Status.FAILURE, "No lane change ahead")
@@ -98,6 +100,7 @@ class Approach(py_trees.behaviour.Behaviour):
         rospy.loginfo("Approaching Change")
         self.change_detected = False
         self.change_distance = np.inf
+        self.change_direction: Optional[bool] = None
         self.virtual_change_distance = np.inf
         self.blocked = True
         self.counter_lanefree = 0
@@ -124,14 +127,30 @@ class Approach(py_trees.behaviour.Behaviour):
             self.change_distance = lane_change_distance.distance
             self.change_detected = lane_change_distance.isLaneChange
             self.change_option = lane_change_distance.roadOption
-            add_debug_entry(self.name, f"Change distance: {self.change_distance}")
+
+            # Check if change is to the left or right lane
+            if self.change_option == RoadOption.CHANGELANELEFT:
+                self.change_direction = False
+            elif self.change_option == RoadOption.CHANGELANERIGHT:
+                self.change_direction = True
+
+            add_debug_entry(
+                self.name,
+                f"Change distance: {self.change_distance}\n"
+                f"Change direction right: {self.change_direction}",
+            )
 
         # calculate virtual stopline
-        if self.change_distance != np.inf and self.change_detected:
+        if self.change_detected and self.change_distance != np.inf:
             self.virtual_change_distance = self.change_distance
 
+            if self.change_direction is None:
+                return debug_status(
+                    self.name, Status.FAILURE, "No lane change direction detected"
+                )
+
             lc_free, lc_mask = tree.is_lane_free(
-                right_lane=False,
+                right_lane=self.change_direction,
                 lane_length=22.5,
                 lane_transform=-5.0,
                 check_method="lanemarking",
@@ -297,16 +316,17 @@ class Wait(py_trees.behaviour.Behaviour):
         #     else:
         #         change_clear = True
 
-        map_data = self.blackboard.get("/paf/hero/mapping/init_data")
-        map = Map.from_ros_msg(map_data)
+        # map_data = self.blackboard.get("/paf/hero/mapping/init_data")
+        # map = Map.from_ros_msg(map_data)
         # checks if the left lane of the car is free,
         # otherwise pause lane change
-        tree = map.build_tree(mapping_common.map.lane_free_filter())
+        # tree = map.build_tree(mapping_common.map.lane_free_filter())
 
         change_clear = False
-        if map.entities and tree.is_lane_free(
-            right_lane=False, lane_length=22.5, lane_transform=-5.0
-        ):
+        # if map.entities and tree.is_lane_free(
+        #    right_lane=False, lane_length=22.5, lane_transform=-5.0
+        # ):
+        if True:
             self.counter_lanefree += 1
             if self.counter_lanefree > 1:
                 # rospy.loginfo("WAIT: Lane Change is free!")
