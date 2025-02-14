@@ -7,9 +7,10 @@ import tf.transformations
 from carla_msgs.msg import CarlaRoute  # , CarlaWorldInfo
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from nav_msgs.msg import Path
-from preplanning_trajectory import OpenDriveConverter
 from ros_compatibility.node import CompatibleNode
 from std_msgs.msg import Float32MultiArray, String
+
+from global_planner.preplanning_trajectory import OpenDriveConverter
 
 RIGHT = 1
 LEFT = 2

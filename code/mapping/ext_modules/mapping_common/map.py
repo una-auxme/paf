@@ -6,6 +6,7 @@ import shapely
 from shapely import STRtree, LineString
 import numpy as np
 import numpy.typing as npt
+import math
 
 from genpy.rostime import Time
 from std_msgs.msg import Header
@@ -479,7 +480,8 @@ class MapTree:
             "fallback",
             # "trajectory" not implemented yet
         ] = "rectangle",
-        coverage: float = 1.0,
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
         lane_angle: float = 5.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """Returns if a lane left or right of our car is free.
@@ -504,6 +506,10 @@ class MapTree:
         - lane_angle (float, optional): sets how many degrees the lanes may be skewed
             in relation to each other that the check get executed. Defaults to 5.0 °,
             only used for lanemarking method.
+        - min_coverage_percent (float, optional): how much an entity must collide
+            with the checkbox in percent. Defaults to 0.0.
+        - min_coverage_area (float, optional): how much an entity must collide
+            with the checkbox in m2. Defaults to 0.0.
 
         Default is "rectangle".
         Returns:
@@ -516,7 +522,8 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                coverage=coverage,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
             )
         elif check_method == "lanemarking":
             return self.is_lane_free_lanemarking(
@@ -524,7 +531,8 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                coverage=coverage,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
                 lane_angle=lane_angle,
             )
         elif check_method == "fallback":
@@ -533,7 +541,8 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                coverage=coverage,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
                 lane_angle=lane_angle,
             )
 
@@ -547,7 +556,8 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                coverage=coverage,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
             )
 
         # check_method == "trajectory": not implemented yet
@@ -558,7 +568,8 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        coverage: float = 1.0,
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if the lane is free by using a checkbox with size and position
         according to inputs
@@ -570,8 +581,10 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much an entity must collide with the
-            checkbox in percent. Defaults to 1.0.
+            min_coverage_percent (float, optional): how much an entity must collide
+            with the checkbox in percent. Defaults to 0.0.
+            min_coverage_area (float, optional): how much an entity must collide
+            with the checkbox in m2. Defaults to 0.0.
 
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
@@ -603,7 +616,8 @@ class MapTree:
         # get entities that are colliding with the checkbox entity
         colliding_entities = self.get_overlapping_entities(
             lane_box_shapely,
-            coverage,
+            min_coverage_percent=min_coverage_percent,
+            min_coverage_area=min_coverage_area,
         )
 
         # if list with lane box intersection is empty --> lane is free
@@ -617,7 +631,8 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        coverage: float = 1.0,
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
         lane_angle: float = 5.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if a lane is free by using a checkbox that is placed between two lane
@@ -631,8 +646,10 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            coverage (float, optional): how much an entity must collide with the
-            checkbox in percent. Defaults to 1.0.
+            min_coverage_percent (float, optional): how much an entity must collide
+            with the checkbox in percent. Defaults to 0.0.
+            min_coverage_area (float, optional): how much an entity must collide
+            with the checkbox in m2. Defaults to 0.0.
             lane_angle (float, optional): sets how many degrees the lanes may be skewed
             in relation to each other that the check get executed. Defaults to 5.0 °
 
@@ -702,7 +719,8 @@ class MapTree:
         # d6d246fe181d6c60a1de33e578f2d4a47cb05ed4
         colliding_entities = self.get_overlapping_entities(
             lane_box,
-            coverage,
+            min_coverage_percent=min_coverage_percent,
+            min_coverage_area=min_coverage_area,
         )
 
         # if there are colliding entities, the lane is not free
@@ -773,7 +791,7 @@ class MapTree:
             shape = ent.poly
             shape_area: float = shape.area
 
-            if min_coverage_percent <= 0.0 and min_coverage_area <= 0.0:
+            if min_coverage_percent == 0.0 and min_coverage_area == 0.0:
                 # Check for intersection, because query only does it roughly
                 if shapely.intersects(mask, shape):
                     collision_entities.append(ent)
@@ -782,6 +800,8 @@ class MapTree:
             # Calculate intersection area
             shapely_intersection = shapely.intersection(mask, shape)
             intersection_area: float = shapely_intersection.area
+            if math.isclose(intersection_area, 0.0):
+                continue
             if (
                 intersection_area / shape_area >= min_coverage_percent
                 or intersection_area >= min_coverage_area

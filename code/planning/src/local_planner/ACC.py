@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ros_compatibility as roscomp
 from geometry_msgs.msg import PoseStamped, Point
+import mapping_common.markers
 import mapping_common.shape
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
@@ -20,7 +21,8 @@ import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
-from mapping_common.shape import Polygon
+from mapping_common.markers import debug_marker, debug_marker_array
+from mapping_common.transform import Vector2
 from mapping.msg import Map as MapMsg
 
 MARKER_NAMESPACE: str = "acc"
@@ -31,7 +33,6 @@ class ACC(CompatibleNode):
     possible collisions, the current speed, the trajectory, and the speed limits."""
 
     map: Optional[Map] = None
-    last_map_timestamp: Optional[rospy.Time] = None
 
     # unstuck attributes
     __unstuck_flag: bool = False
@@ -150,8 +151,6 @@ class ACC(CompatibleNode):
         self.logdebug("ACC initialized")
 
     def __get_map(self, data: MapMsg):
-        if self.map is not None:
-            self.last_map_timestamp = self.map.timestamp
         self.map = Map.from_ros_msg(data)
         self.update_velocity()
 
@@ -327,20 +326,20 @@ class ACC(CompatibleNode):
         collision_masks = [front_rect, trajectory_mask]
         collision_mask = shapely.union_all(collision_masks)
 
-        shape_markers = []
+        debug_markers: List[Marker] = []
         for mask in collision_masks:
-            shape_markers.append((Polygon.from_shapely(mask), (0, 1.0, 1.0, 0.5)))
+            debug_markers.append(debug_marker(mask, color=(0, 1.0, 1.0, 0.5)))
 
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
-        text_markers = []
-        entity_markers = []
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
         marker_text: str = ""
         if entity_result is not None:
             entity, distance = entity_result
-            entity_markers.append((entity.entity, (1.0, 0.0, 0.0, 0.5)))
+            debug_markers.append(
+                debug_marker(entity.entity, color=(1.0, 0.0, 0.0, 0.5), scale_z=0.3)
+            )
 
             lead_delta_velocity = (
                 hero.get_delta_forward_velocity_of(entity.entity) or -current_velocity
@@ -349,11 +348,15 @@ class ACC(CompatibleNode):
                 current_velocity, distance, lead_delta_velocity
             )
 
+            lead_x_velocity = entity.entity.get_global_x_velocity()
+            lead_x_velocity_str = (
+                "None" if lead_x_velocity is None else f"{lead_x_velocity:6.4f}"
+            )
             marker_text += (
-                f"LeadDistance: {distance}\n"
-                + f"LeadXVelocity: {entity.entity.get_global_x_velocity()}\n"
-                + f"DeltaV: {lead_delta_velocity}\n"
-                + f"RawACCSpeed: {desired_speed}\n"
+                f"LeadDistance: {distance:7.4f}\n"
+                + f"LeadXVelocity: {lead_x_velocity_str}\n"
+                + f"DeltaV: {lead_delta_velocity:6.4f}\n"
+                + f"RawACCSpeed: {desired_speed:6.4f}\n"
             )
 
         if self.speed_limit is None:
@@ -363,20 +366,18 @@ class ACC(CompatibleNode):
             # max speed is the current speed limit
             desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"FinalACCSpeed: {desired_speed}\n"
-        text_marker = Marker(type=Marker.TEXT_VIEW_FACING, text=marker_text)
-        text_marker.pose.position.x = -2.0
-        text_marker.pose.position.y = 0.0
-        text_markers.append((text_marker, (1.0, 1.0, 1.0, 1.0)))
+        marker_text += f"FinalACCSpeed: {desired_speed:6.4f}\n"
+        debug_markers.append(
+            debug_marker(
+                marker_text,
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=Vector2.new(-2.0, 0.0),
+            )
+        )
 
         self.velocity_pub.publish(desired_speed)
 
-        marker_array = mapping_common.entity.shape_debug_marker_array(
-            MARKER_NAMESPACE,
-            entities=entity_markers,
-            shapes=shape_markers,
-            markers=text_markers,
-        )
+        marker_array = debug_marker_array(MARKER_NAMESPACE, debug_markers)
         self.marker_publisher.publish(marker_array)
 
     def calculate_velocity_based_on_lead(

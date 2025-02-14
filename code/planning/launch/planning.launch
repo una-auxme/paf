@@ -27,13 +27,16 @@
            <param name="global_route_txt" value="/code/planning/src/global_planner/global_route.txt" />
            <param name="role_name" value="hero" />
     </node> -->
-    <node pkg="planning" type="global_planner.py" name="PrePlanner" output="screen">
+    <node pkg="planning" type="global_planner_node.py" name="PrePlanner" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="1" />
            <param name="distance_spawn_to_first_wp" value="100" />
     </node>
 
-    <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen"/>
+    <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen">
+       <rosparam file="$(find planning)/config/behavior_config.yaml" command="load" />
+    </node>
+
     <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
 
     <node pkg="planning" type="RequestBehaviourChangeService.py" name="RequestBehaviourChangeService" output="screen">

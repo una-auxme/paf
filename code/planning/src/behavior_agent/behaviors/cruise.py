@@ -1,7 +1,8 @@
 import py_trees
 import rospy
 from std_msgs.msg import String
-from behaviors import behavior_speed as bs
+
+from . import behavior_speed as bs
 
 
 class Cruise(py_trees.behaviour.Behaviour):

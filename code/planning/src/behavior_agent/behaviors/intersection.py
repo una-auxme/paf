@@ -3,13 +3,10 @@ import numpy as np
 from std_msgs.msg import String
 
 import rospy
-import sys
-import os
 
-from behaviors import behavior_speed as bs
+from . import behavior_speed as bs
 
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-from local_planner.utils import (  # type: ignore # noqa: E402
+from local_planner.utils import (
     TARGET_DISTANCE_TO_STOP,
     convert_to_ms,
 )
