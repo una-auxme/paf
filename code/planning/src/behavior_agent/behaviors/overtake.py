@@ -338,7 +338,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 )
             if isinstance(ot_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-            add_debug_entry(self.name, f"Overtake free?: {ot_free}")
+            add_debug_entry(self.name, f"Overtake free?: {ot_free.name}")
             if ot_free is LaneFreeState.FREE:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies

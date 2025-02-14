@@ -186,8 +186,10 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
             if current_behavior_topic_msg is None
             else current_behavior_topic_msg.data
         )
-        info_text = f"Behavior from curr_behavior topic: {current_behavior_topic}\n\
-        Behavior Tree Overview:"
+        info_text = (
+            f"Behavior from curr_behavior topic: {current_behavior_topic}\n"
+            f"Behavior Tree Overview:"
+        )
         if info_dict is None:
             rospy.logwarn(_info_error_msg)
         else:
