@@ -326,7 +326,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     right_lane=False,
                     lane_length=12.0,
                     lane_transform=-6.0,
-                    check_method="lanemarking",
+                    check_method="fallback",
                 )
             else:
                 self.ot_bicycle_pub.publish(False)
@@ -334,7 +334,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     right_lane=False,
                     lane_length=self.clear_distance,
                     lane_transform=15.0,
-                    check_method="lanemarking",
+                    check_method="fallback",
                 )
             if isinstance(ot_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
@@ -485,7 +485,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 right_lane=False,
                 lane_length=12.0,
                 lane_transform=-6.0,
-                check_method="lanemarking",
+                check_method="fallback",
             )
         else:
             self.ot_bicycle_pub.publish(False)
@@ -494,7 +494,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 right_lane=False,
                 lane_length=self.clear_distance,
                 lane_transform=15.0,
-                check_method="lanemarking",
+                check_method="fallback",
             )
 
         if isinstance(ot_mask, shapely.Polygon):
