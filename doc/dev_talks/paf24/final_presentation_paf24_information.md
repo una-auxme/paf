@@ -13,7 +13,7 @@
 ⏳ **Total Duration: 130 minutes**
 
 1. **90 minutes** – Final Presentation
-2. **30 minutes** – Questions & Discussion
+2. **30 minutes** – Questions, Discussion and Parallel Demo of the Vehicle Running
 3. **10 minutes** – Break
 4. **20 minutes** – Evaluation by Supervisors
 5. **10 minutes** – Feedback & Conclusion
