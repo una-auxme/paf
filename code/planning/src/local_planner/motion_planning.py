@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-# import tf.transformations
 import math
-import os
-import sys
 from typing import List, Optional
 
 import numpy as np
+
 import ros_compatibility as roscomp
 import rospy
 from carla_msgs.msg import CarlaSpeedometer
@@ -16,7 +14,8 @@ from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
 from scipy.spatial.transform import Rotation
 from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
-from utils import (
+
+from local_planner.utils import (
     NUM_WAYPOINTS,
     NUM_WAYPOINTS_BICYCLE,
     TARGET_DISTANCE_TO_STOP,
@@ -26,11 +25,7 @@ from utils import (
     spawn_car,
     convert_pose_to_array,
 )
-
-sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
-from behaviors import behavior_speed as bs  # type: ignore # noqa: E402
-
-# from scipy.spatial._kdtree import KDTree
+from behavior_agent.behaviors import behavior_speed as bs
 
 
 UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0

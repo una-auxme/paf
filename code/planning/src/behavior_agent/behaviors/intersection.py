@@ -9,11 +9,12 @@ from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Transform2D, Point2
 
-from behaviors import behavior_speed as bs
+from . import behavior_speed as bs
 
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-from local_planner.utils import (  # type: ignore # noqa: E402
+from local_planner.utils import (
+    TARGET_DISTANCE_TO_STOP,
     TARGET_DISTANCE_TO_STOP_INTERSECTION,
+    convert_to_ms,
 )
 
 """

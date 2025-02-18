@@ -2,12 +2,10 @@ import py_trees
 import rospy
 from std_msgs.msg import String
 import numpy as np
-from behaviors import behavior_speed as bs
+from . import behavior_speed as bs
 
 import mapping_common.map
-from mapping_common.map import Map
-
-# from mapping import msg
+from mapping_common.map import Map, LaneFreeState
 
 
 class LeaveParkingSpace(py_trees.behaviour.Behaviour):
@@ -117,8 +115,15 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                     # checks if the left lane of the car is free,
                     # otherwise pause unparking
                     tree = map.build_tree(mapping_common.map.lane_free_filter())
-                    if map.entities and tree.is_lane_free(
-                        right_lane=False, lane_length=22.5, lane_transform=-5.0
+                    if (
+                        map.entities
+                        and tree.is_lane_free(
+                            right_lane=False,
+                            lane_length=22.5,
+                            lane_transform=-5.0,
+                            check_method="rectangle",
+                        )[0]
+                        is LaneFreeState.FREE
                     ):
                         rospy.loginfo("Left lane is now free. Starting unparking.")
                         self.started = True
