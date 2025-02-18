@@ -3,20 +3,21 @@
 **Summary:** This document outlines the guidelines for documentation to ensure consistency, readability, maintainability, and adherence to best practices in coding standards.
 
 - [1. In Code Documentation](#1-in-code-documentation)
-  - [1.1. Linting](#11-linting)
-    - [1.1.1. Python Linting](#111-python-linting)
-    - [1.1.2. Markdown Linting](#112-markdown-linting)
-  - [1.2. Templates](#12-templates)
-  - [1.3. Python Docstrings](#13-python-docstrings)
-  - [1.4. Readability and Maintainability](#14-readability-and-maintainability)
-  - [1.5. Code Structure](#15-code-structure)
-  - [1.6. Efficiency and Performance](#16-efficiency-and-performance)
-  - [1.7. Error Handling](#17-error-handling)
-  - [1.8. Testing](#18-testing)
-  - [1.9. Security](#19-security)
-  - [1.10. Version Control](#110-version-control)
-  - [1.11. Scalability](#111-scalability)
-  - [1.12. Consistency with Coding Standards](#112-consistency-with-coding-standards)
+  - [1.1. Remove or clearly mark unused or deprecated code](#11-remove-or-clearly-mark-unused-or-deprecated-code)
+  - [1.2. Linting](#12-linting)
+    - [1.2.1. Python Linting](#121-python-linting)
+    - [1.2.2. Markdown Linting](#122-markdown-linting)
+  - [1.3. Templates](#13-templates)
+  - [1.4. Python Docstrings](#14-python-docstrings)
+  - [1.5. Readability and Maintainability](#15-readability-and-maintainability)
+  - [1.6. Code Structure](#16-code-structure)
+  - [1.7. Efficiency and Performance](#17-efficiency-and-performance)
+  - [1.8. Error Handling](#18-error-handling)
+  - [1.9. Testing](#19-testing)
+  - [1.10. Security](#110-security)
+  - [1.11. Version Control](#111-version-control)
+  - [1.12. Scalability](#112-scalability)
+  - [1.13. Consistency with Coding Standards](#113-consistency-with-coding-standards)
 - [2. Markdown Documentation](#2-markdown-documentation)
   - [2.1. Structure and Organization](#21-structure-and-organization)
   - [2.2. Content Detailing](#22-content-detailing)
@@ -24,12 +25,18 @@
   - [2.4. Visual Aids](#24-visual-aids)
   - [2.5. Consistency and Style](#25-consistency-and-style)
   - [2.6. Maintenance](#26-maintenance)
+  - [2.7. Deprecation](#27-deprecation)
 
 ## 1. In Code Documentation
 
 In-code documentation is essential for maintaining code quality, readability, and maintainability. It helps developers understand the purpose of the code, its functionality, and how to use it effectively. Below are the requirements for in-code documentation:
 
-### 1.1. Linting
+### 1.1. Remove or clearly mark unused or deprecated code
+
+- **Unused Code:** Remove any unused code to reduce clutter and improve code readability. Unused code can lead to confusion and make it difficult to maintain the codebase.
+- **Deprecated Code:** Clearly mark any deprecated code with comments or annotations to inform other developers that the code should not be used. Deprecated code should be replaced with updated implementations.
+
+### 1.2. Linting
 
 You can lint your files locally with:
 
@@ -37,23 +44,23 @@ You can lint your files locally with:
 docker compose -f build/docker-compose.linting.yaml up
 ```
 
-#### 1.1.1. Python Linting
+#### 1.2.1. Python Linting
 
 Ensure that all Python files pass linting checks without issues.
 Tools such as `black` are already present in this project.
 Regular linting ensures that the code adheres to the project's style guide, enhancing readability and maintainability.
 
-#### 1.1.2. Markdown Linting
+#### 1.2.2. Markdown Linting
 
 Lint all markdown files with `markdownlint`.
 
-### 1.2. Templates
+### 1.3. Templates
 
 Follow the guidelines presented in the following templates:
 
 - [python](templates/template_class.py)
 
-### 1.3. Python Docstrings
+### 1.4. Python Docstrings
 
 The project comes with an extension to automatically generate docstrings. It is mandatory to use it if you comment your code.
 
@@ -65,44 +72,44 @@ Press `Enter` or select the option and it should produce a docstring that looks 
 
 ![docstring.png](/doc/assets/development/docstring.png)
 
-### 1.4. Readability and Maintainability
+### 1.5. Readability and Maintainability
 
 - **Consistent Formatting:** Code should follow a consistent and readable formatting style. Tools like linters or formatters can help enforce a consistent code style.
   - [linting](./linting.md)
 - **Meaningful Names:** Variable and function names should be descriptive and convey the purpose of the code.
 - **Comments:** Clear and concise comments should be used where necessary to explain complex logic or provide context.
 
-### 1.5. Code Structure
+### 1.6. Code Structure
 
 - **Modularity:** Code should be organized into modular components or functions, promoting reusability and maintainability.
 - **Appropriate Use of Functions/Methods:** Functions should have a clear purpose and adhere to the single responsibility principle.
 - **Hierarchy and Nesting:** Avoid overly nested structures; use appropriate levels of indentation to enhance readability.
 
-### 1.6. Efficiency and Performance
+### 1.7. Efficiency and Performance
 
 - **Optimized Algorithms:** Code should use efficient algorithms and data structures to achieve good performance.
 - **Avoidance of Code Smells:** Detect and eliminate code smells such as duplicated code, unnecessary complexity, or anti-patterns.
 
-### 1.7. Error Handling
+### 1.8. Error Handling
 
 - **Effective Error Messages:** Error messages should be clear and provide useful information for debugging.
 - **Graceful Error Handling:** Code should handle errors gracefully, avoiding crashes and providing appropriate feedback.
 
-### 1.8. Testing
+### 1.9. Testing
 
 - **Comprehensive Test Coverage:** Code should be accompanied by a suite of tests that cover different scenarios, ensuring reliability and maintainability.
 - **Test Readability:** Tests should be clear and easy to understand, serving as documentation for the codebase.
 
-### 1.9. Security
+### 1.10. Security
 
 - **Input Validation:** Code should validate and sanitize inputs.
 
-### 1.10. Version Control
+### 1.11. Version Control
 
 - **Commit Messages:** Use descriptive and meaningful commit messages to track changes effectively.
 - **Branching Strategy:** Follow a consistent and well-defined branching strategy to manage code changes.
 
-### 1.11. Scalability
+### 1.12. Scalability
 
 - **Avoid Hardcoding:** Parameterize values that might change, making it easier to scale the application.
   - In ROS noetic, you can use the [`rosparam`](https://wiki.ros.org/rosparam) command to set parameters and [`rospy Parameter Server`](https://wiki.ros.org/rospy/Overview/Parameter%20Server) to retrieve them.
@@ -111,7 +118,7 @@ Press `Enter` or select the option and it should produce a docstring that looks 
 - **Modular Design:** Use a modular design to facilitate the addition of new features and components.
 - **Optimized Resource Usage:** Ensure efficient utilization of resources to support scalability.
 
-### 1.12. Consistency with Coding Standards
+### 1.13. Consistency with Coding Standards
 
 - **Adherence to Coding Guidelines:** Follow established coding standards and best practices for the programming language or framework used.
 
@@ -161,3 +168,8 @@ docker compose -f build/docker-compose.linting.yaml up
 
 - **Regular Updates:** Keep the documentation up-to-date with any changes in the project. Regular reviews should be conducted to ensure accuracy and relevance.
 - **Version Control:** Utilize version control systems to manage changes to the documentation. This allows for tracking revisions and collaborating effectively with other team members.
+
+### 2.7. Deprecation
+
+- **Deprecation Notices**: When documentation, documented features or components become outdated, obsolete, or deprecated, remove them whenever possible.
+  - If removal is not feasible, clearly mark them as deprecated in the documentation. Additionally, provide guidance on alternative solutions or replacements to help users transition smoothly.
