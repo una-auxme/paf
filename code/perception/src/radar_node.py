@@ -40,8 +40,8 @@ class RadarNode(CompatibleNode):
         }
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
         self.sensor_config = {
-            "RADAR0": [2.0, -1.5, 1],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, 1.5, 1],  # , 0.0, 0.0, 0.0],
+            "RADAR0": [2.0, -1.5, 0.5],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 1.5, 0.5],  # , 0.0, 0.0, 0.0],
         }
 
         self.timer_interval = 0.1  # 0.1 seconds
