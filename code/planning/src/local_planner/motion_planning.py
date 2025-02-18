@@ -534,7 +534,7 @@ class MotionPlanning(CompatibleNode):
         If the behavior is an overtake behavior, a trajectory change is triggered.
         """
         self.__curr_behavior = data.data
-        if data.data == bs.ot_enter_init.name:
+        if data.data == bs.ot_enter_init.name or data.data == bs.lc_app_init.name:
             if np.isinf(self.__ot_distance):
                 self.__overtake_status = -1
                 self.overtake_success_pub.publish(self.__overtake_status)

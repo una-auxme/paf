@@ -20,6 +20,7 @@ from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from local_planner.utils import TARGET_DISTANCE_TO_STOP_LANECHANGE, convert_to_ms
 
 LANECHANGE_MARKER_COLOR = (153 / 255, 50 / 255, 204 / 255, 1.0)
+LANECHANGE_FREE = False
 
 """
 Source: https://github.com/ll7/psaf2
@@ -99,6 +100,8 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         rospy.loginfo("Approaching Change")
+        global LANECHANGE_FREE
+        LANECHANGE_FREE = False
         self.change_detected = False
         self.change_distance: Optional[float] = None
         self.change_option: Optional[RoadOption] = None
@@ -118,6 +121,8 @@ class Approach(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
+        global LANECHANGE_FREE
+
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(self.name, Status.FAILURE, "Map is None")
@@ -163,7 +168,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 lane_transform=-5.0,
                 check_method="fallback",
             )
-            lc_free = LaneFreeState.FREE
+            # lc_free = LaneFreeState.FREE
             if isinstance(lc_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
             add_debug_entry(self.name, f"Lanechange free?: {lc_free.name}")
@@ -171,9 +176,10 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.counter_lanefree += 1
                 if self.counter_lanefree > 0:
                     add_debug_entry(self.name, "Lane Change is free not slowing down!")
-                    self.ot_distance_pub.publish(0)
+                    self.ot_distance_pub.publish(self.change_distance * 2.0)
                     self.curr_behavior_pub.publish(bs.lc_app_free.name)
                     self.blocked = False
+                    LANECHANGE_FREE = True
                     return debug_status(
                         self.name, Status.SUCCESS, "Lane Change Approach: Lane free"
                     )
@@ -295,6 +301,14 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
         """
+        global LANECHANGE_FREE
+
+        if LANECHANGE_FREE:
+            self.curr_behavior_pub.publish(bs.lc_app_free.name)
+            return debug_status(
+                self.name, py_trees.common.Status.SUCCESS, "LaneChange free"
+            )
+
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(self.name, Status.FAILURE, "Map is None")
