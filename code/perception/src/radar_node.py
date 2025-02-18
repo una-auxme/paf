@@ -236,7 +236,7 @@ class RadarNode(CompatibleNode):
 
         # Filter Mask: Check whether the point is below the calculated floor height
         # plus a safety offset of 30cm
-        mask = points[:, 2] > points[:, 0] * pitch_slope - 0.3
+        mask = points[:, 2] > points[:, 0] * pitch_slope - 0.15
 
         filtered_points = points[mask]
         filtered_out_points = points[~mask]
