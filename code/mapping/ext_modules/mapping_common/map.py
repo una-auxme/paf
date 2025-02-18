@@ -735,7 +735,7 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform_x: float = 0.0,
         lane_transform_y: float = 0.0,
-    ) -> bool:
+    ) -> Tuple[bool, List[shapely.Polygon]]:
         """Returns True if the opposing lane of our car is free.
         Checks if a Polygon lane box intersects with any
         relevant entities.
@@ -753,7 +753,8 @@ class MapTree:
         - lane_transform_y (float): Transforms the checked lane box to the left(>0) or
           right(<0)
         Returns:
-            bool: lane is free / not free
+            (bool, [shapely.Polygon]): lane is free / not free,
+                collision masks used for the check
         """
 
         # lane length cannot be negative, as no rectangle with negative dimension exists
@@ -784,11 +785,12 @@ class MapTree:
         lane_box_shape_tilted_shapely = lane_box_shape_tilted.to_shapely(
             Transform2D.identity()
         )
-        lane_mask = shapely.union_all([lane_box_shapely, lane_box_shape_tilted_shapely])
+        masks = [lane_box_shapely, lane_box_shape_tilted_shapely]
+        lane_mask = shapely.union_all(masks)
         # creates intersection list of lane mask with map entities
         lane_box_intersection_entities = self.query(geo=lane_mask)
         if not lane_box_intersection_entities:
-            return True
+            return (True, masks)
 
         enities_with_motion = [
             entity
@@ -796,11 +798,14 @@ class MapTree:
             if entity.entity.motion is not None
         ]
         if not enities_with_motion:
-            return True
+            return (True, masks)
         # if all entities drive forward or don't move the lane can be considered free
-        return all(
-            hero.get_delta_forward_velocity_of(entity.entity) > -0.5
-            for entity in enities_with_motion
+        return (
+            all(
+                hero.get_delta_forward_velocity_of(entity.entity) > -0.5
+                for entity in enities_with_motion
+            ),
+            masks,
         )
 
     def get_nearest_entity(
