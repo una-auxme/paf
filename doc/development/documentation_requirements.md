@@ -3,6 +3,7 @@
 **Summary:** This document outlines the guidelines for documentation to ensure consistency, readability, maintainability, and adherence to best practices in coding standards.
 
 - [1. In Code Documentation](#1-in-code-documentation)
+  - [Remove or clearly mark unused or deprecated code](#remove-or-clearly-mark-unused-or-deprecated-code)
   - [1.1. Linting](#11-linting)
     - [1.1.1. Python Linting](#111-python-linting)
     - [1.1.2. Markdown Linting](#112-markdown-linting)
@@ -24,10 +25,16 @@
   - [2.4. Visual Aids](#24-visual-aids)
   - [2.5. Consistency and Style](#25-consistency-and-style)
   - [2.6. Maintenance](#26-maintenance)
+  - [Deprecation](#deprecation)
 
 ## 1. In Code Documentation
 
 In-code documentation is essential for maintaining code quality, readability, and maintainability. It helps developers understand the purpose of the code, its functionality, and how to use it effectively. Below are the requirements for in-code documentation:
+
+### Remove or clearly mark unused or deprecated code
+
+- **Unused Code:** Remove any unused code to reduce clutter and improve code readability. Unused code can lead to confusion and make it difficult to maintain the codebase.
+- **Deprecated Code:** Clearly mark any deprecated code with comments or annotations to inform other developers that the code should not be used. Deprecated code should be replaced with updated implementations.
 
 ### 1.1. Linting
 
@@ -161,3 +168,7 @@ docker compose -f build/docker-compose.linting.yaml up
 
 - **Regular Updates:** Keep the documentation up-to-date with any changes in the project. Regular reviews should be conducted to ensure accuracy and relevance.
 - **Version Control:** Utilize version control systems to manage changes to the documentation. This allows for tracking revisions and collaborating effectively with other team members.
+
+### Deprecation
+
+- **Deprecation Notices**: When documentation, documented features or components become outdated, obsolete, or deprecated, remove them whenever possible. If removal is not feasible, clearly mark them as deprecated in the documentation. Additionally, provide guidance on alternative solutions or replacements to help users transition smoothly.
