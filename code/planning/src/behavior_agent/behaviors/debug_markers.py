@@ -123,7 +123,7 @@ class BehaviorDebugInfo:
         self._sys_creation_time = time.time_ns()
 
     def to_string(self, name: str) -> str:
-        status_str = "???"
+        status_str = "UNKNOWN"
         if self.status is not None:
             status, reason = self.status
             if reason is None:
@@ -186,8 +186,10 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
             if current_behavior_topic_msg is None
             else current_behavior_topic_msg.data
         )
-        info_text = f"Behavior from curr_behavior topic: {current_behavior_topic}\n\
-        Behavior Tree Overview:"
+        info_text = (
+            f"Behavior from curr_behavior topic: {current_behavior_topic}\n"
+            f"Behavior Tree Overview:"
+        )
         if info_dict is None:
             rospy.logwarn(_info_error_msg)
         else:

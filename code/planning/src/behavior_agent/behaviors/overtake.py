@@ -92,7 +92,6 @@ def calculate_obstacle(
         hero_heading.data,
     )
     hero_width = hero.get_width()
-    front_mask_size = front_mask_size
     trajectory_mask = mapping_common.mask.build_trajectory_shape(
         trajectory,
         hero_transform,
@@ -263,7 +262,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 55
+        self.clear_distance = 45
         OVERTAKE_FREE = False
 
     def update(self):
@@ -327,7 +326,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     right_lane=False,
                     lane_length=12.0,
                     lane_transform=-6.0,
-                    check_method="lanemarking",
+                    check_method="fallback",
                 )
             else:
                 self.ot_bicycle_pub.publish(False)
@@ -335,11 +334,11 @@ class Approach(py_trees.behaviour.Behaviour):
                     right_lane=False,
                     lane_length=self.clear_distance,
                     lane_transform=15.0,
-                    check_method="lanemarking",
+                    check_method="fallback",
                 )
             if isinstance(ot_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-            add_debug_entry(self.name, f"Overtake free?: {ot_free}")
+            add_debug_entry(self.name, f"Overtake free?: {ot_free.name}")
             if ot_free is LaneFreeState.FREE:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies
@@ -413,7 +412,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Waiting for Overtake")
         # slightly less distance since we have already stopped
-        self.clear_distance = 55
+        self.clear_distance = 45
         self.ot_counter = 0
         self.ot_gone = 0
         return True
@@ -486,7 +485,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 right_lane=False,
                 lane_length=12.0,
                 lane_transform=-6.0,
-                check_method="lanemarking",
+                check_method="fallback",
             )
         else:
             self.ot_bicycle_pub.publish(False)
@@ -495,12 +494,12 @@ class Wait(py_trees.behaviour.Behaviour):
                 right_lane=False,
                 lane_length=self.clear_distance,
                 lane_transform=15.0,
-                check_method="lanemarking",
+                check_method="fallback",
             )
 
         if isinstance(ot_mask, shapely.Polygon):
             add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-        add_debug_entry(self.name, f"Overtake free?: {ot_free}")
+        add_debug_entry(self.name, f"Overtake free?: {ot_free.name}")
         if ot_free is LaneFreeState.FREE:
             self.ot_counter += 1
             if self.ot_counter > 3:
