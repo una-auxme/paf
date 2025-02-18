@@ -79,8 +79,7 @@ def grow_a_tree(role_name):
                                         children=[
                                             lane_change.Approach("Approach Change"),
                                             lane_change.Wait("Wait Change"),
-                                            lane_change.Enter("Enter Change"),
-                                            lane_change.Leave("Leave Change"),
+                                            lane_change.Change("Execute Change"),
                                         ],
                                     ),
                                 ],
