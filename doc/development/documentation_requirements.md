@@ -171,4 +171,5 @@ docker compose -f build/docker-compose.linting.yaml up
 
 ### 2.7. Deprecation
 
-- **Deprecation Notices**: When documentation, documented features or components become outdated, obsolete, or deprecated, remove them whenever possible. If removal is not feasible, clearly mark them as deprecated in the documentation. Additionally, provide guidance on alternative solutions or replacements to help users transition smoothly.
+- **Deprecation Notices**: When documentation, documented features or components become outdated, obsolete, or deprecated, remove them whenever possible.
+  - If removal is not feasible, clearly mark them as deprecated in the documentation. Additionally, provide guidance on alternative solutions or replacements to help users transition smoothly.
