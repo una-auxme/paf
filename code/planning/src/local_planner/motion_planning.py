@@ -15,6 +15,8 @@ from rospy import Publisher, Subscriber
 from scipy.spatial.transform import Rotation
 from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
 
+from mapping_common.transform import Vector2, Point2
+
 from local_planner.utils import (
     NUM_WAYPOINTS,
     NUM_WAYPOINTS_BICYCLE,
@@ -49,15 +51,13 @@ class MotionPlanning(CompatibleNode):
         self.__acc_speed = 0.0
         self.__stopline = None  # (Distance, isStopline)
         self.__change_point = None  # (Distance, isLaneChange, roadOption)
-        self.__collision_point = None
         # TODO: clarify what the overtake_status values mean (by using an enum or ...)
         self.__overtake_status = -1
         self.published = False
-        self.current_pos = None
+        self.current_pos: Optional[Point2] = None
         self.current_heading = None
         self.trajectory = None
         self.overtaking = False
-        self.current_wp = None
         self.enhanced_path = None
         self.current_speed = None
         self.speed_limit = None
@@ -144,13 +144,6 @@ class MotionPlanning(CompatibleNode):
             qos_profile=1,
         )
 
-        self.coll_point_sub: Subscriber = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/collision",
-            self.__set_collision_point,
-            qos_profile=1,
-        )
-
         self.traffic_y_sub: Subscriber = self.new_subscription(
             Int16,
             f"/paf/{self.role_name}/Center/traffic_light_y_distance",
@@ -184,11 +177,6 @@ class MotionPlanning(CompatibleNode):
             String, f"/paf/{self.role_name}/target_velocity_selector", qos_profile=1
         )
 
-        # TODO move up to subscribers
-        self.wp_subs = self.new_subscription(
-            Float32, f"/paf/{self.role_name}/current_wp", self.__set_wp, qos_profile=1
-        )
-
         self.overtake_success_pub = self.new_publisher(
             Float32, f"/paf/{self.role_name}/overtake_success", qos_profile=1
         )
@@ -220,14 +208,6 @@ class MotionPlanning(CompatibleNode):
         """
         self.current_speed = float(data.speed)
 
-    def __set_wp(self, data: Float32):
-        """Recieve current waypoint index from ACC
-
-        Args:
-            data (Float32): Waypoint index
-        """
-        self.current_wp = data.data
-
     def __set_heading(self, data: Float32):
         """Set current Heading
 
@@ -241,13 +221,15 @@ class MotionPlanning(CompatibleNode):
         Args:
             data (PoseStamped): current position
         """
-        self.current_pos = np.array(
-            [data.pose.position.x, data.pose.position.y, data.pose.position.z]
-        )
+        self.current_pos = Point2.from_ros_msg(data.pose.position)
+
+        def update_current_waypoint():
+            
 
     def __set_traffic_y_distance(self, data):
         if data is not None:
             self.traffic_light_y_distance = data.data
+
 
     def change_trajectory(self, distance_obj):
         """update trajectory for overtaking and convert it
@@ -288,9 +270,7 @@ class MotionPlanning(CompatibleNode):
             waypoints_num = NUM_WAYPOINTS_BICYCLE
         else:
             waypoints_num = NUM_WAYPOINTS
-        currentwp = self.current_wp
-        if currentwp is None:
-            return
+
         normal_x_offset = 2
         unstuck_x_offset = 3  # could need adjustment with better steering
         if unstuck:

@@ -307,8 +307,8 @@ class ACC(CompatibleNode):
             hero_transform,
             start_dist_from_hero=front_mask_size,
             max_length=100.0,
-            current_wp_idx=self.__current_wp_index,
-            max_wp_count=200,
+            current_wp_idx=0,
+            max_wp_count=None,
             centered=True,
             width=hero_width,
         )
