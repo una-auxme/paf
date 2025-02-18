@@ -1,5 +1,14 @@
 # Development in PAF
 
+- [First steps](#first-steps)
+- [Development guidelines](#development-guidelines)
+- [Guidelines](#guidelines)
+- [Templates](#templates)
+  - [`template_class.py`](#template_classpy)
+  - [`template_class_no_comments.py`](#template_class_no_commentspy)
+  - [`template_wiki_page.md`](#template_wiki_pagemd)
+- [Discord Webhook](#discord-webhook)
+
 ## First steps
 
 If this is your first time working with the project you can follow the first steps in [/doc/development/first_steps.md](/doc/development/first_steps.md).
@@ -19,6 +28,15 @@ If you contribute to this project please read the following guidelines first:
    3. [drive action](./drive_action.md)
 7. [Install python packages](./installing_python_packages.md)
 8. [Discord Webhook Documentation](./discord_webhook.md)
+
+## Guidelines
+
+1. [Project Management](./project_management.md)
+2. [Sprint Planning Guidelines](./sprint_planning_guidelines.md)
+3. [Sprint Review Presentation Guidelines](./sprint_review_presentation.md)
+4. [Review Guidelines](./review_guideline.md)
+5. [Final Presentation Guidelines](./final_presentation_guidelines.md)
+6. [Documentation Requirements](./documentation_requirements.md)
 
 ## Templates
 
