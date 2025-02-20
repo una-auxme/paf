@@ -90,11 +90,11 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
-        # Get trajectory to determine current speed limit
-        self.trajectory_sub: Subscriber = self.new_subscription(
+        # Get trajectory for collision mask calculation
+        self.trajectory_local_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
+            f"/paf/{self.role_name}/trajectory_local",
+            self.__set_trajectory_local,
             qos_profile=1,
         )
 
@@ -195,7 +195,7 @@ class ACC(CompatibleNode):
         """
         self.trajectory_global = data
 
-    def __set_trajectory(self, data: Path):
+    def __set_trajectory_local(self, data: Path):
         """Receive trajectory from motion planner
 
         Args:

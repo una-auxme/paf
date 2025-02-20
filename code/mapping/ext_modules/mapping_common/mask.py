@@ -7,7 +7,7 @@ import numpy.typing as npt
 import math
 
 from nav_msgs.msg import Path as NavPath
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Point, PoseStamped
 from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity
 from mapping_common.shape import Polygon
@@ -146,6 +146,28 @@ def clamp_line(
     return before
 
 
+def ros_path_to_line(
+    path: NavPath, start_idx: int = 0, end_idx: Optional[int] = None
+) -> shapely.LineString:
+    points = []
+    poses_view = (
+        path.poses[start_idx:] if end_idx is None else path.poses[start_idx:end_idx]
+    )
+    for pose in poses_view:
+        pose: Pose = pose.pose
+        points.append(shapely.Point(pose.position.x, pose.position.y))
+    return shapely.LineString(points)
+
+
+def line_to_ros_path(line: shapely.LineString) -> NavPath:
+    path = NavPath()
+    for coord in line.coords:
+        pose = Pose(position=Point(coord[0], coord[1], 0))
+        pose_stamped = PoseStamped(pose=pose)
+        path.poses.append(pose_stamped)
+    return path
+
+
 def build_trajectory(
     global_trajectory: NavPath,
     global_hero_transform: Transform2D,
@@ -182,16 +204,11 @@ def build_trajectory(
         Optional[shapely.LineString]: Local line based on the trajectory
     """
 
-    points = []
-    poses_view = (
-        global_trajectory.poses[current_wp_idx:]
-        if max_wp_count is None
-        else global_trajectory.poses[current_wp_idx : current_wp_idx + max_wp_count]
+    global_line = ros_path_to_line(
+        global_trajectory,
+        current_wp_idx,
+        None if max_wp_count is None else current_wp_idx + max_wp_count,
     )
-    for pose in poses_view:
-        pose: Pose = pose.pose
-        points.append(Point2.new(pose.position.x, pose.position.y).to_shapely())
-    global_line = shapely.LineString(points)
     hero_pt = global_hero_transform.translation().point()
     hero_pt_s = shapely.Point(hero_pt.x(), hero_pt.y())
     hero_dist: float = global_line.line_locate_point(other=hero_pt_s)
