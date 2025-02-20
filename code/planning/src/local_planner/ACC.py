@@ -9,8 +9,7 @@ import rospy
 from rospy import Publisher, Subscriber
 from std_msgs.msg import Bool, Float32, Float32MultiArray, String
 from visualization_msgs.msg import Marker, MarkerArray
-from typing import Optional
-from typing import List
+from typing import Optional, List
 from planning.cfg import ACCConfig
 from dynamic_reconfigure.server import Server
 
@@ -22,7 +21,7 @@ import mapping_common.entity
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker, debug_marker_array
-from mapping_common.transform import Vector2
+from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping.msg import Map as MapMsg
 
 MARKER_NAMESPACE: str = "acc"
@@ -34,17 +33,7 @@ class ACC(CompatibleNode):
 
     map: Optional[Map] = None
 
-    # unstuck attributes
-    __unstuck_flag: bool = False
-    __unstuck_distance: float = -1
-    # List of all speed limits, sorted by waypoint index
-    __speed_limits_OD: List[float] = []
-    trajectory_global: Optional[Path] = None
-    trajectory: Optional[Path] = None
-    __current_position: Optional[Point] = None
-    # Current index from waypoint
-    __current_wp_index: int = 0
-    __current_heading: Optional[float] = None
+    trajectory_local: Optional[Path] = None
     __curr_behavior: Optional[str] = None
     speed_limit: Optional[float] = None  # m/s
 
@@ -56,37 +45,15 @@ class ACC(CompatibleNode):
         self.map_sub: Subscriber = self.new_subscription(
             MapMsg,
             f"/paf/{self.role_name}/mapping/init_data",
-            self.__get_map,
+            self.__set_map,
             qos_profile=1,
         )
 
-        # Get Unstuck flag and distance for unstuck routine
-        self.unstuck_flag_sub: Subscriber = self.new_subscription(
-            Bool,
-            f"/paf/{self.role_name}/unstuck_flag",
-            self.__get_unstuck_flag,
-            qos_profile=1,
-        )
-        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+        # Get current speed limit
+        self.speed_limit_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/unstuck_distance",
-            self.__get_unstuck_distance,
-            qos_profile=1,
-        )
-
-        # Get initial set of speed limits from global planner
-        self.speed_limit_OD_sub: Subscriber = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/speed_limits_OpenDrive",
-            self.__set_speed_limits_opendrive,
-            qos_profile=1,
-        )
-
-        # Get global trajectory to determine current speed limit
-        self.trajectory_global_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory_global",
-            self.__set_trajectory_global,
+            f"/paf/{self.role_name}/speed_limit",
+            self.__set_speed_limit,
             qos_profile=1,
         )
 
@@ -95,22 +62,6 @@ class ACC(CompatibleNode):
             Path,
             f"/paf/{self.role_name}/trajectory_local",
             self.__set_trajectory_local,
-            qos_profile=1,
-        )
-
-        # Get current position to determine current waypoint
-        self.pose_sub: Subscriber = self.new_subscription(
-            msg_type=PoseStamped,
-            topic=f"/paf/{self.role_name}/current_pos",
-            callback=self.__current_position_callback,
-            qos_profile=1,
-        )
-
-        # Get current_heading
-        self.heading_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/current_heading",
-            self.__get_heading,
             qos_profile=1,
         )
 
@@ -125,14 +76,6 @@ class ACC(CompatibleNode):
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
-        )
-
-        # Publish current waypoint and speed limit
-        self.wp_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/current_wp", qos_profile=1
-        )
-        self.speed_limit_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
 
         # Publish debugging marker
@@ -150,7 +93,10 @@ class ACC(CompatibleNode):
 
         self.logdebug("ACC initialized")
 
-    def __get_map(self, data: MapMsg):
+    def __set_speed_limit(self, data: Float32):
+        self.speed_limit = data.data
+
+    def __set_map(self, data: MapMsg):
         self.map = Map.from_ros_msg(data)
         self.update_velocity()
 
@@ -163,45 +109,13 @@ class ACC(CompatibleNode):
 
         return config
 
-    def __get_unstuck_flag(self, data: Bool):
-        """Set unstuck flag
-
-        Args:
-            data (Bool): Unstuck flag
-        """
-        self.__unstuck_flag = data.data
-
-    def __get_unstuck_distance(self, data: Float32):
-        """Set unstuck distance
-
-        Args:
-            data (Float32): Unstuck distance
-        """
-        self.__unstuck_distance = data.data
-
-    def __get_heading(self, data: Float32):
-        """Receive current heading
-
-        Args:
-            data (Float32): Current heading
-        """
-        self.__current_heading = float(data.data)
-
-    def __set_trajectory_global(self, data: Path):
-        """Recieve trajectory from global planner
-
-        Args:
-            data (Path): Trajectory path
-        """
-        self.trajectory_global = data
-
     def __set_trajectory_local(self, data: Path):
         """Receive trajectory from motion planner
 
         Args:
             data (Path): Trajectory path
         """
-        self.trajectory = data
+        self.trajectory_local = data
 
     def __set_curr_behavior(self, data: String):
         """Receive the current behavior of the vehicle.
@@ -210,52 +124,6 @@ class ACC(CompatibleNode):
             data (String): Current behavior
         """
         self.__curr_behavior = data.data
-
-    def __set_speed_limits_opendrive(self, data: Float32MultiArray):
-        """Recieve speed limits from OpenDrive via global planner
-
-        Args:
-            data (Float32MultiArray): speed limits per waypoint
-        """
-        self.__speed_limits_OD = data.data
-
-    def __current_position_callback(self, data: PoseStamped):
-        """Get current position and check if next waypoint is reached
-            If yes -> update current waypoint and speed limit
-
-        Args:
-            data (PoseStamped): Current position from perception
-        """
-        self.__current_position = data.pose.position
-        if len(self.__speed_limits_OD) < 1 or self.trajectory_global is None:
-            return
-
-        agent = self.__current_position
-        # Get current waypoint
-        current_wp = self.trajectory_global.poses[self.__current_wp_index].pose.position
-        # Get next waypoint
-        next_wp = self.trajectory_global.poses[
-            self.__current_wp_index + 1
-        ].pose.position
-        # distances from agent to current and next waypoint
-        d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
-        d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
-        if d_new < d_old:
-            # If distance to next waypoint is smaller than to current
-            # update current waypoint and corresponding speed limit
-            self.__current_wp_index += 1
-            self.wp_publisher.publish(self.__current_wp_index)
-            self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
-            self.speed_limit_publisher.publish(self.speed_limit)
-        # in case we used the unstuck routine to drive backwards
-        # we have to follow WPs that are already passed
-        elif self.__unstuck_flag:
-            if self.__unstuck_distance is None or self.__unstuck_distance == -1:
-                return
-            self.__current_wp_index -= int(self.__unstuck_distance)
-            self.wp_publisher.publish(self.__current_wp_index)
-            self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
-            self.speed_limit_publisher.publish(self.speed_limit)
 
     def run(self):
         """
@@ -270,12 +138,7 @@ class ACC(CompatibleNode):
         Permanent checks if distance to a possible object is too small and
         publishes the desired speed to motion planning
         """
-        if (
-            self.map is None
-            or self.trajectory is None
-            or self.__current_position is None
-            or self.__current_heading is None
-        ):
+        if self.map is None or self.trajectory_local is None:
             # We don't have the necessary data to drive safely
             self.velocity_pub.publish(0)
             return
@@ -290,40 +153,35 @@ class ACC(CompatibleNode):
         hero_width = max(1.0, hero.get_width())
 
         tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-        hero_transform = mapping_common.map.build_global_hero_transform(
-            self.__current_position.x,
-            self.__current_position.y,
-            self.__current_heading,
-        )
 
         front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
         if self.__curr_behavior in front_mask_reduce_behaviours:
             front_mask_size = 5.5
         else:
             front_mask_size = 7.5
-
-        trajectory_mask = mapping_common.mask.build_trajectory_shape(
-            self.trajectory,
-            hero_transform,
-            start_dist_from_hero=front_mask_size,
-            max_length=100.0,
-            current_wp_idx=0,
-            max_wp_count=None,
-            centered=True,
-            width=hero_width,
-        )
-        if trajectory_mask is None:
-            # We currently have no valid path to check for collisions.
-            # -> cannot drive safely
-            rospy.logerr("ACC: Unable to build collision mask!")
-            self.velocity_pub.publish(0)
-            return
-
         # Add small area in front of car to the collision mask
         front_rect = mapping_common.mask.project_plane(
             front_mask_size, size_y=hero_width
         )
-        collision_masks = [front_rect, trajectory_mask]
+        collision_masks = [front_rect]
+        front_mask_end = Point2.new(front_mask_size, 0.0)
+
+        trajectory_line = mapping_common.mask.ros_path_to_line(self.trajectory_local)
+        (_, trajectory_line) = mapping_common.mask.split_line_at(
+            trajectory_line, front_mask_size
+        )
+
+        if trajectory_line is not None:
+            (x, y) = trajectory_line.coords[0]
+            traj_start = Point2.new(x, y)
+            transl = traj_start.vector_to(front_mask_end)
+            transf = Transform2D.new_translation(transl)
+            trajectory_line = transf * trajectory_line
+            trajectory_mask = mapping_common.mask.curve_to_polygon(
+                trajectory_line, hero_width
+            )
+            collision_masks.append(trajectory_mask)
+
         collision_mask = shapely.union_all(collision_masks)
 
         debug_markers: List[Marker] = []

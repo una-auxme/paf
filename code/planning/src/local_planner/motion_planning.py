@@ -266,14 +266,28 @@ class MotionPlanning(CompatibleNode):
         # This saves processing time and
         # avoids bugs with a "looping"/self-crossing trajectory
         if len(self.global_trajectory.poses) > self.current_global_waypoint_idx + 1:
-            pose0: Pose = self.global_trajectory.poses[0].pose
-            pose1: Pose = self.global_trajectory.poses[1].pose
+            pose0: Pose = self.global_trajectory.poses[
+                self.current_global_waypoint_idx
+            ].pose
+            pose1: Pose = self.global_trajectory.poses[
+                self.current_global_waypoint_idx + 1
+            ].pose
             point0 = Point2.from_ros_msg(pose0.position)
             point1 = Point2.from_ros_msg(pose1.position)
             if self.current_pos.distance_to(point0) > self.current_pos.distance_to(
                 point1
             ):
                 self.current_global_waypoint_idx += 1
+            elif self.current_global_waypoint_idx > 0:
+                last_pose: Pose = self.global_trajectory.poses[
+                    self.current_global_waypoint_idx - 1
+                ].pose
+                last_point = Point2.from_ros_msg(last_pose.position)
+                if self.current_pos.distance_to(point0) > self.current_pos.distance_to(
+                    last_point
+                ):
+                    self.current_global_waypoint_idx -= 1
+
         local_trajectory = mapping_common.mask.build_trajectory(
             self.global_trajectory,
             hero_transform,
