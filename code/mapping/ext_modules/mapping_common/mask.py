@@ -313,7 +313,10 @@ def project_plane(
 
 
 def build_lead_vehicle_collision_masks(
-    width: float, trajectory_local: NavPath, front_mask_size: float
+    width: float,
+    trajectory_local: NavPath,
+    front_mask_size: float,
+    max_trajectory_check_length: Optional[float] = None,
 ) -> List[shapely.Polygon]:
     collision_masks = []
 
@@ -325,7 +328,9 @@ def build_lead_vehicle_collision_masks(
     front_mask_end = Point2.new(front_mask_size, 0.0)
 
     trajectory_line = ros_path_to_line(trajectory_local)
-    (_, trajectory_line) = split_line_at(trajectory_line, front_mask_size)
+    trajectory_line = clamp_line(
+        trajectory_line, front_mask_size, end_distance=max_trajectory_check_length
+    )
 
     if trajectory_line is not None:
         (x, y) = trajectory_line.coords[0]

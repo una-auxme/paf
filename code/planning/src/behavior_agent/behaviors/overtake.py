@@ -74,7 +74,10 @@ def calculate_obstacle(
     hero_width = hero.get_width()
 
     collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
-        hero_width, trajectory, front_mask_size=front_mask_size
+        hero_width,
+        trajectory,
+        front_mask_size=front_mask_size,
+        max_trajectory_check_length=trajectory_check_length,
     )
     if len(collision_masks) == 0:
         # We currently have no valid path to check for collisions.
