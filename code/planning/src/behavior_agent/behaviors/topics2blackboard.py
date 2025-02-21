@@ -137,8 +137,8 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/current_wp",
-            "msg": Float32,
+            "name": f"/paf/{role_name}/trajectory_local",
+            "msg": Path,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {

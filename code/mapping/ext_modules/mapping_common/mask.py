@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import shapely
 import shapely.ops
@@ -310,6 +310,33 @@ def project_plane(
     ]
 
     return shapely.Polygon(points)
+
+
+def build_lead_vehicle_collision_masks(
+    width: float, trajectory_local: NavPath, front_mask_size: float
+) -> List[shapely.Polygon]:
+    collision_masks = []
+
+    if front_mask_size > 0.0:
+        # Add small area in front of car to the collision mask
+        front_rect = project_plane(front_mask_size, size_y=width)
+        collision_masks.append(front_rect)
+
+    front_mask_end = Point2.new(front_mask_size, 0.0)
+
+    trajectory_line = ros_path_to_line(trajectory_local)
+    (_, trajectory_line) = split_line_at(trajectory_line, front_mask_size)
+
+    if trajectory_line is not None:
+        (x, y) = trajectory_line.coords[0]
+        traj_start = Point2.new(x, y)
+        transl = traj_start.vector_to(front_mask_end)
+        transf = Transform2D.new_translation(transl)
+        trajectory_line = transf * trajectory_line
+        trajectory_mask = curve_to_polygon(trajectory_line, width)
+        collision_masks.append(trajectory_mask)
+
+    return collision_masks
 
 
 def point_along_line_angle(x: float, y: float, angle: float, distance: float) -> Point2:

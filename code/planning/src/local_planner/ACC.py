@@ -159,28 +159,10 @@ class ACC(CompatibleNode):
             front_mask_size = 5.5
         else:
             front_mask_size = 7.5
-        # Add small area in front of car to the collision mask
-        front_rect = mapping_common.mask.project_plane(
-            front_mask_size, size_y=hero_width
-        )
-        collision_masks = [front_rect]
-        front_mask_end = Point2.new(front_mask_size, 0.0)
 
-        trajectory_line = mapping_common.mask.ros_path_to_line(self.trajectory_local)
-        (_, trajectory_line) = mapping_common.mask.split_line_at(
-            trajectory_line, front_mask_size
+        collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
+            hero_width, self.trajectory_local, front_mask_size=front_mask_size
         )
-
-        if trajectory_line is not None:
-            (x, y) = trajectory_line.coords[0]
-            traj_start = Point2.new(x, y)
-            transl = traj_start.vector_to(front_mask_end)
-            transf = Transform2D.new_translation(transl)
-            trajectory_line = transf * trajectory_line
-            trajectory_mask = mapping_common.mask.curve_to_polygon(
-                trajectory_line, hero_width
-            )
-            collision_masks.append(trajectory_mask)
 
         collision_mask = shapely.union_all(collision_masks)
 

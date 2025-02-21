@@ -62,53 +62,26 @@ def calculate_obstacle(
                 - No obstacle: None
     """
     # data preparation
-    trajectory = blackboard.get("/paf/hero/trajectory")
-    current_wp = blackboard.get("/paf/hero/current_wp")
-    hero_pos = blackboard.get("/paf/hero/current_pos")
-    hero_heading = blackboard.get("/paf/hero/current_heading")
-    if (
-        trajectory is None
-        or current_wp is None
-        or hero_pos is None
-        or hero_heading is None
-    ):
-        return debug_status(
-            behavior_name,
-            Status.FAILURE,
-            f"Something is True==None: "
-            f"trajectory: {trajectory is None}, current_wp: {current_wp is None}, "
-            f"hero_pos: {hero_pos is None}, hero_heading: {hero_heading is None}",
-        )
+    trajectory = blackboard.get("/paf/hero/trajectory_local")
+    if trajectory is None:
+        return debug_status(behavior_name, Status.FAILURE, "trajectory_local is None")
 
     hero: Optional[Entity] = tree.map.hero()
     if hero is None:
         return debug_status(
             behavior_name, py_trees.common.Status.FAILURE, "hero is None"
         )
-
-    hero_transform = mapping_common.map.build_global_hero_transform(
-        hero_pos.pose.position.x,
-        hero_pos.pose.position.y,
-        hero_heading.data,
-    )
     hero_width = hero.get_width()
-    trajectory_mask = mapping_common.mask.build_trajectory_shape(
-        trajectory,
-        hero_transform,
-        start_dist_from_hero=front_mask_size,
-        max_length=trajectory_check_length,
-        current_wp_idx=int(current_wp.data),
-        max_wp_count=int(trajectory_check_length * 2),
-        centered=True,
-        width=hero_width,
+
+    collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
+        hero_width, trajectory, front_mask_size=front_mask_size
     )
-    if trajectory_mask is None:
+    if len(collision_masks) == 0:
         # We currently have no valid path to check for collisions.
         # -> cannot drive safely
         return debug_status(
             behavior_name, Status.FAILURE, "Unable to build collision mask!"
         )
-    collision_masks = [trajectory_mask]
     collision_mask = shapely.union_all(collision_masks)
 
     for mask in collision_masks:
