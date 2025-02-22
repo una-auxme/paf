@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from collections import deque
+from typing import Deque
 from xml.etree import ElementTree as eTree
 
 import ros_compatibility as roscomp
@@ -11,6 +13,8 @@ from ros_compatibility.node import CompatibleNode
 from std_msgs.msg import Float32MultiArray, String
 
 from global_planner.preplanning_trajectory import OpenDriveConverter
+
+from mapping_common.transform import Point2
 
 RIGHT = 1
 LEFT = 2
@@ -39,6 +43,8 @@ class PrePlanner(CompatibleNode):
 
         self.odc = None
         self.global_route_backup = None
+        self.last_agent_positions: Deque[Point] = deque()
+        self.last_agent_positions_count_target = 5
         self.agent_pos = None
         self.agent_ori = None
 
@@ -243,7 +249,7 @@ class PrePlanner(CompatibleNode):
 
         if self.global_route_backup is not None:
             self.loginfo(
-                "PrePlanner: Received a map update retrying " "route preplanning"
+                "PrePlanner: Received a map update -> retrying route preplanning"
             )
             self.global_route_callback(self.global_route_backup)
 
@@ -254,11 +260,37 @@ class PrePlanner(CompatibleNode):
         (needed for the trajectory preplanning)
         :param data: updated CarlaWorldInformation
         """
-        self.agent_pos = data.pose.position
+        if len(self.last_agent_positions) < self.last_agent_positions_count_target:
+            rospy.loginfo_throttle(0.5, "PrePlanner: Waiting for agent positions")
+            self.last_agent_positions.append(data.pose.position)
+            self.agent_pos = None
+            self.agent_ori = None
+            return
+
+        agent_pos = data.pose.position
+        agent_point = Point2.new(agent_pos.x, agent_pos.y)
+        position_stabilized = True
+        for pos in self.last_agent_positions:
+            pos_point = Point2.new(pos.x, pos.y)
+            if pos_point.distance_to(agent_point) > 0.5:
+                position_stabilized = False
+
+        self.last_agent_positions.popleft()
+        self.last_agent_positions.append(agent_pos)
+
+        if not position_stabilized:
+            rospy.logwarn_throttle(
+                0.5, "PrePlanner: Waiting for agent position to stabilize"
+            )
+            self.agent_pos = None
+            self.agent_ori = None
+            return
+
+        self.agent_pos = agent_pos
         self.agent_ori = data.pose.orientation
         if self.global_route_backup is not None:
             self.loginfo(
-                "PrePlanner: Received a pose update retrying " "route preplanning"
+                "PrePlanner: Received a pose update -> retrying route preplanning"
             )
             try:
                 self.global_route_callback(self.global_route_backup)
