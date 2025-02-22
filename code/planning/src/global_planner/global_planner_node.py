@@ -128,7 +128,7 @@ class PrePlanner(CompatibleNode):
             or abs(y_start - y_target) > self.distance_spawn_to_first_wp
         ):
             self.logwarn(
-                "PrePlanner: current agent-pose doesnt match the " "given global route"
+                "PrePlanner: current agent-pose does not match the given global route"
             )
             self.global_route_backup = data
             return
@@ -214,7 +214,7 @@ class PrePlanner(CompatibleNode):
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
         self.global_route_backup = None
-        self.logerr("PrePlanner: published trajectory")
+        self.logwarn("PrePlanner: published trajectory")
 
     def world_info_callback(self, opendrive: String) -> None:
         """
