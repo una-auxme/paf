@@ -333,10 +333,15 @@ def build_lead_vehicle_collision_masks(
 
     front_mask_end = Point2.new(front_mask_size, 0.0)
 
-    trajectory_line = ros_path_to_line(trajectory_local)
-    trajectory_line = clamp_line(
-        trajectory_line, front_mask_size, end_distance=max_trajectory_check_length
+    trajectory_line = build_trajectory_from_start(
+        trajectory_local,
+        start_point=Point2.new(front_mask_size, 0.0),
+        max_centering_dist=0.5,
     )
+    if max_trajectory_check_length is not None and trajectory_line is not None:
+        (trajectory_line, _) = split_line_at(
+            trajectory_line, max_trajectory_check_length
+        )
 
     if trajectory_line is not None:
         (x, y) = trajectory_line.coords[0]
@@ -348,6 +353,42 @@ def build_lead_vehicle_collision_masks(
         collision_masks.append(trajectory_mask)
 
     return collision_masks
+
+
+def build_trajectory_from_start(
+    trajectory_local: NavPath,
+    start_point: Point2,
+    max_centering_dist: Optional[float] = None,
+) -> Optional[shapely.LineString]:
+    start_point_s = start_point.to_shapely()
+    trajectory_line = ros_path_to_line(trajectory_local)
+    # Calculate the distance on the traj to the start_point
+    # (start_point is projected onto the traj)
+    start_dist: float = trajectory_line.line_locate_point(other=start_point_s)
+    (_, trajectory_line) = split_line_at(trajectory_line, start_dist)
+    if trajectory_line is None:
+        return None
+
+    if max_centering_dist is not None:
+        # If the trajectory stat point is close enough to
+        # the given start_point, move traj to the start_point
+        (p0_x, p0_y) = trajectory_line.coords[0]
+        p0 = Point2.new(p0_x, p0_y)
+        traj_start_dist = start_point.distance_to(p0)
+        if traj_start_dist <= max_centering_dist:
+            transform = Transform2D.new_translation(p0.vector_to(start_point))
+            trajectory_line = transform * trajectory_line
+            return trajectory_line
+
+    # Prepend the start_point to the trajectory
+    trajectory_line = shapely.LineString(
+        np.append(
+            [[start_point.x(), start_point.y()]],
+            np.array(trajectory_line.coords),
+            axis=0,
+        )
+    )
+    return trajectory_line
 
 
 def point_along_line_angle(x: float, y: float, angle: float, distance: float) -> Point2:

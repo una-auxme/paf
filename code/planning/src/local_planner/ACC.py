@@ -1,30 +1,34 @@
 #!/usr/bin/env python
+import math
+from typing import Optional, List, Tuple
+
+import shapely
+
 import ros_compatibility as roscomp
-from geometry_msgs.msg import PoseStamped, Point
-import mapping_common.markers
-import mapping_common.shape
+
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Bool, Float32, Float32MultiArray, String
+from std_msgs.msg import Float32, String
 from visualization_msgs.msg import Marker, MarkerArray
-from typing import Optional, List
+
 from planning.cfg import ACCConfig
 from dynamic_reconfigure.server import Server
 
-import shapely
-
+import mapping_common.markers
+import mapping_common.shape
 import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
-from mapping_common.entity import FlagFilter
+from mapping_common.entity import FlagFilter, Entity
 from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping.msg import Map as MapMsg
 
 MARKER_NAMESPACE: str = "acc"
+ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
 
 
 class ACC(CompatibleNode):
@@ -35,7 +39,7 @@ class ACC(CompatibleNode):
 
     trajectory_local: Optional[Path] = None
     __curr_behavior: Optional[str] = None
-    speed_limit: Optional[float] = None  # m/s
+    speed_limit: float = 5.0
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -83,12 +87,6 @@ class ACC(CompatibleNode):
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
         )
 
-        # Tunable values for the controllers
-        self.Kp: float
-        self.Ki: float
-        self.T_gap: float
-        self.d_min: float
-        self.acceleration_factor: float
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
         self.logdebug("ACC initialized")
@@ -101,12 +99,6 @@ class ACC(CompatibleNode):
         self.update_velocity()
 
     def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        self.Kp = config["Kp"]
-        self.Ki = config["Ki"]
-        self.T_gap = config["T_gap"]
-        self.d_min = config["d_min"]
-        self.acceleration_factor = config["acceleration_factor"]
-
         return config
 
     def __set_trajectory_local(self, data: Path):
@@ -161,20 +153,23 @@ class ACC(CompatibleNode):
             front_mask_size = 7.5
 
         collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
-            hero_width, self.trajectory_local, front_mask_size=front_mask_size
+            hero_width,
+            self.trajectory_local,
+            front_mask_size=front_mask_size,
+            max_trajectory_check_length=100.0,
         )
 
         collision_mask = shapely.union_all(collision_masks)
 
         debug_markers: List[Marker] = []
         for mask in collision_masks:
-            debug_markers.append(debug_marker(mask, color=(0, 1.0, 1.0, 0.5)))
+            debug_markers.append(debug_marker(mask, color=ACC_MARKER_COLOR))
 
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
-        marker_text: str = ""
+        marker_text: str = "ACC overview:"
         if entity_result is not None:
             entity, distance = entity_result
             debug_markers.append(
@@ -193,20 +188,32 @@ class ACC(CompatibleNode):
                 "None" if lead_x_velocity is None else f"{lead_x_velocity:6.4f}"
             )
             marker_text += (
-                f"LeadDistance: {distance:7.4f}\n"
-                + f"LeadXVelocity: {lead_x_velocity_str}\n"
-                + f"DeltaV: {lead_delta_velocity:6.4f}\n"
-                + f"RawACCSpeed: {desired_speed:6.4f}\n"
+                f"\nLeadDistance: {distance:7.4f}"
+                + f"\nLeadXVelocity: {lead_x_velocity_str}"
+                + f"\nDeltaV: {lead_delta_velocity:6.4f}"
+                + f"\nMaxLeadSpeed: {desired_speed:6.4f}"
             )
 
-        if self.speed_limit is None:
-            # if no speed limit is available, drive 5 m/s max
-            desired_speed = min(5.0, desired_speed)
-        else:
-            # max speed is the current speed limit
-            desired_speed = min(self.speed_limit, desired_speed)
+        # max speed is the current speed limit
+        desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"FinalACCSpeed: {desired_speed:6.4f}\n"
+        curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
+        desired_speed = min(curve_speed, desired_speed)
+        marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
+
+        debug_markers.extend(c_markers)
+
+        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
+
+        if desired_speed == curve_speed:
+            speed_reason = "Curve"
+        elif desired_speed == self.speed_limit:
+            speed_reason = "Speed limit"
+        else:
+            speed_reason = "Obstacle"
+
+        marker_text += f"\nSpeed reason: {speed_reason}"
+
         debug_markers.append(
             debug_marker(
                 marker_text,
@@ -237,7 +244,7 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        d_min = self.d_min
+        d_min: float = rospy.get_param("~d_min")
 
         # if we want to overtake, we need to keep some distance to the obstacle
         if (
@@ -255,23 +262,98 @@ class ACC(CompatibleNode):
 
         else:
             # PI controller which chooses the desired speed
-            Kp = self.Kp
-            Ki = self.Ki
-            T_gap = self.T_gap
-            d_min = self.d_min
+            Kp: float = rospy.get_param("~Kp")
+            Ki: float = rospy.get_param("~Ki")
+            T_gap: float = rospy.get_param("~T_gap")
+            acceleration_factor: float = rospy.get_param("~acceleration_factor")
 
             desired_distance = d_min + T_gap * hero_velocity
             delta_d = lead_distance - desired_distance
             speed_adjustment = Ki * delta_d + Kp * delta_v
             # we want to accelerate more slowly
             if hero_velocity > 1 and speed_adjustment > 0:
-                speed_adjustment *= self.acceleration_factor
+                speed_adjustment *= acceleration_factor
             desired_speed = hero_velocity + speed_adjustment
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
 
         return desired_speed
+
+    def calculate_velocity_based_on_trajectory(
+        self, hero: Entity
+    ) -> Tuple[float, List[Marker]]:
+        debug_markers: List[Marker] = []
+
+        hero_width = hero.get_width()
+        hero_front_x = hero.get_front_x()
+        front_point = Point2.new(hero_front_x, 0.0)
+        trajectory_line = mapping_common.mask.build_trajectory_from_start(
+            self.trajectory_local, front_point, max_centering_dist=None
+        )
+
+        # Creates lines that exit the car left and right at an angle
+        curve_angle: float = math.radians(rospy.get_param("~curve_line_angle"))
+        max_curve_distance: float = rospy.get_param("~max_curve_distance")
+        curve_line_end_base = (Vector2.forward() * max_curve_distance).point()
+        curve_line_angles = [curve_angle, -curve_angle]
+        curve_line_offsets = [
+            Vector2.new(hero_front_x, hero_width / 2),
+            Vector2.new(hero_front_x, -hero_width / 2),
+        ]
+        curve_lines: List[shapely.LineString] = []
+        for angle, offset in zip(curve_line_angles, curve_line_offsets):
+            transform = Transform2D.new_rotation_translation(angle, offset)
+            line_end: Point2 = transform * curve_line_end_base
+            line = shapely.LineString(
+                [offset.point().to_shapely(), line_end.to_shapely()]
+            )
+            curve_lines.append(line)
+            debug_markers.append(debug_marker(line, color=ACC_MARKER_COLOR))
+
+        # Calculate the smallest distance where the trajectory intersects with
+        # any curve line
+        intersection_dist = float("inf")
+        intersection_point = None
+        for curve_line in curve_lines:
+            intersection = shapely.intersection(trajectory_line, curve_line)
+            for coord in shapely.get_coordinates(intersection):
+                int_point = Point2.new(coord[0], coord[1])
+                int_dist = front_point.distance_to(int_point)
+                if int_dist < intersection_dist:
+                    intersection_point = int_point
+                    intersection_dist = int_dist
+
+        if intersection_point is None or intersection_dist == float("inf"):
+            return (float("inf"), debug_markers)
+
+        debug_markers.append(debug_marker(intersection_point, color=ACC_MARKER_COLOR))
+        debug_markers.append(
+            debug_marker(
+                f"Curve dist: {intersection_dist:4.1f}",
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=intersection_point.vector(),
+            )
+        )
+
+        # Linear interpolation of the desired curve speed based on the intersection_dist
+        min_curve_speed: float = rospy.get_param("~min_curve_speed")
+        min_curve_distance: float = rospy.get_param("~min_curve_distance")
+        max_curve_speed: float = rospy.get_param("~max_curve_speed")
+
+        intersection_dist = max(0, intersection_dist - min_curve_distance)
+        max_curve_distance = max(0, max_curve_distance - min_curve_distance)
+        if max_curve_distance == 0:
+            rospy.logwarn_throttle(
+                1.0, "ACC: max_curve_distance should not be <= min_curve_distance"
+            )
+            return (float("inf"), debug_markers)
+
+        speed_percentage = intersection_dist / max_curve_distance
+        desired_speed = (
+            speed_percentage * (max_curve_speed - min_curve_speed) + min_curve_speed
+        )
+        return (desired_speed, debug_markers)
 
 
 if __name__ == "__main__":

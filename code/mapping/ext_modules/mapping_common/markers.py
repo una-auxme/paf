@@ -25,7 +25,7 @@ def debug_marker(
 
     Args:
         base (Any): Currently supported: Entity, Shape2D, shapely.Polygon,
-            Marker, str, Point2, [Point2, Point2] as Arrow
+            shapely.LineString, Marker, str, Point2, [Point2, Point2] as Arrow
         frame_id (Optional[str], optional): Defaults to "hero".
         position_z (Optional[float], optional): Defaults to None.
             If None, the z position of base will be used.
@@ -53,6 +53,12 @@ def debug_marker(
     elif isinstance(base, shapely.Polygon):
         shape2d = Polygon.from_shapely(base)
         marker = shape2d.to_marker(marker_style=MarkerStyle.LINESTRING)
+    elif isinstance(base, shapely.LineString):
+        marker = Marker(type=Marker.LINE_STRIP)
+        marker.scale.x = 0.05  # Line thickness
+        for x, y in base.coords:
+            p = Point2.new(x, y)
+            marker.points.append(p.to_ros_msg())
     elif isinstance(base, Marker):
         marker = base
     elif isinstance(base, str):

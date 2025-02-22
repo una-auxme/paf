@@ -4,7 +4,6 @@ from math import atan, sin
 import ros_compatibility as roscomp
 import rospy
 from carla_msgs.msg import CarlaSpeedometer
-from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
@@ -44,26 +43,12 @@ class PurePursuitController(CompatibleNode):
             Path, "/paf/acting/trajectory_local", self.__set_trajectory, qos_profile=1
         )
 
-        # self.position_sub: Subscriber = self.new_subscription(
-        #     PoseStamped,
-        #     "/paf/acting/current_pos",
-        #     self.__set_position,
-        #     qos_profile=1,
-        # )
-
         self.velocity_sub: Subscriber = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__set_velocity,
             qos_profile=1,
         )
-
-        # self.heading_sub: Subscriber = self.new_subscription(
-        #     Float32,
-        #     "/paf/acting/current_heading",
-        #     self.__set_heading,
-        #     qos_profile=1,
-        # )
 
         self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/pure_pursuit_steer", qos_profile=1
@@ -122,22 +107,6 @@ class PurePursuitController(CompatibleNode):
                 )
                 return
 
-            # if self.__position is None:
-            #     self.logdebug(
-            #         "PurePursuitController hasn't received the "
-            #         "position of the vehicle yet "
-            #         "and can therefore not publish steering"
-            #     )
-            #     return
-
-            # if self.__heading is None:
-            #     self.logdebug(
-            #         "PurePursuitController hasn't received the "
-            #         "heading of the vehicle yet and "
-            #         "can therefore not publish steering"
-            #     )
-            #     return
-
             if self.__velocity is None:
                 rospy.logwarn_throttle(
                     1.0,
@@ -166,23 +135,8 @@ class PurePursuitController(CompatibleNode):
         hero = mapping_common.hero.create_hero_entity()
         hero_front_x = hero.get_front_x()
         front_point = Point2.new(hero_front_x, 0.0)
-        front_point_s = front_point.to_shapely()
-        trajectory_line = mapping_common.mask.ros_path_to_line(self.__path)
-        # Calculate the distance on the traj to the front_point
-        # (front_point is projected onto the traj)
-        front_dist: float = trajectory_line.line_locate_point(other=front_point_s)
-        (_, trajectory_line) = mapping_common.mask.split_line_at(
-            trajectory_line, front_dist
-        )
-        if trajectory_line is None:
-            return None
-        # Prepend the front_point to the trajectory
-        trajectory_line = shapely.LineString(
-            np.append(
-                [[front_point.x(), front_point.y()]],
-                np.array(trajectory_line.coords),
-                axis=0,
-            )
+        trajectory_line = mapping_common.mask.build_trajectory_from_start(
+            self.__path, front_point, max_centering_dist=None
         )
 
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
@@ -232,101 +186,12 @@ class PurePursuitController(CompatibleNode):
         # <-
         return steering_angle
 
-    # def __get_target_point_index(self, ld: float) -> int:
-    #     """
-    #     Get the index of the target point on the current trajectory based on
-    #     the look ahead distance.
-    #     :param ld: look ahead distance
-    #     :return:
-    #     """
-    #     if len(self.__path.poses) < 2:
-    #         return -1
-
-    #     closest_index = np.argmin(
-    #         np.array([self.__dist_to(pose.pose.position) for pose in self.__path.poses])
-    #     )
-
-    #     ld_distances = np.array(
-    #         [
-    #             self.__dist_to(pose.pose.position) - ld
-    #             for pose in self.__path.poses[closest_index:]
-    #         ]
-    #     )
-    #     min_dist_idx = np.argmin(np.abs(ld_distances))
-    #     return closest_index + min_dist_idx
-
-    # def __is_ahead(self, pos: Tuple[float, float]) -> bool:
-    #     x, y = pos
-    #     c_x, c_y = self.__position
-    #     to_car = np.array([x - c_x, y - c_y])
-    #     heading = self.__rotate_vector_2d(np.array([1.0, 0.0]), self.__heading)
-
-    #     return np.dot(to_car, heading) > 1
-
-    # def __rotate_vector_2d(self, vector, angle_rad):
-    #     rotation_matrix = np.array(
-    #         [
-    #             [np.cos(angle_rad), -np.sin(angle_rad)],
-    #             [np.sin(angle_rad), np.cos(angle_rad)],
-    #         ]
-    #     )
-
-    #     return rotation_matrix @ np.array(vector)
-
-    # def __dist_to(self, pos: Point) -> float:
-    #     """
-    #     Distance between current position and target position (only (x,y))
-    #     :param pos: targeted position
-    #     :return: distance
-    #     """
-    #     x_current = self.__position[0]
-    #     y_current = self.__position[1]
-    #     x_target = pos.x
-    #     y_target = pos.y
-    #     d = (x_target - x_current) ** 2 + (y_target - y_current) ** 2
-    #     return math.sqrt(d)
-
-    # def __set_position(self, data: PoseStamped, min_diff=0.001):
-    #     """
-    #     Updates the current position of the vehicle
-    #     To avoid problems when the car is stationary, new positions will only
-    #     be accepted, if they are a certain distance from the current one
-    #     :param data: new position as PoseStamped
-    #     :param min_diff: minium difference between new and current point for
-    #     the new point to be accepted
-    #     :return:
-    #     """
-    #     # No position yet: always get the published position
-    #     if self.__position is None:
-    #         x0 = data.pose.position.x
-    #         y0 = data.pose.position.y
-    #         self.__position = (x0, y0)
-    #         return
-    #     # check if the new position is valid
-    #     dist = self.__dist_to(data.pose.position)
-    #     if dist < min_diff:
-    #         # if new position is to close to current, do not accept it
-    #         # too close = closer than min_diff = 0.001 meters
-    #         # for debugging purposes:
-    #         self.logdebug(
-    #             "New position disregarded, "
-    #             f"as dist ({round(dist, 3)}) to current pos "
-    #             f"< min_diff ({round(min_diff, 3)})"
-    #         )
-    #         return
-    #     new_x = data.pose.position.x
-    #     new_y = data.pose.position.y
-    #     self.__position = (new_x, new_y)
-
     def __set_trajectory(self, data: Path):
         path_len = len(data.poses)
         if path_len < 1:
             self.loginfo("Pure Pursuit: Empty path received and disregarded")
             return
         self.__path = data
-
-    # def __set_heading(self, data: Float32):
-    #     self.__heading = data.data
 
     def __set_velocity(self, data: CarlaSpeedometer):
         self.__velocity = data.speed

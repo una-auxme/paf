@@ -3,4 +3,11 @@ Ki: 1.2
 T_gap: 1.9
 d_min: 0.7
 
-acceleration_factor: 0.1
+acceleration_factor: 1.0
+
+curve_line_angle: 15.0
+min_curve_distance: 3.0
+min_curve_speed: 3.0
+max_curve_distance: 75.0
+max_curve_speed: 20.0
+

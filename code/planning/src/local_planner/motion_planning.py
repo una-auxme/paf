@@ -303,6 +303,8 @@ class MotionPlanning(CompatibleNode):
         # Publish local path
         self.local_trajectory_pub.publish(local_path)
         # Publish the global path for reference
+        self.global_trajectory.header.stamp = rospy.get_rostime()
+        self.global_trajectory.header.frame_id = "global"
         self.traj_pub.publish(self.global_trajectory)
         # Publish speed limit
         if (
@@ -453,7 +455,7 @@ class MotionPlanning(CompatibleNode):
             data (Path): Trajectory waypoints
         """
         self.global_trajectory = data
-        # TODO: Only reset this index if we receive a different trajectory
+        # TODO: Only reinit if we receive a different trajectory
         self.init_trajectory = True
         self.loginfo("Global trajectory received")
 
