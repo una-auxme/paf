@@ -61,6 +61,8 @@ class MotionPlanning(CompatibleNode):
         self.current_pos: Optional[Point2] = None
         self.current_heading: Optional[float] = None
         self.global_trajectory: Optional[Path] = None
+        self.init_trajectory: bool = True
+        """If the trajectory has changed and we need to do initialization"""
         self.speed_limits_OD = None
         self.current_global_waypoint_idx: int = 0
         """Index of the !!ROUGHLY!! current waypoint of self.global_trajectory
@@ -261,6 +263,56 @@ class MotionPlanning(CompatibleNode):
             self.current_pos.y(),
             self.current_heading,
         )
+
+        if self.init_trajectory:
+            # We need to find the start point first
+            self.current_global_waypoint_idx = 0
+            max_length = None
+            self.init_trajectory = False
+        else:
+            self._update_current_global_waypoint_idx()
+            max_length = 100.0
+
+        local_trajectory = mapping_common.mask.build_trajectory(
+            self.global_trajectory,
+            hero_transform,
+            max_length=max_length,
+            current_wp_idx=max(0, self.current_global_waypoint_idx - 2),
+            max_wp_count=200,
+            centered=False,
+        )
+        if local_trajectory is None:
+            # Try to reinitialize trajectory on next position update
+            self.init_trajectory = True
+            local_path = Path()
+        else:
+            local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
+
+            (start_x, start_y) = local_trajectory.coords[0]
+            start_vector = Vector2.new(start_x, start_y)
+            if start_vector.length() > 25.0:
+                # We are far away from the trajectory
+                # Try to reinitialize trajectory on next position update
+                self.init_trajectory = True
+
+        local_path.header.stamp = rospy.get_rostime()
+        local_path.header.frame_id = "hero"
+        # Publish local path
+        self.local_trajectory_pub.publish(local_path)
+        # Publish speed limit
+        if (
+            self.speed_limits_OD is not None
+            and len(self.speed_limits_OD) > self.current_global_waypoint_idx
+        ):
+            self.speed_limit_publisher.publish(
+                self.speed_limits_OD[self.current_global_waypoint_idx]
+            )
+        else:
+            rospy.logwarn_throttle(
+                1, "Motion planning: No speed limit available for current waypoint"
+            )
+
+    def _update_current_global_waypoint_idx(self):
         # The next_global_waypoint_idx is used to limit the build_trajectory
         # algorithm to a certain part of the trajectory.
         # This saves processing time and
@@ -287,36 +339,6 @@ class MotionPlanning(CompatibleNode):
                     last_point
                 ):
                     self.current_global_waypoint_idx -= 1
-
-        local_trajectory = mapping_common.mask.build_trajectory(
-            self.global_trajectory,
-            hero_transform,
-            max_length=100.0,
-            current_wp_idx=max(0, self.current_global_waypoint_idx - 2),
-            max_wp_count=200,
-            centered=False,
-        )
-        if local_trajectory is None:
-            local_path = Path()
-        else:
-            local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
-
-        local_path.header.stamp = rospy.get_rostime()
-        local_path.header.frame_id = "hero"
-        # Publish local path
-        self.local_trajectory_pub.publish(local_path)
-        # Publish speed limit
-        if (
-            self.speed_limits_OD is not None
-            and len(self.speed_limits_OD) > self.current_global_waypoint_idx
-        ):
-            self.speed_limit_publisher.publish(
-                self.speed_limits_OD[self.current_global_waypoint_idx]
-            )
-        else:
-            rospy.logwarn_throttle(
-                1, "Motion planning: No speed limit available for current waypoint"
-            )
 
     def __set_traffic_y_distance(self, data):
         if data is not None:
@@ -427,7 +449,7 @@ class MotionPlanning(CompatibleNode):
         """
         self.global_trajectory = data
         # TODO: Only reset this index if we receive a different trajectory
-        self.current_global_waypoint_idx = 0
+        self.init_trajectory = True
         self.loginfo("Global trajectory received")
 
         self.__corners = self.__calc_corner_points()
