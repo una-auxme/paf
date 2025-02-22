@@ -91,7 +91,10 @@ def split_line_at(
         current_dist = end_dist
 
     line0 = None
-    if coords_0_start_idx < coords_0_end_idx:
+    # Need at least two points
+    if (
+        new_split_point is not None and coords_0_start_idx <= coords_0_end_idx
+    ) or coords_0_start_idx < coords_0_end_idx:
         coords0: npt.NDArray[np.float64] = coords_array[
             coords_0_start_idx : coords_0_end_idx + 1
         ]
@@ -103,7 +106,10 @@ def split_line_at(
 
     # Now build the line after the split
     line1 = None
-    if coords_1_start_idx < coords_1_end_idx:
+    # Need at least two points
+    if (
+        new_split_point is not None and coords_1_start_idx <= coords_1_end_idx
+    ) or coords_1_start_idx < coords_1_end_idx:
         coords1: npt.NDArray[np.float64] = coords_array[
             coords_1_start_idx : coords_1_end_idx + 1
         ]
