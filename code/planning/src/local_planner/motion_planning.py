@@ -284,16 +284,19 @@ class MotionPlanning(CompatibleNode):
         if local_trajectory is None:
             # Try to reinitialize trajectory on next position update
             self.init_trajectory = True
-            local_path = Path()
-        else:
-            local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
+            rospy.logfatal_throttle(1.0, "MotionPlanning: Empty trajectory")
+            return
 
-            (start_x, start_y) = local_trajectory.coords[0]
-            start_vector = Vector2.new(start_x, start_y)
-            if start_vector.length() > 25.0:
-                # We are far away from the trajectory
-                # Try to reinitialize trajectory on next position update
-                self.init_trajectory = True
+        (start_x, start_y) = local_trajectory.coords[0]
+        start_vector = Vector2.new(start_x, start_y)
+        if start_vector.length() > 25.0:
+            # We are far away from the trajectory
+            # Try to reinitialize trajectory on next position update
+            self.init_trajectory = True
+            rospy.logfatal_throttle(1.0, "MotionPlanning: Too far away from trajectory")
+            return
+
+        local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
 
         local_path.header.stamp = rospy.get_rostime()
         local_path.header.frame_id = "hero"

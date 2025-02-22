@@ -35,8 +35,8 @@ class Passthrough(CompatibleNode):
     )
     # Topics for steering controllers
     trajectory = TopicMapping(
-        pub_name="/paf/acting/trajectory",
-        sub_name=f"/paf/{role_name}/trajectory",
+        pub_name="/paf/acting/trajectory_local",
+        sub_name=f"/paf/{role_name}/trajectory_local",
         topic_type=Path,
     )
     position = TopicMapping(
