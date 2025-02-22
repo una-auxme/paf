@@ -271,14 +271,14 @@ class MotionPlanning(CompatibleNode):
             self.init_trajectory = False
         else:
             self._update_current_global_waypoint_idx()
-            max_length = 100.0
+            max_length = 200.0
 
         local_trajectory = mapping_common.mask.build_trajectory(
             self.global_trajectory,
             hero_transform,
             max_length=max_length,
             current_wp_idx=max(0, self.current_global_waypoint_idx - 2),
-            max_wp_count=200,
+            max_wp_count=None if max_length is None else int(max_length * 2),
             centered=False,
         )
         if local_trajectory is None:
@@ -302,6 +302,8 @@ class MotionPlanning(CompatibleNode):
         local_path.header.frame_id = "hero"
         # Publish local path
         self.local_trajectory_pub.publish(local_path)
+        # Publish the global path for reference
+        self.traj_pub.publish(self.global_trajectory)
         # Publish speed limit
         if (
             self.speed_limits_OD is not None
