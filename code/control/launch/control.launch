@@ -11,7 +11,7 @@
     necessary calculations are done and the vehicle controller is ready to send the next command to the carla simulator.
     Further information for a correct fix would be: https://carla.readthedocs.io/en/stable/configuring_the_simulation/
     -->
-    <arg name="loop_sleep_time" default="0.1" />
+    <arg name="loop_sleep_time" default="0.2" />
 
     <node pkg="control" type="velocity_controller.py" name="velocity_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
