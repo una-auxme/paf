@@ -555,7 +555,7 @@ class Leave(py_trees.behaviour.Behaviour):
                 right_lane=True,
                 lane_length=15.0,
                 lane_transform=7.5,
-                check_method="fallback",
+                check_method="lanemarking",
             )
             add_debug_entry(self.name, f"Right lane free?: {ot_free.name}")
             if isinstance(ot_mask, shapely.Polygon):

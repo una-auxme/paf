@@ -138,6 +138,8 @@ class PurePursuitController(CompatibleNode):
         trajectory_line = mapping_common.mask.build_trajectory_from_start(
             self.__path, front_point, max_centering_dist=None
         )
+        if trajectory_line is None:
+            return None
 
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
         look_ahead_dist = np.clip(

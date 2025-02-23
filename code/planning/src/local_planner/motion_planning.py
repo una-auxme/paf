@@ -29,6 +29,7 @@ from planning.srv import (
     OvertakeStatusResponse,
 )
 
+import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
 from mapping_common.transform import Vector2, Point2, Transform2D
@@ -493,10 +494,11 @@ class MotionPlanning(CompatibleNode):
         else:
             # We only start overtaking if we are
             # close enough to the overtake trajectory.
-            # In local coordinated the position of the car is (0, 0).
-            distance_to_overtake = shapely.distance(
-                overtake_trajectory, shapely.Point(0.0, 0.0)
-            )
+            # In local coordinated the position of the car is (0, 0), but
+            # Using the front (hood) position for the check is better
+            hero = mapping_common.hero.create_hero_entity()
+            front_point_s = shapely.Point(hero.get_front_x(), 0.0)
+            distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
             if distance_to_overtake < 0.5:
                 self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
         if after_trajectory is not None:
