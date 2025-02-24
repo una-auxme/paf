@@ -66,18 +66,18 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         self.current_pos_sub = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
+            "/paf/hero/current_pos",
             self.current_pos_callback,
             qos_profile=1,
         )
         self.head_sub = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
+            "/paf/hero/current_heading",
             self.heading_callback,
             qos_profile=1,
         )
         self.update_stop_marks_service = rospy.Service(
-            f"/paf/{self.role_name}/mapping/update_stop_marks",
+            "/paf/hero/mapping/update_stop_marks",
             UpdateStopMarks,
             self.update_stopmarks_callback,
         )
