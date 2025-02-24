@@ -149,7 +149,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         Server(MappingIntegrationConfig, self.dynamic_reconfigure_callback)
 
         self.rate = self.get_param("~map_publish_rate", 20)
-        self.new_timer(1.0 / self.rate, self.publish_new_map)
+        self.new_timer(1.0 / self.rate, self.publish_new_map_handler)
 
     def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
         """
@@ -458,6 +458,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero.timestamp = timestamp
         hero.motion = motion
         return hero
+
+    def publish_new_map_handler(self, timer_event=None):
+        try:
+            self.publish_new_map()
+        except Exception as e:
+            rospy.logfatal(f"Mapping data integration: {e}")
 
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
