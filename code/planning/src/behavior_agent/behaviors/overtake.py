@@ -133,13 +133,11 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
         )
-        return True
 
     def initialise(self):
         # Counter for detecting overtake situation
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
-        return True
 
     def update(self):
         """
@@ -230,7 +228,6 @@ class Approach(py_trees.behaviour.Behaviour):
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.start_overtake_proxy = create_start_overtake_proxy()
-        return True
 
     def initialise(self):
         """
@@ -362,7 +359,6 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         self.start_overtake_proxy = create_start_overtake_proxy()
         self.blackboard = py_trees.blackboard.Blackboard()
-        return True
 
     def initialise(self):
         rospy.loginfo("Waiting for Overtake")
@@ -370,7 +366,6 @@ class Wait(py_trees.behaviour.Behaviour):
         self.clear_distance = 45
         self.ot_counter = 0
         self.ot_gone = 0
-        return True
 
     def update(self):
         """
@@ -471,7 +466,6 @@ class Enter(py_trees.behaviour.Behaviour):
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.overtake_status_proxy = create_overtake_status_proxy()
-        return True
 
     def initialise(self):
         """
@@ -526,11 +520,9 @@ class Leave(py_trees.behaviour.Behaviour):
         self.blackboard = py_trees.blackboard.Blackboard()
         self.overtake_status_proxy = create_overtake_status_proxy()
         self.end_overtake_proxy = create_end_overtake_proxy()
-        return True
 
     def initialise(self):
         self.curr_behavior_pub.publish(bs.ot_leave.name)
-        return True
 
     def update(self):
         """

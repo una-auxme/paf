@@ -6,7 +6,6 @@ from std_msgs.msg import String, Float32
 import rospy
 import numpy as np
 
-# import carla
 from agents.navigation.local_planner import RoadOption
 
 from mapping_common.map import Map, LaneFreeState
@@ -16,6 +15,14 @@ import shapely
 from . import behavior_speed as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
+from .overtake_service_utils import (
+    create_start_overtake_proxy,
+    create_end_overtake_proxy,
+    create_overtake_status_proxy,
+    request_start_overtake,
+    request_end_overtake,
+    request_overtake_status,
+)
 
 from local_planner.utils import TARGET_DISTANCE_TO_STOP_LANECHANGE, convert_to_ms
 
@@ -39,10 +46,9 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def setup(self, timeout):
         self.blackboard = py_trees.blackboard.Blackboard()
-        return True
 
     def initialise(self):
-        self.dist = 0
+        pass
 
     def update(self):
         """
@@ -52,7 +58,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
-
         lane_change_distance = self.blackboard.get("/paf/hero/lane_change_distance")
         if lane_change_distance is None:
             return debug_status(
@@ -61,12 +66,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             change_distance = lane_change_distance.distance
             change_detected = lane_change_distance.isLaneChange
-            # add_debug_entry(
-            #    self.name,
-            #    f"road option: {lane_change_distance.roadOption} "
-            #    f"RoadOption.CHANGELANELEFT: {RoadOption.CHANGELANELEFT} "
-            #    f"RoadOption.CHANGELANERIGHT: {RoadOption.CHANGELANERIGHT} ",
-            # )
         if change_detected and change_distance < 30:
             return debug_status(self.name, Status.SUCCESS, "Lane change ahead")
         else:
@@ -96,7 +95,8 @@ class Approach(py_trees.behaviour.Behaviour):
         self.ot_distance_pub = rospy.Publisher(
             "/paf/hero/" "overtake_distance", Float32, queue_size=1
         )
-        return True
+        # self.lanechange_status_proxy = create_overtake_status_proxy()
+        self.start_lanechange_proxy = create_start_overtake_proxy()
 
     def initialise(self):
         rospy.loginfo("Approaching Change")
@@ -161,7 +161,6 @@ class Approach(py_trees.behaviour.Behaviour):
 
         # calculate virtual stopline
         if self.change_detected:
-
             lc_free, lc_mask = tree.is_lane_free(
                 right_lane=self.change_direction,
                 lane_length=22.5,
@@ -176,9 +175,9 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.counter_lanefree += 1
                 if self.counter_lanefree > 0:
                     add_debug_entry(self.name, "Lane Change is free not slowing down!")
-                    self.ot_distance_pub.publish(self.change_distance * 2.0)
-                    self.curr_behavior_pub.publish(bs.lc_app_free.name)
-                    self.blocked = False
+                    # self.ot_distance_pub.publish(self.change_distance * 2.0)
+                    # self.curr_behavior_pub.publish(bs.lc_app_free.name)
+                    # self.blocked = False
                     LANECHANGE_FREE = True
                     return debug_status(
                         self.name, Status.SUCCESS, "Lane Change Approach: Lane free"
@@ -284,14 +283,12 @@ class Wait(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
-        return True
 
     def initialise(self):
         rospy.loginfo("Lane Change Wait")
         self.change_option: Optional[RoadOption] = None
         self.change_direction: Optional[bool] = None
         self.counter_lanefree = 0
-        return True
 
     def update(self):
         """
@@ -396,7 +393,6 @@ class Change(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
-        return True
 
     def initialise(self):
         """
