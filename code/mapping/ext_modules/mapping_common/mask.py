@@ -147,7 +147,8 @@ def clamp_line(
         return None
     if end_distance is None:
         return after
-    assert end_distance >= start_distance
+    if end_distance >= start_distance:
+        return None
     before, _ = split_line_at(after, end_distance - start_distance)
     return before
 

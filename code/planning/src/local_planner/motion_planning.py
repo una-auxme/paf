@@ -486,10 +486,6 @@ class MotionPlanning(CompatibleNode):
         # Apply "smooth" transition by cropping the before and after parts
         transition_length = overtake_request.transition_length
         if before_trajectory is not None:
-            (before_trajectory, _) = mapping_common.mask.split_line_at(
-                before_trajectory,
-                before_trajectory.length - transition_length,
-            )
             self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_QUEUED
         else:
             # We only start overtaking if we are
@@ -501,10 +497,13 @@ class MotionPlanning(CompatibleNode):
             distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
             if distance_to_overtake < 0.5:
                 self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
-        if after_trajectory is not None:
-            (_, after_trajectory) = mapping_common.mask.split_line_at(
-                after_trajectory, transition_length
-            )
+
+        ot_length = overtake_trajectory.length
+        overtake_trajectory_cropped = mapping_common.mask.clamp_line(
+            overtake_trajectory, transition_length, ot_length - transition_length
+        )
+        if overtake_trajectory_cropped is not None:
+            overtake_trajectory = overtake_trajectory_cropped
 
         # Build final trajectory by appending coordinates
         coords = np.array(overtake_trajectory.coords)
