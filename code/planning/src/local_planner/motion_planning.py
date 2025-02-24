@@ -627,8 +627,6 @@ class MotionPlanning(CompatibleNode):
         self.init_trajectory = True
         self.loginfo("Global trajectory received")
 
-        self.__corners = self.__calc_corner_points()
-
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
         """Recieve speed limits from OpenDrive via global planner
 
