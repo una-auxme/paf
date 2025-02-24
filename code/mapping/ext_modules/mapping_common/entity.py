@@ -511,16 +511,6 @@ class Entity:
         min_x, min_y, max_x, max_y = local_poly.bounds
         return max_y - min_y
 
-    def get_front_x(self) -> float:
-        """Returns the local x length from the center to the front of the entity
-
-        Returns:
-            float: width
-        """
-        local_poly = self.shape.to_shapely()
-        min_x, min_y, max_x, max_y = local_poly.bounds
-        return max_x
-
 
 @dataclass(init=False)
 class Car(Entity):

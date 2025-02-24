@@ -30,13 +30,13 @@ class Passthrough(CompatibleNode):
     # Topics for velocity controller.
     target_velocity = TopicMapping(
         pub_name="/paf/acting/target_velocity",
-        sub_name=f"/paf/{role_name}/acc_velocity",
+        sub_name=f"/paf/{role_name}/target_velocity",
         topic_type=Float32,
     )
     # Topics for steering controllers
     trajectory = TopicMapping(
-        pub_name="/paf/acting/trajectory_local",
-        sub_name=f"/paf/{role_name}/trajectory_local",
+        pub_name="/paf/acting/trajectory",
+        sub_name=f"/paf/{role_name}/trajectory",
         topic_type=Path,
     )
     position = TopicMapping(

@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 
 import shapely
 import shapely.ops
@@ -7,7 +7,7 @@ import numpy.typing as npt
 import math
 
 from nav_msgs.msg import Path as NavPath
-from geometry_msgs.msg import Pose, Point, PoseStamped
+from geometry_msgs.msg import Pose
 from mapping_common.transform import Transform2D, Point2, Vector2
 from mapping_common.entity import Entity
 from mapping_common.shape import Polygon
@@ -91,10 +91,7 @@ def split_line_at(
         current_dist = end_dist
 
     line0 = None
-    # Need at least two points
-    if (
-        new_split_point is not None and coords_0_start_idx <= coords_0_end_idx
-    ) or coords_0_start_idx < coords_0_end_idx:
+    if coords_0_start_idx < coords_0_end_idx:
         coords0: npt.NDArray[np.float64] = coords_array[
             coords_0_start_idx : coords_0_end_idx + 1
         ]
@@ -106,10 +103,7 @@ def split_line_at(
 
     # Now build the line after the split
     line1 = None
-    # Need at least two points
-    if (
-        new_split_point is not None and coords_1_start_idx <= coords_1_end_idx
-    ) or coords_1_start_idx < coords_1_end_idx:
+    if coords_1_start_idx < coords_1_end_idx:
         coords1: npt.NDArray[np.float64] = coords_array[
             coords_1_start_idx : coords_1_end_idx + 1
         ]
@@ -152,28 +146,6 @@ def clamp_line(
     return before
 
 
-def ros_path_to_line(
-    path: NavPath, start_idx: int = 0, end_idx: Optional[int] = None
-) -> shapely.LineString:
-    points = []
-    poses_view = (
-        path.poses[start_idx:] if end_idx is None else path.poses[start_idx:end_idx]
-    )
-    for pose in poses_view:
-        pose: Pose = pose.pose
-        points.append(shapely.Point(pose.position.x, pose.position.y))
-    return shapely.LineString(points)
-
-
-def line_to_ros_path(line: shapely.LineString) -> NavPath:
-    path = NavPath()
-    for coord in line.coords:
-        pose = Pose(position=Point(coord[0], coord[1], 0))
-        pose_stamped = PoseStamped(pose=pose)
-        path.poses.append(pose_stamped)
-    return path
-
-
 def build_trajectory(
     global_trajectory: NavPath,
     global_hero_transform: Transform2D,
@@ -210,11 +182,16 @@ def build_trajectory(
         Optional[shapely.LineString]: Local line based on the trajectory
     """
 
-    global_line = ros_path_to_line(
-        global_trajectory,
-        current_wp_idx,
-        None if max_wp_count is None else current_wp_idx + max_wp_count,
+    points = []
+    poses_view = (
+        global_trajectory.poses[current_wp_idx:]
+        if max_wp_count is None
+        else global_trajectory.poses[current_wp_idx : current_wp_idx + max_wp_count]
     )
+    for pose in poses_view:
+        pose: Pose = pose.pose
+        points.append(Point2.new(pose.position.x, pose.position.y).to_shapely())
+    global_line = shapely.LineString(points)
     hero_pt = global_hero_transform.translation().point()
     hero_pt_s = shapely.Point(hero_pt.x(), hero_pt.y())
     hero_dist: float = global_line.line_locate_point(other=hero_pt_s)
@@ -316,79 +293,6 @@ def project_plane(
     ]
 
     return shapely.Polygon(points)
-
-
-def build_lead_vehicle_collision_masks(
-    width: float,
-    trajectory_local: NavPath,
-    front_mask_size: float,
-    max_trajectory_check_length: Optional[float] = None,
-) -> List[shapely.Polygon]:
-    collision_masks = []
-
-    if front_mask_size > 0.0:
-        # Add small area in front of car to the collision mask
-        front_rect = project_plane(front_mask_size, size_y=width)
-        collision_masks.append(front_rect)
-
-    front_mask_end = Point2.new(front_mask_size, 0.0)
-
-    trajectory_line = build_trajectory_from_start(
-        trajectory_local,
-        start_point=Point2.new(front_mask_size, 0.0),
-        max_centering_dist=0.5,
-    )
-    if max_trajectory_check_length is not None and trajectory_line is not None:
-        (trajectory_line, _) = split_line_at(
-            trajectory_line, max_trajectory_check_length
-        )
-
-    if trajectory_line is not None:
-        (x, y) = trajectory_line.coords[0]
-        traj_start = Point2.new(x, y)
-        transl = traj_start.vector_to(front_mask_end)
-        transf = Transform2D.new_translation(transl)
-        trajectory_line = transf * trajectory_line
-        trajectory_mask = curve_to_polygon(trajectory_line, width)
-        collision_masks.append(trajectory_mask)
-
-    return collision_masks
-
-
-def build_trajectory_from_start(
-    trajectory_local: NavPath,
-    start_point: Point2,
-    max_centering_dist: Optional[float] = None,
-) -> Optional[shapely.LineString]:
-    start_point_s = start_point.to_shapely()
-    trajectory_line = ros_path_to_line(trajectory_local)
-    # Calculate the distance on the traj to the start_point
-    # (start_point is projected onto the traj)
-    start_dist: float = trajectory_line.line_locate_point(other=start_point_s)
-    (_, trajectory_line) = split_line_at(trajectory_line, start_dist)
-    if trajectory_line is None:
-        return None
-
-    if max_centering_dist is not None:
-        # If the trajectory stat point is close enough to
-        # the given start_point, move traj to the start_point
-        (p0_x, p0_y) = trajectory_line.coords[0]
-        p0 = Point2.new(p0_x, p0_y)
-        traj_start_dist = start_point.distance_to(p0)
-        if traj_start_dist <= max_centering_dist:
-            transform = Transform2D.new_translation(p0.vector_to(start_point))
-            trajectory_line = transform * trajectory_line
-            return trajectory_line
-
-    # Prepend the start_point to the trajectory
-    trajectory_line = shapely.LineString(
-        np.append(
-            [[start_point.x(), start_point.y()]],
-            np.array(trajectory_line.coords),
-            axis=0,
-        )
-    )
-    return trajectory_line
 
 
 def point_along_line_angle(x: float, y: float, angle: float, distance: float) -> Point2:

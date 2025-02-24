@@ -2,11 +2,19 @@
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" /> 
 
+    <node pkg="planning" type="collision_check.py" name="CollisionCheck" output="screen">
+           <param name="role_name" value="hero" />
+           <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node>
     <node pkg="planning" type="ACC.py" name="ACC" output="screen">
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <rosparam file="$(find planning)/config/acc_config.yaml" command="load" />
     </node>
+    <!-- <node pkg="local_planner" type="local_planner/dev_collision_publisher.py" name="DevCollisionCheck" output="screen">
+        <param name="role_name" value="hero" />
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node> -->
     <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="$(arg control_loop_rate)" />

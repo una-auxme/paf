@@ -44,9 +44,6 @@ class Point2(_Coord2):
 
     Receives both rotation and translation when transformed with a Transform2D"""
 
-    def distance_to(self, other: "Point2") -> float:
-        return self.vector_to(other).length()
-
     def vector(self) -> "Vector2":
         return Vector2(self._matrix)
 

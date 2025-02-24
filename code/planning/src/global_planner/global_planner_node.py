@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from collections import deque
-from typing import Deque
 from xml.etree import ElementTree as eTree
 
 import ros_compatibility as roscomp
@@ -13,8 +11,6 @@ from ros_compatibility.node import CompatibleNode
 from std_msgs.msg import Float32MultiArray, String
 
 from global_planner.preplanning_trajectory import OpenDriveConverter
-
-from mapping_common.transform import Point2
 
 RIGHT = 1
 LEFT = 2
@@ -43,9 +39,6 @@ class PrePlanner(CompatibleNode):
 
         self.odc = None
         self.global_route_backup = None
-        self.position_stabilized: bool = False
-        self.last_agent_positions: Deque[Point] = deque()
-        self.last_agent_positions_count_target = 5
         self.agent_pos = None
         self.agent_ori = None
 
@@ -65,7 +58,7 @@ class PrePlanner(CompatibleNode):
         self.global_plan_sub = self.new_subscription(
             msg_type=CarlaRoute,
             topic="/carla/" + self.role_name + "/global_plan",
-            callback=self._global_route_callback,
+            callback=self.global_route_callback,
             qos_profile=10,
         )
 
@@ -92,16 +85,17 @@ class PrePlanner(CompatibleNode):
         # uncomment for self.dev_load_world_info() for dev_launch
         # self.dev_load_world_info()
 
-    def _global_route_callback(self, data: CarlaRoute) -> None:
-        self.update_global_route(data)
-
-    def update_global_route(self, data: CarlaRoute) -> None:
+    def global_route_callback(self, data: CarlaRoute) -> None:
         """
         when the global route gets updated a new trajectory is calculated with
         the help of OpenDriveConverter and published into
         '/paf/ self.role_name /trajectory_global'
         :param data: global Route
         """
+        if data is None:
+            self.logwarn("global_route_callback got called with None")
+            return
+
         if self.odc is None:
             self.logwarn(
                 "PrePlanner: global route got updated before map... "
@@ -128,7 +122,7 @@ class PrePlanner(CompatibleNode):
             or abs(y_start - y_target) > self.distance_spawn_to_first_wp
         ):
             self.logwarn(
-                "PrePlanner: current agent-pose does not match the given global route"
+                "PrePlanner: current agent-pose doesnt match the " "given global route"
             )
             self.global_route_backup = data
             return
@@ -214,7 +208,7 @@ class PrePlanner(CompatibleNode):
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
         self.global_route_backup = None
-        self.logwarn("PrePlanner: published trajectory")
+        self.logerr("PrePlanner: published trajectory")
 
     def world_info_callback(self, opendrive: String) -> None:
         """
@@ -249,9 +243,9 @@ class PrePlanner(CompatibleNode):
 
         if self.global_route_backup is not None:
             self.loginfo(
-                "PrePlanner: Received a map update -> retrying route preplanning"
+                "PrePlanner: Received a map update retrying " "route preplanning"
             )
-            self.update_global_route(self.global_route_backup)
+            self.global_route_callback(self.global_route_backup)
 
     def position_callback(self, data: PoseStamped):
         """
@@ -260,43 +254,14 @@ class PrePlanner(CompatibleNode):
         (needed for the trajectory preplanning)
         :param data: updated CarlaWorldInformation
         """
-        if len(self.last_agent_positions) < self.last_agent_positions_count_target:
-            rospy.loginfo_throttle(0.5, "PrePlanner: Waiting for agent positions")
-            self.last_agent_positions.append(data.pose.position)
-            self.agent_pos = None
-            self.agent_ori = None
-            return
-
-        agent_pos = data.pose.position
-        agent_point = Point2.new(agent_pos.x, agent_pos.y)
-
-        # Check if our position has stabilized
-        if not self.position_stabilized:
-            self.position_stabilized = True
-            for pos in self.last_agent_positions:
-                pos_point = Point2.new(pos.x, pos.y)
-                if pos_point.distance_to(agent_point) > 0.5:
-                    self.position_stabilized = False
-
-        self.last_agent_positions.popleft()
-        self.last_agent_positions.append(agent_pos)
-
-        if not self.position_stabilized:
-            rospy.logwarn_throttle(
-                0.5, "PrePlanner: Waiting for agent position to stabilize"
-            )
-            self.agent_pos = None
-            self.agent_ori = None
-            return
-
-        self.agent_pos = agent_pos
+        self.agent_pos = data.pose.position
         self.agent_ori = data.pose.orientation
         if self.global_route_backup is not None:
             self.loginfo(
-                "PrePlanner: Received a pose update -> retrying route preplanning"
+                "PrePlanner: Received a pose update retrying " "route preplanning"
             )
             try:
-                self.update_global_route(self.global_route_backup)
+                self.global_route_callback(self.global_route_backup)
             except Exception:
                 self.logerr("Preplanner failed -> restart")
 

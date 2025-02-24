@@ -4,7 +4,6 @@ import math
 from math import atan, sqrt, sin, cos
 import numpy as np
 import ros_compatibility as roscomp
-import rospy
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
@@ -87,36 +86,32 @@ class StanleyController(CompatibleNode):
             :return:
             """
             if self.__path is None:
-                rospy.logwarn_throttle(
-                    1.0,
+                self.logwarn(
                     "StanleyController hasn't received a path yet "
-                    "and can therefore not publish steering",
+                    "and can therefore not publish steering"
                 )
                 return
             if self.__position is None:
-                rospy.logwarn_throttle(
-                    1.0,
+                self.logwarn(
                     "StanleyController hasn't received the"
                     "position of the vehicle yet "
-                    "and can therefore not publish steering",
+                    "and can therefore not publish steering"
                 )
                 return
 
             if self.__heading is None:
-                rospy.logwarn_throttle(
-                    1.0,
+                self.logwarn(
                     "StanleyController hasn't received the"
                     "heading of the vehicle yet and"
-                    "can therefore not publish steering",
+                    "can therefore not publish steering"
                 )
                 return
 
             if self.__velocity is None:
-                rospy.logwarn_throttle(
-                    1.0,
+                self.logwarn(
                     "StanleyController hasn't received the "
                     "velocity of the vehicle yet "
-                    "and can therefore not publish steering",
+                    "and can therefore not publish steering"
                 )
                 return
             self.stanley_steer_pub.publish(self.__calculate_steer())
