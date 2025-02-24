@@ -553,7 +553,7 @@ class Car(Entity):
         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_car = msg.TypeCar(
             brake_light=self.brake_light.value, indicator=self.indicator.value
@@ -595,7 +595,7 @@ class Lanemarking(Entity):
         kwargs["predicted"] = m.type_lanemarking.predicted
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_lanemarking = msg.TypeLanemarking(
             style=self.style.value,
@@ -661,9 +661,44 @@ class TrafficLight(Entity):
         kwargs["state"] = TrafficLight.State(m.type_traffic_light.state)
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)
+        return m
+
+
+@dataclass(init=False)
+class StopMark(Entity):
+    """Traffic light or stop sign
+
+    Note: Class may be split up later
+
+    TrafficLight and StopSign add only their stop line to the map.
+    They set the *is_stopmark* flag only if the car has to stop there.
+    """
+
+    reason: str
+
+    def __init__(self, reason: str, **kwargs):
+        super().__init__(**kwargs)
+        self.reason = reason
+
+    @staticmethod
+    def _extract_kwargs(m: msg.Entity) -> Dict:
+        kwargs = super(StopMark, StopMark)._extract_kwargs(m)
+        kwargs["reason"] = m.type_stop_mark.reason
+        return kwargs
+
+    def to_ros_msg(self) -> msg.Entity:
+        m = super().to_ros_msg()
+        m.type_stop_mark = msg.TypeStopMark(reason=self.reason)
+        return m
+
+    def get_marker(self) -> Marker:
+        m = super().to_marker()
+        m.color.r = 255 / 255
+        m.color.g = 126 / 255
+        m.color.b = 0 / 255
         return m
 
 
@@ -681,7 +716,14 @@ class Pedestrian(Entity):
         return m
 
 
-_entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]
+_entity_supported_classes = [
+    Entity,
+    Car,
+    Lanemarking,
+    TrafficLight,
+    StopMark,
+    Pedestrian,
+]
 _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()
