@@ -1,6 +1,7 @@
 import rospy
 from typing import Optional
 from py_trees.blackboard import Blackboard
+from geometry_msgs.msg import PoseStamped
 
 from planning.srv import (
     StartOvertake,
@@ -45,9 +46,9 @@ def _get_global_hero_transform() -> Transform2D:
     current_pos = blackboard.get("/paf/hero/current_pos")
     current_heading = blackboard.get("/paf/hero/current_heading")
     hero_transform = mapping_common.map.build_global_hero_transform(
-        current_pos.x,
-        current_pos.y,
-        current_heading,
+        current_pos.pose.position.x,
+        current_pos.pose.position.y,
+        current_heading.data,
     )
     return hero_transform
 
@@ -76,9 +77,11 @@ def request_start_overtake(
 
 
 def request_end_overtake(
-    proxy: rospy.ServiceProxy, local_end_pos: Optional[Point2] = None
+    proxy: rospy.ServiceProxy,
+    local_end_pos: Optional[Point2] = None,
+    transition_length: float = 2.0,
 ) -> EndOvertakeResponse:
-    req = EndOvertakeRequest()
+    req = EndOvertakeRequest(transition_length=transition_length)
     if local_end_pos is not None:
         hero_transform = _get_global_hero_transform()
         global_end_pos: Point2 = hero_transform * local_end_pos

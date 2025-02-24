@@ -171,7 +171,7 @@ class BehaviorTree(CompatibleNode):
         root = grow_a_tree(role_name)
         self.behavior_tree = py_trees_ros.trees.BehaviourTree(root)
 
-        if not self.behavior_tree.setup(timeout=15):
+        if not self.behavior_tree.setup(timeout=60):
             rospy.logerr("Behavior tree Setup failed.")
             sys.exit(1)
 

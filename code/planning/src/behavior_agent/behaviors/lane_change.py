@@ -2,6 +2,7 @@ import py_trees
 from py_trees.common import Status
 from typing import Optional
 from std_msgs.msg import String, Float32
+from planning.srv import OvertakeStatusResponse
 
 import rospy
 import numpy as np
@@ -10,6 +11,7 @@ from agents.navigation.local_planner import RoadOption
 
 from mapping_common.map import Map, LaneFreeState
 from mapping_common.entity import FlagFilter
+from mapping_common.transform import Point2
 from mapping_common.markers import debug_marker
 import shapely
 from . import behavior_speed as bs
@@ -47,6 +49,9 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def setup(self, timeout):
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.overtake_status_proxy = create_overtake_status_proxy()
+        self.end_overtake_proxy = create_end_overtake_proxy()
+        return True
 
     def initialise(self):
         pass
@@ -69,12 +74,34 @@ class Ahead(py_trees.behaviour.Behaviour):
         else:
             change_distance = lane_change_distance.distance
             change_detected = lane_change_distance.isLaneChange
+
+        overtake_status: OvertakeStatusResponse = request_overtake_status(
+            self.overtake_status_proxy
+        )
         if change_detected and change_distance < 30:
-            ##############################
-            # HIER STOP MARKER EINFÜGEN  #
-            # mit LANECHANGE_STOPMARK_ID #
-            ##############################
-            return debug_status(self.name, Status.SUCCESS, "Lane change ahead")
+            if overtake_status is OvertakeStatusResponse.OVERTAKING:
+                # ENDE OT AUF GLEICHER SPUR HIN
+                request_end_overtake(
+                    proxy=self.end_overtake_proxy,
+                    local_end_pos=Point2.new(change_distance - 10.0, 0.0),
+                    transition_length=20.0,
+                )
+                return debug_status(
+                    self.name,
+                    Status.FAILURE,
+                    "Already in overtake, no lane change needed",
+                )
+            # if overtake_status is OvertakeStatusResponse.NO_OVERTAKE or
+            # overtake_status is OvertakeStatusResponse.OVERTAKE_QUEUED:
+            else:
+                if overtake_status is OvertakeStatusResponse.OVERTAKE_QUEUED:
+                    request_end_overtake(self.end_overtake_proxy)
+                ##############################
+                # HIER STOP MARKER EINFÜGEN  #
+                # mit LANECHANGE_STOPMARK_ID #
+                ##############################
+                return debug_status(self.name, Status.SUCCESS, "Lane change ahead")
+
         else:
             return debug_status(self.name, Status.FAILURE, "No lane change ahead")
 
@@ -99,11 +126,10 @@ class Approach(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
-        self.ot_distance_pub = rospy.Publisher(
-            "/paf/hero/" "overtake_distance", Float32, queue_size=1
-        )
-        self.start_lanechange_proxy = create_start_overtake_proxy()
+        rospy.logerr("hier gehts noch")
+        self.start_overtake_proxy = create_start_overtake_proxy()
         # self.lanechange_status_proxy = create_overtake_status_proxy()
+        return True
 
     def initialise(self):
         rospy.loginfo("Approaching Change")
@@ -181,7 +207,18 @@ class Approach(py_trees.behaviour.Behaviour):
                     # bool to skip Wait since oncoming is free
                     LANECHANGE_FREE = True
                     add_debug_entry(self.name, "Lane Change is free not slowing down!")
-                    request_start_overtake(self.start_overtake_proxy)
+                    if self.change_direction:
+                        lanechange_offset = -2.5
+                    else:
+                        lanechange_offset = 2.5
+                    request_start_overtake(
+                        proxy=self.start_overtake_proxy,
+                        offset=lanechange_offset,
+                        local_end_pos=Point2.new(
+                            self.change_distance - 10.0, lanechange_offset
+                        ),
+                        transition_length=20.0,
+                    )
                     ##############################
                     # HIER STOP MARKER ENTFERNEN #
                     # mit LANECHANGE_STOPMARK_ID #
@@ -287,6 +324,7 @@ class Wait(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
+        return True
 
     def initialise(self):
         rospy.loginfo("Lane Change Wait")
@@ -403,6 +441,7 @@ class Change(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
+        return True
 
     def initialise(self):
         """
