@@ -55,6 +55,7 @@ def _get_global_hero_transform() -> Transform2D:
 def request_start_overtake(
     proxy: rospy.ServiceProxy,
     local_start_pos: Optional[Point2] = None,
+    local_end_pos: Optional[Point2] = None,
     offset: float = 2.5,
     transition_length: float = 2.0,
 ) -> StartOvertakeResponse:
@@ -63,7 +64,13 @@ def request_start_overtake(
         hero_transform = _get_global_hero_transform()
         global_start_pos: Point2 = hero_transform * local_start_pos
         req.has_start_pos = True
-        req.end_pos = global_start_pos.to_ros_msg()
+        req.start_pos = global_start_pos.to_ros_msg()
+
+    if local_end_pos is not None:
+        hero_transform = _get_global_hero_transform()
+        global_end_pos: Point2 = hero_transform * local_end_pos
+        req.has_end_pos = True
+        req.start_pos = global_end_pos.to_ros_msg()
 
     return proxy(req)
 
