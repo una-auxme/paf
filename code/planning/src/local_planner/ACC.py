@@ -94,7 +94,9 @@ class ACC(CompatibleNode):
         )
 
         self.speed_service = rospy.Service(
-            "speed_alteration", SpeedAlteration, self.handle_speed_alteration
+            f"/paf/{self.role_name}/acc/speed_alteration",
+            SpeedAlteration,
+            self.handle_speed_alteration,
         )
 
         Server(ACCConfig, self.dynamic_reconfigure_callback)
