@@ -27,6 +27,12 @@ from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping.msg import Map as MapMsg
 
+from planning.srv import (
+    SpeedAlteration,
+    SpeedAlterationRequest,
+    SpeedAlterationResponse,
+)
+
 MARKER_NAMESPACE: str = "acc"
 ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
 
@@ -85,6 +91,10 @@ class ACC(CompatibleNode):
         # Publish debugging marker
         self.marker_publisher: Publisher = self.new_publisher(
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
+        )
+
+        self.speed_service = rospy.Service(
+            "speed_alteration", SpeedAlteration, self.handle_speed_alteration
         )
 
         Server(ACCConfig, self.dynamic_reconfigure_callback)
@@ -197,8 +207,12 @@ class ACC(CompatibleNode):
         # max speed is the current speed limit
         desired_speed = min(self.speed_limit, desired_speed)
 
+        # check if external speed limit is lower than current speed limit
+        if self.external_speed_limit:
+            desired_speed = min(self.speed_limit, self.external_speed_limit)
+
         curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
-        desired_speed = min(curve_speed, desired_speed)
+        desired_speed = min(curve_speed, self.desired_speed)
         marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
 
         debug_markers.extend(c_markers)
@@ -209,6 +223,11 @@ class ACC(CompatibleNode):
             speed_reason = "Curve"
         elif desired_speed == self.speed_limit:
             speed_reason = "Speed limit"
+        elif (
+            self.external_speed_limit
+            and self.desired_speed == self.external_speed_limit
+        ):
+            speed_reason = "External speed limit"
         else:
             speed_reason = "Obstacle"
 
@@ -222,7 +241,10 @@ class ACC(CompatibleNode):
             )
         )
 
-        self.velocity_pub.publish(desired_speed)
+        if self.speed_override:
+            self.velocity_pub.publish(self.speed_override)
+        else:
+            self.velocity_pub.publish(desired_speed)
 
         marker_array = debug_marker_array(MARKER_NAMESPACE, debug_markers)
         self.marker_publisher.publish(marker_array)
@@ -354,6 +376,18 @@ class ACC(CompatibleNode):
             speed_percentage * (max_curve_speed - min_curve_speed) + min_curve_speed
         )
         return (desired_speed, debug_markers)
+
+    def handle_speed_alteration(self, req: SpeedAlterationRequest):
+        self.speed_override = (
+            None if not req.speed_override_active else req.speed_override
+        )
+        self.external_speed_limit = (
+            None if not req.speed_limit_active else req.speed_limit
+        )
+
+        response = SpeedAlterationResponse
+        response.success = True
+        return response
 
 
 if __name__ == "__main__":
