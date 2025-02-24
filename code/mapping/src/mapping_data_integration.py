@@ -417,23 +417,35 @@ class MappingDataIntegrationNode(CompatibleNode):
         entities = []
         entities.append(hero_car)
 
-        if self.lidar_clustered_points_data is not None and self.get_param(
-            "~enable_lidar_cluster"
-        ):
-            entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
-        if self.radar_clustered_points_data is not None and self.get_param(
-            "~enable_radar_cluster"
-        ):
-            entities.extend(self.create_entities_from_clusters(sensortype="radar"))
-        if self.vision_clustered_points_data is not None and self.get_param(
-            "enable_vision_cluster"
-        ):
-            entities.extend(self.create_entities_from_clusters(sensortype="vision"))
+        if self.get_param("~enable_lidar_cluster"):
+            if self.lidar_clustered_points_data is not None:
+                entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
+            else:
+                return
 
-        if self.lanemarkings is not None and self.get_param("~enable_lane_marker"):
-            entities.extend(self.lanemarkings)
-        if self.lidar_data is not None and self.get_param("~enable_raw_lidar_points"):
-            entities.extend(self.entities_from_lidar())
+        if self.get_param("~enable_radar_cluster"):
+            if self.radar_clustered_points_data is not None:
+                entities.extend(self.create_entities_from_clusters(sensortype="radar"))
+            else:
+                return
+
+        if self.get_param("~enable_vision_cluster"):
+            if self.vision_clustered_points_data is not None:
+                entities.extend(self.create_entities_from_clusters(sensortype="vision"))
+            else:
+                return
+
+        if self.get_param("~enable_lane_marker"):
+            if self.lanemarkings is not None:
+                entities.extend(self.lanemarkings)
+            else:
+                return
+
+        if self.get_param("~enable_raw_lidar_points"):
+            if self.lidar_data is not None:
+                entities.extend(self.entities_from_lidar())
+            else:
+                return
 
         # lane_box_entities visualizes the shape and position of the lane box
         # which is used for lane_free function
