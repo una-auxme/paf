@@ -8,7 +8,7 @@ from . import behavior_speed as bs
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
 TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)  # default 25 (s)
-UNSTUCK_DRIVE_DURATION = rospy.Duration(1.2)  # default 1.2 (s)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(10)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 
 
