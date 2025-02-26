@@ -178,7 +178,13 @@ class VehicleController(CompatibleNode):
             self.control_publisher.publish(self.message)
             time.sleep(self.loop_sleep_time)
 
-        self.new_timer(self.control_loop_rate, spin_loop)
+        def spin_loop_handler(timer_event=None):
+            try:
+                spin_loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, spin_loop_handler)
         self.spin()
 
     # Subscriber callbacks
