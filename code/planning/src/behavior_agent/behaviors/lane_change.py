@@ -120,7 +120,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
-                        end_transition_length=10.0,
+                        end_transition_length=15.0,
                     )
                     LANECHANGE_FREE = True
                     return debug_status(
@@ -295,7 +295,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         local_end_pos=Point2.new(
                             self.change_distance + 10.0, lanechange_offset
                         ),
-                        end_transition_length=10.0,
+                        end_transition_length=15.0,
                     )
                     update_stop_marks(
                         self.stop_proxy,
