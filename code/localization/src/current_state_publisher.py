@@ -20,11 +20,11 @@ class CurrentStatePublisher(CompatibleNode):
 
         # Publishes current_pos and current_heading from hero frame out of tf-graph
         self.position_publisher: Publisher = self.new_publisher(
-            PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
+            PoseStamped, f"/paf/{self.role_name}/ekf_pos", qos_profile=1
         )
 
         self.heading_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
+            Float32, f"/paf/{self.role_name}/ekf_heading", qos_profile=1
         )
 
         self.tf_buffer = tf2_ros.Buffer()
