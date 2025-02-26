@@ -83,18 +83,18 @@ class Evaluator(CompatibleNode):
         # region Subscriber START
 
         # Current_pos subscriber:
-        self.current_pos_subscriber = self.new_subscription(
+        self.current_filter_pos_subscriber = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
-            self.set_current_pos,
+            f"/paf/{self.role_name}/ekf_pos",
+            self.set_current_filter_pos,
             qos_profile=1,
         )
 
         # Current_heading subscriber:
-        self.current_heading_subscriber = self.new_subscription(
+        self.current_filter_heading_subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
-            self.set_current_heading,
+            f"/paf/{self.role_name}/ekf_heading",
+            self.set_current_filter_heading,
             qos_profile=1,
         )
 
@@ -165,13 +165,13 @@ class Evaluator(CompatibleNode):
         """
         self.unfiltered_pos = data
 
-    def set_current_pos(self, data: PoseStamped):
+    def set_current_filter_pos(self, data: PoseStamped):
         """
         This method is called when new current_pos data is received.
         """
         self.current_pos = data
 
-    def set_current_heading(self, data: Float32):
+    def set_current_filter_heading(self, data: Float32):
         """
         This method is called when new current_heading data is received.
         """
