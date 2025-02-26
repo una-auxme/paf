@@ -41,7 +41,7 @@ class RadarNode(CompatibleNode):
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
         self.sensor_config = {
             "RADAR0": [2.0, -1.5, 0.5],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [2.0, 1.5, 0.5],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [-2.0, -1.5, 0.5],  # , 0.0, 0.0, 0.0],
         }
 
         self.timer_interval = 0.1  # 0.1 seconds
@@ -265,6 +265,7 @@ class RadarNode(CompatibleNode):
         self.dbscan_samples = int(self.get_param("~dbscan_samples", 3))
         self.data_buffered = self.get_param("~data_buffered", False)
         self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
+        self.enable_clustering = float(self.get_param("~enable_clustering", False))
 
         # Sets flag for time_check to know when data is available
         self.datacollecting_started = True
@@ -351,57 +352,58 @@ class RadarNode(CompatibleNode):
         combined_points_filtered_out = np.array(combined_points_filtered_out)
         self.get_lead_vehicle_info(combined_points)
 
-        # Cluster and bounding box processing
-        clustered_data = cluster_data(
-            combined_points,
-            eps=self.dbscan_eps,
-            min_samples=self.dbscan_samples,
-        )
-        cloud = create_pointcloud2(combined_points, clustered_data.labels_, False)
-        self.visualization_radar_publisher.publish(cloud)
-
         cloud2 = create_pointcloud2(combined_points_filtered_out, None, True)
-        self.visualization_radar_publisher2.publish(cloud2)
+        self.visualization_radar_break_filtered.publish(cloud2)
 
-        points_with_labels = np.hstack(
-            (combined_points, clustered_data.labels_.reshape(-1, 1))
-        )
-        bounding_boxes = generate_bounding_boxes(points_with_labels)
-
-        marker_array = MarkerArray()
-        for label, bbox in bounding_boxes:
-            marker = create_bounding_box_marker(
-                label, bbox, bbox_lifetime=self.data_buffer_time
+        # Cluster and bounding box processing
+        if self.get_param("~enable_clustering"):
+            clustered_data = cluster_data(
+                combined_points,
+                eps=self.dbscan_eps,
+                min_samples=self.dbscan_samples,
             )
-            marker_array.markers.append(marker)
+            cloud = create_pointcloud2(combined_points, clustered_data.labels_, False)
+            self.visualization_radar_publisher.publish(cloud)
 
-        self.marker_visualization_radar_publisher.publish(marker_array)
+            points_with_labels = np.hstack(
+                (combined_points, clustered_data.labels_.reshape(-1, 1))
+            )
+            bounding_boxes = generate_bounding_boxes(points_with_labels)
 
-        header = Header()
-        header.stamp = rospy.Time.now()
-        header.frame_id = "hero/RADAR"
+            marker_array = MarkerArray()
+            for label, bbox in bounding_boxes:
+                marker = create_bounding_box_marker(
+                    label, bbox, bbox_lifetime=self.data_buffer_time
+                )
+                marker_array.markers.append(marker)
 
-        clusterPointsNpArray = points_with_labels[:, :3]
-        indexArray = points_with_labels[:, -1]
-        valid_indices = indexArray != -1
-        clusterPointsNpArray = clusterPointsNpArray[valid_indices]
-        indexArray = indexArray[valid_indices]
-        motionArray = calculate_cluster_velocity(points_with_labels)
-        motionArray = motionArray[valid_indices]
+            self.marker_visualization_radar_publisher.publish(marker_array)
 
-        motionArray = [m.to_ros_msg() for m in motionArray]
+            header = Header()
+            header.stamp = rospy.Time.now()
+            header.frame_id = "hero/RADAR"
 
-        clusteredpoints = array_to_clustered_points(
-            clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
-        )
+            clusterPointsNpArray = points_with_labels[:, :3]
+            indexArray = points_with_labels[:, -1]
+            valid_indices = indexArray != -1
+            clusterPointsNpArray = clusterPointsNpArray[valid_indices]
+            indexArray = indexArray[valid_indices]
+            motionArray = calculate_cluster_velocity(points_with_labels)
+            motionArray = motionArray[valid_indices]
 
-        self.entity_radar_publisher.publish(clusteredpoints)
+            motionArray = [m.to_ros_msg() for m in motionArray]
 
-        cluster_info = generate_cluster_info(
-            clustered_data, combined_points, marker_array, bounding_boxes
-        )
+            clusteredpoints = array_to_clustered_points(
+                clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
+            )
 
-        self.cluster_info_radar_publisher.publish(cluster_info)
+            self.entity_radar_publisher.publish(clusteredpoints)
+
+            cluster_info = generate_cluster_info(
+                clustered_data, combined_points, marker_array, bounding_boxes
+            )
+
+            self.cluster_info_radar_publisher.publish(cluster_info)
 
         # Reset the saved messages
         self.sensor_data = {key: None for key in self.sensor_data}
@@ -409,7 +411,7 @@ class RadarNode(CompatibleNode):
     def extract_points(self, msg, sensor_name):
         """
         Extracts and transforms points from a ROS PointCloud2 message based on
-          a specified sensor configuration.
+        a specified sensor configuration.
 
         Parameters:
         - msg: sensor_msgs/PointCloud2
@@ -431,13 +433,22 @@ class RadarNode(CompatibleNode):
 
         data_array = pointcloud2_to_array(msg)
 
-        # Transform data to change its frame
+        # Retrieve sensor position in the vehicle coordinate system
         x, y, z = self.sensor_config[sensor_name]
-        # Use numpy broadcasting for better performance
+
+        # Apply translation to align the point cloud with the vehicle coordinate system
         translation = np.array([x, y, z])
         transformed_points = np.column_stack(
-            (data_array[:, :3] + translation, data_array[:, 3])
+            (
+                data_array[:, :3] + translation,
+                data_array[:, 3],
+            )  # Apply translation to (x, y, z), keep velocity unchanged
         )
+
+        # If the sensor is "RADAR1", it is rear-facing and requires a coordinate transformation
+        if sensor_name == "RADAR1":
+            transformed_points[:, 0] *= -1  # Mirror x-axis
+            transformed_points[:, 1] *= -1  # Mirror y-axis
 
         return transformed_points
 
@@ -452,7 +463,7 @@ class RadarNode(CompatibleNode):
             queue_size=10,
         )
         self.visualization_radar_publisher = rospy.Publisher(
-            rospy.get_param("~visualisation_topic", "/paf/hero/Radar/Visualization"),
+            rospy.get_param("~visualization_topic", "/paf/hero/Radar/Visualization"),
             PointCloud2,
             queue_size=10,
         )
@@ -506,8 +517,10 @@ class RadarNode(CompatibleNode):
             Imu,
             self.imu_callback,
         )
-        self.visualization_radar_publisher2 = rospy.Publisher(
-            rospy.get_param("~visualisation_topic", "/paf/hero/Radar/Visualization2"),
+        self.visualization_radar_break_filtered = rospy.Publisher(
+            rospy.get_param(
+                "~visualisation_topic", "/paf/hero/Radar/radar_break_filtered"
+            ),
             PointCloud2,
             queue_size=10,
         )
