@@ -85,6 +85,19 @@ def test_pedestrian_conversion():
     assert e == e_conv
 
 
+def test_stopmark_conversion():
+    e = entity.StopMark(
+        reason="BlaBla",
+        confidence=1.0,
+        priority=1.0,
+        shape=get_shape(),
+        transform=get_transform(),
+    )
+    msg = e.to_ros_msg()
+    e_conv = entity.Entity.from_ros_msg(msg)
+    assert e == e_conv
+
+
 def test_matches_flags():
     e = get_car()
     flags = entity.Flags(is_collider=True)

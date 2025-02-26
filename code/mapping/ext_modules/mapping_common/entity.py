@@ -694,7 +694,7 @@ class StopMark(Entity):
         m.type_stop_mark = msg.TypeStopMark(reason=self.reason)
         return m
 
-    def get_marker(self) -> Marker:
+    def to_marker(self) -> Marker:
         m = super().to_marker()
         m.color.r = 255 / 255
         m.color.g = 126 / 255
@@ -707,7 +707,7 @@ class Pedestrian(Entity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_marker(self) -> Marker:
+    def to_marker(self) -> Marker:
         m = super().to_marker()
         # [220, 20, 60],  # 4: Pedestrians
         m.color.r = 220 / 255

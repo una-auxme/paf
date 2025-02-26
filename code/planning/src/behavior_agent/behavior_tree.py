@@ -22,6 +22,7 @@ from behavior_agent.behaviors import (
     topics2blackboard,
     unstuck_routine,
     debug_markers,
+    speed_alteration,
 )
 
 
@@ -120,9 +121,11 @@ def grow_a_tree(role_name):
         "Root",
         children=[
             debug_markers.DebugMarkerBlackboardSetupBehavior(),
+            speed_alteration.SpeedAlterationSetupBehavior(),
             topics2blackboard.create_node(role_name),
             DynReconfigImportBehavior(),
             metarules,
+            speed_alteration.SpeedAlterationRequestBehavior(),
             debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),
         ],
