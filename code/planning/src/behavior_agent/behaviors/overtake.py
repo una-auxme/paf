@@ -10,8 +10,9 @@ import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map, MapTree, LaneFreeState
-from mapping_common.entity import ShapelyEntity, Entity
+from mapping_common.entity import ShapelyEntity, Entity, StopMark
 from mapping_common.markers import debug_marker
+from mapping_common.transform import Transform2D, Vector2
 import shapely
 from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import MarkerArray
@@ -29,6 +30,10 @@ from .overtake_service_utils import (
     request_end_overtake,
     request_overtake_status,
 )
+from .stop_mark_service_utils import (
+    create_stop_marks_proxy,
+    update_stop_marks,
+)
 
 from local_planner.utils import (
     NUM_WAYPOINTS,
@@ -36,6 +41,40 @@ from local_planner.utils import (
 )
 
 OVERTAKE_MARKER_COLOR = (17 / 255, 232 / 255, 35 / 255, 1.0)
+
+OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
+
+
+def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
+    reason = "Obstacle: overtake space"
+    transform = (
+        Transform2D.new_translation(Vector2.backward() * 3.0) * obstacle.transform
+    )
+    mark = StopMark(
+        reason=reason,
+        confidence=1.0,
+        priority=1.0,
+        shape=obstacle.shape,
+        transform=transform,
+    )
+    update_stop_marks(
+        proxy,
+        id=OVERTAKE_SPACE_STOPMARKS_ID,
+        reason=reason,
+        is_global=False,
+        marks=[mark],
+    )
+
+
+def unset_space_stop_mark(proxy: rospy.ServiceProxy):
+    update_stop_marks(
+        proxy,
+        id=OVERTAKE_SPACE_STOPMARKS_ID,
+        reason="no obstacle",
+        is_global=False,
+        marks=[],
+    )
+
 
 """
 Source: https://github.com/ll7/psaf2
@@ -133,12 +172,14 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.marker_publisher = rospy.Publisher(
             "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
         )
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
         # Counter for detecting overtake situation
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
+        unset_space_stop_mark(self.stop_proxy)
         return True
 
     def update(self):
@@ -360,6 +401,7 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         self.start_overtake_proxy = create_start_overtake_proxy()
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
@@ -424,6 +466,8 @@ class Wait(py_trees.behaviour.Behaviour):
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+
         self.curr_behavior_pub.publish(bs.ot_wait_free.name)
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
@@ -468,6 +512,7 @@ class Enter(py_trees.behaviour.Behaviour):
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.overtake_status_proxy = create_overtake_status_proxy()
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
@@ -482,6 +527,7 @@ class Enter(py_trees.behaviour.Behaviour):
         """
         Waits for the hero to enter the overtake.
         """
+        unset_space_stop_mark(self.stop_proxy)
         status: OvertakeStatusResponse = request_overtake_status(
             self.overtake_status_proxy
         )

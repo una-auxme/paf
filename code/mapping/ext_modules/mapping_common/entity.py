@@ -669,13 +669,7 @@ class TrafficLight(Entity):
 
 @dataclass(init=False)
 class StopMark(Entity):
-    """Traffic light or stop sign
-
-    Note: Class may be split up later
-
-    TrafficLight and StopSign add only their stop line to the map.
-    They set the *is_stopmark* flag only if the car has to stop there.
-    """
+    """Stop mark as a virtual obstacle for the ACC"""
 
     reason: str
 
@@ -703,6 +697,19 @@ class StopMark(Entity):
         m.scale.z = 0.2
         m.pose.position.z = 0.1
         return m
+
+    def get_meta_markers(self) -> List[Marker]:
+        from mapping_common.markers import debug_marker
+
+        ms = super().get_meta_markers()
+        ms.append(
+            debug_marker(
+                self.reason,
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=self.transform.translation(),
+            )
+        )
+        return ms
 
 
 @dataclass(init=False)
