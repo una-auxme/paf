@@ -9,6 +9,7 @@ from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
+import rospy
 from std_msgs.msg import Float32
 from acting.msg import StanleyDebug
 
@@ -116,7 +117,13 @@ class StanleyController(CompatibleNode):
                 return
             self.stanley_steer_pub.publish(self.__calculate_steer())
 
-        self.new_timer(self.control_loop_rate, loop)
+        def loop_handler(timer_event=None):
+            try:
+                loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, loop_handler)
         self.spin()
 
     def __calculate_steer(self) -> float:

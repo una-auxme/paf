@@ -40,6 +40,12 @@ class Evaluator(CompatibleNode):
         if self.carla_car is not None:
             print(self.carla_car.get_location())
 
+    def checkout_carla_handler(self, timer_event=None):
+        try:
+            self.checkout_carla(timer_event)
+        except Exception as e:
+            rospy.logfatal(e)
+
     def __init__(self):
         """
         Constructor / Setup
@@ -60,7 +66,7 @@ class Evaluator(CompatibleNode):
 
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
         self.carla_car = None
-        self.new_timer(1, self.checkout_carla)
+        self.new_timer(1, self.checkout_carla_handler)
 
         # Tracked Attributes for Debugging
         self.current_pos = PoseStamped()
