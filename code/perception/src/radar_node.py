@@ -265,7 +265,7 @@ class RadarNode(CompatibleNode):
         self.dbscan_samples = int(self.get_param("~dbscan_samples", 3))
         self.data_buffered = self.get_param("~data_buffered", False)
         self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
-        self.enable_clustering = float(self.get_param("~enable_clustering", False))
+        self.enable_clustering = bool(self.get_param("~enable_clustering", False))
 
         # Sets flag for time_check to know when data is available
         self.datacollecting_started = True
