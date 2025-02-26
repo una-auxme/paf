@@ -16,7 +16,14 @@ from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, Stop
 from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
-from mapping_common.filter import MapFilter, GrowthMergingFilter, LaneIndexFilter
+
+from mapping_common.filter import (
+    MapFilter,
+    GrowthMergingFilter,
+    LaneIndexFilter,
+    GrowPedestriansFilter,
+)
+from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
 from mapping.msg import Map as MapMsg, ClusteredPointsArray
 from mapping.srv import UpdateStopMarks, UpdateStopMarksRequest, UpdateStopMarksResponse
@@ -536,6 +543,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             )
         if self.get_param("~enable_lane_index_filter"):
             map_filters.append(LaneIndexFilter())
+        if self.get_param("~enable_pedestrian_grow_filter"):
+            map_filters.append(GrowPedestriansFilter())
 
         return map_filters
 
