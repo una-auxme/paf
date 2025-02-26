@@ -117,10 +117,11 @@ class Ahead(py_trees.behaviour.Behaviour):
                 if self.change_option == RoadOption.CHANGELANELEFT:
                     # change overtake end to the same lane if we are already in overtake
                     # and want a lanechange to left
+                    end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
-                        end_transition_length=15.0,
+                        end_transition_length=end_transition_length,
                     )
                     LANECHANGE_FREE = True
                     return debug_status(
@@ -289,13 +290,14 @@ class Approach(py_trees.behaviour.Behaviour):
                         lanechange_offset = -2.5
                     else:
                         lanechange_offset = 2.5
+                    end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_start_overtake(
                         proxy=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
                             self.change_distance + 10.0, lanechange_offset
                         ),
-                        end_transition_length=15.0,
+                        end_transition_length=end_transition_length,
                     )
                     update_stop_marks(
                         self.stop_proxy,
