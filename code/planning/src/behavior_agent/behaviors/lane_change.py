@@ -95,7 +95,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                     # and want a lanechange to left
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
-                        local_end_pos=Point2.new(self.change_distance + 5.0, 0.0),
+                        local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
                         transition_length=0.0,
                     )
                     return debug_status(
@@ -177,7 +177,7 @@ class Approach(py_trees.behaviour.Behaviour):
 
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
-            return debug_status(self.name, Status.FAILURE, "Map is None")
+            return debug_status(self.name, Status.FAILURE, "Lane Change: Map is None")
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Get lane change distance waypoint from blackboard
@@ -199,7 +199,9 @@ class Approach(py_trees.behaviour.Behaviour):
             or self.change_direction is None
         ):
             return debug_status(
-                self.name, Status.FAILURE, "At least one change parameter is None"
+                self.name,
+                Status.FAILURE,
+                "Lane change: At least one change parameter is None",
             )
 
         add_debug_entry(
@@ -220,14 +222,13 @@ class Approach(py_trees.behaviour.Behaviour):
             )
             if isinstance(lc_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
-            add_debug_entry(self.name, f"Lanechange free?: {lc_free.name}")
+            add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
             if lc_free is LaneFreeState.FREE:
                 self.counter_lanefree += 1
                 # using a counter to account for inconsistencies
                 if self.counter_lanefree > 2:
                     # bool to skip Wait since oncoming is free
                     LANECHANGE_FREE = True
-                    add_debug_entry(self.name, "Lane Change is free not slowing down!")
                     if self.change_direction:
                         lanechange_offset = -2.5
                     else:
@@ -236,7 +237,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         proxy=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
-                            self.change_distance + 5.0, lanechange_offset
+                            self.change_distance + 10.0, lanechange_offset
                         ),
                         transition_length=0.0,
                     )
@@ -244,23 +245,32 @@ class Approach(py_trees.behaviour.Behaviour):
                     # HIER STOP MARKER ENTFERNEN #
                     # mit LANECHANGE_STOPMARK_ID #
                     ##############################
-                    self.curr_behavior_pub.publish(bs.ot_app_free.name)
+                    self.curr_behavior_pub.publish(bs.lc_app_free.name)
                     return debug_status(
-                        self.name, Status.SUCCESS, "Lane Change Approach: Lane free"
+                        self.name,
+                        Status.FAILURE,
+                        "Lane Change: Lane free, changing directly",
                     )
                 else:
                     self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
                     return debug_status(
                         self.name,
                         Status.RUNNING,
-                        f"Lane Change free count: {self.counter_lanefree}",
+                        f"Lane Change: Free with count {self.counter_lanefree}/3",
                     )
             else:
                 if lc_free is LaneFreeState.BLOCKED:
                     self.counter_lanefree = 0
-                add_debug_entry(
-                    self.name, "Lane Change Approach: Oncoming blocked slowing down"
-                )
+                    add_debug_entry(
+                        self.name,
+                        "Lane Change: Lane blocked, reset count, stay in current lane",
+                    )
+                else:
+                    add_debug_entry(
+                        self.name,
+                        "Lane Change: Lane free state unknown, "
+                        f"keep count {self.counter_lanefree}/3, stay in current lane",
+                    )
                 self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
 
         # rospy.loginfo(f"Lane Change approach counter: {self.counter_lanefree}")
@@ -277,17 +287,18 @@ class Approach(py_trees.behaviour.Behaviour):
         #    )
 
         # currently TARGET_DISTANCE_TO_STOP_LANECHANGE == 2 (see utils.py)
-        target_distance = TARGET_DISTANCE_TO_STOP_LANECHANGE
-        if self.change_distance <= target_distance:
+        if self.change_distance <= TARGET_DISTANCE_TO_STOP_LANECHANGE:
             return debug_status(
                 self.name,
                 Status.SUCCESS,
-                f"Lane Change Approach: Reached target distance {self.change_distance},"
-                " stopping approach",
+                f"Lane Change: Reached target distance {self.change_distance}, "
+                "stopping car and change to Wait",
             )
         else:
             return debug_status(
-                self.name, Status.RUNNING, "Lane Change Approach: still approaching"
+                self.name,
+                Status.RUNNING,
+                "Lane Change: Still approaching, stay in current lane",
             )
 
     """
@@ -361,19 +372,19 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
         """
-        global LANECHANGE_FREE
+        # global LANECHANGE_FREE
 
-        if LANECHANGE_FREE:
-            self.curr_behavior_pub.publish(bs.lc_app_free.name)
-            return debug_status(
-                self.name,
-                py_trees.common.Status.SUCCESS,
-                "Lanechange free, skipping Wait",
-            )
+        # if LANECHANGE_FREE:
+        #    self.curr_behavior_pub.publish(bs.lc_app_free.name)
+        #    return debug_status(
+        #        self.name,
+        #        py_trees.common.Status.FAILURE,
+        #        "Lanechange free, skipping Wait and exit lane change behavior",
+        #    )
 
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
-            return debug_status(self.name, Status.FAILURE, "Map is None")
+            return debug_status(self.name, Status.FAILURE, "Lane Change: Map is None")
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Update stopline info
@@ -389,7 +400,9 @@ class Wait(py_trees.behaviour.Behaviour):
 
         if self.change_option is None or self.change_direction is None:
             return debug_status(
-                self.name, Status.FAILURE, "At least one change parameter is None"
+                self.name,
+                Status.FAILURE,
+                "Lane Change: At least one change parameter is None",
             )
 
         # get speed
@@ -418,7 +431,7 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         if isinstance(lc_mask, shapely.Polygon):
             add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
-        add_debug_entry(self.name, f"Lanechange free?: {lc_free}")
+        add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
         if lc_free is LaneFreeState.FREE:
             self.counter_lanefree += 1
             # using a counter to account for inconsistencies
@@ -429,77 +442,89 @@ class Wait(py_trees.behaviour.Behaviour):
                 ##############################
                 self.curr_behavior_pub.publish(bs.lc_wait_free.name)
                 return debug_status(
-                    self.name, Status.SUCCESS, "Lane Change Wait: Change clear"
+                    self.name,
+                    Status.FAILURE,
+                    "Lane Change Wait: Change now clear, changing",
                 )
             else:
                 self.curr_behavior_pub.publish(bs.lc_wait.name)
                 return debug_status(
                     self.name,
                     Status.RUNNING,
-                    f"Lane Change Wait: Free count: {self.counter_lanefree}",
+                    f"Lane Change Wait: Free with count {self.counter_lanefree}/3",
                 )
         else:
+            self.curr_behavior_pub.publish(bs.lc_wait.name)
             if lc_free is LaneFreeState.BLOCKED:
                 self.counter_lanefree = 0
-            self.curr_behavior_pub.publish(bs.lc_wait.name)
-            return debug_status(self.name, Status.RUNNING, "Lane Change Wait: Blocked")
+                return debug_status(
+                    self.name,
+                    Status.RUNNING,
+                    "Lane Change Wait: Lane blocked, reset count, stay in current lane",
+                )
+            else:
+                return debug_status(
+                    self.name,
+                    Status.RUNNING,
+                    "Lane Change Wait: Lane free state unknown, "
+                    f"keep count {self.counter_lanefree}/3, stay in current lane",
+                )
 
     def terminate(self, new_status):
         pass
 
-
-class Change(py_trees.behaviour.Behaviour):
+    # class Change(py_trees.behaviour.Behaviour):
     """
     This behavior handles the switching to a new lane in the
     lane change procedure.
     """
 
-    def __init__(self, name):
-        super(Change, self).__init__(name)
+    # def __init__(self, name):
+    #    super(Change, self).__init__(name)
 
-    def setup(self, timeout):
-        self.blackboard = py_trees.blackboard.Blackboard()
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        return True
+    # def setup(self, timeout):
+    #    self.blackboard = py_trees.blackboard.Blackboard()
+    #    self.curr_behavior_pub = rospy.Publisher(
+    #        "/paf/hero/" "curr_behavior", String, queue_size=1
+    #    )
+    #    return True
 
-    def initialise(self):
-        """
+    # def initialise(self):
+    """
         This prints a state status message and changes the driving speed for
         the lane change.
-        """
-        rospy.loginfo("Lane Change: Change to next Lane")
-        self.curr_behavior_pub.publish(bs.lc_enter_init.name)
+    """
+    #    rospy.loginfo("Lane Change: Change to next Lane")
+    #    self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
-    def update(self):
-        """
+    # def update(self):
+    """
         Continues driving through the lane change until the vehicle gets
         close enough to the next global way point.
         :return: py_trees.common.Status.RUNNING, if still driving to the next lane
                  py_trees.common.Status.SUCCESS, if lane change finished
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
-        """
-        # next_waypoint_msg = self.blackboard.get("/paf/hero/lane_change")
+    """
+    # next_waypoint_msg = self.blackboard.get("/paf/hero/lane_change")
 
-        # if next_waypoint_msg is None:
-        #    return debug_status(
-        #        self.name, Status.FAILURE, "Lane Change Change: No new waypoint"
-        #    )
-        # rospy.logerr(f"lc distance: {next_waypoint_msg.distance}")
-        # if next_waypoint_msg.distance < 5:
-        # rospy.loginfo("Lane Change Change: Drive on the next lane!")
-        #    add_debug_entry(self.name, f"wp distance: {next_waypoint_msg.distance}")
-        #    return debug_status(
-        #       self.name, Status.RUNNING, "Lane Change Change: Drive on the next lane!"
-        #    )
-        # else:
-        #    self.curr_behavior_pub.publish(bs.lc_exit.name)
-        #
-        # URSPRÜNGLICH im else Block gewesen der folgende Return!!!
-        #
-        return debug_status(self.name, Status.FAILURE, "Lane Change Change: Finished")
+    # if next_waypoint_msg is None:
+    #    return debug_status(
+    #        self.name, Status.FAILURE, "Lane Change Change: No new waypoint"
+    #    )
+    # rospy.logerr(f"lc distance: {next_waypoint_msg.distance}")
+    # if next_waypoint_msg.distance < 5:
+    # rospy.loginfo("Lane Change Change: Drive on the next lane!")
+    #    add_debug_entry(self.name, f"wp distance: {next_waypoint_msg.distance}")
+    #    return debug_status(
+    #       self.name, Status.RUNNING, "Lane Change Change: Drive on the next lane!"
+    #    )
+    # else:
+    #    self.curr_behavior_pub.publish(bs.lc_exit.name)
+    #
+    # URSPRÜNGLICH im else Block gewesen der folgende Return!!!
+    #
+    # return debug_status(self.name, Status.FAILURE, "Lane Change Change: Finished")
 
-    def terminate(self, new_status):
-        pass
+    # def terminate(self, new_status):
+    # pass
