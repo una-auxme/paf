@@ -9,7 +9,6 @@ import rospy
 # import numpy as np
 
 from agents.navigation.local_planner import RoadOption
-from carla_msgs.msg import CarlaRoute
 
 from mapping_common.map import Map, LaneFreeState
 from mapping_common.entity import FlagFilter
@@ -91,13 +90,13 @@ class Ahead(py_trees.behaviour.Behaviour):
             # if overtake in process and lanechange is planned to left:
             # just end overtake on the left lane and lanechange is finished
             if overtake_status == OvertakeStatusResponse.OVERTAKING:
-                if self.change_option == CarlaRoute.CHANGELANELEFT:
+                if self.change_option == RoadOption.CHANGELANELEFT:
                     # change overtake end to the same lane if we are already in overtake
                     # and want a lanechange to left
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
-                        local_end_pos=Point2.new(self.change_distance - 10.0, 0.0),
-                        transition_length=20.0,
+                        local_end_pos=Point2.new(self.change_distance + 5.0, 0.0),
+                        transition_length=0.0,
                     )
                     return debug_status(
                         self.name,
@@ -189,9 +188,9 @@ class Approach(py_trees.behaviour.Behaviour):
             self.change_option = lane_change.roadOption
 
             # Check if change is to the left or right lane
-            if self.change_option == CarlaRoute.CHANGELANELEFT:
+            if self.change_option == RoadOption.CHANGELANELEFT:
                 self.change_direction = False
-            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
+            elif self.change_option == RoadOption.CHANGELANERIGHT:
                 self.change_direction = True
 
         if (
@@ -237,9 +236,9 @@ class Approach(py_trees.behaviour.Behaviour):
                         proxy=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
-                            self.change_distance - 10.0, lanechange_offset
+                            self.change_distance + 5.0, lanechange_offset
                         ),
-                        transition_length=20.0,
+                        transition_length=0.0,
                     )
                     ##############################
                     # HIER STOP MARKER ENTFERNEN #
@@ -383,9 +382,9 @@ class Wait(py_trees.behaviour.Behaviour):
             self.change_option = lane_change.roadOption
 
             # Check if change is to the left or right lane
-            if self.change_option == CarlaRoute.CHANGELANELEFT:
+            if self.change_option == RoadOption.CHANGELANELEFT:
                 self.change_direction = False
-            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
+            elif self.change_option == RoadOption.CHANGELANERIGHT:
                 self.change_direction = True
 
         if self.change_option is None or self.change_direction is None:

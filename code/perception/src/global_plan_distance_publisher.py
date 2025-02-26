@@ -4,6 +4,7 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaRoute
+from agents.navigation.local_planner import RoadOption
 
 from perception.msg import Waypoint, LaneChange
 
@@ -90,9 +91,9 @@ class GlobalPlanDistance(CompatibleNode):
             # if the road option indicates an intersection, the distance to the
             # next waypoint is also the distance to the stop line
             if self.road_options[0] in {
-                CarlaRoute.LEFT,
-                CarlaRoute.RIGHT,
-                CarlaRoute.STRAIGHT,
+                RoadOption.LEFT,
+                RoadOption.RIGHT,
+                RoadOption.STRAIGHT,
             }:
                 # print("publish waypoint")
 
@@ -108,8 +109,8 @@ class GlobalPlanDistance(CompatibleNode):
             else:
                 self.waypoint_publisher.publish(Waypoint(current_distance, False))
                 if self.road_options[0] in {
-                    CarlaRoute.CHANGELEFT,
-                    CarlaRoute.CHANGERIGHT,
+                    RoadOption.CHANGELANELEFT,
+                    RoadOption.CHANGELANERIGHT,
                 }:
                     self.lane_change_publisher.publish(
                         LaneChange(
@@ -127,10 +128,10 @@ class GlobalPlanDistance(CompatibleNode):
 
                 if (
                     self.road_options[0]
-                    in {CarlaRoute.CHANGELEFT, CarlaRoute.CHANGERIGHT}
+                    in {RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT}
                     and self.road_options[0] == self.road_options[1]
                 ):
-                    self.road_options[1] = CarlaRoute.LANEFOLLOW
+                    self.road_options[1] = RoadOption.LANEFOLLOW
 
                 print(f"next road option = {self.road_options[0]}")
 
