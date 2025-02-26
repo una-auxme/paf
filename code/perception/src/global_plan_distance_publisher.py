@@ -58,7 +58,7 @@ class GlobalPlanDistance(CompatibleNode):
 
         self.lane_change_publisher = self.new_publisher(
             LaneChange,
-            "/paf/" + self.role_name + "/lane_change_distance",
+            "/paf/" + self.role_name + "/lane_change",
             qos_profile=1,
         )
 
@@ -89,18 +89,35 @@ class GlobalPlanDistance(CompatibleNode):
 
             # if the road option indicates an intersection, the distance to the
             # next waypoint is also the distance to the stop line
-            if self.road_options[0] < 4:
+            if self.road_options[0] in {
+                CarlaRoute.LEFT,
+                CarlaRoute.RIGHT,
+                CarlaRoute.STRAIGHT,
+            }:
                 # print("publish waypoint")
 
                 self.waypoint_publisher.publish(Waypoint(current_distance, True))
                 self.lane_change_publisher.publish(
-                    LaneChange(current_distance, False, self.road_options[0])
+                    LaneChange(
+                        current_distance,
+                        False,
+                        self.road_options[0],
+                        self.global_route[0].position,
+                    )
                 )
             else:
                 self.waypoint_publisher.publish(Waypoint(current_distance, False))
-                if self.road_options[0] == 5 or self.road_options[0] == 6:
+                if self.road_options[0] in {
+                    CarlaRoute.CHANGELEFT,
+                    CarlaRoute.CHANGERIGHT,
+                }:
                     self.lane_change_publisher.publish(
-                        LaneChange(current_distance, True, self.road_options[0])
+                        LaneChange(
+                            current_distance,
+                            True,
+                            self.road_options[0],
+                            self.global_route[0].position,
+                        )
                     )
             # if we reached the next waypoint, pop it and the next point will
             # be published
@@ -109,10 +126,11 @@ class GlobalPlanDistance(CompatibleNode):
                 self.global_route.pop(0)
 
                 if (
-                    self.road_options[0] in {5, 6}
+                    self.road_options[0]
+                    in {CarlaRoute.CHANGELEFT, CarlaRoute.CHANGERIGHT}
                     and self.road_options[0] == self.road_options[1]
                 ):
-                    self.road_options[1] = 4
+                    self.road_options[1] = CarlaRoute.LANEFOLLOW
 
                 print(f"next road option = {self.road_options[0]}")
 

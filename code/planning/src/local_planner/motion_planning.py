@@ -182,7 +182,7 @@ class MotionPlanning(CompatibleNode):
 
         # self.change_point_sub: Subscriber = self.new_subscription(
         #     LaneChange,
-        #     f"/paf/{self.role_name}/lane_change_distance",
+        #     f"/paf/{self.role_name}/lane_change",
         #     self.__set_change_point,
         #     qos_profile=1,
         # )

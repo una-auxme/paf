@@ -1,13 +1,15 @@
 import py_trees
 from py_trees.common import Status
 from typing import Optional
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String  # , Float32
 from planning.srv import OvertakeStatusResponse
 
 import rospy
-import numpy as np
+
+# import numpy as np
 
 from agents.navigation.local_planner import RoadOption
+from carla_msgs.msg import CarlaRoute
 
 from mapping_common.map import Map, LaneFreeState
 from mapping_common.entity import FlagFilter
@@ -26,7 +28,7 @@ from .overtake_service_utils import (
     request_overtake_status,
 )
 
-from local_planner.utils import TARGET_DISTANCE_TO_STOP_LANECHANGE, convert_to_ms
+from local_planner.utils import TARGET_DISTANCE_TO_STOP_LANECHANGE
 
 LANECHANGE_MARKER_COLOR = (153 / 255, 50 / 255, 204 / 255, 1.0)
 LANECHANGE_FREE = False
@@ -54,7 +56,9 @@ class Ahead(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
-        pass
+        self.change_detected = False
+        self.change_distance: Optional[float] = None
+        self.change_option: Optional[RoadOption] = None
 
     def update(self):
         """
@@ -66,35 +70,50 @@ class Ahead(py_trees.behaviour.Behaviour):
         """
         global LANECHANGE_STOPMARK_ID
 
-        lane_change_distance = self.blackboard.get("/paf/hero/lane_change_distance")
-        if lane_change_distance is None:
-            return debug_status(
-                self.name, Status.FAILURE, "lane_change_distance is None"
-            )
+        lane_change = self.blackboard.get("/paf/hero/lane_change")
+        if lane_change is None:
+            return debug_status(self.name, Status.FAILURE, "lane_change is None")
         else:
-            change_distance = lane_change_distance.distance
-            change_detected = lane_change_distance.isLaneChange
+            self.change_distance = lane_change.distance
+            self.change_detected = lane_change.isLaneChange
+            self.change_option = lane_change.roadOption
+
+        if self.change_distance is None or self.change_option is None:
+            return debug_status(
+                self.name, Status.FAILURE, "At least one change parameter is None"
+            )
 
         overtake_status: OvertakeStatusResponse = request_overtake_status(
             self.overtake_status_proxy
         )
-        if change_detected and change_distance < 30:
-            if overtake_status is OvertakeStatusResponse.OVERTAKING:
-                # ENDE OT AUF GLEICHER SPUR HIN
-                request_end_overtake(
-                    proxy=self.end_overtake_proxy,
-                    local_end_pos=Point2.new(change_distance - 10.0, 0.0),
-                    transition_length=20.0,
-                )
-                return debug_status(
-                    self.name,
-                    Status.FAILURE,
-                    "Already in overtake, no lane change needed",
-                )
-            # if overtake_status is OvertakeStatusResponse.NO_OVERTAKE or
-            # overtake_status is OvertakeStatusResponse.OVERTAKE_QUEUED:
+
+        if self.change_detected and self.change_distance < 30:
+            # if overtake in process and lanechange is planned to left:
+            # just end overtake on the left lane and lanechange is finished
+            if overtake_status == OvertakeStatusResponse.OVERTAKING:
+                if self.change_option == CarlaRoute.CHANGELANELEFT:
+                    # change overtake end to the same lane if we are already in overtake
+                    # and want a lanechange to left
+                    request_end_overtake(
+                        proxy=self.end_overtake_proxy,
+                        local_end_pos=Point2.new(self.change_distance - 10.0, 0.0),
+                        transition_length=20.0,
+                    )
+                    return debug_status(
+                        self.name,
+                        Status.FAILURE,
+                        "Already in overtake, just adapted overtake end_pos. "
+                        "no lane change",
+                    )
+                else:
+                    request_end_overtake(self.end_overtake_proxy)
+                    return debug_status(
+                        self.name, Status.SUCCESS, "Lane change ahead, aborted overtake"
+                    )
+            # if overtake queded delete it,
+            # if no overtake ahead continue with lanechange
             else:
-                if overtake_status is OvertakeStatusResponse.OVERTAKE_QUEUED:
+                if overtake_status == OvertakeStatusResponse.OVERTAKE_QUEUED:
                     request_end_overtake(self.end_overtake_proxy)
                 ##############################
                 # HIER STOP MARKER EINFÜGEN  #
@@ -103,7 +122,12 @@ class Ahead(py_trees.behaviour.Behaviour):
                 return debug_status(self.name, Status.SUCCESS, "Lane change ahead")
 
         else:
-            return debug_status(self.name, Status.FAILURE, "No lane change ahead")
+            return debug_status(
+                self.name,
+                Status.FAILURE,
+                f"No lane change ahead, {lane_change.position.x}, \
+                    {lane_change.position.y}",
+            )
 
     def terminate(self, new_status):
         pass
@@ -126,9 +150,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
-        rospy.logerr("hier gehts noch")
         self.start_overtake_proxy = create_start_overtake_proxy()
-        # self.lanechange_status_proxy = create_overtake_status_proxy()
         return True
 
     def initialise(self):
@@ -160,16 +182,16 @@ class Approach(py_trees.behaviour.Behaviour):
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Get lane change distance waypoint from blackboard
-        lane_change_distance = self.blackboard.get("/paf/hero/lane_change_distance")
-        if lane_change_distance is not None:
-            self.change_distance = lane_change_distance.distance
-            self.change_detected = lane_change_distance.isLaneChange
-            self.change_option = lane_change_distance.roadOption
+        lane_change = self.blackboard.get("/paf/hero/lane_change")
+        if lane_change is not None:
+            self.change_distance = lane_change.distance
+            self.change_detected = lane_change.isLaneChange
+            self.change_option = lane_change.roadOption
 
             # Check if change is to the left or right lane
-            if self.change_option == RoadOption.CHANGELANELEFT:
+            if self.change_option == CarlaRoute.CHANGELANELEFT:
                 self.change_direction = False
-            elif self.change_option == RoadOption.CHANGELANERIGHT:
+            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
                 self.change_direction = True
 
         if (
@@ -356,14 +378,14 @@ class Wait(py_trees.behaviour.Behaviour):
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Update stopline info
-        lane_change_distance = self.blackboard.get("/paf/hero/lane_change_distance")
-        if lane_change_distance is not None:
-            self.change_option = lane_change_distance.roadOption
+        lane_change = self.blackboard.get("/paf/hero/lane_change")
+        if lane_change is not None:
+            self.change_option = lane_change.roadOption
 
             # Check if change is to the left or right lane
-            if self.change_option == RoadOption.CHANGELANELEFT:
+            if self.change_option == CarlaRoute.CHANGELANELEFT:
                 self.change_direction = False
-            elif self.change_option == RoadOption.CHANGELANERIGHT:
+            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
                 self.change_direction = True
 
         if self.change_option is None or self.change_direction is None:
@@ -460,7 +482,7 @@ class Change(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        # next_waypoint_msg = self.blackboard.get("/paf/hero/lane_change_distance")
+        # next_waypoint_msg = self.blackboard.get("/paf/hero/lane_change")
 
         # if next_waypoint_msg is None:
         #    return debug_status(

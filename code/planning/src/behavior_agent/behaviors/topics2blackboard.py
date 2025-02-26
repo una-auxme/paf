@@ -87,7 +87,7 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/lane_change_distance",
+            "name": f"/paf/{role_name}/lane_change",
             "msg": LaneChange,
             "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
         },
