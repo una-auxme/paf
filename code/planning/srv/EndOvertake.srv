@@ -2,8 +2,8 @@
 bool has_end_pos
 # Global end position
 geometry_msgs/Point end_pos
-# Transition length to/from the overtake
-float32 transition_length
+# Transition length away from the overtake
+float32 end_transition_length
 
 ---
 

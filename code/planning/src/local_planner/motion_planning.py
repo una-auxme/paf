@@ -268,6 +268,7 @@ class MotionPlanning(CompatibleNode):
         if self.overtake_status.status == OvertakeStatusResponse.NO_OVERTAKE:
             self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_QUEUED
 
+        self.overtake_status.offset = req.offset
         self.overtake_request = req
 
         rospy.loginfo(f"MotionPlanning: {msg}")
@@ -279,7 +280,7 @@ class MotionPlanning(CompatibleNode):
             if req.has_end_pos:
                 self.overtake_request.has_end_pos = True
                 self.overtake_request.end_pos = req.end_pos
-                self.overtake_request.transition_length = req.transition_length
+                self.overtake_request.end_transition_length = req.end_transition_length
                 msg = "Adjusted end of existing overtake"
             else:
                 self.overtake_request = None
@@ -352,17 +353,26 @@ class MotionPlanning(CompatibleNode):
             # We need to find the start point first
             self.current_global_waypoint_idx = 0
             max_length = None
+            max_idx = None
+            min_idx = 0
             self.init_trajectory = False
         else:
             self._update_current_global_waypoint_idx()
             max_length = 200.0
+            max_idx = self.current_global_waypoint_idx + int(max_length * 2)
+            min_idx = max(0, self.current_global_waypoint_idx - int(max_length * 2))
+
+        global_traj_line = mapping_common.mask.ros_path_to_line(
+            self.global_trajectory, start_idx=min_idx, end_idx=max_idx
+        )
+        global_traj_line = self._apply_overtake(
+            global_traj_line, hero_transform=hero_transform
+        )
 
         local_trajectory = mapping_common.mask.build_trajectory(
-            self.global_trajectory,
+            global_traj_line,
             hero_transform,
             max_length=max_length,
-            current_wp_idx=max(0, self.current_global_waypoint_idx - 2),
-            max_wp_count=None if max_length is None else int(max_length * 2),
             centered=False,
         )
         if local_trajectory is None:
@@ -379,10 +389,6 @@ class MotionPlanning(CompatibleNode):
             self.init_trajectory = True
             rospy.logfatal_throttle(1.0, "MotionPlanning: Too far away from trajectory")
             return
-
-        local_trajectory = self._apply_overtake(
-            local_trajectory, hero_transform=hero_transform
-        )
 
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
@@ -413,7 +419,7 @@ class MotionPlanning(CompatibleNode):
         algorithm to a certain part of the trajectory.
         This saves processing time and
         avoids bugs with a "looping"/self-crossing trajectory"""
-        if len(self.global_trajectory.poses) > self.current_global_waypoint_idx + 1:
+        while len(self.global_trajectory.poses) > self.current_global_waypoint_idx + 1:
             pose0: Pose = self.global_trajectory.poses[
                 self.current_global_waypoint_idx
             ].pose
@@ -435,36 +441,52 @@ class MotionPlanning(CompatibleNode):
                     last_point
                 ):
                     self.current_global_waypoint_idx -= 1
+                else:
+                    break
+            else:
+                break
 
     def _apply_overtake(
-        self, local_trajectory: LineString, hero_transform: Transform2D
+        self, global_trajectory: LineString, hero_transform: Transform2D
     ) -> LineString:
+        """Adds an overtake trajectory to global_trajectory
+        if self.overtake_request is set.
+
+        Args:
+            global_trajectory (LineString)
+            hero_transform (Transform2D)
+
+        Returns:
+            LineString: global_trajectory modified with an overtake
+        """
         if self.overtake_request is None:
             self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
-            return local_trajectory
+            return global_trajectory
 
-        hero_transform_inverse = hero_transform.inverse()
+        hero_point = hero_transform.translation().point()
 
         before_trajectory: Optional[LineString] = None
-        overtake_trajectory: Optional[LineString] = local_trajectory
+        overtake_trajectory: Optional[LineString] = global_trajectory
         after_trajectory: Optional[LineString] = None
 
         overtake_request = self.overtake_request
-        if overtake_request.has_start_pos:
-            local_start_point: Point2 = hero_transform_inverse * Point2.from_ros_msg(
-                overtake_request.start_pos
-            )
-            local_start_point_s = local_start_point.to_shapely()
-            start_dist = overtake_trajectory.line_locate_point(local_start_point_s)
-            (before_trajectory, overtake_trajectory) = (
-                mapping_common.mask.split_line_at(overtake_trajectory, start_dist)
-            )
+        if not overtake_request.has_start_pos:
+            overtake_request.has_start_pos = True
+            overtake_request.start_pos = hero_point.to_ros_msg()
+
+        global_start_point_s = Point2.from_ros_msg(
+            overtake_request.start_pos
+        ).to_shapely()
+        start_dist = overtake_trajectory.line_locate_point(global_start_point_s)
+        (before_trajectory, overtake_trajectory) = mapping_common.mask.split_line_at(
+            overtake_trajectory, start_dist
+        )
+
         if overtake_request.has_end_pos and overtake_trajectory is not None:
-            local_end_point: Point2 = hero_transform_inverse * Point2.from_ros_msg(
+            global_end_point_s = Point2.from_ros_msg(
                 overtake_request.end_pos
-            )
-            local_end_point_s = local_end_point.to_shapely()
-            end_dist = overtake_trajectory.line_locate_point(local_end_point_s)
+            ).to_shapely()
+            end_dist = overtake_trajectory.line_locate_point(global_end_point_s)
             (overtake_trajectory, after_trajectory) = mapping_common.mask.split_line_at(
                 overtake_trajectory, end_dist
             )
@@ -476,31 +498,30 @@ class MotionPlanning(CompatibleNode):
                 self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
 
         if overtake_trajectory is None:
-            return local_trajectory
+            return global_trajectory
 
         # Create the overtake by offsetting
         overtake_trajectory = overtake_trajectory.offset_curve(
             distance=overtake_request.offset
         )
 
-        # Apply "smooth" transition by cropping the before and after parts
-        transition_length = overtake_request.transition_length
-        if before_trajectory is not None:
-            self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_QUEUED
-        else:
-            # We only start overtaking if we are
-            # close enough to the overtake trajectory.
-            # In local coordinated the position of the car is (0, 0), but
-            # Using the front (hood) position for the check is better
-            hero = mapping_common.hero.create_hero_entity()
-            front_point_s = shapely.Point(hero.get_front_x(), 0.0)
-            distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
-            if distance_to_overtake < 0.5:
-                self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
+        # We only start overtaking if we are
+        # close enough to the overtake trajectory.
+        # In local coordinated the position of the car is (0, 0), but
+        # Using the front (hood) position for the check is better
+        hero = mapping_common.hero.create_hero_entity()
+        front_point: Point2 = hero_transform * Point2.new(hero.get_front_x(), 0.0)
+        front_point_s = front_point.to_shapely()
+        distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
+        if distance_to_overtake < 0.5:
+            self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
 
+        # Apply "smooth" transition by cropping the before and after parts
         ot_length = overtake_trajectory.length
         overtake_trajectory_cropped = mapping_common.mask.clamp_line(
-            overtake_trajectory, transition_length, ot_length - transition_length
+            overtake_trajectory,
+            start_distance=overtake_request.start_transition_length,
+            end_distance=ot_length - overtake_request.end_transition_length,
         )
         if overtake_trajectory_cropped is not None:
             overtake_trajectory = overtake_trajectory_cropped
@@ -508,9 +529,9 @@ class MotionPlanning(CompatibleNode):
         # Build final trajectory by appending coordinates
         coords = np.array(overtake_trajectory.coords)
         if before_trajectory is not None:
-            coords = np.append(np.array(before_trajectory.coords), coords)
+            coords = np.append(np.array(before_trajectory.coords), coords, axis=0)
         if after_trajectory is not None:
-            coords = np.append(coords, np.array(after_trajectory.coords))
+            coords = np.append(coords, np.array(after_trajectory.coords), axis=0)
 
         overtake_trajectory = LineString(coords)
         return overtake_trajectory

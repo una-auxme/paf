@@ -60,9 +60,14 @@ def request_start_overtake(
     local_start_pos: Optional[Point2] = None,
     local_end_pos: Optional[Point2] = None,
     offset: float = 2.5,
-    transition_length: float = 2.0,
+    start_transition_length: float = 2.0,
+    end_transition_length: float = 2.0,
 ) -> StartOvertakeResponse:
-    req = StartOvertakeRequest(offset=offset, transition_length=transition_length)
+    req = StartOvertakeRequest(
+        offset=offset,
+        start_transition_length=start_transition_length,
+        end_transition_length=end_transition_length,
+    )
     hero_transform = _get_global_hero_transform()
     if local_start_pos is not None:
         global_start_pos: Point2 = hero_transform * local_start_pos
@@ -79,9 +84,9 @@ def request_start_overtake(
 def request_end_overtake(
     proxy: rospy.ServiceProxy,
     local_end_pos: Optional[Point2] = None,
-    transition_length: float = 2.0,
+    end_transition_length: float = 2.0,
 ) -> EndOvertakeResponse:
-    req = EndOvertakeRequest(transition_length=transition_length)
+    req = EndOvertakeRequest(end_transition_length=end_transition_length)
     if local_end_pos is not None:
         hero_transform = _get_global_hero_transform()
         global_end_pos: Point2 = hero_transform * local_end_pos

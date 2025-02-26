@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 
 import shapely
 import shapely.ops
@@ -176,7 +176,7 @@ def line_to_ros_path(line: shapely.LineString) -> NavPath:
 
 
 def build_trajectory(
-    global_trajectory: NavPath,
+    global_trajectory: Union[NavPath, shapely.LineString],
     global_hero_transform: Transform2D,
     max_length: Optional[float] = None,
     current_wp_idx: int = 0,
@@ -203,7 +203,7 @@ def build_trajectory(
             Defaults to None.
         current_wp_idx (int, optional): Waypoint index for
             very rough clamping of the NavPath. Defaults to 0.
-        max_wp_count (Optional[int], optional): Max waypoint index of the NavPath
+        max_wp_count (Optional[int], optional): Max waypoint count of the NavPath
             for very rough clamping of the NavPath. Defaults to None.
         centered (bool, optional): Centered mode. Defaults to False.
 
@@ -211,11 +211,18 @@ def build_trajectory(
         Optional[shapely.LineString]: Local line based on the trajectory
     """
 
-    global_line = ros_path_to_line(
-        global_trajectory,
-        current_wp_idx,
-        None if max_wp_count is None else current_wp_idx + max_wp_count,
-    )
+    if isinstance(global_trajectory, NavPath):
+        global_line = ros_path_to_line(
+            global_trajectory,
+            current_wp_idx,
+            None if max_wp_count is None else current_wp_idx + max_wp_count,
+        )
+    elif isinstance(global_trajectory, shapely.LineString):
+        global_line = global_trajectory
+    else:
+        raise ValueError(
+            f"Type {type(global_trajectory)} not supported for global_trajectory"
+        )
     hero_pt = global_hero_transform.translation().point()
     hero_pt_s = shapely.Point(hero_pt.x(), hero_pt.y())
     hero_dist: float = global_line.line_locate_point(other=hero_pt_s)
