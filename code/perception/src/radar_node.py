@@ -348,12 +348,15 @@ class RadarNode(CompatibleNode):
             rospy.logwarn("No Radarpoints to process!")
             return
 
-        combined_points = np.array(combined_points)
         combined_points_filtered_out = np.array(combined_points_filtered_out)
-        self.get_lead_vehicle_info(combined_points)
-
         cloud2 = create_pointcloud2(combined_points_filtered_out, None, True)
         self.visualization_radar_break_filtered.publish(cloud2)
+
+        combined_points = np.array(combined_points)
+        self.get_lead_vehicle_info(combined_points)
+
+        combined_points_pc2 = create_pointcloud2(combined_points, None, True)
+        self.combined_points.publish(combined_points_pc2)
 
         # Cluster and bounding box processing
         if self.get_param("~enable_clustering"):
@@ -433,9 +436,17 @@ class RadarNode(CompatibleNode):
 
         data_array = pointcloud2_to_array(msg)
 
+        # If the sensor is "RADAR1", it is rear-facing
+        # and requires a coordinate transformation
+        if sensor_name == "RADAR1":
+            data_array[:, 0] *= -1  # Mirror x-axis
+            data_array[:, 1] *= -1  # Mirror y-axis
+
         # Retrieve sensor position in the vehicle coordinate system
         x, y, z = self.sensor_config[sensor_name]
-
+        y *= (
+            -1
+        )  # Todo => Find out why y column has to be multiplied by -1 for alligning Radar points
         # Apply translation to align the point cloud with the vehicle coordinate system
         translation = np.array([x, y, z])
         transformed_points = np.column_stack(
@@ -444,11 +455,6 @@ class RadarNode(CompatibleNode):
                 data_array[:, 3],
             )  # Apply translation to (x, y, z), keep velocity unchanged
         )
-
-        # If the sensor is "RADAR1", it is rear-facing and requires a coordinate transformation
-        if sensor_name == "RADAR1":
-            transformed_points[:, 0] *= -1  # Mirror x-axis
-            transformed_points[:, 1] *= -1  # Mirror y-axis
 
         return transformed_points
 
@@ -519,8 +525,13 @@ class RadarNode(CompatibleNode):
         )
         self.visualization_radar_break_filtered = rospy.Publisher(
             rospy.get_param(
-                "~visualisation_topic", "/paf/hero/Radar/radar_break_filtered"
+                "~visualization_topic", "/paf/hero/Radar/radar_break_filtered"
             ),
+            PointCloud2,
+            queue_size=10,
+        )
+        self.combined_points = rospy.Publisher(
+            rospy.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
             PointCloud2,
             queue_size=10,
         )

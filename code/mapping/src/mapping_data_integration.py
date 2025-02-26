@@ -59,9 +59,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
 
         self.new_subscription(
-            topic=self.get_param(
-                "~visualization_topic", "/paf/hero/Radar/radar_break_filtered"
-            ),
+            topic=self.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
             msg_type=PointCloud2,
             callback=self.radar_callback,
             qos_profile=1,
