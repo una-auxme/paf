@@ -500,7 +500,7 @@ class OpenDriveConverter:
             target = (x_target, y_target)
             still_calculated = False
             if self.pt is not None:
-                for i in range(len(self.pt[0])):
+                for i in range(min(len(self.pt[0]), len(self.pt[1]))):
                     point = (self.pt[0][i], self.pt[1][i])
                     dist = help_functions.euclid_dist(point, target)
                     if dist < TARGET_DIFF:
