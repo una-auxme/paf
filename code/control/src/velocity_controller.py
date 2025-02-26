@@ -114,7 +114,7 @@ class VelocityController(CompatibleNode):
                 if target_velocity == -3:
                     #  -3 is the signal for reverse driving
                     reverse = True
-                    throttle = 1
+                    throttle = 0.25
                     brake = 0
                     rospy.loginfo("VelocityController: reverse driving")
                 elif self.FIXED_SPEED_OVERRIDE:
