@@ -586,7 +586,7 @@ class OpenDriveConverter:
                 widths = self.lane_widths(self.road_id)
                 old_w = self.lane_widths(self.old_id)
                 # if previous lane width was the rightmost one
-                if old_w.index(self.width) + 1 == len(old_w):
+                if self.width in old_w and old_w.index(self.width) + 1 == len(old_w):
                     last_p = (self.pt[0][-1], self.pt[1][-1])
                     min_diff = float("inf")
                     w_min = None
