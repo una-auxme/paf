@@ -96,7 +96,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
-                        transition_length=0.0,
+                        end_transition_length=0.0,
                     )
                     return debug_status(
                         self.name,
@@ -239,7 +239,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         local_end_pos=Point2.new(
                             self.change_distance + 10.0, lanechange_offset
                         ),
-                        transition_length=0.0,
+                        end_transition_length=0.0,
                     )
                     ##############################
                     # HIER STOP MARKER ENTFERNEN #
