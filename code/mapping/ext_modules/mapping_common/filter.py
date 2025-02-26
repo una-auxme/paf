@@ -7,7 +7,7 @@ import rospy
 import shapely
 
 from .map import Map
-from .entity import ShapelyEntity, Entity, FlagFilter
+from .entity import ShapelyEntity, Entity, FlagFilter, Pedestrian
 from .shape import Polygon, Shape2D
 from .transform import Transform2D
 
@@ -46,7 +46,7 @@ class LaneIndexFilter(MapFilter):
     Then returns the updated map with all Entities
     """
 
-    def filter(self, map):
+    def filter(self, map) -> Map:
         try:
             lanemark_f = FlagFilter(is_lanemark=True)
             other_f = FlagFilter(is_lanemark=False)
@@ -79,6 +79,27 @@ class LaneIndexFilter(MapFilter):
         except Exception as e:
             rospy.logwarn(f"Error in LaneIndexFilter: {e}")
             return map  # Return original map on error
+
+
+@dataclass
+class GrowPedestriansFilter(MapFilter):
+    """Grow Pedestrians by 0.3 meter for a better detection of them (e.g. for the ACC)
+
+    !!!Must be called after GrowthMergingFilter!!!
+
+    - Iterates over all entities
+    - If entity is a Pedestrian: Grow them by 0.3 meter
+
+    Then returns the updated map with all Entities
+    """
+
+    def filter(self, map) -> Map:
+        for entity in map.entities:
+            if isinstance(entity, Pedestrian):
+                shape_grown = _grow_polygon(entity.shape.to_shapely(), 0.3)
+                if shape_grown is not None:
+                    entity.shape = Polygon.from_shapely(shape_grown)
+        return map
 
 
 @dataclass
