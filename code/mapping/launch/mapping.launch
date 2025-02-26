@@ -43,6 +43,7 @@
     <param name="min_merging_overlap_percent" value="$(arg min_merging_overlap_percent)" />
     <param name="min_merging_overlap_area" value="$(arg min_merging_overlap_area)" />
     <param name="enable_lane_index_filter" value="$(arg enable_lane_index_filter)" />
+    <param name="enable_pedestrian_grow_filter" value="$(arg enable_pedestrian_grow_filter)" />    
   </node>
 
 </launch>
