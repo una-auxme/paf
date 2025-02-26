@@ -1,10 +1,10 @@
+from typing import Optional
 import rospy
 import py_trees
 
 from planning.srv import (
     SpeedAlteration,
     SpeedAlterationRequest,
-    SpeedAlterationResponse,
 )
 
 
@@ -16,21 +16,38 @@ SPEED_LIMIT_ID: str = "/speed/limit"
 """
 
 
-def add_speed_override(req: SpeedAlterationRequest):
+def add_speed_override(speed_override: float):
     """Sets a speed which overrides prior speed"""
     blackboard = py_trees.blackboard.Blackboard()
-    blackboard.set(SPEED_OVERRIDE_ID, SpeedAlterationRequest.speed_override)
+    blackboard.set(SPEED_OVERRIDE_ID, speed_override)
 
 
-def add_speed_limit(req: SpeedAlterationRequest):
+def add_speed_limit(speed_limit: float):
     """Sets an additional speed limit"""
     blackboard = py_trees.blackboard.Blackboard()
-    blackboard.set(SPEED_LIMIT_ID, SpeedAlterationRequest.speed_limit)
+    current_limit: Optional[float] = blackboard.get(SPEED_LIMIT_ID)
+    if current_limit is not None:
+        speed_limit = min(speed_limit, current_limit)
+    blackboard.set(SPEED_LIMIT_ID, speed_limit)
 
 
-class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
-    """Reads the markers and debug entries from *DEBUG_MARKER_LIST_ID* and
-    *DEBUG_INFO_DICT_ID* inside the blackboard and publishes them into ROS/RViz
+class SpeedAlterationSetupBehavior(py_trees.Behaviour):
+    """Sets up the *SPEED_OVERRIDE_ID*
+    and *SPEED_LIMIT_ID* in the blackboard to None
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(type(self).__name__, *args, **kwargs)
+        self.blackboard = py_trees.blackboard.Blackboard()
+
+    def update(self):
+        self.blackboard.set(SPEED_OVERRIDE_ID, None)
+        self.blackboard.set(SPEED_LIMIT_ID, None)
+
+
+class SpeedAlterationRequestBehavior(py_trees.Behaviour):
+    """Reads the speed override and limit from *SPEED_OVERRIDE_ID*
+    and *SPEED_LIMIT_ID* requests them from the SpeedAlteration service
     """
 
     def __init__(self, *args, **kwargs):

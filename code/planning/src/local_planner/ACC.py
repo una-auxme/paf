@@ -46,6 +46,8 @@ class ACC(CompatibleNode):
     trajectory_local: Optional[Path] = None
     __curr_behavior: Optional[str] = None
     speed_limit: float = 5.0
+    external_speed_limit: Optional[float] = None
+    speed_override: Optional[float] = None
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -209,30 +211,30 @@ class ACC(CompatibleNode):
         # max speed is the current speed limit
         desired_speed = min(self.speed_limit, desired_speed)
 
-        # check if external speed limit is lower than current speed limit
+        # apply the external_speed_limit
         if self.external_speed_limit:
-            desired_speed = min(self.speed_limit, self.external_speed_limit)
+            desired_speed = min(desired_speed, self.external_speed_limit)
 
         curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
-        desired_speed = min(curve_speed, self.desired_speed)
+        desired_speed = min(curve_speed, desired_speed)
         marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
 
         debug_markers.extend(c_markers)
-
-        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
 
         if desired_speed == curve_speed:
             speed_reason = "Curve"
         elif desired_speed == self.speed_limit:
             speed_reason = "Speed limit"
-        elif (
-            self.external_speed_limit
-            and self.desired_speed == self.external_speed_limit
-        ):
+        elif self.external_speed_limit and desired_speed == self.external_speed_limit:
             speed_reason = "External speed limit"
         else:
             speed_reason = "Obstacle"
 
+        if self.speed_override:
+            desired_speed = self.speed_override
+            speed_reason = "Override"
+
+        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
         marker_text += f"\nSpeed reason: {speed_reason}"
 
         debug_markers.append(
@@ -243,10 +245,7 @@ class ACC(CompatibleNode):
             )
         )
 
-        if self.speed_override:
-            self.velocity_pub.publish(self.speed_override)
-        else:
-            self.velocity_pub.publish(desired_speed)
+        self.velocity_pub.publish(desired_speed)
 
         marker_array = debug_marker_array(MARKER_NAMESPACE, debug_markers)
         self.marker_publisher.publish(marker_array)
@@ -387,8 +386,7 @@ class ACC(CompatibleNode):
             None if not req.speed_limit_active else req.speed_limit
         )
 
-        response = SpeedAlterationResponse
-        response.success = True
+        response = SpeedAlterationResponse(success=True)
         return response
 
 
