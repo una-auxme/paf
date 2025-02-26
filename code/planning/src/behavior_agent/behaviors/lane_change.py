@@ -272,11 +272,6 @@ class Approach(py_trees.behaviour.Behaviour):
                 lane_transform=-5.0,
                 check_method="fallback",
             )
-            ###################
-            # UNBEDINGT RAUS ZEILE DARUNTER
-            # NUR TESTZECKE CHANGE TRAJECTORY
-            ###################
-            lc_free = LaneFreeState.FREE
             if isinstance(lc_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
             add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
