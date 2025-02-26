@@ -359,7 +359,7 @@ class RadarNode(CompatibleNode):
         self.combined_points.publish(combined_points_pc2)
 
         # Cluster and bounding box processing
-        if self.get_param("~enable_clustering"):
+        if self.enable_clustering:
             clustered_data = cluster_data(
                 combined_points,
                 eps=self.dbscan_eps,
