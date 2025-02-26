@@ -63,6 +63,8 @@ class Ahead(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
+        global LANECHANGE_FREE
+        LANECHANGE_FREE = False
         self.change_detected = False
         self.change_distance: Optional[float] = None
         self.change_option: Optional[RoadOption] = None
@@ -76,6 +78,8 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
+        global LANECHANGE_FREE
+
         lane_change = self.blackboard.get("/paf/hero/lane_change")
         if lane_change is None:
             return debug_status(self.name, Status.FAILURE, "lane_change is None")
@@ -115,12 +119,13 @@ class Ahead(py_trees.behaviour.Behaviour):
                     # and want a lanechange to left
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
-                        local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
+                        local_end_pos=Point2.new(self.change_distance + 20.0, 0.0),
                         end_transition_length=0.0,
                     )
+                    LANECHANGE_FREE = True
                     return debug_status(
                         self.name,
-                        Status.FAILURE,
+                        Status.SUCCESS,
                         "Already in overtake, just adapted overtake end_pos. "
                         "no lane change",
                     )
@@ -196,8 +201,6 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         rospy.loginfo("Approaching Change")
-        global LANECHANGE_FREE
-        LANECHANGE_FREE = False
         self.change_detected = False
         self.change_distance: Optional[float] = None
         self.change_option: Optional[RoadOption] = None
@@ -216,6 +219,14 @@ class Approach(py_trees.behaviour.Behaviour):
                  detected.
         """
         global LANECHANGE_FREE
+
+        if LANECHANGE_FREE:
+            self.curr_behavior_pub.publish(bs.lc_app_free.name)
+            return debug_status(
+                self.name,
+                py_trees.common.Status.SUCCESS,
+                "Lanechange free, skipping Approach and exit lane change behavior",
+            )
 
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
@@ -280,7 +291,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         proxy=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
-                            self.change_distance + 10.0, lanechange_offset
+                            self.change_distance + 20.0, lanechange_offset
                         ),
                         end_transition_length=0.0,
                     )
@@ -368,12 +379,11 @@ class Wait(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
         """
-
         if LANECHANGE_FREE:
             self.curr_behavior_pub.publish(bs.lc_app_free.name)
             return debug_status(
                 self.name,
-                py_trees.common.Status.S,
+                py_trees.common.Status.SUCCESS,
                 "Lanechange free, skipping Wait and exit lane change behavior",
             )
 
