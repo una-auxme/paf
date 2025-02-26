@@ -2,13 +2,21 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
+from typing import Optional
+import mapping_common.mask
+from mapping_common.map import Map, MapTree
+from .topics2blackboard import BLACKBOARD_MAP_ID
+from mapping_common.entity import ShapelyEntity, Entity
+from mapping_common.entity import FlagFilter
 
 from . import behavior_speed as bs
+from .speed_alteration import add_speed_override
+from .debug_markers import add_debug_marker, debug_status, debug_marker
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
-TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
-TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)  # default 25 (s)
-UNSTUCK_DRIVE_DURATION = rospy.Duration(10)  # default 1.2 (s)
+TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
+TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)  # default 25 (s)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 
 
@@ -115,6 +123,20 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             "/paf/hero/" "unstuck_flag", Bool, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        if self.map is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "Map is None"
+            )
+        self.hero: Optional[Entity] = self.map.hero()
+        if self.hero is None:
+            return debug_status(
+                "us_usntuck", py_trees.common.Status.FAILURE, "hero is None"
+            )
+        self.hero_width = self.hero.get_width()
+        self.reverse_collision_mask = mapping_common.mask.project_plane(
+            10.0, self.hero_width + 4
+        )
 
         return True
 
@@ -241,6 +263,24 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         if rospy.Time.now() - self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
             self.pub_unstuck_flag.publish(True)
+            """
+            add_debug_marker(
+                debug_marker(self.reverse_collision_mask, color=(1, 1, 1, 1))
+            )
+            
+            self.map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+            if self.map is None:
+                return debug_status(
+                    self.name, py_trees.common.Status.FAILURE, "Map is None"
+                )
+            tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+            entity_result = tree.query(self.reverse_collision_mask, "intersects")
+            if not entity_result:
+                add_speed_override(-1)
+            else:
+                add_speed_override(0)
+                """
+            add_speed_override(-0.3)
             rospy.logfatal("Unstuck routine running.")
             return py_trees.common.Status.RUNNING
         else:
