@@ -470,28 +470,28 @@ def create_lane_box(
 
     # Calculating edge points of the lane box shape
     lane_box_close_front = point_along_line_angle(
-        lane_box_center_close[0] + lane_transform,
+        lane_box_center_close[0],
         lane_box_center_close[1] + lane_pos * reduce_lane / 2,
         close_rotation,
-        lane_length_half,
+        lane_length_half + lane_transform,
     )
     lane_box_close_back = point_along_line_angle(
-        lane_box_center_close[0] + lane_transform,
+        lane_box_center_close[0],
         lane_box_center_close[1] + lane_pos * reduce_lane / 2,
         close_rotation,
-        -lane_length_half,
+        -lane_length_half + lane_transform,
     )
     lane_box_further_front = point_along_line_angle(
-        lane_box_center_further[0] + lane_transform,
+        lane_box_center_further[0],
         lane_box_center_further[1] - lane_pos * reduce_lane / 2,
         further_rotation,
-        lane_length_half,
+        lane_length_half + lane_transform,
     )
     lane_box_further_back = point_along_line_angle(
-        lane_box_center_further[0] + lane_transform,
+        lane_box_center_further[0],
         lane_box_center_further[1] - lane_pos * reduce_lane / 2,
         further_rotation,
-        -lane_length_half,
+        -lane_length_half + lane_transform,
     )
 
     lane_box_shape = Polygon(

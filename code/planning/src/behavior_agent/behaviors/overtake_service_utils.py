@@ -42,16 +42,23 @@ def create_overtake_status_proxy() -> rospy.ServiceProxy:
     return service
 
 
-def _get_global_hero_transform() -> Transform2D:
+def get_global_hero_transform() -> Optional[Transform2D]:
     blackboard = Blackboard()
-    current_pos: PoseStamped = blackboard.get("/paf/hero/current_pos")
-    current_heading: Float32 = blackboard.get("/paf/hero/current_heading")
+    current_pos: Optional[PoseStamped] = blackboard.get("/paf/hero/current_pos")
+    current_heading: Optional[Float32] = blackboard.get("/paf/hero/current_heading")
+    if current_pos is None or current_heading is None:
+        return None
     hero_transform = mapping_common.map.build_global_hero_transform(
         current_pos.pose.position.x,
         current_pos.pose.position.y,
         current_heading.data,
     )
     return hero_transform
+
+
+def _get_global_hero_transform() -> Optional[Transform2D]:
+    """Deprecated"""
+    get_global_hero_transform()
 
 
 def request_start_overtake(
@@ -61,13 +68,15 @@ def request_start_overtake(
     offset: float = 2.5,
     start_transition_length: float = 2.0,
     end_transition_length: float = 2.0,
-) -> StartOvertakeResponse:
+) -> Optional[StartOvertakeResponse]:
     req = StartOvertakeRequest(
         offset=offset,
         start_transition_length=start_transition_length,
         end_transition_length=end_transition_length,
     )
-    hero_transform = _get_global_hero_transform()
+    hero_transform = get_global_hero_transform()
+    if hero_transform is None:
+        return None
     if local_start_pos is not None:
         global_start_pos: Point2 = hero_transform * local_start_pos
         req.has_start_pos = True
@@ -84,10 +93,12 @@ def request_end_overtake(
     proxy: rospy.ServiceProxy,
     local_end_pos: Optional[Point2] = None,
     end_transition_length: float = 2.0,
-) -> EndOvertakeResponse:
+) -> Optional[EndOvertakeResponse]:
     req = EndOvertakeRequest(end_transition_length=end_transition_length)
     if local_end_pos is not None:
-        hero_transform = _get_global_hero_transform()
+        hero_transform = get_global_hero_transform()
+        if hero_transform is None:
+            return None
         global_end_pos: Point2 = hero_transform * local_end_pos
         req.has_end_pos = True
         req.end_pos = global_end_pos.to_ros_msg()

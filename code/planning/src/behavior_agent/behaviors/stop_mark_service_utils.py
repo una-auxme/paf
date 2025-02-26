@@ -1,5 +1,5 @@
 import rospy
-from typing import Union, List
+from typing import Union, List, Optional
 from copy import deepcopy
 
 import shapely
@@ -10,7 +10,7 @@ from mapping_common.transform import Transform2D
 from mapping_common.entity import StopMark, Flags
 from mapping_common.shape import Shape2D, Polygon
 
-from .overtake_service_utils import _get_global_hero_transform
+from .overtake_service_utils import get_global_hero_transform
 
 
 def create_stop_marks_proxy() -> rospy.ServiceProxy:
@@ -23,23 +23,31 @@ def update_stop_marks(
     proxy: rospy.ServiceProxy,
     id: str,
     reason: str,
-    is_global: bool,
+    is_global: bool = False,
     marks: List[Union[StopMark, Shape2D, shapely.Polygon]] = [],
     delete_all_others: bool = False,
-) -> UpdateStopMarksResponse:
-    hero_transform = _get_global_hero_transform()
+) -> Optional[UpdateStopMarksResponse]:
+    if not is_global:
+        hero_transform = get_global_hero_transform()
+        if hero_transform is None:
+            return None
+
     global_marks: List[StopMark] = []
     for mark in marks:
         if isinstance(mark, StopMark):
             e = deepcopy(mark)
-            e.reason = reason
+            if len(e.reason) == 0:
+                e.reason = reason
         elif isinstance(mark, Shape2D):
+            shape = deepcopy(mark)
+            transform = shape.offset
+            shape.offset = Transform2D.identity()
             e = StopMark(
                 reason=reason,
                 confidence=1.0,
                 priority=1.0,
-                shape=mark,
-                transform=Transform2D.identity(),
+                shape=shape,
+                transform=transform,
             )
         elif isinstance(mark, shapely.Polygon):
             shape = Polygon.from_shapely(mark, make_centered=True)

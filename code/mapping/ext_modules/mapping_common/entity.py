@@ -699,6 +699,9 @@ class StopMark(Entity):
         m.color.r = 255 / 255
         m.color.g = 126 / 255
         m.color.b = 0 / 255
+
+        m.scale.z = 0.2
+        m.pose.position.z = 0.1
         return m
 
 
