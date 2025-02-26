@@ -119,8 +119,8 @@ class Ahead(py_trees.behaviour.Behaviour):
                     # and want a lanechange to left
                     request_end_overtake(
                         proxy=self.end_overtake_proxy,
-                        local_end_pos=Point2.new(self.change_distance + 20.0, 0.0),
-                        end_transition_length=0.0,
+                        local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
+                        end_transition_length=10.0,
                     )
                     LANECHANGE_FREE = True
                     return debug_status(
@@ -155,8 +155,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                         )
                     ),
                 )
-
-                rospy.logfatal(stop_mark_shape.offset)
 
                 update_stop_marks(
                     self.stop_proxy,
@@ -273,6 +271,10 @@ class Approach(py_trees.behaviour.Behaviour):
                 lane_transform=-5.0,
                 check_method="fallback",
             )
+            ###################
+            # UNBEDINGT RAUS ZEILE DARUNTER
+            # NUR TESTZECKE CHANGE TRAJECTORY
+            ###################
             lc_free = LaneFreeState.FREE
             if isinstance(lc_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
@@ -291,9 +293,9 @@ class Approach(py_trees.behaviour.Behaviour):
                         proxy=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
-                            self.change_distance + 20.0, lanechange_offset
+                            self.change_distance + 10.0, lanechange_offset
                         ),
-                        end_transition_length=0.0,
+                        end_transition_length=10.0,
                     )
                     update_stop_marks(
                         self.stop_proxy,
@@ -487,6 +489,7 @@ class Change(py_trees.behaviour.Behaviour):
         the lane change.
         """
         rospy.loginfo("Lane Change: Change to next Lane")
+        self.change_detected = False
         self.change_distance: Optional[float] = None
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
@@ -503,6 +506,7 @@ class Change(py_trees.behaviour.Behaviour):
         if lane_change is None:
             return debug_status(self.name, Status.FAILURE, "lane_change is None")
         else:
+            self.change_detected = lane_change.isLaneChange
             self.change_distance = lane_change.distance
 
         if self.change_distance is None:
@@ -510,11 +514,14 @@ class Change(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        if self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE:
+        if (
+            self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE
+            or self.change_detected
+        ):
             return debug_status(
                 self.name,
                 Status.RUNNING,
-                "Lane Change Change: Driving to the next lane",
+                "Lane Change Change: Driving to the next lane and end of lanechange",
             )
         else:
             self.curr_behavior_pub.publish(bs.lc_exit.name)
