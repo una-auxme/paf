@@ -1,11 +1,21 @@
+from typing import Optional
 import py_trees
 import rospy
 from std_msgs.msg import String
 import numpy as np
+import shapely
+
+
 from . import behavior_speed as bs
+from .stop_mark_service_utils import create_stop_marks_proxy, update_stop_marks
+from .topics2blackboard import BLACKBOARD_MAP_ID
+from .debug_markers import add_debug_marker
 
 import mapping_common.map
 from mapping_common.map import Map, LaneFreeState
+from mapping_common.markers import debug_marker
+
+UNPARKING_MARKER_COLOR = (219 / 255, 255 / 255, 0 / 255, 1.0)
 
 
 class LeaveParkingSpace(py_trees.behaviour.Behaviour):
@@ -26,6 +36,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         rospy.loginfo("LeaveParkingSpace started")
         self.started = False
         self.finished = False
+        self.stop_proxy = create_stop_marks_proxy()
 
     def setup(self, timeout):
         """
@@ -59,6 +70,37 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         execution
         """
         self.initPosition = self.blackboard.get("/paf/hero/current_pos")
+
+        # Add the initial stop mark
+        if not self.finished:
+            position = self.blackboard.get("/paf/hero/current_pos")
+            speed = self.blackboard.get("/carla/hero/Speed")
+            map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+
+            if (
+                position is not None
+                and self.initPosition is not None
+                and speed is not None
+                and map is not None
+            ):
+                tree = map.build_tree(mapping_common.map.lane_free_filter())
+                _, mask = tree.is_lane_free(
+                    right_lane=False,
+                    lane_length=20.0,
+                    lane_transform=5.0,
+                    check_method="rectangle",
+                    reduce_lane=0.5,
+                )
+                if not isinstance(mask, shapely.Polygon):
+                    rospy.logfatal("Lanemask is not a polygon.")
+                else:
+                    update_stop_marks(
+                        self.stop_proxy,
+                        id=self.name,
+                        reason="lane blocked",
+                        is_global=False,
+                        marks=[mask],
+                    )
 
     def update(self):
         """
@@ -115,16 +157,14 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                     # checks if the left lane of the car is free,
                     # otherwise pause unparking
                     tree = map.build_tree(mapping_common.map.lane_free_filter())
-                    if (
-                        map.entities
-                        and tree.is_lane_free(
-                            right_lane=False,
-                            lane_length=22.5,
-                            lane_transform=-5.0,
-                            check_method="rectangle",
-                        )[0]
-                        is LaneFreeState.FREE
-                    ):
+                    state, mask = tree.is_lane_free(
+                        right_lane=False,
+                        lane_length=22.5,
+                        lane_transform=-5.0,
+                        check_method="rectangle",
+                    )
+                    add_debug_marker(debug_marker(mask, color=UNPARKING_MARKER_COLOR))
+                    if state is LaneFreeState.FREE:
                         rospy.loginfo("Left lane is now free. Starting unparking.")
                         self.started = True
                     else:
@@ -134,6 +174,13 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
                 # starting unparking if allowed (after left lane is free)
                 if self.started:
+                    update_stop_marks(
+                        self.stop_proxy,
+                        id=self.name,
+                        reason="lane not blocked",
+                        is_global=False,
+                        marks=[],
+                    )
                     if distance < 1 or speed.speed < 2:
                         self.curr_behavior_pub.publish(bs.parking.name)
                         self.initPosition = position

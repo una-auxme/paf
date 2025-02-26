@@ -158,7 +158,14 @@ class ACC(CompatibleNode):
             return
         hero_width = max(1.0, hero.get_width())
 
-        tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        def filter_fn(e: Entity) -> bool:
+            filter_collision = FlagFilter(is_collider=True, is_hero=False)
+            filter_stopmark = FlagFilter(is_stopmark=True)
+            return e.matches_filter(filter_collision) or e.matches_filter(
+                filter_stopmark
+            )
+
+        tree = self.map.build_tree(filter_fn=filter_fn)
 
         front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
         if self.__curr_behavior in front_mask_reduce_behaviours:
