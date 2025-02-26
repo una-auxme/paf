@@ -444,9 +444,9 @@ class RadarNode(CompatibleNode):
 
         # Retrieve sensor position in the vehicle coordinate system
         x, y, z = self.sensor_config[sensor_name]
-        y *= (
-            -1
-        )  # Todo => Find out why y column has to be multiplied by -1 for alligning Radar points
+
+        # Todo => Solve hard fix of multiplying y column by -1
+        y *= -1
         # Apply translation to align the point cloud with the vehicle coordinate system
         translation = np.array([x, y, z])
         transformed_points = np.column_stack(
