@@ -262,7 +262,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 lane_transform=-5.0,
                 check_method="fallback",
             )
-            lc_free = LaneFreeState.BLOCKED
+            lc_free = LaneFreeState.FREE
             if isinstance(lc_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
             add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
@@ -319,20 +319,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     )
                 self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
 
-        # rospy.loginfo(f"Lane Change approach counter: {self.counter_lanefree}")
-
-        # get speed
-        # speedometer = self.blackboard.get("/carla/hero/Speed")
-        # if speedometer is not None:
-        #    speed = speedometer.speed
-        # else:
-        #    return debug_status(
-        #        self.name,
-        #        Status.FAILURE,
-        #        "Lane Change Approach: no speedometer connected",
-        #    )
-
-        # currently TARGET_DISTANCE_TO_STOP_LANECHANGE == 2 (see utils.py)
+        # currently TARGET_DISTANCE_TO_STOP_LANECHANGE == 5 (see utils.py)
         if self.change_distance <= TARGET_DISTANCE_TO_STOP_LANECHANGE:
             return debug_status(
                 self.name,
@@ -346,44 +333,6 @@ class Approach(py_trees.behaviour.Behaviour):
                 Status.RUNNING,
                 "Lane Change: Still approaching, stay in current lane",
             )
-
-    """
-        if self.change_distance > target_distance and self.blocked:
-            # too far
-            # self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
-            return debug_status(
-                self.name,
-                Status.RUNNING,
-                f"Lane Change Approach: still approaching, "
-                f"distance: {self.change_distance}",
-            )
-
-        elif (
-            speed <= convert_to_ms(2.0)
-            and self.change_distance < target_distance
-            and self.blocked
-        ):
-            # stopped
-            return debug_status(
-                self.name,
-                Status.SUCCESS,
-                "Lane Change Approach: stopped at virtual stop line",
-            )
-        elif (
-            speed > convert_to_ms(2.0)
-            and self.change_distance < target_distance
-            and not self.blocked
-        ):
-            return debug_status(
-                self.name,
-                Status.SUCCESS,
-                "Lane Change Approach: driven over virtual stop line",
-            )
-        else:
-            return debug_status(
-                self.name, Status.RUNNING, "Lane Change Approach: still approaching"
-            )
-        """
 
     def terminate(self, new_status):
         pass
@@ -450,24 +399,6 @@ class Wait(py_trees.behaviour.Behaviour):
                 Status.FAILURE,
                 "Lane Change: At least one change parameter is None",
             )
-
-        # get speed
-        # speedometer = self.blackboard.get("/carla/hero/Speed")
-        # if speedometer is not None:
-        #    speed = speedometer.speed
-        # else:
-        #    return debug_status(
-        #        self.name,
-        #        Status.FAILURE,
-        #        "Lane Change Wait: no speedometer connected",
-        #    )
-
-        # if speed > convert_to_ms(10):
-        #    return debug_status(
-        #        self.name,
-        #        Status.SUCCESS,
-        #        "Lane Change Wait: Was not blocked, proceed to drive forward",
-        #    )
 
         lc_free, lc_mask = tree.is_lane_free(
             right_lane=self.change_direction,
