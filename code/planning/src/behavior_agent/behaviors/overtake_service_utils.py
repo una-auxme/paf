@@ -63,7 +63,7 @@ def get_global_hero_transform() -> Optional[Transform2D]:
 
 def _get_global_hero_transform() -> Optional[Transform2D]:
     """Deprecated. Use get_global_hero_transform instead"""
-    get_global_hero_transform()
+    return get_global_hero_transform()
 
 
 def request_start_overtake(

@@ -24,7 +24,7 @@ def update_stop_marks(
     id: str,
     reason: str,
     is_global: bool = False,
-    marks: List[Union[StopMark, Shape2D, shapely.Polygon]] = [],
+    marks: Optional[List[Union[StopMark, Shape2D, shapely.Polygon]]] = None,
     delete_all_others: bool = False,
 ) -> Optional[UpdateStopMarksResponse]:
     """Convenience function for the UpdateStopMarks service
@@ -53,6 +53,8 @@ def update_stop_marks(
     Returns:
         Optional[UpdateStopMarksResponse]
     """
+    if marks is None:
+        marks = []
     if not is_global:
         hero_transform = get_global_hero_transform()
         if hero_transform is None:
