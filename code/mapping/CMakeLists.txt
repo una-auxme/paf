@@ -38,15 +38,15 @@ add_message_files(
   TypeCar.msg
   TypeLanemarking.msg
   TypeTrafficLight.msg
+  TypeStopMark.msg
   ClusteredPointsArray.msg
 )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  UpdateStopMarks.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(

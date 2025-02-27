@@ -27,6 +27,12 @@ from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping.msg import Map as MapMsg
 
+from planning.srv import (
+    SpeedAlteration,
+    SpeedAlterationRequest,
+    SpeedAlterationResponse,
+)
+
 MARKER_NAMESPACE: str = "acc"
 ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
 
@@ -40,6 +46,8 @@ class ACC(CompatibleNode):
     trajectory_local: Optional[Path] = None
     __curr_behavior: Optional[str] = None
     speed_limit: float = 5.0
+    external_speed_limit: Optional[float] = None
+    speed_override: Optional[float] = None
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -85,6 +93,12 @@ class ACC(CompatibleNode):
         # Publish debugging marker
         self.marker_publisher: Publisher = self.new_publisher(
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
+        )
+
+        self.speed_service = rospy.Service(
+            f"/paf/{self.role_name}/acc/speed_alteration",
+            SpeedAlteration,
+            self.handle_speed_alteration,
         )
 
         Server(ACCConfig, self.dynamic_reconfigure_callback)
@@ -144,7 +158,14 @@ class ACC(CompatibleNode):
             return
         hero_width = max(1.0, hero.get_width())
 
-        tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        def filter_fn(e: Entity) -> bool:
+            filter_collision = FlagFilter(is_collider=True, is_hero=False)
+            filter_stopmark = FlagFilter(is_stopmark=True)
+            return e.matches_filter(filter_collision) or e.matches_filter(
+                filter_stopmark
+            )
+
+        tree = self.map.build_tree(filter_fn=filter_fn)
 
         front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
         if self.__curr_behavior in front_mask_reduce_behaviours:
@@ -197,21 +218,30 @@ class ACC(CompatibleNode):
         # max speed is the current speed limit
         desired_speed = min(self.speed_limit, desired_speed)
 
+        # apply the external_speed_limit
+        if self.external_speed_limit:
+            desired_speed = min(desired_speed, self.external_speed_limit)
+
         curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
         desired_speed = min(curve_speed, desired_speed)
         marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
 
         debug_markers.extend(c_markers)
 
-        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
-
         if desired_speed == curve_speed:
             speed_reason = "Curve"
         elif desired_speed == self.speed_limit:
             speed_reason = "Speed limit"
+        elif self.external_speed_limit and desired_speed == self.external_speed_limit:
+            speed_reason = "External speed limit"
         else:
             speed_reason = "Obstacle"
 
+        if self.speed_override:
+            desired_speed = self.speed_override
+            speed_reason = "Override"
+
+        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
         marker_text += f"\nSpeed reason: {speed_reason}"
 
         debug_markers.append(
@@ -246,34 +276,23 @@ class ACC(CompatibleNode):
         desired_speed: float = float("inf")
         d_min: float = rospy.get_param("~d_min")
 
-        # if we want to overtake, we need to keep some distance to the obstacle
-        if (
-            self.__curr_behavior == "ot_wait_free"
-            and delta_v < 2
-            and lead_distance < 6 * d_min
-        ):
-            desired_speed = 0.0
-            return desired_speed
+        # PI controller which chooses the desired speed
+        Kp: float = rospy.get_param("~Kp")
+        Ki: float = rospy.get_param("~Ki")
+        T_gap: float = rospy.get_param("~T_gap")
+        acceleration_factor: float = rospy.get_param("~acceleration_factor")
 
-        if hero_velocity < 2 and lead_distance < (
-            d_min + 2
-        ):  # approaches the leading vehicle slowly until a distance of d_min
-            desired_speed = (lead_distance - d_min) / 4
+        desired_distance = d_min + T_gap * hero_velocity
+        delta_d = lead_distance - desired_distance
+        speed_adjustment = Ki * delta_d + Kp * delta_v
+        # we want to accelerate more slowly
+        if hero_velocity > 1 and speed_adjustment > 0:
+            speed_adjustment *= acceleration_factor
+        desired_speed = hero_velocity + speed_adjustment
 
-        else:
-            # PI controller which chooses the desired speed
-            Kp: float = rospy.get_param("~Kp")
-            Ki: float = rospy.get_param("~Ki")
-            T_gap: float = rospy.get_param("~T_gap")
-            acceleration_factor: float = rospy.get_param("~acceleration_factor")
-
-            desired_distance = d_min + T_gap * hero_velocity
-            delta_d = lead_distance - desired_distance
-            speed_adjustment = Ki * delta_d + Kp * delta_v
-            # we want to accelerate more slowly
-            if hero_velocity > 1 and speed_adjustment > 0:
-                speed_adjustment *= acceleration_factor
-            desired_speed = hero_velocity + speed_adjustment
+        # Use at least hard_approach_speed until hard_approach_distance is reached
+        if lead_distance - rospy.get_param("~hard_approach_distance") > 0:
+            desired_speed = max(desired_speed, rospy.get_param("~hard_approach_speed"))
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
@@ -354,6 +373,17 @@ class ACC(CompatibleNode):
             speed_percentage * (max_curve_speed - min_curve_speed) + min_curve_speed
         )
         return (desired_speed, debug_markers)
+
+    def handle_speed_alteration(self, req: SpeedAlterationRequest):
+        self.speed_override = (
+            None if not req.speed_override_active else req.speed_override
+        )
+        self.external_speed_limit = (
+            None if not req.speed_limit_active else req.speed_limit
+        )
+
+        response = SpeedAlterationResponse(success=True)
+        return response
 
 
 if __name__ == "__main__":

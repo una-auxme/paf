@@ -553,7 +553,7 @@ class Car(Entity):
         kwargs["indicator"] = Car.IndicatorState(m.type_car.indicator)
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_car = msg.TypeCar(
             brake_light=self.brake_light.value, indicator=self.indicator.value
@@ -595,7 +595,7 @@ class Lanemarking(Entity):
         kwargs["predicted"] = m.type_lanemarking.predicted
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_lanemarking = msg.TypeLanemarking(
             style=self.style.value,
@@ -661,10 +661,55 @@ class TrafficLight(Entity):
         kwargs["state"] = TrafficLight.State(m.type_traffic_light.state)
         return kwargs
 
-    def to_ros_msg(self, base_msg: Optional[msg.Entity] = None) -> msg.Entity:
+    def to_ros_msg(self) -> msg.Entity:
         m = super().to_ros_msg()
         m.type_traffic_light = msg.TypeTrafficLight(state=self.state.value)
         return m
+
+
+@dataclass(init=False)
+class StopMark(Entity):
+    """Stop mark as a virtual obstacle for the ACC"""
+
+    reason: str
+
+    def __init__(self, reason: str, **kwargs):
+        super().__init__(**kwargs)
+        self.reason = reason
+
+    @staticmethod
+    def _extract_kwargs(m: msg.Entity) -> Dict:
+        kwargs = super(StopMark, StopMark)._extract_kwargs(m)
+        kwargs["reason"] = m.type_stop_mark.reason
+        return kwargs
+
+    def to_ros_msg(self) -> msg.Entity:
+        m = super().to_ros_msg()
+        m.type_stop_mark = msg.TypeStopMark(reason=self.reason)
+        return m
+
+    def to_marker(self) -> Marker:
+        m = super().to_marker()
+        m.color.r = 255 / 255
+        m.color.g = 126 / 255
+        m.color.b = 0 / 255
+
+        m.scale.z = 0.2
+        m.pose.position.z = 0.1
+        return m
+
+    def get_meta_markers(self) -> List[Marker]:
+        from mapping_common.markers import debug_marker
+
+        ms = super().get_meta_markers()
+        ms.append(
+            debug_marker(
+                self.reason,
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=self.transform.translation(),
+            )
+        )
+        return ms
 
 
 @dataclass(init=False)
@@ -672,7 +717,7 @@ class Pedestrian(Entity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_marker(self) -> Marker:
+    def to_marker(self) -> Marker:
         m = super().to_marker()
         # [220, 20, 60],  # 4: Pedestrians
         m.color.r = 220 / 255
@@ -681,7 +726,14 @@ class Pedestrian(Entity):
         return m
 
 
-_entity_supported_classes = [Entity, Car, Lanemarking, TrafficLight, Pedestrian]
+_entity_supported_classes = [
+    Entity,
+    Car,
+    Lanemarking,
+    TrafficLight,
+    StopMark,
+    Pedestrian,
+]
 _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()

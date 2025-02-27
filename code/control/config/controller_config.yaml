@@ -2,3 +2,5 @@ manual_override_active: False
 manual_steer: 0.0
 manual_throttle: 0.0
 stanley_off: True
+
+loop_sleep_time: 0.2

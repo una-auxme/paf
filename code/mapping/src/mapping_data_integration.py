@@ -7,11 +7,13 @@ import ros_numpy
 import rospy
 from visualization_msgs.msg import Marker
 import numpy as np
-from typing import List, Optional
+from typing import List, Optional, Dict
+from copy import deepcopy
 
+import mapping_common.map
 import mapping_common.hero
-from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
+from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 from mapping_common.filter import (
@@ -22,6 +24,9 @@ from mapping_common.filter import (
 )
 
 from mapping.msg import Map as MapMsg, ClusteredPointsArray
+from mapping.srv import UpdateStopMarks, UpdateStopMarksRequest, UpdateStopMarksResponse
+from std_msgs.msg import Float32
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
@@ -50,8 +55,39 @@ class MappingDataIntegrationNode(CompatibleNode):
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     vision_clustered_points_data: Optional[ClusteredPointsArray] = None
 
+    stop_marks: Dict[str, List[StopMark]]
+    """StopMarks from the UpdateStopMarks service
+
+    **Important:** the transform of these entities uses global coordinates
+    """
+    current_pos: Optional[Point2] = None
+    current_heading: Optional[float] = None
+
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
+
+        # For the stop marks:
+        self.stop_marks = {}
+
+        self.current_pos_sub = self.new_subscription(
+            PoseStamped,
+            "/paf/hero/current_pos",
+            self.current_pos_callback,
+            qos_profile=1,
+        )
+        self.head_sub = self.new_subscription(
+            Float32,
+            "/paf/hero/current_heading",
+            self.heading_callback,
+            qos_profile=1,
+        )
+        self.update_stop_marks_service = rospy.Service(
+            "/paf/hero/mapping/update_stop_marks",
+            UpdateStopMarks,
+            self.update_stopmarks_callback,
+        )
+
+        # Sensor subscriptions:
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
@@ -99,6 +135,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
 
+        # Publishers:
+
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
@@ -116,7 +154,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         Server(MappingIntegrationConfig, self.dynamic_reconfigure_callback)
 
         self.rate = self.get_param("~map_publish_rate", 20)
-        self.new_timer(1.0 / self.rate, self.publish_new_map)
+        self.new_timer(1.0 / self.rate, self.publish_new_map_handler)
 
     def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
         """
@@ -128,6 +166,33 @@ class MappingDataIntegrationNode(CompatibleNode):
         # config["min_merging_overlap_percent"]
         # config["min_merging_overlap_area"]
         return config
+
+    def update_stopmarks_callback(
+        self, req: UpdateStopMarksRequest
+    ) -> UpdateStopMarksResponse:
+        if req.delete_all_others:
+            self.stop_marks = {}
+
+        entities = []
+        for e in req.marks:
+            entity = Entity.from_ros_msg(e)
+            if not isinstance(entity, StopMark):
+                rospy.logwarn_throttle(
+                    0.5,
+                    "Entity received from UpdateStopMarks service is not a StopMark."
+                    " ignoring...",
+                )
+                continue
+            entities.append(entity)
+        self.stop_marks[req.id] = entities
+
+        return UpdateStopMarksResponse(success=True)
+
+    def heading_callback(self, data: Float32):
+        self.current_heading = data.data
+
+    def current_pos_callback(self, data: PoseStamped):
+        self.current_pos = Point2.from_ros_msg(data.pose.position)
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
@@ -399,12 +464,18 @@ class MappingDataIntegrationNode(CompatibleNode):
         hero.motion = motion
         return hero
 
+    def publish_new_map_handler(self, timer_event=None):
+        try:
+            self.publish_new_map()
+        except Exception as e:
+            rospy.logfatal(f"Mapping data integration: {e}")
+
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
-        if hero_car is None:
+        if hero_car is None or self.current_pos is None or self.current_heading is None:
             return
 
-        entities = []
+        entities: List[Entity] = []
         entities.append(hero_car)
 
         if self.get_param("~enable_lidar_cluster"):
@@ -436,6 +507,21 @@ class MappingDataIntegrationNode(CompatibleNode):
                 entities.extend(self.entities_from_lidar())
             else:
                 return
+
+        if self.get_param("~enable_stop_marks"):
+            hero_transform_inv = mapping_common.map.build_global_hero_transform(
+                self.current_pos.x(),
+                self.current_pos.y(),
+                self.current_heading,
+            ).inverse()
+            marks = []
+            for global_marks in self.stop_marks.values():
+                for global_mark in global_marks:
+                    local_mark = deepcopy(global_mark)
+                    local_mark.transform = hero_transform_inv * local_mark.transform
+                    marks.append(local_mark)
+
+            entities.extend(marks)
 
         # lane_box_entities visualizes the shape and position of the lane box
         # which is used for lane_free function

@@ -68,6 +68,7 @@ add_service_files(
   StartOvertake.srv
   EndOvertake.srv
   OvertakeStatus.srv
+  SpeedAlteration.srv
 )
 
 ## Generate actions in the 'action' folder
