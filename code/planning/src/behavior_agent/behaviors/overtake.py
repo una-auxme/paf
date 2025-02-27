@@ -11,7 +11,7 @@ import mapping_common.entity
 from mapping_common.map import Map, MapTree, LaneFreeState
 from mapping_common.entity import ShapelyEntity, Entity, StopMark
 from mapping_common.markers import debug_marker
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.transform import Transform2D, Vector2, Point2
 import shapely
 from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import MarkerArray
@@ -119,6 +119,7 @@ def calculate_obstacle(
     hero_width = hero.get_width()
 
     collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
+        Point2.new(hero.get_front_x(), 0.0),
         hero_width,
         trajectory,
         front_mask_size=front_mask_size,
@@ -328,7 +329,11 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
 
-        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        # Only add stop space if the obstacle is standing
+        if obstacle_speed < 0.5:
+            set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        else:
+            unset_space_stop_mark(self.stop_proxy)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
@@ -468,7 +473,11 @@ class Wait(py_trees.behaviour.Behaviour):
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
-        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        # Only add stop space if the obstacle is standing
+        if obstacle_speed < 0.5:
+            set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        else:
+            unset_space_stop_mark(self.stop_proxy)
 
         self.curr_behavior_pub.publish(bs.ot_wait_free.name)
         ot_free, ot_mask = tree.is_lane_free(

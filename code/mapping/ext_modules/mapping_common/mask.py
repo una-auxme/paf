@@ -327,36 +327,50 @@ def project_plane(
 
 
 def build_lead_vehicle_collision_masks(
+    start_point: Point2,
     width: float,
     trajectory_local: NavPath,
     front_mask_size: float,
     max_trajectory_check_length: Optional[float] = None,
+    rotate_front_mask: float = 0.0,
 ) -> List[shapely.Polygon]:
     """Builds a list of collision masks for determining the lead vehicle
     in front of the hero.
 
     Args:
+        start_point (Point2): Start point of the collision masks.
+            Should be the front center of the hero
         width (float): Width of the collision masks. Should match the width of the hero
         trajectory_local (NavPath): Planned local trajectory
         front_mask_size (float): Size of the static mask in front
         max_trajectory_check_length (Optional[float], optional):
             Max length of the collision masks. Defaults to None.
+        rotate_front_mask (float, optional): rotates the static mask in front.
+            Usecase: Adjust with the steering angle.
 
     Returns:
         List[shapely.Polygon]
     """
     collision_masks = []
 
+    front_mask_end: Point2 = start_point
+
     if front_mask_size > 0.0:
         # Add small area in front of car to the collision mask
-        front_rect = project_plane(front_mask_size, size_y=width)
-        collision_masks.append(front_rect)
-
-    front_mask_end = Point2.new(front_mask_size, 0.0)
+        line_end_offset: Vector2 = Vector2.forward() * front_mask_size
+        if rotate_front_mask != 0.0:
+            rotation = Transform2D.new_rotation(rotate_front_mask)
+            line_end_offset = rotation * line_end_offset
+        front_mask_end = start_point + line_end_offset
+        front_line = shapely.LineString(
+            [start_point.to_shapely(), front_mask_end.to_shapely()]
+        )
+        front_mask = curve_to_polygon(front_line, width=width)
+        collision_masks.append(front_mask)
 
     trajectory_line = build_trajectory_from_start(
         trajectory_local,
-        start_point=Point2.new(front_mask_size, 0.0),
+        start_point=front_mask_end,
         max_centering_dist=0.5,
     )
     if max_trajectory_check_length is not None and trajectory_line is not None:

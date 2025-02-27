@@ -260,12 +260,12 @@ class MotionPlanning(CompatibleNode):
 
         (start_x, start_y) = local_trajectory.coords[0]
         start_vector = Vector2.new(start_x, start_y)
-        if start_vector.length() > 25.0:
+        if start_vector.length() > 100.0:
             # We are far away from the trajectory
             # Try to reinitialize trajectory on next position update
             self.init_trajectory = True
             rospy.logfatal_throttle(1.0, "MotionPlanning: Too far away from trajectory")
-            return
+            # Do not return here, otherwise the car does not continue driving
 
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
