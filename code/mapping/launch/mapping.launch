@@ -20,6 +20,7 @@
   <arg name="min_merging_overlap_area" default="1.0" />
   
   <arg name="enable_lane_index_filter" default="True" />
+  <arg name="enable_pedestrian_grow_filter" default="True" />
 
   <node pkg="mapping" type="mapping_data_integration.py" name="mapping_data_integration" output="screen">
     <param name="map_publish_rate" value="$(arg map_publish_rate)" />
@@ -43,6 +44,7 @@
     <param name="min_merging_overlap_percent" value="$(arg min_merging_overlap_percent)" />
     <param name="min_merging_overlap_area" value="$(arg min_merging_overlap_area)" />
     <param name="enable_lane_index_filter" value="$(arg enable_lane_index_filter)" />
+    <param name="enable_pedestrian_grow_filter" value="$(arg enable_pedestrian_grow_filter)" />    
   </node>
 
 </launch>

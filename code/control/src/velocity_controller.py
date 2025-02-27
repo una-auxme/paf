@@ -122,7 +122,7 @@ class VelocityController(CompatibleNode):
                     brake = 0
                     rospy.loginfo("VelocityController: reverse driving")
             # very low target_velocities -> stand
-            elif target_velocity < 0.01:
+            elif target_velocity < 0.1:
                 reverse = False
                 brake = 1
                 throttle = 0

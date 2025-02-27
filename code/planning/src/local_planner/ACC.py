@@ -158,7 +158,14 @@ class ACC(CompatibleNode):
             return
         hero_width = max(1.0, hero.get_width())
 
-        tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        def filter_fn(e: Entity) -> bool:
+            filter_collision = FlagFilter(is_collider=True, is_hero=False)
+            filter_stopmark = FlagFilter(is_stopmark=True)
+            return e.matches_filter(filter_collision) or e.matches_filter(
+                filter_stopmark
+            )
+
+        tree = self.map.build_tree(filter_fn=filter_fn)
 
         front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
         if self.__curr_behavior in front_mask_reduce_behaviours:
@@ -269,34 +276,23 @@ class ACC(CompatibleNode):
         desired_speed: float = float("inf")
         d_min: float = rospy.get_param("~d_min")
 
-        # if we want to overtake, we need to keep some distance to the obstacle
-        if (
-            self.__curr_behavior == "ot_wait_free"
-            and delta_v < 2
-            and lead_distance < 6 * d_min
-        ):
-            desired_speed = 0.0
-            return desired_speed
+        # PI controller which chooses the desired speed
+        Kp: float = rospy.get_param("~Kp")
+        Ki: float = rospy.get_param("~Ki")
+        T_gap: float = rospy.get_param("~T_gap")
+        acceleration_factor: float = rospy.get_param("~acceleration_factor")
 
-        if hero_velocity < 2 and lead_distance < (
-            d_min + 2
-        ):  # approaches the leading vehicle slowly until a distance of d_min
-            desired_speed = (lead_distance - d_min) / 4
+        desired_distance = d_min + T_gap * hero_velocity
+        delta_d = lead_distance - desired_distance
+        speed_adjustment = Ki * delta_d + Kp * delta_v
+        # we want to accelerate more slowly
+        if hero_velocity > 1 and speed_adjustment > 0:
+            speed_adjustment *= acceleration_factor
+        desired_speed = hero_velocity + speed_adjustment
 
-        else:
-            # PI controller which chooses the desired speed
-            Kp: float = rospy.get_param("~Kp")
-            Ki: float = rospy.get_param("~Ki")
-            T_gap: float = rospy.get_param("~T_gap")
-            acceleration_factor: float = rospy.get_param("~acceleration_factor")
-
-            desired_distance = d_min + T_gap * hero_velocity
-            delta_d = lead_distance - desired_distance
-            speed_adjustment = Ki * delta_d + Kp * delta_v
-            # we want to accelerate more slowly
-            if hero_velocity > 1 and speed_adjustment > 0:
-                speed_adjustment *= acceleration_factor
-            desired_speed = hero_velocity + speed_adjustment
+        # Use at least hard_approach_speed until hard_approach_distance is reached
+        if lead_distance - rospy.get_param("~hard_approach_distance") > 0:
+            desired_speed = max(desired_speed, rospy.get_param("~hard_approach_speed"))
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
