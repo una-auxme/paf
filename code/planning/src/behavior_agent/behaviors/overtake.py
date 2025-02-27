@@ -4,7 +4,6 @@ from typing import Optional, Tuple, Union
 from std_msgs.msg import String, Float32
 
 import rospy
-import numpy as np
 
 import mapping_common.map
 import mapping_common.mask
@@ -16,7 +15,6 @@ from mapping_common.transform import Transform2D, Vector2
 import shapely
 from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import MarkerArray
-from std_msgs.msg import Bool
 from planning.srv import OvertakeStatusResponse
 
 from . import behavior_speed as bs
@@ -36,7 +34,6 @@ from .stop_mark_service_utils import (
 )
 
 from local_planner.utils import (
-    NUM_WAYPOINTS,
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
 )
 
