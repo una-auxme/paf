@@ -1,10 +1,11 @@
 from typing import Optional, List, Tuple, Any
+from collections.abc import Sequence
 
 import shapely
 
 from mapping_common.entity import Entity
-from mapping_common.shape import Shape2D, MarkerStyle, Polygon
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.shape import Shape2D, MarkerStyle, Polygon, Circle
+from mapping_common.transform import Transform2D, Vector2, Point2
 
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
@@ -23,7 +24,8 @@ def debug_marker(
     """Creates a marker based on *base*
 
     Args:
-        base (Any): Currently supported: Entity, Shape2D, shapely.Polygon, Marker, str
+        base (Any): Currently supported: Entity, Shape2D, shapely.Polygon,
+            shapely.LineString, Marker, str, Point2, [Point2, Point2] as Arrow
         frame_id (Optional[str], optional): Defaults to "hero".
         position_z (Optional[float], optional): Defaults to None.
             If None, the z position of base will be used.
@@ -51,10 +53,40 @@ def debug_marker(
     elif isinstance(base, shapely.Polygon):
         shape2d = Polygon.from_shapely(base)
         marker = shape2d.to_marker(marker_style=MarkerStyle.LINESTRING)
+    elif isinstance(base, shapely.LineString):
+        marker = Marker(type=Marker.LINE_STRIP)
+        marker.scale.x = 0.05  # Line thickness
+        for x, y in base.coords:
+            p = Point2.new(x, y)
+            marker.points.append(p.to_ros_msg())
     elif isinstance(base, Marker):
         marker = base
     elif isinstance(base, str):
         marker = Marker(type=Marker.TEXT_VIEW_FACING, text=base)
+    elif isinstance(base, Point2):
+        transform = Transform2D.new_translation(base.vector())
+        shape = Circle(radius=0.1)
+        marker = shape.to_marker(transform=transform)
+    elif isinstance(base, Sequence):
+        if len(base) == 2:
+            p0 = base[0]
+            p1 = base[1]
+            if not (isinstance(p0, Point2) and isinstance(p1, Point2)):
+                raise TypeError(
+                    f"Unsupported debug marker base sequence: '{type(p0)}, {type(p1)}'"
+                )
+            marker = Marker(type=Marker.ARROW)
+            marker.pose.position.x = p0.x()
+            marker.pose.position.y = p0.y()
+            marker.pose.position.z = 0.0
+            marker.scale.x = 0.1
+            marker.scale.y = 0.3
+            marker.points.append(Point2.zero().to_ros_msg())
+            marker.points.append(p0.vector_to(p1).point().to_ros_msg())
+        else:
+            raise TypeError(
+                f"Unsupported debug marker base sequence length: '{len(base)}'"
+            )
     else:
         raise TypeError(f"Unsupported debug marker base type: '{type(base)}'")
 

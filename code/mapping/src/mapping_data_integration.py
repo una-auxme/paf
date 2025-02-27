@@ -9,19 +9,19 @@ from visualization_msgs.msg import Marker
 import numpy as np
 from typing import List, Optional
 
+import mapping_common.hero
 from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
-
 from mapping_common.filter import (
     MapFilter,
     GrowthMergingFilter,
     LaneIndexFilter,
     GrowPedestriansFilter,
 )
-from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
+from mapping.msg import Map as MapMsg, ClusteredPointsArray
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
@@ -394,24 +394,9 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
         timestamp = self.hero_speed.header.stamp
-        # Shape based on https://www.motortrend.com/cars/
-        # lincoln/mkz/2020/specs/?trim=Base+Sedan
-        shape = Rectangle(
-            length=4.92506,
-            width=1.86436,
-            offset=Transform2D.new_translation(Vector2.new(0.0, 0.0)),
-        )
-        transform = Transform2D.identity()
-        flags = Flags(is_collider=True, is_hero=True)
-        hero = Car(
-            confidence=1.0,
-            priority=1.0,
-            shape=shape,
-            transform=transform,
-            timestamp=timestamp,
-            flags=flags,
-            motion=motion,
-        )
+        hero = mapping_common.hero.create_hero_entity()
+        hero.timestamp = timestamp
+        hero.motion = motion
         return hero
 
     def publish_new_map(self, timer_event=None):
