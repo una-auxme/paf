@@ -13,6 +13,10 @@ from . import behavior_speed as bs
 from .speed_alteration import add_speed_override
 from .debug_markers import add_debug_marker, debug_status, debug_marker
 from .overtake_service_utils import request_end_overtake, create_end_overtake_proxy
+from .stop_mark_service_utils import (
+    create_stop_marks_proxy,
+    update_stop_marks,
+)
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
@@ -248,6 +252,14 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         if self.stuck_duration >= TRIGGER_STUCK_DURATION:
             end_overtake_proxy = create_end_overtake_proxy()
             request_end_overtake(end_overtake_proxy)
+            stop_proxy = create_stop_marks_proxy()
+            update_stop_marks(
+                stop_proxy,
+                id="unstuck",
+                reason="unstuck triggered",
+                is_global=False,
+                marks=[],
+            )
             rospy.logfatal(
                 f"""Should be Driving but Stuck in one place
                            for more than {TRIGGER_STUCK_DURATION.secs}\n
@@ -259,6 +271,14 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         elif self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
             end_overtake_proxy = create_end_overtake_proxy()
             request_end_overtake(end_overtake_proxy)
+            stop_proxy = create_stop_marks_proxy()
+            update_stop_marks(
+                stop_proxy,
+                id="unstuck",
+                reason="unstuck triggered",
+                is_global=False,
+                marks=[],
+            )
             rospy.logfatal(
                 f"""Wait Stuck in one place
                            for more than {TRIGGER_WAIT_STUCK_DURATION.secs}
