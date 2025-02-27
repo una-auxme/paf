@@ -332,6 +332,19 @@ def build_lead_vehicle_collision_masks(
     front_mask_size: float,
     max_trajectory_check_length: Optional[float] = None,
 ) -> List[shapely.Polygon]:
+    """Builds a list of collision masks for determining the lead vehicle
+    in front of the hero.
+
+    Args:
+        width (float): Width of the collision masks. Should match the width of the hero
+        trajectory_local (NavPath): Planned local trajectory
+        front_mask_size (float): Size of the static mask in front
+        max_trajectory_check_length (Optional[float], optional):
+            Max length of the collision masks. Defaults to None.
+
+    Returns:
+        List[shapely.Polygon]
+    """
     collision_masks = []
 
     if front_mask_size > 0.0:
@@ -368,6 +381,18 @@ def build_trajectory_from_start(
     start_point: Point2,
     max_centering_dist: Optional[float] = None,
 ) -> Optional[shapely.LineString]:
+    """Build a trajectory based on *trajectory_local* that starts at *start_point*
+
+    Args:
+        trajectory_local (NavPath): _description_
+        start_point (Point2): _description_
+        max_centering_dist (Optional[float], optional):
+            Centers *trajectory_local* onto *start_point* if they align closely enough.
+            Defaults to None-> No centering.
+
+    Returns:
+        Optional[shapely.LineString]: _description_
+    """
     start_point_s = start_point.to_shapely()
     trajectory_line = ros_path_to_line(trajectory_local)
     # Calculate the distance on the traj to the start_point

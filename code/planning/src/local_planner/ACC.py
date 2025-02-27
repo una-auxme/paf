@@ -302,6 +302,21 @@ class ACC(CompatibleNode):
     def calculate_velocity_based_on_trajectory(
         self, hero: Entity
     ) -> Tuple[float, List[Marker]]:
+        """Approximates a maximum safe cornering speed.
+
+        Traces two lines at +/- ~curve_line_angle from the front of the car
+        and measures the distance at which they intersect with the trajectory.
+
+        Based on this distance, a suitable speed is calculated.
+
+        For parameter descriptions, look in planning/config/ACC.cfg
+
+        Args:
+            hero (Entity): Hero entity
+
+        Returns:
+            Tuple[float, List[Marker]]: (desired_speed, debug_markers)
+        """
         debug_markers: List[Marker] = []
 
         hero_width = hero.get_width()

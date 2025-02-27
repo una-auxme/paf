@@ -43,6 +43,11 @@ def create_overtake_status_proxy() -> rospy.ServiceProxy:
 
 
 def get_global_hero_transform() -> Optional[Transform2D]:
+    """Returns the current hero transform based on data in the blackboard
+
+    Returns:
+        Optional[Transform2D]: None if the required data is not yet available
+    """
     blackboard = Blackboard()
     current_pos: Optional[PoseStamped] = blackboard.get("/paf/hero/current_pos")
     current_heading: Optional[Float32] = blackboard.get("/paf/hero/current_heading")
@@ -57,7 +62,7 @@ def get_global_hero_transform() -> Optional[Transform2D]:
 
 
 def _get_global_hero_transform() -> Optional[Transform2D]:
-    """Deprecated"""
+    """Deprecated. Use get_global_hero_transform instead"""
     get_global_hero_transform()
 
 
@@ -69,6 +74,43 @@ def request_start_overtake(
     start_transition_length: float = 2.0,
     end_transition_length: float = 2.0,
 ) -> Optional[StartOvertakeResponse]:
+    """Convenience function for the StartOvertake service
+
+    Queues an overtake inside the motion planning or
+    updates an existing one with the new settings
+
+    Note that transition lengths are cropped from the overtake
+    between start and end point.
+
+    Note that the local positions are internally converted into
+    global positions and then sent to the service.
+
+    Args:
+        proxy (rospy.ServiceProxy): Service proxy to use for sending the request.
+            Use create_start_overtake_proxy() to create it.
+        local_start_pos (Optional[Point2], optional):
+            If set, the overtake starts at start_pos.
+            If None, the overtake starts immediately.
+            Defaults to None.
+        local_end_pos (Optional[Point2], optional):
+            If set, the overtake ends at end_pos.
+            If None, the hero will stay in the overtake indefinitely
+            until an EndOvertake request is received.
+            Defaults to None.
+        offset (float, optional): How far the overtake trajectory
+            should be offset from the base trajectory in m.
+            If negative, the overtake will be offset to the right.
+            Defaults to 2.5.
+        start_transition_length (float, optional): Transition length towards
+            the overtake.
+            Defaults to 2.0.
+        end_transition_length (float, optional): Transition length away from
+            the overtake.
+            Defaults to 2.0.
+
+    Returns:
+        Optional[StartOvertakeResponse]: _description_
+    """
     req = StartOvertakeRequest(
         offset=offset,
         start_transition_length=start_transition_length,
@@ -94,6 +136,31 @@ def request_end_overtake(
     local_end_pos: Optional[Point2] = None,
     end_transition_length: float = 2.0,
 ) -> Optional[EndOvertakeResponse]:
+    """Convenience function for the EndOvertake service
+
+    Ends the currently running overtake / aborts a queued one.
+    Does nothing if no overtake is running/queued.
+
+    Note that transition lengths are cropped from the overtake
+    between start and end point.
+
+    Note that the local positions are internally converted into
+    global positions and then sent to the service.
+
+    Args:
+        proxy (rospy.ServiceProxy): Service proxy to use for sending the request.
+            Use create_end_overtake_proxy() to create it.
+        local_end_pos (Optional[Point2], optional):
+            If set, the overtake ends at end_pos.
+            If None, the hero will leave the overtake immediately.
+            Defaults to None.
+        end_transition_length (float, optional): Transition length away from
+            the overtake.
+            Defaults to 2.0.
+
+    Returns:
+        Optional[EndOvertakeResponse]
+    """
     req = EndOvertakeRequest(end_transition_length=end_transition_length)
     if local_end_pos is not None:
         hero_transform = get_global_hero_transform()
@@ -107,4 +174,14 @@ def request_end_overtake(
 
 
 def request_overtake_status(proxy: rospy.ServiceProxy) -> OvertakeStatusResponse:
+    """Convenience function for the OvertakeStatus service
+
+    Args:
+        proxy (rospy.ServiceProxy): Service proxy to use for sending the request.
+            Use create_overtake_status_proxy() to create it.
+
+    Returns:
+        OvertakeStatusResponse: Status response from the service.
+            Look in planning/srv/OvertakeStatus.srv for it's definition
+    """
     return proxy()
