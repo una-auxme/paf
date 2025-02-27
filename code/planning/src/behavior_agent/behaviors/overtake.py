@@ -271,6 +271,7 @@ class Approach(py_trees.behaviour.Behaviour):
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.start_overtake_proxy = create_start_overtake_proxy()
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
@@ -330,6 +331,8 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
 
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             ot_free, ot_mask = tree.is_lane_free(
@@ -346,7 +349,9 @@ class Approach(py_trees.behaviour.Behaviour):
                 # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
                     add_debug_entry(self.name, "Overtake is free not slowing down!")
-                    request_start_overtake(self.start_overtake_proxy)
+                    request_start_overtake(
+                        self.start_overtake_proxy, start_transition_length=5.0
+                    )
                     self.curr_behavior_pub.publish(bs.ot_app_free.name)
                     # bool to skip Wait since oncoming is free
                     OVERTAKE_FREE = True
@@ -483,7 +488,9 @@ class Wait(py_trees.behaviour.Behaviour):
             self.ot_counter += 1
             if self.ot_counter > 3:
                 self.curr_behavior_pub.publish(bs.ot_wait_free.name)
-                request_start_overtake(self.start_overtake_proxy)
+                request_start_overtake(
+                    self.start_overtake_proxy, start_transition_length=0.0
+                )
                 return debug_status(self.name, Status.SUCCESS, "Overtake free")
             else:
                 return debug_status(
