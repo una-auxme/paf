@@ -296,6 +296,8 @@ class MotionPlanning(CompatibleNode):
         algorithm to a certain part of the trajectory.
         This saves processing time and
         avoids bugs with a "looping"/self-crossing trajectory"""
+        if self.current_pos is None:
+            return
         while len(self.global_trajectory.poses) > self.current_global_waypoint_idx + 1:
             pose0: Pose = self.global_trajectory.poses[
                 self.current_global_waypoint_idx
@@ -310,6 +312,7 @@ class MotionPlanning(CompatibleNode):
             ):
                 self.current_global_waypoint_idx += 1
             elif self.current_global_waypoint_idx > 0:
+                # Check if we need to count the index backwards
                 last_pose: Pose = self.global_trajectory.poses[
                     self.current_global_waypoint_idx - 1
                 ].pose
@@ -317,7 +320,9 @@ class MotionPlanning(CompatibleNode):
                 if self.current_pos.distance_to(point0) > self.current_pos.distance_to(
                     last_point
                 ):
-                    self.current_global_waypoint_idx -= 1
+                    self.current_global_waypoint_idx = max(
+                        0, self.current_global_waypoint_idx - 1
+                    )
                 else:
                     break
             else:
