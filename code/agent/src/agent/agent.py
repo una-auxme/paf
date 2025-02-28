@@ -1,5 +1,6 @@
 from leaderboard.autoagents.ros1_agent import ROS1Agent
 from leaderboard.autoagents.autonomous_agent import Track
+import math
 
 
 def get_entry_point():
@@ -49,8 +50,8 @@ class PAFAgent(ROS1Agent):
                 "type": "sensor.other.radar",
                 "id": "RADAR0",
                 "x": 2.0,
-                "y": 1.5,
-                "z": 1,
+                "y": -1.5,
+                "z": 0.5,
                 "roll": 0.0,
                 "pitch": 0.0,
                 "yaw": 0.0,
@@ -60,12 +61,12 @@ class PAFAgent(ROS1Agent):
             {
                 "type": "sensor.other.radar",
                 "id": "RADAR1",
-                "x": 2.0,
+                "x": -2.0,
                 "y": -1.5,
-                "z": 1,
+                "z": 0.5,
                 "roll": 0.0,
                 "pitch": 0.0,
-                "yaw": 0.0,
+                "yaw": math.radians(180),
                 "horizontal_fov": 25,
                 "vertical_fov": 0.1,
             },

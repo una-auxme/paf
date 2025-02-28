@@ -70,8 +70,8 @@
           "id": "RADAR0",
           "spawn_point": {
             "x": 2.0,
-            "y": 1.5,
-            "z": 1,
+            "y": -1.5,
+            "z": 0.5,
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0
@@ -85,9 +85,9 @@
           "type": "sensor.other.radar",
           "id": "RADAR1",
           "spawn_point": {
-            "x": 2.0,
+            "x": -2.0,
             "y": -1.5,
-            "z": 1,
+            "z": 0.5,
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0

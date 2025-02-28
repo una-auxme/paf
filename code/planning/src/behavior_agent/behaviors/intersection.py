@@ -9,7 +9,14 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Transform2D, Point2
 from mapping_common.markers import debug_marker
 
+from mapping_common.shape import Rectangle
+from mapping_common.transform import Transform2D, Vector2
+
 from . import behavior_speed as bs
+from .stop_mark_service_utils import (
+    create_stop_marks_proxy,
+    update_stop_marks,
+)
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from .topics2blackboard import BLACKBOARD_MAP_ID
 
@@ -34,6 +41,31 @@ def get_color(state):
         return "yellow"
     else:
         return ""
+
+
+INTERSECTION_STOPMARKS_ID = "intersection"
+
+
+def set_stop_mark(proxy: rospy.ServiceProxy, distance: float):
+    transform = Transform2D.new_translation(Vector2.new(distance, 0.0))
+    mask = Rectangle(0.5, 10.0, offset=transform)
+    update_stop_marks(
+        proxy,
+        id=INTERSECTION_STOPMARKS_ID,
+        reason="traffic light red",
+        is_global=False,
+        marks=[mask],
+    )
+
+
+def unset_stop_mark(proxy: rospy.ServiceProxy):
+    update_stop_marks(
+        proxy,
+        id=INTERSECTION_STOPMARKS_ID,
+        reason="no traffic light",
+        is_global=False,
+        marks=[],
+    )
 
 
 class Ahead(py_trees.behaviour.Behaviour):
@@ -160,6 +192,7 @@ class Approach(py_trees.behaviour.Behaviour):
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
@@ -263,12 +296,14 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.curr_behavior_pub.publish(bs.int_app_init.name)
             else:
                 self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
+            set_stop_mark(self.stop_proxy, self.virtual_stopline_distance)
 
         # approach slowly when traffic light is green as traffic lights are
         # higher priority than traffic signs this behavior is desired
         if self.traffic_light_status == "green":
             self.stopping = False
             self.curr_behavior_pub.publish(bs.int_app_green.name)
+            unset_stop_mark(self.stop_proxy)
 
         add_debug_entry(self.name, f"Stopping: {self.stopping}")
 
@@ -365,6 +400,7 @@ class Wait(py_trees.behaviour.Behaviour):
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.stop_proxy = create_stop_marks_proxy()
         self.red_light_flag = False
         self.green_light_time = None
         return True
@@ -573,6 +609,7 @@ class Enter(py_trees.behaviour.Behaviour):
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
@@ -606,6 +643,7 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
+        unset_stop_mark(self.stop_proxy)
         next_waypoint_msg = self.blackboard.get("/paf/hero/waypoint_distance")
 
         if next_waypoint_msg is None:
