@@ -25,7 +25,7 @@ class VehicleController(CompatibleNode):
     INFO: Currently the loop of the node has a sleep command in it. The control
     command triggers the carla simulator to render the next frame. If the loop
     does not have the time to sleep the simulator will run as fast as the system
-    allows it to run. If your system is too slow to run with the 0.1 loop_sleep_time
+    allows it to run. If your system is too slow to run with the 0.2 loop_sleep_time
     you could slow it down by setting the loop_sleep_time to a higher value.
     """
 
@@ -173,7 +173,7 @@ class VehicleController(CompatibleNode):
         self.loginfo("VehicleController node running")
 
         def spin_loop(timer_event=None):
-            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.1)
+            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.2)
             self.update_control_message()
             self.control_publisher.publish(self.message)
             time.sleep(self.loop_sleep_time)

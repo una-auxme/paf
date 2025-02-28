@@ -1,0 +1,12 @@
+# Override speed of vehicle with given speed
+float32 speed_override
+# Set additional speed limit
+float32 speed_limit
+# Indicate if speed_override variable is set
+bool speed_override_active
+# Indicate if speed_limit variable is set
+bool speed_limit_active
+
+---
+
+bool success
