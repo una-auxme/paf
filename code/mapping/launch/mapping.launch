@@ -2,7 +2,7 @@
   <arg name="map_publish_rate" default="20" />
   <arg name="polygon_simplify_tolerance" default="0.1" />
 
-  <arg name="enable_radar_cluster" default="False" />
+  <arg name="enable_radar_cluster" default="True" />
   <arg name="enable_lidar_cluster" default="True" />
   <arg name="enable_vision_cluster" default="True" />
   <arg name="enable_raw_lidar_points" default="False" />
