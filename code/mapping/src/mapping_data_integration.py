@@ -276,13 +276,10 @@ class MappingDataIntegrationNode(CompatibleNode):
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
-            self.radar_clustered_points_data = None
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
-            self.lidar_clustered_points_data = None
         elif sensortype == "vision":
             data = self.vision_clustered_points_data
-            self.vision_clustered_points_data = None
         else:
             raise ValueError(f"Unknown sensortype: {sensortype}")
 
