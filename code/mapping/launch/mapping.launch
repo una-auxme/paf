@@ -15,7 +15,6 @@
   <arg name="lidar_discard_probability" default="0.9" />
 
   <arg name="radar_shape_radius" default="0.15" />
-  <arg name="radar_priority" default="0.25" />
 
   <arg name="enable_merge_filter" default="True" />
   <arg name="merge_growth_distance" default="0.65" />

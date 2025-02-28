@@ -314,7 +314,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
                 if sensortype == "radar":
-                    shape = Circle(0.15)
+                    shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
                     transform = Transform2D.new_translation(
                         Vector2.new(cluster_points_xy[0, 0], cluster_points_xy[0, 1])
                     )
