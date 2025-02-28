@@ -573,16 +573,12 @@ class MapTree:
 
         hero = self.map.hero()
         if motion_aware and hero is not None:
-            # Does not work if car is behind us as the motion is not calculated. If the
-            # next car is visible it is too late
-
             for i in range(len(colliding_entities) - 1, -1, -1):
                 entity = colliding_entities[i]
-                delta_motion = hero.get_delta_forward_velocity_of(entity.entity)
+                delta_motion = hero.get_delta_velocity_of(entity.entity)
 
                 if delta_motion is not None and delta_motion > 0.5:
                     del colliding_entities[i]
-
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
             return LaneFreeState.FREE, lane_box
