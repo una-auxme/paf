@@ -45,6 +45,7 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    radar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -53,13 +54,22 @@ class MappingDataIntegrationNode(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
+        self.lanemarkings = None
+
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
             msg_type=PointCloud2,
             callback=self.lidar_callback,
             qos_profile=1,
         )
-        self.lanemarkings = None
+
+        self.new_subscription(
+            topic=self.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
+            msg_type=PointCloud2,
+            callback=self.radar_callback,
+            qos_profile=1,
+        )
+
         self.new_subscription(
             topic=self.get_param(
                 "~lanemarkings_init_topic", "/paf/hero/mapping/init_lanemarkings"
@@ -143,6 +153,9 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def radar_callback(self, data: PointCloud2):
+        self.radar_data = data
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -272,6 +285,35 @@ class MappingDataIntegrationNode(CompatibleNode):
             lidar_entities.append(e)
 
         return lidar_entities
+
+    def entities_from_radar(self) -> List[Entity]:
+        if self.radar_data is None:
+            return []
+
+        data = self.radar_data
+        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        coordinates = coordinates.view(
+            (coordinates.dtype[0], len(coordinates.dtype.names))
+        )
+        shape = Circle(self.get_param("~radar_shape_radius", 0.15))
+        priority = self.get_param("~radar_priority", 0.25)
+
+        radar_entities = []
+        for x, y, z, intensity in coordinates:
+            v = Vector2.new(x, y)
+            transform = Transform2D.new_translation(v)
+            flags = Flags(is_collider=True)
+            e = Entity(
+                confidence=0.5 * intensity,
+                priority=priority,
+                shape=shape,
+                transform=transform,
+                timestamp=data.header.stamp,
+                flags=flags,
+            )
+            radar_entities.append(e)
+
+        return radar_entities
 
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
         data = None
@@ -449,6 +491,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         if self.get_param("~enable_raw_lidar_points"):
             if self.lidar_data is not None:
                 entities.extend(self.entities_from_lidar())
+            else:
+                return
+
+        if self.get_param("~enable_raw_radar_points"):
+            if self.radar_data is not None:
+                entities.extend(self.entities_from_radar())
             else:
                 return
 
