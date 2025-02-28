@@ -32,9 +32,6 @@ from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
 
-
-# from shapely.validation import orient
-
 from mapping.cfg import MappingIntegrationConfig
 from dynamic_reconfigure.server import Server
 
@@ -50,7 +47,6 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
-    radar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -96,13 +92,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
             msg_type=PointCloud2,
             callback=self.lidar_callback,
-            qos_profile=1,
-        )
-
-        self.new_subscription(
-            topic=self.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
-            msg_type=PointCloud2,
-            callback=self.radar_callback,
             qos_profile=1,
         )
 
@@ -218,9 +207,6 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
-
-    def radar_callback(self, data: PointCloud2):
-        self.radar_data = data
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -351,46 +337,14 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
-    def entities_from_radar(self) -> List[Entity]:
-        if self.radar_data is None:
-            return []
-
-        data = self.radar_data
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        coordinates = coordinates.view(
-            (coordinates.dtype[0], len(coordinates.dtype.names))
-        )
-        shape = Circle(self.get_param("~radar_shape_radius", 0.15))
-        priority = self.get_param("~radar_priority", 0.25)
-
-        radar_entities = []
-        for x, y, z, intensity in coordinates:
-            v = Vector2.new(x, y)
-            transform = Transform2D.new_translation(v)
-            flags = Flags(is_collider=True)
-            e = Entity(
-                confidence=0.5 * intensity,
-                priority=priority,
-                shape=shape,
-                transform=transform,
-                timestamp=data.header.stamp,
-                flags=flags,
-            )
-            radar_entities.append(e)
-
-        return radar_entities
-
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
-            self.radar_clustered_points_data = None
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
-            self.lidar_clustered_points_data = None
         elif sensortype == "vision":
             data = self.vision_clustered_points_data
-            self.vision_clustered_points_data = None
         else:
             raise ValueError(f"Unknown sensortype: {sensortype}")
 
@@ -424,27 +378,34 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
-                continue
+                if sensortype == "radar":
+                    shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
+                    transform = Transform2D.new_translation(
+                        Vector2.new(cluster_points_xy[0, 0], cluster_points_xy[0, 1])
+                    )
+                else:
+                    continue
+            else:
+                if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
+                    # add startpoint to close polygon
+                    cluster_points_xy = np.vstack(
+                        [cluster_points_xy, cluster_points_xy[0]]
+                    )
 
-            if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                # add startpoint to close polygon
-                cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
+                cluster_polygon = MultiPoint(cluster_points_xy)
+                cluster_polygon_hull = cluster_polygon.convex_hull
+                if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                    rospy.loginfo("Empty hull")
+                    continue
+                if not isinstance(cluster_polygon_hull, shapely.Polygon):
+                    rospy.loginfo("Cluster is not polygon, continue")
+                    continue
 
-            cluster_polygon = MultiPoint(cluster_points_xy)
-            cluster_polygon_hull = cluster_polygon.convex_hull
-            if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                rospy.loginfo("Empty hull")
-                continue
-            if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                rospy.loginfo("Cluster is not polygon, continue")
-                continue
-
-            shape = Polygon.from_shapely(
-                cluster_polygon_hull, make_centered=True  # type: ignore
-            )
-
-            transform = shape.offset
-            shape.offset = Transform2D.identity()
+                shape = Polygon.from_shapely(
+                    cluster_polygon_hull, make_centered=True  # type: ignore
+                )
+                transform = shape.offset
+                shape.offset = Transform2D.identity()
 
             motion = None
             if motion_array_converted is not None:
@@ -550,12 +511,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             else:
                 return
 
-        if self.get_param("~enable_raw_radar_points"):
-            if self.radar_data is not None:
-                entities.extend(self.entities_from_radar())
-            else:
-                return
-
         if self.get_param("~enable_stop_marks"):
             hero_transform_inv = mapping_common.map.build_global_hero_transform(
                 self.current_pos.x(),
@@ -570,27 +525,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                     marks.append(local_mark)
 
             entities.extend(marks)
-
-        # lane_box_entities visualizes the shape and position of the lane box
-        # which is used for lane_free function
-        # lane_box_entities = [
-        #    Entity(
-        #        confidence=100.0,
-        #        priority=100.0,
-        #        shape=Rectangle(
-        #            length=22.5,
-        #            width=1.5,
-        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
-        #        ),
-        #        transform=Transform2D.identity(),
-        #        flags=Flags(is_ignored=True),
-        #    )
-        # ]
-        # entities.extend(lane_box_entities)
-
-        # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
