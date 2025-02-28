@@ -7,7 +7,6 @@ from std_msgs.msg import String, Header
 from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sklearn.cluster import DBSCAN
 
-# from sklearn.cluster import HDBSCAN
 from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
@@ -354,9 +353,6 @@ class RadarNode(CompatibleNode):
 
         combined_points = np.array(combined_points)
         self.get_lead_vehicle_info(combined_points)
-
-        # combined_points_pc2 = create_pointcloud2(combined_points, None, True)
-        # self.combined_points.publish(combined_points_pc2)
 
         # Cluster and bounding box processing
 

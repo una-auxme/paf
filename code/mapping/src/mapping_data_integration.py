@@ -27,9 +27,6 @@ from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
 
-
-# from shapely.validation import orient
-
 from mapping.cfg import MappingIntegrationConfig
 from dynamic_reconfigure.server import Server
 
@@ -45,7 +42,6 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
-    # radar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -461,33 +457,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                 entities.extend(self.entities_from_lidar())
             else:
                 return
-
-        # if self.get_param("~enable_raw_radar_points"):
-        #     if self.radar_data is not None:
-        #         entities.extend(self.entities_from_radar())
-        #     else:
-        #         return
-
-        # lane_box_entities visualizes the shape and position of the lane box
-        # which is used for lane_free function
-        # lane_box_entities = [
-        #    Entity(
-        #        confidence=100.0,
-        #        priority=100.0,
-        #        shape=Rectangle(
-        #            length=22.5,
-        #            width=1.5,
-        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
-        #        ),
-        #        transform=Transform2D.identity(),
-        #        flags=Flags(is_ignored=True),
-        #    )
-        # ]
-        # entities.extend(lane_box_entities)
-
-        # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
