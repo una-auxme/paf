@@ -11,7 +11,6 @@ from std_msgs.msg import Float32
 from acting.msg import Debug
 from visualization_msgs.msg import MarkerArray
 import numpy as np
-import shapely
 
 import mapping_common.mask
 import mapping_common.hero

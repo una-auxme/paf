@@ -36,9 +36,19 @@ UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
 
 class MotionPlanning(CompatibleNode):
     """
-    This node selects speeds based on the current behaviour and ACC to forward to the
-    acting components. It also handles the generation of trajectories for overtaking
-    maneuvers.
+    This node received the trajectory_global from the PrePlanner/global_planner.
+
+    It then calculates the trajectory_local and publishes it.
+
+    The published trajectory_local has local coordinates in relation to the hero car
+    and is cropped to the projected center point of the car.
+    It might also contain an overtake depending on self.overtake_request.
+
+    For starting and stopping overtakes, it provides
+    StartOvertake, EndOvertake and OvertakeStatus services
+
+    It also publishes the OpenDrive speed limit based on the hero's position
+    on the trajectory.
     """
 
     def __init__(self):
@@ -143,9 +153,16 @@ class MotionPlanning(CompatibleNode):
                 req.offset = max(
                     abs(req.offset), abs(self.overtake_request.offset)
                 ) * sign(req.offset)
-                msg = f"Adjusted existing overtake. Used bigger offset: {req.offset}"
+                msg = f"Adjusted existing overtake. Used bigger offset: {req.offset}."
             else:
                 msg = "Overwrote existing overtake."
+            if (
+                req.has_start_pos
+                and self.overtake_status.status == OvertakeStatusResponse.OVERTAKING
+            ):
+                # We are already overtaking, continue to do so
+                req.has_start_pos = False
+                msg += " Ignored new start point, because overtake is already running."
 
         if self.overtake_status.status == OvertakeStatusResponse.NO_OVERTAKE:
             self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_QUEUED
@@ -186,7 +203,9 @@ class MotionPlanning(CompatibleNode):
         self.current_heading = data.data
 
     def __set_current_pos(self, data: PoseStamped):
-        """set current position
+        """Sets the current position and
+        publishes a new trajectory_local based on it
+
         Args:
             data (PoseStamped): current position
         """
@@ -241,12 +260,12 @@ class MotionPlanning(CompatibleNode):
 
         (start_x, start_y) = local_trajectory.coords[0]
         start_vector = Vector2.new(start_x, start_y)
-        if start_vector.length() > 25.0:
+        if start_vector.length() > 100.0:
             # We are far away from the trajectory
             # Try to reinitialize trajectory on next position update
             self.init_trajectory = True
             rospy.logfatal_throttle(1.0, "MotionPlanning: Too far away from trajectory")
-            return
+            # Do not return here, otherwise the car does not continue driving
 
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
@@ -307,7 +326,7 @@ class MotionPlanning(CompatibleNode):
     def _apply_overtake(
         self, global_trajectory: LineString, hero_transform: Transform2D
     ) -> LineString:
-        """Adds an overtake trajectory to global_trajectory
+        """Adds an overtake trajectory to *global_trajectory*
         if self.overtake_request is set.
 
         Args:

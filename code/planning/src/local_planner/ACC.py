@@ -48,6 +48,7 @@ class ACC(CompatibleNode):
     speed_limit: float = 5.0
     external_speed_limit: Optional[float] = None
     speed_override: Optional[float] = None
+    steer: Optional[float] = None
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -82,6 +83,14 @@ class ACC(CompatibleNode):
             String,
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
+            qos_profile=1,
+        )
+
+        # Get current steering to adjust the front collision mask
+        self.steer_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/pure_pursuit_steer",
+            self.__set_steer,
             qos_profile=1,
         )
 
@@ -131,6 +140,14 @@ class ACC(CompatibleNode):
         """
         self.__curr_behavior = data.data
 
+    def __set_steer(self, data: Float32):
+        """Receive the steering angle of the vehicle.
+
+        Args:
+            data (Float32): Current steering angle
+        """
+        self.steer = data.data
+
     def run(self):
         """
         Control loop
@@ -167,17 +184,18 @@ class ACC(CompatibleNode):
 
         tree = self.map.build_tree(filter_fn=filter_fn)
 
-        front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
-        if self.__curr_behavior in front_mask_reduce_behaviours:
-            front_mask_size = 5.5
+        if self.__curr_behavior is not None and self.__curr_behavior.startswith("ot_"):
+            front_mask_size = 3.5
         else:
-            front_mask_size = 7.5
+            front_mask_size = 5.5
 
         collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
+            Point2.new(hero.get_front_x(), 0.0),
             hero_width,
             self.trajectory_local,
             front_mask_size=front_mask_size,
             max_trajectory_check_length=100.0,
+            rotate_front_mask=0.0 if self.steer is None else -self.steer * 0.75,
         )
 
         collision_mask = shapely.union_all(collision_masks)
@@ -302,6 +320,21 @@ class ACC(CompatibleNode):
     def calculate_velocity_based_on_trajectory(
         self, hero: Entity
     ) -> Tuple[float, List[Marker]]:
+        """Approximates a maximum safe cornering speed.
+
+        Traces two lines at +/- ~curve_line_angle from the front of the car
+        and measures the distance at which they intersect with the trajectory.
+
+        Based on this distance, a suitable speed is calculated.
+
+        For parameter descriptions, look in planning/config/ACC.cfg
+
+        Args:
+            hero (Entity): Hero entity
+
+        Returns:
+            Tuple[float, List[Marker]]: (desired_speed, debug_markers)
+        """
         debug_markers: List[Marker] = []
 
         hero_width = hero.get_width()

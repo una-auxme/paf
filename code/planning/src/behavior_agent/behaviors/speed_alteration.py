@@ -44,6 +44,8 @@ class SpeedAlterationSetupBehavior(py_trees.Behaviour):
         self.blackboard.set(SPEED_OVERRIDE_ID, None)
         self.blackboard.set(SPEED_LIMIT_ID, None)
 
+        return py_trees.common.Status.SUCCESS
+
 
 class SpeedAlterationRequestBehavior(py_trees.Behaviour):
     """Reads the speed override and limit from *SPEED_OVERRIDE_ID*

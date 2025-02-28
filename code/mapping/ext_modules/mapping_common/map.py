@@ -253,7 +253,7 @@ class MapTree:
     Also includes their shapely.Polygon
     """
     map: Map
-    """The map this tree was created with
+    """The unfiltered map this tree was created with
     """
 
     def __init__(
