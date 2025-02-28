@@ -330,7 +330,7 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
         # Only add stop space if the obstacle is standing
-        if obstacle_speed < 0.5:
+        if obstacle_speed < 1.0:
             set_space_stop_mark(self.stop_proxy, obstacle=entity)
         else:
             unset_space_stop_mark(self.stop_proxy)
@@ -474,7 +474,7 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
         # Only add stop space if the obstacle is standing
-        if obstacle_speed < 0.5:
+        if obstacle_speed < 1.0:
             set_space_stop_mark(self.stop_proxy, obstacle=entity)
         else:
             unset_space_stop_mark(self.stop_proxy)
