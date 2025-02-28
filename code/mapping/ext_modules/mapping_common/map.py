@@ -573,55 +573,21 @@ class MapTree:
 
         hero = self.map.hero()
         if motion_aware and hero is not None:
-            motion_count = 0
-            overall_motion = 0.0
-            for entity in colliding_entities:
-                if entity.entity.motion is None:
-                    continue
-                motion_count += 1
+            # Does not work if car is behind us as the motion is not calculated. If the
+            # next car is visible it is too late
+
+            for i in range(len(colliding_entities) - 1, -1, -1):
+                entity = colliding_entities[i]
                 delta_motion = hero.get_delta_forward_velocity_of(entity.entity)
-                if delta_motion is None:
-                    continue
-                overall_motion += delta_motion
-            average_motion = overall_motion / motion_count if motion_count > 0 else 0.0
-            if average_motion > 0.5:
-                # cut the lane box so that it is only in front of the car
-                colliding_entities = self.filter_entities(
-                    entities=colliding_entities, direction="front"
-                )
-            elif average_motion < -0.5:
-                # cut the lane box so that it is only behind the car
-                colliding_entities = self.filter_entities(
-                    entities=colliding_entities, direction="back"
-                )
+
+                if delta_motion is not None and delta_motion > 0.5:
+                    del colliding_entities[i]
 
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
             return LaneFreeState.FREE, lane_box
-        else:
-            return LaneFreeState.BLOCKED, lane_box
-        # check_method == "trajectory": not implemented yet
 
-    def filter_entities(
-        self, entities, direction: Literal["front", "back"]
-    ) -> List[ShapelyEntity]:
-        """Filters the entities in the tree based on the front and back tuple
-
-        Args:
-            t (Literal["front", "back"]): Tuple with the front and back entities
-
-        Returns:
-            List[ShapelyEntity]: Filtered entities
-        """
-        for i in range(len(entities) - 1, -1, -1):
-            entity = entities[i]
-            if direction == "front":
-                if entity.entity.transform.translation().x() < 0:
-                    del entities[i]
-            elif direction == "back":
-                if entity.entity.transform.translation().x() > 0:
-                    del entities[i]
-        return entities
+        return LaneFreeState.BLOCKED, lane_box
 
     def is_lane_free_rectangle(
         self,
