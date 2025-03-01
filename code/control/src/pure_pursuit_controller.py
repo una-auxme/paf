@@ -11,7 +11,6 @@ from std_msgs.msg import Float32
 from acting.msg import Debug
 from visualization_msgs.msg import MarkerArray
 import numpy as np
-import shapely
 
 import mapping_common.mask
 import mapping_common.hero
@@ -65,9 +64,7 @@ class PurePursuitController(CompatibleNode):
             qos_profile=1,
         )
 
-        # self.__position: Optional[tuple[float, float]] = None  # x, y
         self.__path: Optional[Path] = None
-        # self.__heading: Optional[float] = None
         self.__velocity: Optional[float] = None
 
         # Tuneable Values for PurePursuit-Algorithm

@@ -1,3 +1,12 @@
+"""This DEPRECATED file contains behavior name to speed mappings
+
+Note that since PR #725, the speeds listed here are
+completely unused in favor of the ACC.
+
+Removing this file is currently not possible,
+since the name definitions are still used throughout the project.
+"""
+
 from collections import namedtuple
 
 
