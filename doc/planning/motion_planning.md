@@ -35,7 +35,7 @@ This node subscribes to the following topics:
 - `/paf/hero/current_heading`: Subscribes to the filtered heading of the ego vehicle.
 - `/paf/hero/current_pos`: Subscribes to the filtered position of our car.
 - `/paf/hero/current_wp`: Subscribes to the current waypoint.
-- `/paf/hero/lane_change_distance`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
+- `/paf/hero/lane_change`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
 - `/paf/hero/speed_limit`: Subscribes to the speed limit.
 - `/paf/hero/trajectory_global`: Subscribes to the global trajectory, which is calculated at the start of the simulation.
 - `/paf/hero/unstuck_distance`: Subscribes to the distance travelled by the unstuck maneuver.

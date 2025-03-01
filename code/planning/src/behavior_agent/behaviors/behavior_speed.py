@@ -1,3 +1,12 @@
+"""This DEPRECATED file contains behavior name to speed mappings
+
+Note that since PR #725, the speeds listed here are
+completely unused in favor of the ACC.
+
+Removing this file is currently not possible,
+since the name definitions are still used throughout the project.
+"""
+
 from collections import namedtuple
 
 
@@ -48,6 +57,7 @@ lc_app_free = Behavior("lc_app_free", convert_to_ms(30.0))
 
 # Wait
 lc_wait = Behavior("lc_wait", 0)
+lc_wait_free = Behavior("lc_wait_free", convert_to_ms(30.0))
 
 # Enter
 

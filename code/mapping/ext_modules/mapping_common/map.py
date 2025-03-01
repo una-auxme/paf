@@ -252,7 +252,7 @@ class MapTree:
     Also includes their shapely.Polygon
     """
     map: Map
-    """The map this tree was created with
+    """The unfiltered map this tree was created with
     """
 
     def __init__(
@@ -760,7 +760,11 @@ class MapTree:
         if len(query) <= 0:
             return None
 
-        query_distances = map(lambda e: (e, reference.get_distance_to(e)), query)
+        def calc_intersection_distance(e: ShapelyEntity) -> float:
+            intersection = shapely.intersection(e.poly, mask)
+            return shapely.distance(reference.poly, intersection)
+
+        query_distances = map(lambda e: (e, calc_intersection_distance(e)), query)
         return min(query_distances, key=lambda e: e[1])
 
     def get_overlapping_entities(
