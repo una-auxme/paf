@@ -1,5 +1,6 @@
 from typing import Optional
 import py_trees
+from py_trees.common import Status
 import rospy
 from std_msgs.msg import String
 import shapely
@@ -144,10 +145,11 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.FAILURE
 
     def terminate(self, new_status):
-        update_stop_marks(
-            self.stop_proxy,
-            id=self.name,
-            reason="unparking terminated",
-            is_global=False,
-            marks=[],
-        )
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            update_stop_marks(
+                self.stop_proxy,
+                id=self.name,
+                reason="unparking terminated",
+                is_global=False,
+                marks=[],
+            )

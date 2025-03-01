@@ -389,7 +389,8 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
     def terminate(self, new_status):
-        unset_space_stop_mark(self.stop_proxy)
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_space_stop_mark(self.stop_proxy)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -507,7 +508,8 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
-        unset_space_stop_mark(self.stop_proxy)
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_space_stop_mark(self.stop_proxy)
 
 
 class Enter(py_trees.behaviour.Behaviour):
