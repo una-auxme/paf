@@ -3,9 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Intermediate Visualization1
-        - /ACC Debug1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 313
   - Class: rviz/Selection
@@ -65,11 +63,13 @@ Visualization Manager:
         ACC Debug: true
         Behavior Debug: true
         Behavior Info: true
+        Global Trajectory: false
         Grid: false
         Imu: false
         Intermediate Visualization: true
         Lidar: false
-        Path: false
+        Local Trajectory: true
+        PurePursuit Debug: true
         Radar: true
         Value: true
         VisonNode Output: true
@@ -162,11 +162,11 @@ Visualization Manager:
       Length: 0.30000001192092896
       Line Style: Lines
       Line Width: 0.029999999329447746
-      Name: Path
+      Name: Global Trajectory
       Offset:
         X: 0
         Y: 0
-        Z: 703
+        Z: 705
       Pose Color: 255; 85; 255
       Pose Style: None
       Queue Size: 10
@@ -197,7 +197,7 @@ Visualization Manager:
       Marker Topic: /paf/hero/behavior_tree/debug_markers
       Name: Behavior Debug
       Namespaces:
-        {}
+        behavior_tree: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -206,6 +206,38 @@ Visualization Manager:
       Name: Behavior Info
       Namespaces:
         "": true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Local Trajectory
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Queue Size: 10
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /paf/hero/trajectory_local
+      Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /paf/hero/control/pp_debug_markers
+      Name: PurePursuit Debug
+      Namespaces:
+        pp_controller: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -236,7 +268,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 23.41340446472168
+      Distance: 30.159997940063477
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -252,9 +284,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3953990042209625
+      Pitch: 0.18539878726005554
       Target Frame: <Fixed Frame>
-      Yaw: 3.20538592338562
+      Yaw: 3.1353824138641357
     Saved: ~
 Window Geometry:
   Camera:
@@ -276,5 +308,5 @@ Window Geometry:
   VisonNode Output:
     collapsed: false
   Width: 2494
-  X: 2626
-  Y: 32
+  X: 2614
+  Y: 0

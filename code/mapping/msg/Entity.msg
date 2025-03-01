@@ -12,3 +12,4 @@ string type_name
 TypeCar type_car
 TypeLanemarking type_lanemarking
 TypeTrafficLight type_traffic_light
+TypeStopMark type_stop_mark
