@@ -91,6 +91,7 @@ class GlobalPlanDistance(CompatibleNode):
             # if the road option indicates an intersection, the distance to the
             # next waypoint is also the distance to the stop line
             if self.road_options[0] in {
+                RoadOption.VOID,
                 RoadOption.LEFT,
                 RoadOption.RIGHT,
                 RoadOption.STRAIGHT,
