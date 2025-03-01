@@ -17,6 +17,7 @@ import shapely
 from . import behavior_speed as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
+from .overtake import OVERTAKE_SPACE_STOPMARKS_ID
 from .overtake_service_utils import (
     create_start_overtake_proxy,
     create_end_overtake_proxy,
@@ -111,6 +112,14 @@ class Ahead(py_trees.behaviour.Behaviour):
             self.change_detected
             and self.change_distance < TARGET_DISTANCE_TO_TRIGGER_LANECHANGE
         ):
+            # delete stop marks from overtake as they could block lane change
+            update_stop_marks(
+                self.stop_proxy,
+                id=OVERTAKE_SPACE_STOPMARKS_ID,
+                reason="lanechange delete overtake marks",
+                is_global=False,
+                marks=[],
+            )
             # if overtake in process and lanechange is planned to left:
             # just end overtake on the left lane and lanechange is finished
             if overtake_status == OvertakeStatusResponse.OVERTAKING:
