@@ -1,0 +1,11 @@
+# Identifier of this set of stopmarks
+string id
+# StopMark entities with GLOBAL coordinates / transform
+Entity[] marks
+# If set, deletes all StopMarks from the map
+bool delete_all_others
+
+---
+
+string msg
+bool success

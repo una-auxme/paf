@@ -38,15 +38,15 @@ add_message_files(
   TypeCar.msg
   TypeLanemarking.msg
   TypeTrafficLight.msg
+  TypeStopMark.msg
   ClusteredPointsArray.msg
 )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  UpdateStopMarks.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -113,6 +113,7 @@ add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/__init__.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/filter.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/hero.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/markers.c
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mask.c
@@ -121,6 +122,7 @@ add_custom_command(OUTPUT ${PAF_MAPPING_COMMON_BUILD_DIR}/pip-install.stamp
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/__init__.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/entity.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/filter.html
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/hero.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/map.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/markers.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ext_modules/mapping_common/mask.html
