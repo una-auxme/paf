@@ -214,7 +214,7 @@ class ACC(CompatibleNode):
             desired_speed = min(self.speed_limit, self.external_speed_limit)
 
         curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
-        desired_speed = min(curve_speed, self.desired_speed)
+        desired_speed = min(curve_speed, desired_speed)
         marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
 
         debug_markers.extend(c_markers)
@@ -227,7 +227,7 @@ class ACC(CompatibleNode):
             speed_reason = "Speed limit"
         elif (
             self.external_speed_limit
-            and self.desired_speed == self.external_speed_limit
+            and desired_speed == self.external_speed_limit
         ):
             speed_reason = "External speed limit"
         else:
