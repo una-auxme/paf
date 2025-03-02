@@ -30,7 +30,13 @@ class CurrentStatePublisher(CompatibleNode):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.new_timer(self.loop_rate, self.publish_heading)
+        self.new_timer(self.loop_rate, self.publish_heading_handler)
+
+    def publish_heading_handler(self, timer_event=None):
+        try:
+            self.publish_heading(timer_event)
+        except Exception as e:
+            rospy.logfatal(e)
 
     def publish_heading(self, timer_event):
         try:

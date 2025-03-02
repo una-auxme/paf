@@ -149,7 +149,13 @@ class VelocityController(CompatibleNode):
             self.brake_pub.publish(brake)
             self.throttle_pub.publish(throttle)
 
-        self.new_timer(self.control_loop_rate, loop)
+        def loop_handler(timer_event=None):
+            try:
+                loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, loop_handler)
         self.spin()
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
