@@ -1,5 +1,12 @@
 # Localization
 
+An overview over the different nodes working together to localize the vehicle is provided in the [localization](./localization.md) file.
+
+- [Kalman Filter](./kalman_filter.md)
+- [Position Heading Publisher Node](./position_heading_publisher_node.md)
+- [Position Heading Filter Debug Node](./position_heading_filter_debug_node.md)
+- [Coordinate Transformation](./coordinate_transformation.md) (helper functions)
+
 There are currently three nodes working together to localize the vehicle:
 
 - [position_heading_publisher_node](./position_heading_publisher_node.md)
