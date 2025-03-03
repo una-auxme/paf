@@ -182,7 +182,13 @@ class BehaviorTree(CompatibleNode):
         rospy.loginfo("Behavior tree setup done.")
 
         self.rate = self.get_param("~tick_rate", 5.3)
-        self.new_timer(1.0 / self.rate, self.tick_tree)
+        self.new_timer(1.0 / self.rate, self.tick_tree_handler)
+
+    def tick_tree_handler(self, timer_event=None):
+        try:
+            self.tick_tree()
+        except Exception as e:
+            rospy.logfatal(e)
 
     def tick_tree(self, timer_event=None):
         self.behavior_tree.tick()

@@ -428,7 +428,13 @@ class Acting_Debug_Node(CompatibleNode):
                     print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
-        self.new_timer(self.control_loop_rate, loop)
+        def loop_handler(timer_event=None):
+            try:
+                loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, loop_handler)
         self.spin()
 
 
