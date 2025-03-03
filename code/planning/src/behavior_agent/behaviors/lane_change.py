@@ -179,7 +179,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 Status.FAILURE,
-                f"No lane change ahead",
+                "No lane change ahead",
             )
 
     def terminate(self, new_status):
