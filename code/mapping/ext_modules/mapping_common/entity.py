@@ -485,8 +485,8 @@ class Entity:
             value has to be inverted. Use the "get_delta_velocity_of" function for this
             case.
 
-        - result > 0: other moves away from self
-        - result < 0: other moves nearer to self
+        - result > 0: other moves in the forward direction of self
+        - result < 0: other moves in the backward direction of self
 
         Args:
             other (Entity)

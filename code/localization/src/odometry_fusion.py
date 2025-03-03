@@ -160,13 +160,19 @@ class OdometryNode(CompatibleNode):
         # Publish odometry message
         self.odom_pub.publish(odom)
 
+    def publish_odometry_handler(self, timer_event=None):
+        try:
+            self.publish_odometry()
+        except Exception as e:
+            rospy.logfatal(e)
+
     def run(self):
         # wait until Speedometer and steering angle msg are received
         while not self.initialized:
             rospy.sleep(1)
         rospy.sleep(1)
 
-        self.new_timer(self.loop_rate, lambda _: self.publish_odometry())
+        self.new_timer(self.loop_rate, lambda _: self.publish_odometry_handler())
 
         self.spin()
 
