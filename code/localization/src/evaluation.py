@@ -167,13 +167,13 @@ class Evaluator(CompatibleNode):
 
     def set_current_filter_pos(self, data: PoseStamped):
         """
-        This method is called when new current_pos data is received.
+        This method is called when new EKF position data is received.
         """
         self.current_pos = data
 
     def set_current_filter_heading(self, data: Float32):
         """
-        This method is called when new current_heading data is received.
+        This method is called when new EKF heading data is received.
         """
         self.current_heading = data
 
