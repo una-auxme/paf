@@ -57,18 +57,18 @@ generate_dynamic_reconfigure_options(
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   NavigationPoint.msg
-   Trajectory.msg
- )
+# add_message_files(
+#   FILES
+# )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-#   Service1.srv
-#   Service2.srv
   RequestBehaviourChange.srv
+  StartOvertake.srv
+  EndOvertake.srv
+  OvertakeStatus.srv
+  SpeedAlteration.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -79,12 +79,12 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-   perception
-   geometry_msgs
- )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  perception
+  geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

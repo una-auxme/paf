@@ -4,7 +4,7 @@
 import py_trees
 import py_trees_ros
 
-from std_msgs.msg import Float32, Bool, Float32MultiArray, Int16, String
+from std_msgs.msg import Float32, Int16, String
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
@@ -57,11 +57,6 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/slowed_by_car_in_front",
-            "msg": Bool,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
             "name": f"/paf/{role_name}/waypoint_distance",
             "msg": Waypoint,
             "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
@@ -92,13 +87,13 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/lane_change_distance",
-            "msg": LaneChange,
-            "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
+            "name": f"/paf/{role_name}/acc_velocity",
+            "msg": Float32,
+            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/collision",
-            "msg": Float32MultiArray,
+            "name": f"/paf/{role_name}/lane_change_distance",
+            "msg": LaneChange,
             "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
         },
         {
@@ -108,16 +103,6 @@ def create_node(role_name):
         },
         {
             "name": f"/paf/{role_name}/current_heading",
-            "msg": Float32,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/overtake_success",
-            "msg": Float32,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/oncoming",
             "msg": Float32,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
@@ -132,13 +117,8 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/trajectory",
+            "name": f"/paf/{role_name}/trajectory_local",
             "msg": Path,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/current_wp",
-            "msg": Float32,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
