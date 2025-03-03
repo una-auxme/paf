@@ -91,7 +91,13 @@ class TrafficLightNode(CompatibleNode):
             if self.visual_debug:
                 self.traffic_light_visualization(self.traffic_light_msg.state)
 
-        self.new_timer(0.05, loop)
+        def loop_handler(timer_event=None):
+            try:
+                loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(0.05, loop_handler)
         self.spin()
 
     def traffic_light_visualization(self, state):
