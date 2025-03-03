@@ -3,7 +3,7 @@
 """
 ######### !!!!!!!!!! WARNING !!!!!!!!!!!!!!! ##########
 
-This Node is currently not in use and in a non functional state.
+This node is currently not in use and in a non functional state.
 Do not use this node unless you know what to do and how to use it.
 
 ######### !!!!!!!!!! WARNING !!!!!!!!!!!!!!! ##########
@@ -15,7 +15,6 @@ from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, Header
 
-# from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 import rospy
 import carla
@@ -27,8 +26,12 @@ FOLDER_PATH: str = "/Position_Heading_Datasets"
 
 class Evaluator(CompatibleNode):
     """
-    Node publishes a filtered gps signal.
-    This is achieved using a rolling average.
+    This node compares:
+    - the estimated state of the EKF
+    - the estimated state of the Kalman filter
+    - the unfiltered state
+
+    The ground truth (from Carla) is published.
     """
 
     def checkout_carla(self, timer_event):
@@ -41,11 +44,6 @@ class Evaluator(CompatibleNode):
             print(self.carla_car.get_location())
 
     def __init__(self):
-        """
-        Constructor / Setup
-        :return:
-        """
-
         super().__init__("evaluator")
 
         # basic info
@@ -53,9 +51,7 @@ class Evaluator(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
         # carla attributes
-        CARLA_HOST = os.environ.get(
-            "CARLA_SIM_HOST", "paf-carla-simulator-1"
-        )  # carla-simulator")
+        CARLA_HOST = os.environ.get("CARLA_SIM_HOST", "paf-carla-simulator-1")
         CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
 
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
@@ -78,7 +74,7 @@ class Evaluator(CompatibleNode):
         self.test_filter_pos = PoseStamped()
         self.test_filter_heading = Float32()
 
-        self.loginfo("Position Heading Filter Debug node started")
+        self.loginfo("Evaluation node started")
 
         # region Subscriber START
 
