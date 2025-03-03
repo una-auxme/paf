@@ -26,7 +26,7 @@
   - [2.5. Consistency and Style](#25-consistency-and-style)
   - [2.6. Maintenance](#26-maintenance)
   - [2.7. Deprecation](#27-deprecation)
-- [GitHub Repository](#github-repository)
+- [3. GitHub Repository](#3-github-repository)
 
 ## 1. In Code Documentation
 
@@ -175,7 +175,7 @@ docker compose -f build/docker-compose.linting.yaml up
 - **Deprecation Notices**: When documentation, documented features or components become outdated, obsolete, or deprecated, remove them whenever possible.
   - If removal is not feasible, clearly mark them as deprecated in the documentation. Additionally, provide guidance on alternative solutions or replacements to help users transition smoothly.
 
-## GitHub Repository
+## 3. GitHub Repository
 
 At the end of the project, ensure that the GitHub repository is well-maintained and organized. This includes:
 
