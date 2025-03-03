@@ -267,14 +267,19 @@ class Approach(py_trees.behaviour.Behaviour):
 
         add_debug_entry(
             self.name,
-            f"Change distance: {self.change_distance}\n",
-        )
-        add_debug_entry(
-            self.name,
-            f"Change direction: {'None' if self.change_direction is None else self.change_direction.name}\n",
+            f"Change distance: {self.change_distance}",
         )
 
-        # if change to right, do not change early (as there could be no road till change point!)
+        debug_entry_text = "None"
+        if self.change_direction is not None:
+            debug_entry_text = self.change_direction.name
+        add_debug_entry(
+            self.name,
+            f"Change direction: {debug_entry_text}",
+        )
+
+        # if change to right, do not change early
+        # (as there could be no road till change point!)
         if self.change_detected and self.change_direction is LaneFreeDirection.LEFT:
             lc_free, lc_mask = tree.is_lane_free(
                 right_lane=self.change_direction.value,
@@ -348,7 +353,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 "stopping car and change to Wait",
             )
         else:
-            if self.change_distance is LaneFreeDirection.LEFT:
+            if self.change_direction is LaneFreeDirection.LEFT:
                 return debug_status(
                     self.name,
                     Status.RUNNING,
