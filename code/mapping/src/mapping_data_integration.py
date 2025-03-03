@@ -85,7 +85,6 @@ class MappingDataIntegrationNode(CompatibleNode):
         )
 
         # Sensor subscriptions:
-
         self.lanemarkings = None
 
         self.new_subscription(
