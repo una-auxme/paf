@@ -9,7 +9,7 @@ import rospy
 
 from agents.navigation.local_planner import RoadOption
 
-from mapping_common.map import Map, LaneFreeState
+from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
@@ -212,7 +212,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.change_detected = False
         self.change_distance: Optional[float] = None
         self.change_option: Optional[RoadOption] = None
-        self.change_direction: Optional[bool] = None
+        self.change_direction: Optional[LaneFreeDirection] = None
         self.counter_lanefree = 0
         self.curr_behavior_pub.publish(bs.lc_app_init.name)
 
@@ -250,9 +250,9 @@ class Approach(py_trees.behaviour.Behaviour):
 
             # Check if change is to the left or right lane
             if self.change_option == RoadOption.CHANGELANELEFT:
-                self.change_direction = False
+                self.change_direction = LaneFreeDirection.LEFT
             elif self.change_option == RoadOption.CHANGELANERIGHT:
-                self.change_direction = True
+                self.change_direction = LaneFreeDirection.RIGHT
 
         if (
             self.change_distance is None
@@ -271,12 +271,13 @@ class Approach(py_trees.behaviour.Behaviour):
         )
         add_debug_entry(
             self.name,
-            f"Change direction: {'right' if self.change_direction else 'left'}\n",
-        )
+            f"Change direction: {'None' if self.change_direction is None else self.change_direction.name}\n",
+        )   
 
-        if self.change_detected:
+        # if change to right, do not change early (as there could be no road till change point!)
+        if self.change_detected and not self.change_direction:
             lc_free, lc_mask = tree.is_lane_free(
-                right_lane=self.change_direction,
+                right_lane=self.change_direction.value,
                 lane_length=22.5,
                 lane_transform=-5.0,
                 check_method="fallback",
@@ -290,7 +291,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 if self.counter_lanefree > 1:
                     # bool to skip Wait since oncoming is free
                     LANECHANGE_FREE = True
-                    if self.change_direction:
+                    if self.change_direction is LaneFreeDirection.RIGHT:
                         lanechange_offset = -2.5
                     else:
                         lanechange_offset = 2.5
@@ -347,6 +348,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 "stopping car and change to Wait",
             )
         else:
+            if 
             return debug_status(
                 self.name,
                 Status.RUNNING,
@@ -376,7 +378,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Lane Change Wait")
         self.change_option: Optional[RoadOption] = None
-        self.change_direction: Optional[bool] = None
+        self.change_direction: Optional[LaneFreeDirection] = None
         self.counter_lanefree = 0
 
     def update(self):
@@ -407,9 +409,9 @@ class Wait(py_trees.behaviour.Behaviour):
 
             # Check if change is to the left or right lane
             if self.change_option == RoadOption.CHANGELANELEFT:
-                self.change_direction = False
+                self.change_direction = LaneFreeDirection.LEFT
             elif self.change_option == RoadOption.CHANGELANERIGHT:
-                self.change_direction = True
+                self.change_direction = LaneFreeDirection.RIGHT
 
         if self.change_option is None or self.change_direction is None:
             return debug_status(
@@ -419,7 +421,7 @@ class Wait(py_trees.behaviour.Behaviour):
             )
 
         lc_free, lc_mask = tree.is_lane_free(
-            right_lane=self.change_direction,
+            right_lane=self.change_direction.value,
             lane_length=22.5,
             lane_transform=-5.0,
             check_method="lanemarking",
@@ -495,7 +497,6 @@ class Change(py_trees.behaviour.Behaviour):
         the lane change.
         """
         rospy.loginfo("Lane Change: Change to next Lane")
-        self.change_detected = False
         self.change_distance: Optional[float] = None
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
@@ -512,7 +513,6 @@ class Change(py_trees.behaviour.Behaviour):
         if lane_change is None:
             return debug_status(self.name, Status.FAILURE, "lane_change is None")
         else:
-            self.change_detected = lane_change.isLaneChange
             self.change_distance = lane_change.distance
 
         if self.change_distance is None:
@@ -520,10 +520,7 @@ class Change(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        if (
-            self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE
-            or self.change_detected
-        ):
+        if self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE:
             return debug_status(
                 self.name,
                 Status.RUNNING,
