@@ -4,6 +4,7 @@
 uint8 NO_OVERTAKE=0
 uint8 OVERTAKING=1
 uint8 OVERTAKE_QUEUED=2
+uint8 OVERTAKE_ENDING=3
 uint8 status
 # Offset of the current overtake
 float32 offset

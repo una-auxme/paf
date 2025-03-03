@@ -1,4 +1,5 @@
 import py_trees
+from py_trees.common import Status
 import numpy as np
 from std_msgs.msg import String
 from typing import Optional
@@ -363,10 +364,8 @@ class Approach(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]"
-            % (self.name, self.status, new_status)
-        )
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_stop_mark(self.stop_proxy)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -572,10 +571,8 @@ class Wait(py_trees.behaviour.Behaviour):
         writes a status message to the console when the behaviour terminates
         :param new_status: new state after this one is terminated
         """
-        self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]"
-            % (self.name, self.status, new_status)
-        )
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_stop_mark(self.stop_proxy)
 
 
 class Enter(py_trees.behaviour.Behaviour):

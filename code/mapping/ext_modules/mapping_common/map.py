@@ -512,13 +512,30 @@ class MapTree:
             with the checkbox in percent. Defaults to 0.0.
         - min_coverage_area (float, optional): how much an entity must collide
             with the checkbox in m2. Defaults to 0.0.
+        - motion_aware (bool, optional): if true, the lane check will be aware of
+            the motion of the entities. Defaults to True.
 
         Default is "rectangle".
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
             return LaneFreeState and if available the checkbox shape
         """
-        if check_method == "rectangle":
+        lane_state = LaneFreeState.TO_BE_CHECKED
+        lane_box = None
+        if check_method in ["lanemarking", "fallback"]:
+            lane_state, lane_box = self.is_lane_free_lanemarking(
+                right_lane=right_lane,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
+                lane_angle=lane_angle,
+            )
+
+        if check_method == "rectangle" or (
+            check_method == "fallback" and lane_state.is_error()
+        ):
             lane_state, lane_box = self.is_lane_free_rectangle(
                 right_lane=right_lane,
                 lane_length=lane_length,
@@ -527,42 +544,11 @@ class MapTree:
                 min_coverage_percent=min_coverage_percent,
                 min_coverage_area=min_coverage_area,
             )
-        elif check_method == "lanemarking":
-            lane_state, lane_box = self.is_lane_free_lanemarking(
-                right_lane=right_lane,
-                lane_length=lane_length,
-                lane_transform=lane_transform,
-                reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
-                lane_angle=lane_angle,
-            )
-        elif check_method == "fallback":
-            lane_state, lane_box = self.is_lane_free_lanemarking(
-                right_lane=right_lane,
-                lane_length=lane_length,
-                lane_transform=lane_transform,
-                reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
-                lane_angle=lane_angle,
-            )
-
-            # return value of is_lane_free_lanemarking function of value is plausible
-            if lane_state.is_error():
-                lane_state, lane_box = self.is_lane_free_rectangle(
-                    right_lane=right_lane,
-                    lane_length=lane_length,
-                    lane_transform=lane_transform,
-                    reduce_lane=reduce_lane,
-                    min_coverage_percent=min_coverage_percent,
-                    min_coverage_area=min_coverage_area,
-                )
 
         if lane_state.is_error():
             return lane_state, None
 
-        if lane_box is None or not LaneFreeState.TO_BE_CHECKED:
+        if lane_box is None or lane_state != LaneFreeState.TO_BE_CHECKED:
             return LaneFreeState.SHAPE_ERR, None
 
         colliding_entities = self.get_overlapping_entities(
@@ -575,10 +561,29 @@ class MapTree:
         if motion_aware and hero is not None:
             for i in range(len(colliding_entities) - 1, -1, -1):
                 entity = colliding_entities[i]
-                delta_motion = hero.get_delta_velocity_of(entity.entity)
 
-                if delta_motion is not None and delta_motion > 0.5:
+                forward_velocity = hero.get_delta_forward_velocity_of(entity.entity)
+                if forward_velocity is None:
+                    continue
+
+                into_self_local: Transform2D = (
+                    hero.transform.inverse() * entity.entity.transform
+                )
+                other_position_in_self_coords: Vector2 = into_self_local.translation()
+
+                # if the entity is behind the car and moving away from the car
+                # it is not considered as a colliding entity
+                # To not filter any parking cars, the threshold is set to abs(0.5).
+                if other_position_in_self_coords.x() < 0.0 and forward_velocity < -0.5:
                     del colliding_entities[i]
+                    continue
+
+                # car is moving in our direction and is in front of us
+                # car needs to be at least 1.5 m away from us
+                if other_position_in_self_coords.x() > 1.5 and forward_velocity > 0.5:
+                    del colliding_entities[i]
+                    continue
+
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
             return LaneFreeState.FREE, lane_box
@@ -726,10 +731,6 @@ class MapTree:
         if not shapely.is_valid(lane_box):
             return LaneFreeState.SHAPE_ERR, None
 
-        # get entities that are colliding with the checkbox entity
-        # TODO: motion detection check could be done here also,
-        # deprecated function could be found in commit
-        # d6d246fe181d6c60a1de33e578f2d4a47cb05ed4
         return LaneFreeState.TO_BE_CHECKED, lane_box
 
     def is_lane_free_intersection(
