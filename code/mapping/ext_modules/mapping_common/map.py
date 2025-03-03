@@ -548,7 +548,7 @@ class MapTree:
         if lane_state.is_error():
             return lane_state, None
 
-        if lane_box is None or not LaneFreeState.TO_BE_CHECKED:
+        if lane_box is None or not lane_state == LaneFreeState.TO_BE_CHECKED:
             return LaneFreeState.SHAPE_ERR, None
 
         colliding_entities = self.get_overlapping_entities(
@@ -561,12 +561,29 @@ class MapTree:
         if motion_aware and hero is not None:
             for i in range(len(colliding_entities) - 1, -1, -1):
                 entity = colliding_entities[i]
-                delta_motion = hero.get_delta_velocity_of(entity.entity)
 
-                # 0.5 is a threshold for the motion detection. Parking cars could have a small motion delta.
-                # To not filter any parking cars, the threshold is set to 0.5.
-                if delta_motion is not None and delta_motion > 0.5:
+                forward_velocity = hero.get_delta_forward_velocity_of(entity.entity)
+                if forward_velocity is None:
+                    continue
+
+                into_self_local: Transform2D = (
+                    hero.transform.inverse() * entity.entity.transform
+                )
+                other_position_in_self_coords: Vector2 = into_self_local.translation()
+
+                # if the entity is behind the car and moving away from the car
+                # it is not considered as a colliding entity
+                # To not filter any parking cars, the threshold is set to abs(0.5).
+                if other_position_in_self_coords.x() < 0.0 and forward_velocity < -0.5:
                     del colliding_entities[i]
+                    continue
+
+                # car is moving in our direction and is in front of us
+                # car needs to be at least 1.5 m away from us
+                if other_position_in_self_coords.x() > 1.5 and forward_velocity > 0.5:
+                    del colliding_entities[i]
+                    continue
+
         # if there are colliding entities, the lane is not free
         if not colliding_entities:
             return LaneFreeState.FREE, lane_box

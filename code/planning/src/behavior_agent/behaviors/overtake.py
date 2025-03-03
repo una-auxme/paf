@@ -280,7 +280,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 45
+        self.clear_distance = 50
         OVERTAKE_FREE = False
 
     def update(self):
@@ -340,7 +340,7 @@ class Approach(py_trees.behaviour.Behaviour):
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=False,
                 lane_length=self.clear_distance,
-                lane_transform=15.0,
+                lane_transform=10.0,
                 check_method="fallback",
             )
             if isinstance(ot_mask, shapely.Polygon):
@@ -414,7 +414,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Waiting for Overtake")
         # slightly less distance since we have already stopped
-        self.clear_distance = 45
+        self.clear_distance = 50
         self.ot_counter = 0
         self.ot_gone = 0
         return True
@@ -483,7 +483,7 @@ class Wait(py_trees.behaviour.Behaviour):
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
-            lane_transform=15.0,
+            lane_transform=10.0,
             check_method="fallback",
         )
 
