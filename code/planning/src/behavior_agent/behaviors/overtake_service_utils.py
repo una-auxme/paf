@@ -1,7 +1,6 @@
 import rospy
 from typing import Optional
 from py_trees.blackboard import Blackboard
-from geometry_msgs.msg import PoseStamped
 
 from planning.srv import (
     StartOvertake,
@@ -17,6 +16,7 @@ from planning.srv import (
 import mapping_common.map
 from mapping_common.transform import Point2, Transform2D
 
+from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
 
 

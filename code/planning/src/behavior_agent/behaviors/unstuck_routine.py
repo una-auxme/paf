@@ -2,30 +2,14 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
-from typing import Optional, Tuple, Union
-import mapping_common.mask
-from mapping_common.map import Map, MapTree
-from .topics2blackboard import BLACKBOARD_MAP_ID
-from mapping_common.entity import ShapelyEntity, Entity
-from mapping_common.entity import FlagFilter
-import shapely
+
 from . import behavior_speed as bs
-from .speed_alteration import add_speed_override
-from .debug_markers import add_debug_marker, debug_status, debug_marker
-from .overtake_service_utils import request_end_overtake, create_end_overtake_proxy
-from .stop_mark_service_utils import (
-    create_stop_marks_proxy,
-    update_stop_marks,
-)
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
-TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
-TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)  # default 25 (s)
-UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
+TRIGGER_STUCK_DURATION = rospy.Duration(20)  # default 8 (s)
+TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)  # default 25 (s)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(1.2)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
-REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
-REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
-REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
 
 
 def get_distance(pos_1, pos_2):
@@ -47,61 +31,6 @@ def pos_to_np_array(pos):
         return np.array([pos.pose.position.x, pos.pose.position.y])
     else:
         return None
-
-
-def calculate_obstacle_behind(
-    behavior_name: str,
-    tree: MapTree,
-    overlap_percent: float,
-) -> bool:
-    """Calculates if there is an obstacle in front
-
-    Args:
-        behavior_name (str): Name of the behavior using the function.
-            Input self.name here
-        tree (MapTree): Filtered map tree for querying entities
-        blackboard (py_trees.blackboard.Blackboard): Blackboard for fetching data
-        front_mask_size (float): Length of the static box collision mask in front
-        trajectory_check_length (float): Length of the trajectory collision mask
-        overlap_percent (float):
-            How much of an entity has to be inside the collision mask
-
-    Returns:
-        Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
-            - If the function fails to create a valid result: Returns a Status
-            - If the function succeeds:
-                - If there is an obstacle: Returns the entity and
-                  its distance to the hero
-                - No obstacle: None
-    """
-    # data preparation
-    hero: Optional[Entity] = tree.map.hero()
-    if hero is None:
-        return debug_status(
-            behavior_name, py_trees.common.Status.FAILURE, "hero is None"
-        )
-    hero_width = hero.get_width()
-
-    collision_mask = mapping_common.mask.project_plane(
-        -(hero.get_front_x() + REVERSE_LOOKUP_DISTANCE),
-        hero_width * REVERSE_LOOKUP_WIDTH_FACTOR,
-    )
-    add_debug_marker(debug_marker(collision_mask, color=REVERSE_COLLISION_MARKER_COLOR))
-
-    entity_result = tree.get_nearest_entity(
-        collision_mask, hero.to_shapely(), min_coverage_percent=overlap_percent
-    )
-
-    if entity_result is not None:
-        entity, distance = entity_result
-        add_debug_marker(
-            debug_marker(
-                entity.entity, color=REVERSE_COLLISION_MARKER_COLOR, scale_z=0.3
-            )
-        )
-        return True
-    else:
-        return False
 
 
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
@@ -250,16 +179,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         # print fatal error if stuck for too long
         if self.stuck_duration >= TRIGGER_STUCK_DURATION:
-            end_overtake_proxy = create_end_overtake_proxy()
-            request_end_overtake(end_overtake_proxy)
-            stop_proxy = create_stop_marks_proxy()
-            update_stop_marks(
-                stop_proxy,
-                id="unstuck",
-                reason="unstuck triggered",
-                is_global=False,
-                marks=[],
-            )
             rospy.logfatal(
                 f"""Should be Driving but Stuck in one place
                            for more than {TRIGGER_STUCK_DURATION.secs}\n
@@ -269,16 +188,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 self.blackboard.get("/paf/hero/current_pos")
             )
         elif self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
-            end_overtake_proxy = create_end_overtake_proxy()
-            request_end_overtake(end_overtake_proxy)
-            stop_proxy = create_stop_marks_proxy()
-            update_stop_marks(
-                stop_proxy,
-                id="unstuck",
-                reason="unstuck triggered",
-                is_global=False,
-                marks=[],
-            )
             rospy.logfatal(
                 f"""Wait Stuck in one place
                            for more than {TRIGGER_WAIT_STUCK_DURATION.secs}
@@ -332,23 +241,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         if rospy.Time.now() - self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
             self.pub_unstuck_flag.publish(True)
-
-            map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
-            if map is None:
-                return debug_status(
-                    self.name, py_trees.common.Status.FAILURE, "Map is None"
-                )
-            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-            collision_detected = calculate_obstacle_behind(self.name, tree, 0.1)
-
-            if (
-                get_distance(self.init_pos, self.current_pos) < UNSTUCK_CLEAR_DISTANCE
-            ) and not collision_detected:
-                add_speed_override(-0.05)
-            elif get_distance(self.init_pos, self.current_pos) < 0.5:
-                add_speed_override(-0.05)
-            else:
-                add_speed_override(0.001)
             rospy.logfatal("Unstuck routine running.")
             return py_trees.common.Status.RUNNING
         else:
