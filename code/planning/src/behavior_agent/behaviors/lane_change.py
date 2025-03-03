@@ -434,7 +434,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
         lc_free, lc_mask = tree.is_lane_free(
             right_lane=self.change_direction.value,
-            lane_length=22. 5,
+            lane_length=22.5,
             lane_transform=-5.0,
             check_method="lanemarking",
         )
@@ -540,9 +540,11 @@ class Change(py_trees.behaviour.Behaviour):
 
         hero_transform = _get_global_hero_transform()
 
-        local_pos: Point2 = hero_transform.inverse() * Point2.new(
-            self.change_position.x, self.change_position.y
-        ) + Vector2.forward() * 5.0 
+        local_pos: Point2 = (
+            hero_transform.inverse()
+            * Point2.new(self.change_position.x, self.change_position.y)
+            + Vector2.forward() * 5.0
+        )
         trajectory_local = mapping_common.mask.ros_path_to_line(trajectory_local)
         change_distance = trajectory_local.line_locate_point(local_pos.to_shapely())
 
