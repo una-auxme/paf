@@ -14,9 +14,9 @@ Do not make the mistake of overselling your project. Be honest about the challen
   - [2.7. Reflection](#27-reflection)
   - [2.8. Demonstration Videos](#28-demonstration-videos)
 - [3. Additional Guidelines](#3-additional-guidelines)
-  - [3.1. Tips for a Good Presentation:](#31-tips-for-a-good-presentation)
-  - [3.2. Questions \& Discussion:](#32-questions--discussion)
-  - [3.3. Evaluation Criteria (Possible Aspects):](#33-evaluation-criteria-possible-aspects)
+  - [3.1. Tips for a Good Presentation](#31-tips-for-a-good-presentation)
+  - [3.2. Questions \& Discussion](#32-questions--discussion)
+  - [3.3. Evaluation Criteria (Possible Aspects)](#33-evaluation-criteria-possible-aspects)
 
 ## 1. Technical Aspects
 
@@ -77,7 +77,7 @@ Possible topics to cover:
 
 ## 3. Additional Guidelines
 
-### 3.1. Tips for a Good Presentation:
+### 3.1. Tips for a Good Presentation
 
 - Clear and concise slides (avoid overloading with information).
 - Prefer practical examples & demos (if possible).
@@ -85,14 +85,14 @@ Possible topics to cover:
   - Avoid excessive technical depth for unnecessary details.
 - Manage time effectively—do not spend too long on one topic.
 
-### 3.2. Questions & Discussion:
+### 3.2. Questions & Discussion
 
 - Be prepared for critical questions.
 - If someone cannot answer a question immediately, the team can step in.
 
-### 3.3. Evaluation Criteria (Possible Aspects):
+### 3.3. Evaluation Criteria (Possible Aspects)
 
-- Clarity of the presentation
-- Explanation/visualization of the technical implementation & solutions
-- Reflection & lessons learned
-- Quality of responses during the Q&A session
+- Clarity of the presentation.
+- Explanation/visualization of the technical implementation & solutions.
+- Reflection & lessons learned.
+- Quality of responses during the Q&A session.
