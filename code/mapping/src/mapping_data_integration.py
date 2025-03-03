@@ -14,16 +14,18 @@ from mapping_common.transform import Transform2D, Vector2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
 
-from mapping_common.filter import MapFilter, GrowthMergingFilter, LaneIndexFilter
+from mapping_common.filter import (
+    MapFilter,
+    GrowthMergingFilter,
+    LaneIndexFilter,
+    GrowPedestriansFilter,
+)
 from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
-
-
-# from shapely.validation import orient
 
 from mapping.cfg import MappingIntegrationConfig
 from dynamic_reconfigure.server import Server
@@ -48,13 +50,15 @@ class MappingDataIntegrationNode(CompatibleNode):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
+        self.lanemarkings = None
+
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
             msg_type=PointCloud2,
             callback=self.lidar_callback,
             qos_profile=1,
         )
-        self.lanemarkings = None
+
         self.new_subscription(
             topic=self.get_param(
                 "~lanemarkings_init_topic", "/paf/hero/mapping/init_lanemarkings"
@@ -272,13 +276,10 @@ class MappingDataIntegrationNode(CompatibleNode):
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
-            self.radar_clustered_points_data = None
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
-            self.lidar_clustered_points_data = None
         elif sensortype == "vision":
             data = self.vision_clustered_points_data
-            self.vision_clustered_points_data = None
         else:
             raise ValueError(f"Unknown sensortype: {sensortype}")
 
@@ -312,27 +313,34 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
-                continue
+                if sensortype == "radar":
+                    shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
+                    transform = Transform2D.new_translation(
+                        Vector2.new(cluster_points_xy[0, 0], cluster_points_xy[0, 1])
+                    )
+                else:
+                    continue
+            else:
+                if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
+                    # add startpoint to close polygon
+                    cluster_points_xy = np.vstack(
+                        [cluster_points_xy, cluster_points_xy[0]]
+                    )
 
-            if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                # add startpoint to close polygon
-                cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
+                cluster_polygon = MultiPoint(cluster_points_xy)
+                cluster_polygon_hull = cluster_polygon.convex_hull
+                if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                    rospy.loginfo("Empty hull")
+                    continue
+                if not isinstance(cluster_polygon_hull, shapely.Polygon):
+                    rospy.loginfo("Cluster is not polygon, continue")
+                    continue
 
-            cluster_polygon = MultiPoint(cluster_points_xy)
-            cluster_polygon_hull = cluster_polygon.convex_hull
-            if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                rospy.loginfo("Empty hull")
-                continue
-            if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                rospy.loginfo("Cluster is not polygon, continue")
-                continue
-
-            shape = Polygon.from_shapely(
-                cluster_polygon_hull, make_centered=True  # type: ignore
-            )
-
-            transform = shape.offset
-            shape.offset = Transform2D.identity()
+                shape = Polygon.from_shapely(
+                    cluster_polygon_hull, make_centered=True  # type: ignore
+                )
+                transform = shape.offset
+                shape.offset = Transform2D.identity()
 
             motion = None
             if motion_array_converted is not None:
@@ -447,27 +455,6 @@ class MappingDataIntegrationNode(CompatibleNode):
             else:
                 return
 
-        # lane_box_entities visualizes the shape and position of the lane box
-        # which is used for lane_free function
-        # lane_box_entities = [
-        #    Entity(
-        #        confidence=100.0,
-        #        priority=100.0,
-        #        shape=Rectangle(
-        #            length=22.5,
-        #            width=1.5,
-        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
-        #        ),
-        #        transform=Transform2D.identity(),
-        #        flags=Flags(is_ignored=True),
-        #    )
-        # ]
-        # entities.extend(lane_box_entities)
-
-        # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
-
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)
 
@@ -494,6 +481,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             )
         if self.get_param("~enable_lane_index_filter"):
             map_filters.append(LaneIndexFilter())
+        if self.get_param("~enable_pedestrian_grow_filter"):
+            map_filters.append(GrowPedestriansFilter())
 
         return map_filters
 
