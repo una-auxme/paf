@@ -480,10 +480,13 @@ class Entity:
         return velocity
 
     def get_delta_forward_velocity_of(self, other: "Entity") -> Optional[float]:
-        """Calculates the delta velocity compared to other in the heading of self
+        """Calculates the delta velocity compared to other in the heading of self.
+            This function is only for objects in front. If the entity is behind this
+            value has to be inverted. Use the "get_delta_velocity_of" function for this
+            case.
 
-        - result > 0: other moves away from self
-        - result < 0: other moves nearer to self
+        - result > 0: other moves in the forward direction of self
+        - result < 0: other moves in the backward direction of self
 
         Args:
             other (Entity)
@@ -500,6 +503,29 @@ class Entity:
         )
         relative_motion = other_motion_in_self_coords - self.motion.linear_motion
         return relative_motion.x()
+
+    def get_delta_velocity_of(self, other: "Entity") -> Optional[float]:
+        """Calculates the delta velocity compared to other in the heading of self
+
+        - result > 0: other moves away from self
+        - result < 0: other moves nearer to self
+
+        Args:
+            other (Entity)
+
+        Returns:
+            Optional[float]: Delta velocity if both entities have one.
+        """
+        forward_velocity = self.get_delta_forward_velocity_of(other)
+        if forward_velocity is None:
+            return None
+
+        into_self_local: Transform2D = self.transform.inverse() * other.transform
+        other_position_in_self_coords: Vector2 = into_self_local.translation()
+
+        if other_position_in_self_coords.x() < 0.0:
+            return -forward_velocity
+        return forward_velocity
 
     def get_width(self) -> float:
         """Returns the local width (y-bounds) of the entity
