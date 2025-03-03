@@ -11,20 +11,20 @@ from scipy.spatial.transform import Rotation as R
 import tf2_ros
 
 
-class CurrentStatePublisher(CompatibleNode):
+class EKFStatePublisher(CompatibleNode):
     def __init__(self):
-        super().__init__("current_state_publisher")
+        super().__init__("ekf_state_publisher")
         # Parameters
         self.role_name = self.get_param("role_name", "hero")
         self.loop_rate = self.get_param("control_loop_rate", 0.05)
 
-        # Publishes current_pos and current_heading from hero frame out of tf-graph
+        # Publishes ekf_pos and ekf_heading from hero frame out of tf-graph
         self.position_publisher: Publisher = self.new_publisher(
-            PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
+            PoseStamped, f"/paf/{self.role_name}/ekf_pos", qos_profile=1
         )
 
         self.heading_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
+            Float32, f"/paf/{self.role_name}/ekf_heading", qos_profile=1
         )
 
         self.tf_buffer = tf2_ros.Buffer()
@@ -65,7 +65,7 @@ class CurrentStatePublisher(CompatibleNode):
             self.loginfo(ex)
 
     def run(self):
-        self.loginfo("Started CurrentStatePublisher Node!")
+        self.loginfo("Started EKFStatePublisher Node!")
         self.spin()
 
 
@@ -74,10 +74,10 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init("current_state_publisher", args=args)
+    roscomp.init("ekf_state_publisher", args=args)
 
     try:
-        node = CurrentStatePublisher()
+        node = EKFStatePublisher()
         node.run()
     except KeyboardInterrupt:
         pass
