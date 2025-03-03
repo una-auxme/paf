@@ -7,7 +7,6 @@ from std_msgs.msg import String, Header
 from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sklearn.cluster import DBSCAN
 
-# from sklearn.cluster import HDBSCAN
 from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
@@ -355,21 +354,20 @@ class RadarNode(CompatibleNode):
         combined_points = np.array(combined_points)
         self.get_lead_vehicle_info(combined_points)
 
-        combined_points_pc2 = create_pointcloud2(combined_points, None, True)
-        self.combined_points.publish(combined_points_pc2)
-
         # Cluster and bounding box processing
+
         if self.enable_clustering:
-            clustered_data = cluster_data(
+            cluster_labels = cluster_data(
                 combined_points,
                 eps=self.dbscan_eps,
                 min_samples=self.dbscan_samples,
             )
-            cloud = create_pointcloud2(combined_points, clustered_data.labels_, False)
+
+            cloud = create_pointcloud2(combined_points, cluster_labels, False)
             self.visualization_radar_publisher.publish(cloud)
 
             points_with_labels = np.hstack(
-                (combined_points, clustered_data.labels_.reshape(-1, 1))
+                (combined_points, cluster_labels.reshape(-1, 1))
             )
             bounding_boxes = generate_bounding_boxes(points_with_labels)
 
@@ -399,14 +397,24 @@ class RadarNode(CompatibleNode):
             clusteredpoints = array_to_clustered_points(
                 clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
             )
-
             self.entity_radar_publisher.publish(clusteredpoints)
 
             cluster_info = generate_cluster_info(
-                clustered_data, combined_points, marker_array, bounding_boxes
+                cluster_labels, combined_points, marker_array, bounding_boxes
             )
 
             self.cluster_info_radar_publisher.publish(cluster_info)
+        else:
+            motionArray = [
+                Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
+            ]
+            clusteredpoints = array_to_clustered_points(
+                combined_points[:, :3],
+                np.arange(len(combined_points)),
+                motionArray,
+                header_id="hero/RADAR",
+            )
+            self.entity_radar_publisher.publish(clusteredpoints)
 
         # Reset the saved messages
         self.sensor_data = {key: None for key in self.sensor_data}
@@ -441,6 +449,7 @@ class RadarNode(CompatibleNode):
         if sensor_name == "RADAR1":
             data_array[:, 0] *= -1  # Mirror x-axis
             data_array[:, 1] *= -1  # Mirror y-axis
+            data_array[:, 3] *= -1  # Mirror velocity
 
         # Retrieve sensor position in the vehicle coordinate system
         x, y, z = self.sensor_config[sensor_name]
@@ -665,7 +674,7 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps, min_samples):
+def cluster_data(data, eps, min_samples) -> np.ndarray:
     """
     Clusters the radar data using the DBSCAN algorithm
 
@@ -693,7 +702,7 @@ def cluster_data(data, eps, min_samples):
     # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
     clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
 
-    return clustered_points
+    return clustered_points.labels_
 
 
 # generates random color for cluster
@@ -933,13 +942,13 @@ def calculate_cluster_velocity(points_with_labels):
 
 
 # generates string with label-id and cluster size, can be used for extra debugging
-def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
+def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     """
     Generates information about clusters, including the label, number of points,
     markers, and bounding boxes.
 
     Args:
-        clusters (DBSCAN): The clustered data, containing the labels for each point.
+        cluster_labels: The clustered data labels for each point.
         data (numpy.ndarray):
         The point cloud data, typically with columns [x, y, z, distance].
         marker_array (MarkerArray):
@@ -955,8 +964,8 @@ def generate_cluster_info(clusters, data, marker_array, bounding_boxes):
     """
     cluster_info = []
 
-    for label in set(clusters.labels_):
-        cluster_points = data[clusters.labels_ == label]
+    for label in set(cluster_labels):
+        cluster_points = data[cluster_labels == label]
         cluster_size = len(cluster_points)
         if label != -1:
             cluster_info.append(
