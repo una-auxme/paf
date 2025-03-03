@@ -1,5 +1,8 @@
 # Final Presentation Guidelines
 
+The purpose of the final presentation is to showcase the project's results and reflect on the work done. The following guidelines provide a structure for the presentation and additional tips for a successful demonstration.
+Do not make the mistake of overselling your project. Be honest about the challenges you faced and the limitations of your solution. The goal is to present your work in a clear and understandable way.
+
 - [1. Technical Aspects](#1-technical-aspects)
 - [2. Presentation Structure](#2-presentation-structure)
   - [2.1. Introduction \& Objectives](#21-introduction--objectives)
