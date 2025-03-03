@@ -105,9 +105,9 @@ class Ahead(py_trees.behaviour.Behaviour):
         )
 
         # multiplier for y coord, direction for left or right lane change
-        lane_pos = -1
-        if RoadOption.CHANGELANERIGHT:
-            lane_pos = 1
+        lane_pos = 1
+        if self.change_option == RoadOption.CHANGELANERIGHT:
+            lane_pos = -1
 
         if (
             self.change_detected
