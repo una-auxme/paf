@@ -525,10 +525,7 @@ class Change(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        if (
-            self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE
-            or self.change_distance > TARGET_DISTANCE_TO_TRIGGER_LANECHANGE
-        ):
+        if self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE:
             return debug_status(
                 self.name,
                 Status.RUNNING,
