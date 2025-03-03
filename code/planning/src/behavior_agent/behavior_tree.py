@@ -124,7 +124,7 @@ def grow_a_tree(role_name):
             speed_alteration.SpeedAlterationSetupBehavior(),
             topics2blackboard.create_node(role_name),
             DynReconfigImportBehavior(),
-            metarules,
+            rules,
             speed_alteration.SpeedAlterationRequestBehavior(),
             debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),

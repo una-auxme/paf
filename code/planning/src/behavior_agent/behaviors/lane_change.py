@@ -275,7 +275,7 @@ class Approach(py_trees.behaviour.Behaviour):
         )
 
         # if change to right, do not change early (as there could be no road till change point!)
-        if self.change_detected and not self.change_direction:
+        if self.change_detected and self.change_direction is LaneFreeDirection.LEFT:
             lc_free, lc_mask = tree.is_lane_free(
                 right_lane=self.change_direction.value,
                 lane_length=22.5,
@@ -525,7 +525,10 @@ class Change(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        if self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE:
+        if (
+            self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE
+            or self.change_distance > TARGET_DISTANCE_TO_TRIGGER_LANECHANGE
+        ):
             return debug_status(
                 self.name,
                 Status.RUNNING,
