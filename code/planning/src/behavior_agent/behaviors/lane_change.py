@@ -9,10 +9,12 @@ import rospy
 
 from agents.navigation.local_planner import RoadOption
 
+import mapping_common.mask
 from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
+from math import isclose
 import shapely
 from . import behavior_speed as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -122,12 +124,15 @@ class Ahead(py_trees.behaviour.Behaviour):
             )
             # if overtake in process and lanechange is planned to left:
             # just end overtake on the left lane and lanechange is finished
-            if overtake_status == OvertakeStatusResponse.OVERTAKING:
+            if (
+                overtake_status == OvertakeStatusResponse.OVERTAKING
+                or overtake_status == OvertakeStatusResponse.OVERTAKE_QUEUED
+            ):
                 if self.change_option == RoadOption.CHANGELANELEFT:
                     # change overtake end to the same lane if we are already in overtake
                     # and want a lanechange to left
                     end_transition_length = min(15.0, self.change_distance + 9.0)
-                    request_end_overtake(
+                    request_start_overtake(
                         proxy=self.end_overtake_proxy,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
                         end_transition_length=end_transition_length,
@@ -147,9 +152,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             # if overtake queded delete it,
             # if no overtake ahead continue with lanechange
             else:
-                if overtake_status == OvertakeStatusResponse.OVERTAKE_QUEUED:
-                    request_end_overtake(self.end_overtake_proxy)
-
                 hero_transform = _get_global_hero_transform()
 
                 local_pos = hero_transform.inverse() * Point2.new(
@@ -432,7 +434,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
         lc_free, lc_mask = tree.is_lane_free(
             right_lane=self.change_direction.value,
-            lane_length=22.5,
+            lane_length=22. 5,
             lane_transform=-5.0,
             check_method="lanemarking",
         )
@@ -508,6 +510,7 @@ class Change(py_trees.behaviour.Behaviour):
         """
         rospy.loginfo("Lane Change: Change to next Lane")
         self.change_distance: Optional[float] = None
+        self.change_position: Optional[Point] = None
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
     def update(self):
@@ -520,17 +523,30 @@ class Change(py_trees.behaviour.Behaviour):
                  detected.
         """
         lane_change = self.blackboard.get("/paf/hero/lane_change")
-        if lane_change is None:
-            return debug_status(self.name, Status.FAILURE, "lane_change is None")
+        trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
+
+        if lane_change is None or trajectory_local is None:
+            return debug_status(
+                self.name, Status.FAILURE, "lane_change or trajectory_local is None"
+            )
         else:
             self.change_distance = lane_change.distance
+            self.change_position = lane_change.position
 
-        if self.change_distance is None:
+        if self.change_distance is None or self.change_position is None:
             return debug_status(
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        if self.change_distance < TARGET_DISTANCE_TO_STOP_LANECHANGE:
+        hero_transform = _get_global_hero_transform()
+
+        local_pos: Point2 = hero_transform.inverse() * Point2.new(
+            self.change_position.x, self.change_position.y
+        ) + Vector2.forward() * 5.0 
+        trajectory_local = mapping_common.mask.ros_path_to_line(trajectory_local)
+        change_distance = trajectory_local.line_locate_point(local_pos.to_shapely())
+
+        if change_distance > 0:
             return debug_status(
                 self.name,
                 Status.RUNNING,
