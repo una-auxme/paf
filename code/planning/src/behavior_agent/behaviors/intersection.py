@@ -15,7 +15,7 @@ from .stop_mark_service_utils import (
 )
 
 from local_planner.utils import (
-    TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_INTERSECTION,
     convert_to_ms,
 )
 
@@ -255,7 +255,7 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             self.virtual_stopline_distance = 0.0
 
-        target_distance = TARGET_DISTANCE_TO_STOP
+        target_distance = TARGET_DISTANCE_TO_STOP_INTERSECTION
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
         if (
