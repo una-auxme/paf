@@ -14,7 +14,6 @@ from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
-from math import isclose
 import shapely
 from . import behavior_speed as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
