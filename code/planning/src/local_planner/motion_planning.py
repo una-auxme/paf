@@ -30,8 +30,9 @@ import mapping_common.mask
 import mapping_common.map
 from mapping_common.transform import Vector2, Point2, Transform2D
 
-
-UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
+TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
+"""threshold under which the planner decides it is on a trajectory
+"""
 
 
 class MotionPlanning(CompatibleNode):
@@ -184,7 +185,10 @@ class MotionPlanning(CompatibleNode):
             else:
                 self.overtake_request = None
                 msg = "Cancelled existing overtake"
-                self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
+                if self.overtake_status.status == OvertakeStatusResponse.OVERTAKING:
+                    self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_ENDING
+                else:
+                    self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
 
         rospy.loginfo(f"MotionPlanning: {msg}")
         return EndOvertakeResponse(success=True, msg=msg)
@@ -341,8 +345,14 @@ class MotionPlanning(CompatibleNode):
         Returns:
             LineString: global_trajectory modified with an overtake
         """
+        hero = mapping_common.hero.create_hero_entity()
+        front_point: Point2 = hero_transform * Point2.new(hero.get_front_x(), 0.0)
+        front_point_s = front_point.to_shapely()
+
         if self.overtake_request is None:
-            self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
+            distance_to_trajectory = shapely.distance(global_trajectory, front_point_s)
+            if distance_to_trajectory < TRAJECTORY_DISTANCE_THRESHOLD:
+                self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
             return global_trajectory
 
         hero_point = hero_transform.translation().point()
@@ -375,9 +385,9 @@ class MotionPlanning(CompatibleNode):
 
             if overtake_trajectory is None:
                 # If we are after the end of the overtake -> delete overtake_request
-                rospy.loginfo("MotionPlanning: Finished overtake")
+                rospy.loginfo("MotionPlanning: Overtake ending")
                 self.overtake_request = None
-                self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
+                self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_ENDING
 
         if overtake_trajectory is None:
             return global_trajectory
@@ -391,11 +401,8 @@ class MotionPlanning(CompatibleNode):
         # close enough to the overtake trajectory.
         # In local coordinated the position of the car is (0, 0), but
         # Using the front (hood) position for the check is better
-        hero = mapping_common.hero.create_hero_entity()
-        front_point: Point2 = hero_transform * Point2.new(hero.get_front_x(), 0.0)
-        front_point_s = front_point.to_shapely()
         distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
-        if distance_to_overtake < 0.5:
+        if distance_to_overtake < TRAJECTORY_DISTANCE_THRESHOLD:
             self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
 
         # Apply "smooth" transition by cropping the before and after parts

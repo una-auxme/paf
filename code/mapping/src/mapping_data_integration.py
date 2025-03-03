@@ -524,15 +524,6 @@ class MappingDataIntegrationNode(CompatibleNode):
                     marks.append(local_mark)
 
             entities.extend(marks)
-        if self.get_param("~enable_raw_radar_points"):
-            if self.radar_data is not None:
-                entities.extend(self.entities_from_radar())
-            else:
-                return
-
-        # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)

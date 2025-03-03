@@ -390,7 +390,8 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
     def terminate(self, new_status):
-        pass
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_space_stop_mark(self.stop_proxy)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -508,7 +509,8 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
-        pass
+        if new_status is Status.FAILURE or new_status is Status.INVALID:
+            unset_space_stop_mark(self.stop_proxy)
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -558,9 +560,17 @@ class Enter(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name, Status.FAILURE, "Abort: OvertakeStatusResponse.NO_OVERTAKE"
             )
+        elif status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
+            return debug_status(
+                self.name,
+                Status.FAILURE,
+                "Abort: OvertakeStatusResponse.OVERTAKE_ENDING",
+            )
         else:
             return debug_status(
-                self.name, Status.FAILURE, "Abort: Unknown OvertakeStatus"
+                self.name,
+                Status.FAILURE,
+                f"Abort: Unknown OvertakeStatus: {status.status}",
             )
 
     def terminate(self, new_status):
@@ -622,8 +632,17 @@ class Leave(py_trees.behaviour.Behaviour):
             if ot_free is LaneFreeState.FREE:
                 request_end_overtake(self.end_overtake_proxy)
                 return debug_status(
-                    self.name, Status.FAILURE, "Right lane is free. Finished overtake."
+                    self.name,
+                    Status.RUNNING,
+                    "Right lane is free. Finishing overtake...",
                 )
+
+        if status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
+            return debug_status(
+                self.name,
+                Status.RUNNING,
+                "Waiting until we are back on the normal trajectory",
+            )
 
         return debug_status(self.name, Status.RUNNING, "Waiting for right lane free...")
 

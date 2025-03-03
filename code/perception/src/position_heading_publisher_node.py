@@ -56,8 +56,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
         Heading: Kalman, None
         """
         # Filter used:
-        self.pos_filter = self.get_param("pos_filter", "Kalman")
-        self.heading_filter = self.get_param("heading_filter", "Kalman")
+        self.pos_filter = self.get_param("pos_filter", "EKF")
+        self.heading_filter = self.get_param("heading_filter", "EKF")
         self.loginfo(
             "position_heading_publisher_node started with Pos Filter:"
             + self.pos_filter
@@ -101,11 +101,18 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         # Create subscribers depending on the filter used
         # Pos Filter:
-        if self.pos_filter == "Kalman":
+        if self.pos_filter == "EKF":
+            self.ekf_pos_subscriber = self.new_subscription(
+                PoseStamped,
+                "/paf/" + self.role_name + "/ekf_pos",
+                self.publish_filter_pos_as_current_pos,
+                qos_profile=1,
+            )
+        elif self.pos_filter == "Kalman":
             self.kalman_pos_subscriber = self.new_subscription(
                 PoseStamped,
                 "/paf/" + self.role_name + "/kalman_pos",
-                self.publish_kalman_pos_as_current_pos,
+                self.publish_filter_pos_as_current_pos,
                 qos_profile=1,
             )
         elif self.pos_filter == "RunningAvg":
@@ -123,7 +130,14 @@ class PositionHeadingPublisherNode(CompatibleNode):
         # insert additional elifs for other filters here
 
         # Heading Filter:
-        if self.heading_filter == "Kalman":
+        if self.heading_filter == "EKF":
+            self.ekf_heading_subscriber = self.new_subscription(
+                Float32,
+                "/paf/" + self.role_name + "/ekf_heading",
+                self.publish_current_heading,
+                qos_profile=1,
+            )
+        elif self.heading_filter == "Kalman":
             self.kalman_heading_subscriber = self.new_subscription(
                 Float32,
                 "/paf/" + self.role_name + "/kalman_heading",
@@ -151,12 +165,12 @@ class PositionHeadingPublisherNode(CompatibleNode):
         )
         # Publishes current_pos depending on the filter used
         self.cur_pos_publisher = self.new_publisher(
-            PoseStamped, f"/paf/{self.role_name}/current_pos2", qos_profile=1
+            PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
         )
 
         self.__heading: float = 0
         self.__heading_publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/current_heading2", qos_profile=1
+            Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
         )
 
     # endregion Publisher END
@@ -259,21 +273,10 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
             self.cur_pos_publisher.publish(cur_pos)
 
-    def publish_kalman_pos_as_current_pos(self, data: PoseStamped):
+    def publish_filter_pos_as_current_pos(self, data: PoseStamped):
         """
-        This method is called when new kalman filter data is received.
-        The function publishes the kalman position as current position
-        :param data: PoseStamped
-        :return:
-        """
-        self.cur_pos_publisher.publish(data)
-
-    def publish_non_linear_kalman_pos_as_current_pos(self, data: PoseStamped):
-        """
-        This method is called when new non-linear kalman filter data is
-        received.
-        The function publishes the non-linear kalman position as current
-        position
+        This method is called when new filter data is received.
+        The function publishes the filtered position as current position
         :param data: PoseStamped
         :return:
         """

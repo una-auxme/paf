@@ -24,7 +24,7 @@
 
 
   <node
-    pkg="localization" type="current_state_publisher.py" name="current_state_publisher"
+    pkg="localization" type="ekf_state_publisher.py" name="ekf_state_publisher"
     output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
