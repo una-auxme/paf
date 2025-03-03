@@ -548,7 +548,7 @@ class MapTree:
         if lane_state.is_error():
             return lane_state, None
 
-        if lane_box is None or not lane_state == LaneFreeState.TO_BE_CHECKED:
+        if lane_box is None or lane_state != LaneFreeState.TO_BE_CHECKED:
             return LaneFreeState.SHAPE_ERR, None
 
         colliding_entities = self.get_overlapping_entities(
