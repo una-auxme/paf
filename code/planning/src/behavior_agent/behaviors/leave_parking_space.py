@@ -18,6 +18,7 @@ from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 import mapping_common.map
 from mapping_common.map import Map, LaneFreeState
 from mapping_common.markers import debug_marker
+from mapping_common.transform import Point2
 
 from std_msgs.msg import Float32
 
@@ -45,6 +46,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self.added_stop: bool = False
+        self.init_position: Optional[Point2] = None
 
     def add_initial_stop(self):
         """Add the initial stop mark"""
@@ -97,6 +99,8 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 if not self.added_stop:
                     self.add_initial_stop()
                     self.added_stop = True
+                if self.init_position is None:
+                    self.init_position = hero_transform.translation().point()
 
                 # checks if the left lane of the car is free,
                 tree = map.build_tree(mapping_common.map.lane_free_filter())
@@ -110,7 +114,15 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 if mask is not None:
                     add_debug_marker(debug_marker(mask, color=UNPARKING_MARKER_COLOR))
                 add_debug_entry(self.name, f"Lane state: {state.name}")
-                if state is LaneFreeState.FREE:
+                if (
+                    state is LaneFreeState.FREE
+                    or hero_transform.translation()
+                    .point()
+                    .distance_to(self.init_position)
+                    > 5.0
+                ):
+                    # Either the lane is free or
+                    # we started moving away from out start point
                     self.curr_behavior_pub.publish(bs.parking.name)
                     update_stop_marks(
                         self.stop_proxy,

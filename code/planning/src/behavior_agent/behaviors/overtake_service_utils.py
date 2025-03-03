@@ -70,7 +70,7 @@ def request_start_overtake(
     proxy: rospy.ServiceProxy,
     local_start_pos: Optional[Point2] = None,
     local_end_pos: Optional[Point2] = None,
-    offset: float = 2.5,
+    offset: float = 2.75,
     start_transition_length: float = 2.0,
     end_transition_length: float = 2.0,
 ) -> Optional[StartOvertakeResponse]:

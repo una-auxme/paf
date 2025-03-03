@@ -30,6 +30,10 @@ import mapping_common.mask
 import mapping_common.map
 from mapping_common.transform import Vector2, Point2, Transform2D
 
+TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
+"""threshold under which the planner decides it is on a trajectory
+"""
+
 
 class MotionPlanning(CompatibleNode):
     """
@@ -347,7 +351,7 @@ class MotionPlanning(CompatibleNode):
 
         if self.overtake_request is None:
             distance_to_trajectory = shapely.distance(global_trajectory, front_point_s)
-            if distance_to_trajectory < 0.5:
+            if distance_to_trajectory < TRAJECTORY_DISTANCE_THRESHOLD:
                 self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
             return global_trajectory
 
@@ -398,7 +402,7 @@ class MotionPlanning(CompatibleNode):
         # In local coordinated the position of the car is (0, 0), but
         # Using the front (hood) position for the check is better
         distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
-        if distance_to_overtake < 0.5:
+        if distance_to_overtake < TRAJECTORY_DISTANCE_THRESHOLD:
             self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
 
         # Apply "smooth" transition by cropping the before and after parts
