@@ -10,7 +10,6 @@ from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-import rospy
 from std_msgs.msg import Float32
 from acting.msg import StanleyDebug
 

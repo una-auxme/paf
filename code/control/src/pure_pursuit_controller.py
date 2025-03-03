@@ -7,7 +7,6 @@ from carla_msgs.msg import CarlaSpeedometer
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 from rospy import Publisher, Subscriber
-import rospy
 from std_msgs.msg import Float32
 from acting.msg import Debug
 from visualization_msgs.msg import MarkerArray
