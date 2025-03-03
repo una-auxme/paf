@@ -22,15 +22,17 @@
   <node pkg="perception" type="position_heading_publisher_node.py" name="position_heading_publisher_node" output="screen">
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
     <param name="role_name" value="$(arg role_name)" />
-    <param name="pos_filter" value="Kalman" />
-    <param name="heading_filter" value="Kalman" />
+    <param name="pos_filter" value="EKF" />
+    <param name="heading_filter" value="EKF" />
     <!--
         Position Filter values:
-        - "Kalman" (Default)
+        - "EKF" (Default)
+        - "Kalman"
         - "RunningAvg"
         - "None"
         Heading Filter values:
-        - "Kalman" (Default)
+        - "EKF" (Default)
+        - "Kalman"
         - "None"
         - "Old" (Buggy for demonstration purposes only)
       -->
@@ -85,14 +87,14 @@
     <param name="point_cloud_topic_1" value="/carla/hero/RADAR1"/>
     <param name="visualization_topic" value="/paf/hero/Radar/radar_break_filtered"/>
     <param name="dbscan_eps" value="0.3"/>
-    <param name="dbscan_samples" value="3"/>
+    <param name="dbscan_samples" value="1"/>
     <param name="clustered_points_radar_topic" value="/paf/hero/Radar/clustered_points"/>
     <param name="data_buffered" value="False"/>
     <param name="data_buffer_time" value="0.1"/>
     <param name="imu_debug" value="False"/>
     <param name="accelerometer_arrow_size" value="2"/>
     <param name="accelerometer_factor" value="0.05"/>
-    <param name="enable_clustering" value="False"/>
+    <param name="enable_clustering" value="True"/>
   </node>
 
 
