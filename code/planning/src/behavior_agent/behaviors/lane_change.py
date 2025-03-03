@@ -77,6 +77,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         Gets the current distance to the next lane change.
         :return: py_trees.common.Status.SUCCESS, if the vehicle is within range
                  of the lane change
+                 py_trees.common.Status.RUNNING, if overtake was ended, wait for it
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the lane change
         """
@@ -146,17 +147,17 @@ class Ahead(py_trees.behaviour.Behaviour):
                 else:
                     request_end_overtake(self.end_overtake_proxy)
                     return debug_status(
-                        self.name, Status.SUCCESS, "Lane change ahead, aborted overtake"
+                        self.name, Status.RUNNING, "Lane change ahead, aborted overtake"
                     )
-            # if overtake queded delete it,
-            # if no overtake ahead continue with lanechange
+            # if overtake queued: delete it,
+            # if no overtake ahead: continue with lanechange
             else:
+                # create local coords stop mark shape based
+                # on global change position and current hero position
                 hero_transform = _get_global_hero_transform()
-
                 local_pos = hero_transform.inverse() * Point2.new(
                     self.change_position.x, self.change_position.y
                 )
-
                 stop_mark_shape = Rectangle(
                     length=20.0,
                     width=2.5,
@@ -166,7 +167,6 @@ class Ahead(py_trees.behaviour.Behaviour):
                         )
                     ),
                 )
-
                 update_stop_marks(
                     self.stop_proxy,
                     id=LANECHANGE_STOPMARK_ID,
