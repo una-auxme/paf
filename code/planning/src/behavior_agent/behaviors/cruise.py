@@ -10,10 +10,9 @@ class Cruise(py_trees.behaviour.Behaviour):
     This behaviour is the lowest priority one and will be executed when no
     other behaviour is triggered. It doesn't do much, as in the normal cruising
     the holding of the lane and speed control is done by different parts of the
-    project. It might be possible to put the activation/deactivation of the ACC
-    here.
+    project.
 
-    speed control = acting via speed limits and target_speed
+    speed control = acc with speed limits and other limits
     following the trajectory = acting
     """
 
