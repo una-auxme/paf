@@ -34,6 +34,7 @@ lc_app_blocked = Behavior("lc_app_blocked")
 lc_app_free = Behavior("lc_app_free")
 # Wait
 lc_wait = Behavior("lc_wait")
+lc_wait_free = Behavior("lc_wait_free")
 # Enter
 lc_enter_init = Behavior("lc_enter_init")
 # Exit
