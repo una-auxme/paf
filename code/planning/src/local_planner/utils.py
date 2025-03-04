@@ -33,7 +33,7 @@ def convert_to_ms(speed: float):
     return speed / 3.6
 
 
-def get_distance(pos_1, pos_2):
+'''def get_distance(pos_1, pos_2):
     """Calculate the distance between two positions
 
     Args:
@@ -47,7 +47,7 @@ def get_distance(pos_1, pos_2):
     Returns:
         float: Distance
     """
-    return np.linalg.norm(pos_1 - pos_2)
+    return np.linalg.norm(pos_1 - pos_2)'''
 
 
 '''def spawn_car(distance):
