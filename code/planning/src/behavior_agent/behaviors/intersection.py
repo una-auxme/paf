@@ -8,7 +8,7 @@ import rospy
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,

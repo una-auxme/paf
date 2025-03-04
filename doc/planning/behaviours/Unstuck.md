@@ -2,8 +2,7 @@
 
 **Summary:** This file explains the unstuck behavior used as a fallback to recover from stuck situations.
 
-- [Unstuck Behavior](#unstuck-behavior)
-  - [Explanation](#explanation)
+- [Explanation](#explanation)
 
 ## Explanation
 
@@ -57,7 +56,7 @@ Files influenced by this behavior are:
 
 - Planning:
   - [motion_planning.py](/code/planning/src/local_planner/motion_planning.py), for the target_speed and overtake
-  - [behavior_speed.py](/code/planning/src/behavior_agent/behaviours/behavior_speed.py), for the target_speed
+  - [behavior_names.py](/code/planning/src/behavior_agent/behavior_names.py), for the behavior names
 - Acting:
   - [vehicle_controller.py](/doc/acting/vehicle_controller.md), because of driving backwards without steering
   - [velocity_controller.py](/doc/acting/velocity_controller.md), because of the sepcial -3 target_speed case

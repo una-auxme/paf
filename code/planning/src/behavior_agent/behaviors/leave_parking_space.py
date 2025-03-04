@@ -6,7 +6,7 @@ from std_msgs.msg import String
 import shapely
 
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,
