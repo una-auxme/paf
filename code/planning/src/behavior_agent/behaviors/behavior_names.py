@@ -1,8 +1,8 @@
 """
 This file contains the behavior names.
 
-Before PR #740, the names were also coupled with fixed speed values 
-connected to the behaviors. As they are completely unused in favor 
+Before PR #740, the names were also coupled with fixed speed values
+connected to the behaviors. As they are completely unused in favor
 of the ACC since PR #725, the speeds were remove from this file.
 """
 

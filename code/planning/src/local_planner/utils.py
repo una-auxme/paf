@@ -1,8 +1,8 @@
-from scipy.spatial.transform import Rotation
-import numpy as np
-import math
-import carla
-import os
+# from scipy.spatial.transform import Rotation
+# import numpy as np
+# import math
+# import carla
+# import os
 
 
 """
