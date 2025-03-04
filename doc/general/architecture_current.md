@@ -326,7 +326,6 @@ Subscription:
 - ```/paf/hero/brake``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/reverse``` \(/velocity_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/pure_pursuit_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/stanley_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
 
