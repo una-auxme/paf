@@ -2,7 +2,8 @@
 
 **Summary:** This file explains the unstuck behavior used as a fallback to recover from stuck situations.
 
-- [Explanation](#explanation)
+- [Unstuck Behavior](#unstuck-behavior)
+  - [Explanation](#explanation)
 
 ## Explanation
 
