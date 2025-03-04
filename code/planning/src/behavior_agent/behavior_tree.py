@@ -17,7 +17,6 @@ from behavior_agent.behaviors import (
     intersection,
     lane_change,
     leave_parking_space,
-    meta,
     overtake,
     topics2blackboard,
     unstuck_routine,

@@ -12,12 +12,25 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 """
 
 # Distance to stop in Intersection, Lanechange, Overtake
+TARGET_DISTANCE_TO_STOP = 5
 TARGET_DISTANCE_TO_STOP_INTERSECTION = 6.5
 TARGET_DISTANCE_TO_STOP_OVERTAKE = 7.0
 TARGET_DISTANCE_TO_STOP_LANECHANGE = 5.0
 TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 50.0
 # Earth radius in meters for location_to_GPS
-EARTH_RADIUS_EQUA = 6378137.0
+# EARTH_RADIUS_EQUA = 6378137.0
+
+
+def convert_to_ms(speed: float):
+    """Convert km/h to m/s
+
+    Args:
+        speed (float): speed in km/h
+
+    Returns:
+        float: speed in m/s
+    """
+    return speed / 3.6
 
 
 def get_distance(pos_1, pos_2):
@@ -37,7 +50,47 @@ def get_distance(pos_1, pos_2):
     return np.linalg.norm(pos_1 - pos_2)
 
 
-def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
+'''def spawn_car(distance):
+    """Only used for testing, spawns a car in the given distance
+
+    Args:
+        distance (float): distance
+    """
+    CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
+    CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
+
+    client = carla.Client(CARLA_HOST, CARLA_PORT)
+
+    world = client.get_world()
+    world.wait_for_tick()
+
+    blueprint_library = world.get_blueprint_library()
+    # bp = blueprint_library.filter('vehicle.*')[0]
+    # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
+    bp = blueprint_library.filter("model3")[0]
+    for actor in world.get_actors():
+        if actor.attributes.get("role_name") == "hero":
+            ego_vehicle = actor
+            break
+
+    spawnPoint = carla.Transform(
+        ego_vehicle.get_location() + carla.Location(y=distance.data),
+        ego_vehicle.get_transform().rotation,
+    )
+
+    vehicle = world.spawn_actor(bp, spawnPoint)
+    vehicle.set_autopilot(False)
+    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
+
+    # Spawn second vehicle
+    # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
+    #                               carla.Location(x=2.5, y=distance.data + 1),
+    #                               ego_vehicle.get_transform().rotation)
+    # vehicle2 = world.spawn_actor(bp, spawnpoint2)
+    # vehicle2.set_autopilot(False)'''
+
+
+'''def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     """Convert world coordinates to (lat,lon,z) coordinates
        Copied from:
        https://github.com/carla-simulator/scenario_runner/blob/master/srunner/tools/route_manipulation.py
@@ -66,10 +119,10 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
     z = 703
 
-    return {"lat": lat, "lon": lon, "z": z}
+    return {"lat": lat, "lon": lon, "z": z}'''
 
 
-def calculate_rule_of_thumb(emergency, speed):
+'''def calculate_rule_of_thumb(emergency, speed):
     """Calculates the rule of thumb as approximation
     for the braking distance
 
@@ -86,10 +139,10 @@ def calculate_rule_of_thumb(emergency, speed):
         # Emergency brake is really effective in Carla
         return reaction_distance + braking_distance / 2
     else:
-        return reaction_distance + braking_distance
+        return reaction_distance + braking_distance'''
 
 
-def approx_obstacle_pos(
+'''def approx_obstacle_pos(
     distance: float, heading: float, ego_pos: np.array, speed: float
 ):
     """calculate the position of the obstacle in the global coordinate system
@@ -132,68 +185,16 @@ def approx_obstacle_pos(
         vehicle_position_global_start + length_vector + offset_back
     )
 
-    return vehicle_position_global_start + offset_front, vehicle_position_global_end
+    return vehicle_position_global_start + offset_front, vehicle_position_global_end'''
 
 
-def convert_to_ms(speed: float):
-    """Convert km/h to m/s
-
-    Args:
-        speed (float): speed in km/h
-
-    Returns:
-        float: speed in m/s
-    """
-    return speed / 3.6
-
-
-def spawn_car(distance):
-    """Only used for testing, spawns a car in the given distance
-
-    Args:
-        distance (float): distance
-    """
-    CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
-    CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
-
-    client = carla.Client(CARLA_HOST, CARLA_PORT)
-
-    world = client.get_world()
-    world.wait_for_tick()
-
-    blueprint_library = world.get_blueprint_library()
-    # bp = blueprint_library.filter('vehicle.*')[0]
-    # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
-    bp = blueprint_library.filter("model3")[0]
-    for actor in world.get_actors():
-        if actor.attributes.get("role_name") == "hero":
-            ego_vehicle = actor
-            break
-
-    spawnPoint = carla.Transform(
-        ego_vehicle.get_location() + carla.Location(y=distance.data),
-        ego_vehicle.get_transform().rotation,
-    )
-
-    vehicle = world.spawn_actor(bp, spawnPoint)
-    vehicle.set_autopilot(False)
-    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
-
-    # Spawn second vehicle
-    # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
-    #                               carla.Location(x=2.5, y=distance.data + 1),
-    #                               ego_vehicle.get_transform().rotation)
-    # vehicle2 = world.spawn_actor(bp, spawnpoint2)
-    # vehicle2.set_autopilot(False)
-
-
-def interpolate_speed(
+"""def interpolate_speed(
     speed_target: float, speed_current: float, lerp_factor: float
 ) -> float:
-    return (1 - lerp_factor) * speed_current + lerp_factor * speed_target
+    return (1 - lerp_factor) * speed_current + lerp_factor * speed_target"""
 
 
-def filter_vision_objects(float_array, oncoming):
+'''def filter_vision_objects(float_array, oncoming):
     """Filters vision objects to calculate collision check
     It contains the classId, the absolute Euclidean distance
     and 6 coordinates for upper left and lower right corner
@@ -240,10 +241,10 @@ def filter_vision_objects(float_array, oncoming):
         if min_object_in_front[1] > 9.0:
             return None
 
-    return min_object_in_front
+    return min_object_in_front'''
 
 
-def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
+'''def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
     """Convert an array of PoseStamped objects to a numpy array of positions.
 
     Args:
@@ -257,4 +258,4 @@ def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
         result_array[pose] = np.array(
             [poses[pose].pose.position.x, poses[pose].pose.position.y]
         )
-    return result_array
+    return result_array'''

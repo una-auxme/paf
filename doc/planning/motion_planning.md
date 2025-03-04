@@ -59,7 +59,3 @@ To run this node insert the following statement in the [planning.launch](../../c
            <param name="control_loop_rate" value="0.1" />
 </node>
 ```
-
-The motion planning node listens to the following debugging topics:
-
-- `/paf/hero/Spawn_car`: Can spawn a car on the first straight in the dev environment, if this message is manually published.
