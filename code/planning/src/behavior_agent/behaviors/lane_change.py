@@ -503,12 +503,8 @@ class Change(py_trees.behaviour.Behaviour):
         return True
 
     def initialise(self):
-        """
-        This prints a state status message and changes the driving speed for
-        the lane change.
-        """
         rospy.loginfo("Lane Change: Change to next Lane")
-        self.change_distance: Optional[float] = None
+        self.lane_change = self.blackboard.get("/paf/hero/lane_change")
         self.change_position: Optional[Point] = None
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
@@ -521,24 +517,23 @@ class Change(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        lane_change = self.blackboard.get("/paf/hero/lane_change")
         trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
 
-        if lane_change is None or trajectory_local is None:
+        if self.lane_change is None or trajectory_local is None:
             return debug_status(
                 self.name, Status.FAILURE, "lane_change or trajectory_local is None"
             )
         else:
-            self.change_distance = lane_change.distance
-            self.change_position = lane_change.position
+            self.change_position = self.lane_change.position
 
-        if self.change_distance is None or self.change_position is None:
+        if self.change_position is None:
             return debug_status(
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
+        # get change distance from five meter behind global change point
+        # (transfered to local hero coords)
         hero_transform = _get_global_hero_transform()
-
         local_pos: Point2 = (
             hero_transform.inverse()
             * Point2.new(self.change_position.x, self.change_position.y)
