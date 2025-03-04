@@ -34,7 +34,7 @@ from .stop_mark_service_utils import (
 )
 
 from local_planner.utils import (
-    TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_OVERTAKE,
 )
 
 OVERTAKE_MARKER_COLOR = (17 / 255, 232 / 255, 35 / 255, 1.0)
@@ -375,7 +375,7 @@ class Approach(py_trees.behaviour.Behaviour):
         elif self.ot_distance > 20.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle too far away")
 
-        if self.ot_distance < TARGET_DISTANCE_TO_STOP:
+        if self.ot_distance < TARGET_DISTANCE_TO_STOP_OVERTAKE:
             self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
             return debug_status(
                 self.name, Status.SUCCESS, "Overtake Approach: stopping behind obstacle"
