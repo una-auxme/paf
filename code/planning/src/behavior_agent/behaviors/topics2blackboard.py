@@ -11,8 +11,7 @@ from nav_msgs.msg import Path
 from mapping.msg import Map as MapMsg
 from mapping_common.map import Map
 
-from mock.msg import Stop_sign
-from perception.msg import Waypoint, LaneChange, TrafficLightState
+from perception.msg import Waypoint, LaneChange, TrafficLightState, Stop_sign
 
 BLACKBOARD_MAP_ID = "/import/map"
 
