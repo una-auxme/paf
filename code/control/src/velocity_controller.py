@@ -107,20 +107,11 @@ class VelocityController(CompatibleNode):
                 if not self.FIXED_SPEED_OVERRIDE
                 else self.FIXED_SPEED
             )
-
+            # revert driving
             if target_velocity < 0:
-                # self.logerr("VelocityController doesn't support backward "
-                #             "driving yet.")
-                # Check if speed is overwritten
-                if self.FIXED_SPEED_OVERRIDE:
-                    reverse = True
-                    throttle = 1
-                    brake = 0
-                else:
-                    reverse = True
-                    throttle = (-1) * self.pid_t(abs(target_velocity))
-                    brake = 0
-                    rospy.loginfo("VelocityController: reverse driving")
+                reverse = True
+                brake = 0
+                throttle = (-1) * self.pid_t(abs(target_velocity))
             # very low target_velocities -> stand
             elif target_velocity < 0.1:
                 reverse = False
@@ -128,7 +119,6 @@ class VelocityController(CompatibleNode):
                 throttle = 0
             else:
                 reverse = False
-
                 v = target_velocity
                 self.pid_t.setpoint = v
                 throttle = self.pid_t(self.__current_velocity)
