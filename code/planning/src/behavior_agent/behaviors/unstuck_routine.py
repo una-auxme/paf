@@ -25,7 +25,7 @@ UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
 REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
 REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
-STUCK_DETECTED = False
+# STUCK_DETECTED = False
 
 
 def get_distance(pos_1, pos_2):
@@ -114,41 +114,44 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         global TRIGGER_WAIT_STUCK_DURATION
-        global STUCK_DETECTED
-        STUCK_DETECTED = False
+        # global STUCK_DETECTED
+        self.STUCK_DETECTED = False
 
         # self.unstuck_overtake_count = 0
         # self.last_unstuck_positions: Optional[np.ndarray] = None
         # above was before: np.array([np.array([0, 0]), np.array([0, 0])])
-        self.stuck_timer = rospy.Time.now()
-        self.wait_stuck_timer = rospy.Time.now()
-        self.init_ros_stuck_time = rospy.Time.now()
-        self.stuck_duration = rospy.Duration(0)
-        self.wait_stuck_duration = rospy.Duration(0)
+        current_pos = self.blackboard.get("/paf/hero/current_pos")
         current_speed = self.blackboard.get("/carla/hero/Speed")
         target_speed = self.blackboard.get("/paf/hero/target_velocity")
         curr_behavior = self.blackboard.get("/paf/hero/curr_behavior")
 
         # check for None values and initialize if necessary
-        if current_speed is None or target_speed is None:
-            rospy.logdebug("current_speed or target_speed is None")
+        if current_speed is None or target_speed is None or current_pos is None:
+            rospy.logdebug("current_speed, target_speed or current_pos is None")
             return
+
+        self.init_pos = np.array(
+            [current_pos.pose.position.x, current_pos.pose.position.y]
+        )
+        self.init_ros_stuck_time = rospy.Time.now()
+        stuck_timer = rospy.Time.now()
+        wait_stuck_timer = rospy.Time.now()
 
         # check if vehicle is NOT stuck, v > 0.1
         if current_speed.speed >= TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
-            self.wait_stuck_timer = rospy.Time.now()
+            wait_stuck_timer = rospy.Time.now()
 
             # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
             if target_speed.data >= TRIGGER_STUCK_SPEED:
                 # reset stuck timer
-                self.stuck_timer = rospy.Time.now()
-
-        wait_behaviors = [bs.lc_wait.name, bs.ot_app_blocked.name]
-        wait_long_behaviors = [bs.int_wait.name]
+                stuck_timer = rospy.Time.now()
 
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
+        wait_behaviors = [bs.lc_wait.name, bs.ot_app_blocked.name]
+        wait_long_behaviors = [bs.int_wait.name]
+
         if curr_behavior is None or curr_behavior.data in wait_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(50)
         elif curr_behavior.data in wait_long_behaviors:
@@ -157,8 +160,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)
 
         # update the stuck durations
-        self.stuck_duration = rospy.Time.now() - self.stuck_timer
-        self.wait_stuck_duration = rospy.Time.now() - self.wait_stuck_timer
+        self.stuck_duration = rospy.Time.now() - stuck_timer
+        self.wait_stuck_duration = rospy.Time.now() - wait_stuck_timer
 
         # print warnings to indicate potential stuck
         # self.print_warnings()
@@ -167,7 +170,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.stuck_duration >= TRIGGER_STUCK_DURATION
             or self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION
         ):
-            STUCK_DETECTED = True
+            self.STUCK_DETECTED = True
             end_overtake_proxy = create_end_overtake_proxy()
             request_end_overtake(end_overtake_proxy)
             stop_proxy = create_stop_marks_proxy()
@@ -197,8 +200,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, keeps the decision tree from
         finishing
         """
-        global STUCK_DETECTED
-
         current_pos = self.blackboard.get("/paf/hero/current_pos")
         current_speed = self.blackboard.get("/carla/hero/Speed")
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
@@ -211,11 +212,12 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             )
 
         # if no stuck detected, return failure
-        if not STUCK_DETECTED:
+        if not self.STUCK_DETECTED:
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
-                "No stuck detected. Aborting unstuck routine.",
+                f"No stuck detected.\nstuck_dur: {self.stuck_duration.sec}, "
+                f"wait_stuck_dur: {self.wait_stuck_duration.sec}",
             )
             # self.pub_unstuck_flag.publish(False)
             # unstuck distance -1 is set, to reset the unstuck distance
@@ -232,14 +234,11 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                     self.name, py_trees.common.Status.FAILURE, "hero is None"
                 )
             collision_detected = calculate_obstacle_behind(tree, hero, 0.1)
-            init_pos = np.array(
-                [current_pos.pose.position.x, current_pos.pose.position.y]
-            )
             if (
-                get_distance(init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
+                get_distance(self.init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
             ) and not collision_detected:
                 add_speed_override(-0.05)
-            elif get_distance(init_pos, current_pos) < 0.5:
+            elif get_distance(self.init_pos, current_pos) < 0.5:
                 add_speed_override(-0.05)
             else:
                 add_speed_override(0.001)
@@ -249,7 +248,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 "Unstuck routine running.",
             )
         else:
-            STUCK_DETECTED = False
+            self.STUCK_DETECTED = False
             add_speed_override(0.001)
             self.curr_behavior_pub.publish(bs.us_stop.name)
             return debug_status(
