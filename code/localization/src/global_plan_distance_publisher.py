@@ -90,8 +90,6 @@ class GlobalPlanDistance(CompatibleNode):
             # if the road option indicates an intersection, the distance to the
             # next waypoint is also the distance to the stop line
             if self.road_options[0] < 4:
-                # print("publish waypoint")
-
                 self.waypoint_publisher.publish(Waypoint(current_distance, True))
                 self.lane_change_publisher.publish(
                     LaneChange(current_distance, False, self.road_options[0])

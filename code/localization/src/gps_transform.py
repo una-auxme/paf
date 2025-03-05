@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-This Node listens to GPS Data and converts this data into an odometry message.
-The odometry message is then passed into the global ekf.
+This Node listens to GPS Data and converts this data into an Odometry message.
+The Odometry message is then passed into the global EKF.
 
 It is a substitute for navsat_transform node which only works in UTM coordinates but
 CARLA uses WGS coordinate system.
