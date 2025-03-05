@@ -97,6 +97,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     def __init__(self, name):
         super(UnstuckRoutine, self).__init__(name)
+        self.stuck_timer = rospy.Time.now()
+        self.wait_stuck_timer = rospy.Time.now()
         rospy.loginfo("Unstuck Init")
 
     def setup(self, timeout):
@@ -134,18 +136,16 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             [current_pos.pose.position.x, current_pos.pose.position.y]
         )
         self.init_ros_stuck_time = rospy.Time.now()
-        stuck_timer = rospy.Time.now()
-        wait_stuck_timer = rospy.Time.now()
 
         # check if vehicle is NOT stuck, v > 0.1
         if current_speed.speed >= TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
-            wait_stuck_timer = rospy.Time.now()
+            self.wait_stuck_timer = rospy.Time.now()
 
             # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
             if target_speed.data >= TRIGGER_STUCK_SPEED:
                 # reset stuck timer
-                stuck_timer = rospy.Time.now()
+                self.stuck_timer = rospy.Time.now()
 
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
@@ -160,8 +160,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)
 
         # update the stuck durations
-        self.stuck_duration = rospy.Time.now() - stuck_timer
-        self.wait_stuck_duration = rospy.Time.now() - wait_stuck_timer
+        self.stuck_duration = rospy.Time.now() - self.stuck_timer
+        self.wait_stuck_duration = rospy.Time.now() - self.wait_stuck_timer
 
         # print warnings to indicate potential stuck
         # self.print_warnings()
