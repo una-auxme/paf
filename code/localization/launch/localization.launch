@@ -79,7 +79,6 @@
         - "EKF" (Default)
         - "Kalman"
         - "None"
-        - "Old" (Buggy for demonstration purposes only)
       -->
   </node>
 
