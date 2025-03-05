@@ -216,8 +216,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
-                f"No stuck detected.\nstuck_dur: {self.stuck_duration.sec}, "
-                f"wait_stuck_dur: {self.wait_stuck_duration.sec}",
+                f"No stuck detected.\nstuck_dur: {self.stuck_duration.secs}, "
+                f"wait_stuck_dur: {self.wait_stuck_duration.secs}",
             )
             # self.pub_unstuck_flag.publish(False)
             # unstuck distance -1 is set, to reset the unstuck distance
@@ -254,7 +254,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
-                f"Unstuck routine ran for {UNSTUCK_DRIVE_DURATION.sec}. Exiting.",
+                f"Unstuck routine ran for {UNSTUCK_DRIVE_DURATION.secs}. Exiting.",
             )
 
             # while vehicle is stopping publish us_stop
