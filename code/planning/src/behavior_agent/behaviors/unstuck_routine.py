@@ -77,7 +77,7 @@ def calculate_obstacle_behind(
     )
 
     if entity_result is not None:
-        entity, distance = entity_result
+        entity, _ = entity_result
         add_debug_marker(
             debug_marker(
                 entity.entity, color=REVERSE_COLLISION_MARKER_COLOR, scale_z=0.3
@@ -91,7 +91,7 @@ def calculate_obstacle_behind(
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
     """
     This behavior is triggered when the vehicle is stuck and needs to be
-    unstuck. 
+    unstuck.
 
     Documentation to this behavior can be found in
     /doc/planning/Behavior_detailed.md
@@ -124,13 +124,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             rospy.logwarn(f"Wait stuck for {self.wait_stuck_duration.secs} s")
 
     def __init__(self, name):
-        """
-        Minimal one-time initialisation. A good rule of thumb is to only
-        include the initialisation relevant for being able to insert this
-        behaviour in a tree for offline rendering to dot graphs.
-
-         :param name: name of the behaviour
-        """
         super(UnstuckRoutine, self).__init__(name)
         self.stuck_timer = rospy.Time.now()
         self.wait_stuck_timer = rospy.Time.now()
@@ -148,41 +141,20 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.last_stuck_duration_log = rospy.Duration(0)
 
     def setup(self, timeout):
-        """
-        Delayed one-time initialisation that would otherwise interfere with
-        offline rendering of this behaviour in a tree to dot graph or
-        validation of the behaviour's configuration.
-
-        This initializes the blackboard to be able to access data written to it
-        by the ROS topics.
-        :param timeout: an initial timeout to see if the tree generation is
-        successful
-        :return: True, as there is nothing to set up.
-        """
         self.curr_behavior_pub = rospy.Publisher(
             "/paf/hero/" "curr_behavior", String, queue_size=1
         )
-        self.pub_unstuck_distance = rospy.Publisher(
-            "/paf/hero/" "unstuck_distance", Float32, queue_size=1
-        )
-        self.pub_unstuck_flag = rospy.Publisher(
-            "/paf/hero/" "unstuck_flag", Bool, queue_size=1
-        )
+        # self.pub_unstuck_distance = rospy.Publisher(
+        #    "/paf/hero/" "unstuck_distance", Float32, queue_size=1
+        # )
+        # self.pub_unstuck_flag = rospy.Publisher(
+        #    "/paf/hero/" "unstuck_flag", Bool, queue_size=1
+        # )
         self.blackboard = py_trees.blackboard.Blackboard()
 
         return True
 
     def initialise(self):
-        """
-        When is this called?
-        The first time your behaviour is ticked and anytime the status is not
-        RUNNING thereafter.
-
-        What to do here?
-            Any initialisation you need before putting your behaviour to work.
-        :return: True
-        """
-
         self.init_ros_stuck_time = rospy.Time.now()
 
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
@@ -276,14 +248,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        When is this called?
-        Every time your behaviour is ticked.
-
-        What to do here?
-            - Triggering, checking, monitoring. Anything...but do not block!
-            - Set a feedback message
-            - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
-
         This behaviour doesn't do anything else than just keep running unless
         there is a higher priority behaviour
 
@@ -302,9 +266,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             and self.wait_stuck_duration < TRIGGER_WAIT_STUCK_DURATION
         ):
             # rospy.logfatal("No stuck detected.")
-            self.pub_unstuck_flag.publish(False)
+            # self.pub_unstuck_flag.publish(False)
             # unstuck distance -1 is set, to reset the unstuck distance
-            self.pub_unstuck_distance.publish(-1)
+            # self.pub_unstuck_distance.publish(-1)
             return py_trees.common.Status.FAILURE
 
         # stuck detected -> unstuck routine
@@ -337,7 +301,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.RUNNING
             # vehicle has stopped:
             unstuck_distance = get_distance(self.init_pos, self.current_pos)
-            self.pub_unstuck_distance.publish(unstuck_distance)
+            # self.pub_unstuck_distance.publish(unstuck_distance)
 
             # check if vehicle needs to overtake:
             # save current pos to last_unstuck_positions
@@ -370,31 +334,19 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 return py_trees.common.Status.FAILURE
 
             # once we tried the unstuck twice, we try to overtake
-            if self.current_speed.speed < 1:
-                # rospy.logwarn("Unstuck DISTANCE %s.", unstuck_distance)
+            # if self.current_speed.speed < 1:
+            # rospy.logwarn("Unstuck DISTANCE %s.", unstuck_distance)
 
-                # publish the over take behavior 3 times to make sure
-                # it is detected
-                self.curr_behavior_pub.publish(bs.us_overtake.name)
-                if self.unstuck_overtake_count > 3:
-                    self.reset_stuck_values()
-                    rospy.logwarn("Unstuck routine finished.")
-                    return py_trees.common.Status.FAILURE
-                else:
-                    self.unstuck_overtake_count += 1
-                    return py_trees.common.Status.RUNNING
+            # publish the over take behavior 3 times to make sure
+            # it is detected
+            #    self.curr_behavior_pub.publish(bs.us_overtake.name)
+            #    if self.unstuck_overtake_count > 3:
+            #        self.reset_stuck_values()
+            #        rospy.logwarn("Unstuck routine finished.")
+            #        return py_trees.common.Status.FAILURE
+            #    else:
+            #        self.unstuck_overtake_count += 1
+            #        return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
-        """
-        When is this called?
-        Whenever your behaviour switches to a non-running state.
-            - SUCCESS || FAILURE : your behaviour's work cycle has finished
-            - INVALID : a higher priority branch has interrupted, or shutting
-            down
-
-        writes a status message to the console when the behaviour terminates
-        """
-        self.logger.debug(
-            "  %s [Foo::terminate().terminate()][%s->%s]"
-            % (self.name, self.status, new_status)
-        )
+        pass
