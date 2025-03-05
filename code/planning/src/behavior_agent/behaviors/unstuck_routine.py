@@ -2,13 +2,12 @@ import py_trees
 import rospy
 from std_msgs.msg import String, Float32, Bool
 import numpy as np
-from typing import Optional, Tuple, Union
+from typing import Optional
 import mapping_common.mask
 from mapping_common.map import Map, MapTree
 from .topics2blackboard import BLACKBOARD_MAP_ID
-from mapping_common.entity import ShapelyEntity, Entity
+from mapping_common.entity import Entity
 from mapping_common.entity import FlagFilter
-import shapely
 from . import behavior_speed as bs
 from .speed_alteration import add_speed_override
 from .debug_markers import add_debug_marker, debug_status, debug_marker
