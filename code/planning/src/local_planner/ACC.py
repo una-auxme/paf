@@ -101,7 +101,7 @@ class ACC(CompatibleNode):
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
         )
 
-        # Publish to emergancy break if needed
+        # Publish to emergency break if needed
         self.emergency_pub = self.new_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
