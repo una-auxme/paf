@@ -72,9 +72,9 @@ class OdometryNode(CompatibleNode):
         return config
 
     def speed_callback(self, msg: CarlaSpeedometer):
-        """Saves carlas reported speed in a buffer.
+        """Saves Carlas reported speed in a buffer.
 
-        Callback to carlas /Speed topic.
+        Callback to /carla/hero/Speed topic.
 
         Args:
             msg (CarlaSpeedometer): The Carla Speed message.
@@ -86,7 +86,7 @@ class OdometryNode(CompatibleNode):
             self.initialized = True
 
     def steering_callback(self, msg: CarlaEgoVehicleControl):
-        """Saves the steering angle we sent to carla in a buffer.
+        """Saves the steering angle we sent to Carla in a buffer.
 
         The steering input is in the field .steer of the message.
         It is in the range between [-1.0, 1.0].
@@ -95,7 +95,6 @@ class OdometryNode(CompatibleNode):
         Args:
             msg (CarlaEgoVehicleControl): The vehicle info message we receive.
         """
-        #
         self.steering_angle = MAX_STEERING_ANGLE_MKZ_2020 * msg.steer
 
         self.steer_ang_init = True
@@ -157,7 +156,7 @@ class OdometryNode(CompatibleNode):
             cov[3:, 3:] = angular
             odom.twist.covariance = list(cov.flatten())
 
-        # Publish odometry message
+        # Publish Odometry message
         self.odom_pub.publish(odom)
 
     def run(self):
