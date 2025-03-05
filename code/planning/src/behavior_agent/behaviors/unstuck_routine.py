@@ -53,25 +53,10 @@ def calculate_obstacle_behind(
     tree: MapTree,
     overlap_percent: float,
 ) -> bool:
-    """Calculates if there is an obstacle in front
-
-    Args:
-        behavior_name (str): Name of the behavior using the function.
-            Input self.name here
-        tree (MapTree): Filtered map tree for querying entities
-        blackboard (py_trees.blackboard.Blackboard): Blackboard for fetching data
-        front_mask_size (float): Length of the static box collision mask in front
-        trajectory_check_length (float): Length of the trajectory collision mask
-        overlap_percent (float):
-            How much of an entity has to be inside the collision mask
+    """Calculates if there is an obstacle behind the vehicle
 
     Returns:
-        Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
-            - If the function fails to create a valid result: Returns a Status
-            - If the function succeeds:
-                - If there is an obstacle: Returns the entity and
-                  its distance to the hero
-                - No obstacle: None
+        bool
     """
     # data preparation
     hero: Optional[Entity] = tree.map.hero()
@@ -105,12 +90,11 @@ def calculate_obstacle_behind(
 
 class UnstuckRoutine(py_trees.behaviour.Behaviour):
     """
+    This behavior is triggered when the vehicle is stuck and needs to be
+    unstuck. 
+
     Documentation to this behavior can be found in
     /doc/planning/Behavior_detailed.md
-
-    This behavior is triggered when the vehicle is stuck and needs to be
-    unstuck. The behavior will then try to reverse and steer to the left or
-    right to get out of the stuck situation.
     """
 
     def reset_stuck_values(self):
@@ -306,10 +290,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, keeps the decision tree from
         finishing
         """
-        # def reset_stuck_values():
-        #     self.unstuck_overtake_count = 0
-        #     self.stuck_timer = rospy.Time.now()
-        #     self.wait_stuck_timer = rospy.Time.now()
 
         self.current_pos = pos_to_np_array(self.blackboard.get("/paf/hero/current_pos"))
         self.current_speed = self.blackboard.get("/carla/hero/Speed")
