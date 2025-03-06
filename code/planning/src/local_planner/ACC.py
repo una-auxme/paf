@@ -275,7 +275,7 @@ class ACC(CompatibleNode):
 
         # emergency break if obstacle and difference to last desired speed is too big
         if (
-            speed_reason in {"Obstacle", "Override"}
+            speed_reason == "Obstacle"
             and (self.last_desired_speed - desired_speed) > 7.0
             and hero.motion.linear_motion.x() > 7.0
         ):
@@ -283,6 +283,9 @@ class ACC(CompatibleNode):
             marker_text += "\nEmergency break engaged due to abrupt braking"
         # set last desired speed to current desired speed for next loop
         self.last_desired_speed = desired_speed
+
+        # need to delete afterwards, only for debug
+        marker_text += f"\nHero Speed: {hero.motion.linear_motion.x()}"
 
         debug_markers.append(
             debug_marker(
