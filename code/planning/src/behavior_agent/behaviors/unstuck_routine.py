@@ -165,11 +165,13 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             )
             self.init_ros_stuck_time = rospy.Time.now()
             stuck_reason = "Stuck"
+            stuck_dur = TRIGGER_STUCK_DURATION.secs
             if self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
                 stuck_reason = "Wait Stuck"
+                stuck_dur = TRIGGER_WAIT_STUCK_DURATION.secs
             rospy.logfatal(
                 f"{stuck_reason} in one place for more than "
-                f"{TRIGGER_STUCK_DURATION.secs} sec\n"
+                f"{stuck_dur} sec\n"
                 "  --> starting unstuck routine"
             )
 
