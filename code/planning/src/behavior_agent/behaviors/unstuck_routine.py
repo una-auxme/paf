@@ -138,8 +138,11 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
         if (
-            target_speed.data >= TRIGGER_STUCK_SPEED
-            and current_speed.speed >= TRIGGER_STUCK_SPEED
+            current_speed.speed >= TRIGGER_STUCK_SPEED
+            and target_speed.data >= TRIGGER_STUCK_SPEED
+        ) or (
+            current_speed.speed < TRIGGER_STUCK_SPEED
+            and target_speed.data < TRIGGER_STUCK_SPEED
         ):
             # reset stuck timer
             self.stuck_timer = rospy.Time.now()
