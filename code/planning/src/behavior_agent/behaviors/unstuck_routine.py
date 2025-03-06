@@ -1,6 +1,6 @@
 import py_trees
 import rospy
-from std_msgs.msg import String, Float32, Bool
+from std_msgs.msg import String
 import numpy as np
 from typing import Optional
 import mapping_common.mask
@@ -136,10 +136,13 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             # reset wait stuck timer
             self.wait_stuck_timer = rospy.Time.now()
 
-            # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
-            if target_speed.data >= TRIGGER_STUCK_SPEED:
-                # reset stuck timer
-                self.stuck_timer = rospy.Time.now()
+        # check if vehicle is NOT stuck, v >= 0.1 when should be v > 0.1
+        if (
+            target_speed.data >= TRIGGER_STUCK_SPEED
+            and current_speed.speed >= TRIGGER_STUCK_SPEED
+        ):
+            # reset stuck timer
+            self.stuck_timer = rospy.Time.now()
 
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
