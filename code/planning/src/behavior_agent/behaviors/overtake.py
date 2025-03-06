@@ -480,7 +480,7 @@ class Wait(py_trees.behaviour.Behaviour):
         else:
             unset_space_stop_mark(self.stop_proxy)
 
-        self.curr_behavior_pub.publish(bs.ot_wait_blocked.name)
+        self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
