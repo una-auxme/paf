@@ -10,7 +10,8 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Float32, String
+from ros_compatibility.qos import QoSProfile, DurabilityPolicy
+from std_msgs.msg import Float32, String, Bool
 from visualization_msgs.msg import Marker, MarkerArray
 
 from planning.cfg import ACCConfig
@@ -49,6 +50,7 @@ class ACC(CompatibleNode):
     external_speed_limit: Optional[float] = None
     speed_override: Optional[float] = None
     steer: Optional[float] = None
+    last_desired_speed: float = 0.0
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -97,6 +99,15 @@ class ACC(CompatibleNode):
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
+        )
+
+        # Publish to emergency break if needed
+        self.emergency_pub = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         # Publish debugging marker
@@ -261,6 +272,20 @@ class ACC(CompatibleNode):
 
         marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
         marker_text += f"\nSpeed reason: {speed_reason}"
+
+        # emergency break if obstacle and difference to last desired speed is too big
+        if (
+            speed_reason == "Obstacle"
+            and (self.last_desired_speed - desired_speed) > 7.0
+            and hero.motion.linear_motion.x() > 7.0
+        ):
+            self.emergency_pub.publish(Bool(True))
+            marker_text += "\nEmergency break engaged due to abrupt braking"
+        # set last desired speed to current desired speed for next loop
+        self.last_desired_speed = desired_speed
+
+        # need to delete afterwards, only for debug
+        marker_text += f"\nHero Speed: {hero.motion.linear_motion.x()}"
 
         debug_markers.append(
             debug_marker(
