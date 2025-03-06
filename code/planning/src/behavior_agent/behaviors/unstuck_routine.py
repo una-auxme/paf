@@ -252,6 +252,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.STUCK_DETECTED = False
             add_speed_override(0.001)
             self.curr_behavior_pub.publish(bs.us_stop.name)
+            self.stuck_timer = rospy.Time.now()
+            self.wait_stuck_timer = rospy.Time.now()
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
