@@ -99,6 +99,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         super(UnstuckRoutine, self).__init__(name)
         self.stuck_timer = rospy.Time.now()
         self.wait_stuck_timer = rospy.Time.now()
+        self.STUCK_DETECTED = False
         rospy.loginfo("Unstuck Init")
 
     def setup(self, timeout):
@@ -117,7 +118,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     def initialise(self):
         global TRIGGER_WAIT_STUCK_DURATION
         # global STUCK_DETECTED
-        self.STUCK_DETECTED = False
 
         # self.unstuck_overtake_count = 0
         # self.last_unstuck_positions: Optional[np.ndarray] = None
@@ -131,11 +131,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         if current_speed is None or target_speed is None or current_pos is None:
             rospy.logdebug("current_speed, target_speed or current_pos is None")
             return
-
-        self.init_pos = np.array(
-            [current_pos.pose.position.x, current_pos.pose.position.y]
-        )
-        self.init_ros_stuck_time = rospy.Time.now()
 
         # check if vehicle is NOT stuck, v > 0.1
         if current_speed.speed >= TRIGGER_STUCK_SPEED:
@@ -182,6 +177,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 marks=[],
                 delete_all_others=True,
             )
+            self.init_pos = np.array(
+                [current_pos.pose.position.x, current_pos.pose.position.y]
+            )
+            self.init_ros_stuck_time = rospy.Time.now()
             stuck_reason = "Stuck"
             if self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION:
                 stuck_reason = "Wait Stuck"
@@ -190,7 +189,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 f"{TRIGGER_STUCK_DURATION.secs} sec\n"
                 " --> starting unstuck routine"
             )
-        return True
 
     def update(self):
         """
@@ -210,6 +208,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 py_trees.common.Status.FAILURE,
                 "map, current_pos or current_speed is None",
             )
+
+        current_pos = np.array(
+            [current_pos.pose.position.x, current_pos.pose.position.y]
+        )
 
         # if no stuck detected, return failure
         if not self.STUCK_DETECTED:
