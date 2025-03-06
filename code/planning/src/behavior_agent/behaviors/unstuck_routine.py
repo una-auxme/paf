@@ -218,7 +218,8 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 self.name,
                 py_trees.common.Status.FAILURE,
                 f"No stuck detected.\nstuck_dur: {self.stuck_duration.secs}, "
-                f"wait_stuck_dur: {self.wait_stuck_duration.secs}",
+                f"wait_stuck_dur: {self.wait_stuck_duration.secs}"
+                f"\ntrigger_wait_dur: {TRIGGER_WAIT_STUCK_DURATION}",
             )
             # self.pub_unstuck_flag.publish(False)
             # unstuck distance -1 is set, to reset the unstuck distance
