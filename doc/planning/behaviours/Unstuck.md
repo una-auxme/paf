@@ -38,7 +38,7 @@ Once one of the Timers is triggered we do the following:
 This turns the car towards the trajectory, while reversing\
 This happens inside the [vehicle_controller.py](/doc/control/vehicle_controller.md)
 
-3. Setting a n**egative target_velocity** with the **add_speed_override() Service** 
+3. Setting a n**egative target_velocity** with the **add_speed_override() Service**
 
 4. **Calculate negative throttle** with PID\
 This happens inside the [velocity_controller.py](/doc/control/velocity_controller.md)
@@ -54,7 +54,6 @@ This happens inside the [velocity_controller.py](/doc/control/velocity_controlle
     5. Wait until the remaining time for this behaviour is over
     6. If the car still is in a stuck position\
     -> wait until the unstuck is detected and called again
-
 
 This behavior is ONLY implememted to improve route completion and make debugging easier. It is the last fallback behavior when every other planning component can not get us back on track.
 
