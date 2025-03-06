@@ -277,6 +277,7 @@ class ACC(CompatibleNode):
         if (
             speed_reason in {"Obstacle", "Override"}
             and (self.last_desired_speed - desired_speed) > 7.0
+            and hero.motion.linear_motion.x() > 7.0
         ):
             self.emergency_pub.publish(Bool(True))
             marker_text += "\nEmergency break engaged due to abrupt braking"
