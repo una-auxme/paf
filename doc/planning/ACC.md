@@ -7,6 +7,7 @@
   - [Subscribed Topics](#subscribed-topics)
 - [Node Creation + Running Tests](#node-creation--running-tests)
 - [Functionality](#functionality)
+  - [Detailed Functionality](#detailed-functionality)
 
 ## ROS Data Interface
 
@@ -51,4 +52,30 @@ Each time the map from the intermediate layer is received, the ACC triggers the 
 - Calculation of the leading vehicle based on the trajectory mask and the rectangle.
 - Calculation of the desired speed using the function `calculate_velocity_based_on_lead`.
 - Publishing of the markers to visualize the masks and the chosen leading vehicle.
-  
+
+### Detailed Functionality
+
+The ACC node performs the following key functions:
+
+1. **Initialization**:
+   - Subscribes to various topics to receive data about the map, speed limits, trajectory, current behavior, and steering angle.
+   - Publishes the desired speed and debugging markers.
+   - Provides a service to handle speed alterations.
+
+2. **Update Velocity**:
+   - Checks if the necessary data (map and trajectory) is available.
+   - Identifies the leading vehicle and calculates the desired speed based on the distance to the leading vehicle and the current speed.
+   - Considers speed limits and external speed limits.
+   - Calculates the maximum safe speed for cornering based on the trajectory.
+   - Publishes the desired speed and debugging markers.
+
+3. **Calculate Velocity Based on Lead**:
+   - Uses a PI controller to calculate the desired speed based on the distance and speed of the leading vehicle.
+
+4. **Calculate Velocity Based on Trajectory**:
+   - Approximates a maximum safe cornering speed by tracing lines at an angle from the front of the car and measuring the distance at which they intersect with the trajectory.
+
+5. **Handle Speed Alteration**:
+   - Handles requests to override the speed or set an external speed limit.
+
+The ACC node ensures that the vehicle maintains a safe speed by considering potential collisions, speed limits, and the vehicle's trajectory.
