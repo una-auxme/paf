@@ -99,7 +99,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         super(UnstuckRoutine, self).__init__(name)
         self.stuck_timer = rospy.Time.now()
         self.wait_stuck_timer = rospy.Time.now()
-        self.STUCK_DETECTED = False
         rospy.loginfo("Unstuck Init")
 
     def setup(self, timeout):
@@ -118,7 +117,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     def initialise(self):
         global TRIGGER_WAIT_STUCK_DURATION
         # global STUCK_DETECTED
-
+        self.STUCK_DETECTED = False
         # self.unstuck_overtake_count = 0
         # self.last_unstuck_positions: Optional[np.ndarray] = None
         # above was before: np.array([np.array([0, 0]), np.array([0, 0])])
