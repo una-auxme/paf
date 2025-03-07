@@ -34,7 +34,7 @@ REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car 
 REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
 
 
-def get_distance(pos_1, pos_2):
+def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
     """Calculate the distance between two positions
 
     Args:
