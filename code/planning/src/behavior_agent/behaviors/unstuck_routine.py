@@ -242,7 +242,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             elif get_distance(self.init_pos, current_pos) < 0.5:
                 add_speed_override(-0.05)
             else:
-                add_speed_override(0.001)
+                add_speed_override(0.0)
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
@@ -263,7 +263,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 "Unstuck routine running. Try driving forward.",
             )
         else:
-            add_speed_override(0.001)
+            add_speed_override(0.0)
             request_end_overtake(self.end_overtake_proxy)
             self.curr_behavior_pub.publish(bs.us_stop.name)
             self.stuck_timer = rospy.Time.now()
