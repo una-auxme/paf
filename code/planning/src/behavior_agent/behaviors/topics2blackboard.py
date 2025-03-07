@@ -11,7 +11,7 @@ from nav_msgs.msg import Path
 from mapping.msg import Map as MapMsg
 from mapping_common.map import Map
 
-from perception.msg import Waypoint, LaneChange, TrafficLightState, Stop_sign
+from perception.msg import Waypoint, LaneChange, TrafficLightState
 
 BLACKBOARD_MAP_ID = "/import/map"
 
@@ -59,11 +59,6 @@ def create_node(role_name):
             "name": f"/paf/{role_name}/waypoint_distance",
             "msg": Waypoint,
             "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
-        },
-        {
-            "name": f"/paf/{role_name}/stop_sign",
-            "msg": Stop_sign,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
             "name": f"/paf/{role_name}/Center/traffic_light_state",
