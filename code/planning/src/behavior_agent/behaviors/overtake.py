@@ -281,7 +281,6 @@ class Approach(py_trees.behaviour.Behaviour):
         self.ot_distance = 30
         self.ot_counter = 0
         self.clear_distance = 50
-        self.last_obstacle_speed = 0
         OVERTAKE_FREE = False
 
     def update(self):
