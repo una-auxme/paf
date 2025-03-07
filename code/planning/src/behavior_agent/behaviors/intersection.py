@@ -21,27 +21,11 @@ from .stop_mark_service_utils import (
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from .topics2blackboard import BLACKBOARD_MAP_ID
 
-from local_planner.utils import (
-    TARGET_DISTANCE_TO_STOP_INTERSECTION,
-)
-
 INTERSECTION_MARKER_COLOR = (222 / 255, 23 / 255, 214 / 255, 1.0)
 
 """
 Source: https://github.com/ll7/psaf2
 """
-
-
-# 1: Green, 2: Red, 4: Yellow, 0: Unknown
-def get_color(state):
-    if state == 1:
-        return "green"
-    elif state == 2:
-        return "red"
-    elif state == 4:
-        return "yellow"
-    else:
-        return ""
 
 
 INTERSECTION_STOPMARKS_ID = "intersection"

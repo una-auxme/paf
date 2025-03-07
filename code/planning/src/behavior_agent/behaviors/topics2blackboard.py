@@ -12,7 +12,7 @@ from mapping.msg import Map as MapMsg
 from mapping_common.map import Map
 
 from mock.msg import Stop_sign
-from perception.msg import Waypoint, LaneChange, TrafficLightState
+from perception.msg import Waypoint, TrafficLightState
 
 BLACKBOARD_MAP_ID = "/import/map"
 
@@ -57,9 +57,9 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/waypoint_distance",
+            "name": f"/paf/{role_name}/current_waypoint",
             "msg": Waypoint,
-            "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
+            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
             "name": f"/paf/{role_name}/stop_sign",
@@ -90,11 +90,6 @@ def create_node(role_name):
             "name": f"/paf/{role_name}/acc_velocity",
             "msg": Float32,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/lane_change",
-            "msg": LaneChange,
-            "clearing-policy": py_trees.common.ClearingPolicy.ON_INITIALISE,
         },
         {
             "name": f"/paf/{role_name}/current_pos",

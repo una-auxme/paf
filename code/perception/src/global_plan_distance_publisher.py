@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from rospy import Subscriber
+from rospy import Subscriber, Publisher
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
@@ -8,7 +8,7 @@ from carla_msgs.msg import CarlaRoute
 from nav_msgs.msg import Path
 from agents.navigation.local_planner import RoadOption
 
-from perception.msg import Waypoint, LaneChange
+from perception.msg import Waypoint
 
 import math
 
@@ -64,14 +64,8 @@ class GlobalPlanDistance(CompatibleNode):
             qos_profile=1,
         )
 
-        self.waypoint_publisher = self.new_publisher(
-            Waypoint, "/paf/" + self.role_name + "/waypoint_distance", qos_profile=1
-        )
-
-        self.lane_change_publisher = self.new_publisher(
-            LaneChange,
-            "/paf/" + self.role_name + "/lane_change",
-            qos_profile=1,
+        self.waypoint_publisher: Publisher = self.new_publisher(
+            Waypoint, "/paf/" + self.role_name + "/current_waypoint", qos_profile=1
         )
 
     def __set_trajectory_local(self, data: Path):
@@ -102,6 +96,7 @@ class GlobalPlanDistance(CompatibleNode):
             self.global_route is None
             or len(self.global_route) == 0
             or self.road_options is None
+            or len(self.road_options) == 0
             or self.trajectory_local is None
         ):
             return
@@ -113,6 +108,7 @@ class GlobalPlanDistance(CompatibleNode):
             self.global_route[1].position, self.current_pos.position
         )
 
+        waypoint_type = Waypoint.TYPE_UNKNOWN
         # if the road option indicates an intersection, the distance to the
         # next waypoint is also the distance to the stop line
         if self.road_options[0] in {
@@ -121,31 +117,21 @@ class GlobalPlanDistance(CompatibleNode):
             RoadOption.RIGHT,
             RoadOption.STRAIGHT,
         }:
-            # print("publish waypoint")
+            waypoint_type = Waypoint.TYPE_INTERSECTION
+        elif self.road_options[0] in {
+            RoadOption.CHANGELANELEFT,
+            RoadOption.CHANGELANERIGHT,
+        }:
+            waypoint_type = Waypoint.TYPE_INTERSECTION
 
-            self.waypoint_publisher.publish(Waypoint(current_distance, True))
-            self.lane_change_publisher.publish(
-                LaneChange(
-                    current_distance,
-                    False,
-                    self.road_options[0],
-                    self.global_route[0].position,
-                )
-            )
-        else:
-            self.waypoint_publisher.publish(Waypoint(current_distance, False))
-            if self.road_options[0] in {
-                RoadOption.CHANGELANELEFT,
-                RoadOption.CHANGELANERIGHT,
-            }:
-                self.lane_change_publisher.publish(
-                    LaneChange(
-                        current_distance,
-                        True,
-                        self.road_options[0],
-                        self.global_route[0].position,
-                    )
-                )
+        current_waypoint = Waypoint(
+            waypoint_type=waypoint_type,
+            distance=current_distance,
+            roadOption=self.road_options[0],
+            position=self.global_route[0].position,
+        )
+        self.waypoint_publisher.publish(current_waypoint)
+
         # if we reached the next waypoint, pop it and the next point will
         # be published
         if current_distance < 2.5 or next_distance < current_distance:
