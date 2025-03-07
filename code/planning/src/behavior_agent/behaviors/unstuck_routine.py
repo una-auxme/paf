@@ -14,7 +14,6 @@ from .speed_alteration import add_speed_override
 from .debug_markers import add_debug_marker, debug_status, debug_marker
 from .overtake_service_utils import (
     request_start_overtake,
-    _start_overtake_proxy,
     create_start_overtake_proxy,
     request_end_overtake,
     create_end_overtake_proxy,
