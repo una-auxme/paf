@@ -24,19 +24,6 @@ from planning.srv import (
     EndOvertakeResponse,
     OvertakeStatusResponse,
 )
-from scipy.spatial.transform import Rotation
-from std_msgs.msg import Bool, Float32, Float32MultiArray, Int16, String
-
-from local_planner.utils import (
-    NUM_WAYPOINTS,
-    NUM_WAYPOINTS_BICYCLE,
-    TARGET_DISTANCE_TO_STOP,
-    TARGET_DISTANCE_TO_STOP_INTERSECTION,
-    TARGET_DISTANCE_TO_STOP_OVERTAKE,
-    convert_to_ms,
-    spawn_car,
-    convert_pose_to_array,
-)
 
 import mapping_common.hero
 import mapping_common.mask
