@@ -1,8 +1,8 @@
-# from scipy.spatial.transform import Rotation
-# import numpy as np
-# import math
-# import carla
-# import os
+from scipy.spatial.transform import Rotation
+import numpy as np
+import math
+import carla
+import os
 
 
 """
@@ -18,7 +18,7 @@ TARGET_DISTANCE_TO_STOP_OVERTAKE = 7.0
 TARGET_DISTANCE_TO_STOP_LANECHANGE = 5.0
 TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 35.0
 # Earth radius in meters for location_to_GPS
-# EARTH_RADIUS_EQUA = 6378137.0
+EARTH_RADIUS_EQUA = 6378137.0
 
 
 def convert_to_ms(speed: float):
@@ -33,7 +33,7 @@ def convert_to_ms(speed: float):
     return speed / 3.6
 
 
-'''def get_distance(pos_1, pos_2):
+def get_distance(pos_1, pos_2):
     """Calculate the distance between two positions
 
     Args:
@@ -47,10 +47,10 @@ def convert_to_ms(speed: float):
     Returns:
         float: Distance
     """
-    return np.linalg.norm(pos_1 - pos_2)'''
+    return np.linalg.norm(pos_1 - pos_2)
 
 
-'''def spawn_car(distance):
+def spawn_car(distance):
     """Only used for testing, spawns a car in the given distance
 
     Args:
@@ -87,10 +87,10 @@ def convert_to_ms(speed: float):
     #                               carla.Location(x=2.5, y=distance.data + 1),
     #                               ego_vehicle.get_transform().rotation)
     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
-    # vehicle2.set_autopilot(False)'''
+    # vehicle2.set_autopilot(False)
 
 
-'''def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
+def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     """Convert world coordinates to (lat,lon,z) coordinates
        Copied from:
        https://github.com/carla-simulator/scenario_runner/blob/master/srunner/tools/route_manipulation.py
@@ -119,10 +119,10 @@ def convert_to_ms(speed: float):
     lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
     z = 703
 
-    return {"lat": lat, "lon": lon, "z": z}'''
+    return {"lat": lat, "lon": lon, "z": z}
 
 
-'''def calculate_rule_of_thumb(emergency, speed):
+def calculate_rule_of_thumb(emergency, speed):
     """Calculates the rule of thumb as approximation
     for the braking distance
 
@@ -139,10 +139,10 @@ def convert_to_ms(speed: float):
         # Emergency brake is really effective in Carla
         return reaction_distance + braking_distance / 2
     else:
-        return reaction_distance + braking_distance'''
+        return reaction_distance + braking_distance
 
 
-'''def approx_obstacle_pos(
+def approx_obstacle_pos(
     distance: float, heading: float, ego_pos: np.array, speed: float
 ):
     """calculate the position of the obstacle in the global coordinate system
@@ -185,16 +185,16 @@ def convert_to_ms(speed: float):
         vehicle_position_global_start + length_vector + offset_back
     )
 
-    return vehicle_position_global_start + offset_front, vehicle_position_global_end'''
+    return vehicle_position_global_start + offset_front, vehicle_position_global_end
 
 
-"""def interpolate_speed(
+def interpolate_speed(
     speed_target: float, speed_current: float, lerp_factor: float
 ) -> float:
-    return (1 - lerp_factor) * speed_current + lerp_factor * speed_target"""
+    return (1 - lerp_factor) * speed_current + lerp_factor * speed_target
 
 
-'''def filter_vision_objects(float_array, oncoming):
+def filter_vision_objects(float_array, oncoming):
     """Filters vision objects to calculate collision check
     It contains the classId, the absolute Euclidean distance
     and 6 coordinates for upper left and lower right corner
@@ -241,10 +241,10 @@ def convert_to_ms(speed: float):
         if min_object_in_front[1] > 9.0:
             return None
 
-    return min_object_in_front'''
+    return min_object_in_front
 
 
-'''def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
+def convert_pose_to_array(poses: np.ndarray) -> np.ndarray:
     """Convert an array of PoseStamped objects to a numpy array of positions.
 
     Args:
@@ -258,4 +258,4 @@ def convert_to_ms(speed: float):
         result_array[pose] = np.array(
             [poses[pose].pose.position.x, poses[pose].pose.position.y]
         )
-    return result_array'''
+    return result_array
