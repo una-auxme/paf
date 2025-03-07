@@ -487,7 +487,7 @@ class Wait(py_trees.behaviour.Behaviour):
         #    unset_space_stop_mark(self.stop_proxy)
         # self.last_obstacle_speed = obstacle_speed
 
-        self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+        self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,

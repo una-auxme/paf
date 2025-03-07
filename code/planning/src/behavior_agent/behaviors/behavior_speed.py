@@ -77,6 +77,7 @@ ot_app_free = Behavior("ot_app_free", -1)
 
 # Wait
 
+ot_wait = Behavior("ot_wait", 0)
 ot_wait_free = Behavior("ot_wait_free", convert_to_ms(3.0))
 
 # Enter
