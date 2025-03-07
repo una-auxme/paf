@@ -122,7 +122,7 @@ Subscriptions:
 Publishes:
 
 - ```/paf/hero/waypoint_distance``` \(/MotionPlanning, /behavior_agent\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
-- ```/paf/hero/lane_change_distance``` \(/MotionPlanning, /behavior_agent\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
+- ```/paf/hero/lane_change``` \(/MotionPlanning, /behavior_agent\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 
 ### Kalman filtering ([kalman_filter.py](/../paf/code/perception/src/kalman_filter.py))
 
@@ -189,7 +189,7 @@ Subscriptions:
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
+- ```/paf/hero/lane_change``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 - ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
@@ -257,7 +257,7 @@ Subscriptions:
 - ```/paf/hero/unchecked_emergency``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
-- ```/paf/hero/lane_change_distance``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
+- ```/paf/hero/lane_change``` \(/GlobalPlanDistance\) ([perception/msg/LaneChange](/../paf/code/perception/msg/LaneChange.msg))
 - ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))

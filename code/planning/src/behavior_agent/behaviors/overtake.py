@@ -366,7 +366,8 @@ class Approach(py_trees.behaviour.Behaviour):
                         f"Overtake free count: {self.ot_counter}",
                     )
             else:
-                self.ot_counter = 0
+                if ot_free is LaneFreeState.BLOCKED:
+                    self.ot_counter = 0
                 add_debug_entry(
                     self.name, "Overtake Approach: oncoming blocked slowing down"
                 )
@@ -418,12 +419,11 @@ class Wait(py_trees.behaviour.Behaviour):
         self.clear_distance = 50
         self.ot_counter = 0
         self.ot_gone = 0
-        return True
 
     def update(self):
         """
         Waits behind the road object until map function lane free check
-        return True.
+        returns True.
 
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
@@ -504,7 +504,8 @@ class Wait(py_trees.behaviour.Behaviour):
                     self.name, Status.RUNNING, f"Overtake free count: {self.ot_counter}"
                 )
         else:
-            self.ot_counter = 0
+            if ot_free is LaneFreeState.BLOCKED:
+                self.ot_counter = 0
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
@@ -596,7 +597,6 @@ class Leave(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self.curr_behavior_pub.publish(bs.ot_leave.name)
-        return True
 
     def update(self):
         """

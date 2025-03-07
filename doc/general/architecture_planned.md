@@ -214,7 +214,7 @@ Subscriptions:
 - ```unchecked_emergency``` ([std_msgs/Bool](https://docs.ros.org/en/api/std_msgs/html/msg/Bool.html))
 - ```acc_velocity``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - ```waypoint_distance``` ([perception/Waypoint](../../code/perception/msg/Waypoint.msg))
-- ```lane_change_distance``` ([perception/LanecChange](../../code/perception/msg/LaneChange.msg))
+- ```lane_change``` ([perception/LanecChange](../../code/perception/msg/LaneChange.msg))
 - ```collision``` ([std_msgs/Float32MultiArray](https://docs.ros.org/en/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```traffic_light_y_distance``` ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```unstuck_distance``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
