@@ -303,6 +303,12 @@ class Approach(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
+        hero: Optional[Entity] = tree.map.hero()
+        if hero is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "hero is None"
+            )
+
         obstacle = calculate_obstacle(
             self.name,
             tree,
@@ -319,21 +325,20 @@ class Approach(py_trees.behaviour.Behaviour):
         entity, self.ot_distance = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         add_debug_entry(self.name, f"Overtake distance: {self.ot_distance}")
-        if obstacle_speed > 2.7 and (obstacle_speed - self.last_obstacle_speed < 5):
+        if obstacle_speed > 2.7:  # and (obstacle_speed - self.last_obstacle_speed < 5)
             return debug_status(
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
-        self.last_obstacle_speed = obstacle_speed
+        # self.last_obstacle_speed = obstacle_speed
 
         # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        # if obstacle_speed < 1.0:
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
         # else:
         #    unset_space_stop_mark(self.stop_proxy)
 
@@ -420,7 +425,7 @@ class Wait(py_trees.behaviour.Behaviour):
         self.clear_distance = 55
         self.ot_counter = 0
         self.ot_gone = 0
-        self.last_obstacle_speed = 0
+        # self.last_obstacle_speed = 0
         return True
 
     def update(self):
@@ -464,23 +469,22 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
             return py_trees.common.Status.RUNNING
 
-        entity, distance = obstacle
+        entity, _ = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         self.ot_gone = 0
         add_debug_entry(self.name, f"Obstacle speed: {obstacle_speed}")
 
-        if obstacle_speed > 3.0 and (obstacle_speed - self.last_obstacle_speed < 5):
+        if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
-        self.last_obstacle_speed = obstacle_speed
+        # self.last_obstacle_speed = obstacle_speed
         # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        # if obstacle_speed < 1.0:
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
         # elif obstacle_speed - self.last_obstacle_speed > 10:
         #    pass
         # else:
