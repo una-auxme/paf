@@ -122,7 +122,7 @@ class GlobalPlanDistance(CompatibleNode):
             RoadOption.CHANGELANELEFT,
             RoadOption.CHANGELANERIGHT,
         }:
-            waypoint_type = Waypoint.TYPE_INTERSECTION
+            waypoint_type = Waypoint.TYPE_LANECHANGE
 
         current_waypoint = Waypoint(
             waypoint_type=waypoint_type,
