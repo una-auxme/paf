@@ -438,7 +438,8 @@ class RadarNode(CompatibleNode):
         Returns:
         - np.ndarray
             A 2D array where each row represents a transformed point in the point cloud:
-            [x, y, z, velocity]. Returns an empty array if the sensor name is not recognized.
+            [x, y, z, velocity]. Returns an empty array
+            if the sensor name is not recognized.
         """
 
         if sensor_name not in self.sensor_config:
@@ -579,7 +580,8 @@ class RadarNode(CompatibleNode):
             self.range_velocity_radar_publisher.publish(lead_vehicle_data)
             return
 
-        # Identify the closest point (lead vehicle candidate) based on the x-coordinate (distance)
+        # Identify the closest point (lead vehicle candidate)
+        # based on the x-coordinate (distance)
         closest_point = radar_data[np.argmin(radar_data[:, 0])]
 
         lead_vehicle_data.data = [
@@ -655,7 +657,8 @@ def filter_data(
     Filters radar data based on specified spatial and distance constraints.
 
     This function applies multiple filtering criteria to the input radar data.
-    Points outside these bounds (e.g., spatial limits and maximum distance) are excluded.
+    Points outside these bounds are excluded.
+    (e.g., spatial limits and maximum distance)
 
     Args:
         data (np.ndarray): A 2D numpy array containing radar data, where each row
@@ -694,8 +697,9 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
     """
     Clusters the radar data using the DBSCAN algorithm and returns the cluster labels.
 
-    This function applies DBSCAN clustering to radar data, scaling the data first for better
-    clustering performance. It returns the cluster labels assigned by DBSCAN, where each
+    This function applies DBSCAN clustering to radar data,
+    scaling the data first for better clustering performance.
+    It returns the cluster labels assigned by DBSCAN, where each
     point is assigned a cluster label, and noise points are labeled as -1.
 
     Args:
@@ -710,12 +714,15 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
 
     Returns:
         np.ndarray: An array containing the cluster labels assigned by DBSCAN.
-                    Points labeled as -1 are considered noise and don't belong to any cluster.
+                    Points labeled as -1 are considered noise
+                    and don't belong to any cluster.
 
     Notes:
         - If the input data is empty, the function returns an empty array.
-        - Data is scaled before clustering for better performance using the `StandardScaler`.
-        - The function assumes that the input `data` has 4 columns (x, y, z, velocity), and the z-values are replaced by 1 for the purpose of clustering.
+        - Data is scaled before clustering for better performance
+            using the `StandardScaler`.
+        - The function assumes that the input `data` has 4 columns (x, y, z, velocity),
+            and the z-values are replaced by 1 for the purpose of clustering.
     """
 
     if len(data) == 0:
@@ -758,9 +765,11 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
     Creates a PointCloud2 message from radar points with color mapping for clusters.
 
     Args:
-        clustered_points (np.ndarray): 2D array of radar points in format [x, y, z, velocity].
+        clustered_points (np.ndarray): 2D array of radar points
+            in format [x, y, z, velocity].
         cluster_labels (np.ndarray): Array of cluster labels for each point.
-        filtered_out_points (bool): If True, all points are colored red; otherwise, clusters are colored based on labels.
+        filtered_out_points (bool): If True, all points are colored red; otherwise,
+            clusters are colored based on labels.
 
     Returns:
         PointCloud2: A PointCloud2 message containing the radar point cloud data.
@@ -840,9 +849,10 @@ def generate_bounding_boxes(points_with_labels):
     and maximum coordinates along the x, y, and z axes.
 
     Args:
-        points_with_labels (numpy.ndarray): A 2D array of shape (N, 4) where each row contains
-                                            the coordinates [x, y, z] of a point along with
-                                            its corresponding cluster label in the last column.
+        points_with_labels
+        (numpy.ndarray): A 2D array of shape (N, 4) where each row contains
+                        the coordinates [x, y, z] of a point along with
+                        its corresponding cluster label in the last column.
 
     Returns:
         list: A list of tuples where each tuple contains a cluster label and the
@@ -987,9 +997,6 @@ def calculate_cluster_velocity(points_with_labels):
     return motion_array
 
 
-import json
-
-
 def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     """
     Generates information about clusters, including the label, number of points,
@@ -997,8 +1004,10 @@ def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
 
     Args:
         cluster_labels (numpy.ndarray): The clustered data labels for each point.
-        data (numpy.ndarray): The point cloud data, typically with columns [x, y, z, distance].
-        marker_array (MarkerArray): The array of RViz markers associated with the clusters.
+        data (numpy.ndarray): The point cloud data,
+        typically with columns [x, y, z, distance].
+        marker_array (MarkerArray): The array of RViz markers
+        associated with the clusters.
         bounding_boxes (list): The list of bounding boxes for each detected object.
 
     Returns:
