@@ -187,8 +187,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 stuck_dur = TRIGGER_WAIT_STUCK_DURATION.secs
             rospy.logfatal(
                 f"{stuck_reason} in one place for more than "
-                f"{stuck_dur} sec\n"
-                "  --> starting unstuck routine"
+                f"{stuck_dur} sec --> starting unstuck routine"
             )
 
     def update(self):
@@ -244,7 +243,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 add_speed_override(-2.0)
             else:
                 # skip waiting till UNSTUCK_DRIVE_DURATION reached
-                self.init_ros_stuck_time += UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
+                self.init_ros_stuck_time -= UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
                 add_speed_override(0.0)
             return debug_status(
                 self.name,
