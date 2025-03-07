@@ -528,8 +528,6 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
                 lane_angle=lane_angle,
             )
 
@@ -541,8 +539,6 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
             )
 
         if lane_state.is_error():
@@ -596,8 +592,6 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        min_coverage_percent: float = 0.0,
-        min_coverage_area: float = 0.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if the lane is free by using a checkbox with size and position
         according to inputs
@@ -609,10 +603,6 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            min_coverage_percent (float, optional): how much an entity must collide
-            with the checkbox in percent. Defaults to 0.0.
-            min_coverage_area (float, optional): how much an entity must collide
-            with the checkbox in m2. Defaults to 0.0.
 
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
@@ -649,8 +639,6 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        min_coverage_percent: float = 0.0,
-        min_coverage_area: float = 0.0,
         lane_angle: float = 5.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if a lane is free by using a checkbox that is placed between two lane
@@ -664,10 +652,6 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            min_coverage_percent (float, optional): how much an entity must collide
-            with the checkbox in percent. Defaults to 0.0.
-            min_coverage_area (float, optional): how much an entity must collide
-            with the checkbox in m2. Defaults to 0.0.
             lane_angle (float, optional): sets how many degrees the lanes may be skewed
             in relation to each other that the check get executed. Defaults to 5.0 °
 
