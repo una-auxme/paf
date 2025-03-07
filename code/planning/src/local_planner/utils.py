@@ -15,7 +15,7 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 TARGET_DISTANCE_TO_STOP = 5.0
 TARGET_DISTANCE_TO_STOP_OVERTAKE = 7.0
 TARGET_DISTANCE_TO_STOP_LANECHANGE = 5.0
-TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 50.0
+TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 35.0
 # Number of waypoints to be used for the overtaking maneuver
 NUM_WAYPOINTS = 9
 NUM_WAYPOINTS_BICYCLE = 22
