@@ -71,6 +71,52 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     return {"lat": lat, "lon": lon, "z": z}
 
 
+def approx_obstacle_pos(
+    distance: float, heading: float, ego_pos: np.array, speed: float
+):
+    """calculate the position of the obstacle in the global coordinate system
+        based on ego position, heading and distance
+
+    Args:
+        speed (float): Speed of the ego vehicle
+        distance (float): Distance to the obstacle
+        heading (float): Ego vehivle heading
+        ego_pos (np.array): Position in [x, y, z]
+
+    Returns:
+        np.array: approximated position of the obstacle
+    """
+    rotation_matrix = Rotation.from_euler("z", heading)
+
+    # Create distance vector with 0 rotation
+    relative_position_local = np.array([distance, 0, 0])
+
+    # Rotate distance vector to match heading
+    absolute_position_local = rotation_matrix.apply(relative_position_local)
+
+    # Add ego position vector with distance vetor to get absolute position
+    vehicle_position_global_start = ego_pos + absolute_position_local
+
+    # Calculate the front and back of the vehicle
+    length = np.array([3, 0, 0])
+    length_vector = rotation_matrix.apply(length)
+
+    # calculate the front left corner of the vehicle
+    offset = np.array([1, 0, 0])
+    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(90))
+    offset_front = rotation_adjusted.apply(offset)
+
+    # calculate back right corner of the vehicle
+    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(270))
+    offset_back = rotation_adjusted.apply(offset)
+
+    vehicle_position_global_end = (
+        vehicle_position_global_start + length_vector + offset_back
+    )
+
+    return vehicle_position_global_start + offset_front, vehicle_position_global_end
+
+
 def calculate_rule_of_thumb(emergency, speed):
     """Calculates the rule of thumb as approximation
     for the braking distance
@@ -141,52 +187,6 @@ def spawn_car(distance):
     #                               ego_vehicle.get_transform().rotation)
     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
     # vehicle2.set_autopilot(False)
-
-
-def approx_obstacle_pos(
-    distance: float, heading: float, ego_pos: np.array, speed: float
-):
-    """calculate the position of the obstacle in the global coordinate system
-        based on ego position, heading and distance
-
-    Args:
-        speed (float): Speed of the ego vehicle
-        distance (float): Distance to the obstacle
-        heading (float): Ego vehivle heading
-        ego_pos (np.array): Position in [x, y, z]
-
-    Returns:
-        np.array: approximated position of the obstacle
-    """
-    rotation_matrix = Rotation.from_euler("z", heading)
-
-    # Create distance vector with 0 rotation
-    relative_position_local = np.array([distance, 0, 0])
-
-    # Rotate distance vector to match heading
-    absolute_position_local = rotation_matrix.apply(relative_position_local)
-
-    # Add ego position vector with distance vetor to get absolute position
-    vehicle_position_global_start = ego_pos + absolute_position_local
-
-    # Calculate the front and back of the vehicle
-    length = np.array([3, 0, 0])
-    length_vector = rotation_matrix.apply(length)
-
-    # calculate the front left corner of the vehicle
-    offset = np.array([1, 0, 0])
-    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(90))
-    offset_front = rotation_adjusted.apply(offset)
-
-    # calculate back right corner of the vehicle
-    rotation_adjusted = Rotation.from_euler("z", heading + math.radians(270))
-    offset_back = rotation_adjusted.apply(offset)
-
-    vehicle_position_global_end = (
-        vehicle_position_global_start + length_vector + offset_back
-    )
-
-    return vehicle_position_global_start + offset_front, vehicle_position_global_end
 
 
 def interpolate_speed(
