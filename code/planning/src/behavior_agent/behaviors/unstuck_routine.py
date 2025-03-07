@@ -237,6 +237,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         # drive for UNSTUCK_DRIVE_DURATION forwards again
         # (to pass stopmarkers before they are set again)
         elif rospy.Time.now() - self.init_ros_stuck_time < 2 * UNSTUCK_DRIVE_DURATION:
+            self.curr_behavior_pub.publish(bs.us_forward.name)
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
