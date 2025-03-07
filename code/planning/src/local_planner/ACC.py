@@ -284,9 +284,6 @@ class ACC(CompatibleNode):
         # set last desired speed to current desired speed for next loop
         self.last_desired_speed = desired_speed
 
-        # need to delete afterwards, only for debug
-        marker_text += f"\nHero Speed: {hero.motion.linear_motion.x()}"
-
         debug_markers.append(
             debug_marker(
                 marker_text,
