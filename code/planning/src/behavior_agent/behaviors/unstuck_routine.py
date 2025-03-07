@@ -26,8 +26,8 @@ from .stop_mark_service_utils import (
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
 TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(15)  # default 25 (s)
-UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
-UNSTUCK_CLEAR_DISTANCE = 3  # default 1.5 (m)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(3)  # default 1.2 (s)
+UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
 REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
 REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
@@ -257,7 +257,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                     self.start_overtake_proxy, start_transition_length=0.0
                 )
                 self.unstuck_count = 0
-            self.STUCK_DETECTED = False
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
@@ -269,6 +268,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.curr_behavior_pub.publish(bs.us_stop.name)
             self.stuck_timer = rospy.Time.now()
             self.wait_stuck_timer = rospy.Time.now()
+            self.STUCK_DETECTED = False
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
