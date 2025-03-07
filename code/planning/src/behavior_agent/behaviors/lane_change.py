@@ -159,12 +159,10 @@ class Ahead(py_trees.behaviour.Behaviour):
                     self.change_position.x, self.change_position.y
                 )
                 stop_mark_shape = Rectangle(
-                    length=20.0,
+                    length=25.0,
                     width=0.5,
                     offset=Transform2D.new_translation(
-                        Vector2.new(
-                            local_pos.x() + 10.0, local_pos.y() + lane_pos * 2.5
-                        )
+                        Vector2.new(local_pos.x() + 7.5, local_pos.y() + lane_pos * 1.5)
                     ),
                 )
                 update_stop_marks(
