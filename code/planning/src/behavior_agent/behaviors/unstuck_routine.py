@@ -26,7 +26,7 @@ from .stop_mark_service_utils import (
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
 TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
 TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(15)  # default 25 (s)
-UNSTUCK_DRIVE_DURATION = rospy.Duration(3)  # default 1.2 (s)
+UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
 REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
