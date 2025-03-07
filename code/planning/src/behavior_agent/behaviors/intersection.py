@@ -242,7 +242,7 @@ class Approach(py_trees.behaviour.Behaviour):
             self.stopline_detected = _dis.isStopLine
 
         # Update stop sign Info
-        stop_sign_msg = self.blackboard.get("/paf/hero/stop_sign")
+        stop_sign_msg = None
         if stop_sign_msg is not None:
             self.stop_sign_detected = stop_sign_msg.isStop
             self.stop_distance = stop_sign_msg.distance
