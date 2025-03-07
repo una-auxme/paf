@@ -137,7 +137,7 @@ export USER_UID=$(id -u)
 export USER_GID=$(id -g)
 export USERNAME=$(id -u -n)
 docker compose -f ./docker-compose.leaderboard.yaml build
-docker compose -f ./docker-compose.dev.yaml up build
+docker compose -f ./docker-compose.dev.yaml build
 ```
 
 ## Sources
