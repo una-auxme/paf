@@ -71,6 +71,26 @@ def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
     return {"lat": lat, "lon": lon, "z": z}
 
 
+def calculate_rule_of_thumb(emergency, speed):
+    """Calculates the rule of thumb as approximation
+    for the braking distance
+
+    Args:
+        emergency (bool): if emergency brake is initiated
+        speed (float): speed of the vehicle (km/h)
+
+    Returns:
+        float: distance calculated with rule of thumb
+    """
+    reaction_distance = speed
+    braking_distance = (speed * 0.36) ** 2
+    if emergency:
+        # Emergency brake is really effective in Carla
+        return reaction_distance + braking_distance / 2
+    else:
+        return reaction_distance + braking_distance
+
+
 def convert_to_ms(speed: float):
     """Convert km/h to m/s
 
@@ -121,26 +141,6 @@ def spawn_car(distance):
     #                               ego_vehicle.get_transform().rotation)
     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
     # vehicle2.set_autopilot(False)
-
-
-def calculate_rule_of_thumb(emergency, speed):
-    """Calculates the rule of thumb as approximation
-    for the braking distance
-
-    Args:
-        emergency (bool): if emergency brake is initiated
-        speed (float): speed of the vehicle (km/h)
-
-    Returns:
-        float: distance calculated with rule of thumb
-    """
-    reaction_distance = speed
-    braking_distance = (speed * 0.36) ** 2
-    if emergency:
-        # Emergency brake is really effective in Carla
-        return reaction_distance + braking_distance / 2
-    else:
-        return reaction_distance + braking_distance
 
 
 def approx_obstacle_pos(
