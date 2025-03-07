@@ -8,14 +8,14 @@ import rospy
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,
 )
 
 from local_planner.utils import (
-    TARGET_DISTANCE_TO_STOP,
+    TARGET_DISTANCE_TO_STOP_INTERSECTION,
     convert_to_ms,
 )
 
@@ -242,7 +242,7 @@ class Approach(py_trees.behaviour.Behaviour):
             self.stopline_detected = _dis.isStopLine
 
         # Update stop sign Info
-        stop_sign_msg = self.blackboard.get("/paf/hero/stop_sign")
+        stop_sign_msg = None
         if stop_sign_msg is not None:
             self.stop_sign_detected = stop_sign_msg.isStop
             self.stop_distance = stop_sign_msg.distance
@@ -255,7 +255,7 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             self.virtual_stopline_distance = 0.0
 
-        target_distance = TARGET_DISTANCE_TO_STOP
+        target_distance = TARGET_DISTANCE_TO_STOP_INTERSECTION
         # stop when there is no or red/yellow traffic light or a stop sign is
         # detected
         if (

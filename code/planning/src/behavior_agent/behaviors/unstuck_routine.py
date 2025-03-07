@@ -9,7 +9,8 @@ from mapping_common.map import Map, MapTree
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from mapping_common.entity import Entity
 from mapping_common.entity import FlagFilter
-from . import behavior_speed as bs
+from local_planner.utils import get_distance
+from . import behavior_names as bs
 from .speed_alteration import add_speed_override
 from .debug_markers import add_debug_marker, debug_status, debug_marker
 from .overtake_service_utils import (
@@ -31,19 +32,6 @@ UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
 REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
 REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
-
-
-def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
-    """Calculate the distance between two positions
-
-    Args:
-        pos1 (np.array): Position 1 [#,#]
-        pos2 (np.array): Position 2 [#,#]
-
-    Returns:
-        float: Distance
-    """
-    return np.linalg.norm(pos_1 - pos_2)
 
 
 def pos_to_array(pos: PoseStamped):
