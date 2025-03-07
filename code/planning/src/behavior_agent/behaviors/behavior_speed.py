@@ -93,5 +93,5 @@ cruise = Behavior("Cruise", -1)
 
 # Unstuck Routine
 us_unstuck = Behavior("us_unstuck", -3)
+us_forward = Behavior("us_forward", 0)
 us_stop = Behavior("us_stop", 0)
-us_overtake = Behavior("us_overtake", 0)
