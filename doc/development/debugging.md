@@ -67,7 +67,8 @@ Debug individual nodes with the VS Code debugger. This allows usage of breakpoin
 
 1. Make sure the docker images are up-to-date: [Rebuild docker containers](#rebuild-docker-containers)
 2. Start the `build/docker-compose.dev.yaml` containers and attach VS Code to the **build-agent-dev** container. Always use the VS Code remote for debugging
-3. Make sure the recommended extensions are installed in the VS Code remote.
+3. Open the `/workspace` directory in the VS Code remote
+4. Make sure the recommended extensions are installed in the VS Code remote.
 
 #### Required once for the node you want to debug
 
@@ -135,8 +136,8 @@ To update them, open a terminal, change into the *build* directory and execute:
 export USER_UID=$(id -u)
 export USER_GID=$(id -g)
 export USERNAME=$(id -u -n)
-docker compose -f ./docker-compose.leaderboard.yaml up -d --build
-docker compose -f ./docker-compose.dev.yaml up -d --build
+docker compose -f ./docker-compose.leaderboard.yaml build
+docker compose -f ./docker-compose.dev.yaml up build
 ```
 
 ## Sources
