@@ -45,6 +45,7 @@ lc_exit = Behavior("lc_exit")
 ot_app_blocked = Behavior("ot_app_blocked")
 ot_app_free = Behavior("ot_app_free")
 # Wait
+ot_wait = Behavior("ot_wait")
 ot_wait_free = Behavior("ot_wait_free")
 # Enter
 ot_enter_init = Behavior("ot_enter_init")
@@ -56,5 +57,5 @@ cruise = Behavior("cruise")
 
 # Unstuck Routine
 us_unstuck = Behavior("us_unstuck")
+us_forward = Behavior("us_forward")
 us_stop = Behavior("us_stop")
-us_overtake = Behavior("us_overtake")
