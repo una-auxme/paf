@@ -80,7 +80,7 @@ ot_app_blocked = Behavior("ot_app_blocked", -2)
 ot_app_free = Behavior("ot_app_free", -1)
 
 # Wait
-
+ot_wait = Behavior("ot_wait", 0)
 ot_wait_free = Behavior("ot_wait_free", convert_to_ms(3.0))
 
 # Enter
@@ -97,5 +97,5 @@ cruise = Behavior("Cruise", -1)
 
 # Unstuck Routine
 us_unstuck = Behavior("us_unstuck", -3)
+us_forward = Behavior("us_forward", 0)
 us_stop = Behavior("us_stop", 0)
-us_overtake = Behavior("us_overtake", 0)
