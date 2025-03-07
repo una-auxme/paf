@@ -33,13 +33,15 @@ def convert_to_ms(speed: float):
     return speed / 3.6
 
 
-def get_distance(pos_1, pos_2):
+def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
     """Calculate the distance between two positions
 
     Args:
         pos1 (np.array): Position 1
         pos2 (np.array): Position 2
         # the np.array should be in the form of
+        # np.array([data.pose.position.x,
+            data.pose.position.y]) or
         # np.array([data.pose.position.x,
                     data.pose.position.y,
                     data.pose.position.z])
