@@ -302,12 +302,6 @@ class Approach(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        hero: Optional[Entity] = tree.map.hero()
-        if hero is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "hero is None"
-            )
-
         obstacle = calculate_obstacle(
             self.name,
             tree,
@@ -471,7 +465,6 @@ class Wait(py_trees.behaviour.Behaviour):
 
         self.ot_gone = 0
         add_debug_entry(self.name, f"Obstacle speed: {obstacle_speed}")
-
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
