@@ -280,7 +280,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
-        self.clear_distance = 55
+        self.clear_distance = 50
         self.last_obstacle_speed = 0
         OVERTAKE_FREE = False
 
@@ -330,24 +330,19 @@ class Approach(py_trees.behaviour.Behaviour):
             obstacle_speed = 0
 
         add_debug_entry(self.name, f"Overtake distance: {self.ot_distance}")
-        if obstacle_speed > 2.7:  # and (obstacle_speed - self.last_obstacle_speed < 5)
+        if obstacle_speed > 2.7:
             return debug_status(
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
-        # self.last_obstacle_speed = obstacle_speed
 
-        # Only add stop space if the obstacle is standing
-        # if obstacle_speed < 1.0:
         set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        # else:
-        #    unset_space_stop_mark(self.stop_proxy)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=False,
                 lane_length=self.clear_distance,
-                lane_transform=15.0,
+                lane_transform=10.0,
                 check_method="fallback",
             )
             if isinstance(ot_mask, shapely.Polygon):
@@ -423,10 +418,9 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Waiting for Overtake")
         # slightly less distance since we have already stopped
-        self.clear_distance = 55
+        self.clear_distance = 50
         self.ot_counter = 0
         self.ot_gone = 0
-        # self.last_obstacle_speed = 0
 
     def update(self):
         """
@@ -481,21 +475,14 @@ class Wait(py_trees.behaviour.Behaviour):
 
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
-        # self.last_obstacle_speed = obstacle_speed
-        # Only add stop space if the obstacle is standing
-        # if obstacle_speed < 1.0:
+
         set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        # elif obstacle_speed - self.last_obstacle_speed > 10:
-        #    pass
-        # else:
-        #    unset_space_stop_mark(self.stop_proxy)
-        # self.last_obstacle_speed = obstacle_speed
 
         self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
-            lane_transform=15.0,
+            lane_transform=10.0,
             check_method="fallback",
         )
 
