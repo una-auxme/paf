@@ -57,6 +57,7 @@ lc_app_free = Behavior("lc_app_free", convert_to_ms(30.0))
 
 # Wait
 lc_wait = Behavior("lc_wait", 0)
+lc_wait_free = Behavior("lc_wait_free", convert_to_ms(30.0))
 
 # Enter
 
