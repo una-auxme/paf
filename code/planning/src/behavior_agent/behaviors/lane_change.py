@@ -160,7 +160,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                 )
                 stop_mark_shape = Rectangle(
                     length=20.0,
-                    width=2.5,
+                    width=0.5,
                     offset=Transform2D.new_translation(
                         Vector2.new(
                             local_pos.x() + 10.0, local_pos.y() + lane_pos * 2.5
@@ -435,7 +435,7 @@ class Wait(py_trees.behaviour.Behaviour):
             right_lane=self.change_direction.value,
             lane_length=22.5,
             lane_transform=-5.0,
-            check_method="lanemarking",
+            check_method="fallback",
         )
         if isinstance(lc_mask, shapely.Polygon):
             add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
