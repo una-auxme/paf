@@ -82,10 +82,12 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the lane change
         """
         global LANECHANGE_FREE
-
         lane_change = self.blackboard.get("/paf/hero/lane_change")
-        if lane_change is None:
-            return debug_status(self.name, Status.FAILURE, "lane_change is None")
+        trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
+        if lane_change is None or trajectory_local is None:
+            return debug_status(
+                self.name, Status.FAILURE, "lane_change or trajectory_local is None"
+            )
         else:
             self.change_detected = lane_change.isLaneChange
             self.change_option = lane_change.roadOption
@@ -93,12 +95,13 @@ class Ahead(py_trees.behaviour.Behaviour):
             # get change distance from global change point (transfered to local
             #  hero coords) as this is more accurate than lanechange msg distance
             hero_transform = _get_global_hero_transform()
-            local_pos: Point2 = (
-                hero_transform.inverse()
-                * Point2.new(self.change_position.x, self.change_position.y)
+            local_pos: Point2 = hero_transform.inverse() * Point2.new(
+                self.change_position.x, self.change_position.y
             )
             trajectory_local = mapping_common.mask.ros_path_to_line(trajectory_local)
-            self.change_distance = trajectory_local.line_locate_point(local_pos.to_shapely())
+            self.change_distance = trajectory_local.line_locate_point(
+                local_pos.to_shapely()
+            )
 
         if (
             self.change_distance is None
@@ -163,10 +166,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             else:
                 # create local coords stop mark shape based
                 # on global change position and current hero position
-                hero_transform = _get_global_hero_transform()
-                local_pos = hero_transform.inverse() * Point2.new(
-                    self.change_position.x, self.change_position.y
-                )
                 stop_mark_shape = Rectangle(
                     length=25.0,
                     width=0.5,
