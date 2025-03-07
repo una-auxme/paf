@@ -225,8 +225,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 f"{TRIGGER_WAIT_STUCK_DURATION.secs}",
             )
 
+        curr_us_drive_dur = rospy.Time.now() - self.init_ros_stuck_time
         # stuck detected, starting unstuck routine for UNSTUCK_DRIVE_DURATION seconds
-        if rospy.Time.now() - self.init_ros_stuck_time < UNSTUCK_DRIVE_DURATION:
+        if curr_us_drive_dur < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
             tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
             hero: Optional[Entity] = tree.map.hero()
@@ -238,10 +239,12 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             if (
                 get_distance(self.init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
             ) and not collision_detected:
-                add_speed_override(-1.5)
+                add_speed_override(-2.0)
             elif get_distance(self.init_pos, current_pos) < 0.5:
-                add_speed_override(-1.5)
+                add_speed_override(-2.0)
             else:
+                # skip waiting till UNSTUCK_DRIVE_DURATION reached
+                self.init_ros_stuck_time += UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
                 add_speed_override(0.0)
             return debug_status(
                 self.name,
@@ -250,7 +253,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             )
         # drive for UNSTUCK_DRIVE_DURATION forwards again
         # (to pass stopmarkers before they are set again)
-        elif rospy.Time.now() - self.init_ros_stuck_time < 2 * UNSTUCK_DRIVE_DURATION:
+        elif curr_us_drive_dur < 2 * UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_forward.name)
             if self.unstuck_count == 3:
                 request_start_overtake(
