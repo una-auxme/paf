@@ -18,8 +18,8 @@ from .stop_mark_service_utils import (
 )
 
 TRIGGER_STUCK_SPEED = 0.1  # default 0.1 (m/s)
-TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
-TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)  # default 25 (s)
+TRIGGER_STUCK_DURATION = rospy.Duration(7.5)  # default 8 (s)
+TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(10)  # default 25 (s)
 UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 1.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
@@ -134,11 +134,11 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         wait_long_behaviors = [bs.int_wait.name]
 
         if curr_behavior is None or curr_behavior.data in wait_behaviors:
-            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(50)
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(30)
         elif curr_behavior.data in wait_long_behaviors:
-            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(75)
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)
         else:
-            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(25)
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(10)
 
         # update the stuck durations
         self.stuck_duration = rospy.Time.now() - self.stuck_timer
