@@ -238,9 +238,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             if (
                 get_distance(self.init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
             ) and not collision_detected:
-                add_speed_override(-0.05)
+                add_speed_override(-1.5)
             elif get_distance(self.init_pos, current_pos) < 0.5:
-                add_speed_override(-0.05)
+                add_speed_override(-1.5)
             else:
                 add_speed_override(0.0)
             return debug_status(
