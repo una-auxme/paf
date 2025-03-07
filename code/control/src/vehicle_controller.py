@@ -153,8 +153,8 @@ class VehicleController(CompatibleNode):
                 steer = self._s_steer
             else:
                 steer = (
-                    0
-                    if self.__curr_behavior in ["us_unstuck", "us_stop"]
+                    self._p_steer * (-1)
+                    if self.__curr_behavior == "us_unstuck"
                     else self._p_steer
                 )
 
