@@ -111,13 +111,13 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             rospy.logdebug("current_speed, target_speed or current_pos is None")
             return
 
-        # check if vehicle is NOT stuck, v > 0.1
+        # check if vehicle is NOT stuck, v >= TRIGGER_STUCK_SPEED
         if current_speed.speed >= TRIGGER_STUCK_SPEED:
             # reset wait stuck timer
             self.wait_stuck_timer = rospy.Time.now()
 
-        # check if vehicle is NOT stuck, v > 0.1 when should be v > 0.1
-        # or if we should stand and stand
+        # check if vehicle is NOT stuck, v >= TRIGGER_STUCK_SPEED when should
+        # have v_target > TRIGGER_STUCK_SPEED or if we should stand and stand
         if (
             current_speed.speed >= TRIGGER_STUCK_SPEED
             and target_speed.data >= TRIGGER_STUCK_SPEED
@@ -232,7 +232,15 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
-                "Unstuck routine running.",
+                "Unstuck routine running. Driving backward.",
+            )
+        # drive for UNSTUCK_DRIVE_DURATION forwards again
+        # (to pass stopmarkers before they are set again)
+        elif rospy.Time.now() - self.init_ros_stuck_time < 2 * UNSTUCK_DRIVE_DURATION:
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                "Unstuck routine running. Driving forward.",
             )
         else:
             self.STUCK_DETECTED = False
