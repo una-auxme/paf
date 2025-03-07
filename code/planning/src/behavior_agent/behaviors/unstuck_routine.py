@@ -244,7 +244,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             else:
                 # skip waiting till UNSTUCK_DRIVE_DURATION reached
                 self.init_ros_stuck_time -= UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
-                add_debug_marker((rospy.Time.now() - self.init_ros_stuck_time).secs)
                 add_speed_override(0.0)
             return debug_status(
                 self.name,
