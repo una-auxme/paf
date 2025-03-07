@@ -109,6 +109,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.stuck_timer = rospy.Time.now()
         self.wait_stuck_timer = rospy.Time.now()
         self.unstuck_count = 0
+        self.init_pos = np.array([np.inf, np.inf])
         return True
 
     def initialise(self):
