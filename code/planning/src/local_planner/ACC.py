@@ -261,12 +261,15 @@ class ACC(CompatibleNode):
             speed_reason = "Curve"
         elif desired_speed == self.speed_limit:
             speed_reason = "Speed limit"
-        elif self.external_speed_limit and desired_speed == self.external_speed_limit:
+        elif (
+            self.external_speed_limit is not None
+            and desired_speed == self.external_speed_limit
+        ):
             speed_reason = "External speed limit"
         else:
             speed_reason = "Obstacle"
 
-        if self.speed_override:
+        if self.speed_override is not None:
             desired_speed = self.speed_override
             speed_reason = "Override"
 
