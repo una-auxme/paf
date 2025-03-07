@@ -33,6 +33,11 @@ class LaneFreeState(Enum):
         return self.value < 0
 
 
+class LaneFreeDirection(Enum):
+    LEFT = False
+    RIGHT = True
+
+
 @dataclass
 class Map:
     """2 dimensional map for the intermediate layer
