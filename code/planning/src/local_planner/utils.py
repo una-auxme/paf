@@ -21,18 +21,6 @@ TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 35.0
 EARTH_RADIUS_EQUA = 6378137.0
 
 
-def convert_to_ms(speed: float):
-    """Convert km/h to m/s
-
-    Args:
-        speed (float): speed in km/h
-
-    Returns:
-        float: speed in m/s
-    """
-    return speed / 3.6
-
-
 def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
     """Calculate the distance between two positions
 
@@ -50,6 +38,50 @@ def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
         float: Distance
     """
     return np.linalg.norm(pos_1 - pos_2)
+
+
+def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
+    """Convert world coordinates to (lat,lon,z) coordinates
+       Copied from:
+       https://github.com/carla-simulator/scenario_runner/blob/master/srunner/tools/route_manipulation.py
+
+    Args:
+        lat_ref (float): reference lat value
+        lon_ref (float): reference lat value
+        x (float): x-Coordinate value
+        y (float): y-Coordinate value
+
+    Returns:
+        dict: Dictionary with (lat,lon,z) coordinates
+    """
+
+    scale = math.cos(lat_ref * math.pi / 180.0)
+    mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
+    my = (
+        scale
+        * EARTH_RADIUS_EQUA
+        * math.log(math.tan((90.0 + lat_ref) * math.pi / 360.0))
+    )
+    mx += x
+    my -= y
+
+    lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
+    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
+    z = 703
+
+    return {"lat": lat, "lon": lon, "z": z}
+
+
+def convert_to_ms(speed: float):
+    """Convert km/h to m/s
+
+    Args:
+        speed (float): speed in km/h
+
+    Returns:
+        float: speed in m/s
+    """
+    return speed / 3.6
 
 
 def spawn_car(distance):
@@ -90,38 +122,6 @@ def spawn_car(distance):
     #                               ego_vehicle.get_transform().rotation)
     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
     # vehicle2.set_autopilot(False)
-
-
-def location_to_gps(lat_ref: float, lon_ref: float, x: float, y: float):
-    """Convert world coordinates to (lat,lon,z) coordinates
-       Copied from:
-       https://github.com/carla-simulator/scenario_runner/blob/master/srunner/tools/route_manipulation.py
-
-    Args:
-        lat_ref (float): reference lat value
-        lon_ref (float): reference lat value
-        x (float): x-Coordinate value
-        y (float): y-Coordinate value
-
-    Returns:
-        dict: Dictionary with (lat,lon,z) coordinates
-    """
-
-    scale = math.cos(lat_ref * math.pi / 180.0)
-    mx = scale * lon_ref * math.pi * EARTH_RADIUS_EQUA / 180.0
-    my = (
-        scale
-        * EARTH_RADIUS_EQUA
-        * math.log(math.tan((90.0 + lat_ref) * math.pi / 360.0))
-    )
-    mx += x
-    my -= y
-
-    lon = mx * 180.0 / (math.pi * EARTH_RADIUS_EQUA * scale)
-    lat = 360.0 * math.atan(math.exp(my / (EARTH_RADIUS_EQUA * scale))) / math.pi - 90.0
-    z = 703
-
-    return {"lat": lat, "lon": lon, "z": z}
 
 
 def calculate_rule_of_thumb(emergency, speed):
