@@ -1,15 +1,17 @@
 import py_trees
 from py_trees.common import Status
 import numpy as np
-from std_msgs.msg import String
+import rospy
 from typing import Optional
 
-import rospy
+from std_msgs.msg import String
+from perception.msg import Waypoint, TrafficLightState
+from planning.srv import OvertakeStatusResponse
+
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Transform2D, Point2
 from mapping_common.markers import debug_marker
-
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 
@@ -17,6 +19,10 @@ from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,
+)
+from .overtake_service_utils import (
+    create_overtake_status_proxy,
+    request_overtake_status,
 )
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -28,26 +34,37 @@ Source: https://github.com/ll7/psaf2
 """
 
 
-INTERSECTION_STOPMARKS_ID = "intersection"
+INTERSECTION_LINE_STOPMARKS_ID = "intersection"
+INTERSECTION_LEFT_STOPMARKS_ID = "intersection_left"
 
 
-def set_stop_mark(proxy: rospy.ServiceProxy, distance: float):
+def set_line_stop(proxy: rospy.ServiceProxy, distance: float):
     transform = Transform2D.new_translation(Vector2.new(distance, 0.0))
     mask = Rectangle(0.5, 10.0, offset=transform)
     update_stop_marks(
         proxy,
-        id=INTERSECTION_STOPMARKS_ID,
-        reason="traffic light red",
+        id=INTERSECTION_LINE_STOPMARKS_ID,
+        reason="intersection stop",
         is_global=False,
         marks=[mask],
     )
 
 
-def unset_stop_mark(proxy: rospy.ServiceProxy):
+def unset_line_stop(proxy: rospy.ServiceProxy):
     update_stop_marks(
         proxy,
-        id=INTERSECTION_STOPMARKS_ID,
-        reason="no traffic light",
+        id=INTERSECTION_LINE_STOPMARKS_ID,
+        reason="intersection clear",
+        is_global=False,
+        marks=[],
+    )
+
+
+def unset_left_stop(proxy: rospy.ServiceProxy):
+    update_stop_marks(
+        proxy,
+        id=INTERSECTION_LEFT_STOPMARKS_ID,
+        reason="intersection left clear",
         is_global=False,
         marks=[],
     )
@@ -65,15 +82,12 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def setup(self, timeout):
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.stop_proxy = create_stop_marks_proxy()
+        self.overtake_status_proxy = create_overtake_status_proxy()
         return True
 
     def initialise(self):
-        """
-        This initializes the variables needed to save information about the
-        stop line.
-        """
-        self.dist = 0
-        return True
+        pass
 
     def update(self):
         """
@@ -83,23 +97,42 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the intersection
         """
 
-        bb = self.blackboard.get("/paf/hero/waypoint_distance")
-        if bb is None:
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is None:
             return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No waypoint_distance"
+                self.name, py_trees.common.Status.FAILURE, "No waypoint"
             )
-        else:
-            dist = bb.distance
-            isIntersection = bb.isStopLine
-            add_debug_entry(self.name, f"Dist: {dist}")
-            add_debug_entry(self.name, f"Is intersection: {isIntersection}")
-        if dist < 40 and isIntersection:
-            return debug_status(self.name, py_trees.common.Status.SUCCESS)
-        else:
+
+        dist = waypoint.distance
+        is_intersection = waypoint.waypoint_type == Waypoint.TYPE_INTERSECTION
+        add_debug_entry(self.name, f"Dist: {dist}")
+        add_debug_entry(self.name, f"Is intersection: {is_intersection}")
+
+        if not is_intersection or dist > 40:
             return debug_status(self.name, py_trees.common.Status.FAILURE)
 
+        overtake_status: OvertakeStatusResponse = request_overtake_status(
+            self.overtake_status_proxy
+        )
+
+        # Stay in the overtake behavior as long as we can
+        min_dist = 5.0
+        if dist > min_dist and (
+            overtake_status.status == overtake_status.OVERTAKE_QUEUED
+            or overtake_status.status == overtake_status.OVERTAKING
+        ):
+            set_line_stop(self.stop_proxy, dist)
+            return debug_status(
+                self.name,
+                py_trees.common.Status.FAILURE,
+                f"Waiting until {min_dist}m before intersection for overtake to finish",
+            )
+
+        return debug_status(self.name, py_trees.common.Status.SUCCESS)
+
     def terminate(self, new_status):
-        pass
+        if new_status is Status.INVALID:
+            unset_line_stop(self.stop_proxy)
 
 
 class Approach(py_trees.behaviour.Behaviour):
@@ -212,14 +245,14 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.curr_behavior_pub.publish(bs.int_app_init.name)
             else:
                 self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
-            set_stop_mark(self.stop_proxy, self.virtual_stopline_distance)
+            set_line_stop(self.stop_proxy, self.virtual_stopline_distance)
 
         # approach slowly when traffic light is green as traffic lights are
         # higher priority than traffic signs this behavior is desired
         if self.traffic_light_status == "green":
             self.stopping = False
             self.curr_behavior_pub.publish(bs.int_app_green.name)
-            unset_stop_mark(self.stop_proxy)
+            unset_line_stop(self.stop_proxy)
 
         add_debug_entry(self.name, f"Stopping: {self.stopping}")
 
@@ -271,7 +304,7 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_stop_mark(self.stop_proxy)
+            unset_line_stop(self.stop_proxy)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -439,7 +472,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_stop_mark(self.stop_proxy)
+            unset_line_stop(self.stop_proxy)
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -480,7 +513,7 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        unset_stop_mark(self.stop_proxy)
+        unset_line_stop(self.stop_proxy)
         next_waypoint_msg = self.blackboard.get("/paf/hero/waypoint_distance")
 
         if next_waypoint_msg is None:

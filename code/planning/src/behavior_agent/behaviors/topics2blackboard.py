@@ -66,21 +66,6 @@ def create_node(role_name):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/Center/traffic_light_y_distance",
-            "msg": Int16,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/max_velocity",
-            "msg": Float32,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
-            "name": f"/paf/{role_name}/speed_limit",
-            "msg": Float32,
-            "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
-        },
-        {
             "name": f"/paf/{role_name}/acc_velocity",
             "msg": Float32,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
