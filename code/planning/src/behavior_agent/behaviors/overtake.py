@@ -17,7 +17,7 @@ from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import MarkerArray
 from planning.srv import OvertakeStatusResponse
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake_service_utils import (

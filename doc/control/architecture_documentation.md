@@ -10,7 +10,6 @@ which starts the simulation.
 - [Summary of Control Components](#summary-of-control-components)
   - [Steering controllers](#steering-controllers)
     - [pure\_pursuit\_controller.py](#pure_pursuit_controllerpy)
-    - [stanley\_controller.py](#stanley_controllerpy)
   - [Velocity controllers](#velocity-controllers)
     - [velocity\_controller.py](#velocity_controllerpy)
   - [vehicle\_controller.py](#vehicle_controllerpy)
@@ -40,17 +39,6 @@ which starts the simulation.
   - **pure_pursuit_steer**: Float32
   - **pure_p_debug**: Debug
 
-#### stanley_controller.py
-
-- Inputs:
-  - **trajectory**: Path
-  - **current_pos**: PoseStamped
-  - **Speed**: CarlaSpeedometer
-  - **current_heading**: Float32
-- Outputs:
-  - **stanley_steer**: Float32
-  - **stanley_debug**: StanleyDebug
-
 ### Velocity controllers
 
 > [!TIP]
@@ -77,7 +65,6 @@ which starts the simulation.
   - **throttle**: Float32
   - **brake**: Float32
   - **pure_pursuit_steer**: Float32
-  - **stanley_steer**: Float32
 - Outputs:
   - **vehicle_control_cmd**: [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg)
   - **status**: Bool

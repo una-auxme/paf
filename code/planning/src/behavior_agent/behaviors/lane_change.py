@@ -15,7 +15,7 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
 import shapely
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake import OVERTAKE_SPACE_STOPMARKS_ID

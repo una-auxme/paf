@@ -18,7 +18,6 @@ The document contains an overview over all [nodes](#overview) and [topics](#topi
 - [Acting](#acting)
   - [MainFramePublisher](#mainframepublisher)
   - [pure\_pursuit\_controller](#pure_pursuit_controller)
-  - [stanley\_controller](#stanley_controller)
   - [vehicle\_controller](#vehicle_controller)
   - [velocity\_controller](#velocity_controller)
 
@@ -110,8 +109,8 @@ Publishes:
 
 - ```/paf/hero/unfiltered_heading``` \(no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/unfiltered_pos``` \(/kalman_filter_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_pos``` \(/pure_pursuit_controller, /stanley_controller, /MotionPlanning, /ACC, /MainFramePublisher, /GlobalPlanDistance, /position_heading_publisher_node, /curr_behavior \) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/stanley_controller, /behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/current_pos``` \(/pure_pursuit_controller, /MotionPlanning, /ACC, /MainFramePublisher, /GlobalPlanDistance, /position_heading_publisher_node, /curr_behavior \) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- ```/paf/hero/current_heading``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 ### Global distances ([global_plan_distance_publisher.py](/../paf/code/perception/src/global_plan_distance_publisher.py))
 
@@ -185,7 +184,6 @@ Subscriptions:
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/slowed_by_car_in_front``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
-- ```/paf/hero/stop_sign``` \(/\) ([mock/Stop_sign](/../paf/code/mock/msg/Stop_sign.msg))
 - ```/paf/hero/Center/traffic_light_state``` \(/TrafficLightNode\) ([perception/TrafficLightState](/../paf/code/perception/msg/TrafficLightState.msg))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
@@ -249,7 +247,6 @@ Subscriptions:
 
 [motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py)
 
-- ```/paf/hero/spawn_car``` \(/\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
@@ -315,23 +312,6 @@ Publishes:
 
 - ```/paf/hero/pure_pursuit_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/pure_p_debug``` \(/\) ([acting/msg/Debug](/../paf/code/acting/msg/Debug.msg))
-  
-### [stanley_controller](/../paf/code/acting/src/acting/stanley_controller.py)
-
-Calculates steering angles that keep the ego vehicle on the path given by
-the [Local path planning](#Local-path-planning).
-
-Subscription:
-
-- ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-
-Publishes:
-
-- ```/paf/hero/stanley_steer``` \(/vehicle_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/stanley_debug``` \(/\) ([acting/msg/StanleyDebug](/../paf/code/acting/msg/StanleyDebug.msg))
 
 ### [vehicle_controller](/../paf/code/acting/src/acting/vehicle_controller.py)
 
@@ -344,7 +324,6 @@ Subscription:
 - ```/paf/hero/brake``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/reverse``` \(/velocity_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/pure_pursuit_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/stanley_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
 

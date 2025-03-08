@@ -19,6 +19,7 @@
            <param name="global_route_txt" value="/code/planning/src/global_planner/global_route.txt" />
            <param name="role_name" value="hero" />
     </node> -->
+    
     <node pkg="planning" type="global_planner_node.py" name="PrePlanner" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="1" />
@@ -30,10 +31,5 @@
     </node>
 
     <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
-
-    <node pkg="planning" type="RequestBehaviourChangeService.py" name="RequestBehaviourChangeService" output="screen">
-           <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    </node>
     
 </launch>
