@@ -161,10 +161,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 marks=[],
                 delete_all_others=True,
             )
-            # If we drove for more than 10 meter since last unstuck attempt
+            # If we drove for more than 20 meter since last unstuck attempt
             # --> indicates new stuck location --> reset unstuck_count
             current_pos = pos_to_array(current_pos)
-            if get_distance(self.init_pos, current_pos) > 10:
+            if get_distance(self.init_pos, current_pos) > 20:
                 self.unstuck_count = 0
             self.init_pos = current_pos
             self.init_ros_stuck_time = rospy.Time.now()
@@ -245,6 +245,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             if self.unstuck_count == 3:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0
+                )
+            elif self.unstuck_count == 4:
+                request_start_overtake(
+                    self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
                 self.unstuck_count = 0
             return debug_status(

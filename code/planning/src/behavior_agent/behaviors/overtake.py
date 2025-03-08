@@ -45,7 +45,7 @@ OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
 def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
     reason = "Obstacle: overtake space"
     transform = (
-        Transform2D.new_translation(Vector2.backward() * 3.0) * obstacle.transform
+        Transform2D.new_translation(Vector2.backward() * 3.5) * obstacle.transform
     )
     mark = StopMark(
         reason=reason,
