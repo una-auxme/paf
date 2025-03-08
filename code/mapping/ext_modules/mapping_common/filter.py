@@ -83,12 +83,12 @@ class LaneIndexFilter(MapFilter):
 
 @dataclass
 class GrowPedestriansFilter(MapFilter):
-    """Grow Pedestrians by 0.3 meter for a better detection of them (e.g. for the ACC)
+    """Grow Pedestrians by 0.5 meter for a better detection of them (e.g. for the ACC)
 
     !!!Must be called after GrowthMergingFilter!!!
 
     - Iterates over all entities
-    - If entity is a Pedestrian: Grow them by 0.3 meter
+    - If entity is a Pedestrian: Grow them by 0.5 meter
 
     Then returns the updated map with all Entities
     """
@@ -96,7 +96,7 @@ class GrowPedestriansFilter(MapFilter):
     def filter(self, map) -> Map:
         for entity in map.entities:
             if isinstance(entity, Pedestrian):
-                shape_grown = _grow_polygon(entity.shape.to_shapely(), 0.3)
+                shape_grown = _grow_polygon(entity.shape.to_shapely(), 0.5)
                 if shape_grown is not None:
                     entity.shape = Polygon.from_shapely(shape_grown)
         return map

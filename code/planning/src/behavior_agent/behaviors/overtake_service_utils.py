@@ -61,11 +61,6 @@ def get_global_hero_transform() -> Optional[Transform2D]:
     return hero_transform
 
 
-def _get_global_hero_transform() -> Optional[Transform2D]:
-    """Deprecated. Use get_global_hero_transform instead"""
-    return get_global_hero_transform()
-
-
 def request_start_overtake(
     proxy: rospy.ServiceProxy,
     local_start_pos: Optional[Point2] = None,
