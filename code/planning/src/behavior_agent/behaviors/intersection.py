@@ -407,7 +407,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 # Drive through intersection
                 self.over_stop_line = True
                 unset_line_stop(self.stop_proxy)
-                if intersection_type == RoadOptions.LEFT:
+                if intersection_type == RoadOption.LEFT:
                     # drive a bit over the stopline
                     set_line_stop(self.stop_proxy, dist + 1.0)
                 return debug_status(
@@ -420,7 +420,7 @@ class Wait(py_trees.behaviour.Behaviour):
                     py_trees.common.Status.RUNNING,
                     "No traffic light detected",
                 )
-        if intersection_type != RoadOptions.LEFT:
+        if intersection_type != RoadOption.LEFT:
             return debug_status(
                 self.name, py_trees.common.Status.SUCCESS, "No left turn -> continue"
             )
