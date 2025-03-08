@@ -12,24 +12,23 @@ It containes parameters and utility functions to reduce code in the ros nodes.
 """
 
 # Distance to stop in Intersection, Lanechange, Overtake
-TARGET_DISTANCE_TO_STOP = 5.0
+TARGET_DISTANCE_TO_STOP_INTERSECTION = 6.5
 TARGET_DISTANCE_TO_STOP_OVERTAKE = 7.0
 TARGET_DISTANCE_TO_STOP_LANECHANGE = 5.0
 TARGET_DISTANCE_TO_TRIGGER_LANECHANGE = 35.0
-# Number of waypoints to be used for the overtaking maneuver
-NUM_WAYPOINTS = 9
-NUM_WAYPOINTS_BICYCLE = 22
 # Earth radius in meters for location_to_GPS
 EARTH_RADIUS_EQUA = 6378137.0
 
 
-def get_distance(pos_1, pos_2):
+def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
     """Calculate the distance between two positions
 
     Args:
         pos1 (np.array): Position 1
         pos2 (np.array): Position 2
         # the np.array should be in the form of
+        # np.array([data.pose.position.x,
+            data.pose.position.y]) or
         # np.array([data.pose.position.x,
                     data.pose.position.y,
                     data.pose.position.z])

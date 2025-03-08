@@ -7,14 +7,6 @@
   </include>
 
   <!--
-  <include file="$(find planning_runner)/launch/planning_runner.launch">
-  </include>
-
-  <include file="$(find mock)/launch/mock.launch">
-      <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
-      <arg name="role_name" value="$(arg role_name)"/>
-  </include>
-
   <include file="$(find acting)/launch/acting.launch">
       <arg name="control_loop_rate" value="$(arg control_loop_rate)"/>
       <arg name="role_name" value="$(arg role_name)"/>
