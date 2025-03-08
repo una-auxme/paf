@@ -123,6 +123,9 @@ class ACC(CompatibleNode):
 
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
+        self.last_desired_speed = 0
+        self.emergency_count = 0
+
         self.logdebug("ACC initialized")
 
     def __set_speed_limit(self, data: Float32):
@@ -279,20 +282,45 @@ class ACC(CompatibleNode):
 
         # emergency break if obstacle and difference to last desired speed is too big
         # and we are driving fast and obstacle is slow
-        speed_diff = self.last_desired_speed - desired_speed
+        # slow_obstacle = True
+        # if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
+        #    slow_obstacle = False
+        hero_speed = hero.motion.linear_motion.x()
         slow_obstacle = True
         if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
             slow_obstacle = False
-        if (
-            speed_reason == "Obstacle"
-            and speed_diff > 7.0
-            and hero.motion.linear_motion.x() > 7.0
-            and slow_obstacle
-        ):
-            self.emergency_pub.publish(Bool(True))
-            marker_text += "\nEmergency break engaged due to abrupt braking"
+        speed_diff = self.last_desired_speed - desired_speed
+
+        if slow_obstacle and hero_speed > 6.0:
+            if self.emergency_count == 0:
+                if speed_diff > 7.0:
+                    self.emergency_count += 1
+            elif self.emergency_count < 3:
+                if speed_diff > -1.0:
+                    self.emergency_count += 1
+                else:
+                    self.emergency_count = 0
+            else:
+                self.emergency_pub.publish(Bool(True))
+                self.emergency_count = 0
+                # marker_text += "\nEmergency break engaged due to abrupt braking"
+            marker_text += f"Emergency count: {self.emergency_count}/3"
         # set last desired speed to current desired speed for next loop
         self.last_desired_speed = desired_speed
+
+        # if (
+        #    speed_reason == "Obstacle"
+        #    and speed_diff > 7.0
+        #    and hero.motion.linear_motion.x() > 7.0
+        #    and slow_obstacle
+        # ):
+        #    self.emergency_count += 1
+        #    if self.emergency_count == 3:
+        #        self.emergency_pub.publish(Bool(True))
+        #        self.emergency_count = 0
+        #        marker_text += "\nEmergency break engaged due to abrupt braking"
+        # else:
+        #    self.emergency_count = 0
 
         debug_markers.append(
             debug_marker(
