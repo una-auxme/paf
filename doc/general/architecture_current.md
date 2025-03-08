@@ -184,7 +184,6 @@ Subscriptions:
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/slowed_by_car_in_front``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/waypoint_distance``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
-- ```/paf/hero/stop_sign``` \(/\) ([perception/Stop_sign](/../paf/code/perception/msg/Stop_sign.msg))
 - ```/paf/hero/Center/traffic_light_state``` \(/TrafficLightNode\) ([perception/TrafficLightState](/../paf/code/perception/msg/TrafficLightState.msg))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
