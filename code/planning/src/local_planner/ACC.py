@@ -219,6 +219,7 @@ class ACC(CompatibleNode):
 
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
+        lead_x_velocity: Optional[float] = None
         marker_text: str = "ACC overview:"
         if entity_result is not None:
             entity, distance = entity_result
@@ -277,10 +278,16 @@ class ACC(CompatibleNode):
         marker_text += f"\nSpeed reason: {speed_reason}"
 
         # emergency break if obstacle and difference to last desired speed is too big
+        # and we are driving fast and obstacle is slow
+        speed_diff = self.last_desired_speed - desired_speed
+        slow_obstacle = True
+        if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
+            slow_obstacle = False
         if (
             speed_reason == "Obstacle"
-            and (self.last_desired_speed - desired_speed) > 7.0
+            and speed_diff > 7.0
             and hero.motion.linear_motion.x() > 7.0
+            and slow_obstacle
         ):
             self.emergency_pub.publish(Bool(True))
             marker_text += "\nEmergency break engaged due to abrupt braking"
