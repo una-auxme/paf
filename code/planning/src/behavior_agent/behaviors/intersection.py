@@ -13,7 +13,7 @@ from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,
@@ -179,7 +179,7 @@ class Approach(py_trees.behaviour.Behaviour):
         add_debug_entry(self.name, f"Stopline detected: {self.stopline_detected}")
 
         # Update stop sign Info
-        stop_sign_msg = self.blackboard.get("/paf/hero/stop_sign")
+        stop_sign_msg = None
         if stop_sign_msg is not None:
             self.stop_sign_detected = stop_sign_msg.isStop
             self.stop_distance = stop_sign_msg.distance
