@@ -27,7 +27,7 @@ from .overtake_service_utils import (
     request_start_overtake,
     request_end_overtake,
     request_overtake_status,
-    _get_global_hero_transform,
+    get_global_hero_transform,
 )
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
@@ -95,7 +95,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             self.change_position = waypoint.position
             # get change distance from global change point (transfered to local
             #  hero coords) as this is more accurate than lanechange msg distance
-            hero_transform = _get_global_hero_transform()
+            hero_transform = get_global_hero_transform()
             local_pos: Point2 = hero_transform.inverse() * Point2.new(
                 self.change_position.x, self.change_position.y
             )
@@ -542,7 +542,7 @@ class Change(py_trees.behaviour.Behaviour):
 
         # get change distance from five meter behind global change point
         # (transfered to local hero coords)
-        hero_transform = _get_global_hero_transform()
+        hero_transform = get_global_hero_transform()
         local_pos: Point2 = (
             hero_transform.inverse()
             * Point2.new(self.change_position.x, self.change_position.y)
