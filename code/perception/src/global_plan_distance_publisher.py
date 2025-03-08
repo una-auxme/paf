@@ -139,7 +139,8 @@ class GlobalPlanDistance(CompatibleNode):
             self.global_route.pop(0)
 
             if (
-                self.road_options[0]
+                len(self.road_options) > 1
+                and self.road_options[0]
                 in {RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT}
                 and self.road_options[0] == self.road_options[1]
             ):
