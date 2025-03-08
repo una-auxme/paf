@@ -7,6 +7,7 @@ from typing import Optional
 from std_msgs.msg import String
 from perception.msg import Waypoint, TrafficLightState
 from planning.srv import OvertakeStatusResponse
+from agents.navigation.local_planner import RoadOption
 
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
@@ -323,7 +324,6 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.stop_proxy = create_stop_marks_proxy()
-        self.red_light_flag = False
         self.green_light_time = None
         return True
 
@@ -333,34 +333,9 @@ class Wait(py_trees.behaviour.Behaviour):
         self.red_light_flag = False
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
-        hero_pos = self.blackboard.get("/paf/hero/current_pos")
-        hero_heading = self.blackboard.get("/paf/hero/current_heading")
-        self.start_pos = (hero_pos.pose.position.x, hero_pos.pose.position.y)
-        hero_heading = hero_heading.data
-        trajectory = self.blackboard.get("/paf/hero/trajectory")
-        current_wp = self.blackboard.get("/paf/hero/current_wp")
-        current_wp = current_wp.data
-        trajectory_point = trajectory.poses[int(current_wp) + 10].pose.position
         self.oncoming_distance = 45.0
-
-        x_direction = trajectory_point.x - hero_pos.pose.position.x
-        y_direction = trajectory_point.y - hero_pos.pose.position.y
-
         self.oncoming_counter = 0
-        self.red_counter = 0
 
-        rotation_matrix = Transform2D.new_rotation(-hero_heading)
-        intersection_point = rotation_matrix * Point2.new(x_direction, y_direction)
-
-        # intersection type to determine a left turn, right turn or driving straight
-        # 0 = straight, 1 = left, 2 = right
-
-        if intersection_point.y() > 1.0:
-            self.intersection_type = 1
-        elif intersection_point.y() < -1.0:
-            self.intersection_type = 2
-        else:
-            self.intersection_type = 0
         return True
 
     def update(self):
@@ -384,22 +359,30 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No hero in map"
             )
-
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "No waypoint"
+            )
+        intersection_type = waypoint.roadOption
+        dist = waypoint.distance
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
-
+        set_line_stop(self.stop_proxy, dist)
         if light_status_msg is not None:
-            traffic_light_status = get_color(light_status_msg.state)
+            traffic_light_status = light_status_msg.state
         else:
             traffic_light_status = "No traffic light message"
 
         add_debug_entry(self.name, f"Traffic light status: {traffic_light_status}")
+        add_debug_entry(self.name, f"Intersection type: {intersection_type}")
 
         if light_status_msg is not None and self.over_stop_line is False:
-            traffic_light_status = get_color(light_status_msg.state)
-            if traffic_light_status == "red" or traffic_light_status == "yellow":
+            if (
+                traffic_light_status == TrafficLightState.RED
+                or traffic_light_status == TrafficLightState.YELLOW
+            ):
                 # Wait at traffic light
                 self.red_light_flag = True
-                self.red_counter = 0
                 self.green_light_time = rospy.get_rostime()
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return debug_status(
@@ -408,39 +391,36 @@ class Wait(py_trees.behaviour.Behaviour):
                     "Waiting for traffic light",
                 )
             elif (
-                rospy.get_rostime() - self.green_light_time < rospy.Duration(0.5)
-                and traffic_light_status == "green"
+                rospy.get_rostime() - self.green_light_time < rospy.Duration(1)
+                and traffic_light_status == TrafficLightState.GREEN
             ):
-                # Wait approx 0.5s for confirmation
+                # Wait approx 1s for confirmation
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
                     "Wait Confirm green light!",
                 )
             elif (
-                rospy.get_rostime() - self.green_light_time > rospy.Duration(0.5)
-                and traffic_light_status == "green"
+                rospy.get_rostime() - self.green_light_time > rospy.Duration(1)
+                and traffic_light_status == TrafficLightState.GREEN
             ):
                 # Drive through intersection
                 self.over_stop_line = True
-                if self.intersection_type != 1:
-                    self.curr_behavior_pub.publish(bs.int_app_green.name)
-                else:
+                unset_line_stop(self.stop_proxy)
+                if intersection_type == RoadOptions.LEFT:
                     # drive a bit over the stopline
-                    self.curr_behavior_pub.publish(bs.int_wait_to_stop.name)
+                    set_line_stop(self.stop_proxy, dist + 1.0)
                 return debug_status(
                     self.name, py_trees.common.Status.RUNNING, "Driving through..."
                 )
             else:
                 self.over_stop_line = True
-                self.curr_behavior_pub.publish(bs.int_wait_to_stop.name)
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
                     "No traffic light detected",
                 )
-        if self.intersection_type != 1:
-            self.curr_behavior_pub.publish(bs.int_enter.name)
+        if intersection_type != RoadOptions.LEFT:
             return debug_status(
                 self.name, py_trees.common.Status.SUCCESS, "No left turn -> continue"
             )
