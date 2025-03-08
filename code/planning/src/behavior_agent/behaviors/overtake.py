@@ -45,7 +45,7 @@ OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
 def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
     reason = "Obstacle: overtake space"
     transform = (
-        Transform2D.new_translation(Vector2.backward() * 3.0) * obstacle.transform
+        Transform2D.new_translation(Vector2.backward() * 3.5) * obstacle.transform
     )
     mark = StopMark(
         reason=reason,
@@ -318,9 +318,8 @@ class Approach(py_trees.behaviour.Behaviour):
         entity, self.ot_distance = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         add_debug_entry(self.name, f"Overtake distance: {self.ot_distance}")
@@ -329,11 +328,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
 
-        # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        else:
-            unset_space_stop_mark(self.stop_proxy)
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
@@ -461,12 +456,11 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
             return py_trees.common.Status.RUNNING
 
-        entity, distance = obstacle
+        entity, _ = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         self.ot_gone = 0
@@ -474,11 +468,7 @@ class Wait(py_trees.behaviour.Behaviour):
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
-        # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        else:
-            unset_space_stop_mark(self.stop_proxy)
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
 
         self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
