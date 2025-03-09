@@ -158,8 +158,8 @@ class GlobalPlanDistance(CompatibleNode):
         if self.global_route is None:
             self.global_route = list(route.poses)
             self.road_options = list(route.road_options)
-            self.road_options.pop(0)
-            self.global_route.pop(0)
+            # self.road_options.pop(0)
+            # self.global_route.pop(0)
 
     def run(self):
         """
