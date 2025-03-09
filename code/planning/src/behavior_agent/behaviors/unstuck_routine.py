@@ -161,10 +161,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 marks=[],
                 delete_all_others=True,
             )
-            # If we drove for more than 10 meter since last unstuck attempt
+            # If we drove for more than 20 meter since last unstuck attempt
             # --> indicates new stuck location --> reset unstuck_count
             current_pos = pos_to_array(current_pos)
-            if get_distance(self.init_pos, current_pos) > 10:
+            if get_distance(self.init_pos, current_pos) > 20:
                 self.unstuck_count = 0
             self.init_pos = current_pos
             self.init_ros_stuck_time = rospy.Time.now()
@@ -175,8 +175,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 stuck_dur = TRIGGER_WAIT_STUCK_DURATION.secs
             rospy.logfatal(
                 f"{stuck_reason} in one place for more than "
-                f"{stuck_dur} sec\n"
-                "  --> starting unstuck routine"
+                f"{stuck_dur} sec --> starting unstuck routine"
             )
 
     def update(self):
@@ -232,7 +231,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 add_speed_override(-2.0)
             else:
                 # skip waiting till UNSTUCK_DRIVE_DURATION reached
-                self.init_ros_stuck_time += UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
+                self.init_ros_stuck_time -= UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
                 add_speed_override(0.0)
             return debug_status(
                 self.name,
@@ -246,6 +245,10 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             if self.unstuck_count == 3:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0
+                )
+            elif self.unstuck_count == 4:
+                request_start_overtake(
+                    self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
                 self.unstuck_count = 0
             return debug_status(
