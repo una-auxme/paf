@@ -337,13 +337,20 @@ class Wait(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         rospy.loginfo("Wait Intersection")
-
+        global CURRENT_INTERSECTION_WAYPOINT
+        if CURRENT_INTERSECTION_WAYPOINT is None:
+            rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
+            return debug_status(
+                self.name,
+                Status.FAILURE,
+                "Error: CURRENT_INTERSECTION_WAYPOINT not set",
+            )
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
         self.oncoming_distance = 40.0
         self.oncoming_counter = 0
         self.stop_time = rospy.get_rostime()
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        waypoint: Optional[Waypoint] = CURRENT_INTERSECTION_WAYPOINT
         if waypoint is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No waypoint"
@@ -379,7 +386,15 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No waypoint"
             )
-        dist = waypoint.distance
+        dist = calculate_waypoint_distance(
+            self.blackboard, CURRENT_INTERSECTION_WAYPOINT
+        )
+        if dist is None:
+            return debug_status(
+                self.name,
+                Status.FAILURE,
+                "Missing information for stop_line distance calculation",
+            )
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
         if light_status_msg is not None:
             traffic_light_status = light_status_msg.state
