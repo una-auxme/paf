@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,16 +15,18 @@ since it is used to visualize the data of the heading filter debug node.
 FILE_START = 0
 FILE_END = 20
 
-FILE_NUM = "00"  # Change this to plot your wanted file #
+# Change this to the file number of the data you want to plot
+FILE_NUM = "00"
 
 
 # current file_name to plot the data of one file!
 file_name = "data_" + str(FILE_NUM) + ".csv"
 
 # folder paths/ file paths
-folder_path_x = "./x_error/"
-folder_path_y = "./y_error/"
-folder_path_heading = "./heading_error/"
+base_path = "/workspace/code/localization/src/data/position_heading_datasets"
+folder_path_x = base_path + "/x_error/"
+folder_path_y = base_path + "/y_error/"
+folder_path_heading = base_path + "/heading_error/"
 
 
 # region PLOTS
@@ -421,16 +425,14 @@ def plot_csv_x_or_y(file_name, type="x"):
     df = pd.read_csv(file_path)
 
     # Plot the 'test_filter' (blue) and 'current' (green)
-    plt.plot(df["Test Filter"], "b-", label="Test Filter")
-    plt.plot(df["Current"], "g-", label="Current")
+    plt.plot(df["Time"], df["Test Filter"], "b-", label="Test Filter")
+    plt.plot(df["Time"], df["Current"], "g-", label="Current")
 
     # Plot the 'ideal' column with a red dotted line
-    plt.plot(df["Ideal (Carla)"], "r:", label="Ideal")
+    plt.plot(df["Time"], df["Ideal (Carla)"], "r:", label="Ideal")
 
     # Display the legend
     plt.legend()
-    # Plot the DataFrame
-    df.plot()
 
     # Add a grid
     plt.grid(True)
@@ -460,15 +462,13 @@ def plot_csv_heading(file_name):
 
     # Plot the 'test_filter_heading' (blue) and 'current_heading' (green)
     # line style
-    plt.plot(df["Test Filter"], "b-", label="Test Filter Heading")
-    plt.plot(df["Current"], "g-", label="Current Heading")
+    plt.plot(df["Time"], df["Test Filter"], "b-", label="Test Filter Heading")
+    plt.plot(df["Time"], df["Current"], "g-", label="Current Heading")
 
     # Plot the 'ideal_heading' column with a blue dotted line
-    plt.plot(df["Ideal (Carla)"], "r:", label="Ideal Heading")
+    plt.plot(df["Time"], df["Ideal (Carla)"], "r:", label="Ideal Heading")
     # Display the legend
     plt.legend()
-    # Plot the DataFrame
-    df.plot()
 
     # Add a grid
     plt.grid(True)
@@ -738,13 +738,13 @@ def get_x_or_y_or_h_from_csv_file(file_name, type="x"):
 if __name__ == "__main__":
     # file_name can be changed by changing the FILE_NUM variable
     data = file_name
-    plot_CEP(data)
+    # plot_CEP(data)
 
-    plot_x_or_y_or_h_notched_box(data, type="x", error_type="MSE")
-    plot_x_or_y_or_h_notched_box(data, type="x", error_type="MAE")
+    # plot_x_or_y_or_h_notched_box(data, type="x", error_type="MSE")
+    # plot_x_or_y_or_h_notched_box(data, type="x", error_type="MAE")
 
-    plot_x_or_y_or_h_notched_box(data, type="y", error_type="MSE")
-    plot_x_or_y_or_h_notched_box(data, type="y", error_type="MAE")
+    # plot_x_or_y_or_h_notched_box(data, type="y", error_type="MSE")
+    # plot_x_or_y_or_h_notched_box(data, type="y", error_type="MAE")
 
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MSE')
     # plot_x_or_y_or_h_notched_box(data, type='h', error_type='MAE')
@@ -753,9 +753,9 @@ if __name__ == "__main__":
     # plot_best_tuned_file_by_type(type='y',error_type='MSE',check_type='IQR')
     # plot_best_tuned_file_by_type(type='h',error_type='MSE',check_type='IQR')
 
-    # plot_csv_x_or_y(data, type='x')
-    # plot_csv_x_or_y(data, type='y')
-    # plot_csv_heading(data)
+    plot_csv_x_or_y(data, type="x")
+    plot_csv_x_or_y(data, type="y")
+    plot_csv_heading(data)
     # plot_csv_positions(data)
 
     # always use plt.show() to show the plots
