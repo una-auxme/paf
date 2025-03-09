@@ -727,7 +727,6 @@ class MapTree:
         hero: Entity,
         lane_length: float = 20.0,
         lane_transform_x: float = 0.0,
-        lane_transform_y: float = 0.0,
     ) -> Tuple[bool, List[shapely.Polygon]]:
         """Returns True if the opposing lane of our car is free.
         Checks if a Polygon lane box intersects with any
@@ -743,8 +742,6 @@ class MapTree:
         - lane_transform_x (float): Transforms the checked lane box to the front (>0) or
           back (<0) of the car, in meters. Default is 0 meter so the lane box originates
            from the car position -> same distance to the front and rear get checked
-        - lane_transform_y (float): Transforms the checked lane box to the left(>0) or
-          right(<0)
         Returns:
             (bool, [shapely.Polygon]): lane is free / not free,
                 collision masks used for the check
@@ -754,32 +751,16 @@ class MapTree:
         if lane_length < 0:
             raise ValueError("Lane length cannot take a negative value.")
 
-        lane_box_shape = Rectangle(
-            length=lane_length,
-            width=11.0,
-            offset=Transform2D.new_translation(
-                Vector2.new(lane_transform_x, lane_transform_y)
-            ),
-        )
-        lane_box_shape_tilted = Rectangle(
-            length=(lane_length / 2.0) + 1.5,
-            width=12.0,
-            offset=Transform2D.new_rotation_translation(
-                -0.45,
-                Vector2.new(
-                    lane_transform_x + lane_length / 3.0,
-                    (lane_transform_y - 4.0),
-                ),
-            ),
+        lane_mask = shapely.Polygon(
+            [
+                [lane_transform_x, 0],
+                [lane_transform_x + lane_length, -10],
+                [lane_transform_x + lane_length, 30],
+                [lane_transform_x, lane_transform_x],
+            ]
         )
 
-        # converts lane boxes to a shapely Polygon
-        lane_box_shapely = lane_box_shape.to_shapely(Transform2D.identity())
-        lane_box_shape_tilted_shapely = lane_box_shape_tilted.to_shapely(
-            Transform2D.identity()
-        )
-        masks = [lane_box_shapely, lane_box_shape_tilted_shapely]
-        lane_mask = shapely.union_all(masks)
+        masks = [lane_mask]
         # creates intersection list of lane mask with map entities
         lane_box_intersection_entities = self.query(geo=lane_mask)
         if not lane_box_intersection_entities:

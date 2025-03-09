@@ -266,7 +266,11 @@ class Approach(py_trees.behaviour.Behaviour):
                 "Missing information for stop_line distance calculation",
             )
         add_debug_entry(self.name, f"Stop line distance: {stop_line_distance}")
-        if stop_line_distance <= 0.0:
+        if CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.LEFT:
+            line_threshold = 5.0
+        else:
+            line_threshold = 0.0
+        if stop_line_distance <= line_threshold:
             # We already drove over the stopline...go to next behavior
             return debug_status(
                 self.name,
@@ -347,9 +351,10 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
-        self.oncoming_distance = 40.0
+        self.oncoming_distance = 30.0
         self.oncoming_counter = 0
         self.stop_time = rospy.get_rostime()
+        self.was_red = False
         waypoint: Optional[Waypoint] = CURRENT_INTERSECTION_WAYPOINT
         if waypoint is None:
             return debug_status(
@@ -431,6 +436,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 # Wait at traffic light
                 self.green_light_time = rospy.get_rostime()
                 self.curr_behavior_pub.publish(bs.int_wait.name)
+                self.was_red = True
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
@@ -452,6 +458,7 @@ class Wait(py_trees.behaviour.Behaviour):
             elif (
                 rospy.get_rostime() - self.green_light_time < rospy.Duration(1)
                 and traffic_light_status == TrafficLightState.GREEN
+                and self.was_red
             ):
                 # Wait approx 1s for confirmation
                 return debug_status(
@@ -462,6 +469,7 @@ class Wait(py_trees.behaviour.Behaviour):
             elif (
                 rospy.get_rostime() - self.green_light_time > rospy.Duration(1)
                 and traffic_light_status == TrafficLightState.GREEN
+                and self.was_red
             ):
                 # Drive through intersection
                 self.over_stop_line = True
@@ -469,6 +477,9 @@ class Wait(py_trees.behaviour.Behaviour):
                 return debug_status(
                     self.name, py_trees.common.Status.RUNNING, "Driving through..."
                 )
+            else:
+                # Light was green when switching to wait, drive through intersection
+                self.over_stop_line = True
         unset_line_stop(self.stop_proxy)
         if self.intersection_type != RoadOption.LEFT:
             return debug_status(
@@ -476,7 +487,7 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         self.curr_behavior_pub.publish(bs.int_wait.name)
         intersection_clear, intersection_masks = tree.is_lane_free_intersection(
-            hero, self.oncoming_distance, 35.0, 0.0
+            hero, self.oncoming_distance, 10.0
         )
         for mask in intersection_masks:
             add_debug_marker(debug_marker(mask, color=INTERSECTION_MARKER_COLOR))
