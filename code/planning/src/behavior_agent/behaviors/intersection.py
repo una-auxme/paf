@@ -13,6 +13,8 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Transform2D
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
+from mapping_common.transform import Transform2D, Vector2
+import shapely
 from mapping_common.transform import Vector2
 
 from . import behavior_names as bs
@@ -336,12 +338,18 @@ class Wait(py_trees.behaviour.Behaviour):
     def initialise(self):
         rospy.loginfo("Wait Intersection")
 
-        self.red_light_flag = False
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
-        self.oncoming_distance = 45.0
+        self.oncoming_distance = 40.0
         self.oncoming_counter = 0
-
+        self.stop_time = rospy.get_rostime()
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "No waypoint"
+            )
+        self.intersection_type = waypoint.roadOption
+        self.left_marker_set = False
         return True
 
     def update(self):
@@ -353,6 +361,7 @@ class Wait(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS, if the traffic light switched
                  to green or no traffic light is detected
         """
+        self.curr_behavior_pub.publish(bs.int_wait.name)
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
@@ -370,31 +379,60 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No waypoint"
             )
-        intersection_type = waypoint.roadOption
         dist = waypoint.distance
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
-        set_line_stop(self.stop_proxy, dist)
         if light_status_msg is not None:
             traffic_light_status = light_status_msg.state
         else:
             traffic_light_status = "No traffic light message"
 
         add_debug_entry(self.name, f"Traffic light status: {traffic_light_status}")
-        add_debug_entry(self.name, f"Intersection type: {intersection_type}")
+        add_debug_entry(self.name, f"Intersection type: {self.intersection_type}")
 
-        if light_status_msg is not None and self.over_stop_line is False:
+        if self.intersection_type == RoadOption.LEFT and not self.left_marker_set:
+            free, mask = tree.is_lane_free(
+                False,
+                lane_length=35.0,
+                lane_transform=2.0,
+                reduce_lane=0.75,
+                check_method="rectangle",
+            )
+            if isinstance(mask, shapely.Polygon):
+                update_stop_marks(
+                    self.stop_proxy,
+                    id=INTERSECTION_LEFT_STOPMARKS_ID,
+                    reason="intersection stop",
+                    is_global=False,
+                    marks=[mask],
+                )
+                self.left_marker_set = True
+
+        if self.over_stop_line is False:
+            set_line_stop(self.stop_proxy, dist)
             if (
                 traffic_light_status == TrafficLightState.RED
                 or traffic_light_status == TrafficLightState.YELLOW
             ):
                 # Wait at traffic light
-                self.red_light_flag = True
                 self.green_light_time = rospy.get_rostime()
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
                     "Waiting for traffic light",
+                )
+            elif (
+                traffic_light_status == TrafficLightState.UNKNOWN
+                or light_status_msg is None
+            ):
+                # Wait at least 2 seconds at stopline
+                if rospy.get_rostime() - self.stop_time > rospy.Duration(2):
+                    self.over_stop_line = True
+                    unset_line_stop(self.stop_proxy)
+                return debug_status(
+                    self.name,
+                    py_trees.common.Status.RUNNING,
+                    "Waiting at stopline",
                 )
             elif (
                 rospy.get_rostime() - self.green_light_time < rospy.Duration(1)
@@ -413,24 +451,14 @@ class Wait(py_trees.behaviour.Behaviour):
                 # Drive through intersection
                 self.over_stop_line = True
                 unset_line_stop(self.stop_proxy)
-                if intersection_type == RoadOption.LEFT:
-                    # drive a bit over the stopline
-                    set_line_stop(self.stop_proxy, dist + 1.0)
                 return debug_status(
                     self.name, py_trees.common.Status.RUNNING, "Driving through..."
                 )
-            else:
-                self.over_stop_line = True
-                return debug_status(
-                    self.name,
-                    py_trees.common.Status.RUNNING,
-                    "No traffic light detected",
-                )
-        if intersection_type != RoadOption.LEFT:
+        unset_line_stop(self.stop_proxy)
+        if self.intersection_type != RoadOption.LEFT:
             return debug_status(
                 self.name, py_trees.common.Status.SUCCESS, "No left turn -> continue"
             )
-
         self.curr_behavior_pub.publish(bs.int_wait.name)
         intersection_clear, intersection_masks = tree.is_lane_free_intersection(
             hero, self.oncoming_distance, 35.0, 0.0
@@ -441,6 +469,7 @@ class Wait(py_trees.behaviour.Behaviour):
             self.oncoming_counter += 1
             if self.oncoming_counter > 2:
                 self.curr_behavior_pub.publish(bs.int_enter.name)
+                unset_left_stop(self.stop_proxy)
                 return debug_status(
                     self.name, py_trees.common.Status.SUCCESS, "Intersection clear"
                 )
