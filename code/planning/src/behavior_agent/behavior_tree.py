@@ -60,7 +60,6 @@ def grow_a_tree(role_name):
                                             ),
                                             intersection.Wait("Wait Intersection"),
                                             intersection.Enter("Enter Intersection"),
-                                            intersection.Leave("Leave Intersection"),
                                         ],
                                     ),
                                 ],

@@ -477,9 +477,16 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.over_stop_line = True
         unset_line_stop(self.stop_proxy)
         if self.intersection_type != RoadOption.LEFT:
-            return debug_status(
-                self.name, py_trees.common.Status.SUCCESS, "No left turn -> continue"
-            )
+            if dist <= 0.0:
+                return debug_status(
+                    self.name,
+                    py_trees.common.Status.SUCCESS,
+                    "No left turn -> continue",
+                )
+            else:
+                return debug_status(
+                    self.name, py_trees.common.Status.RUNNING, "Driving over stopline"
+                )
         self.curr_behavior_pub.publish(bs.int_wait.name)
         intersection_clear, intersection_masks = tree.is_lane_free_intersection(
             hero, self.oncoming_distance, 12.0
@@ -538,8 +545,14 @@ class Enter(py_trees.behaviour.Behaviour):
         the intersection.
         """
         rospy.loginfo("Enter Intersection")
-
+        unset_line_stop(self.stop_proxy)
         self.curr_behavior_pub.publish(bs.int_enter.name)
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "No waypoint"
+            )
+        self.start_dist = waypoint.distance
 
     def update(self):
         """
@@ -552,58 +565,22 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        global CURRENT_INTERSECTION_WAYPOINT
-        unset_line_stop(self.stop_proxy)
-        next_waypoint_msg = self.blackboard.get("/paf/hero/waypoint_distance")
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
 
-        if next_waypoint_msg is None:
+        if waypoint is None:
             return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No next waypoint"
+                self.name, py_trees.common.Status.FAILURE, "No waypoint"
             )
-        add_debug_entry(self.name, f"Next waypoint dist: {next_waypoint_msg.distance}")
-        if next_waypoint_msg.distance > 8 and next_waypoint_msg.distance < 35:
+        add_debug_entry(self.name, f"Next waypoint dist: {waypoint.distance}")
+        if abs(self.start_dist - waypoint.distance) < 5.0:
             self.curr_behavior_pub.publish(bs.int_enter.name)
             return debug_status(
                 self.name, py_trees.common.Status.RUNNING, "Driving through..."
             )
         else:
             return debug_status(
-                self.name, py_trees.common.Status.SUCCESS, "Done driving through"
+                self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
-
-    def terminate(self, new_status):
-        pass
-
-
-class Leave(py_trees.behaviour.Behaviour):
-    """
-    This behaviour defines the leaf of this subtree, if this behavior is
-    reached, the vehicle left the intersection.
-    """
-
-    def __init__(self, name):
-        super(Leave, self).__init__(name)
-
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        self.blackboard = py_trees.blackboard.Blackboard()
-        return True
-
-    def initialise(self):
-        rospy.loginfo("Leave Intersection")
-        self.curr_behavior_pub.publish(bs.int_exit.name)
-        return True
-
-    def update(self):
-        """
-        Abort this subtree
-        :return: py_trees.common.Status.FAILURE, to exit this subtree
-        """
-        return debug_status(
-            self.name, py_trees.common.Status.FAILURE, "Left intersection"
-        )
 
     def terminate(self, new_status):
         pass
