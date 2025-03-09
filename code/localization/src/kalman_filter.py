@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+'''
+This node publishes the position and heading estimated by
+a (linear) Kalman Filter on the topics:
+  - kalman_pos
+  - kalman_heading
+
+The estimation is based on the data provided by the following sensors / topics:
+  - IMU -> provides acceleration
+  - unfiltered_pos (derived from the GPS sensor data) -> provides position
+  - Speedometer -> provides the speed in the current direction
+
+The state estimation is only done in a 2D plane.
+To estimate a 3D position, the z-coordinate of the car is calculated
+using a running average of the last GPS_RUNNING_AVG_ARGS measurements.
+The z-coordinate is therefore not estimated by the Kalman Filter.  
+'''
+
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -17,18 +34,7 @@ from xml.etree import ElementTree as eTree
 GPS_RUNNING_AVG_ARGS = 10
 
 """
-For more information see the documentation in:
-../../doc/perception/kalman_filter.md
-
-This class implements a Kalman filter for a 3D object tracked in 2D space.
-It implements the data of the IMU and the GPS Sensors.
-The IMU Sensor provides the acceleration
-and the GPS Sensor provides the position.
-The Carla Speedometer provides the current Speed in the headed direction.
-
-The Z Coordinate (Latitude) is calculated by a simple Running Average of
-the last 10 (GPS_RUNNING_AVG_ARGS) GPS-z Measurements and
-is not in any way related to the Kalman Filter.
+DEFINITIONS:
 
 Noise values are derived from:
 https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py
@@ -72,10 +78,8 @@ The measurement covariance matrix R is defined as:
 
 class KalmanFilter(CompatibleNode):
     """
-    This class implements a Kalman filter for the
-    Heading and Position of the car.
-    For more information see the documentation in:
-    ../../doc/perception/kalman_filter.md
+    This class implements a Kalman filter to estimate the
+    position and heading of the car.
     """
 
     def __init__(self):
@@ -416,10 +420,10 @@ class KalmanFilter(CompatibleNode):
         self.z_v[1, 0] = velocity.speed * math.sin(self.x_est[2, 0])
 
     def get_geoRef(self, opendrive: String):
-        """_summary_
-        Reads the reference values for lat and lon from the carla OpenDriveMap
+        """
+        Reads the reference values for lat and lon from the Carla OpenDriveMap
         Args:
-            opendrive (String): OpenDrive Map from carla
+            opendrive (String): OpenDrive Map from Carla
         """
         root = eTree.fromstring(opendrive.data)
         header = root.find("header")

@@ -1,5 +1,34 @@
 #!/usr/bin/env python
 
+"""
+This node subscibes to unfiltered data, extracts relevant information
+from this data and passes this information on to a different topic:
+  - IMU data (/carla/hero/IMU) -> /paf/hero/unfiltered_heading
+  - GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
+
+Both signals can be filtered with the available filters:
+  - Position Filter values:
+      - "EKF" (Default)
+      - "Kalman"
+      - "RunningAvg"
+      - "None"
+  - Heading Filter values:
+      - "EKF" (Default)
+      - "Kalman"
+      - "None"
+The chosen filter is used to pass its outputs onto the topics:
+  - /paf/hero/current_pos
+  - /paf/hero/current_heading
+
+The filter is chosen in the localization.launch file.
+
+!!!
+When creating a new filter, the corresponding subscriber and publisher
+must be added in the constructor for clean modular programming
+!!!
+
+"""
+
 import math
 from tf.transformations import euler_from_quaternion
 import numpy as np
@@ -17,30 +46,6 @@ GPS_RUNNING_AVG_ARGS: int = 10
 
 
 class PositionHeadingPublisherNode(CompatibleNode):
-    """
-    This node subscibes to unfiltered data, extracts relevant information
-    from this data and passes this information on to a different topic:
-    - IMU data (/carla/hero/IMU) -> /paf/hero/unfiltered_heading
-    - GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
-
-    Both signals can be filtered with the available filters:
-    Position Filter values:
-        - "EKF" (Default)
-        - "Kalman"
-        - "RunningAvg"
-        - "None"
-    Heading Filter values:
-        - "EKF" (Default)
-        - "Kalman"
-        - "None"
-    The filter is chosen in the localization.launch file.
-
-    !When creating a new filter, the corresponding subscriber and publisher
-    must be added in the constructor for clean modular programming!
-
-    For more information:
-    ../../doc/localization/position_heading_publisher_node.md
-    """
 
     def __init__(self):
         """

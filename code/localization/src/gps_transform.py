@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 """
-This Node listens to GPS Data and converts this data into an Odometry message.
+This node listens to GPS Data and converts this data into an Odometry message.
 The Odometry message is then passed into the global EKF.
 
-It is a substitute for navsat_transform node which only works in UTM coordinates but
-CARLA uses WGS coordinate system.
+It is a substitute for the navsat_transform node (in the robot_localization package)
+which only works in UTM coordinates but Carla uses the WGS coordinate system.
+
+This node gets its input from the sensor_covariance_fusion node.
 """
 
 from rospy import Publisher

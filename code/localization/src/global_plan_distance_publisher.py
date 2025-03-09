@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+This node publishes the distance to the next waypoint and the
+stop line of an intersection specified by the global waypoint in front of
+it.
+"""
+
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
@@ -9,15 +15,8 @@ from perception.msg import Waypoint, LaneChange
 
 import math
 
-# import rospy
-
 
 class GlobalPlanDistance(CompatibleNode):
-    """
-    Creates a node that publishes the distance to the next waypoint and the
-    stop line of an intersection specified by the global waypoint in front of
-    it.
-    """
 
     def __init__(self):
         """
