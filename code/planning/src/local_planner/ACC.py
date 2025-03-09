@@ -51,6 +51,7 @@ class ACC(CompatibleNode):
     speed_override: Optional[float] = None
     steer: Optional[float] = None
     last_desired_speed: float = 0.0
+    emergency_count: int = 0
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -122,9 +123,6 @@ class ACC(CompatibleNode):
         )
 
         Server(ACCConfig, self.dynamic_reconfigure_callback)
-
-        self.last_desired_speed = 0
-        self.emergency_count = 0
 
         self.logdebug("ACC initialized")
 
