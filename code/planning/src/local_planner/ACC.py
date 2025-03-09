@@ -282,11 +282,11 @@ class ACC(CompatibleNode):
 
         # emergency break if obstacle and difference to last desired speed is too big
         # and we are driving fast and obstacle is slow
+        speed_diff = self.last_desired_speed - desired_speed
         hero_speed = hero.motion.linear_motion.x()
         slow_obstacle = True
         if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
             slow_obstacle = False
-        speed_diff = self.last_desired_speed - desired_speed
 
         if slow_obstacle and hero_speed > 6.0:
             if self.emergency_count == 0:
