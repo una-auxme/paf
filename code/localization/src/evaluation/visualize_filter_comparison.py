@@ -1,17 +1,36 @@
 #!/usr/bin/env python
 
+'''
+!!! WARNIG !!!
+This node is currently not in use.
+
+To use this node first data needs to be saved using the
+save_filter_data.py file.
+
+An old filter (for example the EKF) can be compared to
+a new filter and the ground truth.
+Possible comparisons:
+  - x positions
+  - y positions
+  - z positions
+  - headings
+This nodes creates plots visualizing the comparisons.
+'''
+
 import matplotlib.pyplot as plt
 from math import pi
 import numpy as np
 
-NEW_FILTER_FILE_NAME = "02"
-OLD_FILTER_FILE_NAME = "02"
-GT_FILE_NAME = "02"
+# specify here which number the data to be compared has
+# normally all three numbers should be the same
+NEW_FILTER_FILE_NAME = "00"
+OLD_FILTER_FILE_NAME = "00"
+GT_FILE_NAME = "00"
 
 
 # open the file with the estimated positions of the new filter
 nf_pos_file = open(
-    "/workspace/code/perception/src/experiments/filter_comparison/"
+    "/workspace/code/localization/src/experiments/filter_comparison/"
     + "new_filter_pos/data_"
     + NEW_FILTER_FILE_NAME
     + ".csv",
@@ -22,7 +41,7 @@ nf_pos_first_line = nf_pos_file.readline()
 
 # open the file with the estimated headings of the new filter
 nf_heading_file = open(
-    "/workspace/code/perception/src/experiments/filter_comparison/"
+    "/workspace/code/localization/src/experiments/filter_comparison/"
     + "new_filter_heading/data_"
     + NEW_FILTER_FILE_NAME
     + ".csv",
@@ -33,7 +52,7 @@ nf_heading_first_line = nf_heading_file.readline()
 
 # open the file with the estimated positions of the new filter
 of_pos_file = open(
-    "/workspace/code/perception/src/experiments/filter_comparison/"
+    "/workspace/code/localization/src/experiments/filter_comparison/"
     + "old_filter_pos/data_"
     + OLD_FILTER_FILE_NAME
     + ".csv",
@@ -44,7 +63,7 @@ of_pos_first_line = of_pos_file.readline()
 
 # open the file with the estimated positions of the new filter
 of_heading_file = open(
-    "/workspace/code/perception/src/experiments/filter_comparison/"
+    "/workspace/code/localization/src/experiments/filter_comparison/"
     + "old_filter_heading/data_"
     + OLD_FILTER_FILE_NAME
     + ".csv",
@@ -55,7 +74,7 @@ of_heading_first_line = of_heading_file.readline()
 
 # open the ground truth file
 gt_file = open(
-    "/workspace/code/perception/src/experiments/filter_comparison/"
+    "/workspace/code/localization/src/experiments/filter_comparison/"
     + "ground_truth/data_"
     + GT_FILE_NAME
     + ".csv",

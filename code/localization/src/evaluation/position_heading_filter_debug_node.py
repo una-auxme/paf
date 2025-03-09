@@ -3,10 +3,12 @@
 """
 !!! WARNIG !!!
 This node is currently not in use.
+
 With this node 2 filters can be compared to each other
 and to the unfiltered data.
 The position as well as the heading is compared.
 """
+
 import os
 import csv
 import math
@@ -627,7 +629,7 @@ def main(args=None):
     :return:
     """
 
-    roscomp.init("position_heading_publisher_node_2", args=args)
+    roscomp.init("position_heading_filter_debug_node", args=args)
     try:
         node = position_heading_filter_debug_node()
         node.run()

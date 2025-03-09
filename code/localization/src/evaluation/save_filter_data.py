@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 """
-This node saves the following data:
+!!! WARNIG !!!
+This node is currently not in use.
+
+This node saves the following data in a csv file:
 - ground truth (heading and position)
 - IMU
 - Speedometer
@@ -14,9 +17,6 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
-
-# from sensor_msgs.msg import Imu
-# from carla_msgs.msg import CarlaSpeedometer
 
 import rospy
 import threading
@@ -133,7 +133,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/new_filter_pos"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -184,7 +184,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/new_filter_heading"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -231,7 +231,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/old_filter_pos"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -282,7 +282,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/old_filter_heading"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -329,7 +329,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/sensor_data"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -398,7 +398,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/sensor_data"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -467,7 +467,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/experiments/" + FOLDER_PATH
         folder_path = base_path + "/ground_truth"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
