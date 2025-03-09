@@ -29,21 +29,19 @@ TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
 TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(15)  # default 25 (s)
 UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
-REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
-REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
-REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
+COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
+LOOKUP_DISTANCE = 1.0  # Distance that should be checked in front or behind the car (m)
+LOOKUP_WIDTH_FACTOR = 1.25
 
 
 def pos_to_array(pos: PoseStamped):
     return np.array([pos.pose.position.x, pos.pose.position.y])
 
 
-def calculate_obstacle_behind(
-    tree: MapTree,
-    hero: Entity,
-    overlap_percent: float,
+def calculate_obstacle(
+    tree: MapTree, hero: Entity, overlap_percent: float, in_front: bool = False
 ) -> bool:
-    """Calculates if there is an obstacle behind the vehicle
+    """Calculates if there is an obstacle in front or behind the vehicle
 
     Returns:
         bool
@@ -51,11 +49,15 @@ def calculate_obstacle_behind(
     # data preparation
     hero_width = hero.get_width()
 
+    pos = -1.0
+    if in_front:
+        pos = 1.0
+
     collision_mask = mapping_common.mask.project_plane(
-        -(hero.get_front_x() + REVERSE_LOOKUP_DISTANCE),
-        hero_width * REVERSE_LOOKUP_WIDTH_FACTOR,
+        pos * (hero.get_front_x() + LOOKUP_DISTANCE),
+        hero_width * LOOKUP_WIDTH_FACTOR,
     )
-    add_debug_marker(debug_marker(collision_mask, color=REVERSE_COLLISION_MARKER_COLOR))
+    add_debug_marker(debug_marker(collision_mask, color=COLLISION_MARKER_COLOR))
 
     entity_result = tree.get_nearest_entity(
         collision_mask, hero.to_shapely(), min_coverage_percent=overlap_percent
@@ -64,9 +66,7 @@ def calculate_obstacle_behind(
     if entity_result is not None:
         entity, _ = entity_result
         add_debug_marker(
-            debug_marker(
-                entity.entity, color=REVERSE_COLLISION_MARKER_COLOR, scale_z=0.3
-            )
+            debug_marker(entity.entity, color=COLLISION_MARKER_COLOR, scale_z=0.3)
         )
         return True
     else:
@@ -130,12 +130,20 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             # reset stuck timer
             self.stuck_timer = rospy.Time.now()
 
+        # If we drove for more than 15 meter since last unstuck attempt
+        # --> indicates new stuck location --> reset unstuck_count
+        current_pos = pos_to_array(current_pos)
+        if get_distance(self.init_pos, current_pos) > 15:
+            self.unstuck_count = 0
+
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
         wait_behaviors = [bs.lc_wait.name, bs.ot_wait.name]
         wait_long_behaviors = [bs.int_wait.name]
 
-        if curr_behavior is None or curr_behavior.data in wait_behaviors:
+        if self.unstuck_count != 0:
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(5)
+        elif curr_behavior is None or curr_behavior.data in wait_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(30)
         elif curr_behavior.data in wait_long_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)
@@ -151,21 +159,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             or self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION
         ):
             self.STUCK_DETECTED = True
-            self.unstuck_count += 1
-            request_end_overtake(self.end_overtake_proxy)
-            update_stop_marks(
-                self.stop_proxy,
-                id="unstuck",
-                reason="unstuck triggered",
-                is_global=False,
-                marks=[],
-                delete_all_others=True,
-            )
-            # If we drove for more than 20 meter since last unstuck attempt
-            # --> indicates new stuck location --> reset unstuck_count
-            current_pos = pos_to_array(current_pos)
-            if get_distance(self.init_pos, current_pos) > 20:
-                self.unstuck_count = 0
             self.init_pos = current_pos
             self.init_ros_stuck_time = rospy.Time.now()
             stuck_reason = "Stuck"
@@ -212,17 +205,18 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 f"{TRIGGER_WAIT_STUCK_DURATION.secs}",
             )
 
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        hero: Optional[Entity] = tree.map.hero()
+        if hero is None:
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "hero is None"
+            )
+
         curr_us_drive_dur = rospy.Time.now() - self.init_ros_stuck_time
         # stuck detected, starting unstuck routine for UNSTUCK_DRIVE_DURATION seconds
         if curr_us_drive_dur < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
-            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-            hero: Optional[Entity] = tree.map.hero()
-            if hero is None:
-                return debug_status(
-                    self.name, py_trees.common.Status.FAILURE, "hero is None"
-                )
-            collision_detected = calculate_obstacle_behind(tree, hero, 0.1)
+            collision_detected = calculate_obstacle(tree, hero, 0.1)
             if (
                 get_distance(self.init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
             ) and not collision_detected:
@@ -242,15 +236,30 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         # (to pass stopmarkers before they are set again)
         elif curr_us_drive_dur < 2 * UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_forward.name)
-            if self.unstuck_count == 3:
+            if self.unstuck_count == 1:
+                request_end_overtake(self.end_overtake_proxy)
+                update_stop_marks(
+                    self.stop_proxy,
+                    id="unstuck",
+                    reason="unstuck triggered",
+                    is_global=False,
+                    marks=[],
+                    delete_all_others=True,
+                )
+            elif self.unstuck_count == 2:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0
                 )
-            elif self.unstuck_count == 4:
+            elif self.unstuck_count == 3:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
                 self.unstuck_count = 0
+            collision_detected = calculate_obstacle(tree, hero, 0.1, True)
+            if not collision_detected:
+                add_speed_override(2.0)
+            else:
+                add_speed_override(0.0)
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
@@ -263,6 +272,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.stuck_timer = rospy.Time.now()
             self.wait_stuck_timer = rospy.Time.now()
             self.STUCK_DETECTED = False
+            self.unstuck_count += 1
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
