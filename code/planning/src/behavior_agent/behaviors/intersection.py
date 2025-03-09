@@ -8,6 +8,7 @@ from perception.msg import Waypoint, TrafficLightState
 from planning.srv import OvertakeStatusResponse
 from agents.navigation.local_planner import RoadOption
 
+import mapping_common.hero
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker
@@ -26,6 +27,7 @@ from .overtake_service_utils import (
     request_overtake_status,
     request_end_overtake,
 )
+from .speed_alteration import add_speed_limit
 from .waypoint_utils import calculate_waypoint_distance
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -53,17 +55,29 @@ def tr_status_str(t: Optional[TrafficLightState]):
 INTERSECTION_LINE_STOPMARKS_ID = "intersection"
 INTERSECTION_LEFT_STOPMARKS_ID = "intersection_left"
 
-INTERSECTION_START_MIN_DISTANCE = 7.5
+INTERSECTION_START_MIN_DISTANCE = 5.0
 """Distance at which we (force) enter into the approach behavior
 if it was not possible before.
+
+This distance is based roughly on the front of the car
 
 Example: A running overtake delays the intersection behavior
 """
 
-WAIT_TARGET_DISTANCE = 4.5
+WAIT_TARGET_DISTANCE = 2.0
 """Target distance under which the car waits in front of the stop line
 
-This distance is based roughly on the center of the car
+This distance is based roughly on the front of the car
+"""
+
+STOP_LINE_OFFSET = -1.0
+"""Offset of the stop line compared to the position in the waypoint
+
+Offset points in forward direction of the hero
+"""
+
+INTERSECTION_END_DISTANCE = 10.0
+"""Distance after the intersection endpoint for leaving the behavior
 """
 
 
@@ -73,7 +87,16 @@ CURRENT_INTERSECTION_WAYPOINT: Optional[Waypoint]
 
 
 def set_line_stop(proxy: rospy.ServiceProxy, distance: float):
-    transform = Transform2D.new_translation(Vector2.new(distance, 0.0))
+    """Sets the stop line at distance from the front of the hero
+
+    Args:
+        proxy (rospy.ServiceProxy)
+        distance (float): distance from the front of the hero
+    """
+    hero = mapping_common.hero.create_hero_entity()
+    transform = Transform2D.new_translation(
+        Vector2.new(distance + hero.get_front_x(), 0.0)
+    )
     mask = Rectangle(0.5, 10.0, offset=transform)
     update_stop_marks(
         proxy,
@@ -263,12 +286,9 @@ class Approach(py_trees.behaviour.Behaviour):
                 Status.FAILURE,
                 "Missing information for stop_line distance calculation",
             )
+        stop_line_distance += STOP_LINE_OFFSET
         add_debug_entry(self.name, f"Stop line distance: {stop_line_distance}")
-        if CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.LEFT:
-            line_threshold = 5.0
-        else:
-            line_threshold = 0.0
-        if stop_line_distance <= line_threshold:
+        if stop_line_distance <= 0.0:
             # We already drove over the stopline...go to next behavior
             return debug_status(
                 self.name,
@@ -306,6 +326,10 @@ class Approach(py_trees.behaviour.Behaviour):
             # Green light
             self.curr_behavior_pub.publish(bs.int_app_green.name)
             unset_line_stop(self.stop_proxy)
+            if stop_line_distance < WAIT_TARGET_DISTANCE:
+                return debug_status(
+                    self.name, py_trees.common.Status.SUCCESS, "Driving over stop_line"
+                )
 
         return debug_status(
             self.name,
@@ -341,25 +365,17 @@ class Wait(py_trees.behaviour.Behaviour):
         global CURRENT_INTERSECTION_WAYPOINT
         if CURRENT_INTERSECTION_WAYPOINT is None:
             rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
-            return debug_status(
-                self.name,
-                Status.FAILURE,
-                "Error: CURRENT_INTERSECTION_WAYPOINT not set",
-            )
+            return
+        self.waypoint = CURRENT_INTERSECTION_WAYPOINT
+
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
         self.oncoming_distance = 45.0
         self.oncoming_counter = 0
         self.stop_time = rospy.get_rostime()
         self.was_red = False
-        waypoint: Optional[Waypoint] = CURRENT_INTERSECTION_WAYPOINT
-        if waypoint is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No waypoint"
-            )
-        self.intersection_type = waypoint.roadOption
+        self.intersection_type = self.waypoint.roadOption
         self.left_marker_set = False
-        return True
 
     def update(self):
         """
@@ -384,15 +400,15 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No hero in map"
             )
-        dist = calculate_waypoint_distance(
-            self.blackboard, CURRENT_INTERSECTION_WAYPOINT
-        )
+        dist = calculate_waypoint_distance(self.blackboard, self.waypoint)
         if dist is None:
             return debug_status(
                 self.name,
                 Status.FAILURE,
                 "Missing information for stop_line distance calculation",
             )
+        dist += STOP_LINE_OFFSET
+
         light_status_msg = self.blackboard.get("/paf/hero/Center/traffic_light_state")
         if light_status_msg is not None:
             traffic_light_status = light_status_msg.state
@@ -530,51 +546,61 @@ class Enter(py_trees.behaviour.Behaviour):
 
     def setup(self, timeout):
         self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
+            "/paf/hero/curr_behavior", String, queue_size=1
         )
         self.blackboard = py_trees.blackboard.Blackboard()
         self.stop_proxy = create_stop_marks_proxy()
         return True
 
     def initialise(self):
-        """
-        This prints a state status message and changes the driving speed for
-        the intersection.
-        """
         rospy.loginfo("Enter Intersection")
         unset_line_stop(self.stop_proxy)
         self.curr_behavior_pub.publish(bs.int_enter.name)
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
-        if waypoint is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No waypoint"
-            )
-        self.start_dist = waypoint.distance
 
     def update(self):
         """
-        Continues driving through the intersection until the vehicle gets
-        close enough to the next global way point.
+        Continues driving through the intersection until it is far way enough
+        from CURRENT_INTERSECTION_WAYPOINT
         :return: py_trees.common.Status.RUNNING, if too far from the end of
                  the intersection
                  py_trees.common.Status.FAILURE, once finished.
         """
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        global CURRENT_INTERSECTION_WAYPOINT
+        if CURRENT_INTERSECTION_WAYPOINT is None:
+            rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
+            return debug_status(
+                self.name,
+                Status.FAILURE,
+                "Error: CURRENT_INTERSECTION_WAYPOINT not set",
+            )
 
-        if waypoint is None:
+        intersection_end_distance = calculate_waypoint_distance(
+            self.blackboard, CURRENT_INTERSECTION_WAYPOINT, forward_offset=20
+        )
+        if intersection_end_distance is None:
             return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No waypoint"
+                self.name,
+                Status.FAILURE,
+                "Missing information for intersection_end_distance calculation",
             )
-        add_debug_entry(self.name, f"Next waypoint dist: {waypoint.distance}")
-        if abs(self.start_dist - waypoint.distance) < 5.0:
-            self.curr_behavior_pub.publish(bs.int_enter.name)
-            return debug_status(
-                self.name, py_trees.common.Status.RUNNING, "Driving through..."
-            )
-        else:
+        add_debug_entry(
+            self.name, f"Intersection end distance: {intersection_end_distance}"
+        )
+
+        # Distance does usually not reach exacty zero, use some margin
+        if intersection_end_distance <= 0.5:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
+
+        if CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.STRAIGHT:
+            # We drive slower in straight intersections to avoid emergency vehicles
+            # TODO only drive slower for traffic light
+            add_speed_limit(3.0)
+        self.curr_behavior_pub.publish(bs.int_enter.name)
+        return debug_status(
+            self.name, py_trees.common.Status.RUNNING, "Driving through..."
+        )
 
     def terminate(self, new_status):
         pass
