@@ -344,6 +344,7 @@ class RadarNode(CompatibleNode):
                         combined_points_filtered_out.extend(break_filter_out_data)
 
         if not combined_points:
+            self.entity_radar_publisher.publish(ClusteredPointsArray())
             rospy.logwarn("No Radarpoints to process!")
             return
 
