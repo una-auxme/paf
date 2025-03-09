@@ -4,7 +4,7 @@
 import py_trees
 import py_trees_ros
 
-from std_msgs.msg import Float32, Int16, String
+from std_msgs.msg import Float32, String
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path

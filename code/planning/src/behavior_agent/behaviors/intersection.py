@@ -10,12 +10,10 @@ from agents.navigation.local_planner import RoadOption
 
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter
-from mapping_common.transform import Transform2D
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 import shapely
-from mapping_common.transform import Vector2
 
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
@@ -323,8 +321,7 @@ class Approach(py_trees.behaviour.Behaviour):
 class Wait(py_trees.behaviour.Behaviour):
     """
     This behavior handles the waiting in front of the stop line at the inter-
-    section until there either is no traffic light, the traffic light is
-    green or the intersection is clear.
+    section until the vehicle is allowed to drive through.
     """
 
     def __init__(self, name):
@@ -369,9 +366,10 @@ class Wait(py_trees.behaviour.Behaviour):
         Waits in front of the intersection until there is a green light.
         In case of turning left, oncoming traffic is checked bevor proceeding.
         :return: py_trees.common.Status.RUNNING, while traffic light is yellow
-                 or red
+                 or red or oncoming is blocked.
                  py_trees.common.Status.SUCCESS, if the traffic light switched
-                 to green or no traffic light is detected
+                 to green or no traffic light is detected and oncoming is free
+                 when turning left.
         """
         self.curr_behavior_pub.publish(bs.int_wait.name)
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
@@ -523,9 +521,8 @@ class Wait(py_trees.behaviour.Behaviour):
 
 class Enter(py_trees.behaviour.Behaviour):
     """
-    This behavior handles the driving through an intersection, it initially
-    sets a speed and finishes if the ego vehicle is close to the end of the
-    intersection.
+    This behavior handles the driving through an intersection, finishes
+    after a certain distance threshold and ends the intersection behavior.
     """
 
     def __init__(self, name):
@@ -560,10 +557,7 @@ class Enter(py_trees.behaviour.Behaviour):
         close enough to the next global way point.
         :return: py_trees.common.Status.RUNNING, if too far from the end of
                  the intersection
-                 py_trees.common.Status.SUCCESS, if close to the end of the
-                 intersection
-                 py_trees.common.Status.FAILURE, if no next path point can be
-                 detected.
+                 py_trees.common.Status.FAILURE, once finished.
         """
         waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
 

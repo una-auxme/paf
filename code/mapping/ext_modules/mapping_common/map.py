@@ -733,8 +733,7 @@ class MapTree:
         relevant entities.
 
         This is only meant to be used in intersections. Ignores entities
-        that are not moving towards the hero. Adds a tilted rectangle to the
-        collision mask to account for the hero car not standing straight.
+        that are not moving towards the hero.
 
         Parameters:
         - lane_length (float): Sets the lane length that should be checked, in meters.
