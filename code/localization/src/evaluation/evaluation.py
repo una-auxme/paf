@@ -21,7 +21,7 @@ import carla
 
 GPS_RUNNING_AVG_ARGS: int = 10
 DATA_SAVING_MAX_TIME: int = 45
-FOLDER_PATH: str = "/Position_Heading_Datasets"
+FOLDER_PATH: str = "/position_heading_datasets"
 
 
 class Evaluator(CompatibleNode):
