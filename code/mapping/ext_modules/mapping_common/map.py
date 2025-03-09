@@ -775,7 +775,7 @@ class MapTree:
         # if all entities drive forward or don't move the lane can be considered free
         return (
             all(
-                hero.get_delta_forward_velocity_of(entity.entity) > -0.5
+                entity.entity.get_global_x_velocity() < -0.5
                 for entity in enities_with_motion
             ),
             masks,
