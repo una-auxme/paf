@@ -503,6 +503,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
             unset_line_stop(self.stop_proxy)
+            unset_left_stop(self.stop_proxy)
 
 
 class Enter(py_trees.behaviour.Behaviour):
