@@ -351,7 +351,7 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         self.green_light_time = rospy.get_rostime()
         self.over_stop_line = False
-        self.oncoming_distance = 30.0
+        self.oncoming_distance = 45.0
         self.oncoming_counter = 0
         self.stop_time = rospy.get_rostime()
         self.was_red = False
@@ -385,11 +385,6 @@ class Wait(py_trees.behaviour.Behaviour):
         if hero is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No hero in map"
-            )
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
-        if waypoint is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No waypoint"
             )
         dist = calculate_waypoint_distance(
             self.blackboard, CURRENT_INTERSECTION_WAYPOINT
@@ -487,8 +482,10 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         self.curr_behavior_pub.publish(bs.int_wait.name)
         intersection_clear, intersection_masks = tree.is_lane_free_intersection(
-            hero, self.oncoming_distance, 10.0
+            hero, self.oncoming_distance, 12.0
         )
+        add_debug_entry(self.name, f"Oncoming counter: {self.oncoming_counter}")
+        add_debug_entry(self.name, f"Intersection clear: {intersection_clear}")
         for mask in intersection_masks:
             add_debug_marker(debug_marker(mask, color=INTERSECTION_MARKER_COLOR))
         if intersection_clear:
@@ -555,6 +552,7 @@ class Enter(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
+        global CURRENT_INTERSECTION_WAYPOINT
         unset_line_stop(self.stop_proxy)
         next_waypoint_msg = self.blackboard.get("/paf/hero/waypoint_distance")
 

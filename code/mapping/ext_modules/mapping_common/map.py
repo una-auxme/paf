@@ -753,10 +753,10 @@ class MapTree:
 
         lane_mask = shapely.Polygon(
             [
-                [lane_transform_x, 0],
-                [lane_transform_x + lane_length, -10],
-                [lane_transform_x + lane_length, 30],
-                [lane_transform_x, lane_transform_x],
+                [lane_transform_x, -2],
+                [lane_transform_x + lane_length, -15],
+                [lane_transform_x + lane_length, 10],
+                [lane_transform_x, 10],
             ]
         )
 
