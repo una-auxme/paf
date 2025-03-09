@@ -34,10 +34,8 @@ TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
 """threshold under which the planner decides it is on a trajectory
 """
 
-SPLIT_DIST_NONE_THRESHOLD: float = 0.2
-"""Split distance under which a split line will be counted as None
-
-Relevant for the overtake start/end point calculations
+OVERTAKE_ENDING_DIST_THRESHOLD: float = 0.2
+"""Threshold at which the overtake is considered ending
 """
 
 
@@ -379,8 +377,6 @@ class MotionPlanning(CompatibleNode):
         (before_trajectory, overtake_trajectory) = mapping_common.mask.split_line_at(
             overtake_trajectory, start_dist
         )
-        if start_dist < SPLIT_DIST_NONE_THRESHOLD:
-            before_trajectory = None
 
         if overtake_request.has_end_pos and overtake_trajectory is not None:
             global_end_point_s = Point2.from_ros_msg(
@@ -391,7 +387,11 @@ class MotionPlanning(CompatibleNode):
                 overtake_trajectory, end_dist
             )
 
-            if overtake_trajectory is None or end_dist < SPLIT_DIST_NONE_THRESHOLD:
+            if (
+                overtake_trajectory is None
+                or overtake_trajectory.line_locate_point(front_point_s)
+                > overtake_trajectory.length - OVERTAKE_ENDING_DIST_THRESHOLD
+            ):
                 # If we are after the end of the overtake -> delete overtake_request
                 rospy.loginfo("MotionPlanning: Overtake ending")
                 self.overtake_request = None
@@ -404,6 +404,9 @@ class MotionPlanning(CompatibleNode):
         overtake_trajectory = overtake_trajectory.offset_curve(
             distance=overtake_request.offset
         )
+
+        if overtake_trajectory is None:
+            return global_trajectory
 
         # We only start overtaking if we are
         # close enough to the overtake trajectory.
