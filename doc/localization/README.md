@@ -1,8 +1,17 @@
-# Localization
+# Documentation of Localization
 
-An overview over the different nodes working together to localize the vehicle is provided in the [localization](./localization.md) file.
+This file provides an overview of the different nodes working together to localize the vehicle.
+The following picture visualizes the process.
 
-- [Kalman Filter](./kalman_filter.md)
+![Overview localization]()
+
+Currently the state of the car is estimated using an Extended Kalman Filter (EKF).
+Several nodes work together to make this possible.
+A detailed explanation is provided in the corresponding [.md file](./extended_kalman_filter.md)
+
+Aside from the EKF a (linear) Kalman Filter can be used to estimate the position and heading of the vehicle.
+More details are provided in the correlating [.md file](./kalman_filter.md)
+
 - [Position Heading Publisher Node](./position_heading_publisher_node.md)
 - [Position Heading Filter Debug Node](./position_heading_filter_debug_node.md)
 - [Coordinate Transformation](./coordinate_transformation.md) (helper functions)
