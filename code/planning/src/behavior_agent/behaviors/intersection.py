@@ -223,7 +223,7 @@ class Ahead(py_trees.behaviour.Behaviour):
 
         add_debug_entry(self.name, f"Stop line distance: {stop_line_distance}")
 
-        if stop_line_distance > 30:
+        if stop_line_distance > 25:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Stop line too far away"
             )
