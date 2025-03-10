@@ -11,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import Float32MultiArray
 from tf.transformations import quaternion_from_matrix
 
 import struct
@@ -147,8 +146,11 @@ class RadarNode(CompatibleNode):
 
     def publish_ground_projection_marker(self, acc_arrow_size):
         """
-        Publishes markers to visualise the calculated floor height
+        Publishes markers to visualize the calculated floor height
         and displays the current pitch angle as text in RViz.
+        This function can be activated in the perception.launch file by switching the
+        'imu_debug' parameter to 'True'.
+
         """
         # Arrow marker for the angle of inclination
         arrow_marker = Marker()
@@ -247,17 +249,21 @@ class RadarNode(CompatibleNode):
         else:
             return filtered_points, filtered_out_points
 
-    def callback(self, data, sensor_name):
-        """Collects data from radar sensors and calles process data function
-        to further process sensor data
+    def callback(self, data: PointCloud2, sensor_name: str):
+        """
+        Collects radar sensor data and triggers processing.
 
-        Sets rosparam parameters
-        Extracts information from radar data
-        and publishes the clustered radar data
-        points as a String message.
+        This function:
+        - Stores radar sensor data either in a buffer or a single register.
+        - Triggers `process_data` when all sensors have provided data.
+        - Updates a flag for time-checking logic.
 
         Args:
-            data: Point2Cloud message containing radar data
+            data (sensor_msgs/PointCloud2): Radar sensor data.
+            sensor_name (str): Identifier for the radar sensor.
+
+        Raises:
+            NotImplementedError: If `sensor_name` is unknown.
         """
 
         self.dbscan_eps = float(self.get_param("~dbscan_eps", 0.3))
@@ -265,6 +271,7 @@ class RadarNode(CompatibleNode):
         self.data_buffered = self.get_param("~data_buffered", False)
         self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
         self.enable_clustering = bool(self.get_param("~enable_clustering", False))
+        self.enable_debug_info = bool(self.get_param("~enable_debug_info", False))
 
         # Sets flag for time_check to know when data is available
         self.datacollecting_started = True
@@ -352,7 +359,6 @@ class RadarNode(CompatibleNode):
         self.visualization_radar_break_filtered.publish(cloud2)
 
         combined_points = np.array(combined_points)
-        self.get_lead_vehicle_info(combined_points)
 
         # Cluster and bounding box processing
 
@@ -399,11 +405,11 @@ class RadarNode(CompatibleNode):
             )
             self.entity_radar_publisher.publish(clusteredpoints)
 
-            cluster_info = generate_cluster_info(
-                cluster_labels, combined_points, marker_array, bounding_boxes
-            )
-
-            self.cluster_info_radar_publisher.publish(cluster_info)
+            if self.enable_debug_info:
+                cluster_info = generate_cluster_info(
+                    cluster_labels, combined_points, marker_array, bounding_boxes
+                )
+                self.cluster_info_radar_publisher.publish(cluster_info)
         else:
             motionArray = [
                 Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
@@ -434,8 +440,8 @@ class RadarNode(CompatibleNode):
         Returns:
         - np.ndarray
             A 2D array where each row represents a transformed point in the point cloud:
-            [x, y, z, Velocity]. Returns an empty array if the sensor name is
-            not recognized.
+            [x, y, z, velocity]. Returns an empty array
+            if the sensor name is not recognized.
         """
 
         if sensor_name not in self.sensor_config:
@@ -444,39 +450,28 @@ class RadarNode(CompatibleNode):
 
         data_array = pointcloud2_to_array(msg)
 
-        # If the sensor is "RADAR1", it is rear-facing
-        # and requires a coordinate transformation
+        # If the sensor is "RADAR1", apply a coordinate transformation (rear-facing)
         if sensor_name == "RADAR1":
-            data_array[:, 0] *= -1  # Mirror x-axis
-            data_array[:, 1] *= -1  # Mirror y-axis
-            data_array[:, 3] *= -1  # Mirror velocity
+            data_array[:, [0, 1, 3]] *= -1  # Mirror x, y, and velocity axes
 
         # Retrieve sensor position in the vehicle coordinate system
-        x, y, z = self.sensor_config[sensor_name]
+        sensor_x, sensor_y, sensor_z = self.sensor_config[sensor_name]
 
-        # Todo => Solve hard fix of multiplying y column by -1
-        y *= -1
+        # TODO: Solve hardcoded inversion of the y-axis
+        sensor_y *= -1
+
         # Apply translation to align the point cloud with the vehicle coordinate system
-        translation = np.array([x, y, z])
+        translation = np.array([sensor_x, sensor_y, sensor_z])
         transformed_points = np.column_stack(
-            (
-                data_array[:, :3] + translation,
-                data_array[:, 3],
-            )  # Apply translation to (x, y, z), keep velocity unchanged
-        )
+            (data_array[:, :3] + translation, data_array[:, 3])
+        )  # Apply translation to (x, y, z), keep velocity unchanged
 
         return transformed_points
 
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
-        self.dist_array_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/dist_array_unsegmented"
-            ),
-            String,
-            queue_size=10,
-        )
+
         self.visualization_radar_publisher = rospy.Publisher(
             rospy.get_param("~visualization_topic", "/paf/hero/Radar/Visualization"),
             PointCloud2,
@@ -498,21 +493,6 @@ class RadarNode(CompatibleNode):
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
-            queue_size=10,
-        )
-        self.range_velocity_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~range_velocity_topic",
-                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
-            ),
-            Float32MultiArray,
-            queue_size=10,
-        )
-        self.lead_vehicle_marker_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
-            ),
-            Marker,
             queue_size=10,
         )
         rospy.Subscriber(
@@ -550,63 +530,6 @@ class RadarNode(CompatibleNode):
 
         rospy.spin()
 
-    def get_lead_vehicle_info(self, radar_data):
-        """
-        Processes radar data to identify and publish information about the lead vehicle.
-
-        This function filters radar points to identify the closest point within a
-        specified region, representing the lead vehicle. It publishes the distance
-        and velocity of the lead vehicle as a `Float32MultiArray` message and also
-        visualizes the lead vehicle using a marker in RViz.
-
-        Args:
-            radar_data (np.ndarray): Radar data represented as a 2D NumPy array where
-                                    each row corresponds to a radar point with the
-                                    format [x, y, z, velocity].
-
-        Returns:
-            None: The function publishes data to relevant ROS topics and does not return
-            any value.
-        """
-
-        radar_data = filter_data(radar_data, max_x=20, min_y=-1, max_y=1)
-
-        lead_vehicle_info = Float32MultiArray()
-
-        # Handle the case where no valid radar points are found
-        if len(radar_data) == 0:
-            lead_vehicle_info.data = []
-            self.range_velocity_radar_publisher.publish(lead_vehicle_info)
-            return
-
-        # Identify the closest point (lead vehicle candidate) based on the x-coordinate
-        closest_point = radar_data[np.argmin(radar_data[:, 0])]
-
-        lead_vehicle_info.data = [closest_point[0], closest_point[3]]
-
-        # Create a marker for visualizing the lead vehicle in RViz
-        marker = Marker()
-        marker.header.frame_id = "hero"
-        marker.header.stamp = rospy.Time.now()
-        marker.ns = "lead_vehicle_marker"
-        marker.id = 500
-        marker.type = Marker.SPHERE
-        marker.action = Marker.ADD
-        marker.pose.position.x = closest_point[0]
-        marker.pose.position.y = closest_point[1]
-        marker.pose.position.z = closest_point[2]
-        marker.scale.x = 1.0
-        marker.scale.y = 1.0
-        marker.scale.z = 1.0
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-
-        self.lead_vehicle_marker_publisher.publish(marker)
-        self.range_velocity_radar_publisher.publish(lead_vehicle_info)
-        return
-
 
 def pointcloud2_to_array(pointcloud_msg):
     """
@@ -622,7 +545,11 @@ def pointcloud2_to_array(pointcloud_msg):
         A 2D array where each row corresponds to a point in the point cloud:
         [x, y, z, Velocity]
     """
+
+    # Convert PointCloud2 message to a numpy structured array
     cloud_array = ros_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
+
+    # Stack the x, y, z coordinates with velocity to form a 2D array
     return np.column_stack(
         (cloud_array["x"], cloud_array["y"], cloud_array["z"], cloud_array["Velocity"])
     )
@@ -642,12 +569,13 @@ def filter_data(
     Filters radar data based on specified spatial and distance constraints.
 
     This function applies multiple filtering criteria to the input radar data.
-    Points outside these bounds are excluded from the output.
+    Points outside these bounds are excluded.
+    (e.g., spatial limits and maximum distance)
 
     Args:
         data (np.ndarray): A 2D numpy array containing radar data, where each row
-        represents a data point with the format [x, y, z, distance]. The array
-        shape is (N, 4), where N is the number of points.
+            represents a data point with the format [x, y, z, distance]. The array
+            shape is (N, 4), where N is the number of points.
         min_x (float, optional): Minimum value for the x-coordinate. Default is -100.
         max_x (float, optional): Maximum value for the x-coordinate. Default is 100.
         min_y (float, optional): Minimum value for the y-coordinate. Default is -100.
@@ -655,14 +583,17 @@ def filter_data(
         min_z (float, optional): Minimum value for the z-coordinate. Default is -1.
         max_z (float, optional): Maximum value for the z-coordinate. Default is 100.
         max_distance (float, optional): Maximum allowable distance of the point from
-        the sensor. Default is 100.
+            the sensor. Default is 100.
 
     Returns:
         np.ndarray: A numpy array containing only the filtered data points that meet
-        the specified criteria.
+            the specified criteria.
     """
 
+    # First filter by distance (column index 3 corresponds to distance)
     filtered_data = data[data[:, 3] < max_distance]
+
+    # Apply spatial filtering (x, y, z constraints)
     filtered_data = filtered_data[
         (filtered_data[:, 0] >= min_x)
         & (filtered_data[:, 0] <= max_x)
@@ -676,25 +607,43 @@ def filter_data(
 
 def cluster_data(data, eps, min_samples) -> np.ndarray:
     """
-    Clusters the radar data using the DBSCAN algorithm
+    Clusters the radar data using the DBSCAN algorithm and returns the cluster labels.
+
+    This function applies DBSCAN clustering to radar data,
+    scaling the data first for better clustering performance.
+    It returns the cluster labels assigned by DBSCAN, where each
+    point is assigned a cluster label, and noise points are labeled as -1.
 
     Args:
-        data (np.ndarray): data array which should be clustered
-        eps (float, optional): maximum distance of points. Defaults to 0.8.
-        min_samples (int, optional): min samples for 1 cluster. Defaults to 3.
+        data (np.ndarray): A 2D array containing radar data. Each row represents a point
+                            with the format [x, y, z, velocity], where:
+                            - x, y, z are the 3D coordinates of the radar point.
+                            - velocity is the velocity associated with that point.
+        eps (float): The maximum distance between two samples for them to be considered
+                     as in the same neighborhood. Default is 0.8.
+        min_samples (int): The number of samples in a neighborhood for a point to be
+                           considered as a core point. Default is 3.
 
     Returns:
-        dict: A dictionary where the keys are cluster labels (int) and the values
-              are the number of points in each cluster. Returns an empty dictionary
-              if no points are available.
-        DBSCAN: A DBSCAN clustering object containing labels and core sample indices
+        np.ndarray: An array containing the cluster labels assigned by DBSCAN.
+                    Points labeled as -1 are considered noise
+                    and don't belong to any cluster.
+
+    Notes:
+        - If the input data is empty, the function returns an empty array.
+        - Data is scaled before clustering for better performance
+            using the `StandardScaler`.
+        - The function assumes that the input `data` has 4 columns (x, y, z, velocity),
+            and the z-values are replaced by 1 for the purpose of clustering.
     """
 
     if len(data) == 0:
-        return {}
-    scaler = StandardScaler()
-    # data_reduced = data[:, [0, 1, 3]]
+        return np.array([])
 
+    # Scaling the data for better clustering performance
+    scaler = StandardScaler()
+
+    # data_reduced = data[:, [0, 1, 3]]
     data_reduced = data
     data_reduced[:, 2] = 1
     data_scaled = scaler.fit_transform(data_reduced)
@@ -705,49 +654,68 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
     return clustered_points.labels_
 
 
-# generates random color for cluster
 def generate_color_map(num_clusters):
+    """
+    Generates a random RGB color map for a given number of clusters.
+
+    Args:
+        num_clusters (int): Number of clusters to generate colors for.
+
+    Returns:
+        np.ndarray: An array of shape (num_clusters, 3) containing random RGB colors.
+
+    Notes:
+        Uses a fixed seed (42) for reproducibility.
+    """
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(num_clusters, 3))
     return colors
 
 
 def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
-    """_summary_
+    """
+    Creates a PointCloud2 message from radar points with color mapping for clusters.
 
     Args:
-        clustered_points (dict): clustered points after dbscan
-        cluster_labels (_type_): _description_
+        clustered_points (np.ndarray): 2D array of radar points
+            in format [x, y, z, velocity].
+        cluster_labels (np.ndarray): Array of cluster labels for each point.
+        filtered_out_points (bool): If True, all points are colored red; otherwise,
+            clusters are colored based on labels.
 
     Returns:
-        PointCloud2: pointcloud which can be published
+        PointCloud2: A PointCloud2 message containing the radar point cloud data.
     """
     header = Header()
     header.stamp = rospy.Time.now()
     header.frame_id = "hero"
 
     points = []
-    colors = []
 
-    if filtered_out_points is False:
+    # Define colors based on filtering flag
+    if not filtered_out_points:
         unique_labels = np.unique(cluster_labels)
         colors = generate_color_map(len(unique_labels))
+    else:
+        colors = None  # All points will be colored red
 
     for i, point in enumerate(clustered_points):
         x, y, z, v = point
-        if filtered_out_points is False:
-            label = cluster_labels[i]
-
-            if label == -1:
-                r, g, b = 128, 128, 128
-            else:
-                r, g, b = colors[label]
+        # Handle color assignment based on the filtered_out_points flag
+        if filtered_out_points:
+            r, g, b = 255, 0, 0  # Red color for filtered points
         else:
-            r, g, b = 255, 0, 0
+            label = cluster_labels[i]
+            if label == -1:  # Noise points
+                r, g, b = 128, 128, 128  # Gray for noise
+            else:
+                r, g, b = colors[label]  # Assign color from color map
 
+        # Pack the RGB color into a single 32-bit float
         rgb = struct.unpack("f", struct.pack("I", (r << 16) | (g << 8) | b))[0]
         points.append([x, y, z, rgb])
 
+    # Define PointCloud2 fields
     fields = [
         PointField("x", 0, PointField.FLOAT32, 1),
         PointField("y", 4, PointField.FLOAT32, 1),
@@ -760,99 +728,100 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
 
 def calculate_aabb(cluster_points):
     """
-        Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
+    Calculates the axis-aligned bounding box (AABB) for a set of 3D points.
 
-        This function computes the minimum and maximum values along each axis (x, y, z)
-        for a given set of 3D points, which defines the bounding box that contains
-        all points in the cluster.
+    This function computes the minimum and maximum values along each axis (x, y, z)
+    for a given set of 3D points, which defines the bounding box that contains
+    all points in the cluster.
 
-        Args:
-            cluster_points (numpy.ndarray):
-            A 2D array where each row represents a 3D point (x, y, z).
-            The array should have shape (N, 3) where N is the number of points.
-    fies if data buffering is enabled using the `data_buffered` parameter
-        Returns:
-            tuple: A tuple of the form (x_min, x_max, y_min, y_max, z_min, z_max),
-            which represents the axis-aligned bounding box (AABB) for the given
-            set of points. The values are the minimum and maximum coordinates
-            along the x, y, and z axes.
+    Args:
+        cluster_points (numpy.ndarray): A 2D array of shape (N, 3) where each row
+                                        represents a 3D point (x, y, z).
+
+    Returns:
+        tuple: A tuple (x_min, x_max, y_min, y_max, z_min, z_max), representing
+               the axis-aligned bounding box (AABB) for the given set of points.
+               The values are the minimum and maximum coordinates along the x, y,
+               and z axes.
     """
+    # Using np.min and np.max on each axis to get the bounding box
+    x_min, x_max = np.min(cluster_points[:, 0]), np.max(cluster_points[:, 0])
+    y_min, y_max = np.min(cluster_points[:, 1]), np.max(cluster_points[:, 1])
+    z_min, z_max = np.min(cluster_points[:, 2]), np.max(cluster_points[:, 2])
 
-    x_min = np.min(cluster_points[:, 0])
-    x_max = np.max(cluster_points[:, 0])
-    y_min = np.min(cluster_points[:, 1])
-    y_max = np.max(cluster_points[:, 1])
-    z_min = np.min(cluster_points[:, 2])
-    z_max = np.max(cluster_points[:, 2])
     return x_min, x_max, y_min, y_max, z_min, z_max
 
 
 def generate_bounding_boxes(points_with_labels):
     """
-    Generates bounding boxes for clustered points.
+    Generates axis-aligned bounding boxes (AABB) for each unique cluster.
 
     This function processes a set of points, each associated with a cluster label,
-    and generates an axis-aligned bounding box (AABB) for each unique cluster label.
+    and computes the bounding box (AABB) for each cluster by finding the minimum
+    and maximum coordinates along the x, y, and z axes.
 
     Args:
-        points_with_labels (numpy.ndarray):
-        A 2D array of shape (N, 4) where each row contains
-        the coordinates (x, y, z) of a point along with its
-        corresponding cluster label in the last column.
-        The array should have the structure [x, y, z, label].
+        points_with_labels
+        (numpy.ndarray): A 2D array of shape (N, 4) where each row contains
+                        the coordinates [x, y, z] of a point along with
+                        its corresponding cluster label in the last column.
 
     Returns:
-        list: A list of tuples, where each tuple contains a cluster label and the
-              corresponding bounding box (bbox). The bbox is represented by a tuple
-              of the form (x_min, x_max, y_min, y_max, z_min, z_max).
+        list: A list of tuples where each tuple contains a cluster label and the
+              corresponding bounding box (bbox). The bbox is represented as
+              (x_min, x_max, y_min, y_max, z_min, z_max).
     """
     bounding_boxes = []
-    unique_labels = np.unique(points_with_labels[:, -1])
+    unique_labels = np.unique(
+        points_with_labels[:, -1]
+    )  # Extract unique cluster labels
+
     for label in unique_labels:
-        if label == -1:
+        if label == -1:  # Skip noise points (label -1)
             continue
+
+        # Filter points belonging to the current cluster
         cluster_points = points_with_labels[points_with_labels[:, -1] == label, :3]
+
+        # Calculate the AABB for the cluster points
         bbox = calculate_aabb(cluster_points)
+
+        # Append the label and bounding box to the result list
         bounding_boxes.append((label, bbox))
+
     return bounding_boxes
 
 
 def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1):
     """
-    Creates an RViz Marker for visualizing a 3D bounding box using Marker.CUBE.
+    Creates an RViz Marker for visualizing a 3D bounding box (either AABB or OBB).
 
     Args:
-        label (int): Unique identifier for the cluster or object.
-                     Used as the Marker ID.
-        bbox (tuple): Bounding box dimensions.
-                      For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
-                      For OBB: (center, dimensions, eigenvectors).
-        bbox_type (str): The type of bounding box ("aabb" or "obb").
+        label (int): Unique identifier for the cluster or object. Used as the Marker ID.
+        bbox (tuple): Bounding box information.
+                      - For AABB: (x_min, x_max, y_min, y_max, z_min, z_max).
+                      - For OBB: (center, dimensions, eigenvectors).
+        bbox_type (str): Type of bounding box ("aabb" or "obb").
+        bbox_lifetime (float): Duration for which the marker is visible in RViz.
 
     Returns:
         Marker: A CUBE Marker object that can be published to RViz.
     """
-    # Initialize the Marker object
+    # Initialize Marker
     marker = Marker()
     marker.header.frame_id = "hero"  # Reference frame for the marker
     marker.ns = "marker_radar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
-    marker.lifetime = rospy.Duration(
-        bbox_lifetime
-    )  # Marker visibility duration in seconds
-    marker.type = Marker.CUBE  # Use a cube for the bounding box
+    marker.lifetime = rospy.Duration(bbox_lifetime)  # Marker visibility duration
+    marker.type = Marker.CUBE  # Use a cube to represent the bounding box
     marker.action = Marker.ADD  # Action to add or modify the marker
 
-    # Set marker color and opacity
-    marker.color.r = 1.0  # Red
-    marker.color.g = 0.5  # Green
-    marker.color.b = 0.0  # Blue
-    marker.color.a = 0.8  # Opacity
+    # Set default marker color (semi-transparent yellow)
+    marker.color.r, marker.color.g, marker.color.b, marker.color.a = 1.0, 0.5, 0.0, 0.8
 
     if bbox_type == "aabb":
-        x_min, x_max, y_min, y_max, z_min, z_max = bbox
-
         # Calculate center and dimensions for AABB
+        x_min, x_max, y_min, y_max, z_min, z_max = bbox
         center_x = (x_min + x_max) / 2.0
         center_y = (y_min + y_max) / 2.0
         center_z = (z_min + z_max) / 2.0
@@ -861,38 +830,37 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
         size_y = y_max - y_min
         size_z = z_max - z_min
 
-        marker.pose.position.x = center_x
-        marker.pose.position.y = center_y
-        marker.pose.position.z = center_z
-
-        marker.pose.orientation.x = 0.0
-        marker.pose.orientation.y = 0.0
-        marker.pose.orientation.z = 0.0
-        marker.pose.orientation.w = 1.0
-
-        marker.scale.x = size_x
-        marker.scale.y = size_y
-        marker.scale.z = size_z
+        # Set the position and scale for AABB
+        marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = (
+            center_x,
+            center_y,
+            center_z,
+        )
+        marker.pose.orientation.x = marker.pose.orientation.y = (
+            marker.pose.orientation.z
+        ) = 0.0
+        marker.pose.orientation.w = 1.0  # No rotation for AABB
+        marker.scale.x, marker.scale.y, marker.scale.z = size_x, size_y, size_z
 
     elif bbox_type == "obb":
+        # Extract OBB parameters: center, dimensions, eigenvectors
         center, dimensions, eigenvectors = bbox
         width, length, height = dimensions
 
-        # Assign OBB parameters
-        marker.pose.position.x = center[0]
-        marker.pose.position.y = center[1]
-        marker.pose.position.z = center[2]
+        # Set the position for OBB
+        marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = center
 
-        # Convert eigenvectors to quaternion
+        # Convert eigenvectors (rotation matrix) to quaternion for OBB
         quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
-        marker.pose.orientation.x = quaternion[0]
-        marker.pose.orientation.y = quaternion[1]
-        marker.pose.orientation.z = quaternion[2]
-        marker.pose.orientation.w = quaternion[3]
+        (
+            marker.pose.orientation.x,
+            marker.pose.orientation.y,
+            marker.pose.orientation.z,
+            marker.pose.orientation.w,
+        ) = quaternion
 
-        marker.scale.x = width
-        marker.scale.y = length
-        marker.scale.z = height
+        # Set scale for OBB
+        marker.scale.x, marker.scale.y, marker.scale.z = width, length, height
 
     else:
         raise ValueError(f"Unsupported bbox_type: {bbox_type}")
@@ -920,7 +888,7 @@ def calculate_cluster_velocity(points_with_labels):
     - The output array has the same length as the input array.
     """
     labels = points_with_labels[:, -1]
-    valid_mask = labels != -1  # Filter indvalid labels
+    valid_mask = labels != -1  # Filter invalid labels
     valid_points = points_with_labels[valid_mask]
 
     unique_labels = np.unique(valid_points[:, -1])
@@ -931,7 +899,7 @@ def calculate_cluster_velocity(points_with_labels):
         for label in unique_labels
     }
 
-    # Assign the correct length to the velocity values
+    # Initialize the output array with None and assign velocities for valid points
     motion_array = np.full(len(points_with_labels), None, dtype=object)
     motion_array[valid_mask] = [
         Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
@@ -941,39 +909,48 @@ def calculate_cluster_velocity(points_with_labels):
     return motion_array
 
 
-# generates string with label-id and cluster size, can be used for extra debugging
 def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     """
     Generates information about clusters, including the label, number of points,
-    markers, and bounding boxes.
+    the number of markers, and bounding boxes.
+    This function can be activated in the perception.launch file by switching the
+    'enable_debug_info' parameter to 'True'.
 
     Args:
-        cluster_labels: The clustered data labels for each point.
-        data (numpy.ndarray):
-        The point cloud data, typically with columns [x, y, z, distance].
-        marker_array (MarkerArray):
-        The array of RViz markers associated with the clusters.
+        cluster_labels (numpy.ndarray): The clustered data labels for each point.
+        data (numpy.ndarray): The point cloud data,
+        typically with columns [x, y, z, distance].
+        marker_array (MarkerArray): The array of RViz markers
+        associated with the clusters.
         bounding_boxes (list): The list of bounding boxes for each detected object.
 
     Returns:
-        str: A JSON string containing the information about each cluster, including:
-             - "label": The cluster label.
-             - "points_count": The number of points in the cluster.
-             - "Anzahl marker": The number of markers in the MarkerArray.
-             - "Anzahl Boundingboxen": The number of bounding boxes.
+        str: A JSON string containing a list of dictionaries with the following keys:
+            - "label": The cluster label.
+            - "points_count": The number of points in the cluster.
+            - "num_marker": The number of markers in the MarkerArray.
+            - "num_bounding_boxes": The number of bounding boxes.
     """
+    # Get the number of markers and bounding boxes (constant values for all clusters)
+    num_markers = len(marker_array.markers)
+    num_bounding_boxes = len(bounding_boxes)
+
+    # Use np.unique for efficient label extraction
+    unique_labels = np.unique(cluster_labels)
+
     cluster_info = []
 
-    for label in set(cluster_labels):
-        cluster_points = data[cluster_labels == label]
-        cluster_size = len(cluster_points)
-        if label != -1:
+    for label in unique_labels:
+        if label != -1:  # Skip the label -1 (invalid points)
+            cluster_points = data[cluster_labels == label]
+            cluster_size = len(cluster_points)
+
             cluster_info.append(
                 {
                     "label": int(label),
                     "points_count": cluster_size,
-                    "num_marker": len(marker_array.markers),
-                    "num_bounding_boxes": len(bounding_boxes),
+                    "num_marker": num_markers,
+                    "num_bounding_boxes": num_bounding_boxes,
                 }
             )
 
