@@ -15,7 +15,7 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
 import shapely
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake import OVERTAKE_SPACE_STOPMARKS_ID
@@ -26,7 +26,7 @@ from .overtake_service_utils import (
     request_start_overtake,
     request_end_overtake,
     request_overtake_status,
-    _get_global_hero_transform,
+    get_global_hero_transform,
 )
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
@@ -82,15 +82,26 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the lane change
         """
         global LANECHANGE_FREE
-
         lane_change = self.blackboard.get("/paf/hero/lane_change")
-        if lane_change is None:
-            return debug_status(self.name, Status.FAILURE, "lane_change is None")
+        trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
+        if lane_change is None or trajectory_local is None:
+            return debug_status(
+                self.name, Status.FAILURE, "lane_change or trajectory_local is None"
+            )
         else:
-            self.change_distance = lane_change.distance
             self.change_detected = lane_change.isLaneChange
             self.change_option = lane_change.roadOption
             self.change_position = lane_change.position
+            # get change distance from global change point (transfered to local
+            #  hero coords) as this is more accurate than lanechange msg distance
+            hero_transform = get_global_hero_transform()
+            local_pos: Point2 = hero_transform.inverse() * Point2.new(
+                self.change_position.x, self.change_position.y
+            )
+            trajectory_local = mapping_common.mask.ros_path_to_line(trajectory_local)
+            self.change_distance = trajectory_local.line_locate_point(
+                local_pos.to_shapely()
+            )
 
         if (
             self.change_distance is None
@@ -113,6 +124,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         if (
             self.change_detected
             and self.change_distance < TARGET_DISTANCE_TO_TRIGGER_LANECHANGE
+            and self.change_distance > 0
         ):
             # delete stop marks from overtake as they could block lane change
             update_stop_marks(
@@ -154,10 +166,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             else:
                 # create local coords stop mark shape based
                 # on global change position and current hero position
-                hero_transform = _get_global_hero_transform()
-                local_pos = hero_transform.inverse() * Point2.new(
-                    self.change_position.x, self.change_position.y
-                )
                 stop_mark_shape = Rectangle(
                     length=25.0,
                     width=0.5,
@@ -531,7 +539,7 @@ class Change(py_trees.behaviour.Behaviour):
 
         # get change distance from five meter behind global change point
         # (transfered to local hero coords)
-        hero_transform = _get_global_hero_transform()
+        hero_transform = get_global_hero_transform()
         local_pos: Point2 = (
             hero_transform.inverse()
             * Point2.new(self.change_position.x, self.change_position.y)

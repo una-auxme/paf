@@ -16,7 +16,6 @@ generate_dynamic_reconfigure_options(
   config/Controller.cfg
   config/PurePursuit.cfg
   config/Velocity.cfg
-  config/Stanley.cfg
 )
 
 catkin_package()

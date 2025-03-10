@@ -6,7 +6,7 @@ from std_msgs.msg import String
 import shapely
 
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
     update_stop_marks,
@@ -106,9 +106,9 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 tree = map.build_tree(mapping_common.map.lane_free_filter())
                 state, mask = tree.is_lane_free(
                     right_lane=False,
-                    lane_length=20,
-                    lane_transform=-10,
-                    check_method="lanemarking",
+                    lane_length=25,
+                    lane_transform=-15,
+                    check_method="fallback",
                     reduce_lane=0.5,
                 )
                 if mask is not None:

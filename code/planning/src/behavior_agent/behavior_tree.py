@@ -17,7 +17,6 @@ from behavior_agent.behaviors import (
     intersection,
     lane_change,
     leave_parking_space,
-    meta,
     overtake,
     topics2blackboard,
     unstuck_routine,
@@ -113,10 +112,6 @@ def grow_a_tree(role_name):
         ],
     )
 
-    metarules = Sequence(
-        "Meta",
-        children=[meta.Start("Start"), rules, meta.End("End")],
-    )
     root = Parallel(
         "Root",
         children=[
@@ -124,7 +119,7 @@ def grow_a_tree(role_name):
             speed_alteration.SpeedAlterationSetupBehavior(),
             topics2blackboard.create_node(role_name),
             DynReconfigImportBehavior(),
-            metarules,
+            rules,
             speed_alteration.SpeedAlterationRequestBehavior(),
             debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),
