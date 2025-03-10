@@ -60,7 +60,6 @@ def grow_a_tree(role_name):
                                             ),
                                             intersection.Wait("Wait Intersection"),
                                             intersection.Enter("Enter Intersection"),
-                                            intersection.Leave("Leave Intersection"),
                                         ],
                                     ),
                                 ],
@@ -152,12 +151,21 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
         if self.config is None:
             return py_trees.common.Status.FAILURE
 
-        for param in BEHAVIORConfig.config_description["parameters"]:
+        self._handle_parameter_group(BEHAVIORConfig.config_description)
+
+        return py_trees.common.Status.SUCCESS
+
+    def _handle_parameter_group(self, group):
+        if self.config is None:
+            return
+        for param in group["parameters"]:
             param_name = param["name"]
             self.blackboard.set(
                 f"/params/{param_name}", self.config[param_name], overwrite=True
             )
-        return py_trees.common.Status.SUCCESS
+
+        for subgroup in group["groups"]:
+            self._handle_parameter_group(subgroup)
 
 
 class BehaviorTree(CompatibleNode):
