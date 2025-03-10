@@ -11,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 import json
 from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import Float32MultiArray
 from tf.transformations import quaternion_from_matrix
 
 import struct
