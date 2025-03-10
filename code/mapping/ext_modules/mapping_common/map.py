@@ -736,8 +736,12 @@ class MapTree:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
             reference (ShapelyEntity): Entity for the nearest distance calculation
-            min_coverage_percent (float, optional): Defaults to 0.0.
-            min_coverage_area (float, optional): Defaults to 0.0.
+            min_coverage_percent (float, optional):
+                How much of an entity has to be inside the collision mask in percent.
+                Defaults to 0.0.
+            min_coverage_area (float, optional):
+                How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
         Returns:
             Optional[Tuple[ShapelyEntity, float]]:
@@ -772,8 +776,12 @@ class MapTree:
         Args:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
-            min_coverage_percent (float, optional): Defaults to 0.0.
-            min_coverage_area (float, optional): Defaults to 0.0.
+            min_coverage_percent (float, optional):
+                How much of an entity has to be inside the collision mask in percent.
+                Defaults to 0.0.
+            min_coverage_area (float, optional):
+                How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
         Returns:
             List[ShapelyEntity]: A list of entities that have at least
