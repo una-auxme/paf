@@ -610,6 +610,7 @@ class Leave(py_trees.behaviour.Behaviour):
             )
 
         if status.status == OvertakeStatusResponse.OVERTAKING:
+            # First: check if our right lane is free and end overtake if possible
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=True,
                 lane_length=15.0,
@@ -626,6 +627,30 @@ class Leave(py_trees.behaviour.Behaviour):
                     Status.RUNNING,
                     "Right lane is free. Finishing overtake...",
                 )
+
+            # Second: check if we have an obstacle in front and end overtake
+            obstacle = calculate_obstacle(
+                self.name,
+                tree,
+                self.blackboard,
+                front_mask_size=0.0,
+                trajectory_check_length=20.0,
+                overlap_percent=0.5,
+            )
+            if isinstance(obstacle, py_trees.common.Status):
+                return obstacle
+            if obstacle is None:
+                add_debug_entry(self.name, "No obstacle in front")
+            else:
+                _, obstacle_distance = obstacle
+                add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
+                if obstacle_distance < 5.0:
+                    request_end_overtake(self.end_overtake_proxy)
+                    return debug_status(
+                        self.name,
+                        Status.RUNNING,
+                        "Obstacle in front. Finishing overtake...",
+                    )
 
         if status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
             return debug_status(
