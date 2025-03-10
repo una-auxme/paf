@@ -205,18 +205,17 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 f"{TRIGGER_WAIT_STUCK_DURATION.secs}",
             )
 
-        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-        hero: Optional[Entity] = tree.map.hero()
-        if hero is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "hero is None"
-            )
-
         curr_us_drive_dur = rospy.Time.now() - self.init_ros_stuck_time
         # stuck detected, starting unstuck routine for UNSTUCK_DRIVE_DURATION seconds
         if curr_us_drive_dur < UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_unstuck.name)
-            collision_detected = calculate_obstacle(tree, hero, 0.1)
+            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+            hero: Optional[Entity] = tree.map.hero()
+            if hero is None:
+                return debug_status(
+                    self.name, py_trees.common.Status.FAILURE, "hero is None"
+                )
+            collision_detected = calculate_obstacle_behind(tree, hero, 0.1)
             if (
                 get_distance(self.init_pos, current_pos) < UNSTUCK_CLEAR_DISTANCE
             ) and not collision_detected:
@@ -255,11 +254,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                     self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
                 self.unstuck_count = 0
-            collision_detected = calculate_obstacle(tree, hero, 0.1, True)
-            if not collision_detected:
-                add_speed_override(2.0)
-            else:
-                add_speed_override(0.0)
             return debug_status(
                 self.name,
                 py_trees.common.Status.RUNNING,
