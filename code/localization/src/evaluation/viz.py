@@ -754,8 +754,8 @@ if __name__ == "__main__":
     # plot_best_tuned_file_by_type(type='h',error_type='MSE',check_type='IQR')
 
     plot_csv_x_or_y(data, type="x")
-    plot_csv_x_or_y(data, type="y")
-    plot_csv_heading(data)
+    # plot_csv_x_or_y(data, type="y")
+    # plot_csv_heading(data)
     # plot_csv_positions(data)
 
     # always use plt.show() to show the plots
