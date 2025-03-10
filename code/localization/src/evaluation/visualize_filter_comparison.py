@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''
+"""
 !!! WARNIG !!!
 This node is currently not in use.
 
@@ -15,7 +15,7 @@ Possible comparisons:
   - z positions
   - headings
 This nodes creates plots visualizing the comparisons.
-'''
+"""
 
 import matplotlib.pyplot as plt
 from math import pi
@@ -522,37 +522,5 @@ def plot_y_error(subplotId):
     plt.legend()
 
 
-"""
-def plot_z_position():
-    plt.plot(
-        nf_pos_time_stamps,
-        nf_z_positions,
-        label="nf z positions " + NEW_FILTER_FILE_NAME,
-    )
-    plt.plot(
-        of_pos_time_stamps,
-        of_z_positions,
-        label="of z positions " + OLD_FILTER_FILE_NAME,
-    )
-    plt.plot(gt_time_stamps, gt_z_positions, label="gt z positions " + GT_FILE_NAME)
-    plt.plot()
-    plt.legend()
-
-
-def plot_heading():
-    plt.plot(
-        nf_heading_time_stamps, nf_headings, label="nf heading " + NEW_FILTER_FILE_NAME
-    )
-    plt.plot(
-        of_heading_time_stamps, of_headings, label="of heading " + OLD_FILTER_FILE_NAME
-    )
-    plt.plot(gt_time_stamps, gt_headings, label="gt heading " + GT_FILE_NAME)
-    plt.plot()
-    plt.legend()
-"""
-
-
 plot_x_position()
 # plot_y_position()
-# plot_z_position()
-# plot_heading()
