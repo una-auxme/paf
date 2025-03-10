@@ -333,6 +333,7 @@ def build_lead_vehicle_collision_masks(
     front_mask_size: float,
     max_trajectory_check_length: Optional[float] = None,
     rotate_front_mask: float = 0.0,
+    max_centering_dist: Optional[float] = 0.5,
 ) -> List[shapely.Polygon]:
     """Builds a list of collision masks for determining the lead vehicle
     in front of the hero.
@@ -347,6 +348,10 @@ def build_lead_vehicle_collision_masks(
             Max length of the collision masks. Defaults to None.
         rotate_front_mask (float, optional): rotates the static mask in front.
             Usecase: Adjust with the steering angle.
+        max_centering_dist (Optional[float], optional):
+            Centers the trajectory part of the mask onto the front mask,
+            if they align closely enough
+            If None-> No centering.
 
     Returns:
         List[shapely.Polygon]
@@ -371,7 +376,7 @@ def build_lead_vehicle_collision_masks(
     trajectory_line = build_trajectory_from_start(
         trajectory_local,
         start_point=front_mask_end,
-        max_centering_dist=0.5,
+        max_centering_dist=max_centering_dist,
     )
     if max_trajectory_check_length is not None and trajectory_line is not None:
         (trajectory_line, _) = split_line_at(
