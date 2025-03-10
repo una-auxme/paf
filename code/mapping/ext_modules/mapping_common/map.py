@@ -761,7 +761,7 @@ class MapTree:
 
         masks = [lane_mask]
         # creates intersection list of lane mask with map entities
-        lane_box_intersection_entities = self.query(geo=lane_mask)
+        lane_box_intersection_entities = self.get_overlapping_entities(mask=lane_mask)
         if not lane_box_intersection_entities:
             return (True, masks)
 
@@ -775,7 +775,7 @@ class MapTree:
         # if all entities drive forward or don't move the lane can be considered free
         return (
             all(
-                entity.entity.get_global_x_velocity() < -0.5
+                entity.entity.get_global_x_velocity() > -0.5
                 for entity in enities_with_motion
             ),
             masks,

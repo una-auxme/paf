@@ -17,7 +17,8 @@ def calculate_waypoint_distance(
     """Calculates the distance of the hero(front) to the waypoint
 
     Takes into account the trajectory_local.
-    If the hero has already driven "over" the waypoint, the result will be <= 0.0
+    If the hero has already driven "over" the waypoint, the result will be roughly 0.
+    **IMPORTANT**: ROUGHLY 0. Recommended: check for <= 0.2
 
     Args:
         blackboard (Blackboard)

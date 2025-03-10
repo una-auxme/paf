@@ -127,6 +127,28 @@ def unset_line_stop(proxy: rospy.ServiceProxy):
     )
 
 
+def set_left_stop(proxy: rospy.ServiceProxy):
+    # Just an empty map
+    map = Map()
+    # We just use the lane free function to create the shape for our stopmarker
+    tree = map.build_tree()
+    _, mask = tree.is_lane_free(
+        False,
+        lane_length=35.0,
+        lane_transform=2.0,
+        reduce_lane=0.75,
+        check_method="rectangle",
+    )
+    if isinstance(mask, shapely.Polygon):
+        update_stop_marks(
+            proxy,
+            id=INTERSECTION_LEFT_STOPMARKS_ID,
+            reason="intersection left stop",
+            is_global=False,
+            marks=[mask],
+        )
+
+
 def unset_left_stop(proxy: rospy.ServiceProxy):
     update_stop_marks(
         proxy,
@@ -360,6 +382,9 @@ class Approach(py_trees.behaviour.Behaviour):
                     self.name, py_trees.common.Status.SUCCESS, "Driving over stop_line"
                 )
 
+        if CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.LEFT:
+            set_left_stop(self.stop_proxy)
+
         return debug_status(
             self.name,
             py_trees.common.Status.RUNNING,
@@ -460,22 +485,8 @@ class Wait(py_trees.behaviour.Behaviour):
         add_debug_entry(self.name, f"Intersection type: {self.intersection_type}")
 
         if self.intersection_type == RoadOption.LEFT and not self.left_marker_set:
-            free, mask = tree.is_lane_free(
-                False,
-                lane_length=35.0,
-                lane_transform=2.0,
-                reduce_lane=0.75,
-                check_method="rectangle",
-            )
-            if isinstance(mask, shapely.Polygon):
-                update_stop_marks(
-                    self.stop_proxy,
-                    id=INTERSECTION_LEFT_STOPMARKS_ID,
-                    reason="intersection stop",
-                    is_global=False,
-                    marks=[mask],
-                )
-                self.left_marker_set = True
+            set_left_stop(self.stop_proxy)
+            self.left_marker_set = True
 
         # First check if we still need to wait at the stop line
         if self.over_stop_line is False:
