@@ -302,8 +302,7 @@ class ACC(CompatibleNode):
             else:
                 self.emergency_pub.publish(Bool(True))
                 self.emergency_count = 0
-                # marker_text += "\nEmergency break engaged due to abrupt braking"
-            marker_text += f"Emergency count: {self.emergency_count}/5"
+            marker_text += f"\nEmergency count: {self.emergency_count}/5"
         else:
             self.emergency_count = 0
         # set last desired speed to current desired speed for next loop

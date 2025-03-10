@@ -111,6 +111,7 @@ class VelocityController(CompatibleNode):
             if target_velocity < 0:
                 reverse = True
                 v = abs(target_velocity)
+                self.pid_t.setpoint = v
                 brake = 0
                 throttle = self.pid_t(-self.__current_velocity)
                 if throttle < 0:
