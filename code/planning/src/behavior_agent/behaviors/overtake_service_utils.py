@@ -95,7 +95,7 @@ def request_start_overtake(
         offset (float, optional): How far the overtake trajectory
             should be offset from the base trajectory in m.
             If negative, the overtake will be offset to the right.
-            Defaults to 2.5.
+            Defaults to 2.75.
         start_transition_length (float, optional): Transition length towards
             the overtake.
             Defaults to 2.0.

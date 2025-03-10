@@ -29,19 +29,21 @@ TRIGGER_STUCK_DURATION = rospy.Duration(8)  # default 8 (s)
 TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(15)  # default 25 (s)
 UNSTUCK_DRIVE_DURATION = rospy.Duration(5)  # default 1.2 (s)
 UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
-COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
-LOOKUP_DISTANCE = 1.0  # Distance that should be checked in front or behind the car (m)
-LOOKUP_WIDTH_FACTOR = 1.25
+REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
+REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
+REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
 
 
 def pos_to_array(pos: PoseStamped):
     return np.array([pos.pose.position.x, pos.pose.position.y])
 
 
-def calculate_obstacle(
-    tree: MapTree, hero: Entity, overlap_percent: float, in_front: bool = False
+def calculate_obstacle_behind(
+    tree: MapTree,
+    hero: Entity,
+    overlap_percent: float,
 ) -> bool:
-    """Calculates if there is an obstacle in front or behind the vehicle
+    """Calculates if there is an obstacle behind the vehicle
 
     Returns:
         bool
@@ -49,15 +51,11 @@ def calculate_obstacle(
     # data preparation
     hero_width = hero.get_width()
 
-    pos = -1.0
-    if in_front:
-        pos = 1.0
-
     collision_mask = mapping_common.mask.project_plane(
-        pos * (hero.get_front_x() + LOOKUP_DISTANCE),
-        hero_width * LOOKUP_WIDTH_FACTOR,
+        -(hero.get_front_x() + REVERSE_LOOKUP_DISTANCE),
+        hero_width * REVERSE_LOOKUP_WIDTH_FACTOR,
     )
-    add_debug_marker(debug_marker(collision_mask, color=COLLISION_MARKER_COLOR))
+    add_debug_marker(debug_marker(collision_mask, color=REVERSE_COLLISION_MARKER_COLOR))
 
     entity_result = tree.get_nearest_entity(
         collision_mask, hero.to_shapely(), min_coverage_percent=overlap_percent
@@ -66,7 +64,9 @@ def calculate_obstacle(
     if entity_result is not None:
         entity, _ = entity_result
         add_debug_marker(
-            debug_marker(entity.entity, color=COLLISION_MARKER_COLOR, scale_z=0.3)
+            debug_marker(
+                entity.entity, color=REVERSE_COLLISION_MARKER_COLOR, scale_z=0.3
+            )
         )
         return True
     else:
