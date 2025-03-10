@@ -39,7 +39,7 @@ This node subscribes to the following topics:
 - `/paf/hero/speed_limit`: Subscribes to the speed limit.
 - `/paf/hero/trajectory_global`: Subscribes to the global trajectory, which is calculated at the start of the simulation.
 - `/paf/hero/unstuck_distance`: Subscribes to the distance travelled by the unstuck maneuver.
-- `/paf/hero/waypoint_distance`: Subscribes to the Carla Waypoint to get the new road option.
+- `/paf/hero/current_waypoint`: Subscribes to the Carla Waypoint to get the new road option.
 
 ### Published Topics
 

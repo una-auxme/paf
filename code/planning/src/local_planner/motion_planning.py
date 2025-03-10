@@ -34,6 +34,10 @@ TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
 """threshold under which the planner decides it is on a trajectory
 """
 
+OVERTAKE_ENDING_DIST_THRESHOLD: float = 0.2
+"""Threshold at which the overtake is considered ending
+"""
+
 
 class MotionPlanning(CompatibleNode):
     """
@@ -374,7 +378,11 @@ class MotionPlanning(CompatibleNode):
                 overtake_trajectory, end_dist
             )
 
-            if overtake_trajectory is None:
+            if (
+                overtake_trajectory is None
+                or overtake_trajectory.line_locate_point(front_point_s)
+                > overtake_trajectory.length - OVERTAKE_ENDING_DIST_THRESHOLD
+            ):
                 # If we are after the end of the overtake -> delete overtake_request
                 rospy.loginfo("MotionPlanning: Overtake ending")
                 self.overtake_request = None
@@ -387,6 +395,9 @@ class MotionPlanning(CompatibleNode):
         overtake_trajectory = overtake_trajectory.offset_curve(
             distance=overtake_request.offset
         )
+
+        if overtake_trajectory is None:
+            return global_trajectory
 
         # We only start overtaking if we are
         # close enough to the overtake trajectory.

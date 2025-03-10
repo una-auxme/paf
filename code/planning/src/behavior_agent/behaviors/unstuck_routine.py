@@ -130,12 +130,21 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             # reset stuck timer
             self.stuck_timer = rospy.Time.now()
 
+        # If we drove for more than 15 meter since last unstuck attempt
+        # --> indicates new stuck location --> reset unstuck_count
+        current_pos = pos_to_array(current_pos)
+        if get_distance(self.init_pos, current_pos) > 15:
+            self.unstuck_count = 0
+
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
         wait_behaviors = [bs.lc_wait.name, bs.ot_wait.name]
-        wait_long_behaviors = [bs.int_wait.name]
+        wait_long_behaviors = [bs.int_wait.name, bs.int_app_to_stop.name]
 
-        if curr_behavior is None or curr_behavior.data in wait_behaviors:
+        last_duration = TRIGGER_WAIT_STUCK_DURATION
+        if self.unstuck_count != 0:
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(5)
+        elif curr_behavior is None or curr_behavior.data in wait_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(30)
         elif curr_behavior.data in wait_long_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)
@@ -146,26 +155,17 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.stuck_duration = rospy.Time.now() - self.stuck_timer
         self.wait_stuck_duration = rospy.Time.now() - self.wait_stuck_timer
 
+        # Set back timer if the duration just got smaller
+        if TRIGGER_WAIT_STUCK_DURATION < last_duration:
+            offset_duration = TRIGGER_WAIT_STUCK_DURATION - rospy.Duration(5)
+            if self.wait_stuck_duration >= offset_duration:
+                self.wait_stuck_timer = rospy.Time.now() - offset_duration
+
         if (
             self.stuck_duration >= TRIGGER_STUCK_DURATION
             or self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION
         ):
             self.STUCK_DETECTED = True
-            self.unstuck_count += 1
-            request_end_overtake(self.end_overtake_proxy)
-            update_stop_marks(
-                self.stop_proxy,
-                id="unstuck",
-                reason="unstuck triggered",
-                is_global=False,
-                marks=[],
-                delete_all_others=True,
-            )
-            # If we drove for more than 20 meter since last unstuck attempt
-            # --> indicates new stuck location --> reset unstuck_count
-            current_pos = pos_to_array(current_pos)
-            if get_distance(self.init_pos, current_pos) > 20:
-                self.unstuck_count = 0
             self.init_pos = current_pos
             self.init_ros_stuck_time = rospy.Time.now()
             stuck_reason = "Stuck"
@@ -242,11 +242,21 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         # (to pass stopmarkers before they are set again)
         elif curr_us_drive_dur < 2 * UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_forward.name)
-            if self.unstuck_count == 3:
+            if self.unstuck_count == 1:
+                request_end_overtake(self.end_overtake_proxy)
+                update_stop_marks(
+                    self.stop_proxy,
+                    id="unstuck",
+                    reason="unstuck triggered",
+                    is_global=False,
+                    marks=[],
+                    delete_all_others=True,
+                )
+            elif self.unstuck_count == 2:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0
                 )
-            elif self.unstuck_count == 4:
+            elif self.unstuck_count == 3:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
@@ -263,6 +273,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.stuck_timer = rospy.Time.now()
             self.wait_stuck_timer = rospy.Time.now()
             self.STUCK_DETECTED = False
+            self.unstuck_count += 1
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
