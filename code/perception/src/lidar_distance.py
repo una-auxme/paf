@@ -12,10 +12,6 @@ from tf.transformations import quaternion_from_matrix
 from visualization_msgs.msg import Marker, MarkerArray
 from mapping.msg import ClusteredPointsArray
 
-# from mpl_toolkits.mplot3d import Axes3D
-# from itertools import combinations
-# from matplotlib.colors import LinearSegmentedColormap
-
 
 class LidarDistance:
     """See doc/perception/lidar_distance_utility.md on
@@ -27,11 +23,11 @@ class LidarDistance:
 
     def callback(self, data):
         """
-        Callback function that processes LiDAR point cloud data.
+        Callback function that processes LIDAR point cloud data.
 
         Executes clustering and image calculations for the provided point cloud.
 
-        :param data: LiDAR point cloud as a ROS PointCloud2 message.
+        :param data: LIDAR point cloud as a ROS PointCloud2 message.
         """
         self.start_clustering(data)
         self.start_image_calculation(data)
@@ -74,20 +70,13 @@ class LidarDistance:
             ImageMsg,
             queue_size=10,
         )
-        self.dist_array_lidar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~image_distance_topic_cluster", "/paf/hero/dist_clustered"
-            ),
-            PointCloud2,
-            queue_size=10,
-        )
         self.marker_visualization_lidar_publisher = rospy.Publisher(
             rospy.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
             MarkerArray,
             queue_size=10,
         )
 
-        self.entity_lidar_publisher = rospy.Publisher(
+        self.clustered_points_publisher = rospy.Publisher(
             rospy.get_param(
                 "~clustered_points_lidar_topic", "/paf/hero/Lidar/clustered_points"
             ),
@@ -95,7 +84,7 @@ class LidarDistance:
             queue_size=10,
         )
 
-        # Subscriber for LiDAR data (point clouds)
+        # Subscriber for LIDAR data (point clouds)
         rospy.Subscriber(
             rospy.get_param("~source_topic", "/carla/hero/LIDAR"),
             PointCloud2,
@@ -107,17 +96,28 @@ class LidarDistance:
 
     def start_clustering(self, data):
         """
-        Filters LiDAR point clouds, performs clustering,
-        generates bounding boxes, and publishes the results.
+        Processes LIDAR point clouds by filtering, clustering,
+        generating bounding boxes, and publishing the results.
 
-        :param data: LiDAR point clouds in ROS PointCloud2 format.
+        Steps:
+        - Converts PointCloud2 data to NumPy structured array
+        - Filters irrelevant LIDAR points
+        - Applies DBSCAN clustering
+        - Removes noise points (label = -1)
+        - Generates bounding boxes for detected clusters
+        - Publishes visualization markers and clustered entities
+
+        :param data: LIDAR point clouds in ROS PointCloud2 format.
         """
 
         # Convert PointCloud2 data to a NumPy structured array
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
-        # Filter the point clouds to exclude irrelevant data
+        # Retrieve ROS parameters with default values
         z_min = rospy.get_param("~clustering_lidar_z_min", -1.4)
+        eps = rospy.get_param("~dbscan_eps", 0.4)
+        min_samples = rospy.get_param("~dbscan_min_samples", 10)
+
         filtered_coordinates = coordinates[
             ~(
                 (coordinates["x"] >= -2)
@@ -130,9 +130,7 @@ class LidarDistance:
             )  # Exclude points below a certain height (street)
         ]
 
-        # Perform clustering on the filtered coordinates
-        eps = rospy.get_param("~dbscan_eps", 0.4)
-        min_samples = rospy.get_param("~dbscan_min_samples", 10)
+        # Perform DBSCAN clustering
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
             filtered_coordinates, eps, min_samples
         )
@@ -146,68 +144,41 @@ class LidarDistance:
             )
         )
 
+        # Remove noise points (label = -1) before processing further
+        valid_indices = cluster_labels != -1
+        filtered_xyz = filtered_xyz[valid_indices]
+        cluster_labels = cluster_labels[valid_indices]
+
         # Combine coordinates with their cluster labels
-        cluster_labels = cluster_labels.reshape(-1, 1)
-        points_with_labels = np.hstack((filtered_xyz, cluster_labels))
+        points_with_labels = np.hstack((filtered_xyz, cluster_labels.reshape(-1, 1)))
 
-        bounding_boxes = generate_bounding_boxes(points_with_labels)
+        # Generate bounding boxes only for valid clusters
+        bounding_boxes = (
+            generate_bounding_boxes(points_with_labels) if points_with_labels.size > 0 else []
+        )
 
-        # Create a MarkerArray for visualization
+        # Create and populate a MarkerArray for visualization
         marker_array = MarkerArray()
-        for label, bbox in bounding_boxes:
-            if label != -1:  # Ignore noise points (label = -1)
-                marker = create_bounding_box_marker(label, bbox)
-                marker_array.markers.append(marker)
+        marker_array.markers.extend(
+            create_bounding_box_marker(label, bbox) for label, bbox in bounding_boxes
+        )
 
-        # Publish the MarkerArray for visualization
+        # Publish visualization markers
         self.marker_visualization_lidar_publisher.publish(marker_array)
 
-        header = rospy.Header()
-        header.stamp = rospy.Time.now()
-        header.frame_id = "hero/LIDAR"
-
-        clusterPointsNpArray = points_with_labels[:, :3]
-        indexArray = points_with_labels[:, -1]
-        valid_indices = indexArray != -1
-        clusterPointsNpArray = clusterPointsNpArray[valid_indices]
-        indexArray = indexArray[valid_indices]
-        clusteredpoints = array_to_clustered_points(
-            clusterPointsNpArray, indexArray, header_id="hero/LIDAR"
+        # Prepare and publish clustered entity data
+        cluster_points_np = points_with_labels[:, :3]
+        index_array = points_with_labels[:, -1]
+        clustered_points_msg = array_to_clustered_points(
+            cluster_points_np, index_array, header_id="hero/LIDAR"
         )
-        self.entity_lidar_publisher.publish(clusteredpoints)
-
-        # Store valid cluster data for combining
-        if clustered_points:
-            self.cluster_buffer.append(clustered_points)
-        else:
-            rospy.logwarn("No cluster data generated.")
-
-        # Combine clusters from the buffer
-        combined_clusters = combine_clusters(self.cluster_buffer)
-        self.cluster_buffer = []
-
-        self.publish_clusters(combined_clusters, data.header)
-
-    def publish_clusters(self, combined_clusters, data_header):
-        """
-        Publishes combined clusters as a ROS PointCloud2 message.
-
-        :param combined_clusters: Combined point clouds of the clusters as a structured
-         NumPy array.
-        :param data_header: Header information for the ROS message.
-        """
-        # Convert to a PointCloud2 message
-        pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(combined_clusters)
-        pointcloud_msg.header = data_header
-        pointcloud_msg.header.stamp = rospy.Time.now()
-        # Publish the clusters
-        self.dist_array_lidar_publisher.publish(pointcloud_msg)
+        self.clustered_points_publisher.publish(clustered_points_msg)
 
     def start_image_calculation(self, data):
         """
-        Computes distance images based on LiDAR data and publishes them.
+        Computes distance images based on LIDAR data and publishes them.
 
-        :param data: LiDAR point cloud in ROS PointCloud2 format.
+        :param data: LIDAR point cloud in ROS PointCloud2 format.
         """
         coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
 
@@ -226,9 +197,9 @@ class LidarDistance:
     def calculate_image(self, coordinates, focus):
         """
         Calculates a distance image for a specific focus (view direction) from
-        LiDAR coordinates.
+        LIDAR coordinates.
 
-        :param coordinates: Filtered LiDAR coordinates as a NumPy array.
+        :param coordinates: Filtered LIDAR coordinates as a NumPy array.
         :param focus: The focus direction ("Center", "Back", "Left", "Right").
         :return: Distance image as a 2D array.
         """
@@ -288,9 +259,9 @@ class LidarDistance:
 
     def reconstruct_img_from_lidar(self, coordinates_xyz, focus):
         """
-        Reconstructs a 2D image from 3D LiDAR data for a given camera perspective.
+        Reconstructs a 2D image from 3D LIDAR data for a given camera perspective.
 
-        :param coordinates_xyz: 3D coordinates of the filtered LiDAR points.
+        :param coordinates_xyz: 3D coordinates of the filtered LIDAR points.
         :param focus: Camera view (e.g., "Center", "Back").
         :return: Reconstructed image as a 2D array.
         """
@@ -552,52 +523,11 @@ def array_to_pointcloud2(points, header="hero/Lidar"):
     return pointcloud_msg
 
 
-def combine_clusters(cluster_buffer):
-    """
-    Combines clusters from multiple point clouds into a structured NumPy array.
-
-    :param cluster_buffer: List of dictionaries containing cluster IDs and point clouds.
-    :return: Combined structured NumPy array with fields "x", "y", "z", "cluster_id".
-    """
-    points_list = []
-    cluster_ids_list = []
-
-    for clustered_points in cluster_buffer:
-        for cluster_id, points in clustered_points.items():
-            if points.size > 0:  # Ignore empty clusters
-                points_list.append(points)
-                # Create an array with the cluster ID for all points in the cluster
-                cluster_ids_list.append(
-                    np.full(points.shape[0], cluster_id, dtype=np.float32)
-                )
-
-    if not points_list:  # If no points are present
-        return np.array(
-            [], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("cluster_id", "f4")]
-        )
-
-    # Combine all points and cluster IDs into two separate arrays
-    all_points = np.vstack(points_list)
-    all_cluster_ids = np.concatenate(cluster_ids_list)
-
-    # Create a structured array for the combined data
-    combined_points = np.zeros(
-        all_points.shape[0],
-        dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("cluster_id", "f4")],
-    )
-    combined_points["x"] = all_points[:, 0]
-    combined_points["y"] = all_points[:, 1]
-    combined_points["z"] = all_points[:, 2]
-    combined_points["cluster_id"] = all_cluster_ids
-
-    return combined_points
-
-
 def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     """
-    Performs clustering on LiDAR data using DBSCAN and returns the clusters.
+    Performs clustering on LIDAR data using DBSCAN and returns the clusters.
 
-    :param coordinates: LiDAR point cloud as a NumPy array with "x", "y", "z".
+    :param coordinates: LIDAR point cloud as a NumPy array with "x", "y", "z".
     :param eps: Maximum distance between points to group them into a cluster.
     :param min_samples: Minimum number of points required to form a cluster.
     :return: Dictionary with cluster IDs and their corresponding point clouds.
