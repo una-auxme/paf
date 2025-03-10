@@ -233,7 +233,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/localization/" "src/data" + FOLDER_PATH
+        base_path = "/workspace/code/localization/" "src/data/" + FOLDER_PATH
         folder_path_heading = base_path + "/heading_error"
 
         # Ensure the directories exist
