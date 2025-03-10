@@ -164,8 +164,8 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
                 f"/params/{param_name}", self.config[param_name], overwrite=True
             )
 
-        for group in group["groups"]:
-            self._handle_parameter_group(group)
+        for subgroup in group["groups"]:
+            self._handle_parameter_group(subgroup)
 
 
 class BehaviorTree(CompatibleNode):

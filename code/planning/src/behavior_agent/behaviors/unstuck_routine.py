@@ -149,7 +149,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         # Set back timer if the duration just got smaller
         if TRIGGER_WAIT_STUCK_DURATION < last_duration:
-            offset_duration = TRIGGER_WAIT_STUCK_DURATION - rospy.Duration(2)
+            offset_duration = TRIGGER_WAIT_STUCK_DURATION - rospy.Duration(5)
             if self.wait_stuck_duration >= offset_duration:
                 self.wait_stuck_timer = rospy.Time.now() - offset_duration
 

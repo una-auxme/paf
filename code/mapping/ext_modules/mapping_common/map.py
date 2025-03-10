@@ -724,10 +724,9 @@ class MapTree:
 
     def is_lane_free_intersection(
         self,
-        hero: Entity,
         lane_length: float = 20.0,
         lane_transform_x: float = 0.0,
-    ) -> Tuple[bool, List[shapely.Polygon]]:
+    ) -> Tuple[bool, Optional[shapely.Polygon]]:
         """Returns True if the opposing lane of our car is free.
         Checks if a Polygon lane box intersects with any
         relevant entities.
@@ -759,11 +758,10 @@ class MapTree:
             ]
         )
 
-        masks = [lane_mask]
         # creates intersection list of lane mask with map entities
         lane_box_intersection_entities = self.get_overlapping_entities(mask=lane_mask)
         if not lane_box_intersection_entities:
-            return (True, masks)
+            return (True, lane_mask)
 
         enities_with_motion = [
             entity
@@ -771,14 +769,14 @@ class MapTree:
             if entity.entity.motion is not None
         ]
         if not enities_with_motion:
-            return (True, masks)
+            return (True, lane_mask)
         # if all entities drive forward or don't move the lane can be considered free
         return (
             all(
                 entity.entity.get_global_x_velocity() > -0.5
                 for entity in enities_with_motion
             ),
-            masks,
+            lane_mask,
         )
 
     def get_nearest_entity(

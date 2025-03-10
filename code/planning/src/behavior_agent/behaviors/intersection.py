@@ -448,11 +448,6 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        hero = map.hero()
-        if hero is None:
-            return debug_status(
-                self.name, py_trees.common.Status.FAILURE, "No hero in map"
-            )
         dist = calculate_waypoint_distance(
             self.blackboard, self.waypoint, forward_offset=STOP_LINE_OFFSET
         )
@@ -555,15 +550,15 @@ class Wait(py_trees.behaviour.Behaviour):
             )
 
         self.curr_behavior_pub.publish(bs.int_wait.name)
-        intersection_clear, intersection_masks = tree.is_lane_free_intersection(
-            hero,
+        intersection_clear, intersection_mask = tree.is_lane_free_intersection(
             lane_length=self.blackboard.get("/params/left_check_length"),
             lane_transform_x=self.blackboard.get("/params/left_check_x_transform"),
         )
         add_debug_entry(self.name, f"Oncoming counter: {self.oncoming_counter}")
         add_debug_entry(self.name, f"Intersection clear: {intersection_clear}")
-        for mask in intersection_masks:
-            add_debug_marker(debug_marker(mask, color=INTERSECTION_MARKER_COLOR))
+        add_debug_marker(
+            debug_marker(intersection_mask, color=INTERSECTION_MARKER_COLOR)
+        )
         if intersection_clear:
             self.oncoming_counter += 1
             if self.oncoming_counter > 2 and not self.blackboard.get(

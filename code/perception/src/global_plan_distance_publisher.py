@@ -146,8 +146,6 @@ class GlobalPlanDistance(CompatibleNode):
             ):
                 self.road_options[1] = RoadOption.LANEFOLLOW
 
-            print(f"next road option = {self.road_options[0]}")
-
     def update_global_route(self, route):
         """
         Callback if the global route is published, saves the route and road
@@ -158,8 +156,6 @@ class GlobalPlanDistance(CompatibleNode):
         if self.global_route is None:
             self.global_route = list(route.poses)
             self.road_options = list(route.road_options)
-            # self.road_options.pop(0)
-            # self.global_route.pop(0)
 
     def run(self):
         """
