@@ -68,10 +68,6 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.csv_heading_created = False
         self.csv_file_path_heading = ""
 
-        # parameters to make sure log message is only printed once
-        self.pos_msg_printed = False
-        self.heading_msg_printed = False
-
         self.loginfo("Position Heading Filter Debug node started")
 
         # region Subscriber START
@@ -201,13 +197,6 @@ class position_heading_filter_debug_node(CompatibleNode):
             /y_error
         It does this for a limited amount of time.
         """
-        # stop saving data when max is reached
-        if rospy.get_time() > DATA_SAVING_MAX_TIME and self.pos_msg_printed is False:
-            self.pos_msg_printed = True
-            self.loginfo("Stopped saving location data")
-            return
-        elif rospy.get_time() > DATA_SAVING_MAX_TIME:
-            return
 
         # Specify the path to the folder where you want to save the data
         base_path = "/workspace/code/localization/" "src/data/" + FOLDER_PATH
@@ -242,16 +231,6 @@ class position_heading_filter_debug_node(CompatibleNode):
             /heading_error
         It does this for a limited amount of time.
         """
-        # if rospy.get_time() > 45 stop saving data:
-        if (
-            rospy.get_time() > DATA_SAVING_MAX_TIME
-            and self.heading_msg_printed is False
-        ):
-            self.heading_msg_printed = True
-            self.loginfo("Stopped saving heading data")
-            return
-        elif rospy.get_time() > DATA_SAVING_MAX_TIME:
-            return
 
         # Specify the path to the folder where you want to save the data
         base_path = "/workspace/code/localization/" "src/data" + FOLDER_PATH
@@ -560,6 +539,9 @@ class position_heading_filter_debug_node(CompatibleNode):
             """
             Loop for the data gathering
             """
+            initialized = False
+            printed_message = False
+            now = 0
             while True:
                 # update Carla attributes
                 self.set_carla_attributes()
@@ -574,10 +556,17 @@ class position_heading_filter_debug_node(CompatibleNode):
 
                 # save debug data in csv files
                 # (uncomment if not needed -> solely debugging with rqt_plot)
-                self.save_position_data()
-                self.save_heading_data()
+                if not initialized:
+                    now = rospy.get_time()
+                    initialized = True
+                while initialized and (rospy.get_time() - now) <= DATA_SAVING_MAX_TIME:
+                    self.save_position_data()
+                    self.save_heading_data()
+                if not printed_message:
+                    self.loginfo("Finished saving position and heading data")
+                    printed_message = True
 
-                # rospy.sleep(self.control_loop_rate)
+                rospy.sleep(int(self.control_loop_rate))
 
         threading.Thread(target=loop).start()
         self.spin()
