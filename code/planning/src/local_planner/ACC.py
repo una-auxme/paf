@@ -221,6 +221,7 @@ class ACC(CompatibleNode):
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
         lead_x_velocity: Optional[float] = None
+        obstacle_is_stopmark = False
         marker_text: str = "ACC overview:"
         if entity_result is not None:
             entity, distance = entity_result
@@ -244,6 +245,9 @@ class ACC(CompatibleNode):
                 + f"\nLeadXVelocity: {lead_x_velocity_str}"
                 + f"\nDeltaV: {lead_delta_velocity:6.4f}"
                 + f"\nMaxLeadSpeed: {desired_speed:6.4f}"
+            )
+            obstacle_is_stopmark = entity.entity.flags.matches_filter(
+                FlagFilter(is_stopmark=True)
             )
 
         # max speed is the current speed limit
@@ -286,11 +290,11 @@ class ACC(CompatibleNode):
         if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
             slow_obstacle = False
 
-        if slow_obstacle and hero_speed > 6.0:
+        if slow_obstacle and not obstacle_is_stopmark and hero_speed > 7.0:
             if self.emergency_count == 0:
                 if speed_diff > 7.0:
                     self.emergency_count += 1
-            elif self.emergency_count < 3:
+            elif self.emergency_count < 5:
                 if speed_diff > -1.0:
                     self.emergency_count += 1
                 else:
@@ -299,7 +303,7 @@ class ACC(CompatibleNode):
                 self.emergency_pub.publish(Bool(True))
                 self.emergency_count = 0
                 # marker_text += "\nEmergency break engaged due to abrupt braking"
-            marker_text += f"Emergency count: {self.emergency_count}/3"
+            marker_text += f"Emergency count: {self.emergency_count}/5"
         else:
             self.emergency_count = 0
         # set last desired speed to current desired speed for next loop
