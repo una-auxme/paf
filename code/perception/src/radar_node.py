@@ -147,8 +147,11 @@ class RadarNode(CompatibleNode):
 
     def publish_ground_projection_marker(self, acc_arrow_size):
         """
-        Publishes markers to visualise the calculated floor height
+        Publishes markers to visualize the calculated floor height
         and displays the current pitch angle as text in RViz.
+        This function can be activated in the perception.launch file by switching the
+        'imu_debug' parameter to 'True'.
+
         """
         # Arrow marker for the angle of inclination
         arrow_marker = Marker()
@@ -269,6 +272,7 @@ class RadarNode(CompatibleNode):
         self.data_buffered = self.get_param("~data_buffered", False)
         self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
         self.enable_clustering = bool(self.get_param("~enable_clustering", False))
+        self.enable_debug_info = bool(self.get_param("~enable_debug_info", False))
 
         # Sets flag for time_check to know when data is available
         self.datacollecting_started = True
@@ -356,7 +360,6 @@ class RadarNode(CompatibleNode):
         self.visualization_radar_break_filtered.publish(cloud2)
 
         combined_points = np.array(combined_points)
-        self.get_lead_vehicle_info(combined_points)
 
         # Cluster and bounding box processing
 
@@ -403,11 +406,11 @@ class RadarNode(CompatibleNode):
             )
             self.entity_radar_publisher.publish(clusteredpoints)
 
-            cluster_info = generate_cluster_info(
-                cluster_labels, combined_points, marker_array, bounding_boxes
-            )
-
-            self.cluster_info_radar_publisher.publish(cluster_info)
+            if self.enable_debug_info:
+                cluster_info = generate_cluster_info(
+                    cluster_labels, combined_points, marker_array, bounding_boxes
+                )
+                self.cluster_info_radar_publisher.publish(cluster_info)
         else:
             motionArray = [
                 Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
@@ -469,13 +472,7 @@ class RadarNode(CompatibleNode):
     def listener(self):
         """Initializes the node and its publishers."""
         rospy.init_node("radar_node")
-        self.dist_array_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~image_distance_topic", "/paf/hero/Radar/dist_array_unsegmented"
-            ),
-            String,
-            queue_size=10,
-        )
+
         self.visualization_radar_publisher = rospy.Publisher(
             rospy.get_param("~visualization_topic", "/paf/hero/Radar/Visualization"),
             PointCloud2,
@@ -497,21 +494,6 @@ class RadarNode(CompatibleNode):
         self.cluster_info_radar_publisher = rospy.Publisher(
             rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
             String,
-            queue_size=10,
-        )
-        self.range_velocity_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~range_velocity_topic",
-                "/paf/hero/Radar/lead_vehicle/range_velocity_array",
-            ),
-            Float32MultiArray,
-            queue_size=10,
-        )
-        self.lead_vehicle_marker_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~lead_vehicle_marker_topic", "/paf/hero/Radar/lead_vehicle/marker"
-            ),
-            Marker,
             queue_size=10,
         )
         rospy.Subscriber(
@@ -548,75 +530,6 @@ class RadarNode(CompatibleNode):
         )
 
         rospy.spin()
-
-    def get_lead_vehicle_info(self, radar_data):
-        """
-        Processes radar data to identify and publish information about the lead vehicle.
-
-        This function filters radar points to identify the closest point within a
-        specified region, representing the lead vehicle. It publishes the distance
-        and velocity of the lead vehicle as a `Float32MultiArray` message and also
-        visualizes the lead vehicle using a marker in RViz.
-
-        Args:
-            radar_data (np.ndarray): Radar data represented as a 2D NumPy array where
-                                    each row corresponds to a radar point with the
-                                    format [x, y, z, velocity].
-
-        Returns:
-            None: The function publishes data to relevant ROS topics and does not return
-            any value.
-        """
-
-        # Filter data based on specified region for lead vehicle detection
-        radar_data = filter_data(radar_data, max_x=20, min_y=-1, max_y=1)
-
-        # Create the message for publishing lead vehicle information
-        lead_vehicle_data = Float32MultiArray()
-
-        # Handle the case where no valid radar points are found
-        if radar_data.size == 0:
-            lead_vehicle_data.data = []  # No data to publish
-            self.range_velocity_radar_publisher.publish(lead_vehicle_data)
-            return
-
-        # Identify the closest point (lead vehicle candidate)
-        # based on the x-coordinate (distance)
-        closest_point = radar_data[np.argmin(radar_data[:, 0])]
-
-        lead_vehicle_data.data = [
-            closest_point[0],
-            closest_point[3],
-        ]  # Distance (x), Velocity
-
-        # Create a marker to visualize the lead vehicle in RViz
-        marker = Marker()
-        marker.header.frame_id = "hero"
-        marker.header.stamp = rospy.Time.now()
-        marker.ns = "lead_vehicle_marker"  # Namespace for the marker
-        marker.id = 500  # Unique ID for the marker
-        marker.type = Marker.SPHERE  # Marker type (sphere)
-        marker.action = Marker.ADD  # Action to add the marker
-        marker.pose.position.x = closest_point[
-            0
-        ]  # Set the position based on the radar point
-        marker.pose.position.y = closest_point[1]
-        marker.pose.position.z = closest_point[2]
-        marker.scale.x = 1.0  # Marker size
-        marker.scale.y = 1.0
-        marker.scale.z = 1.0
-        marker.color.r = 1.0  # Red color for lead vehicle
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0  # Full opacity
-
-        # Publish the lead vehicle marker to RViz
-        self.lead_vehicle_marker_publisher.publish(marker)
-
-        # Publish the lead vehicle information (distance and velocity)
-        self.range_velocity_radar_publisher.publish(lead_vehicle_data)
-
-        return
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -1001,6 +914,8 @@ def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     """
     Generates information about clusters, including the label, number of points,
     the number of markers, and bounding boxes.
+    This function can be activated in the perception.launch file by switching the
+    'enable_debug_info' parameter to 'True'.
 
     Args:
         cluster_labels (numpy.ndarray): The clustered data labels for each point.
