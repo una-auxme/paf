@@ -85,6 +85,7 @@ def calculate_obstacle(
     front_mask_size: float,
     trajectory_check_length: float,
     overlap_percent: float,
+    overlap_area: float = 0.0,
 ) -> Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
     """Calculates if there is an obstacle in front
 
@@ -96,7 +97,10 @@ def calculate_obstacle(
         front_mask_size (float): Length of the static box collision mask in front
         trajectory_check_length (float): Length of the trajectory collision mask
         overlap_percent (float):
-            How much of an entity has to be inside the collision mask
+            How much of an entity has to be inside the collision mask in percent
+        overlap_area (float):
+            How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
     Returns:
         Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
@@ -124,6 +128,7 @@ def calculate_obstacle(
         trajectory,
         front_mask_size=front_mask_size,
         max_trajectory_check_length=trajectory_check_length,
+        max_centering_dist=None,
     )
     if len(collision_masks) == 0:
         # We currently have no valid path to check for collisions.
@@ -178,7 +183,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
         unset_space_stop_mark(self.stop_proxy)
-        return True
 
     def update(self):
         """
@@ -610,6 +614,7 @@ class Leave(py_trees.behaviour.Behaviour):
             )
 
         if status.status == OvertakeStatusResponse.OVERTAKING:
+            # First: check if our right lane is free and end overtake if possible
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=True,
                 lane_length=15.0,
@@ -626,6 +631,31 @@ class Leave(py_trees.behaviour.Behaviour):
                     Status.RUNNING,
                     "Right lane is free. Finishing overtake...",
                 )
+
+            # Second: check if we have an obstacle in front and end overtake
+            obstacle = calculate_obstacle(
+                self.name,
+                tree,
+                self.blackboard,
+                front_mask_size=0.0,
+                trajectory_check_length=20.0,
+                overlap_percent=1.0,
+                overlap_area=1.0,
+            )
+            if isinstance(obstacle, py_trees.common.Status):
+                return obstacle
+            if obstacle is None:
+                add_debug_entry(self.name, "No obstacle in front")
+            else:
+                _, obstacle_distance = obstacle
+                add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
+                if obstacle_distance < 5.0:
+                    request_end_overtake(self.end_overtake_proxy)
+                    return debug_status(
+                        self.name,
+                        Status.RUNNING,
+                        "Obstacle in front. Finishing overtake...",
+                    )
 
         if status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
             return debug_status(
