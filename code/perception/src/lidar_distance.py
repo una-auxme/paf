@@ -153,9 +153,10 @@ class LidarDistance:
         points_with_labels = np.hstack((filtered_xyz, cluster_labels.reshape(-1, 1)))
 
         # Generate bounding boxes only for valid clusters
-        bounding_boxes = (
-            generate_bounding_boxes(points_with_labels) if points_with_labels.size > 0 else []
-        )
+        if points_with_labels.size > 0:
+            bounding_boxes = generate_bounding_boxes(points_with_labels)
+        else:
+            bounding_boxes = []
 
         # Create and populate a MarkerArray for visualization
         marker_array = MarkerArray()
