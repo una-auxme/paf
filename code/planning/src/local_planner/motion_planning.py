@@ -28,7 +28,7 @@ from planning.srv import (
 import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
-from mapping_common.transform import Vector2, Point2, Transform2D
+from mapping_common.transform import Point2, Transform2D
 
 TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
 """threshold under which the planner decides it is on a trajectory
