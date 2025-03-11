@@ -85,13 +85,6 @@
   </node>
 
 
-  <!-- node that subscribes to current state and publishes distances -->
-  <node pkg="localization" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
-    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    <param name="role_name" value="$(arg role_name)" />
-  </node>
-
-
   <!-- just for debugging / optimizing purposes -> uncomment to use and see plots -->
   <!-- <node pkg="localization" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
