@@ -17,15 +17,14 @@ class VehicleController(CompatibleNode):
     """
     This node is responsible for collecting all data needed for the
     vehicle_control_cmd and sending it.
-    The node also decides weather to use the stanley or pure pursuit
-    controller.
+    The node uses the pure pursuit controller for steering.
     If the node receives an emergency msg, it will bring the vehicle to a stop
     and send an emergency msg with data = False back, after the velocity of the
     vehicle has reached 0.
     INFO: Currently the loop of the node has a sleep command in it. The control
     command triggers the carla simulator to render the next frame. If the loop
     does not have the time to sleep the simulator will run as fast as the system
-    allows it to run. If your system is too slow to run with the 0.1 loop_sleep_time
+    allows it to run. If your system is too slow to run with the 0.2 loop_sleep_time
     you could slow it down by setting the loop_sleep_time to a higher value.
     """
 
@@ -45,13 +44,11 @@ class VehicleController(CompatibleNode):
         self.__brake = 0.0
         self.__throttle = 0.0
         self._p_steer = 0.0
-        self._s_steer = 0.0
 
-        # Manual control and Stanley controller flags
+        # Manual control
         self.MANUAL_OVERRIDE = False
         self.MANUAL_STEER = 0.0
         self.MANUAL_THROTTLE = 0.0
-        self.STANLEY_OFF = False
 
         # Initialize publishers
         self.control_publisher = self.new_publisher(
@@ -118,12 +115,6 @@ class VehicleController(CompatibleNode):
             self.__set_pure_pursuit_steer,
             qos_profile=1,
         )
-        self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/stanley_steer",
-            self.__set_stanley_steer,
-            qos_profile=1,
-        )
 
         # Dynamic reconfigure
         Server(ControllerConfig, self.dynamic_reconfigure_callback)
@@ -135,7 +126,6 @@ class VehicleController(CompatibleNode):
         self.MANUAL_STEER = config["manual_steer"]
         self.MANUAL_THROTTLE = config["manual_throttle"]
         self.MANUAL_OVERRIDE = config["manual_override_active"]
-        self.STANLEY_OFF = config["stanley_off"]
         return config
 
     def update_control_message(self):
@@ -149,14 +139,11 @@ class VehicleController(CompatibleNode):
         elif self.__emergency:
             self.__emergency_brake(True)
         else:
-            if not self.STANLEY_OFF and self.__velocity > 5:
-                steer = self._s_steer
-            else:
-                steer = (
-                    0
-                    if self.__curr_behavior in ["us_unstuck", "us_stop"]
-                    else self._p_steer
-                )
+            steer = (
+                self._p_steer * (-1)
+                if self.__curr_behavior == "us_unstuck"
+                else self._p_steer
+            )
 
             self.message.reverse = self.__reverse
             self.message.throttle = self.__throttle
@@ -173,12 +160,18 @@ class VehicleController(CompatibleNode):
         self.loginfo("VehicleController node running")
 
         def spin_loop(timer_event=None):
-            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.1)
+            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.2)
             self.update_control_message()
             self.control_publisher.publish(self.message)
             time.sleep(self.loop_sleep_time)
 
-        self.new_timer(self.control_loop_rate, spin_loop)
+        def spin_loop_handler(timer_event=None):
+            try:
+                spin_loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, spin_loop_handler)
         self.spin()
 
     # Subscriber callbacks
@@ -209,9 +202,6 @@ class VehicleController(CompatibleNode):
 
     def __set_pure_pursuit_steer(self, data: Float32):
         self._p_steer = data.data / (math.pi / 2)
-
-    def __set_stanley_steer(self, data: Float32):
-        self._s_steer = data.data / (math.pi / 2)
 
     def __emergency_brake(self, active: bool):
         if active:
