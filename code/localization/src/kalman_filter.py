@@ -15,6 +15,7 @@ The state estimation is only done in a 2D plane.
 To estimate a 3D position, the z-coordinate of the car is calculated
 using a running average of the last GPS_RUNNING_AVG_ARGS measurements.
 The z-coordinate is therefore not estimated by the Kalman Filter.
+
 """
 
 import numpy as np

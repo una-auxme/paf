@@ -29,8 +29,6 @@ must be added in the constructor for clean modular programming
 
 """
 
-import math
-from tf.transformations import euler_from_quaternion
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
