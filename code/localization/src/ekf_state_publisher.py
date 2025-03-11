@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''
+"""
 This node publishes the position and heading estimated by
 an Extended Kalman Filter (EKF) on the topics:
   - ekf_pos
@@ -10,7 +10,7 @@ There are currently two EKFs from the robot_localization package running:
   - ekf_local (publishing the transformation odom->hero to the /tf topic)
   - ekf_global (publishing the transformation global->odom to the /tf topic)
 These nodes provide this node with its input.
-'''
+"""
 
 import rospy
 from rospy import Publisher

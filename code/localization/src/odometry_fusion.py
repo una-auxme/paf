@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-'''
+"""
 This node creates an Odometry message for the local and global EKFs.
 The message is calculated using the following data:
   - the current velocity (topic: /carla/hero/Speed)
   - the current steering angle (topic: /carla/hero/vehicle_control_command)
-'''
+"""
 
 import rospy
 from ros_compatibility.node import CompatibleNode
