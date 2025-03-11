@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-!!! WARNIG !!!
+!!! WARNING !!!
 This node is currently not in use.
 
 To use this node first data needs to be saved using the

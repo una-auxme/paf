@@ -5,9 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 """
+!!! WARNING !!!
+This node is currently not in use.
+
 The documentation on how to use this file can be found in
-docs/perception/perception_heading_filter_debug_node.md
-since it is used to visualize the data of the heading filter debug node.
+the corresponding .md file in the documentation.
+
+It is used to visualize the data produced by the
+position_heading_filter_debug_node.
 """
 
 # FILE START and END are only needed for the range

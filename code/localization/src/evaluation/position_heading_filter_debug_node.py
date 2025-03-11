@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-!!! WARNIG !!!
+!!! WARNING !!!
 This node is currently not in use.
 
 With this node 2 filters can be compared to each other
@@ -199,7 +199,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/localization/" "src/data/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path_x = base_path + "/x_error"
         folder_path_y = base_path + "/y_error"
         # Ensure the directories exist
@@ -233,7 +233,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/localization/" "src/data/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path_heading = base_path + "/heading_error"
 
         # Ensure the directories exist
