@@ -4,9 +4,12 @@
 Carla publishes the IMU and GPS Data without covariances.
 
 We have to decide on clever values and add them to the data.
-This node reads a param file (sensor_covariances.yaml) and listens to topics.
+This node reads a param file (sensor_covariances.yaml)
+and listens to the topics with IMU and GPS data.
 
 When a message is received the covariance is added and the data is sent out again.
+
+The nodes outputs are used by the local and global EKFs and the gps_transform node.
 """
 
 import rospy

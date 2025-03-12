@@ -24,8 +24,6 @@ int_app_green = Behavior("int_app_green")
 int_wait = Behavior("int_wait")
 # Enter
 int_enter = Behavior("int_enter")
-# Exit
-int_exit = Behavior("int_exit")
 
 # Lane Change
 # Approach

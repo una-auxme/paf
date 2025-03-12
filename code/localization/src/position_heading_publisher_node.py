@@ -1,14 +1,40 @@
 #!/usr/bin/env python
 
-import math
-from tf.transformations import euler_from_quaternion
+"""
+This node subscibes to unfiltered data, extracts relevant information
+from this data and passes this information on to a different topic:
+  - IMU data (/carla/hero/IMU) -> /paf/hero/unfiltered_heading
+  - GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
+
+Both signals can be filtered with the available filters:
+  - Position Filter values:
+      - "EKF" (Default)
+      - "Kalman"
+      - "RunningAvg"
+      - "None"
+  - Heading Filter values:
+      - "EKF" (Default)
+      - "Kalman"
+      - "None"
+The chosen filter is used to pass its outputs onto the topics:
+  - /paf/hero/current_pos
+  - /paf/hero/current_heading
+
+The filter is chosen in the localization.launch file.
+
+!!!
+When creating a new filter, the corresponding subscriber and publisher
+must be added in the constructor for clean modular programming
+!!!
+
+"""
+
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 
-# from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32, String
 from coordinate_transformation import CoordinateTransformer
 from coordinate_transformation import quat_to_heading
@@ -18,27 +44,6 @@ GPS_RUNNING_AVG_ARGS: int = 10
 
 
 class PositionHeadingPublisherNode(CompatibleNode):
-    """
-    This Node subcribes to the unfiltered GNSS and Heading Signals and
-    publishes a (PoseStamped) gps signal as currentPos
-    as well as a (Float32) heading signal as currentHeading.
-    Both signals can be filtered with the available filters:
-    Position Filter values:
-        - "Kalman" (Default)
-        - "RunningAvg"
-        - "None"
-    Heading Filter values:
-        - "Kalman" (Default)
-        - "None"
-        - "Old" (Buggy for demonstration purposes only)
-    These can be turned on and off in the launch file.
-
-    !When creating a new filter, the corresponding subscriber and publisher
-    must be added in the constructor for clean modular programming!
-
-    For more information:
-    ../../doc/perception/position_heading_publisher_node.md
-    """
 
     def __init__(self):
         """
@@ -52,8 +57,8 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         """
         Possible Filters:
-        Pos: Kalman, RunningAvg, None
-        Heading: Kalman, None
+        Pos: EKF, Kalman, RunningAvg, None
+        Heading: EKF, Kalman, None
         """
         # Filter used:
         self.pos_filter = self.get_param("pos_filter", "EKF")
@@ -100,7 +105,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
         )
 
         # Create subscribers depending on the filter used
-        # Pos Filter:
+        # Position Filter:
         if self.pos_filter == "EKF":
             self.ekf_pos_subscriber = self.new_subscription(
                 PoseStamped,
@@ -123,8 +128,10 @@ class PositionHeadingPublisherNode(CompatibleNode):
                 qos_profile=1,
             )
         elif self.pos_filter == "None":
-            # No additional subscriber needed since the unfiltered GPS data is
-            # subscribed by self.gps_subscriber
+            # No additional subscriber needed
+            # -> handled by gps_subscriber
+            #    (or rather its callback function publish_unfilterd_gps)
+            # -> publishes unfilterd GPS signal as current_pos
             pass
 
         # insert additional elifs for other filters here
@@ -145,8 +152,10 @@ class PositionHeadingPublisherNode(CompatibleNode):
                 qos_profile=1,
             )
         elif self.heading_filter == "None":
-            # No additional subscriber needed since the unfiltered heading
-            # data is subscribed by self.imu_subscriber
+            # No additional subscriber needed
+            # -> handled by imu_subscriber
+            #    (or rather its callback function publish_unfiltered_heading)
+            # -> publishes unfiltered IMU signal as current_heading
             pass
 
         # insert additional elifs for other filters here
@@ -159,7 +168,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
             Float32, f"/paf/{self.role_name}/unfiltered_heading", qos_profile=1
         )
 
-        # 3D Odometry (GPS) for Filters
+        # 3D Odometry (GPS) for filters -> converted to x/y/z coordinates
         self.unfiltered_gps_publisher = self.new_publisher(
             PoseStamped, f"/paf/{self.role_name}/unfiltered_pos", qos_profile=1
         )
@@ -167,7 +176,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
         self.cur_pos_publisher = self.new_publisher(
             PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
         )
-
+        # Publishes current_heading depending on the filter used
         self.__heading: float = 0
         self.__heading_publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
@@ -197,23 +206,9 @@ class PositionHeadingPublisherNode(CompatibleNode):
         if self.heading_filter == "None":
             self.__heading = heading
             self.__heading_publisher.publish(self.__heading)
-        elif self.heading_filter == "Old":
-            # In the case of using "Old" filter, the heading is
-            # calculated the WRONG way, just for demonstration purposes
-            roll, pitch, yaw = euler_from_quaternion(data_orientation_q)
-            raw_heading = math.atan2(roll, pitch)
-
-            # transform raw_heading so that:
-            # ---------------------------------------------------------------
-            # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
-            # ---------------------------------------------------------------
-            heading = (raw_heading - (math.pi / 2)) % (2 * math.pi) - math.pi
-            self.__heading = heading
-            self.__heading_publisher.publish(self.__heading)
-        # insert additional elifs for other filters here
         else:
             # in each other case the heading is published as unfiltered heading
-            # for further filtering in other nodes such as the kalman node
+            # for further filtering in other nodes such as the EKF
             self.unfiltered_heading_publisher.publish(heading)
 
     def publish_current_heading(self, data: Float32):
@@ -236,7 +231,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
         """
         This method is called when new GNSS data is received.
         The function calculates the average position and then publishes it.
-        Measurements are also transformed to global xyz-coordinates
+        Measurements are also transformed to global x/y/z-coordinates
         :param data: GNSS measurement
         :return:
         """
@@ -285,7 +280,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
     def publish_unfiltered_gps(self, data: NavSatFix):
         """
         This method is called when new GNSS data is received.
-        It publishes the unfiltered GPS data as XYZ (PoseStamped).
+        It publishes the unfiltered GPS data as x/y/z coordinates (PoseStamped).
         :param data: GNSS measurement
         :return:
         """
@@ -321,7 +316,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
                 self.cur_pos_publisher.publish(unfiltered_pos)
             else:
                 # in each other case the pos is published as unfiltered pos
-                # for further filtering in other nodes such as the kalman node
+                # for further filtering in other nodes such as the EKF
                 self.unfiltered_gps_publisher.publish(unfiltered_pos)
 
     # insert new position functions here...
@@ -331,7 +326,7 @@ class PositionHeadingPublisherNode(CompatibleNode):
     def get_geoRef(self, opendrive: String):
         """_summary_
         Reads the reference values for lat and lon from the carla OpenDriveMap
-        This is necessary for the coordinate transformation from GNSS to XYZ
+        This is necessary for the coordinate transformation from GNSS to x/y/z
         Args:
             opendrive (String): OpenDrive Map from carla
         """
