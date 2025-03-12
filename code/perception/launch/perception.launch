@@ -70,7 +70,6 @@
 
   <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
-    <param name="range_topic" value="/carla/hero/LIDAR_range"/>
 
     <!-- Cluster configuration -->
     <param name="clustering_lidar_z_min" value="-1.4" />
@@ -95,6 +94,7 @@
     <param name="accelerometer_arrow_size" value="2"/>
     <param name="accelerometer_factor" value="0.05"/>
     <param name="enable_clustering" value="True"/>
+    <param name="enable_debug_info" value="False"/>
   </node>
 
 

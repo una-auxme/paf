@@ -17,7 +17,7 @@ from mapping_common.entity import FlagFilter, Car
 from visualization_msgs.msg import MarkerArray
 from planning.srv import OvertakeStatusResponse
 
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake_service_utils import (
@@ -45,7 +45,7 @@ OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
 def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
     reason = "Obstacle: overtake space"
     transform = (
-        Transform2D.new_translation(Vector2.backward() * 3.0) * obstacle.transform
+        Transform2D.new_translation(Vector2.backward() * 3.5) * obstacle.transform
     )
     mark = StopMark(
         reason=reason,
@@ -85,6 +85,7 @@ def calculate_obstacle(
     front_mask_size: float,
     trajectory_check_length: float,
     overlap_percent: float,
+    overlap_area: float = 0.0,
 ) -> Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
     """Calculates if there is an obstacle in front
 
@@ -96,7 +97,10 @@ def calculate_obstacle(
         front_mask_size (float): Length of the static box collision mask in front
         trajectory_check_length (float): Length of the trajectory collision mask
         overlap_percent (float):
-            How much of an entity has to be inside the collision mask
+            How much of an entity has to be inside the collision mask in percent
+        overlap_area (float):
+            How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
     Returns:
         Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
@@ -124,6 +128,7 @@ def calculate_obstacle(
         trajectory,
         front_mask_size=front_mask_size,
         max_trajectory_check_length=trajectory_check_length,
+        max_centering_dist=None,
     )
     if len(collision_masks) == 0:
         # We currently have no valid path to check for collisions.
@@ -178,7 +183,6 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
         unset_space_stop_mark(self.stop_proxy)
-        return True
 
     def update(self):
         """
@@ -318,9 +322,8 @@ class Approach(py_trees.behaviour.Behaviour):
         entity, self.ot_distance = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         add_debug_entry(self.name, f"Overtake distance: {self.ot_distance}")
@@ -329,11 +332,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
 
-        # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        else:
-            unset_space_stop_mark(self.stop_proxy)
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
@@ -366,7 +365,8 @@ class Approach(py_trees.behaviour.Behaviour):
                         f"Overtake free count: {self.ot_counter}",
                     )
             else:
-                self.ot_counter = 0
+                if ot_free is LaneFreeState.BLOCKED:
+                    self.ot_counter = 0
                 add_debug_entry(
                     self.name, "Overtake Approach: oncoming blocked slowing down"
                 )
@@ -418,12 +418,11 @@ class Wait(py_trees.behaviour.Behaviour):
         self.clear_distance = 50
         self.ot_counter = 0
         self.ot_gone = 0
-        return True
 
     def update(self):
         """
         Waits behind the road object until map function lane free check
-        return True.
+        returns True.
 
         :return: py_trees.common.Status.RUNNING, while is lane free returns False
                  py_trees.common.Status.SUCCESS, when lane free returns True
@@ -461,12 +460,11 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
             return py_trees.common.Status.RUNNING
 
-        entity, distance = obstacle
+        entity, _ = obstacle
         entity = entity.entity
 
-        if entity.motion is not None:
-            obstacle_speed = entity.motion.linear_motion.length()
-        else:
+        obstacle_speed = entity.get_global_x_velocity()
+        if obstacle_speed is None:
             obstacle_speed = 0
 
         self.ot_gone = 0
@@ -474,13 +472,9 @@ class Wait(py_trees.behaviour.Behaviour):
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
-        # Only add stop space if the obstacle is standing
-        if obstacle_speed < 1.0:
-            set_space_stop_mark(self.stop_proxy, obstacle=entity)
-        else:
-            unset_space_stop_mark(self.stop_proxy)
+        set_space_stop_mark(self.stop_proxy, obstacle=entity)
 
-        self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+        self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
@@ -504,7 +498,8 @@ class Wait(py_trees.behaviour.Behaviour):
                     self.name, Status.RUNNING, f"Overtake free count: {self.ot_counter}"
                 )
         else:
-            self.ot_counter = 0
+            if ot_free is LaneFreeState.BLOCKED:
+                self.ot_counter = 0
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
     def terminate(self, new_status):
@@ -596,7 +591,6 @@ class Leave(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         self.curr_behavior_pub.publish(bs.ot_leave.name)
-        return True
 
     def update(self):
         """
@@ -620,6 +614,7 @@ class Leave(py_trees.behaviour.Behaviour):
             )
 
         if status.status == OvertakeStatusResponse.OVERTAKING:
+            # First: check if our right lane is free and end overtake if possible
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=True,
                 lane_length=15.0,
@@ -636,6 +631,31 @@ class Leave(py_trees.behaviour.Behaviour):
                     Status.RUNNING,
                     "Right lane is free. Finishing overtake...",
                 )
+
+            # Second: check if we have an obstacle in front and end overtake
+            obstacle = calculate_obstacle(
+                self.name,
+                tree,
+                self.blackboard,
+                front_mask_size=0.0,
+                trajectory_check_length=20.0,
+                overlap_percent=1.0,
+                overlap_area=1.0,
+            )
+            if isinstance(obstacle, py_trees.common.Status):
+                return obstacle
+            if obstacle is None:
+                add_debug_entry(self.name, "No obstacle in front")
+            else:
+                _, obstacle_distance = obstacle
+                add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
+                if obstacle_distance < 5.0:
+                    request_end_overtake(self.end_overtake_proxy)
+                    return debug_status(
+                        self.name,
+                        Status.RUNNING,
+                        "Obstacle in front. Finishing overtake...",
+                    )
 
         if status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
             return debug_status(

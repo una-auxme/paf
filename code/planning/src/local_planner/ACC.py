@@ -10,7 +10,8 @@ from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Float32, String
+from ros_compatibility.qos import QoSProfile, DurabilityPolicy
+from std_msgs.msg import Float32, String, Bool
 from visualization_msgs.msg import Marker, MarkerArray
 
 from planning.cfg import ACCConfig
@@ -49,6 +50,8 @@ class ACC(CompatibleNode):
     external_speed_limit: Optional[float] = None
     speed_override: Optional[float] = None
     steer: Optional[float] = None
+    last_desired_speed: float = 0.0
+    emergency_count: int = 0
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -97,6 +100,15 @@ class ACC(CompatibleNode):
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
+        )
+
+        # Publish to emergency break if needed
+        self.emergency_pub = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         # Publish debugging marker
@@ -208,6 +220,8 @@ class ACC(CompatibleNode):
 
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
+        lead_x_velocity: Optional[float] = None
+        obstacle_is_stopmark = False
         marker_text: str = "ACC overview:"
         if entity_result is not None:
             entity, distance = entity_result
@@ -232,6 +246,9 @@ class ACC(CompatibleNode):
                 + f"\nDeltaV: {lead_delta_velocity:6.4f}"
                 + f"\nMaxLeadSpeed: {desired_speed:6.4f}"
             )
+            obstacle_is_stopmark = entity.entity.flags.matches_filter(
+                FlagFilter(is_stopmark=True)
+            )
 
         # max speed is the current speed limit
         desired_speed = min(self.speed_limit, desired_speed)
@@ -250,17 +267,46 @@ class ACC(CompatibleNode):
             speed_reason = "Curve"
         elif desired_speed == self.speed_limit:
             speed_reason = "Speed limit"
-        elif self.external_speed_limit and desired_speed == self.external_speed_limit:
+        elif (
+            self.external_speed_limit is not None
+            and desired_speed == self.external_speed_limit
+        ):
             speed_reason = "External speed limit"
         else:
             speed_reason = "Obstacle"
 
-        if self.speed_override:
+        if self.speed_override is not None:
             desired_speed = self.speed_override
             speed_reason = "Override"
 
         marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
         marker_text += f"\nSpeed reason: {speed_reason}"
+
+        # emergency break if obstacle and difference to last desired speed is too big
+        # and we are driving fast and obstacle is slow
+        speed_diff = self.last_desired_speed - desired_speed
+        hero_speed = hero.motion.linear_motion.x()
+        slow_obstacle = True
+        if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
+            slow_obstacle = False
+
+        if slow_obstacle and not obstacle_is_stopmark and hero_speed > 7.0:
+            if self.emergency_count == 0:
+                if speed_diff > 7.0:
+                    self.emergency_count += 1
+            elif self.emergency_count < 5:
+                if speed_diff > -1.0:
+                    self.emergency_count += 1
+                else:
+                    self.emergency_count = 0
+            else:
+                self.emergency_pub.publish(Bool(True))
+                self.emergency_count = 0
+            marker_text += f"\nEmergency count: {self.emergency_count}/5"
+        else:
+            self.emergency_count = 0
+        # set last desired speed to current desired speed for next loop
+        self.last_desired_speed = desired_speed
 
         debug_markers.append(
             debug_marker(

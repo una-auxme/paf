@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
+from rospy import Subscriber, Publisher
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaRoute
+from nav_msgs.msg import Path
+from agents.navigation.local_planner import RoadOption
 
-from perception.msg import Waypoint, LaneChange
+from perception.msg import Waypoint
 
 import math
 
@@ -33,7 +36,8 @@ class GlobalPlanDistance(CompatibleNode):
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
         self.publish_loop_rate = 0.05  # 20Hz rate like the sensors
 
-        self.current_pos = PoseStamped()
+        self.current_pos = None
+        self.trajectory_local = None
         self.global_route = None
         self.road_options = None
 
@@ -45,6 +49,14 @@ class GlobalPlanDistance(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get trajectory only for checking of the motion_planning has initialized
+        self.trajectory_local_sub: Subscriber = self.new_subscription(
+            Path,
+            f"/paf/{self.role_name}/trajectory_local",
+            self.__set_trajectory_local,
+            qos_profile=1,
+        )
+
         self.global_plan_subscriber = self.new_subscription(
             CarlaRoute,
             "/carla/" + self.role_name + "/global_plan",
@@ -52,15 +64,17 @@ class GlobalPlanDistance(CompatibleNode):
             qos_profile=1,
         )
 
-        self.waypoint_publisher = self.new_publisher(
-            Waypoint, "/paf/" + self.role_name + "/waypoint_distance", qos_profile=1
+        self.waypoint_publisher: Publisher = self.new_publisher(
+            Waypoint, "/paf/" + self.role_name + "/current_waypoint", qos_profile=1
         )
 
-        self.lane_change_publisher = self.new_publisher(
-            LaneChange,
-            "/paf/" + self.role_name + "/lane_change_distance",
-            qos_profile=1,
-        )
+    def __set_trajectory_local(self, data: Path):
+        """Receive trajectory from motion planner
+
+        Args:
+            data (Path): Trajectory path
+        """
+        self.trajectory_local = data
 
     def update_position(self, pos):
         """
@@ -78,43 +92,59 @@ class GlobalPlanDistance(CompatibleNode):
 
         # check if the global route has been published and that there are still
         # points to navigate to
-        if self.global_route is not None and self.global_route:
+        if (
+            self.global_route is None
+            or len(self.global_route) == 0
+            or self.road_options is None
+            or len(self.road_options) == 0
+            or self.trajectory_local is None
+        ):
+            return
 
-            current_distance = distance(
-                self.global_route[0].position, self.current_pos.position
-            )
-            next_distance = distance(
-                self.global_route[1].position, self.current_pos.position
-            )
+        current_distance = distance(
+            self.global_route[0].position, self.current_pos.position
+        )
+        next_distance = distance(
+            self.global_route[1].position, self.current_pos.position
+        )
 
-            # if the road option indicates an intersection, the distance to the
-            # next waypoint is also the distance to the stop line
-            if self.road_options[0] < 4:
-                # print("publish waypoint")
+        waypoint_type = Waypoint.TYPE_UNKNOWN
+        # if the road option indicates an intersection, the distance to the
+        # next waypoint is also the distance to the stop line
+        if self.road_options[0] in {
+            RoadOption.VOID,
+            RoadOption.LEFT,
+            RoadOption.RIGHT,
+            RoadOption.STRAIGHT,
+        }:
+            waypoint_type = Waypoint.TYPE_INTERSECTION
+        elif self.road_options[0] in {
+            RoadOption.CHANGELANELEFT,
+            RoadOption.CHANGELANERIGHT,
+        }:
+            waypoint_type = Waypoint.TYPE_LANECHANGE
 
-                self.waypoint_publisher.publish(Waypoint(current_distance, True))
-                self.lane_change_publisher.publish(
-                    LaneChange(current_distance, False, self.road_options[0])
-                )
-            else:
-                self.waypoint_publisher.publish(Waypoint(current_distance, False))
-                if self.road_options[0] == 5 or self.road_options[0] == 6:
-                    self.lane_change_publisher.publish(
-                        LaneChange(current_distance, True, self.road_options[0])
-                    )
-            # if we reached the next waypoint, pop it and the next point will
-            # be published
-            if current_distance < 2.5 or next_distance < current_distance:
-                self.road_options.pop(0)
-                self.global_route.pop(0)
+        current_waypoint = Waypoint(
+            waypoint_type=waypoint_type,
+            distance=current_distance,
+            roadOption=self.road_options[0],
+            position=self.global_route[0].position,
+        )
+        self.waypoint_publisher.publish(current_waypoint)
 
-                if (
-                    self.road_options[0] in {5, 6}
-                    and self.road_options[0] == self.road_options[1]
-                ):
-                    self.road_options[1] = 4
+        # if we reached the next waypoint, pop it and the next point will
+        # be published
+        if current_distance < 2.5 or next_distance < current_distance:
+            self.road_options.pop(0)
+            self.global_route.pop(0)
 
-                print(f"next road option = {self.road_options[0]}")
+            if (
+                len(self.road_options) > 1
+                and self.road_options[0]
+                in {RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT}
+                and self.road_options[0] == self.road_options[1]
+            ):
+                self.road_options[1] = RoadOption.LANEFOLLOW
 
     def update_global_route(self, route):
         """
@@ -126,8 +156,6 @@ class GlobalPlanDistance(CompatibleNode):
         if self.global_route is None:
             self.global_route = list(route.poses)
             self.road_options = list(route.road_options)
-            self.road_options.pop(0)
-            self.global_route.pop(0)
 
     def run(self):
         """

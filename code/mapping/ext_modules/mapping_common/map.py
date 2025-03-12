@@ -33,6 +33,11 @@ class LaneFreeState(Enum):
         return self.value < 0
 
 
+class LaneFreeDirection(Enum):
+    LEFT = False
+    RIGHT = True
+
+
 @dataclass
 class Map:
     """2 dimensional map for the intermediate layer
@@ -528,8 +533,6 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
                 lane_angle=lane_angle,
             )
 
@@ -541,8 +544,6 @@ class MapTree:
                 lane_length=lane_length,
                 lane_transform=lane_transform,
                 reduce_lane=reduce_lane,
-                min_coverage_percent=min_coverage_percent,
-                min_coverage_area=min_coverage_area,
             )
 
         if lane_state.is_error():
@@ -596,8 +597,6 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        min_coverage_percent: float = 0.0,
-        min_coverage_area: float = 0.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if the lane is free by using a checkbox with size and position
         according to inputs
@@ -609,10 +608,6 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            min_coverage_percent (float, optional): how much an entity must collide
-            with the checkbox in percent. Defaults to 0.0.
-            min_coverage_area (float, optional): how much an entity must collide
-            with the checkbox in m2. Defaults to 0.0.
 
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
@@ -649,8 +644,6 @@ class MapTree:
         lane_length: float = 20.0,
         lane_transform: float = 0.0,
         reduce_lane: float = 1.5,
-        min_coverage_percent: float = 0.0,
-        min_coverage_area: float = 0.0,
         lane_angle: float = 5.0,
     ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]:
         """checks if a lane is free by using a checkbox that is placed between two lane
@@ -664,10 +657,6 @@ class MapTree:
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
             (= width - reduce_lane). Defaults to 1.5.
-            min_coverage_percent (float, optional): how much an entity must collide
-            with the checkbox in percent. Defaults to 0.0.
-            min_coverage_area (float, optional): how much an entity must collide
-            with the checkbox in m2. Defaults to 0.0.
             lane_angle (float, optional): sets how many degrees the lanes may be skewed
             in relation to each other that the check get executed. Defaults to 5.0 °
 
@@ -733,6 +722,63 @@ class MapTree:
 
         return LaneFreeState.TO_BE_CHECKED, lane_box
 
+    def is_lane_free_intersection(
+        self,
+        lane_length: float = 20.0,
+        lane_transform_x: float = 0.0,
+    ) -> Tuple[bool, Optional[shapely.Polygon]]:
+        """Returns True if the opposing lane of our car is free.
+        Checks if a Polygon lane box intersects with any
+        relevant entities.
+
+        This is only meant to be used in intersections. Ignores entities
+        that are not moving towards the hero.
+
+        Parameters:
+        - lane_length (float): Sets the lane length that should be checked, in meters.
+          Default value is 20 meters.
+        - lane_transform_x (float): Transforms the checked lane box to the front (>0) or
+          back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+           from the car position -> same distance to the front and rear get checked
+        Returns:
+            (bool, [shapely.Polygon]): lane is free / not free,
+                collision masks used for the check
+        """
+
+        # lane length cannot be negative, as no rectangle with negative dimension exists
+        if lane_length < 0:
+            raise ValueError("Lane length cannot take a negative value.")
+
+        lane_mask = shapely.Polygon(
+            [
+                [lane_transform_x, -2],
+                [lane_transform_x + lane_length, -15],
+                [lane_transform_x + lane_length, 10],
+                [lane_transform_x, 10],
+            ]
+        )
+
+        # creates intersection list of lane mask with map entities
+        lane_box_intersection_entities = self.get_overlapping_entities(mask=lane_mask)
+        if not lane_box_intersection_entities:
+            return (True, lane_mask)
+
+        enities_with_motion = [
+            entity
+            for entity in lane_box_intersection_entities
+            if entity.entity.motion is not None
+        ]
+        if not enities_with_motion:
+            return (True, lane_mask)
+        # if all entities drive forward or don't move the lane can be considered free
+        return (
+            all(
+                entity.entity.get_global_x_velocity() > -0.5
+                for entity in enities_with_motion
+            ),
+            lane_mask,
+        )
+
     def get_nearest_entity(
         self,
         mask: shapely.Geometry,
@@ -747,8 +793,12 @@ class MapTree:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
             reference (ShapelyEntity): Entity for the nearest distance calculation
-            min_coverage_percent (float, optional): Defaults to 0.0.
-            min_coverage_area (float, optional): Defaults to 0.0.
+            min_coverage_percent (float, optional):
+                How much of an entity has to be inside the collision mask in percent.
+                Defaults to 0.0.
+            min_coverage_area (float, optional):
+                How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
         Returns:
             Optional[Tuple[ShapelyEntity, float]]:
@@ -783,8 +833,12 @@ class MapTree:
         Args:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
-            min_coverage_percent (float, optional): Defaults to 0.0.
-            min_coverage_area (float, optional): Defaults to 0.0.
+            min_coverage_percent (float, optional):
+                How much of an entity has to be inside the collision mask in percent.
+                Defaults to 0.0.
+            min_coverage_area (float, optional):
+                How much of an entity has to be inside the collision mask in m2.
+                Defaults to 0.0.
 
         Returns:
             List[ShapelyEntity]: A list of entities that have at least

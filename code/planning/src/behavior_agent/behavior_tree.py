@@ -17,7 +17,6 @@ from behavior_agent.behaviors import (
     intersection,
     lane_change,
     leave_parking_space,
-    meta,
     overtake,
     topics2blackboard,
     unstuck_routine,
@@ -61,7 +60,6 @@ def grow_a_tree(role_name):
                                             ),
                                             intersection.Wait("Wait Intersection"),
                                             intersection.Enter("Enter Intersection"),
-                                            intersection.Leave("Leave Intersection"),
                                         ],
                                     ),
                                 ],
@@ -80,8 +78,7 @@ def grow_a_tree(role_name):
                                         children=[
                                             lane_change.Approach("Approach Change"),
                                             lane_change.Wait("Wait Change"),
-                                            lane_change.Enter("Enter Change"),
-                                            lane_change.Leave("Leave Change"),
+                                            lane_change.Change("Execute Change"),
                                         ],
                                     ),
                                 ],
@@ -114,10 +111,6 @@ def grow_a_tree(role_name):
         ],
     )
 
-    metarules = Sequence(
-        "Meta",
-        children=[meta.Start("Start"), rules, meta.End("End")],
-    )
     root = Parallel(
         "Root",
         children=[
@@ -125,7 +118,7 @@ def grow_a_tree(role_name):
             speed_alteration.SpeedAlterationSetupBehavior(),
             topics2blackboard.create_node(role_name),
             DynReconfigImportBehavior(),
-            metarules,
+            rules,
             speed_alteration.SpeedAlterationRequestBehavior(),
             debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),
@@ -158,12 +151,21 @@ class DynReconfigImportBehavior(py_trees.Behaviour):
         if self.config is None:
             return py_trees.common.Status.FAILURE
 
-        for param in BEHAVIORConfig.config_description["parameters"]:
+        self._handle_parameter_group(BEHAVIORConfig.config_description)
+
+        return py_trees.common.Status.SUCCESS
+
+    def _handle_parameter_group(self, group):
+        if self.config is None:
+            return
+        for param in group["parameters"]:
             param_name = param["name"]
             self.blackboard.set(
                 f"/params/{param_name}", self.config[param_name], overwrite=True
             )
-        return py_trees.common.Status.SUCCESS
+
+        for subgroup in group["groups"]:
+            self._handle_parameter_group(subgroup)
 
 
 class BehaviorTree(CompatibleNode):
