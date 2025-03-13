@@ -1,5 +1,19 @@
 # mapping_common.mask module
 
+- [mapping_common.mask module]()
+  - [`curve_to_polygon()`](#mapping_common.mask.curve_to_polygon)
+  - [`split_line_at()`](#mapping_common.mask.split_line_at)
+  - [`clamp_line()`](#mapping_common.mask.clamp_line)
+  - [`ros_path_to_line()`](#mapping_common.mask.ros_path_to_line)
+  - [`line_to_ros_path()`](#mapping_common.mask.line_to_ros_path)
+  - [`build_trajectory()`](#mapping_common.mask.build_trajectory)
+  - [`build_trajectory_shape()`](#mapping_common.mask.build_trajectory_shape)
+  - [`project_plane()`](#mapping_common.mask.project_plane)
+  - [`build_lead_vehicle_collision_masks()`](#mapping_common.mask.build_lead_vehicle_collision_masks)
+  - [`build_trajectory_from_start()`](#mapping_common.mask.build_trajectory_from_start)
+  - [`point_along_line_angle()`](#mapping_common.mask.point_along_line_angle)
+  - [`create_lane_box()`](#mapping_common.mask.create_lane_box)
+
 <a id="mapping_common.mask.curve_to_polygon"></a>
 
 ### mapping_common.mask.curve_to_polygon(line, width)

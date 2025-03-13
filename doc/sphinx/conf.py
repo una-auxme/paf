@@ -45,5 +45,8 @@ def setup(app):
 # autodoc config:
 autodoc_class_signature = "mixed"
 autodoc_member_order = "bysource"
+autodoc_preserve_defaults = True
 
+# markdown config
+markdown_bullet = "-"
 markdown_anchor_signatures = True

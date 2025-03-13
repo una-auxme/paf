@@ -1,5 +1,10 @@
 # mapping_common.hero module
 
+- [mapping_common.hero module]()
+  - [`HERO_CAR_LENGTH`](#mapping_common.hero.HERO_CAR_LENGTH)
+  - [`HERO_CAR_WIDTH`](#mapping_common.hero.HERO_CAR_WIDTH)
+  - [`create_hero_entity()`](#mapping_common.hero.create_hero_entity)
+
 <a id="mapping_common.hero.HERO_CAR_LENGTH"></a>
 
 ### mapping_common.hero.HERO_CAR_LENGTH *: float* *= 4.92506*

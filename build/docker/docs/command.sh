@@ -4,7 +4,7 @@ set -e
 cd /workspace
 
 # Use this command to generate the base .rst files in the documentation.
-sphinx-apidoc -o ./doc/sphinx/ ./code/mapping/ext_modules/mapping_common sphinx-apidoc --separate --force --module-first
+sphinx-apidoc -o ./doc/sphinx/ ./code/mapping/ext_modules/mapping_common --separate --module-first
 
 # Rebuild mapping_common without compilation
 echo "True" > ./code/mapping/ext_modules/.debug_enabled

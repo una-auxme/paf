@@ -1,5 +1,9 @@
 # mapping_common.markers module
 
+- [mapping_common.markers module]()
+  - [`debug_marker()`](#mapping_common.markers.debug_marker)
+  - [`debug_marker_array()`](#mapping_common.markers.debug_marker_array)
+
 <a id="mapping_common.markers.debug_marker"></a>
 
 ### mapping_common.markers.debug_marker(base, frame_id='hero', position_z=None, transform=None, offset=None, color=None, scale_z=None)
