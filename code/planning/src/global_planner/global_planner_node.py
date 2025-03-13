@@ -111,7 +111,7 @@ class PrePlanner(CompatibleNode):
             self.global_route_backup = data
             return
 
-        if self.agent_pos is None or self.agent_ori is None:
+        if self.agent_pos is None or self.agent_ori is None or data.poses is None:
             self.logwarn(
                 "PrePlanner: global route got updated before current "
                 "pose... therefore there is no pose to start with"
@@ -134,6 +134,8 @@ class PrePlanner(CompatibleNode):
             return
 
         # get the first turn command (1, 2, or 3)
+        x_turn = None
+        y_turn = None
         ind = 0
         for i, opt in enumerate(data.road_options):
             if opt == LEFT or opt == RIGHT or opt == FORWARD:
@@ -141,6 +143,10 @@ class PrePlanner(CompatibleNode):
                 y_turn = data.poses[i].position.y
                 ind = i
                 break
+        if x_turn is None or y_turn is None:
+            self.logwarn("PrePlanner: Did not find first turn command")
+            self.global_route_backup = data
+            return
         # if first target point is turning point
         if x_target == x_turn and y_target == y_turn:
             x_target = None
@@ -213,6 +219,7 @@ class PrePlanner(CompatibleNode):
         self.path_backup.header.frame_id = "global"
         self.path_backup.poses = stamped_poses
         self.path_pub.publish(self.path_backup)
+
         self.global_route_backup = None
         self.logwarn("PrePlanner: published trajectory")
 
@@ -297,8 +304,8 @@ class PrePlanner(CompatibleNode):
             )
             try:
                 self.update_global_route(self.global_route_backup)
-            except Exception:
-                self.logerr("Preplanner failed -> restart")
+            except Exception as e:
+                self.logerr(f"Preplanner failed: {e}")
 
     def dev_load_world_info(self):
         file_path = "/workspace/code/planning/src/global_planner/string_world_info.txt"
