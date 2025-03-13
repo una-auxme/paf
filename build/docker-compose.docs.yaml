@@ -1,0 +1,15 @@
+# compose file for building the mapping documentation
+# with sphinx
+
+services:
+  docs:
+    build:
+      dockerfile: build/docker/docs/Dockerfile
+      context: ../
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${USER_UID}
+        USER_GID: ${USER_GID}
+    volumes:
+      - ../:/workspace
+    command: /command.sh
