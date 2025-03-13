@@ -707,7 +707,9 @@ class OpenDriveConverter:
             last_width = self.width
             step_size = STEP_SIZE
             ind = widths.index(last_width)
-            if ind == len(widths) - 1:
+            if (command == CHANGE_LEFT and ind == 0) or (
+                command == CHANGE_RIGHT and ind == len(widths) - 1
+            ):
                 return points_calc
 
             new_width = widths[ind + width_dir]
