@@ -13,53 +13,64 @@ The Unstuck Behavior works with two Timers:
 1. ```Wait Stuck Timer```
 2. ```Stuck Timer```
 
-Whenever we are driving at some velocity > 0.1 the timers are reset.
+Whenever we are driving at some velocity > 0.1 m/s the timers are reset.
 
-Also if we are in a planned waiting behaviors (currently bs.int_wait.name, bs.lc_wait.name, bs.ot_wait_stopped) or don't have set a behavior yet
-(means we are in unparking but not yet started driving -> Wait for lane free) the stuck timer gets reset. This will prevent triggering the unstuck
-routine when we still wait scheduled. As we still have the wait stuck timer there is no chance to get in a 'hard' stuck here when something went
-wrong in the waiting behaviors.
+The Wait Stuck Timer duration until the Unstuck gets triggered is based on the current behavior published by curr_behavior:
 
-If we get into a situation where the velocity <= 0.1 the timers start running.
+| Duration (sec) | Behavior |
+| -------------- | -------- |
+| 60             | int_wait, int_app_to_stop (Wait for green light at intersection) |
+| 30             | lc_wait, ot_wait, None = no published behavior in parking space (Wait for lane free)|
+| 15             | Default (all other behaviors) |
+| 5              | Unstuck executed before, not moved for more than 15 meter (still stuck) |
 
-We can then either trigger the Wait Stuck Timer condition (currently 60 secs)
-after not moving for longer than that duration -> Wait Stuck
+The different durations will prevent triggering the unstuck routine too fast when we have a scheduled wait.
+
+If we get into a situation where the velocity <= 0.1 m/s the timers start running.
+
+We can then either trigger the Wait Stuck Timer condition
+(duration see table above) after not moving for longer than that duration -> Wait Stuck
 
 OR
 
-we trigger the quicker Stuck Timer condition (currently 20 secs), after not moving for longer than that duration WHILE being told to move -> Stuck.
+we trigger the quicker Stuck Timer condition (currently 8 sec), after not moving for longer than that duration WHILE being told to move -> Stuck.
 
 Once one of the Timers is triggered we do the following:
 
-1. **Reset** the planned **overtake** trajectory and **remove** all added **stopmakers**
+1. **Drive reverse:** \
+  Based on the count how many times the Unstuck routine was already executed while not moved for more than 15 meters (still stuck) we do following:
+  
+    | Unstuck Count | Behavior |
+    | -------------- | -------- |
+    | 0             | Do nothing additional. |
+    | 1             | Reset the planned overtake trajectory and remove all added stopmakers. |
+    | 2             | Add an overtake 2.75m to the left. |
+    | 3              | Add an ovetake 1.00m to the right. reset Unstuck Count to 0. |
 
-2. **Inverting steering angle** that points towards the trajectory\
-This turns the car towards the trajectory, while reversing\
-This happens inside the [vehicle_controller.py](/doc/control/vehicle_controller.md)
+   While driving in reverse:
 
-3. Setting a n**egative target_velocity** with the **add_speed_override() Service**
-
-4. **Calculate negative throttle** with PID\
-This happens inside the [velocity_controller.py](/doc/control/velocity_controller.md)
-
-5. **While driving in reverse**
+    0. **Invert steering angle** that it points towards the trajectory.
+    This turns the car towards the trajectory, while reversing
     1. Check if there is an obstacle inside the obstacle mask
-    2. if there is none, then reverse until the **UNSTUCK_CLEAR_DISTANCE** is reached, or an obstacle appears inside the collision mask.
-    3. If an obstacle is detected but the car has'nt moved more than 0,5m
+    2. If there is none, then reverse slowly (2 m/s) via the add_speed_override() service, until the **UNSTUCK_CLEAR_DISTANCE** is reached, or an obstacle appears inside the collision mask.
+    3. If an obstacle is detected but the car has'nt moved more than 0,5 m
     -> keep reversing.\
     Otherwise the car could be stuck forever, because it is not moving at all.
     4. If there is an obstacle or the **UNSTUCK_CLEAR_DISTANCE** is reached\
-    -> Set speed to 0.001 -> this triggers braking and standing still inside the **velocity_controller**
-    5. Wait until the remaining time for this behaviour is over
-    6. If the car still is in a stuck position\
-    -> wait until the unstuck is detected and called again
+    -> Set speed to 0 m/s via the add_speed_override() service -> this triggers braking and standing still.
+2. **Drive forward:** \
+  After driving backward we try driving forward. This step is preventing any stop marker appear directly after driven backward or trajectory gets changed when other behaviors gets triggered again. Directly appeared stop marker or planned overtakes could lead directly to a new unstuck again!
+
+The duration of the driving backward and driving forward each is defined by **UNSTUCK_DRIVE_DURATION**. Currently, every step gets executed for 5 seconds.
 
 This behavior is ONLY implememted to improve route completion and make debugging easier. It is the last fallback behavior when every other planning component can not get us back on track.
 
 Files influenced by this behavior are:
 
 - Planning:
-  - [motion_planning.py](/code/planning/src/local_planner/motion_planning.py), for the target_speed and overtake
+  - [ACC.py](/code/planning/src/local_planner/ACC.py), for the target_speed, add_speed_override() service
+  - [motion_planning.py](/code/planning/src/local_planner/motion_planning.py), for the overtake and its service
   - [behavior_names.py](/code/planning/src/behavior_agent/behavior_names.py), for the behavior names
 - Control:
-  - [vehicle_controller.py](/doc/acting/vehicle_controller.md), because of inverting the pure pursuit steering angle for us_unstuck behavior
+  - [velocity_controller.py](/code/control/src/velocity_controller.py), because of driving backwards
+  - [pure_pursuit_controller.py](/code/control/src/pure_pursuit_controller.py), because of inverting the pure pursuit steering angle for us_unstuck behavior
