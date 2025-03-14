@@ -51,13 +51,13 @@ Once one of the Timers is triggered we do the following:
 
     0. **Invert steering angle** that it points towards the trajectory.
     This turns the car towards the trajectory, while reversing
-    1. Check if there is an obstacle inside the obstacle mask
-    2. If there is none, then reverse slowly (2 m/s) via the add_speed_override() service, until the **UNSTUCK_CLEAR_DISTANCE** is reached, or an obstacle appears inside the collision mask.
-    3. If an obstacle is detected but the car has'nt moved more than 0,5 m
+    1. **Check** if there is an **obstacle** inside the obstacle mask
+    2. If there is none, then **reverse slowly** (2 m/s) via the add_speed_override() service, until the **UNSTUCK_CLEAR_DISTANCE** is reached, or an obstacle appears inside the collision mask.
+    3. If an **obstacle** is **detected** but the car has'nt moved more than 0,5 m
     -> keep reversing.\
     Otherwise the car could be stuck forever, because it is not moving at all.
-    4. If there is an obstacle or the **UNSTUCK_CLEAR_DISTANCE** is reached\
-    -> Set speed to 0 m/s via the add_speed_override() service -> this triggers braking and standing still.
+    4. If there is an **obstacle** or the **UNSTUCK_CLEAR_DISTANCE** is reached\
+    -> Set speed to 0 m/s via the add_speed_override() service -> this triggers braking and **standing still**.
 2. **Drive forward:** \
   After driving backward we try driving forward. This step is preventing any stop marker appear directly after driven backward or trajectory gets changed when other behaviors gets triggered again. Directly appeared stop marker or planned overtakes could lead directly to a new unstuck again!
 
