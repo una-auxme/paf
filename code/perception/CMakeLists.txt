@@ -14,7 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   rosout
   rospy
   std_msgs
+  geometry_msgs  
   message_generation
+  dynamic_reconfigure
 )
 
 
@@ -51,7 +53,6 @@ catkin_python_setup()
 add_message_files(
   FILES
   Waypoint.msg
-  LaneChange.msg
   TrafficLightState.msg
   MinDistance.msg
 )
@@ -74,6 +75,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -91,10 +93,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  config/TrafficLight.cfg
+)
 
 ###################################
 ## catkin specific configuration ##

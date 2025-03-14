@@ -1,0 +1,5 @@
+manual_override_active: False
+manual_steer: 0.0
+manual_throttle: 0.0
+
+loop_sleep_time: 0.2

@@ -30,13 +30,21 @@ class Passthrough(CompatibleNode):
     # Topics for velocity controller.
     target_velocity = TopicMapping(
         pub_name="/paf/acting/target_velocity",
-        sub_name=f"/paf/{role_name}/target_velocity",
+        sub_name=f"/paf/{role_name}/acc_velocity",
         topic_type=Float32,
     )
+
+    # Publish acc_velocity as paf/hero/target_velocity
+    acc_to_target_velocity = TopicMapping(
+        pub_name="/paf/hero/target_velocity",
+        sub_name=f"/paf/{role_name}/acc_velocity",
+        topic_type=Float32,
+    )
+
     # Topics for steering controllers
     trajectory = TopicMapping(
-        pub_name="/paf/acting/trajectory",
-        sub_name=f"/paf/{role_name}/trajectory",
+        pub_name="/paf/acting/trajectory_local",
+        sub_name=f"/paf/{role_name}/trajectory_local",
         topic_type=Path,
     )
     position = TopicMapping(
@@ -50,7 +58,13 @@ class Passthrough(CompatibleNode):
         topic_type=Float32,
     )
 
-    mapped_topics = [target_velocity, trajectory, position, heading]
+    mapped_topics = [
+        target_velocity,
+        acc_to_target_velocity,
+        trajectory,
+        position,
+        heading,
+    ]
 
     def __init__(self):
         self.publishers: Dict[str, Publisher] = {}

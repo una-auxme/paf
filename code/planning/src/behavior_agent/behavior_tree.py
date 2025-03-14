@@ -1,20 +1,32 @@
 #!/usr/bin/env python
 
-import functools
+from typing import Optional, Dict
+import sys
+
+import py_trees
+from py_trees.composites import Parallel, Selector, Sequence
 from py_trees.behaviours import Running
 import py_trees_ros
+
 import rospy
-import sys
-from behaviours import (
+import ros_compatibility as roscomp
+from ros_compatibility.node import CompatibleNode
+
+from behavior_agent.behaviors import (
+    cruise,
     intersection,
     lane_change,
+    leave_parking_space,
     overtake,
-    maneuvers,
-    meta,
-    road_features,
     topics2blackboard,
+    unstuck_routine,
+    debug_markers,
+    speed_alteration,
 )
-from py_trees.composites import Parallel, Selector, Sequence
+
+
+from planning.cfg import BEHAVIORConfig
+from dynamic_reconfigure.server import Server
 
 """
 Source: https://github.com/ll7/psaf2
@@ -29,17 +41,17 @@ def grow_a_tree(role_name):
             Selector(
                 "Priorities",
                 children=[
-                    maneuvers.UnstuckRoutine("Unstuck Routine"),
+                    unstuck_routine.UnstuckRoutine("Unstuck Routine"),
                     Selector(
                         "Road Features",
                         children=[
-                            maneuvers.LeaveParkingSpace("Leave Parking Space"),
+                            leave_parking_space.LeaveParkingSpace(
+                                "Leave Parking Space"
+                            ),
                             Sequence(
                                 "Intersection",
                                 children=[
-                                    road_features.IntersectionAhead(
-                                        "Intersection Ahead?"
-                                    ),
+                                    intersection.Ahead("Intersection Ahead?"),
                                     Sequence(
                                         "Intersection Actions",
                                         children=[
@@ -48,7 +60,6 @@ def grow_a_tree(role_name):
                                             ),
                                             intersection.Wait("Wait Intersection"),
                                             intersection.Enter("Enter Intersection"),
-                                            intersection.Leave("Leave Intersection"),
                                         ],
                                     ),
                                 ],
@@ -61,22 +72,26 @@ def grow_a_tree(role_name):
                             Sequence(
                                 "Laneswitch",
                                 children=[
-                                    road_features.LaneChangeAhead("Lane Change Ahead?"),
+                                    lane_change.Ahead("Lane Change Ahead?"),
                                     Sequence(
                                         "Lane Change Actions",
                                         children=[
                                             lane_change.Approach("Approach Change"),
                                             lane_change.Wait("Wait Change"),
-                                            lane_change.Enter("Enter Change"),
-                                            lane_change.Leave("Leave Change"),
+                                            lane_change.Change("Execute Change"),
                                         ],
                                     ),
                                 ],
                             ),
+                        ],
+                    ),
+                    Selector(
+                        "Overtaking",
+                        children=[
                             Sequence(
-                                "Overtaking",
+                                "Overtake",
                                 children=[
-                                    road_features.OvertakeAhead("Overtake Ahead?"),
+                                    overtake.Ahead("Overtake Ahead?"),
                                     Sequence(
                                         "Overtake Actions",
                                         children=[
@@ -90,52 +105,116 @@ def grow_a_tree(role_name):
                             ),
                         ],
                     ),
-                    maneuvers.Cruise("Cruise"),
+                    cruise.Cruise("Cruise"),
                 ],
             )
         ],
     )
 
-    metarules = Sequence(
-        "Meta",
-        children=[meta.Start("Start"), rules, meta.End("End")],
-    )
     root = Parallel(
         "Root",
         children=[
+            debug_markers.DebugMarkerBlackboardSetupBehavior(),
+            speed_alteration.SpeedAlterationSetupBehavior(),
             topics2blackboard.create_node(role_name),
-            metarules,
+            DynReconfigImportBehavior(),
+            rules,
+            speed_alteration.SpeedAlterationRequestBehavior(),
+            debug_markers.DebugMarkerBlackboardPublishBehavior(),
             Running("Idle"),
         ],
     )
     return root
 
 
-def shutdown(behaviour_tree):
-    behaviour_tree.interrupt()
+class DynReconfigImportBehavior(py_trees.Behaviour):
+    """Imports the config into the blackboard
+
+    Imports variables from the dynamic reconfigure config (config/behavior_config.yaml)
+    into the blackboard.
+
+    Parameters are available as "/params/*parameter_name*"
+    """
+
+    config: Optional[Dict] = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(type(self).__name__, *args, **kwargs)
+        self.blackboard = py_trees.blackboard.Blackboard()
+        Server(BEHAVIORConfig, self.dynamic_reconfigure_callback)
+
+    def dynamic_reconfigure_callback(self, config: Dict, level):
+        self.config = config
+        return config
+
+    def update(self):
+        if self.config is None:
+            return py_trees.common.Status.FAILURE
+
+        self._handle_parameter_group(BEHAVIORConfig.config_description)
+
+        return py_trees.common.Status.SUCCESS
+
+    def _handle_parameter_group(self, group):
+        if self.config is None:
+            return
+        for param in group["parameters"]:
+            param_name = param["name"]
+            self.blackboard.set(
+                f"/params/{param_name}", self.config[param_name], overwrite=True
+            )
+
+        for subgroup in group["groups"]:
+            self._handle_parameter_group(subgroup)
+
+
+class BehaviorTree(CompatibleNode):
+
+    def __init__(self):
+        super().__init__("BehaviorTree")
+
+        role_name = self.get_param("~role_name", "hero")
+        root = grow_a_tree(role_name)
+        self.behavior_tree = py_trees_ros.trees.BehaviourTree(root)
+
+        if not self.behavior_tree.setup(timeout=15):
+            rospy.logerr("Behavior tree Setup failed.")
+            sys.exit(1)
+
+        rospy.loginfo("Behavior tree setup done.")
+
+        self.rate = self.get_param("~tick_rate", 5.3)
+        self.new_timer(1.0 / self.rate, self.tick_tree_handler)
+
+    def tick_tree_handler(self, timer_event=None):
+        try:
+            self.tick_tree()
+        except Exception as e:
+            rospy.logfatal(e)
+
+    def tick_tree(self, timer_event=None):
+        self.behavior_tree.tick()
+
+    def shutdown(self):
+        self.behavior_tree.interrupt()
 
 
 def main():
     """
     Entry point for the demo script.
     """
-    rospy.init_node("behavior_tree", anonymous=True)
-    role_name = rospy.get_param("~role_name", "hero")
-    root = grow_a_tree(role_name)
-    behaviour_tree = py_trees_ros.trees.BehaviourTree(root)
-    rospy.on_shutdown(functools.partial(shutdown, behaviour_tree))
+    roscomp.init("BehaviorTree")
 
-    if not behaviour_tree.setup(timeout=15):
-        rospy.logerr("Tree Setup failed")
-        sys.exit(1)
-    rospy.loginfo("tree setup worked")
-    r = rospy.Rate(5.3)
-    while not rospy.is_shutdown():
-        behaviour_tree.tick()
-        try:
-            r.sleep()
-        except rospy.ROSInterruptException:
-            pass
+    node = None
+    try:
+        node = BehaviorTree()
+        node.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if node is not None:
+            node.shutdown()
+        roscomp.shutdown()
 
 
 if __name__ == "__main__":

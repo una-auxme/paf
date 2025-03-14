@@ -12,6 +12,8 @@
 - [Joker Rules](./joker_rules_paf24.md)
 - [Sprint Review Meeting Guidelines](./sprint_review_meeting_guidelines.md)
   - [Sprint Summary Template](./sprint_summary_template.md)
+- [Final Presentation Guidelines](./final_presentation_paf24_information.md)
+- [Documentation Deadline](./documentation_deadline.md)
 
 ## Notes for Sprints
 

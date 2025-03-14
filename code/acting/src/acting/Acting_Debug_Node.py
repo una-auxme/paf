@@ -57,7 +57,7 @@ TRAJECTORY_TYPE = 3
 PRINT_AFTER_TIME = 10.0  # How long after Simulationstart to print data
 PRINT_TRAJECTORY = False  # True = prints the published trajectory
 PRINT_VELOCITY_DATA = False  # True = print target and current velocities
-PRINT_STEERING_DATA = False  # True = print stanley and pp steerings
+PRINT_STEERING_DATA = False  # True = print pp steerings
 
 
 class Acting_Debug_Node(CompatibleNode):
@@ -132,14 +132,6 @@ class Acting_Debug_Node(CompatibleNode):
             qos_profile=1,
         )
 
-        # Subscriber for Stanley_steer
-        self.stanley_steer_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/stanley_steer",
-            self.__get_stanley_steer,
-            qos_profile=1,
-        )
-
         # Subscriber for PurePursuit_steer
         self.pure_pursuit_steer_sub: Subscriber = self.new_subscription(
             Float32,
@@ -174,7 +166,6 @@ class Acting_Debug_Node(CompatibleNode):
         self.__throttles = []
         self.__current_headings = []
         self.__purepursuit_steers = []
-        self.__stanley_steers = []
         self.__vehicle_steers = []
         self.positions = []
 
@@ -328,11 +319,6 @@ class Acting_Debug_Node(CompatibleNode):
     def __get_throttle(self, data: Float32):
         self.__throttles.append(float(data.data))
 
-    def __get_stanley_steer(self, data: Float32):
-        r = 1 / (math.pi / 2)
-        steering_float = float(data.data) * r
-        self.__stanley_steers.append(steering_float)
-
     def __get_purepursuit_steer(self, data: Float32):
         r = 1 / (math.pi / 2)
         steering_float = float(data.data) * r
@@ -422,13 +408,17 @@ class Acting_Debug_Node(CompatibleNode):
                 if PRINT_STEERING_DATA:
                     print(">> PUREPURSUIT STEERS <<")
                     print(self.__purepursuit_steers)
-                    print(">> STANLEY STEERS <<")
-                    print(self.__stanley_steers)
                     print(">> ACTUAL POSITIONS <<")
                     print(self.positions)
                 print(">>>>>>>>>>>> DATA <<<<<<<<<<<<<<")
 
-        self.new_timer(self.control_loop_rate, loop)
+        def loop_handler(timer_event=None):
+            try:
+                loop()
+            except Exception as e:
+                rospy.logfatal(e)
+
+        self.new_timer(self.control_loop_rate, loop_handler)
         self.spin()
 
 

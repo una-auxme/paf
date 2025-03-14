@@ -1,0 +1,11 @@
+# If the overtake should end at end_pos. If False, will end the overtake immediately
+bool has_end_pos
+# Global end position
+geometry_msgs/Point end_pos
+# Transition length away from the overtake
+float32 end_transition_length
+
+---
+
+string msg
+bool success

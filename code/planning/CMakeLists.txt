@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   message_generation
+  dynamic_reconfigure
 )
 
 roslaunch_add_file_check(launch)
@@ -25,6 +26,11 @@ roslaunch_add_file_check(launch)
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 catkin_python_setup()
+
+generate_dynamic_reconfigure_options(
+  config/ACC.cfg
+  config/BEHAVIOR.cfg
+)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -51,18 +57,18 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   NavigationPoint.msg
-   Trajectory.msg
- )
+# add_message_files(
+#   FILES
+# )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  StartOvertake.srv
+  EndOvertake.srv
+  OvertakeStatus.srv
+  SpeedAlteration.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,12 +78,12 @@ catkin_python_setup()
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-   perception
-   geometry_msgs
- )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  perception
+  geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

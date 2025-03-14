@@ -3,7 +3,7 @@ from math import cos, degrees, sin
 from typing import Tuple
 from xml.etree import ElementTree as eTree
 
-import help_functions
+from global_planner import help_functions
 
 # Check small distance between two points
 SMALL_DIST = 0.001
@@ -500,7 +500,7 @@ class OpenDriveConverter:
             target = (x_target, y_target)
             still_calculated = False
             if self.pt is not None:
-                for i in range(len(self.pt[0])):
+                for i in range(min(len(self.pt[0]), len(self.pt[1]))):
                     point = (self.pt[0][i], self.pt[1][i])
                     dist = help_functions.euclid_dist(point, target)
                     if dist < TARGET_DIFF:
@@ -586,7 +586,7 @@ class OpenDriveConverter:
                 widths = self.lane_widths(self.road_id)
                 old_w = self.lane_widths(self.old_id)
                 # if previous lane width was the rightmost one
-                if old_w.index(self.width) + 1 == len(old_w):
+                if self.width in old_w and old_w.index(self.width) + 1 == len(old_w):
                     last_p = (self.pt[0][-1], self.pt[1][-1])
                     min_diff = float("inf")
                     w_min = None

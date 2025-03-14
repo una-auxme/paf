@@ -1,0 +1,16 @@
+Kp: 0.5
+Ki: 1.2
+T_gap: 1.9
+d_min: 0.7
+
+hard_approach_distance: 1.0
+hard_approach_speed: 1.0
+
+acceleration_factor: 1.0
+
+curve_line_angle: 15.0
+min_curve_distance: 2.0
+min_curve_speed: 4.0
+max_curve_distance: 50.0
+max_curve_speed: 30.0
+

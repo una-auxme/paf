@@ -4,6 +4,8 @@
 
 build/config.local.yml
 
+
+code/bags
 code/build
 code/log
 code/simulation_results.json
@@ -13,3 +15,4 @@ code/output
 __pycache__/
 
 *.tsv
+code/yolo11n-seg.pt

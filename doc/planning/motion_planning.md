@@ -35,11 +35,11 @@ This node subscribes to the following topics:
 - `/paf/hero/current_heading`: Subscribes to the filtered heading of the ego vehicle.
 - `/paf/hero/current_pos`: Subscribes to the filtered position of our car.
 - `/paf/hero/current_wp`: Subscribes to the current waypoint.
-- `/paf/hero/lane_change_distance`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
+- `/paf/hero/lane_change`: Subscribes to the Carla Waypoint to check if the next Waypoint is a lane change.
 - `/paf/hero/speed_limit`: Subscribes to the speed limit.
 - `/paf/hero/trajectory_global`: Subscribes to the global trajectory, which is calculated at the start of the simulation.
 - `/paf/hero/unstuck_distance`: Subscribes to the distance travelled by the unstuck maneuver.
-- `/paf/hero/waypoint_distance`: Subscribes to the Carla Waypoint to get the new road option.
+- `/paf/hero/current_waypoint`: Subscribes to the Carla Waypoint to get the new road option.
 
 ### Published Topics
 
@@ -59,7 +59,3 @@ To run this node insert the following statement in the [planning.launch](../../c
            <param name="control_loop_rate" value="0.1" />
 </node>
 ```
-
-The motion planning node listens to the following debugging topics:
-
-- `/paf/hero/Spawn_car`: Can spawn a car on the first straight in the dev environment, if this message is manually published.
