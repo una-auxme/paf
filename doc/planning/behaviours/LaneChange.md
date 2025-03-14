@@ -2,21 +2,22 @@
 
 **Summary:** This file explains the Lane Change behavior.
 
-- [Lane Change Behavior](#lanechange-behavior)
-  - [General](#general)
-  - [Lane Change Ahead](#lanechange-ahead)
-  - [Approach](#approach)
-  - [Wait](#wait)
-  - [Enter](#enter)
-  - [Leave](#leave)
+- [General](#general)
+- [Ahead](#ahead)
+- [Approach](#approach)
+- [Wait](#wait)
+- [Change](#change)
 
 ## General
 
-This behaviour executes a lane change. It slows the vehicle down until the lane change point is reached and then proceeds to switch lanes.
+This behaviour executes a lane change. It proceeds an early lane change when the change lane is free. It also detects if we are already on the desired lane (e.g. thorugh an overtake). \
+It slows the vehicle down when the lane change point is reached (and no change occured till then) and then proceeds to switch lanes. \
+The behavior detects if a change to left or right is planned.
 
-## Lane Change ahead
+## Ahead
 
-Checks whether the next waypoint is a lane change and inititates the lane change sequence accordingly.
+Checks whether the next waypoint is a lane change and inititates the lane change sequence accordingly. \
+When a lane change is ahead, a stop marker gets published at its position, preventing our car to drive on the change lane unchecked. This avoids crashed with traffic that is driving on the change lane.
 
 ## Approach
 
@@ -28,12 +29,14 @@ Once the car is within a set distance of the virtual stop line and not blocked i
 
 ## Wait
 
-Waits at the lane change point until the lane change is not blocked (not implemented).
+Waits at the lane change point until the lane change is not blocked. This is executed with the
+help of the is_lane_free function. \
+Only wait when we are still on the old lane (not changed in approach before as the change lane was not free till now).
 
-## Enter
+## Change
 
-Inititates the lane change with 20 km/h and continues driving on the next lane until the lane change waypoint is far enough away.
+Executes the lane change. This will delete the stop marker that prevented driving to the next lane. As the change is only executed after the lane is free the change should be collision free.
 
-## Leave
+When the car is already on its desired lane when entering the change state, this subbehavior only is only responsible for a correct end of the lane change behavior (see below).
 
-Simply exits the behaviour.
+As soon as we moved more than five meters away from the global lane change position (from the waypoint message) the change is considered as done and the whole lane change behavior completes.
