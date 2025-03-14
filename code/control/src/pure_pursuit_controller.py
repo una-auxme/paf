@@ -162,6 +162,9 @@ class PurePursuitController(CompatibleNode):
         target_vector = front_point.vector_to(target_point)
         # Get the error between current heading and target heading
         alpha = Vector2.forward().angle_to(target_vector)
+        # Limit alpha to +- pi/2 to avoid having a reduced steering angle
+        # when alpha is too big
+        alpha = min(max(-math.pi * 0.5, alpha), math.pi * 0.5)
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
         steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
         steering_angle = self.K_PUB * steering_angle  # Needed for unknown reason

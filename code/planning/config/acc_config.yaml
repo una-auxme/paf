@@ -3,7 +3,7 @@ Ki: 1.2
 T_gap: 1.9
 d_min: 0.7
 
-hard_approach_distance: 1.0
+hard_approach_distance: 1.5
 hard_approach_speed: 1.0
 
 acceleration_factor: 1.0

@@ -1,6 +1,6 @@
 import copy
 from math import cos, degrees, sin
-from typing import Tuple
+from typing import Tuple, Optional
 from xml.etree import ElementTree as eTree
 
 from global_planner import help_functions
@@ -360,8 +360,8 @@ class OpenDriveConverter:
         y_target: float,
         x_next_t: float,
         y_next_t: float,
-        x_first_t: float,
-        y_first_t: float,
+        x_first_t: Optional[float],
+        y_first_t: Optional[float],
         yaw: int,
         command: int,
     ):
@@ -696,109 +696,82 @@ class OpenDriveConverter:
             or command == CHANGE_FOLLOW
         ):
             if command == CHANGE_LEFT:
-                points = reference_line
-                last_width = self.width
-                step_size = STEP_SIZE
-                ind = widths.index(last_width)
-                if ind == 0:
-                    return points_calc
-                new_width = widths[ind - 1]
-                self.width = new_width
-                diff = abs(last_width - new_width)
-                steps = int(diff / step_size)
-                first_widths = [last_width - step_size * i for i in range(steps)]
-                for i in range(len(first_widths)):
-                    p1_x = points[0][index + i]
-                    p1_y = points[1][index + i]
-                    p2_x = points[0][index + i + 1]
-                    p2_y = points[1][index + i + 1]
-                    if i != len((points[0])) - 2:
-                        p3_x = points[0][index + i + 2]
-                        p3_y = points[1][index + i + 2]
-                    point, v = self.update_one_point(
-                        p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, first_widths[i]
-                    )
-                    points_calc[0][index + i] = point[0]
-                    points_calc[1][index + i] = point[1]
-                for i in range(index + len(first_widths), len(points[0]) - 1):
-                    p1_x = points[0][i]
-                    p1_y = points[1][i]
-                    p2_x = points[0][i + 1]
-                    p2_y = points[1][i + 1]
-                    if i != len((points[0])) - 2:
-                        p3_x = points[0][i + 2]
-                        p3_y = points[1][i + 2]
-                    else:
-                        p3_x = points[0][-1]
-                        p3_y = points[1][-1]
-                    point, v = self.update_one_point(
-                        p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, new_width
-                    )
-                    points_calc[0][i] = point[0]
-                    points_calc[1][i] = point[1]
-                point, v = self.update_one_point(
-                    p2_x,
-                    p2_y,
-                    target_x,
-                    target_y,
-                    target_x,
-                    target_y,
-                    direction,
-                    new_width,
-                )
-                points_calc[0][i + 1] = point[0]
-                points_calc[1][i + 1] = point[1]
-            # change lane right
+                width_dir = -1
             elif command == CHANGE_RIGHT:
-                points = reference_line
-                last_width = self.width
-                step_size = STEP_SIZE
-                ind = widths.index(last_width)
-                if ind == len(widths) - 1:
-                    return points_calc
-                new_width = widths[ind + 1]
-                self.width = new_width
-                diff = abs(last_width - new_width)
-                steps = int(diff / step_size)
-                first_widths = [last_width + step_size * i for i in range(steps)]
-                for i in range(len(first_widths)):
-                    p1_x = points[0][index + i]
-                    p1_y = points[1][index + i]
-                    p2_x = points[0][index + i + 1]
-                    p2_y = points[1][index + i + 1]
-                    if i != len((points[0])) - 2:
-                        p3_x = points[0][index + i + 2]
-                        p3_y = points[1][index + i + 2]
-                    point, v = self.update_one_point(
-                        p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, first_widths[i]
-                    )
-                    points_calc[0][index + i] = point[0]
-                    points_calc[1][index + i] = point[1]
-                for i in range(index + len(first_widths), len(points[0]) - 1):
-                    p1_x = points[0][i]
-                    p1_y = points[1][i]
-                    p2_x = points[0][i + 1]
-                    p2_y = points[1][i + 1]
-                    if i != len((points[0])) - 2:
-                        p3_x = points[0][i + 2]
-                        p3_y = points[1][i + 2]
-                    point, v = self.update_one_point(
-                        p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, new_width
-                    )
-                    points_calc[0][i] = point[0]
-                    points_calc[1][i] = point[1]
+                width_dir = 1
+            else:
+                return points_calc
+
+            points = reference_line
+            max_point_range = len(points[0]) - index - 1
+            last_width = self.width
+            step_size = STEP_SIZE
+            ind = widths.index(last_width)
+            if (command == CHANGE_LEFT and ind == 0) or (
+                command == CHANGE_RIGHT and ind == len(widths) - 1
+            ):
+                return points_calc
+
+            new_width = widths[ind + width_dir]
+            self.width = new_width
+            diff = abs(last_width - new_width)
+            steps = int(diff / step_size)
+            first_widths = [
+                last_width + step_size * i * width_dir for i in range(steps)
+            ]
+
+            p2_x = None
+            p2_y = None
+            i = None
+            for i in range(min(len(first_widths), max_point_range)):
+                p1_x = points[0][index + i]
+                p1_y = points[1][index + i]
+                p2_x = points[0][index + i + 1]
+                p2_y = points[1][index + i + 1]
+                if i < len((points[0])) - 2:
+                    p3_x = points[0][index + i + 2]
+                    p3_y = points[1][index + i + 2]
+                else:
+                    p3_x = points[0][-1]
+                    p3_y = points[1][-1]
                 point, v = self.update_one_point(
-                    p2_x,
-                    p2_y,
-                    target_x,
-                    target_y,
-                    target_x,
-                    target_y,
-                    direction,
-                    new_width,
+                    p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, first_widths[i]
                 )
-                points_calc[0][i + 1] = point[0]
-                points_calc[1][i + 1] = point[1]
+                points_calc[0][index + i] = point[0]
+                points_calc[1][index + i] = point[1]
+            for i in range(index + len(first_widths), len(points[0]) - 1):
+                p1_x = points[0][i]
+                p1_y = points[1][i]
+                p2_x = points[0][i + 1]
+                p2_y = points[1][i + 1]
+                if i < len((points[0])) - 2:
+                    p3_x = points[0][i + 2]
+                    p3_y = points[1][i + 2]
+                else:
+                    p3_x = points[0][-1]
+                    p3_y = points[1][-1]
+                point, v = self.update_one_point(
+                    p1_x, p1_y, p2_x, p2_y, p3_x, p3_y, direction, new_width
+                )
+                points_calc[0][i] = point[0]
+                points_calc[1][i] = point[1]
+
+            if p2_x is None or p2_y is None or i is None:
+                return points_calc
+
+            point, v = self.update_one_point(
+                p2_x,
+                p2_y,
+                target_x,
+                target_y,
+                target_x,
+                target_y,
+                direction,
+                new_width,
+            )
+            points_calc[0][i + 1] = point[0]
+            points_calc[1][i + 1] = point[1]
+
         # passing a junction action
         else:
             if x_next_t is not None and y_next_t is not None:
@@ -1278,10 +1251,10 @@ class OpenDriveConverter:
 
     def get_initial_next_road_id(
         self,
-        predecessor: int,
-        successor: int,
-        x_target: float,
-        y_target: float,
+        predecessor: Optional[int],
+        successor: Optional[int],
+        x_target: Optional[float],
+        y_target: Optional[float],
         yaw: int,
     ):
         """Find the next road to drive

@@ -47,6 +47,8 @@ services:
       #- ROUTE=/workspace/code/routes/routes_stop_sign_pedestrian_cross.xml
       #- ROUTE=/workspace/code/routes/routes_highway.xml
       #- ROUTE=/workspace/code/routes/routes_bicycle.xml
+      #- ROUTE=/workspace/code/routes/routes_town13.xml
+      #- ROUTE=/workspace/code/routes/routes_three_routes.xml
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       # if you change the volume here also change the copy command
