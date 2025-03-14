@@ -11,6 +11,8 @@ This document provides an overview of the structure of the documentation.
 - [`acting`](#acting)
 - [`assets`](#assets)
 - [`dev_talks`](#dev_talks)
+- [`sphinx`](#sphinx)
+  - [Configuration resources](#configuration-resources)
 
 ## `general`
 
@@ -47,3 +49,10 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 ## `dev_talks`
 
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
+
+## `sphinx`
+
+### Configuration resources
+
+- <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>
+- <https://www.sphinx-doc.org/en/master/usage/configuration.html>
