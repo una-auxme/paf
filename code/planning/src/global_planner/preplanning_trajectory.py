@@ -482,8 +482,8 @@ class OpenDriveConverter:
         self,
         x_target: float,
         y_target: float,
-        x_next_t: float,
-        y_next_t: float,
+        x_next_t: Optional[float],
+        y_next_t: Optional[float],
         command: int,
     ):
         """Calculate the trajectory to the next waypoint
@@ -589,7 +589,7 @@ class OpenDriveConverter:
                 if self.width in old_w and old_w.index(self.width) + 1 == len(old_w):
                     last_p = (self.pt[0][-1], self.pt[1][-1])
                     min_diff = float("inf")
-                    w_min = None
+                    min_width = None
                     for width in widths:
                         p, v = self.update_one_point(
                             points[0][0],
@@ -604,8 +604,7 @@ class OpenDriveConverter:
                         diff = help_functions.euclid_dist(p, last_p)
                         if diff < min_diff:
                             min_diff = diff
-                            w_min = width
-                    self.width = w_min
+                            min_width = width
                 else:
                     min_diff = float("inf")
                     min_width = None
@@ -614,7 +613,15 @@ class OpenDriveConverter:
                         if diff < min_diff:
                             min_diff = diff
                             min_width = width
+
+                # Something in the min_width calculation above is broken
+                # (can be observed in the third validation route)
+                # This results in min_width being None -> results in crash in
+                # self.calculate_midpoints(points)
+                if min_width is not None:
+                    # TODO: fix min_width calc and remove this
                     self.width = min_width
+
                 points = self.calculate_midpoints(points)
                 if command == LEFT or command == RIGHT or command == STRAIGHT:
                     if x_next_t is not None and y_next_t is not None:
