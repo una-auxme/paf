@@ -64,13 +64,3 @@ Once one of the Timers is triggered we do the following:
 The duration of the driving backward and driving forward each is defined by **UNSTUCK_DRIVE_DURATION**. Currently, every step gets executed for 5 seconds.
 
 This behavior is ONLY implememted to improve route completion and make debugging easier. It is the last fallback behavior when every other planning component can not get us back on track.
-
-Files influenced by this behavior are:
-
-- Planning:
-  - [ACC.py](/code/planning/src/local_planner/ACC.py), for the target_speed, add_speed_override() service
-  - [motion_planning.py](/code/planning/src/local_planner/motion_planning.py), for the overtake and its service
-  - [behavior_names.py](/code/planning/src/behavior_agent/behavior_names.py), for the behavior names
-- Control:
-  - [velocity_controller.py](/code/control/src/velocity_controller.py), because of driving backwards
-  - [pure_pursuit_controller.py](/code/control/src/pure_pursuit_controller.py), because of inverting the pure pursuit steering angle for us_unstuck behavior
