@@ -1,6 +1,6 @@
 # Behavior Tree
 
-**Summary:** This page contains a simple explanation for the behavior tree. For more technical insights have a look at the [code](../../code/planning/src/behavior_agent/behaviours) itself.
+**Summary:** This page contains a simple explanation for the behavior tree. For more technical insights have a look at the [code](../../code/planning/src/behavior_agent/behaviors) itself.
 
 **Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
@@ -69,22 +69,22 @@ Every behavior is documented detailed in the 'behavior' subfolder:
 - [Intersection](./behaviors/Intersection.md)
 - [LaneChange](./behaviors/LaneChange.md)
 - [LeaveParkingSpace](./behaviors/LeaveParkingSpace.md)
-- [Overtake](./behaviors/Overtake.md.md)
+- [Overtake](./behaviors/Overtake.md)
 - [Unstuck](./behaviors/Unstuck.md)
 
 ## Developing guide
 
 ### Tree Definition
 
-The tree is defined in the `grow_a_tree()`-function inside `code/planning/src/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
+The tree is defined in the `grow_a_tree()`-function inside the [behavior_tree.py](../../code/planning/src/behavior_agent/behavior_tree.py), which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
 ### Behaviors
 
-`Behaviors` are implemented in the `code/planning/src/behavior_agent/behaviors/` directory. All the behaviors used in the current version of the tree are contained as skeletons.
+`Behaviors` are implemented in the [code/planning/src/behavior_agent/behaviors/](../../code/planning/src/behavior_agent/behaviors/) subdirectory. All the behaviors used in the current version of the tree are contained as skeletons.
 
 #### Blackboard
 
-To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `code/planning/src/behavior_agent/behaviors/topics2blackboard.py`:
+To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in the [topics2blackboard.py](../../code/planning/src/behavior_agent/behaviors/topics2blackboard.py):
 
 ``` python
 ...
