@@ -6,7 +6,7 @@ components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter
 from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published.
 
-This component and so most of the documentation was taken from the previous project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
+This component and so most of the documentation was taken from the project PAF22 (Authors: Simon Erlbacher, Niklas Vogel)
 
 - [Getting started](#getting-started)
 - [Description](#description)
