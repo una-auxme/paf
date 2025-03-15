@@ -11,14 +11,12 @@ The motion planning is responsible for collecting all the velocity recommendatio
 
 ## Overview
 
-This module contains one ROS node and is responsible for adjusting and publishing the target velocity and the target trajectory according to the traffic situation.
-It subscribes to topics that provide information about the current velocity of the vehicle, the current heading and many more to navigate safely in the simulation.
-It also publishes a topic that indicates wether an overtake maneuver was successful or not.
-
-This component is also responsible for providing a target_speed of `-3` for acting, whenever we need to use the Unstuck Behavior. This is currently the only behavior that allows the car to drive backwards.
+This module contains one ROS node and is responsible for adjusting and publishing the speed limit, the trajectory and the local trajectory according to the traffic situation.
+It subscribes to topics that provide information about the global trajectory, the current position and heading of the vehicle and the speed limits from the OpenDrive map to navigate safely in the simulation.
+It also contains and processes services for starting and ending an overtake and the current overtake status.
 
 The trajectory is calculated by the global planner and is adjusted by the motion planning node.
-When the decision making node decides that an overtake maneuver is necessary, the motion planning node will adjust the trajectory accordingly.
+When the decision making node decides that an overtake maneuver is necessary, the motion planning node will receive this information via the services mentioned above and adjusts the trajectory accordingly.
 Otherwise the received trajectory is published without any changes.
 
 ## ROS Data Interface
