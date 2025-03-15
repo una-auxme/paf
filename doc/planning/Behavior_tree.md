@@ -11,9 +11,7 @@
     - [Sequence](#sequence)
     - [Condition](#condition)
     - [Subtree](#subtree)
-  - [Intersection](#intersection)
-    - [Legend](#legend)
-  - [Other Behaviors](#other-behaviors)
+- [Our behaviors](#our-behaviors)
 - [Developing guide](#developing-guide)
   - [Tree Definition](#tree-definition)
   - [Behaviors](#behaviors)
@@ -63,35 +61,16 @@ Is always the first child of a sequence. It decides if the sequence should be ex
 
 Represents a specific task/scenario which is handled by the decision tree.
 
-### Intersection
+## Our behaviors
 
-#### Legend
+Every behavior is documented detailed in the 'behavior' subfolder:
 
-![BT Legend](../assets/legend_bt.png)
-
-![BT Intersection](../assets/intersection.png)
-
-If there is an intersection coming up, the agent executes the following sequence of behaviors:
-
-- Approach Intersection
-
-    Slows down and stops at line if a yellow or red traffic light is detected
-
-- Wait at Intersection
-
-    Waits for traffic lights or higher priority traffic
-
-- Enter Intersection
-
-    Enters the intersection and follows it predetermined path through the intersection
-
-- Leave Intersection
-
-    Leaves the intersection in the right direction
-
-### Other Behaviors
-
-Lane Change and Overtake are built just like Intersection. So there is always an Approach, Wait, Enter and Leave part.
+- [Cruise](./behaviors/Cruise.md)
+- [Intersection](./behaviors/Intersection.md)
+- [LaneChange](./behaviors/LaneChange.md)
+- [LeaveParkingSpace](./behaviors/LeaveParkingSpace.md)
+- [Overtake](./behaviors/Overtake.md.md)
+- [Unstuck](./behaviors/Unstuck.md)
 
 ## Developing guide
 
