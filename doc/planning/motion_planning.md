@@ -41,8 +41,8 @@ This node publishes the following topics:
 
 ### Provided Services
 
-- `/paf/hero/motion_planning/start_overtake`: Service for starting an overtake with givin parameters.
-- `/paf/hero/motion_planning/end_overtake`: Service for ending an overtake with givin parameters.
+- `/paf/hero/motion_planning/start_overtake`: Service for starting an overtake with given parameters.
+- `/paf/hero/motion_planning/end_overtake`: Service for ending an overtake with given parameters.
 - `/paf/hero/motion_planning/overtake_status`:  Service for the current status of an overtake.
 
 ## Node Creation + Running Tests
@@ -52,6 +52,6 @@ To run this node insert the following statement in the [planning.launch](../../c
 ```xml
 <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
            <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="0.1" />
+           <param name="control_loop_rate" value="0.05" />
 </node>
 ```
