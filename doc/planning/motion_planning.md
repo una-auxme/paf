@@ -30,7 +30,6 @@ This node subscribes to the following topics:
 - `/carla/hero/Speed`: Subscribes to the current speed.
 - `/paf/hero/acc_velocity`: Subscribes to the speed published by the acc.
 - `/paf/hero/Center/traffic_light_y_distance`: Subscribes to the distance the traffic light has to the upper camera bound in pixels.
-- `/paf/hero/collision`: Subscribes to the collision published by the Collision Check.
 - `/paf/hero/curr_behavior`: Subscribes to Current Behavior pubished by the Decision Making.
 - `/paf/hero/current_heading`: Subscribes to the filtered heading of the ego vehicle.
 - `/paf/hero/current_pos`: Subscribes to the filtered position of our car.

@@ -187,7 +187,6 @@ Subscriptions:
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/max_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/overtake_success``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
@@ -220,9 +219,8 @@ Publishes:
 
 ### [Local Planning](../planning/Local_Planning.md)
 
-It consists of three components:
+It consists of two components:
 
-- [Collision Check](../planning//Collision_Check.md): Checks for collisions based on objects recieved from [Perception](#perception)
 - [ACC](../planning/ACC.md): Generates a new speed based on a possible collision recieved from Collision Check and speedlimits recieved from [Global Planner](#global-planning)
 - [Motion Planning](../planning/motion_planning.md): Decides the target speed and modifies trajectory if signal recieved from [Behavior Agent](#behavior-agent-behavior_agent)
 
@@ -236,12 +234,6 @@ Subscriptions:
 - ```/paf/hero/speed_limits_OpenDrive``` \(/PrePlanner\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
-
-[collision_check.py](/../paf/code/planning/src/local_planner/collision_check.py)
-
-- ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/msg/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
-- ```/paf/hero/Center/object_distance``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 
 [motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py)
 
@@ -254,7 +246,6 @@ Subscriptions:
 - ```/paf/hero/unchecked_emergency``` \(/\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
 - ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_waypoint``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
-- ```/paf/hero/collision``` \(/CollisionCheck\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/Center/traffic_light_y_distance``` \(/TrafficLightNode\) ([std_msgs/Int16](https://docs.ros.org/en/api/std_msgs/html/msg/Int16.html))
 - ```/paf/hero/unstuck_distance``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_wp``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
@@ -266,12 +257,6 @@ Publishes:
 - ```/paf/hero/acc_velocity``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/current_wp``` ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/speed_limit``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-
-[collision_check.py](/../paf/code/planning/src/local_planner/collision_check.py)
-
-- ```/paf/hero/emergency``` \(/vehicle_controller\) ([std_msg/Bool](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Bool.html))
-- ```/paf/hero/collision``` \(/ACC, /MotionPlanning\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
-- ```/paf/hero/oncoming``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 [motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py)
 

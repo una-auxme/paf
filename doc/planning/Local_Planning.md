@@ -2,18 +2,16 @@
 
 **Summary:** This page contains the conceptual and theoretical explanations for the Local Planning component. For more technical documentation have a look at the other linked documentation files.
 
-- [Local Planning](#local-planning)
-  - [Overview](#overview)
-  - [Collision Check](#collision-check)
-    - [Apply filters](#apply-filters)
-    - [Calculate Speed](#calculate-speed)
-    - [Check for collision](#check-for-collision)
-    - [ACC](#acc)
-  - [Motion Planning](#motion-planning)
-    - [Cornering Speed](#cornering-speed)
-    - [Selecting the target velocity](#selecting-the-target-velocity)
-    - [Moving the trajectory](#moving-the-trajectory)
-  - [Sources](#sources)
+- [Overview](#overview)
+  - [Apply filters](#apply-filters)
+  - [Calculate Speed](#calculate-speed)
+  - [Check for collision](#check-for-collision)
+  - [ACC](#acc)
+- [Motion Planning](#motion-planning)
+  - [Cornering Speed](#cornering-speed)
+  - [Selecting the target velocity](#selecting-the-target-velocity)
+  - [Moving the trajectory](#moving-the-trajectory)
+- [Sources](#sources)
 
 ## Overview
 
@@ -24,12 +22,6 @@ The Local Planning in this project is divided in three components. Collision Che
 ![Planning_architecture.png](../assets/planning/Planning_architecture.png)
 
 The theoretical concepts of each Local Planning component are explained below.
-
-## [Collision Check](./Collision_Check.md)
-
-The Collision Check is the backbone of the Local Planning. Its task is to detect collisions with objects published by the vision node. The workflow when new objects are recieved looks like this:
-
-![collision_check.png](../assets/planning/collision_check.png)
 
 ### Apply filters
 
