@@ -1,7 +1,7 @@
 import py_trees
 from py_trees.common import Status
 from typing import Optional, Tuple, Union
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String
 
 import rospy
 
@@ -14,7 +14,6 @@ from mapping_common.markers import debug_marker
 from mapping_common.transform import Transform2D, Vector2, Point2
 import shapely
 from mapping_common.entity import FlagFilter, Car
-from visualization_msgs.msg import MarkerArray
 from planning.srv import OvertakeStatusResponse
 
 from . import behavior_names as bs
@@ -84,7 +83,7 @@ def calculate_obstacle(
     blackboard: py_trees.blackboard.Blackboard,
     front_mask_size: float,
     trajectory_check_length: float,
-    overlap_percent: float,
+    overlap_percent: float = 0.0,
     overlap_area: float = 0.0,
 ) -> Union[Optional[Tuple[ShapelyEntity, float]], py_trees.common.Status]:
     """Calculates if there is an obstacle in front
@@ -97,7 +96,8 @@ def calculate_obstacle(
         front_mask_size (float): Length of the static box collision mask in front
         trajectory_check_length (float): Length of the trajectory collision mask
         overlap_percent (float):
-            How much of an entity has to be inside the collision mask in percent
+            How much of an entity has to be inside the collision mask in percent.
+                Defaults to 0.0.
         overlap_area (float):
             How much of an entity has to be inside the collision mask in m2.
                 Defaults to 0.0.
@@ -172,12 +172,6 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def setup(self, timeout):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.ot_distance_pub = rospy.Publisher(
-            "/paf/hero/" "overtake_distance", Float32, queue_size=1
-        )
-        self.marker_publisher = rospy.Publisher(
-            "/paf/hero/" "overtake/debug_markers", MarkerArray, queue_size=1
-        )
         self.stop_proxy = create_stop_marks_proxy()
         return True
 
@@ -210,7 +204,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             self.blackboard,
             front_mask_size=0.0,
             trajectory_check_length=18.0,
-            overlap_percent=0.35,
         )
         if isinstance(obstacle, py_trees.common.Status):
             return obstacle
@@ -245,7 +238,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
             add_debug_entry(self.name, f"Overtake counter: {self.counter_overtake}")
             if self.counter_overtake > 4:
-                self.ot_distance_pub.publish(obstacle_distance)
                 return debug_status(
                     self.name, Status.SUCCESS, "Overtake counter big enough"
                 )
@@ -315,7 +307,6 @@ class Approach(py_trees.behaviour.Behaviour):
             self.blackboard,
             front_mask_size=1.5,
             trajectory_check_length=20.0,
-            overlap_percent=0.5,
         )
         if isinstance(obstacle, py_trees.common.Status):
             return obstacle
@@ -450,7 +441,6 @@ class Wait(py_trees.behaviour.Behaviour):
             self.blackboard,
             front_mask_size=1.0,
             trajectory_check_length=20.0,
-            overlap_percent=0.5,
         )
         if isinstance(obstacle, py_trees.common.Status):
             return obstacle
