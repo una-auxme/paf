@@ -1,6 +1,6 @@
 # Motion Planning
 
-**Summary:** [motion_planning.py](.../code/planning/local_planner/src/motion_planning.py):
+**Summary:** [motion_planning.py](../../code/planning/src/local_planner/motion_planning.py):
 The motion planning is responsible for collecting all the velocity recommendations from the different components and choosing the optimal one to be fowarded into the acting. It also is capable to change the trajectory for an overtaking maneuver.
 
 - [Overview](#overview)
