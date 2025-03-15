@@ -142,7 +142,10 @@ def calculate_obstacle(
         add_debug_marker(debug_marker(mask, color=OVERTAKE_MARKER_COLOR))
 
     entity_result = tree.get_nearest_entity(
-        collision_mask, hero.to_shapely(), min_coverage_percent=overlap_percent
+        collision_mask,
+        hero.to_shapely(),
+        min_coverage_percent=overlap_percent,
+        min_coverage_area=overlap_area,
     )
 
     if entity_result is not None:
