@@ -7,6 +7,7 @@ The motion planning is responsible for collecting all the velocity recommendatio
 - [ROS Data Interface](#ros-data-interface)
   - [Subscribed Topics](#subscribed-topics)
   - [Published Topics](#published-topics)
+  - [Provided Services](#provided-services)
 - [Node Creation + Running Tests](#node-creation--running-tests)
 
 ## Overview
@@ -37,6 +38,12 @@ This node publishes the following topics:
 - `/paf/hero/trajectory`: Publishes the global trajectory. ([nav_msgs/Path](https://docs.ros.org/en/lunar/api/nav_msgs/html/msg/Path.html))
 - `/paf/hero/trajectory_local`: Publishes the new adjusted trajectory. ([nav_msgs/Path](https://docs.ros.org/en/lunar/api/nav_msgs/html/msg/Path.html))
 - `/paf/hero/speed_limit`: Subscribes to the speed limit.
+
+### Provided Services
+
+- `/paf/hero/motion_planning/start_overtake`: Service for starting an overtake with givin parameters.
+- `/paf/hero/motion_planning/end_overtake`: Service for ending an overtake with givin parameters.
+- `/paf/hero/motion_planning/overtake_status`:  Service for the current status of an overtake.
 
 ## Node Creation + Running Tests
 
