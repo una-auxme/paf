@@ -75,7 +75,7 @@ To make the calculated waypoints available to other components it is formed into
 This node subscribes to the following needed topics:
 
 - OpenDrive Map:
-  - `/carla/{role_name}/OpenDRIVE` ([String](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html)) or `/carla/world_info` ([CarlaWorldInfo](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaworldinfomsg))
+  - `/carla/{role_name}/OpenDRIVE` ([String](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
 - global Plan:
   - `/carla/{role_name}/global_plan` ([CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
 - current agent position:
@@ -86,7 +86,7 @@ This node subscribes to the following needed topics:
 This node publishes the following topics:
 
 - preplanned trajectory:
-  - `/paf/{role_name}/trajectory` ([Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+  - `/paf/{role_name}/trajectory_global` ([Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - prevailing speed limits:
   - `/paf/{role_name}/speed_limits_OpenDrive`
   ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
