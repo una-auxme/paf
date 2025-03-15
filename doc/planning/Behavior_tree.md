@@ -80,7 +80,7 @@ The tree is defined in the `grow_a_tree()`-function inside the [behavior_tree.py
 
 ### Behaviors
 
-`Behaviors` are implemented in the [code/planning/src/behavior_agent/behaviors/](../../code/planning/src/behavior_agent/behaviors/) subdirectory. All the behaviors used in the current version of the tree are contained as skeletons.
+`Behaviors` are implemented in the [behaviors/](../../code/planning/src/behavior_agent/behaviors/) subdirectory. All the behaviors used in the current version of the tree are contained as skeletons.
 
 #### Blackboard
 
