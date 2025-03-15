@@ -35,9 +35,9 @@ This node subscribes to the following topics:
 
 This node publishes the following topics:
 
-- `/paf/hero/trajectory`: Publishes the global trajectory. ([nav_msgs/Path](https://docs.ros.org/en/lunar/api/nav_msgs/html/msg/Path.html))
-- `/paf/hero/trajectory_local`: Publishes the new adjusted trajectory. ([nav_msgs/Path](https://docs.ros.org/en/lunar/api/nav_msgs/html/msg/Path.html))
-- `/paf/hero/speed_limit`: Subscribes to the speed limit.
+- `/paf/hero/trajectory`: Publishes the global trajectory.
+- `/paf/hero/trajectory_local`: Publishes the new adjusted trajectory.
+- `/paf/hero/speed_limit`: Publishes the speed limit.
 
 ### Provided Services
 
