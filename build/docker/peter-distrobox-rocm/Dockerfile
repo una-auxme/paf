@@ -50,16 +50,19 @@ RUN --mount=type=bind,target=/opt/carla.tar.xz,source=CARLA_Leaderboard_2.0.tar.
 # RUN cd ${CARLA_ROOT} && chmod +x ./ImportAssets.sh && ./ImportAssets.sh
 ENV CARLA_PORT=2000
 
+ARG LEADERBOARD_GIT_BRANCH=leaderboard-2.0
+
 # ROS bridge
 RUN apt-get update && apt-get install -y ros-noetic-ackermann-msgs ros-noetic-derived-object-msgs \
   ros-noetic-carla-msgs ros-noetic-pcl-conversions \
   ros-noetic-rviz ros-noetic-rqt ros-noetic-pcl-ros ros-noetic-rosbridge-suite ros-noetic-rosbridge-server \
   ros-noetic-robot-pose-ekf ros-noetic-ros-numpy \
   ros-noetic-py-trees-ros ros-noetic-rqt-py-trees ros-noetic-rqt-reconfigure \
-  ros-noetic-ros-pytest
+  ros-noetic-ros-pytest \
+  ros-noetic-robot-localization
 ENV ROOT_CATKIN_WS=/catkin
 WORKDIR $ROOT_CATKIN_WS
-RUN git clone --recurse-submodules -b leaderboard-2.0 --recurse-submodules --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
+RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --recurse-submodules --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
 RUN cd ./src/ros-bridge/carla_ackermann_control && \
   sed -i '24 i \  <build_depend condition="$ROS_VERSION == 1">carla_msgs</build_depend>' package.xml
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -69,11 +72,11 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Scenario runner
 ENV SCENARIO_RUNNER_ROOT=/opt/scenario_runner
-RUN git clone -b leaderboard-2.0 --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
 
 # Carla leaderboard
 ENV LEADERBOARD_ROOT=/opt/leaderboard
-RUN git clone -b leaderboard-2.0 --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
 
 # # Vscodium
 # RUN wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg \

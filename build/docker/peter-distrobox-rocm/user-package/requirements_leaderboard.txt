@@ -1,5 +1,4 @@
 # Srunner
-Shapely==1.7.1
 psutil
 xmlschema==1.0.18
 ephem
