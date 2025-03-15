@@ -95,7 +95,7 @@ This node publishes the following topics:
 
 To generate a initial trajectory in the developement environment, you can use the [dev_global_route.py](../../code/planning/src/global_planner/dev_global_route.py) node. This node generates the initial trajectory on town 12.
 
-Activate the node you need the do the following steps also described in [global_planner.py](../../code/planning/src/global_planner/global_planner.py):
+Activate the node you need the do the following steps also described in [global_planner_node.py](../../code/planning/src/global_planner/global_planner_node.py):
 
 - Uncomment the following lines in [planning.launch](../../code/planning/launch/planning.launch):
 
@@ -109,7 +109,7 @@ Activate the node you need the do the following steps also described in [global_
 </node>
 ```
 
-- Uncomment the following line in the bottom of the `init` method in [global_planner.py](../../code/planning/src/global_planner/global_planner.py):
+- Uncomment the following line in the bottom of the `init` method in [global_planner_node.py](../../code/planning/src/global_planner/global_planner_node.py):
 
 ```python
 self.dev_load_world_info()
