@@ -1,6 +1,9 @@
 
 # TEB Local Planner (Timed elastic bands)
 
+>[!WARNING] The TEB Local planner was tested but discontinued in PAF2024.
+The goal of this document is to provide information on how it can be integrated into the PAF project if necessary.
+
 **Summary**: This page provides an overview on what the Timed elastic bands local planner is.
 How it works and the way it is integrated into our code.
 
@@ -8,8 +11,12 @@ How it works and the way it is integrated into our code.
 - [Integration with the PAF project](#integration-with-the-paf-project)
   - [Ros TEB Planner](#ros-teb-planner)
   - [Interface package](#interface-package)
+- [Installation](#installation)
 - [Parameter Tuning](#parameter-tuning)
 - [About move\_base](#about-move_base)
+
+>[!NOTE] Also checkout the following Markdown. It shows an implementation example where TEB is integrated into the motion_planning node.
+[TEB for Overtake](discontinued/teb_motion_planning.md)
 
 ## Timed elastic bands
 
@@ -26,15 +33,7 @@ We decided to use a preexisting ROS-TEB-implementation.
 The implementation is from the TU-Dortmund and is usually directly integrated into the move_base framework of ROS.
 We do not use move_base and therefore need an interface package for this.
 
-In order to install it in the Docker-Container add the following code to `build/docker/agent/Dockerfile`
 
-```
-# Install teb_local_planner as well as teb_planner_pa
-RUN sudo apt-get install -y \
-    ros-noetic-teb-local-planner
-ARG TEB_PLANNER_PA_GITHUB_URL=https://github.com/TUC-ProAut/ros_teb_planner.git
-RUN git clone $TEB_PLANNER_PA_GITHUB_URL src/ros_teb_planner
-```
 
 ### [Ros TEB Planner](http://wiki.ros.org/teb_local_planner)
 
@@ -73,6 +72,18 @@ When launched a service is provided called "/teb_planner_node_pa/plan".
 Documentation on this service request and response can be found [here](https://github.com/TUC-ProAut/ros_teb_planner/tree/main/teb_planner_pa_msgs)
 In short a request with start and end position as well as viapoints and obstacles is sent and the service responds with a path.
 This [launch config](https://github.com/TUC-ProAut/ros_teb_planner/blob/main/teb_planner_pa/launch/rviz.launch) is also useful as it shows the scene created by your requests.
+
+## Installation
+
+In order to install it in the Docker-Container add the following code to `build/docker/agent/Dockerfile`
+
+```docker
+# Install teb_local_planner as well as teb_planner_pa
+RUN sudo apt-get install -y \
+    ros-noetic-teb-local-planner
+ARG TEB_PLANNER_PA_GITHUB_URL=https://github.com/TUC-ProAut/ros_teb_planner.git
+RUN git clone $TEB_PLANNER_PA_GITHUB_URL src/ros_teb_planner
+```
 
 ## Parameter Tuning
 
