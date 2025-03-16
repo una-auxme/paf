@@ -1,31 +1,41 @@
 #!/usr/bin/env python
+import math
+from typing import Optional, List, Tuple
+
+import shapely
+
 import ros_compatibility as roscomp
-from geometry_msgs.msg import PoseStamped, Point
-import mapping_common.markers
-import mapping_common.shape
+
 from nav_msgs.msg import Path
 from ros_compatibility.node import CompatibleNode
 import rospy
 from rospy import Publisher, Subscriber
-from std_msgs.msg import Bool, Float32, Float32MultiArray, String
+from ros_compatibility.qos import QoSProfile, DurabilityPolicy
+from std_msgs.msg import Float32, String, Bool
 from visualization_msgs.msg import Marker, MarkerArray
-from typing import Optional
-from typing import List
+
 from planning.cfg import ACCConfig
 from dynamic_reconfigure.server import Server
 
-import shapely
-
+import mapping_common.markers
+import mapping_common.shape
 import mapping_common.map
 import mapping_common.mask
 import mapping_common.entity
 from mapping_common.map import Map
-from mapping_common.entity import FlagFilter
+from mapping_common.entity import FlagFilter, Entity
 from mapping_common.markers import debug_marker, debug_marker_array
-from mapping_common.transform import Vector2
+from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping.msg import Map as MapMsg
 
+from planning.srv import (
+    SpeedAlteration,
+    SpeedAlterationRequest,
+    SpeedAlterationResponse,
+)
+
 MARKER_NAMESPACE: str = "acc"
+ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
 
 
 class ACC(CompatibleNode):
@@ -34,19 +44,14 @@ class ACC(CompatibleNode):
 
     map: Optional[Map] = None
 
-    # unstuck attributes
-    __unstuck_flag: bool = False
-    __unstuck_distance: float = -1
-    # List of all speed limits, sorted by waypoint index
-    __speed_limits_OD: List[float] = []
-    trajectory_global: Optional[Path] = None
-    trajectory: Optional[Path] = None
-    __current_position: Optional[Point] = None
-    # Current index from waypoint
-    __current_wp_index: int = 0
-    __current_heading: Optional[float] = None
+    trajectory_local: Optional[Path] = None
     __curr_behavior: Optional[str] = None
-    speed_limit: Optional[float] = None  # m/s
+    speed_limit: float = 5.0
+    external_speed_limit: Optional[float] = None
+    speed_override: Optional[float] = None
+    steer: Optional[float] = None
+    last_desired_speed: float = 0.0
+    emergency_count: int = 0
 
     def __init__(self):
         super(ACC, self).__init__("ACC")
@@ -56,61 +61,23 @@ class ACC(CompatibleNode):
         self.map_sub: Subscriber = self.new_subscription(
             MapMsg,
             f"/paf/{self.role_name}/mapping/init_data",
-            self.__get_map,
+            self.__set_map,
             qos_profile=1,
         )
 
-        # Get Unstuck flag and distance for unstuck routine
-        self.unstuck_flag_sub: Subscriber = self.new_subscription(
-            Bool,
-            f"/paf/{self.role_name}/unstuck_flag",
-            self.__get_unstuck_flag,
-            qos_profile=1,
-        )
-        self.unstuck_distance_sub: Subscriber = self.new_subscription(
+        # Get current speed limit
+        self.speed_limit_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/unstuck_distance",
-            self.__get_unstuck_distance,
+            f"/paf/{self.role_name}/speed_limit",
+            self.__set_speed_limit,
             qos_profile=1,
         )
 
-        # Get initial set of speed limits from global planner
-        self.speed_limit_OD_sub: Subscriber = self.new_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/speed_limits_OpenDrive",
-            self.__set_speed_limits_opendrive,
-            qos_profile=1,
-        )
-
-        # Get global trajectory to determine current speed limit
-        self.trajectory_global_sub: Subscriber = self.new_subscription(
+        # Get trajectory for collision mask calculation
+        self.trajectory_local_sub: Subscriber = self.new_subscription(
             Path,
-            f"/paf/{self.role_name}/trajectory_global",
-            self.__set_trajectory_global,
-            qos_profile=1,
-        )
-
-        # Get trajectory to determine current speed limit
-        self.trajectory_sub: Subscriber = self.new_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory",
-            self.__set_trajectory,
-            qos_profile=1,
-        )
-
-        # Get current position to determine current waypoint
-        self.pose_sub: Subscriber = self.new_subscription(
-            msg_type=PoseStamped,
-            topic=f"/paf/{self.role_name}/current_pos",
-            callback=self.__current_position_callback,
-            qos_profile=1,
-        )
-
-        # Get current_heading
-        self.heading_sub: Subscriber = self.new_subscription(
-            Float32,
-            f"/paf/{self.role_name}/current_heading",
-            self.__get_heading,
+            f"/paf/{self.role_name}/trajectory_local",
+            self.__set_trajectory_local,
             qos_profile=1,
         )
 
@@ -122,17 +89,26 @@ class ACC(CompatibleNode):
             qos_profile=1,
         )
 
+        # Get current steering to adjust the front collision mask
+        self.steer_sub: Subscriber = self.new_subscription(
+            Float32,
+            f"/paf/{self.role_name}/pure_pursuit_steer",
+            self.__set_steer,
+            qos_profile=1,
+        )
+
         # Publish desired speed to acting
         self.velocity_pub: Publisher = self.new_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
         )
 
-        # Publish current waypoint and speed limit
-        self.wp_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/current_wp", qos_profile=1
-        )
-        self.speed_limit_publisher: Publisher = self.new_publisher(
-            Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
+        # Publish to emergency break if needed
+        self.emergency_pub = self.new_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
+            qos_profile=QoSProfile(
+                depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
         )
 
         # Publish debugging marker
@@ -140,68 +116,33 @@ class ACC(CompatibleNode):
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
         )
 
-        # Tunable values for the controllers
-        self.Kp: float
-        self.Ki: float
-        self.T_gap: float
-        self.d_min: float
-        self.acceleration_factor: float
+        self.speed_service = rospy.Service(
+            f"/paf/{self.role_name}/acc/speed_alteration",
+            SpeedAlteration,
+            self.handle_speed_alteration,
+        )
+
         Server(ACCConfig, self.dynamic_reconfigure_callback)
 
         self.logdebug("ACC initialized")
 
-    def __get_map(self, data: MapMsg):
+    def __set_speed_limit(self, data: Float32):
+        self.speed_limit = data.data
+
+    def __set_map(self, data: MapMsg):
         self.map = Map.from_ros_msg(data)
         self.update_velocity()
 
     def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        self.Kp = config["Kp"]
-        self.Ki = config["Ki"]
-        self.T_gap = config["T_gap"]
-        self.d_min = config["d_min"]
-        self.acceleration_factor = config["acceleration_factor"]
-
         return config
 
-    def __get_unstuck_flag(self, data: Bool):
-        """Set unstuck flag
-
-        Args:
-            data (Bool): Unstuck flag
-        """
-        self.__unstuck_flag = data.data
-
-    def __get_unstuck_distance(self, data: Float32):
-        """Set unstuck distance
-
-        Args:
-            data (Float32): Unstuck distance
-        """
-        self.__unstuck_distance = data.data
-
-    def __get_heading(self, data: Float32):
-        """Receive current heading
-
-        Args:
-            data (Float32): Current heading
-        """
-        self.__current_heading = float(data.data)
-
-    def __set_trajectory_global(self, data: Path):
-        """Recieve trajectory from global planner
-
-        Args:
-            data (Path): Trajectory path
-        """
-        self.trajectory_global = data
-
-    def __set_trajectory(self, data: Path):
+    def __set_trajectory_local(self, data: Path):
         """Receive trajectory from motion planner
 
         Args:
             data (Path): Trajectory path
         """
-        self.trajectory = data
+        self.trajectory_local = data
 
     def __set_curr_behavior(self, data: String):
         """Receive the current behavior of the vehicle.
@@ -211,51 +152,13 @@ class ACC(CompatibleNode):
         """
         self.__curr_behavior = data.data
 
-    def __set_speed_limits_opendrive(self, data: Float32MultiArray):
-        """Recieve speed limits from OpenDrive via global planner
+    def __set_steer(self, data: Float32):
+        """Receive the steering angle of the vehicle.
 
         Args:
-            data (Float32MultiArray): speed limits per waypoint
+            data (Float32): Current steering angle
         """
-        self.__speed_limits_OD = data.data
-
-    def __current_position_callback(self, data: PoseStamped):
-        """Get current position and check if next waypoint is reached
-            If yes -> update current waypoint and speed limit
-
-        Args:
-            data (PoseStamped): Current position from perception
-        """
-        self.__current_position = data.pose.position
-        if len(self.__speed_limits_OD) < 1 or self.trajectory_global is None:
-            return
-
-        agent = self.__current_position
-        # Get current waypoint
-        current_wp = self.trajectory_global.poses[self.__current_wp_index].pose.position
-        # Get next waypoint
-        next_wp = self.trajectory_global.poses[
-            self.__current_wp_index + 1
-        ].pose.position
-        # distances from agent to current and next waypoint
-        d_old = abs(agent.x - current_wp.x) + abs(agent.y - current_wp.y)
-        d_new = abs(agent.x - next_wp.x) + abs(agent.y - next_wp.y)
-        if d_new < d_old:
-            # If distance to next waypoint is smaller than to current
-            # update current waypoint and corresponding speed limit
-            self.__current_wp_index += 1
-            self.wp_publisher.publish(self.__current_wp_index)
-            self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
-            self.speed_limit_publisher.publish(self.speed_limit)
-        # in case we used the unstuck routine to drive backwards
-        # we have to follow WPs that are already passed
-        elif self.__unstuck_flag:
-            if self.__unstuck_distance is None or self.__unstuck_distance == -1:
-                return
-            self.__current_wp_index -= int(self.__unstuck_distance)
-            self.wp_publisher.publish(self.__current_wp_index)
-            self.speed_limit = self.__speed_limits_OD[self.__current_wp_index]
-            self.speed_limit_publisher.publish(self.speed_limit)
+        self.steer = data.data
 
     def run(self):
         """
@@ -270,12 +173,7 @@ class ACC(CompatibleNode):
         Permanent checks if distance to a possible object is too small and
         publishes the desired speed to motion planning
         """
-        if (
-            self.map is None
-            or self.trajectory is None
-            or self.__current_position is None
-            or self.__current_heading is None
-        ):
+        if self.map is None or self.trajectory_local is None:
             # We don't have the necessary data to drive safely
             self.velocity_pub.publish(0)
             return
@@ -289,52 +187,42 @@ class ACC(CompatibleNode):
             return
         hero_width = max(1.0, hero.get_width())
 
-        tree = self.map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-        hero_transform = mapping_common.map.build_global_hero_transform(
-            self.__current_position.x,
-            self.__current_position.y,
-            self.__current_heading,
-        )
+        def filter_fn(e: Entity) -> bool:
+            filter_collision = FlagFilter(is_collider=True, is_hero=False)
+            filter_stopmark = FlagFilter(is_stopmark=True)
+            return e.matches_filter(filter_collision) or e.matches_filter(
+                filter_stopmark
+            )
 
-        front_mask_reduce_behaviours = ["ot_wait_free", "ot_app_blocked", "ot_leave"]
-        if self.__curr_behavior in front_mask_reduce_behaviours:
-            front_mask_size = 5.5
+        tree = self.map.build_tree(filter_fn=filter_fn)
+
+        if self.__curr_behavior is not None and self.__curr_behavior.startswith("ot_"):
+            front_mask_size = 3.5
         else:
-            front_mask_size = 7.5
+            front_mask_size = 5.5
 
-        trajectory_mask = mapping_common.mask.build_trajectory_shape(
-            self.trajectory,
-            hero_transform,
-            start_dist_from_hero=front_mask_size,
-            max_length=100.0,
-            current_wp_idx=self.__current_wp_index,
-            max_wp_count=200,
-            centered=True,
-            width=hero_width,
+        collision_masks = mapping_common.mask.build_lead_vehicle_collision_masks(
+            Point2.new(hero.get_front_x(), 0.0),
+            hero_width,
+            self.trajectory_local,
+            front_mask_size=front_mask_size,
+            max_trajectory_check_length=100.0,
+            rotate_front_mask=0.0 if self.steer is None else -self.steer * 0.75,
         )
-        if trajectory_mask is None:
-            # We currently have no valid path to check for collisions.
-            # -> cannot drive safely
-            rospy.logerr("ACC: Unable to build collision mask!")
-            self.velocity_pub.publish(0)
-            return
 
-        # Add small area in front of car to the collision mask
-        front_rect = mapping_common.mask.project_plane(
-            front_mask_size, size_y=hero_width
-        )
-        collision_masks = [front_rect, trajectory_mask]
         collision_mask = shapely.union_all(collision_masks)
 
         debug_markers: List[Marker] = []
         for mask in collision_masks:
-            debug_markers.append(debug_marker(mask, color=(0, 1.0, 1.0, 0.5)))
+            debug_markers.append(debug_marker(mask, color=ACC_MARKER_COLOR))
 
         entity_result = tree.get_nearest_entity(collision_mask, hero.to_shapely())
 
         current_velocity = hero.get_global_x_velocity() or 0.0
         desired_speed: float = float("inf")
-        marker_text: str = ""
+        lead_x_velocity: Optional[float] = None
+        obstacle_is_stopmark = False
+        marker_text: str = "ACC overview:"
         if entity_result is not None:
             entity, distance = entity_result
             debug_markers.append(
@@ -353,20 +241,73 @@ class ACC(CompatibleNode):
                 "None" if lead_x_velocity is None else f"{lead_x_velocity:6.4f}"
             )
             marker_text += (
-                f"LeadDistance: {distance:7.4f}\n"
-                + f"LeadXVelocity: {lead_x_velocity_str}\n"
-                + f"DeltaV: {lead_delta_velocity:6.4f}\n"
-                + f"RawACCSpeed: {desired_speed:6.4f}\n"
+                f"\nLeadDistance: {distance:7.4f}"
+                + f"\nLeadXVelocity: {lead_x_velocity_str}"
+                + f"\nDeltaV: {lead_delta_velocity:6.4f}"
+                + f"\nMaxLeadSpeed: {desired_speed:6.4f}"
+            )
+            obstacle_is_stopmark = entity.entity.flags.matches_filter(
+                FlagFilter(is_stopmark=True)
             )
 
-        if self.speed_limit is None:
-            # if no speed limit is available, drive 5 m/s max
-            desired_speed = min(5.0, desired_speed)
-        else:
-            # max speed is the current speed limit
-            desired_speed = min(self.speed_limit, desired_speed)
+        # max speed is the current speed limit
+        desired_speed = min(self.speed_limit, desired_speed)
 
-        marker_text += f"FinalACCSpeed: {desired_speed:6.4f}\n"
+        # apply the external_speed_limit
+        if self.external_speed_limit:
+            desired_speed = min(desired_speed, self.external_speed_limit)
+
+        curve_speed, c_markers = self.calculate_velocity_based_on_trajectory(hero)
+        desired_speed = min(curve_speed, desired_speed)
+        marker_text += f"\nMaxCurveSpeed: {curve_speed:6.4f}"
+
+        debug_markers.extend(c_markers)
+
+        if desired_speed == curve_speed:
+            speed_reason = "Curve"
+        elif desired_speed == self.speed_limit:
+            speed_reason = "Speed limit"
+        elif (
+            self.external_speed_limit is not None
+            and desired_speed == self.external_speed_limit
+        ):
+            speed_reason = "External speed limit"
+        else:
+            speed_reason = "Obstacle"
+
+        if self.speed_override is not None:
+            desired_speed = self.speed_override
+            speed_reason = "Override"
+
+        marker_text += f"\nFinalACCSpeed: {desired_speed:6.4f}"
+        marker_text += f"\nSpeed reason: {speed_reason}"
+
+        # emergency break if obstacle and difference to last desired speed is too big
+        # and we are driving fast and obstacle is slow
+        speed_diff = self.last_desired_speed - desired_speed
+        hero_speed = hero.motion.linear_motion.x()
+        slow_obstacle = True
+        if lead_x_velocity is not None and abs(lead_x_velocity) > 3.0:
+            slow_obstacle = False
+
+        if slow_obstacle and not obstacle_is_stopmark and hero_speed > 7.0:
+            if self.emergency_count == 0:
+                if speed_diff > 7.0:
+                    self.emergency_count += 1
+            elif self.emergency_count < 5:
+                if speed_diff > -1.0:
+                    self.emergency_count += 1
+                else:
+                    self.emergency_count = 0
+            else:
+                self.emergency_pub.publish(Bool(True))
+                self.emergency_count = 0
+            marker_text += f"\nEmergency count: {self.emergency_count}/5"
+        else:
+            self.emergency_count = 0
+        # set last desired speed to current desired speed for next loop
+        self.last_desired_speed = desired_speed
+
         debug_markers.append(
             debug_marker(
                 marker_text,
@@ -397,41 +338,131 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        d_min = self.d_min
+        d_min: float = rospy.get_param("~d_min")
 
-        # if we want to overtake, we need to keep some distance to the obstacle
-        if (
-            self.__curr_behavior == "ot_wait_free"
-            and delta_v < 2
-            and lead_distance < 6 * d_min
-        ):
-            desired_speed = 0.0
-            return desired_speed
+        # PI controller which chooses the desired speed
+        Kp: float = rospy.get_param("~Kp")
+        Ki: float = rospy.get_param("~Ki")
+        T_gap: float = rospy.get_param("~T_gap")
+        acceleration_factor: float = rospy.get_param("~acceleration_factor")
 
-        if hero_velocity < 2 and lead_distance < (
-            d_min + 2
-        ):  # approaches the leading vehicle slowly until a distance of d_min
-            desired_speed = (lead_distance - d_min) / 4
+        desired_distance = d_min + T_gap * hero_velocity
+        delta_d = lead_distance - desired_distance
+        speed_adjustment = Ki * delta_d + Kp * delta_v
+        # we want to accelerate more slowly
+        if hero_velocity > 1 and speed_adjustment > 0:
+            speed_adjustment *= acceleration_factor
+        desired_speed = hero_velocity + speed_adjustment
 
-        else:
-            # PI controller which chooses the desired speed
-            Kp = self.Kp
-            Ki = self.Ki
-            T_gap = self.T_gap
-            d_min = self.d_min
-
-            desired_distance = d_min + T_gap * hero_velocity
-            delta_d = lead_distance - desired_distance
-            speed_adjustment = Ki * delta_d + Kp * delta_v
-            # we want to accelerate more slowly
-            if hero_velocity > 1 and speed_adjustment > 0:
-                speed_adjustment *= self.acceleration_factor
-            desired_speed = hero_velocity + speed_adjustment
+        # Use at least hard_approach_speed until hard_approach_distance is reached
+        if lead_distance - rospy.get_param("~hard_approach_distance") > 0:
+            desired_speed = max(desired_speed, rospy.get_param("~hard_approach_speed"))
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
 
         return desired_speed
+
+    def calculate_velocity_based_on_trajectory(
+        self, hero: Entity
+    ) -> Tuple[float, List[Marker]]:
+        """Approximates a maximum safe cornering speed.
+
+        Traces two lines at +/- ~curve_line_angle from the front of the car
+        and measures the distance at which they intersect with the trajectory.
+
+        Based on this distance, a suitable speed is calculated.
+
+        For parameter descriptions, look in planning/config/ACC.cfg
+
+        Args:
+            hero (Entity): Hero entity
+
+        Returns:
+            Tuple[float, List[Marker]]: (desired_speed, debug_markers)
+        """
+        debug_markers: List[Marker] = []
+
+        hero_width = hero.get_width()
+        hero_front_x = hero.get_front_x()
+        front_point = Point2.new(hero_front_x, 0.0)
+        trajectory_line = mapping_common.mask.build_trajectory_from_start(
+            self.trajectory_local, front_point, max_centering_dist=None
+        )
+
+        # Creates lines that exit the car left and right at an angle
+        curve_angle: float = math.radians(rospy.get_param("~curve_line_angle"))
+        max_curve_distance: float = rospy.get_param("~max_curve_distance")
+        curve_line_end_base = (Vector2.forward() * max_curve_distance).point()
+        curve_line_angles = [curve_angle, -curve_angle]
+        curve_line_offsets = [
+            Vector2.new(hero_front_x, hero_width / 2),
+            Vector2.new(hero_front_x, -hero_width / 2),
+        ]
+        curve_lines: List[shapely.LineString] = []
+        for angle, offset in zip(curve_line_angles, curve_line_offsets):
+            transform = Transform2D.new_rotation_translation(angle, offset)
+            line_end: Point2 = transform * curve_line_end_base
+            line = shapely.LineString(
+                [offset.point().to_shapely(), line_end.to_shapely()]
+            )
+            curve_lines.append(line)
+            debug_markers.append(debug_marker(line, color=ACC_MARKER_COLOR))
+
+        # Calculate the smallest distance where the trajectory intersects with
+        # any curve line
+        intersection_dist = float("inf")
+        intersection_point = None
+        for curve_line in curve_lines:
+            intersection = shapely.intersection(trajectory_line, curve_line)
+            for coord in shapely.get_coordinates(intersection):
+                int_point = Point2.new(coord[0], coord[1])
+                int_dist = front_point.distance_to(int_point)
+                if int_dist < intersection_dist:
+                    intersection_point = int_point
+                    intersection_dist = int_dist
+
+        if intersection_point is None or intersection_dist == float("inf"):
+            return (float("inf"), debug_markers)
+
+        debug_markers.append(debug_marker(intersection_point, color=ACC_MARKER_COLOR))
+        debug_markers.append(
+            debug_marker(
+                f"Curve dist: {intersection_dist:4.1f}",
+                color=(1.0, 1.0, 1.0, 1.0),
+                offset=intersection_point.vector(),
+            )
+        )
+
+        # Linear interpolation of the desired curve speed based on the intersection_dist
+        min_curve_speed: float = rospy.get_param("~min_curve_speed")
+        min_curve_distance: float = rospy.get_param("~min_curve_distance")
+        max_curve_speed: float = rospy.get_param("~max_curve_speed")
+
+        intersection_dist = max(0, intersection_dist - min_curve_distance)
+        max_curve_distance = max(0, max_curve_distance - min_curve_distance)
+        if max_curve_distance == 0:
+            rospy.logwarn_throttle(
+                1.0, "ACC: max_curve_distance should not be <= min_curve_distance"
+            )
+            return (float("inf"), debug_markers)
+
+        speed_percentage = intersection_dist / max_curve_distance
+        desired_speed = (
+            speed_percentage * (max_curve_speed - min_curve_speed) + min_curve_speed
+        )
+        return (desired_speed, debug_markers)
+
+    def handle_speed_alteration(self, req: SpeedAlterationRequest):
+        self.speed_override = (
+            None if not req.speed_override_active else req.speed_override
+        )
+        self.external_speed_limit = (
+            None if not req.speed_limit_active else req.speed_limit
+        )
+
+        response = SpeedAlterationResponse(success=True)
+        return response
 
 
 if __name__ == "__main__":

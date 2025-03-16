@@ -12,8 +12,6 @@ import math
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-# from tf.transformations import euler_from_quaternion
-
 
 a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
 b = 6356752.3142
@@ -143,47 +141,3 @@ def quat_to_heading(quaternion):
     heading = -theta
 
     return heading
-
-
-# old functions
-# def quat_to_heading(msg):
-#     orientation_q = msg
-#     orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z,
-#                         orientation_q.w]
-#     (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-#     heading = float(math.atan2(pitch, roll))
-#     return -heading + math.pi
-
-# if __name__ == '__main__':
-#    def are_close(a, b):
-#        return abs(a - b) < 1e-4
-#
-#
-#    latLA = 34.00000048
-#    lonLA = -117.3335693
-#    hLA = 251.702
-#
-#    x0, y0, z0 = geodetic_to_ecef(latLA, lonLA, hLA)
-#    x = x0 + 1
-#    y = y0
-#    z = z0
-#    xEast, yNorth, zUp = ecef_to_enu(x, y, z, latLA, lonLA, hLA)
-#    assert are_close(0.88834836, xEast)
-#    assert are_close(0.25676467, yNorth)
-#    assert are_close(-0.38066927, zUp)
-#
-#    x = x0
-#    y = y0 + 1
-#    z = z0
-#    xEast, yNorth, zUp = ecef_to_enu(x, y, z, latLA, lonLA, hLA)
-#    assert are_close(-0.45917011, xEast)
-#    assert are_close(0.49675810, yNorth)
-#    assert are_close(-0.73647416, zUp)
-#
-#    x = x0
-#    y = y0
-#    z = z0 + 1
-#    xEast, yNorth, zUp = ecef_to_enu(x, y, z, latLA, lonLA, hLA)
-#    assert are_close(0.00000000, xEast)
-#    assert are_close(0.82903757, yNorth)
-#    assert are_close(0.55919291, zUp)

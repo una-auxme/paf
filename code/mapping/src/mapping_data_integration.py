@@ -7,28 +7,30 @@ import ros_numpy
 import rospy
 from visualization_msgs.msg import Marker
 import numpy as np
-from typing import List, Optional
+from typing import List, Optional, Dict
+from copy import deepcopy
 
-from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian
-from mapping_common.transform import Transform2D, Vector2
+import mapping_common.map
+import mapping_common.hero
+from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
+from mapping_common.transform import Transform2D, Vector2, Point2
 from mapping_common.shape import Circle, Polygon, Rectangle
 from mapping_common.map import Map
-
 from mapping_common.filter import (
     MapFilter,
     GrowthMergingFilter,
     LaneIndexFilter,
     GrowPedestriansFilter,
 )
-from mapping.msg import Map as MapMsg, ClusteredPointsArray
 
+from mapping.msg import Map as MapMsg, ClusteredPointsArray
+from mapping.srv import UpdateStopMarks, UpdateStopMarksRequest, UpdateStopMarksResponse
+from std_msgs.msg import Float32
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
-
-
-# from shapely.validation import orient
 
 from mapping.cfg import MappingIntegrationConfig
 from dynamic_reconfigure.server import Server
@@ -45,28 +47,50 @@ class MappingDataIntegrationNode(CompatibleNode):
     """
 
     lidar_data: Optional[PointCloud2] = None
-    radar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     vision_clustered_points_data: Optional[ClusteredPointsArray] = None
 
+    stop_marks: Dict[str, List[StopMark]]
+    """StopMarks from the UpdateStopMarks service
+
+    **Important:** the transform of these entities uses global coordinates
+    """
+    current_pos: Optional[Point2] = None
+    current_heading: Optional[float] = None
+
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
+        # For the stop marks:
+        self.stop_marks = {}
+
+        self.current_pos_sub = self.new_subscription(
+            PoseStamped,
+            "/paf/hero/current_pos",
+            self.current_pos_callback,
+            qos_profile=1,
+        )
+        self.head_sub = self.new_subscription(
+            Float32,
+            "/paf/hero/current_heading",
+            self.heading_callback,
+            qos_profile=1,
+        )
+        self.update_stop_marks_service = rospy.Service(
+            "/paf/hero/mapping/update_stop_marks",
+            UpdateStopMarks,
+            self.update_stopmarks_callback,
+        )
+
+        # Sensor subscriptions:
         self.lanemarkings = None
 
         self.new_subscription(
             topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
             msg_type=PointCloud2,
             callback=self.lidar_callback,
-            qos_profile=1,
-        )
-
-        self.new_subscription(
-            topic=self.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
-            msg_type=PointCloud2,
-            callback=self.radar_callback,
             qos_profile=1,
         )
 
@@ -109,6 +133,8 @@ class MappingDataIntegrationNode(CompatibleNode):
             qos_profile=1,
         )
 
+        # Publishers:
+
         self.map_publisher = self.new_publisher(
             msg_type=MapMsg,
             topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
@@ -126,7 +152,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         Server(MappingIntegrationConfig, self.dynamic_reconfigure_callback)
 
         self.rate = self.get_param("~map_publish_rate", 20)
-        self.new_timer(1.0 / self.rate, self.publish_new_map)
+        self.new_timer(1.0 / self.rate, self.publish_new_map_handler)
 
     def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
         """
@@ -138,6 +164,33 @@ class MappingDataIntegrationNode(CompatibleNode):
         # config["min_merging_overlap_percent"]
         # config["min_merging_overlap_area"]
         return config
+
+    def update_stopmarks_callback(
+        self, req: UpdateStopMarksRequest
+    ) -> UpdateStopMarksResponse:
+        if req.delete_all_others:
+            self.stop_marks = {}
+
+        entities = []
+        for e in req.marks:
+            entity = Entity.from_ros_msg(e)
+            if not isinstance(entity, StopMark):
+                rospy.logwarn_throttle(
+                    0.5,
+                    "Entity received from UpdateStopMarks service is not a StopMark."
+                    " ignoring...",
+                )
+                continue
+            entities.append(entity)
+        self.stop_marks[req.id] = entities
+
+        return UpdateStopMarksResponse(success=True)
+
+    def heading_callback(self, data: Float32):
+        self.current_heading = data.data
+
+    def current_pos_callback(self, data: PoseStamped):
+        self.current_pos = Point2.from_ros_msg(data.pose.position)
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
@@ -153,9 +206,6 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
-
-    def radar_callback(self, data: PointCloud2):
-        self.radar_data = data
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -286,46 +336,14 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         return lidar_entities
 
-    def entities_from_radar(self) -> List[Entity]:
-        if self.radar_data is None:
-            return []
-
-        data = self.radar_data
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-        coordinates = coordinates.view(
-            (coordinates.dtype[0], len(coordinates.dtype.names))
-        )
-        shape = Circle(self.get_param("~radar_shape_radius", 0.15))
-        priority = self.get_param("~radar_priority", 0.25)
-
-        radar_entities = []
-        for x, y, z, intensity in coordinates:
-            v = Vector2.new(x, y)
-            transform = Transform2D.new_translation(v)
-            flags = Flags(is_collider=True)
-            e = Entity(
-                confidence=0.5 * intensity,
-                priority=priority,
-                shape=shape,
-                transform=transform,
-                timestamp=data.header.stamp,
-                flags=flags,
-            )
-            radar_entities.append(e)
-
-        return radar_entities
-
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
-            self.radar_clustered_points_data = None
         elif sensortype == "lidar":
             data = self.lidar_clustered_points_data
-            self.lidar_clustered_points_data = None
         elif sensortype == "vision":
             data = self.vision_clustered_points_data
-            self.vision_clustered_points_data = None
         else:
             raise ValueError(f"Unknown sensortype: {sensortype}")
 
@@ -359,27 +377,34 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
-                continue
+                if sensortype == "radar":
+                    shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
+                    transform = Transform2D.new_translation(
+                        Vector2.new(cluster_points_xy[0, 0], cluster_points_xy[0, 1])
+                    )
+                else:
+                    continue
+            else:
+                if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
+                    # add startpoint to close polygon
+                    cluster_points_xy = np.vstack(
+                        [cluster_points_xy, cluster_points_xy[0]]
+                    )
 
-            if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                # add startpoint to close polygon
-                cluster_points_xy = np.vstack([cluster_points_xy, cluster_points_xy[0]])
+                cluster_polygon = MultiPoint(cluster_points_xy)
+                cluster_polygon_hull = cluster_polygon.convex_hull
+                if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                    rospy.loginfo("Empty hull")
+                    continue
+                if not isinstance(cluster_polygon_hull, shapely.Polygon):
+                    rospy.loginfo("Cluster is not polygon, continue")
+                    continue
 
-            cluster_polygon = MultiPoint(cluster_points_xy)
-            cluster_polygon_hull = cluster_polygon.convex_hull
-            if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                rospy.loginfo("Empty hull")
-                continue
-            if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                rospy.loginfo("Cluster is not polygon, continue")
-                continue
-
-            shape = Polygon.from_shapely(
-                cluster_polygon_hull, make_centered=True  # type: ignore
-            )
-
-            transform = shape.offset
-            shape.offset = Transform2D.identity()
+                shape = Polygon.from_shapely(
+                    cluster_polygon_hull, make_centered=True  # type: ignore
+                )
+                transform = shape.offset
+                shape.offset = Transform2D.identity()
 
             motion = None
             if motion_array_converted is not None:
@@ -436,32 +461,23 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
         timestamp = self.hero_speed.header.stamp
-        # Shape based on https://www.motortrend.com/cars/
-        # lincoln/mkz/2020/specs/?trim=Base+Sedan
-        shape = Rectangle(
-            length=4.92506,
-            width=1.86436,
-            offset=Transform2D.new_translation(Vector2.new(0.0, 0.0)),
-        )
-        transform = Transform2D.identity()
-        flags = Flags(is_collider=True, is_hero=True)
-        hero = Car(
-            confidence=1.0,
-            priority=1.0,
-            shape=shape,
-            transform=transform,
-            timestamp=timestamp,
-            flags=flags,
-            motion=motion,
-        )
+        hero = mapping_common.hero.create_hero_entity()
+        hero.timestamp = timestamp
+        hero.motion = motion
         return hero
+
+    def publish_new_map_handler(self, timer_event=None):
+        try:
+            self.publish_new_map()
+        except Exception as e:
+            rospy.logfatal(f"Mapping data integration: {e}")
 
     def publish_new_map(self, timer_event=None):
         hero_car = self.create_hero_entity()
-        if hero_car is None:
+        if hero_car is None or self.current_pos is None or self.current_heading is None:
             return
 
-        entities = []
+        entities: List[Entity] = []
         entities.append(hero_car)
 
         if self.get_param("~enable_lidar_cluster"):
@@ -494,32 +510,20 @@ class MappingDataIntegrationNode(CompatibleNode):
             else:
                 return
 
-        if self.get_param("~enable_raw_radar_points"):
-            if self.radar_data is not None:
-                entities.extend(self.entities_from_radar())
-            else:
-                return
+        if self.get_param("~enable_stop_marks"):
+            hero_transform_inv = mapping_common.map.build_global_hero_transform(
+                self.current_pos.x(),
+                self.current_pos.y(),
+                self.current_heading,
+            ).inverse()
+            marks = []
+            for global_marks in self.stop_marks.values():
+                for global_mark in global_marks:
+                    local_mark = deepcopy(global_mark)
+                    local_mark.transform = hero_transform_inv * local_mark.transform
+                    marks.append(local_mark)
 
-        # lane_box_entities visualizes the shape and position of the lane box
-        # which is used for lane_free function
-        # lane_box_entities = [
-        #    Entity(
-        #        confidence=100.0,
-        #        priority=100.0,
-        #        shape=Rectangle(
-        #            length=22.5,
-        #            width=1.5,
-        #            offset=Transform2D.new_translation(Vector2.new(-2.5, 2.2)),
-        #        ),
-        #        transform=Transform2D.identity(),
-        #        flags=Flags(is_ignored=True),
-        #    )
-        # ]
-        # entities.extend(lane_box_entities)
-
-        # Will be used when the new function for entity creation is implemented
-        # if self.get_param("enable_vision_points"):
-        #    entities.extend(self.entities_from_vision_points())
+            entities.extend(marks)
 
         stamp = rospy.get_rostime()
         map = Map(timestamp=stamp, entities=entities)

@@ -1,4 +1,3 @@
-<!---->
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
