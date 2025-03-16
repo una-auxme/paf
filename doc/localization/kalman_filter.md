@@ -230,9 +230,9 @@ Smaller boxes mean the data is closer together and less spread.
 The Kalman Filter was tuned to create the smallest MSE possible, which gives more weight to larger errors which we want to minimise.
 
 The MAE on the other hand shows a 1:1 representation in terms of distance from the ideal to the predicted location.
-![MSE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/perception/data_26_MSE_Boxed.png)
+![MSE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/localization/data_26_MSE_Boxed.png)
 
-![MAE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/perception/data_26_MAE_Boxed.png)
+![MAE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/localization/data_26_MAE_Boxed.png)
 
 As you see this data you might think the unfiltered data seems to be just as good if not even better than the previous rolling average filter (RAF).
 
