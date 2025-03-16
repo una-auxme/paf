@@ -33,8 +33,6 @@ We decided to use a preexisting ROS-TEB-implementation.
 The implementation is from the TU-Dortmund and is usually directly integrated into the move_base framework of ROS.
 We do not use move_base and therefore need an interface package for this.
 
-
-
 ### [Ros TEB Planner](http://wiki.ros.org/teb_local_planner)
 
 The ROS-TEB Planner is a local_planning_algorithm for base_local_planner ROS-package.
