@@ -26,6 +26,16 @@ We decided to use a preexisting ROS-TEB-implementation.
 The implementation is from the TU-Dortmund and is usually directly integrated into the move_base framework of ROS.
 We do not use move_base and therefore need an interface package for this.
 
+In order to install it in the Docker-Container add the following code to `build/docker/agent/Dockerfile`
+
+```
+# Install teb_local_planner as well as teb_planner_pa
+RUN sudo apt-get install -y \
+    ros-noetic-teb-local-planner
+ARG TEB_PLANNER_PA_GITHUB_URL=https://github.com/TUC-ProAut/ros_teb_planner.git
+RUN git clone $TEB_PLANNER_PA_GITHUB_URL src/ros_teb_planner
+```
+
 ### [Ros TEB Planner](http://wiki.ros.org/teb_local_planner)
 
 The ROS-TEB Planner is a local_planning_algorithm for base_local_planner ROS-package.
