@@ -205,6 +205,7 @@ class VisionNode(CompatibleNode):
             or output[0].boxes is None
             or len(output[0].boxes) == 0
         ):
+            self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         box_classes = output[0].boxes.cls.int().cpu().numpy()
         carla_classes = np.array(coco_to_carla)[box_classes]
@@ -212,6 +213,7 @@ class VisionNode(CompatibleNode):
         # check if the masks and box_classess size is correct
         if masks.size(0) != len(box_classes):
             rospy.logerr("Masks and box classes size mismatch")
+            self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
 
         # proceed with traffic light detection
@@ -224,17 +226,20 @@ class VisionNode(CompatibleNode):
         # check if the scaled masks are valid
         if scaled_masks is None or scaled_masks.size(0) == 0:
             rospy.logerr("No scaled masks found")
+            self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         valid_points, class_indices = self.process_segmentation_mask(
             scaled_masks.cpu().numpy(),
             lidar_array=lidar_array,
         )
         if valid_points is None or valid_points.size == 0:
+            self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         clustered_points, cluster_indices, carla_classes_indices = self.cluster_points(
             valid_points, class_indices, carla_classes
         )
         if clustered_points is None or clustered_points.size == 0:
+            self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         # self.publish_distance_output(clustered_points, carla_classes_indices)
         clustered_lidar_points_msg = array_to_clustered_points(
