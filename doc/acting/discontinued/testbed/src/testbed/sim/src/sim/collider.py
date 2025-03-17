@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 from numpy.typing import NDArray
 
-from typing import Tuple, List
+from typing import Tuple
 
 from sim.screen_entity import ScreenEntity
 

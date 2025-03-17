@@ -8,9 +8,8 @@ from sim.msg import Entities, Entity
 from sensor_msgs.msg import PointCloud2, PointField
 import std_msgs.msg
 import struct
-import numpy as np
 
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 from rospy import Publisher
 
 

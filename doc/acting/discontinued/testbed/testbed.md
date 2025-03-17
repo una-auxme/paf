@@ -4,11 +4,10 @@
 Such as TimeElasticBands, RandomTrees, DynamicWindow and many more. But also other steering controllers such as ReedsShepp-Paths or Dubin Curves.
 Often there is no clear benefit in choosing one of them over the other. In PAF2025 a testbed for these Local Planners in order to compare them to one another was created.
 
-The goal was to have a PyGame simulation of the vehicle. A global trajectory gets produced by e.g. Acting Debug. 
+The goal was to have a PyGame simulation of the vehicle. A global trajectory gets produced by e.g. Acting Debug.  
 The Local Planner acts and then steering and throttle is calculated in control package, which is then again read by the simulation. With the lightweight nature of a performant sim in pygame load times are held to a minimum, and there is also the possibility to pause and reset the car.
 
 Code compatibility with other systems such as control was important, however as the cars code changed maintaining the sim got progressively harder.
-
 
 ![testbed image](./assets/actingtestbed.png)
 
@@ -21,7 +20,6 @@ Code compatibility with other systems such as control was important, however as 
 
 The main code for the sim can now be found inside `/doc/acting/discontinued/testbed/src/testbed`.
 In this folder there are 3 Packages which we worked on.
-
 
 In the following image the communication structure is visualized.
 The car sim will publish the vehicles `current_pos`, `current_heading`, `Speed` and `target_velocity`.

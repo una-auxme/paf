@@ -2,7 +2,6 @@ from trajectory_generator_base import TrajectoryGenerator
 from helper_functions import interpolate_route
 
 import numpy as np
-import math
 
 from typing import List, Tuple
 

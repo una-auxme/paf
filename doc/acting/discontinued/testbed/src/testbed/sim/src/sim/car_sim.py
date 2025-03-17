@@ -5,10 +5,9 @@ import random
 import math
 
 import pygame
-from pygame.locals import *
+from pygame.locals import QUIT, MOUSEBUTTONDOWN
 
 from sim.msg import (
-    VehicleCtrl,
     VehicleInfo,
     Entity,
     Entities,
@@ -27,7 +26,7 @@ from sim.trajectory import Trajectory
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped
 
-from typing import Tuple, List, Optional
+from typing import List, Optional
 
 speed = 5
 
@@ -105,7 +104,8 @@ class Simulation:
             self.rate.sleep()
 
         # rospy.timer.Timer(duration, lambda _: self.update())
-        """We would love to use this timer here. And the timer does work if not in docker container. 
+        """We would love to use this timer here.
+        And the timer does work if not in docker container.
         Inside the container the timer somehow works differently and we cannot use it.
         """
 
@@ -181,17 +181,17 @@ class Simulation:
             pygame.draw.lines(self.screen, (120, 120, 0), False, points, 2)
 
         self.multi_path = None
-        #! Transform left to right
+        # Transform left to right
 
     def _draw_vehicle_info(self):
         v = self.car.v
         theta = self.car.theta
         label: str = (
-            f"Vel:     {round(v,2)} m/s",
-            f"Theta:   {round(theta,2)} rad",
-            f"Steer:   {round(self.steer,2)}",
-            f"Throttle:{round(self.throttle,2)}",
-            f"Brake:   {round(self.brake,2)}",
+            f"Vel:     {round(v, 2)} m/s",
+            f"Theta:   {round(theta, 2)} rad",
+            f"Steer:   {round(self.steer, 2)}",
+            f"Throttle:{round(self.throttle, 2)}",
+            f"Brake:   {round(self.brake, 2)}",
         )
         y_offset = 0
         for line in label:

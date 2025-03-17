@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 import math
 import pygame
 
@@ -56,7 +56,8 @@ class Car:
             if self.steering_angle != 0:
                 # Turning radius based on steering angle and wheelbase
                 turning_radius = self.wheelbase / math.tan(self.steering_angle)
-                # Calculate the change in orientation (theta) based on velocity and turning radius
+                # Calculate the change in orientation (theta)
+                # based on velocity and turning radius
                 delta_theta = self.v / turning_radius * dt
 
                 # Update the orientation (heading) of the car

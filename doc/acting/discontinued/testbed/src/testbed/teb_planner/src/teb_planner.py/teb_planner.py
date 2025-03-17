@@ -6,7 +6,6 @@ from ros_compatibility.node import CompatibleNode
 import rospy
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped, Pose, Point32
-from nav_msgs.msg import Path
 
 from costmap_converter.msg import ObstacleArrayMsg, ObstacleMsg
 from teb_planner_pa_msgs.srv import PlanRequest, PlanResponse, Plan
@@ -20,7 +19,6 @@ from sim.msg import (
 )
 
 from mapping.msg import Map as MapMsg
-from mapping_common.entity import Entity
 from mapping_common.map import Map
 
 from acting.trajectory_modifier import TrajectoryModifier

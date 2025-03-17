@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
-import rospy
 
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
