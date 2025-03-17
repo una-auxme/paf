@@ -197,6 +197,8 @@ Publishes:
 
 - ```/paf/hero/curr_behavior``` \(/MotionPlanning, /vehicle_controller\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
 
+Includes:
+
 [cruise.py](/../paf/code/planning/src/behavior_agent/behaviors/cruise.py)
 
 [intersection.py](/../paf/code/planning/src/behavior_agent/behaviors/intersection.py)
@@ -206,10 +208,6 @@ Publishes:
 [leave_parking_space.py](/../paf/code/planning/src/behavior_agent/behaviors/leave_parking_space.py)
 
 [overtake.py](/../paf/code/planning/src/behavior_agent/behaviors/overtake.py)
-
-- ```/paf/hero/overtake_distance``` \( ) ([std_msgs/Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-
-- ```/paf/hero/overtake/debug_markers``` \( ) (MarkerArray)
 
 [unstuck_routine.py](/../paf/code/planning/src/behavior_agent/behaviors/unstuck_routine.py)
 
