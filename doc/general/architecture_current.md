@@ -215,8 +215,8 @@ Includes:
 
 It consists of two components:
 
-- [ACC](../planning/ACC.md): Generates a new speed based on a possible collision recieved from Collision Check and speedlimits recieved from [Global Planner](#global-planning)
-- [Motion Planning](../planning/motion_planning.md): Decides the target speed and modifies trajectory if signal recieved from [Behavior Agent](#behavior-agent-behavior_agent)
+- [ACC](../planning/ACC.md): Generates a new speed based on a possible collision received from Collision Check and speedlimits received from [Global Planner](#global-planning)
+- [Motion Planning](../planning/motion_planning.md): Decides the target speed and modifies trajectory if signal received from [Behavior Agent](#behavior-agent-behavior_agent)
 
 Subscriptions:
 
