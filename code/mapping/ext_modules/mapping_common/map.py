@@ -865,9 +865,9 @@ class MapTree:
             if math.isclose(intersection_area, 0.0):
                 continue
             if (
-                intersection_area / shape_area >= min_coverage_percent
-                or intersection_area >= min_coverage_area
-            ):
+                min_coverage_percent > 0.0
+                and intersection_area / shape_area >= min_coverage_percent
+            ) or (min_coverage_area > 0.0 and intersection_area >= min_coverage_area):
                 collision_entities.append(ent)
 
         return collision_entities
