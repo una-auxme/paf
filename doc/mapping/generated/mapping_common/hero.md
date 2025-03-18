@@ -10,6 +10,10 @@
 
 # mapping\_common.hero
 
+Contains hero-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/hero.md)**
+
 <a id="mapping_common.hero.HERO_CAR_LENGTH"></a>
 
 #### HERO\_CAR\_LENGTH: `float`
@@ -30,7 +34,7 @@ Hero car width in meters
 def create_hero_entity() -> Car
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/hero.py#L15)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/hero.py#L20)
 
 Creates a car-entity with the shape of the hero car
 

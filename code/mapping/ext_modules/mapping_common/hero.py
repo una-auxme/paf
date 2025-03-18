@@ -1,3 +1,8 @@
+"""Contains hero-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/hero.md)**
+"""
+
 from mapping_common.entity import Car, Flags
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2

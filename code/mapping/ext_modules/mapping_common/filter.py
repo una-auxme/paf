@@ -1,3 +1,8 @@
+"""Contains filter-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/filter.md)**
+"""
+
 from dataclasses import dataclass
 from copy import deepcopy
 from typing import List, Tuple, Optional, Callable

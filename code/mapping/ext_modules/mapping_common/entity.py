@@ -1,6 +1,6 @@
 """Contains entity-related functions
 
-**[Generated documentation file](/doc/mapping/generated/mapping_common.entity)**
+**[API documentation](/doc/mapping/generated/mapping_common/entity.md)**
 """
 
 from typing import List, Optional, Dict
@@ -157,7 +157,11 @@ class FlagFilter:
 
 @dataclass
 class TrackingInfo:
-    """Information that might be required to consistently track entities"""
+    """Information that might be required to consistently track entities
+
+    Note: As of 03.2025, this class and attribute in #Entity is still completely unused.
+    PAF24 still left it in as a base/guidance for future tracking experiments
+    """
 
     visibility_time: Duration = field(default_factory=Duration)
     """How long the entity has been visible for. Never gets reset"""
@@ -170,13 +174,25 @@ class TrackingInfo:
     """In how many consecutive data frames the entity was not visible.
     Reset when the entity is visible again"""
     moving_time: Duration = field(default_factory=Duration)
-    """How long an entity was moving continuously. Reset when standing"""
+    """How long an entity was moving continuously. Reset when standing
+
+    This might be used to decide if we should overtake
+    """
     standing_time: Duration = field(default_factory=Duration)
-    """How long an entity stood still continuously. Reset when moving"""
+    """How long an entity stood still continuously. Reset when moving
+
+    This might be used to decide if we should overtake
+    """
     moving_time_sum: Duration = field(default_factory=Duration)
-    """Sums of all the time the entity was moving. Never gets reset"""
+    """Sums of all the time the entity was moving. Never gets reset
+
+    This might be used to decide if we should overtake
+    """
     standing_time_sum: Duration = field(default_factory=Duration)
-    """Sums of all the time the entity was standing still. Never gets reset"""
+    """Sums of all the time the entity was standing still. Never gets reset
+
+    This might be used to decide if we should overtake
+    """
     min_linear_speed: float = 0.0
     """Minimum linear speed of this entity ever recorded"""
     max_linear_speed: float = 0.0
@@ -470,6 +486,12 @@ class Entity:
     def get_global_x_velocity(self) -> Optional[float]:
         """
         Returns the global x velocity of the entity in in m/s.
+
+        Note that *global* is a bit misleading in this case.
+        It does NOT mean global in relation to the hero's GPS coordinates,
+        but in the x-direction of the map this entity belongs to.
+
+        -> It returns the velocity in the same x-direction as the hero.
 
         Returns:
         - Optional[float]: Velocity of the entity in front in m/s.

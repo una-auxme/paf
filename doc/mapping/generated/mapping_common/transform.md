@@ -20,6 +20,10 @@
 
 # mapping\_common.transform
 
+Contains transform-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/transform.md)**
+
 <a id="mapping_common.transform.Point2"></a>
 
 ## Point2
@@ -29,7 +33,7 @@
 class Point2(_Coord2)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L42)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L47)
 
 2 dimensional point.
 
@@ -44,7 +48,7 @@ Receives both rotation and translation when transformed with a Transform2D
 class Vector2(_Coord2)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L101)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L106)
 
 2 dimensional direction vector.
 
@@ -58,7 +62,7 @@ Receives only the rotation when transformed with a Transform2D
 def length() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L106)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L111)
 
 Calculates the length of this vector
 
@@ -74,7 +78,7 @@ Calculates the length of this vector
 def normalized() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L116)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L121)
 
 Returns this direction Vector with length 1.0
 
@@ -92,7 +96,7 @@ If the vector is the zero vector, the result will be zero as well
 def angle_to(other: "Vector2") -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L129)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L134)
 
 Calculates the angle to *other*
 
@@ -117,7 +121,7 @@ Calculates the angle to *other*
 class Transform2D()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L246)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L251)
 
 Homogeneous 2 dimensional transformation matrix
 
@@ -142,7 +146,7 @@ v_transformed = t * v
 def translation() -> Vector2
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L273)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L278)
 
 Returns only the translation that this Transform applies
 
@@ -158,7 +162,7 @@ Returns only the translation that this Transform applies
 def rotation() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L283)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L288)
 
 Returns only the rotation that this Transform applies
 
@@ -177,7 +181,7 @@ Returns only the rotation that this Transform applies
 def inverse() -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L296)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L301)
 
 Returns an inverted Transformation matrix
 
@@ -194,7 +198,7 @@ Returns an inverted Transformation matrix
 def identity() -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L305)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L310)
 
 Returns the identity transform (no transformation)
 
@@ -211,7 +215,7 @@ Returns the identity transform (no transformation)
 def new_rotation(angle: float) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L314)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L319)
 
 Returns a transformation matrix consisting of a rotation around `angle`
 
@@ -231,7 +235,7 @@ Returns a transformation matrix consisting of a rotation around `angle`
 def new_translation(v: Vector2) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L332)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L337)
 
 Returns a transformation matrix consisting of a translation along `v`
 
@@ -248,7 +252,7 @@ Returns a transformation matrix consisting of a translation along `v`
 def new_rotation_translation(angle: float, v: Vector2) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L343)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L348)
 
 Returns a transformation matrix consisting of first a rotation around `angle`
 and then a translation along `v`.

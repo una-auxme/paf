@@ -60,7 +60,7 @@
 
 Contains entity-related functions
 
-**[Generated documentation file](/doc/mapping/generated/mapping_common.entity)**
+**[API documentation](/doc/mapping/generated/mapping_common/entity.md)**
 
 <a id="mapping_common.entity.Motion2D"></a>
 
@@ -206,6 +206,9 @@ class TrackingInfo()
 
 Information that might be required to consistently track entities
 
+Note: As of 03.2025, this class and attribute in [`Entity`](#mapping_common.entity.Entity) is still completely unused.
+PAF24 still left it in as a base/guidance for future tracking experiments
+
 <a id="mapping_common.entity.TrackingInfo.visibility_time"></a>
 
 #### visibility\_time: `Duration`
@@ -238,11 +241,15 @@ Reset when the entity is visible again
 
 How long an entity was moving continuously. Reset when standing
 
+This might be used to decide if we should overtake
+
 <a id="mapping_common.entity.TrackingInfo.standing_time"></a>
 
 #### standing\_time: `Duration`
 
 How long an entity stood still continuously. Reset when moving
+
+This might be used to decide if we should overtake
 
 <a id="mapping_common.entity.TrackingInfo.moving_time_sum"></a>
 
@@ -250,11 +257,15 @@ How long an entity stood still continuously. Reset when moving
 
 Sums of all the time the entity was moving. Never gets reset
 
+This might be used to decide if we should overtake
+
 <a id="mapping_common.entity.TrackingInfo.standing_time_sum"></a>
 
 #### standing\_time\_sum: `Duration`
 
 Sums of all the time the entity was standing still. Never gets reset
+
+This might be used to decide if we should overtake
 
 <a id="mapping_common.entity.TrackingInfo.min_linear_speed"></a>
 
@@ -277,7 +288,7 @@ Maximum linear speed of this entity ever recorded
 class Entity()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L216)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L232)
 
 A thing of interest around the hero car that has a location and a shape
 
@@ -370,7 +381,7 @@ If this entity is supposed to be tracked, tracking_info must not be None
 def matches_filter(f: FlagFilter) -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L266)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L282)
 
 Returns if this entity matches the filter mask f
 
@@ -392,7 +403,7 @@ Returns if this entity matches the filter mask f
 def from_ros_msg(m: msg.Entity) -> "Entity"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L286)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L302)
 
 Creates an entity from m
 
@@ -406,7 +417,7 @@ Note that the returned entity might be a subclass of Entity
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L362)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L378)
 
 Creates an ROS marker based on the entity
 
@@ -422,7 +433,7 @@ Creates an ROS marker based on the entity
 def get_meta_markers() -> List[Marker]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L377)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L393)
 
 Creates additional meta markers for the entity
 
@@ -438,7 +449,7 @@ Creates additional meta markers for the entity
 def is_mergeable_with(other: "Entity") -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L436)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L452)
 
 Returns if self should be merged/combined with other at all
 
@@ -461,9 +472,15 @@ Mainly used in the filtering steps of the intermediate layer map
 def get_global_x_velocity() -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L470)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L486)
 
 Returns the global x velocity of the entity in in m/s.
+
+Note that *global* is a bit misleading in this case.
+It does NOT mean global in relation to the hero's GPS coordinates,
+but in the x-direction of the map this entity belongs to.
+
+-> It returns the velocity in the same x-direction as the hero.
 
 **Returns**:
 
@@ -477,7 +494,7 @@ Returns the global x velocity of the entity in in m/s.
 def get_delta_forward_velocity_of(other: "Entity") -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L487)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L509)
 
 Calculates the delta velocity compared to other in the heading of self.
 This function is only for objects in front. If the entity is behind this
@@ -504,7 +521,7 @@ case.
 def get_delta_velocity_of(other: "Entity") -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L512)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L534)
 
 Calculates the delta velocity compared to other in the heading of self
 
@@ -528,7 +545,7 @@ Calculates the delta velocity compared to other in the heading of self
 def get_width() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L535)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L557)
 
 Returns the local width (y-bounds) of the entity
 
@@ -544,7 +561,7 @@ Returns the local width (y-bounds) of the entity
 def get_front_x() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L545)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L567)
 
 Returns the local x length from the center to the front of the entity
 
@@ -561,7 +578,7 @@ Returns the local x length from the center to the front of the entity
 class Lanemarking(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L604)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L626)
 
 <a id="mapping_common.entity.Lanemarking.to_marker"></a>
 
@@ -571,7 +588,7 @@ class Lanemarking(Entity)
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L638)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L660)
 
 Creates an ROS marker based on the entity
 
@@ -588,7 +605,7 @@ Creates an ROS marker based on the entity
 class TrafficLight(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L669)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L691)
 
 Traffic light or stop sign
 
@@ -606,7 +623,7 @@ They set the *is_stopmark* flag only if the car has to stop there.
 class StopMark(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L702)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L724)
 
 Stop mark as a virtual obstacle for the ACC
 
@@ -619,7 +636,7 @@ Stop mark as a virtual obstacle for the ACC
 class ShapelyEntity()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L775)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L797)
 
 A Container containing both an entity and a shapely.Polygon
 based on the entity's shape and transform
@@ -635,7 +652,7 @@ not automatically update itself and will contain outdated information.
 def get_distance_to(other: "ShapelyEntity") -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L786)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L808)
 
 Returns the distance to other in m.
 

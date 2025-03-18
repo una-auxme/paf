@@ -1,3 +1,8 @@
+"""Contains shape-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/shape.md)**
+"""
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -32,8 +37,10 @@ class Shape2D:
     """
 
     offset: Transform2D
-    """Local transformation of this shape based on
-    the transformation of the entity it is attached to"""
+    """Local transformation of this shape
+
+    If this shape is attached to an entity, this acts as an additional offset
+    on top of the entity's transformation."""
 
     @staticmethod
     def from_ros_msg(m: msg.Shape2D) -> "Shape2D":

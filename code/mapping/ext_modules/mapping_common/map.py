@@ -1,3 +1,8 @@
+"""Contains map-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/map.md)**
+"""
+
 from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Literal, Tuple
 from enum import Enum

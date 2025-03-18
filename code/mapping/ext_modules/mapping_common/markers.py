@@ -1,3 +1,8 @@
+"""Contains markers-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/markers.md)**
+"""
+
 from typing import Optional, List, Tuple, Any
 from collections.abc import Sequence
 

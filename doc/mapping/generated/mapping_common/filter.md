@@ -14,6 +14,10 @@
 
 # mapping\_common.filter
 
+Contains filter-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/filter.md)**
+
 <a id="mapping_common.filter.MapFilter"></a>
 
 ## MapFilter
@@ -22,7 +26,7 @@
 class MapFilter()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L15)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L20)
 
 Abstract base class for all mapping filters
 
@@ -34,7 +38,7 @@ Abstract base class for all mapping filters
 def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L18)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L23)
 
 Filters the map.
 
@@ -59,7 +63,7 @@ Look into the class description for what the filter does
 class LaneIndexFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L34)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L39)
 
 Updates the Index of lanemark Entities if duplicates have been removed.
 
@@ -83,7 +87,7 @@ Then returns the updated map with all Entities
 class GrowPedestriansFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L85)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L90)
 
 Grow Pedestrians by 0.5 meter for a better detection of them (e.g. for the ACC)
 
@@ -103,7 +107,7 @@ Then returns the updated map with all Entities
 class GrowthMergingFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L106)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L111)
 
 Merges entities in the map with growing them
 

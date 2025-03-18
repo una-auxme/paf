@@ -1,3 +1,8 @@
+"""Contains mask-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/mask.md)**
+"""
+
 from typing import Optional, Tuple, List, Union
 
 import shapely

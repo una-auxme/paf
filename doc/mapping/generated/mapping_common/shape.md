@@ -17,6 +17,10 @@
 
 # mapping\_common.shape
 
+Contains shape-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/shape.md)**
+
 <a id="mapping_common.shape.Shape2D"></a>
 
 ## Shape2D
@@ -26,7 +30,7 @@
 class Shape2D()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L27)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L32)
 
 A 2 dimensional shape
 
@@ -37,8 +41,10 @@ but cython does not support the ABC superclass and decorators
 
 #### offset: `Transform2D`
 
-Local transformation of this shape based on
-the transformation of the entity it is attached to
+Local transformation of this shape
+
+If this shape is attached to an entity, this acts as an additional offset
+on top of the entity's transformation.
 
 <a id="mapping_common.shape.Shape2D.from_ros_msg"></a>
 
@@ -49,7 +55,7 @@ the transformation of the entity it is attached to
 def from_ros_msg(m: msg.Shape2D) -> "Shape2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L39)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L46)
 
 Creates a shape from m
 
@@ -64,7 +70,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L66)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L73)
 
 Creates an ROS marker based on this shape
 
@@ -85,7 +91,7 @@ Creates an ROS marker based on this shape
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L98)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L105)
 
 Creates a shapely.Polygon based on this shape
 
@@ -107,7 +113,7 @@ Creates a shapely.Polygon based on this shape
 class Rectangle(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L111)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L118)
 
 Rectangle with width and height in meters
 
@@ -120,7 +126,7 @@ Rectangle with width and height in meters
 class Circle(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L175)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L182)
 
 Circle with radius in meters
 
@@ -133,7 +139,7 @@ Circle with radius in meters
 class Polygon(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L226)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L233)
 
 Polygon defined by a list of Point2 objects.
 
@@ -146,7 +152,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L260)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L267)
 
 Convert to a visualization Marker for RViz.
 
@@ -160,7 +166,7 @@ def from_shapely(poly: shapely.Polygon,
                  make_centered: bool = False) -> "Polygon"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L368)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L375)
 
 Creates a Polygon from a shapely.Polygon
 

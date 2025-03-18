@@ -9,6 +9,10 @@
 
 # mapping\_common.markers
 
+Contains markers-related functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/markers.md)**
+
 <a id="mapping_common.markers.debug_marker"></a>
 
 #### debug\_marker(base: Any, frame\_id: Optional[str] = "hero", position\_z: Optional[float] = None, transform: Optional[Transform2D] = None, offset: Optional[Vector2] = None, color: Optional[Tuple[float, float, float, float]] = None, scale\_z: Optional[float] = None)
@@ -23,7 +27,7 @@ def debug_marker(base: Any,
                  scale_z: Optional[float] = None) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L15)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L20)
 
 Creates a marker based on *base*
 
@@ -67,7 +71,7 @@ def debug_marker_array(
         lifetime: Optional[rospy.Duration] = None) -> MarkerArray
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L130)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L135)
 
 Builds a MArkerArray based on *markers*
 
