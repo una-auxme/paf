@@ -29,7 +29,7 @@ For this purpose, the is_lane_free function is used while we are still driving (
 
 If the lane is free, the trajectory immediatly gets planned to the desired change lane, this happens with the help of the request_start_overtake() service.
 
-If the lane isn't free, the hero continues to drive on the old lane with a continuous check whether the lane is now free.
+If the lane is not free, the hero continues to drive on the old lane with a continuous check whether the lane is now free.
 
 Once the car is nearby the change point (< TARGET_DISTANCE_TO_STOP_LANECHANGE) and no change occured yet, a switch to the wait subbehavior takes place. Meanwhile, because of the stop marker set in the Ahead subbehavior, the hero stops just before the change point (still on the old lane).
 
