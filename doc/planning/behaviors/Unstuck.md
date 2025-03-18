@@ -53,7 +53,7 @@ Once one of the Timers is triggered we do the following:
     This turns the car towards the trajectory, while reversing
     1. **Check** if there is an **obstacle** inside the obstacle mask
     2. If there is none, then **reverse slowly** (2 m/s) via the add_speed_override() service, until the **UNSTUCK_CLEAR_DISTANCE** is reached, or an obstacle appears inside the collision mask.
-    3. If an **obstacle** is **detected** but the car has'nt moved more than 0,5 m
+    3. If an **obstacle** is **detected** but the car has not moved more than 0,5 m
     -> keep reversing.\
     Otherwise the car could be stuck forever, because it is not moving at all.
     4. If there is an **obstacle** or the **UNSTUCK_CLEAR_DISTANCE** is reached\
