@@ -1,7 +1,7 @@
-# syntax = edrevo/dockerfile-plus
+FROM python:3.8-slim-bullseye
 
-INCLUDE+ ./build/docker/agent/Dockerfile
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y git
+RUN git config --global safe.directory '*'
 
-RUN pip install -U sphinx sphinx-markdown-builder sphinx-autodoc-typehints myst-parser pydoc-markdown mkdocs "mkdocstrings[python]" pandoc
-
-ADD --chmod=755 ./build/docker/docs/command.sh /command.sh
+RUN pip install -U 'pydoc-markdown==4.8.2'

@@ -1,4 +1,7 @@
-"""Contains entity-related functions"""
+"""Contains entity-related functions
+
+**[Generated documentation file](/doc/mapping/generated/mapping_common.entity)**
+"""
 
 from typing import List, Optional, Dict
 from enum import Enum

@@ -7,12 +7,11 @@ This document provides an overview of the structure of the documentation.
 - [`research`](#research)
 - [`examples`](#examples)
 - [`perception`](#perception)
+- [`mapping`](#mapping)
 - [`planning`](#planning)
 - [`acting`](#acting)
 - [`assets`](#assets)
 - [`dev_talks`](#dev_talks)
-- [`sphinx`](#sphinx)
-  - [Configuration resources](#configuration-resources)
 
 ## `general`
 
@@ -34,6 +33,10 @@ To-do
 
 The [`perception`](./perception/) folder contains documentation for the whole perception module and its individual components.
 
+## `mapping`
+
+The [`mapping`](./mapping/) folder contains documentation for the mapping package, often also called the **Intermediate Layer**.
+
 ## `planning`
 
 The [`planning`](./planning/) folder contains documentation for the whole planning module and its individual components.
@@ -49,10 +52,3 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 ## `dev_talks`
 
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
-
-## `sphinx`
-
-### Configuration resources
-
-- <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>
-- <https://www.sphinx-doc.org/en/master/usage/configuration.html>

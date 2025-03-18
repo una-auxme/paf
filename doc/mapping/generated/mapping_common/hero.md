@@ -1,0 +1,40 @@
+<!-- markdownlint-disable -->
+# Table of Contents
+
+* [mapping\_common.hero](#mapping_common.hero)
+  * [HERO\_CAR\_LENGTH](#mapping_common.hero.HERO_CAR_LENGTH)
+  * [HERO\_CAR\_WIDTH](#mapping_common.hero.HERO_CAR_WIDTH)
+  * [create\_hero\_entity](#mapping_common.hero.create_hero_entity)
+
+<a id="mapping_common.hero"></a>
+
+# mapping\_common.hero
+
+<a id="mapping_common.hero.HERO_CAR_LENGTH"></a>
+
+#### HERO\_CAR\_LENGTH: `float`
+
+Hero car length in meters
+
+<a id="mapping_common.hero.HERO_CAR_WIDTH"></a>
+
+#### HERO\_CAR\_WIDTH: `float`
+
+Hero car width in meters
+
+<a id="mapping_common.hero.create_hero_entity"></a>
+
+#### create\_hero\_entity()
+
+```python
+def create_hero_entity() -> Car
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/hero.py#L15)
+
+Creates a car-entity with the shape of the hero car
+
+**Returns**:
+
+  Car
+
