@@ -7,7 +7,7 @@
 ## General
 
 The leave parking space behavior is only executed at the beginning of the simulation to leave the parking space. \
-It is also responsible that we don't start to drive while no intermediate layer map, trajectory and acc speed is set (because of no init yet).
+It is also responsible that we do not start to drive while no intermediate layer map, trajectory and acc speed is set (because at least one of them is not initialized yet).
 
 The behavior places a stop marker to the left side of the car, leading to stop the car from uncontrolled unparking. \
 With the is_lane_free function it is checked whether the left lane is free. If this is the case the stop marker gets removed and the car starts its way.
