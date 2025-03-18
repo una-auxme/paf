@@ -16,6 +16,8 @@ author = "PAF"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "myst_parser",
 ]
@@ -50,3 +52,9 @@ autodoc_preserve_defaults = True
 # markdown config
 markdown_bullet = "-"
 markdown_anchor_signatures = True
+
+# napoleon config
+napoleon_google_docstring = True
+napoleon_use_param = True
+napoleon_use_rtype = True
+napoleon_attr_annotations = True

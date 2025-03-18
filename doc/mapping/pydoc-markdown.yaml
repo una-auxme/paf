@@ -1,0 +1,27 @@
+loaders:
+- type: python
+  search_path: [../../code/mapping/ext_modules]
+renderer:
+  type: mkdocs
+  markdown:
+    descriptive_class_title: false
+    signature_in_header: true
+    render_typehint_in_data_header: true
+    render_toc: true
+    source_linker:
+      type: git
+      url_template: "/{path}#L{lineno}"
+  pages:
+  - title: API Documentation
+    children:
+    - title: Entity documentation
+      contents:
+      - mapping_common.entity.*
+    - title: Filter documentation
+      contents:
+      - mapping_common.filter.*
+processors:
+  - type: filter
+  - type: crossref
+  - type: smart
+  

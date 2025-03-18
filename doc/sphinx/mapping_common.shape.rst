@@ -8,5 +8,6 @@ mapping\_common.shape module
 
 .. automodule:: mapping_common.shape
    :members:
+   :exclude-members: t
    :undoc-members:
    :show-inheritance:

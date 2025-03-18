@@ -1,3 +1,5 @@
+"""Contains entity-related functions"""
+
 from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
