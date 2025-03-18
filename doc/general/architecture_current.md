@@ -172,9 +172,8 @@ Publishes:
 
 ### Behavior Agent ([behavior_agent](/../paf/code/planning/src/behavior_agent/))
 
-Decides which speed is the right one to pass through a certain situation and
-also checks if an overtake is necessary.
-Everything is based on the data from the Perception [Perception](#Perception). More about the behavior tree can be found [here](../planning/Behavior_tree.md)
+Decides which situation occurs and how the car reacts to it, e.g. checks for intersection, overtake, lanechange and more.
+Everything is based on the data from the [Perception](#Perception) and Intermediate Layer. More about the behavior tree can be found [here](../planning/Behavior_tree.md)
 
 Subscriptions:
 
