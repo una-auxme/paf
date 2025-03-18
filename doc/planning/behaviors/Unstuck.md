@@ -45,7 +45,7 @@ Once one of the Timers is triggered we do the following:
     | 0             | Do nothing additional. |
     | 1             | Reset the planned overtake trajectory and remove all added stopmakers. |
     | 2             | Add an overtake 2.75m to the left. |
-    | 3              | Add an ovetake 1.00m to the right. reset Unstuck Count to 0. |
+    | 3              | Add an ovetake 1.00m to the right. Reset Unstuck Count to 0. |
 
    While driving in reverse:
 
