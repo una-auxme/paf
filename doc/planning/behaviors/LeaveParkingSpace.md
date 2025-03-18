@@ -14,4 +14,4 @@ With the is_lane_free function it is checked whether the left lane is free. If t
 
 Also, if the car started moving more than five meter while the stop marker is still there, we know that the car started its way and this behavior is done (can occur e.g. when the devroute is started and no parking space is needed to be left).
 
-Once one of these two situation occurs, a variable 'self.finished' is set to true so that this behavior is never executed again and FAILURE is returned to end the behavior. Otherwise it stays in RUNNING.
+Once one of these two situations occurs, a variable 'self.finished' is set to true so that this behavior is never executed again and FAILURE is returned to end the behavior. Otherwise it stays in RUNNING.
