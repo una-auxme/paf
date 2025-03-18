@@ -12,7 +12,7 @@
 
 This behaviour executes a lane change. It proceeds an early lane change when the change lane is free. It also detects if the hero is already on the desired lane (e.g. thorugh an overtake).
 
-It slows the vehicle down when the lane change point is reached (and no change occured till then) and then proceeds to switch lanes.
+It slows the vehicle down and stops it (with the help of a stopmark) when the lane change point is reached when no change occured till then and then it proceeds to switch lanes.
 
 The behavior also detects if a change to left or right is planned and reacts to this accordingly.
 
