@@ -23,7 +23,7 @@ The theoretical concepts of each Local Planning component are explained below.
 
 ## [ACC](./ACC.md)
 
-The ACC is responsible for evaluating the target speed based on the current traffic situation. It recieves the speed limits from the global planner and the collisions from the Collision Check.
+The ACC is the only component that decides at which speed the vehicle should drive. It uses mainly the distance to and the speed of the leading vehicle to calculate a reasonable speed. For further information, check the [ACC documentation](./ACC.md)
 The ACC permanently evaluates in an infinite loop if a collision is recieved and calculates a new target speed accordingly.
 
 **If a collision is recieved**: Caluclate the distance to stop at the current speed without the emergency brake as safety distance that should be kept.
