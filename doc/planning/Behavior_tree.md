@@ -24,6 +24,7 @@
       - [`initialise()`](#initialise)
       - [`update()`](#update)
       - [`terminate()`](#terminate)
+  - [Dynamic Reconfigure](#dynamic-reconfigure)
 
 ## About
 
@@ -140,3 +141,10 @@ Main function of a behavior, that gets called everytime the behavior is ticked. 
 ##### `terminate()`
 
 This gets called, whenever a behavior is cancelled by a higher priority branch. Use to terminate middleware connections or asynchronous Calculations, whose results are not needed anymore.
+
+### Dynamic Reconfigure
+
+Dynamic Reconfigure is implemented in the Behavior Tree. This allows variables to be changed at runtime, which is good for debugging etc. \
+If you want to add a new parameter, you need to include them in the
+[behavior_config.yaml](../../code/planning/config/behavior_config.yaml) and in the [BEHAVIOR.cfg](../../code/planning/config/BEHAVIOR.cfg) in the `/code/planning/config` subfolder. \
+New parameters are added automatically into the blackboard and are available as topic `/params/*parameter_name*`.
