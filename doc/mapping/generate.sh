@@ -20,3 +20,6 @@ for file in ./generated/**/*.md; do
     sed '1 i\<!-- markdownlint-disable -->' -i "${file}"
     echo Disabled linter for "${file}"
 done
+
+cd ./generated/mapping_common
+ln -s ./index.md ./README.md
