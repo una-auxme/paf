@@ -1,53 +1,95 @@
 <launch>
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
+  
+  <!--
+  Possible filter values:
+  - "EKF" (Default)
+  - "Kalman"
+  - "RunningAvg" -> "None" is used for heading filter
+  - "None"
+  -->
+  <arg name="filter" default="EKF" />
 
 
-  <rosparam
-    command="load" file="$(find localization)/config/sensor_covariances.yaml" />
 
-  <node
-    pkg="localization" type="sensor_covariance_fusion.py" name="sensor_covariance_fusion"
-    output="screen">
-  </node>
+  <group if="$(eval arg('filter')=='EKF')">
+    <!-- nodes to estimate state using an Extended Kalman Filter (EKF) -->
 
-  <rosparam
-    command="load" file="$(find localization)/config/odometry_covariances.yaml" />
+    <rosparam
+      command="load" file="$(find localization)/config/sensor_covariances.yaml" />
+
+    <node
+      pkg="localization" type="sensor_covariance_fusion.py" name="sensor_covariance_fusion"
+      output="screen">
+    </node>
 
 
-  <node
-    pkg="localization" type="odometry_fusion.py" name="odometry_fusion"
-    output="screen">
-    <param name="role_name" value="$(arg role_name)" />
+    <rosparam
+      command="load" file="$(find localization)/config/odometry_covariances.yaml" />
+
+    <node
+      pkg="localization" type="odometry_fusion.py" name="odometry_fusion"
+      output="screen">
+      <param name="role_name" value="$(arg role_name)" />
+      <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node>
+
+
+    <node
+      pkg="localization" type="gps_transform.py" name="gps_transformation" output="screen">
+    </node>
+
+
+    <rosparam
+      command="load" file="$(find localization)/config/ekf_config.yaml" />
+
+    <node
+      pkg="robot_localization" type="ekf_localization_node" name="ekf_local" clear_params="true">
+      <remap from="/odometry/filtered" to="/odometry/filtered_local" />
+    </node>
+
+
+    <node
+      pkg="robot_localization" type="ekf_localization_node" name="ekf_global" clear_params="true">
+    </node>
+
+    
+    <node
+      pkg="localization" type="ekf_state_publisher.py" name="ekf_state_publisher"
+      output="screen">
+      <param name="role_name" value="$(arg role_name)" />
+      <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node>
+  </group>
+
+
+  <group if="$(eval arg('filter')=='Kalman')">
+    <!-- node to estimate state using a (linear) Kalman filter -->
+    <node pkg="localization" type="kalman_filter.py" name="kalman_filter_node" output="screen">
+      <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+      <param name="role_name" value="$(arg role_name)" />
+    </node>
+  </group>
+
+
+  <!-- node that decides which filter is used to estimate the current state (position and heading) -->
+  <node pkg="localization" type="position_heading_publisher_node.py" name="position_heading_publisher_node" output="screen">
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-  </node>
-
-
-  <node
-    pkg="localization" type="ekf_state_publisher.py" name="ekf_state_publisher"
-    output="screen">
     <param name="role_name" value="$(arg role_name)" />
+
+    <param name="pos_filter" value="$(arg filter)"/>
+    
+    <param name="heading_filter" value="$(arg filter)" unless="$(eval arg('filter') == 'RunningAvg')"/>
+    <param name="heading_filter" value="None" if="$(eval arg('filter') == 'RunningAvg')"/>
+  </node>
+
+
+  <!-- just for debugging / optimizing purposes -> uncomment to use and see plots -->
+  <!-- <node pkg="localization" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
     <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-  </node>
-
-
-  <!-- robot localization -->
-  <rosparam
-    command="load" file="$(find localization)/config/ekf_config.yaml" />
-
-  <node
-    pkg="robot_localization" type="ekf_localization_node" name="ekf_local" clear_params="true">
-    <remap from="/odometry/filtered" to="/odometry/filtered_local" />
-    <!-- navsat needs odom filtered from global ekf. Dont mess with that here.-->
-  </node>
-
-
-  <node
-    pkg="robot_localization" type="ekf_localization_node" name="ekf_global" clear_params="true">
-  </node>
-
-  <node
-    pkg="localization" type="gps_transform.py" name="gps_transformation" output="screen">
-    <!-- substitute for navsat transform. navsat does utm we need wgs-->
-  </node>
+    <param name="role_name" value="$(arg role_name)" />
+  </node> -->
+  <!--<node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/position_debug/data[10] /paf/hero/position_debug/data[13] /paf/hero/position_debug/data[16]"/>-->
+  <!--<node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/heading_debug/data[5] /paf/hero/heading_debug/data[6]" />-->
 </launch>

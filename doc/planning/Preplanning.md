@@ -2,14 +2,13 @@
 
 **Summary:** Preplanner holds the logic to create a trajectory out of an OpenDrive Map with the belonging road options
 
-- [Preplanning](#preplanning)
-  - [Getting started](#getting-started)
-  - [Road option concept](#road-option-concept)
-  - [Road information](#road-information)
-  - [Junction](#junction)
-  - [Road interpolation](#road-interpolation)
-  - [How to use the implementation](#how-to-use-the-implementation)
-    - [Sources](#sources)
+- [Getting started](#getting-started)
+- [Road option concept](#road-option-concept)
+- [Road information](#road-information)
+- [Junction](#junction)
+- [Road interpolation](#road-interpolation)
+- [How to use the implementation](#how-to-use-the-implementation)
+  - [Sources](#sources)
 
 ## Getting started
 
@@ -35,6 +34,9 @@ We need to cover the following instructions for lane changes:
 - No change: 4
 - Change left: 5
 - Change right: 6
+
+These numbers are stored in an enum RoadOption which can be imported via the following line: \
+`from agents.navigation.local_planner import RoadOption`
 
 We also get the information when we need to change a lane. For example before we reach an intersection.
 

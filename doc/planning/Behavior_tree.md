@@ -1,6 +1,6 @@
 # Behavior Tree
 
-**Summary:** This page contains a simple explanation for the behavior tree. For more technical insights have a look at the [code](../../code/planning/src/behavior_agent/behaviours) itself.
+**Summary:** This page contains a simple explanation for the behavior tree. For more technical insights have a look at the [code](../../code/planning/src/behavior_agent/behaviors) itself.
 
 **Disclaimer**: As we mainly built our decision tree on the previous projects [psaf2](https://github.com/ll7/psaf2) and [paf22](https://github.com/ll7/paf22) , most part of the documentation was added here and adjusted to the changes we made.
 
@@ -11,9 +11,7 @@
     - [Sequence](#sequence)
     - [Condition](#condition)
     - [Subtree](#subtree)
-  - [Intersection](#intersection)
-    - [Legend](#legend)
-  - [Other Behaviors](#other-behaviors)
+- [Our behaviors](#our-behaviors)
 - [Developing guide](#developing-guide)
   - [Tree Definition](#tree-definition)
   - [Behaviors](#behaviors)
@@ -26,6 +24,7 @@
       - [`initialise()`](#initialise)
       - [`update()`](#update)
       - [`terminate()`](#terminate)
+  - [Dynamic Reconfigure](#dynamic-reconfigure)
 
 ## About
 
@@ -63,49 +62,30 @@ Is always the first child of a sequence. It decides if the sequence should be ex
 
 Represents a specific task/scenario which is handled by the decision tree.
 
-### Intersection
+## Our behaviors
 
-#### Legend
+Every behavior is documented detailed in the 'behavior' subfolder:
 
-![BT Legend](../assets/legend_bt.png)
-
-![BT Intersection](../assets/intersection.png)
-
-If there is an intersection coming up, the agent executes the following sequence of behaviors:
-
-- Approach Intersection
-
-    Slows down and stops at line if a yellow or red traffic light is detected
-
-- Wait at Intersection
-
-    Waits for traffic lights or higher priority traffic
-
-- Enter Intersection
-
-    Enters the intersection and follows it predetermined path through the intersection
-
-- Leave Intersection
-
-    Leaves the intersection in the right direction
-
-### Other Behaviors
-
-Lane Change and Overtake are built just like Intersection. So there is always an Approach, Wait, Enter and Leave part.
+- [Cruise](./behaviors/Cruise.md)
+- [Intersection](./behaviors/Intersection.md)
+- [LaneChange](./behaviors/LaneChange.md)
+- [LeaveParkingSpace](./behaviors/LeaveParkingSpace.md)
+- [Overtake](./behaviors/Overtake.md)
+- [Unstuck](./behaviors/Unstuck.md)
 
 ## Developing guide
 
 ### Tree Definition
 
-The tree is defined in the `grow_a_tree()`-function inside `code/planning/src/behavior_agent/behavior_tree.py`, which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
+The tree is defined in the `grow_a_tree()`-function inside the [behavior_tree.py](../../code/planning/src/behavior_agent/behavior_tree.py), which is also the main node. It can be visualized using an [rqt-Plugin](https://wiki.ros.org/rqt_py_trees).
 
 ### Behaviors
 
-`Behaviors` are implemented in the `code/planning/src/behavior_agent/behaviors/` directory. All the behaviors used in the current version of the tree are contained as skeletons.
+`Behaviors` are implemented in the [behaviors/](../../code/planning/src/behavior_agent/behaviors/) subdirectory. All the behaviors used in the current version of the tree are contained as skeletons.
 
 #### Blackboard
 
-To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in `code/planning/src/behavior_agent/behaviors/topics2blackboard.py`:
+To deal with the asynchronicity of ROS, all the topics this tree subscribes to, should be written to the Blackboard at the beginning of each tick. A node is available, that automates this task. Just add your node to the list in the [topics2blackboard.py](../../code/planning/src/behavior_agent/behaviors/topics2blackboard.py):
 
 ``` python
 ...
@@ -161,3 +141,10 @@ Main function of a behavior, that gets called everytime the behavior is ticked. 
 ##### `terminate()`
 
 This gets called, whenever a behavior is cancelled by a higher priority branch. Use to terminate middleware connections or asynchronous Calculations, whose results are not needed anymore.
+
+### Dynamic Reconfigure
+
+Dynamic Reconfigure is implemented in the Behavior Tree. This allows variables to be changed at runtime, which is good for debugging etc. \
+If you want to add a new parameter, you need to include them in the
+[behavior_config.yaml](../../code/planning/config/behavior_config.yaml) and in the [BEHAVIOR.cfg](../../code/planning/config/BEHAVIOR.cfg) in the `/code/planning/config` subfolder. \
+New parameters are added automatically into the blackboard and are available as topic `/params/*parameter_name*`.

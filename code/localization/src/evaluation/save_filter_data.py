@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
 """
-This node saves the following data:
+!!! WARNING !!!
+This node is currently not in use.
+
+This node saves the following data in a csv file:
 - ground truth (heading and position)
 - IMU
 - Speedometer
@@ -14,9 +17,6 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
-
-# from sensor_msgs.msg import Imu
-# from carla_msgs.msg import CarlaSpeedometer
 
 import rospy
 import threading
@@ -133,7 +133,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path = base_path + "/new_filter_pos"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -184,7 +184,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path = base_path + "/new_filter_heading"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -231,7 +231,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path = base_path + "/old_filter_pos"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -282,7 +282,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path = base_path + "/old_filter_heading"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
@@ -321,144 +321,6 @@ class SaveFilterData(CompatibleNode):
             # -> save the ground truth
             self.save_ground_truth()
 
-    '''def save_imu_data(self, imu_data):
-        """
-        This method saves the imu data in a csv file
-        """
-        if self.stop_saving_data is True:
-            return
-
-        # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
-        folder_path = base_path + "/sensor_data"
-        # Ensure the directories exist
-        os.makedirs(folder_path, exist_ok=True)
-
-        # Create the csv files ONCE if it does not exist
-        if self.sensor_data_csv_created is False:
-            self.sensor_data_csv_file_path = create_file(folder_path)
-            self.sensor_data_csv_created = True
-
-        if self.carla_car is None:
-            return
-        self.write_csv_imu(imu_data)
-
-    def write_csv_imu(self, imu_data):
-        with open(self.sensor_data_csv_file_path, "a", newline="") as file:
-            writer = csv.writer(file)
-            # Check if file is empty and add first row
-            if self.first_line_written is False:
-                writer.writerow(
-                    [
-                        "Time",
-                        "Sensor",
-                        "pos x",
-                        "pos y",
-                        "pos z",
-                        "vel",
-                        "orientation x",
-                        "orientation y",
-                        "orientation z",
-                        "orientation w",
-                        "ang vel z",
-                        "lin acc x",
-                        "lin acc y",
-                    ]
-                )
-                self.first_line_written = True
-            self.time = rospy.get_time()
-            self.imu_to_write = [
-                self.time,
-                "imu",
-                0.0,  # pos
-                0.0,
-                0.0,
-                0.0,  # vel
-                imu_data.orientation.x,
-                imu_data.orientation.y,
-                imu_data.orientation.z,
-                imu_data.orientation.w,
-                imu_data.angular_velocity.z,
-                imu_data.linear_acceleration.x,
-                imu_data.linear_acceleration.y,
-            ]
-            if self.previous_imu != self.imu_to_write:
-                writer.writerow(self.imu_to_write)
-                self.previous_imu = self.imu_to_write
-
-            # after each sensor measurement
-            # -> save the ground truth
-            self.save_ground_truth()
-
-    def save_velocity(self, velocity):
-        """
-        This method saves the velocity in a csv file
-        """
-        if self.stop_saving_data is True:
-            return
-
-        # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
-        folder_path = base_path + "/sensor_data"
-        # Ensure the directories exist
-        os.makedirs(folder_path, exist_ok=True)
-
-        # Create the csv files ONCE if it does not exist
-        if self.sensor_data_csv_created is False:
-            self.sensor_data_csv_file_path = create_file(folder_path)
-            self.sensor_data_csv_created = True
-
-        if self.carla_car is None:
-            return
-        self.write_csv_vel(velocity)
-
-    def write_csv_vel(self, velocity):
-        with open(self.sensor_data_csv_file_path, "a", newline="") as file:
-            writer = csv.writer(file)
-            # Check if file is empty and add first row
-            if self.first_line_written is False:
-                writer.writerow(
-                    [
-                        "Time",
-                        "Sensor",
-                        "pos x",
-                        "pos y",
-                        "pos z",
-                        "vel",
-                        "orientation x",
-                        "orientation y",
-                        "orientation z",
-                        "orientation w",
-                        "ang vel z",
-                        "lin acc x",
-                        "lin acc y",
-                    ]
-                )
-                self.first_line_written = True
-            self.time = rospy.get_time()
-            self.vel_to_write = [
-                self.time,
-                "speed",
-                0.0,  # pos
-                0.0,
-                0.0,
-                velocity.speed,
-                0.0,  # orientation
-                0.0,
-                0.0,
-                0.0,
-                0.0,  # ang vel
-                0.0,  # lin acc
-                0.0,
-            ]
-            if self.previous_vel != self.vel_to_write:
-                writer.writerow(self.vel_to_write)
-                self.previous_vel = self.vel_to_write
-
-            # after each sensor measurement
-            # -> save the ground truth
-            self.save_ground_truth()'''
-
     def save_ground_truth(self):
         """
         This method saves the ground truth in a csv file
@@ -467,7 +329,7 @@ class SaveFilterData(CompatibleNode):
             return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path = base_path + "/ground_truth"
         # Ensure the directories exist
         os.makedirs(folder_path, exist_ok=True)
