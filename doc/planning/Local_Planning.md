@@ -20,8 +20,8 @@ The theoretical concepts of each Local Planning component are listed below.
 
 ## Adaptive Cruise Control (ACC)
 
-The Adaptive Cruise Control (ACC) is the only component that decides at which speed the vehicle should drive. It uses mainly the distance to and the speed of the leading vehicle to calculate a reasonable speed. For further and more detailed information, check the [ACC documentation](./ACC.md)
+The Adaptive Cruise Control (ACC) is the only component that decides at which speed the vehicle should drive. It uses mainly the distance to and the speed of the leading vehicle to calculate a reasonable speed. For further and more detailed information, check the [ACC documentation](./ACC.md).
 
 ## Motion Planning
 
-The Motion planning is responsible for adjusting and publishing the speed limit, the trajectory and the local trajectory according to the traffic situation. For further and more detailed information, check the [Motion Planning documentation](./motion_planning.md)
+The Motion planning is responsible for adjusting and publishing the speed limit, the trajectory and the local trajectory according to the traffic situation. For further and more detailed information, check the [Motion Planning documentation](./motion_planning.md).
