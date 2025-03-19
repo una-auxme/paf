@@ -28,6 +28,12 @@ We initially deployed two forward-facing radar sensors but later opted for a con
 | **Two Forward-Facing Radars** | ✅ Wider long-range field of view <br> ✅ Higher data density → More robust clustering | ❌ Cannot directly detect speeds of approaching vehicles |
 | **One Front-Facing, One Rear-Facing Radar** | ✅ Detects speeds of approaching vehicles for safer overtaking & parking maneuvers <br> ✅ Better detection of distant vehicles when making left turns | ❌ Slightly reduced clustering quality for front detection <br> ❌ Narrower forward-facing field of view |
 
+2.2 Alternative Radar Placement
+
+In principle, it is possible to use four radar sensors instead of just two. However, due to the limitations in the CARLA qualifying phase, only two sensors are currently allowed.
+
+A future improvement could involve dynamically activating two radars for qualifying and then switching to four radars once full autonomy is permitted. This approach would significantly enhance the perception system by covering blind spots and improving clustering reliability.
+
 ## 3. Main Components
 
 ### 3.1 Initialization and ROS Parameters
