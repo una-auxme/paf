@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Filter documentation
+
+## Table of Contents
 
 * [mapping\_common.filter](#mapping_common.filter)
   * [MapFilter](#mapping_common.filter.MapFilter)
@@ -32,7 +34,7 @@ Abstract base class for all mapping filters
 
 <a id="mapping_common.filter.MapFilter.filter"></a>
 
-#### filter(map: Map)
+#### filter
 
 ```python
 def filter(map: Map) -> Map

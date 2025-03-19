@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Nodes
+
+## Table of Contents
 
 * [mapping\_data\_integration](#mapping_data_integration)
   * [MappingDataIntegrationNode](#mapping_data_integration.MappingDataIntegrationNode)
@@ -38,7 +40,7 @@ StopMarks from the UpdateStopMarks service
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.dynamic_reconfigure_callback"></a>
 
-#### dynamic\_reconfigure\_callback(config: "MappingIntegrationConfig", level)
+#### dynamic\_reconfigure\_callback
 
 ```python
 def dynamic_reconfigure_callback(config: "MappingIntegrationConfig", level)

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Execute this script with the /build/docker-compose.docs.yaml
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

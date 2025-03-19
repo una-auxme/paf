@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Shape documentation
+
+## Table of Contents
 
 * [mapping\_common.shape](#mapping_common.shape)
   * [Shape2D](#mapping_common.shape.Shape2D)
@@ -48,7 +50,7 @@ on top of the entity's transformation.
 
 <a id="mapping_common.shape.Shape2D.from_ros_msg"></a>
 
-#### from\_ros\_msg(m: msg.Shape2D)
+#### from\_ros\_msg
 
 ```python
 @staticmethod
@@ -63,7 +65,7 @@ Note that the returned shape will be a subclass of Shape2D
 
 <a id="mapping_common.shape.Shape2D.to_marker"></a>
 
-#### to\_marker(transform: Optional[Transform2D] = None, marker\_style: MarkerStyle = MarkerStyle.CLOSED\_OBJECT)
+#### to\_marker
 
 ```python
 def to_marker(transform: Optional[Transform2D] = None,
@@ -85,7 +87,7 @@ Creates an ROS marker based on this shape
 
 <a id="mapping_common.shape.Shape2D.to_shapely"></a>
 
-#### to\_shapely(transform: Optional[Transform2D] = None)
+#### to\_shapely
 
 ```python
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
@@ -145,7 +147,7 @@ Polygon defined by a list of Point2 objects.
 
 <a id="mapping_common.shape.Polygon.to_marker"></a>
 
-#### to\_marker(transform: Optional[Transform2D] = None, marker\_style: MarkerStyle = MarkerStyle.CLOSED\_OBJECT)
+#### to\_marker
 
 ```python
 def to_marker(transform: Optional[Transform2D] = None,
@@ -158,7 +160,7 @@ Convert to a visualization Marker for RViz.
 
 <a id="mapping_common.shape.Polygon.from_shapely"></a>
 
-#### from\_shapely(poly: shapely.Polygon, make\_centered: bool = False)
+#### from\_shapely
 
 ```python
 @staticmethod

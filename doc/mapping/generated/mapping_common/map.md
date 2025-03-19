@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Map documentation
+
+## Table of Contents
 
 * [mapping\_common.map](#mapping_common.map)
   * [Map](#mapping_common.map.Map)
@@ -85,7 +87,7 @@ Note that this list might also include the hero car (as first element of this li
 
 <a id="mapping_common.map.Map.hero"></a>
 
-#### hero()
+#### hero
 
 ```python
 def hero() -> Optional[Entity]
@@ -101,7 +103,7 @@ Returns the entity of the hero car if it is the first element of the map
 
 <a id="mapping_common.map.Map.entities_without_hero"></a>
 
-#### entities\_without\_hero()
+#### entities\_without\_hero
 
 ```python
 def entities_without_hero() -> List[Entity]
@@ -119,7 +121,7 @@ Only checks if the first entity is_hero
 
 <a id="mapping_common.map.Map.get_lane_y_axis_intersections"></a>
 
-#### get\_lane\_y\_axis\_intersections(direction: str = "left")
+#### get\_lane\_y\_axis\_intersections
 
 ```python
 def get_lane_y_axis_intersections(direction: str = "left") -> dict
@@ -142,7 +144,7 @@ calculates the intersections of the lanemarks in lane_pos direction
 
 <a id="mapping_common.map.Map.build_tree"></a>
 
-#### build\_tree(f: Optional[FlagFilter] = None, filter\_fn: Optional[Callable[[Entity], bool]] = None)
+#### build\_tree
 
 ```python
 def build_tree(
@@ -175,7 +177,7 @@ the nearest or (intersect, touch, etc.) with a given geometry
 
 <a id="mapping_common.map.Map.filtered"></a>
 
-#### filtered(f: Optional[FlagFilter] = None, filter\_fn: Optional[Callable[[Entity], bool]] = None)
+#### filtered
 
 ```python
 def filtered(
@@ -201,7 +203,7 @@ Filters self.entities
 
 <a id="mapping_common.map.Map.to_multi_poly_array"></a>
 
-#### to\_multi\_poly\_array(area\_to\_incorporate: Tuple[int, int], resolution\_scale: int)
+#### to\_multi\_poly\_array
 
 ```python
 def to_multi_poly_array(area_to_incorporate: Tuple[int, int],
@@ -263,7 +265,7 @@ The unfiltered map this tree was created with
 
 <a id="mapping_common.map.MapTree.__init__"></a>
 
-#### \_\_init\_\_(map: Map, f: Optional[FlagFilter] = None, filter\_fn: Optional[Callable[[Entity], bool]] = None)
+#### \_\_init\_\_
 
 ```python
 def __init__(map: Map,
@@ -288,7 +290,7 @@ Both filters need to match for the entity to match.
 
 <a id="mapping_common.map.MapTree.nearest"></a>
 
-#### nearest(geo: shapely.Geometry)
+#### nearest
 
 ```python
 def nearest(geo: shapely.Geometry) -> Optional[ShapelyEntity]
@@ -313,20 +315,7 @@ https://shapely.readthedocs.io/en/stable/strtree.html#shapely.STRtree.nearest
 
 <a id="mapping_common.map.MapTree.query"></a>
 
-#### query(geo: shapely.Geometry, predicate: Optional[
-            Literal[
-                "intersects",
-                "within",
-                "contains",
-                "overlaps",
-                "crosses",
-                "touches",
-                "covers",
-                "covered\_by",
-                "contains\_properly",
-                "dwithin",
-            ]
-        ] = None, distance: Optional[float] = None)
+#### query
 
 ```python
 def query(geo: shapely.Geometry,
@@ -376,7 +365,7 @@ https://shapely.readthedocs.io/en/stable/strtree.html#shapely.STRtree.query
 
 <a id="mapping_common.map.MapTree.query_nearest"></a>
 
-#### query\_nearest(geo: shapely.Geometry, max\_distance: Optional[float] = None, exclusive: bool = False, all\_matches: bool = True)
+#### query\_nearest
 
 ```python
 def query_nearest(
@@ -411,20 +400,7 @@ https://shapely.readthedocs.io/en/stable/strtree.html#shapely.STRtree.query_near
 
 <a id="mapping_common.map.MapTree.query_self"></a>
 
-#### query\_self(predicate: Optional[
-            Literal[
-                "intersects",
-                "within",
-                "contains",
-                "overlaps",
-                "crosses",
-                "touches",
-                "covers",
-                "covered\_by",
-                "contains\_properly",
-                "dwithin",
-            ]
-        ] = None, distance: Optional[float] = None)
+#### query\_self
 
 ```python
 def query_self(
@@ -469,7 +445,7 @@ Removes any self intersections and duplicate interaction pairs.
 
 <a id="mapping_common.map.MapTree.get_entity_in_front_or_back"></a>
 
-#### get\_entity\_in\_front\_or\_back(in\_front=True)
+#### get\_entity\_in\_front\_or\_back
 
 ```python
 def get_entity_in_front_or_back(in_front=True) -> Optional[ShapelyEntity]
@@ -490,12 +466,7 @@ Calculates the nearest entity on that polygon
 
 <a id="mapping_common.map.MapTree.is_lane_free"></a>
 
-#### is\_lane\_free(right\_lane: bool = False, lane\_length: float = 20.0, lane\_transform: float = 0.0, reduce\_lane: float = 1.5, check\_method: Literal[
-            "rectangle",
-            "lanemarking",
-            "fallback",
-            # "trajectory" not implemented yet
-        ] = "rectangle", min\_coverage\_percent: float = 0.0, min\_coverage\_area: float = 0.0, lane\_angle: float = 5.0, motion\_aware: bool = True)
+#### is\_lane\_free
 
 ```python
 def is_lane_free(
@@ -557,7 +528,7 @@ lanemarking is not plausible
 
 <a id="mapping_common.map.MapTree.is_lane_free_rectangle"></a>
 
-#### is\_lane\_free\_rectangle(right\_lane: bool = False, lane\_length: float = 20.0, lane\_transform: float = 0.0, reduce\_lane: float = 1.5)
+#### is\_lane\_free\_rectangle
 
 ```python
 def is_lane_free_rectangle(
@@ -590,7 +561,7 @@ according to inputs
 
 <a id="mapping_common.map.MapTree.is_lane_free_lanemarking"></a>
 
-#### is\_lane\_free\_lanemarking(right\_lane: bool = False, lane\_length: float = 20.0, lane\_transform: float = 0.0, reduce\_lane: float = 1.5, lane\_angle: float = 5.0)
+#### is\_lane\_free\_lanemarking
 
 ```python
 def is_lane_free_lanemarking(
@@ -627,7 +598,7 @@ the checkbox.
 
 <a id="mapping_common.map.MapTree.is_lane_free_intersection"></a>
 
-#### is\_lane\_free\_intersection(lane\_length: float = 20.0, lane\_transform\_x: float = 0.0)
+#### is\_lane\_free\_intersection
 
 ```python
 def is_lane_free_intersection(
@@ -660,7 +631,7 @@ that are not moving towards the hero.
 
 <a id="mapping_common.map.MapTree.get_nearest_entity"></a>
 
-#### get\_nearest\_entity(mask: shapely.Geometry, reference: ShapelyEntity, min\_coverage\_percent: float = 0.0, min\_coverage\_area: float = 0.0)
+#### get\_nearest\_entity
 
 ```python
 def get_nearest_entity(
@@ -696,7 +667,7 @@ at least coverage % or area in the mask geometry.
 
 <a id="mapping_common.map.MapTree.get_overlapping_entities"></a>
 
-#### get\_overlapping\_entities(mask: shapely.Geometry, min\_coverage\_percent: float = 0.0, min\_coverage\_area: float = 0.0)
+#### get\_overlapping\_entities
 
 ```python
 def get_overlapping_entities(
@@ -729,7 +700,7 @@ mask geometry.
 
 <a id="mapping_common.map.build_global_hero_transform"></a>
 
-#### build\_global\_hero\_transform(x: float, y: float, heading: float)
+#### build\_global\_hero\_transform
 
 ```python
 def build_global_hero_transform(x: float, y: float,
@@ -754,7 +725,7 @@ based on its coordinates and heading
 
 <a id="mapping_common.map.lane_free_filter"></a>
 
-#### lane\_free\_filter()
+#### lane\_free\_filter
 
 ```python
 def lane_free_filter() -> FlagFilter

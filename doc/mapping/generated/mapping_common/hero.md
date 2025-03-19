@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Hero documentation
+
+## Table of Contents
 
 * [mapping\_common.hero](#mapping_common.hero)
   * [HERO\_CAR\_LENGTH](#mapping_common.hero.HERO_CAR_LENGTH)
@@ -28,7 +30,7 @@ Hero car width in meters
 
 <a id="mapping_common.hero.create_hero_entity"></a>
 
-#### create\_hero\_entity()
+#### create\_hero\_entity
 
 ```python
 def create_hero_entity() -> Car

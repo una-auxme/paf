@@ -1,5 +1,7 @@
 <!-- markdownlint-disable -->
-# Table of Contents
+# Transform documentation
+
+## Table of Contents
 
 * [mapping\_common.transform](#mapping_common.transform)
   * [Point2](#mapping_common.transform.Point2)
@@ -56,7 +58,7 @@ Receives only the rotation when transformed with a Transform2D
 
 <a id="mapping_common.transform.Vector2.length"></a>
 
-#### length()
+#### length
 
 ```python
 def length() -> float
@@ -72,7 +74,7 @@ Calculates the length of this vector
 
 <a id="mapping_common.transform.Vector2.normalized"></a>
 
-#### normalized()
+#### normalized
 
 ```python
 def normalized() -> "Vector2"
@@ -90,7 +92,7 @@ If the vector is the zero vector, the result will be zero as well
 
 <a id="mapping_common.transform.Vector2.angle_to"></a>
 
-#### angle\_to(other: "Vector2")
+#### angle\_to
 
 ```python
 def angle_to(other: "Vector2") -> float
@@ -140,7 +142,7 @@ v_transformed = t * v
 
 <a id="mapping_common.transform.Transform2D.translation"></a>
 
-#### translation()
+#### translation
 
 ```python
 def translation() -> Vector2
@@ -156,7 +158,7 @@ Returns only the translation that this Transform applies
 
 <a id="mapping_common.transform.Transform2D.rotation"></a>
 
-#### rotation()
+#### rotation
 
 ```python
 def rotation() -> float
@@ -175,7 +177,7 @@ Returns only the rotation that this Transform applies
 
 <a id="mapping_common.transform.Transform2D.inverse"></a>
 
-#### inverse()
+#### inverse
 
 ```python
 def inverse() -> "Transform2D"
@@ -191,7 +193,7 @@ Returns an inverted Transformation matrix
 
 <a id="mapping_common.transform.Transform2D.identity"></a>
 
-#### identity()
+#### identity
 
 ```python
 @staticmethod
@@ -208,7 +210,7 @@ Returns the identity transform (no transformation)
 
 <a id="mapping_common.transform.Transform2D.new_rotation"></a>
 
-#### new\_rotation(angle: float)
+#### new\_rotation
 
 ```python
 @staticmethod
@@ -228,7 +230,7 @@ Returns a transformation matrix consisting of a rotation around `angle`
 
 <a id="mapping_common.transform.Transform2D.new_translation"></a>
 
-#### new\_translation(v: Vector2)
+#### new\_translation
 
 ```python
 @staticmethod
@@ -245,7 +247,7 @@ Returns a transformation matrix consisting of a translation along `v`
 
 <a id="mapping_common.transform.Transform2D.new_rotation_translation"></a>
 
-#### new\_rotation\_translation(angle: float, v: Vector2)
+#### new\_rotation\_translation
 
 ```python
 @staticmethod

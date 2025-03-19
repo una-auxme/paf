@@ -7,8 +7,8 @@ renderer:
   type: mkdocs
   output_directory: .build
   markdown:
+    render_page_title: true
     descriptive_class_title: false
-    signature_in_header: true
     render_typehint_in_data_header: true
     render_toc: true
     source_linker:

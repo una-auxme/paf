@@ -26,7 +26,8 @@ from mapping import msg
 class Motion2D:
     """Motion of an entity
 
-    Speeds are global (not relative to hero car).
+    Speed magnitudes are global (not relative to hero car).
+    The motion direction is relative as usual.
     """
 
     linear_motion: Vector2 = field(default_factory=lambda: Vector2.zero())
@@ -60,7 +61,7 @@ class Motion2D:
 class Flags:
     """Dedicated flags an entity can have.
 
-    Look into the FlagFilter class for an explanation fo the individual flags.
+    Look into the #FlagFilter class for an explanation of the individual flags.
 
     Note that attributes should not be accessed directly,
     but only the matches_filter function should be used
