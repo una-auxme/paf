@@ -2,7 +2,7 @@
 
 ## Architecture Diagram
 
-![Planning Architecture Diagram](../assets/planning/planning_structure.png)
+**TO DO**: Add snippet from the global architecture diagram.
 
 ## Overview
 
