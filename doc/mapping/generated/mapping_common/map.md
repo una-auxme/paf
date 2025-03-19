@@ -4,6 +4,17 @@
 ## Table of Contents
 
 * [mapping\_common.map](#mapping_common.map)
+  * [LaneFreeState](#mapping_common.map.LaneFreeState)
+    * [TO\_BE\_CHECKED](#mapping_common.map.LaneFreeState.TO_BE_CHECKED)
+    * [FREE](#mapping_common.map.LaneFreeState.FREE)
+    * [BLOCKED](#mapping_common.map.LaneFreeState.BLOCKED)
+    * [MISSING\_LANEMARK\_ERR](#mapping_common.map.LaneFreeState.MISSING_LANEMARK_ERR)
+    * [LANEMARK\_ANGLE\_ERR](#mapping_common.map.LaneFreeState.LANEMARK_ANGLE_ERR)
+    * [SHAPE\_ERR](#mapping_common.map.LaneFreeState.SHAPE_ERR)
+    * [is\_error](#mapping_common.map.LaneFreeState.is_error)
+  * [LaneFreeDirection](#mapping_common.map.LaneFreeDirection)
+    * [LEFT](#mapping_common.map.LaneFreeDirection.LEFT)
+    * [RIGHT](#mapping_common.map.LaneFreeDirection.RIGHT)
   * [Map](#mapping_common.map.Map)
     * [timestamp](#mapping_common.map.Map.timestamp)
     * [entities](#mapping_common.map.Map.entities)
@@ -13,6 +24,8 @@
     * [build\_tree](#mapping_common.map.Map.build_tree)
     * [filtered](#mapping_common.map.Map.filtered)
     * [to\_multi\_poly\_array](#mapping_common.map.Map.to_multi_poly_array)
+    * [from\_ros\_msg](#mapping_common.map.Map.from_ros_msg)
+    * [to\_ros\_msg](#mapping_common.map.Map.to_ros_msg)
   * [MapTree](#mapping_common.map.MapTree)
     * [filtered\_entities](#mapping_common.map.MapTree.filtered_entities)
     * [map](#mapping_common.map.MapTree.map)
@@ -38,6 +51,68 @@
 Contains map-related functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/map.md)**
+
+<a id="mapping_common.map.LaneFreeState"></a>
+
+## LaneFreeState
+
+```python
+class LaneFreeState(Enum)
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L29)
+
+<a id="mapping_common.map.LaneFreeState.TO_BE_CHECKED"></a>
+
+#### TO\_BE\_CHECKED
+
+<a id="mapping_common.map.LaneFreeState.FREE"></a>
+
+#### FREE
+
+<a id="mapping_common.map.LaneFreeState.BLOCKED"></a>
+
+#### BLOCKED
+
+<a id="mapping_common.map.LaneFreeState.MISSING_LANEMARK_ERR"></a>
+
+#### MISSING\_LANEMARK\_ERR
+
+<a id="mapping_common.map.LaneFreeState.LANEMARK_ANGLE_ERR"></a>
+
+#### LANEMARK\_ANGLE\_ERR
+
+<a id="mapping_common.map.LaneFreeState.SHAPE_ERR"></a>
+
+#### SHAPE\_ERR
+
+<a id="mapping_common.map.LaneFreeState.is_error"></a>
+
+#### is\_error
+
+```python
+def is_error()
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L37)
+
+<a id="mapping_common.map.LaneFreeDirection"></a>
+
+## LaneFreeDirection
+
+```python
+class LaneFreeDirection(Enum)
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L41)
+
+<a id="mapping_common.map.LaneFreeDirection.LEFT"></a>
+
+#### LEFT
+
+<a id="mapping_common.map.LaneFreeDirection.RIGHT"></a>
+
+#### RIGHT
 
 <a id="mapping_common.map.Map"></a>
 
@@ -226,6 +301,27 @@ a numpy array
 **Returns**:
 
 - `npt.NDArray` - array with contours drawn in
+
+<a id="mapping_common.map.Map.from_ros_msg"></a>
+
+#### from\_ros\_msg
+
+```python
+@staticmethod
+def from_ros_msg(m: msg.Map) -> "Map"
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L234)
+
+<a id="mapping_common.map.Map.to_ros_msg"></a>
+
+#### to\_ros\_msg
+
+```python
+def to_ros_msg() -> msg.Map
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L238)
 
 <a id="mapping_common.map.MapTree"></a>
 

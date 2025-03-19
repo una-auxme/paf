@@ -61,6 +61,8 @@ renderer:
       - mapping_common.transform.*
 processors:
   - type: filter
+    expression: not (type(obj).__name__.lower() == "indirection" or (name.startswith("_") and not name.endswith("_")))
+    documented_only: false
   - type: crossref
   - type: smart
   

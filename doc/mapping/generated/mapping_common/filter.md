@@ -7,10 +7,15 @@
   * [MapFilter](#mapping_common.filter.MapFilter)
     * [filter](#mapping_common.filter.MapFilter.filter)
   * [LaneIndexFilter](#mapping_common.filter.LaneIndexFilter)
+    * [filter](#mapping_common.filter.LaneIndexFilter.filter)
   * [GrowPedestriansFilter](#mapping_common.filter.GrowPedestriansFilter)
+    * [filter](#mapping_common.filter.GrowPedestriansFilter.filter)
   * [GrowthMergingFilter](#mapping_common.filter.GrowthMergingFilter)
+    * [growth\_distance](#mapping_common.filter.GrowthMergingFilter.growth_distance)
     * [min\_merging\_overlap\_percent](#mapping_common.filter.GrowthMergingFilter.min_merging_overlap_percent)
     * [min\_merging\_overlap\_area](#mapping_common.filter.GrowthMergingFilter.min_merging_overlap_area)
+    * [simplify\_tolerance](#mapping_common.filter.GrowthMergingFilter.simplify_tolerance)
+    * [filter](#mapping_common.filter.GrowthMergingFilter.filter)
 
 <a id="mapping_common.filter"></a>
 
@@ -80,6 +85,16 @@ Updates the Index of lanemark Entities if duplicates have been removed.
 
 Then returns the updated map with all Entities
 
+<a id="mapping_common.filter.LaneIndexFilter.filter"></a>
+
+#### filter
+
+```python
+def filter(map) -> Map
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L54)
+
 <a id="mapping_common.filter.GrowPedestriansFilter"></a>
 
 ## GrowPedestriansFilter
@@ -99,6 +114,16 @@ Grow Pedestrians by 0.5 meter for a better detection of them (e.g. for the ACC)
 - If entity is a Pedestrian: Grow them by 0.5 meter
 
 Then returns the updated map with all Entities
+
+<a id="mapping_common.filter.GrowPedestriansFilter.filter"></a>
+
+#### filter
+
+```python
+def filter(map) -> Map
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L101)
 
 <a id="mapping_common.filter.GrowthMergingFilter"></a>
 
@@ -128,6 +153,10 @@ Basic (very simplified) function:
 - It then deletes all entities that got merged into another
     and returns the resulting map
 
+<a id="mapping_common.filter.GrowthMergingFilter.growth_distance"></a>
+
+#### growth\_distance: `float`
+
 <a id="mapping_common.filter.GrowthMergingFilter.min_merging_overlap_percent"></a>
 
 #### min\_merging\_overlap\_percent: `float`
@@ -139,4 +168,18 @@ Min overlap of the grown shapes in percent
 #### min\_merging\_overlap\_area: `float`
 
 Min overlap of the grown shapes in m2
+
+<a id="mapping_common.filter.GrowthMergingFilter.simplify_tolerance"></a>
+
+#### simplify\_tolerance: `float`
+
+<a id="mapping_common.filter.GrowthMergingFilter.filter"></a>
+
+#### filter
+
+```python
+def filter(map: Map) -> Map
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L140)
 
