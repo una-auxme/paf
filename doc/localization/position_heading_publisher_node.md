@@ -135,3 +135,32 @@ This node publishes the following topics:
   - `/paf/{role_name}/current_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - Current Position:
   - `/paf/{self.role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+
+
+
+
+It is also used to extract relevant information
+from raw data and pass this information on to a different topic so it can be used by the filter nodes more easily.
+
+- GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
+- IMU data (/carla/hero/IMU) -> /paf/hero/unfiltered_heading
+
+### Published / subscribed topics
+
+The following topics are therefore published by this node:
+
+- `unfiltered_pos` (raw data, subscribed to by filter nodes e.g. kalman_filter)
+- `unfiltered_heading` (raw data, subscribed to by filter nodes e.g. kalman_filter)
+- `current_pos` (filtered data, position of the car)
+- `current_heading` (filtered data, orientation of the car around the z-axis)
+
+To gather the necessary information for the topics above the node subscribes the following topics:
+
+- OpenDrive (map information)
+- IMU (Inertial Measurement Unit)
+- GPS
+- the topic published by the filter that is used (e.g. kalman_pos)
+
+As you can see the node first subscribes the filtered data (e.g. kalman_pos) and then publishes this data as the current position / heading. It merely passes along the data.
+
+This makes it possible for multiple filter nodes to be running and only the data produced by one filter is published as the current position / heading. Otherwise different filters would publish to the same topic (e.g. current_pos) which is not desirable.

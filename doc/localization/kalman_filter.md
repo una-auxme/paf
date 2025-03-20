@@ -219,6 +219,30 @@ This node publishes the following topics:
 - Kalman Position:
   - `/paf/{self.role_name}/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
+### Published / subscribed topics
+
+Therefore the published topics are:
+
+- `kalman_pos` (filtered position of the vehicle)
+- `kalman_heading` (filtered heading of the vehicle)
+
+The variables to be estimated are put together in the state vector. It consists of the following elements:
+
+- `x` (position on the x-axis)
+- `y` (position on the y-axis)
+- `v_x` (velocity in the x-direction)
+- `v_y` (velocity in the y-direction)
+- `yaw` (orientation, rotation around z-axis)
+- `omega_z` (angular velocity)
+
+The z-position is currently not estimated by the Kalman Filter and is calculated using the rolling average.
+
+The x-/y-position is measured by the GNSS sensor. The measurement is provided by the unfiltered_pos topic.
+
+The velocity in x-/y-direction can be derived from the speed measured by the Carla Speedometer in combination with the current orientation.
+
+To get the orientation and angular velocity of the vehicle the data provided by the IMU (Inertial Measurement Unit) sensor is used.
+
 ## Performance
 
 In the following graphs you will see the MSE/ MAE Boxed Graph of Location Error with respect to ideal Location.
