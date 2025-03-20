@@ -1,6 +1,16 @@
-"""Contains transform-related functions
+"""Contains 2d transformation (position, rotation) functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/transform.md)**
+
+Overview of the main components:
+- Transform2D: Homogeneous 2 dimensional transformation matrix. 
+  Can represent an arbitrary chain of translations and rotations.
+- Point2: Used for positions in 2d space
+- Vector2: Used for directions and offsets.
+  Important: Transform2D does not apply translations to the vector.
+- The math operators have been overloaded to support typical operations
+  between Point2, Vector2 and Transform2D
+
 """
 
 from dataclasses import dataclass
@@ -145,12 +155,13 @@ class Vector2(_Coord2):
         """
         # Based on https://stackoverflow.com/questions/21483999/
         # using-atan2-to-find-angle-between-two-vectors/21486462#21486462
-        # A·B = |A| |B| COS(θ) = x
-        # A×B = |A| |B| SIN(θ) = y (in 2 dimensional space only)
+        # A·B = |A| |B| COS(θ)
+        # A×B = |A| |B| SIN(θ) (in 2 dimensional space only)
         # Where θ is the (unsigned) angle between A and B
         # => The implementation is very similar Transform2D.rotation(self)
         # => |A| |B| can be ignored because it is just a scalar multiplication
-        #  of the vector (does not change direction)
+        #    of the vector (does not change direction)
+        # => COS(θ) = x; SIN(θ) = y
         cross = np.cross(self._matrix[:2], other._matrix[:2])
         dot = np.dot(self._matrix[:2], other._matrix[:2])
         return math.atan2(cross, dot)
@@ -249,12 +260,19 @@ class Vector2(_Coord2):
 
 @dataclass(init=False, eq=False)
 class Transform2D:
-    """Homogeneous 2 dimensional transformation matrix
+    """Homogeneous 2 dimensional transformation matrix.
+
+    Can represent an arbitrary chain of translations and rotations.
 
     Based on https://alexsm.com/homogeneous-transforms/
 
-    ## Examples:
-    ### Transform a Vector2
+    Multiply Transform2D with #Vector2 or #Point2 to apply its transformation.
+
+    Further explanation:
+    https://en.wikipedia.org/w/index.php?title=Transformation_matrix&oldid=1275425866#Composing_and_inverting_transformations
+
+    Examples:
+    ##### Transform a Vector2
     ```python
     v = Vector2.new(1.0, 0.0)
     t = Transform2D.new_rotation(math.pi/2.0)
