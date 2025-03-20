@@ -1,166 +1,112 @@
-# position_heading_publisher_node
+# The position_heading_publisher_node
 
-**Summary:** This node publishes the `current_pos` (Location of the car) and `current_heading` (Orientation of the car around the Z- axis) for every Node that needs to work with that. It also publishes all unfiltered Position and Heading signals for the Filter nodes to work with (such as Kalman).
+**Summary:** This node forwards the position and heading estimated by the chosen filter to the topics `current_pos` (location of the car) and `current_heading` (orientation of the car around the z-axis).
+Several nodes from Planning and Acting use that information.
 
-- [position\_heading\_publisher\_node](#position_heading_publisher_node)
-  - [Usage](#usage)
-  - [Modular Extension / Template](#modular-extension--template)
-    - [Heading Functions](#heading-functions)
-    - [Position Functions](#position-functions)
-    - [Inputs](#inputs)
-    - [Outputs](#outputs)
+The node is also used to extract relevant information
+from raw data and pass this information on to a different topic so it can be used by the filter nodes more easily.
+For example the GPS data consisting of latitude, longitude and altitude is transformed into x/y/z coordinates: /carla/hero/GPS &rarr; /paf/hero/unfiltered_pos
+
+- [Usage](#usage)
+- [Overview of the code](#overview-of-the-code)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+  - [Functions regarding the heading](#functions-regarding-the-heading)
+  - [Functions regarding the position](#functions-regarding-the-position)
 
 ## Usage
 
-Change the pos_filter and heading_filter parameter values of the position_heading_publisher_node in the [perception.launch](../../code/perception/launch/perception.launch) file,
-to **"Kalman"**, depending on if you want to use the Kalman Filter for both the Position and the Heading.
+There are currently 4 filters to choose from:
 
-You will also have to uncomment the kalman_filter.py node or any other filter in the [perception.launch](../../code/perception/launch/perception.launch) to start the filter node.
-The only filter that is already implementet by the position_heading_publisher_node is the RunningAverage Filter, which can be turned on the same way.
+- [Extended Kalman Filter](extended_kalman_filter.md) (EKF)
+- (Linear) [Kalman Filter](kalman_filter.md) (Kalman)
+- Running Average (RunningAvg)
+- None
 
-You can use filters for the heading and for the location independently using the following parameter values:
+For more information on the different Kalman Filters click the links above.
+The Running Average Filter calculates the average of the last few measurements and uses the result as the current estimate.
+If you do not want to use a filter and simply make use of the raw sensor data then the None "filter" can be selected.
 
-**Position Filter values:**
+In the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file the filter to be used is set.
+You only need to set the `filter` argument accordingly, like shown in the following picture.
 
-    - "Kalman" (Default)
+![Filter choice](../assets/localization/filter_choice.jpeg)
 
-    - "RunningAvg"
-  
-    - "None"
+Please note, that there is no Running Average Filter implemented for the estimation of the heading.
+If this filter is chosen, the position is estimated using the Running Average and for the heading the None "filter" (so raw data) is used.
 
-**Heading Filter values:**
+The Running Average Filter as well as the None "filter" are implemented directly in the position_heading_publisher_node.
+All other filters should be implemented in their own file(s) publishing their estimated position / heading to their own topics.
+The position_heading_publisher_node can then forward the state estimation to the topics `current_pos` and `current_heading`.
 
-    - "Kalman" (Default)
-  
-    - "None"
-  
-    - "Old" (Buggy for demonstration purposes only)
+If you want to add a new filter, please refer to [README.md](README.md#adding-a-new-filter)
 
-In case of using the Kalman Filter for both, it should look like this:
+This modular design visualized in the image above makes it possible for multiple filter nodes to be running and only the data produced by one filter is published as the current position / heading. Otherwise different filters would publish to the same topic (e.g. current_pos) which is not desirable.
+However, we choose to save computational power by only launching the node(s), that are needed to estimate the state of the vehicle with the chosen filter.
 
-![Kalman Filter for both parameters](../../doc/assets/perception/kalman_installation_guide.png)
-
-_If you want to create a new Filter in the future, I suggest keeping this template intact. See next Chapter_ 😊
-
-No further installation needed.
-
-## Modular Extension / Template
-
-You might get into the situation of needing a better optimized filter for either position or heading or both.
-In that case you should follow the current template of the file:
-
-For example: _Implementing a new non-linear Kalman Filter could look like this_:
-
-- _perception.launch file_:
-
-![Non Linear Kalman Filter Example](../../doc/assets/perception/non_linear_kalman_example.png)
-
-- _Subscribers_:
-
-![Non Linear Kalman Filter Example 2](../../doc/assets/perception/modular_subscriber_example.png)
-
-- _Heading Methods_:
-
-![Non Linear Kalman Filter Example](../../doc/assets/perception/adding_new_position_methods.png)
-
-- _Position Methods_:
-
-![Non Linear Kalman Filter Example](../../doc/assets/perception/new_heading_pub_example.png)
-
-As you can see, this file is merely for gathering and forwarding the filter values in the form of currentPos and currentHeading.
-
-Only the RunningAvg Filter and the Old Heading Filter are implemented directly in this file.
-All other filters should be built in their own class forwarding their filtered positions/ headings to the position_heading_publisher_node so it can publish the filter values that we want as the currentPos and currentHeading which the rest of the code is depending on.
-
-### Heading Functions
-
-**`publish_unfiltered_heading`**
-
-This method is called when new IMU data is received.
-It publishes unfiltered location data as `PoseStamped`, so other filters can use it.
-
-If `none` is selected for the Filter, it publishes the data as the `current_pos` instead. (not recommended)
-
-**`publish_current_heading`**
-
-This method is called when new heading data is received. It handles all necessary updates and publishes the heading as a double value,
-indicating the cars rotation around the z-axis in rad.
-For more info about how the heading is calculated see [here](./coordinate_transformation.md).
-
-### Position Functions
-
-**`publish_running_avg_pos`**
-
-This method is called when new GNSS data is received. The function calculates the average position and then publishes it as the current position.
-
-This is only used when the `running_avg` Filter is selected.
-
-**`publish_kalman_pos_as_current_pos`**
-
-This method is called when new kalman filter data is received. The function publishes the kalman position as the current position.
-
-This is only used when the `Kalman` Filter is selected
-
-**`publish_unfiltered_gps`**
-
-This method is called when new GNSS data is received.
-
-It publishes unfiltered location data as `PoseStamped`, so other filters can use it.
-
-If `none` is selected for the Filter, it publishes the data as the `current_pos` instead. (not recommended)
-
-**`get_geoRef`**
-
-Reads the reference values for lat and lon from the carla OpenDriveMap.
-Otherwise we could not calculate the global Coordinate System
+## Overview of the code
 
 ### Inputs
 
 This node subscribes to the following topics:
 
+- OpenDrive Map:
+  - `/carla/hero/OpenDRIVE` ([String](https://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
 - IMU:
-  - `/carla/{role_name}/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
+  - `/carla/hero/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
 - GPS:
-  - `/carla/{role_name}/GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
-- Kalman position:
-  - `/paf/" + self.role_name + "/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- Kalman Heading:
-  - `/paf/" + self.role_name + "/kalman_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+  - `/carla/hero/GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
+- Estimated heading (by the chosen filter):
+  - e.g. `/paf/hero/ekf_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- Estimated position (by the chosen filter):
+  - e.g. `/paf/hero/ekf_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
 ### Outputs
 
 This node publishes the following topics:
 
-- Current Heading:
-  - `/paf/{role_name}/current_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- Current Position:
-  - `/paf/{self.role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- Current heading:
+  - `/paf/hero/current_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- Current position:
+  - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- Raw (transformed) heading data:
+  - `paf/hero/unfiltered_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
+### Functions regarding the heading
 
+**`publish_unfiltered_heading`**
 
+This method is called when new IMU data is received.
+It publishes unfiltered orientation data as a `Float32` message, so other filters can use it.
 
-It is also used to extract relevant information
-from raw data and pass this information on to a different topic so it can be used by the filter nodes more easily.
+If `None` is selected as the filter, it publishes the data as the `current_heading` instead (not recommended).
 
-- GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
-- IMU data (/carla/hero/IMU) -> /paf/hero/unfiltered_heading
+**`publish_current_heading`**
 
-### Published / subscribed topics
+This method is called when new heading data (from a filter) is received.
+The published data has the Message Type `Float32`.
 
-The following topics are therefore published by this node:
+### Functions regarding the position
 
-- `unfiltered_pos` (raw data, subscribed to by filter nodes e.g. kalman_filter)
-- `unfiltered_heading` (raw data, subscribed to by filter nodes e.g. kalman_filter)
-- `current_pos` (filtered data, position of the car)
-- `current_heading` (filtered data, orientation of the car around the z-axis)
+**`publish_running_avg_pos`**
 
-To gather the necessary information for the topics above the node subscribes the following topics:
+This method implements the Running Average Filter and is only called if this filter is selected.
+When new GPS data is received, the function calculates the average position over the last few measurements and then publishes the result as the current position.
 
-- OpenDrive (map information)
-- IMU (Inertial Measurement Unit)
-- GPS
-- the topic published by the filter that is used (e.g. kalman_pos)
+**`publish_filter_pos_as_current_pos`**
 
-As you can see the node first subscribes the filtered data (e.g. kalman_pos) and then publishes this data as the current position / heading. It merely passes along the data.
+This method is called when new filter data (for example from the EKF) is received. The function publishes the estimated position as the current position.
 
-This makes it possible for multiple filter nodes to be running and only the data produced by one filter is published as the current position / heading. Otherwise different filters would publish to the same topic (e.g. current_pos) which is not desirable.
+**`publish_unfiltered_gps`**
+
+This method is called when new GPS data is received.
+It only transforms the latitude/longitude/altitude into x/y/z coordinates.
+Then this position data is published as a `PoseStamped` message, so filters (like the Kalman Filter) can use it.
+
+If `None` is selected as the Filter, it publishes the data as the `current_pos` instead (not recommended).
+
+**`get_geoRef`**
+
+Reads the reference values for latitude and longitude from the carla OpenDriveMap.
+Otherwise we could not calculate the global Coordinate System.

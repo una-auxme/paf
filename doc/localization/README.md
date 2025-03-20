@@ -38,7 +38,7 @@ An even simpler approach is calculating the current state using a **Running Aver
 If you do not want to use a filter and simply make use of the raw sensor data then the **None** "filter" can be selected.
 
 The filter to be used is chosen in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file.
-You only need to set the `filter` argument accordingly like shown in the following picture.
+You only need to set the `filter` argument accordingly, like shown in the following picture.
 
 ![Filter choice](../assets/localization/filter_choice.jpeg)
 
