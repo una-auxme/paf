@@ -1,6 +1,12 @@
-"""Contains entity-related functions
+"""Contains Entity classes and functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/entity.md)**
+
+Overview of the main components:
+- **Entity** class and subclasses (Car, Pedestrian, etc..)
+- Entity attribute classes: Motion2D, Flags, TrackingInfo
+- ShapelyEntity: Container containing an Entity and its shape as shapely.Polygon
+
 """
 
 from typing import List, Optional, Dict
@@ -231,7 +237,10 @@ class TrackingInfo:
 
 @dataclass
 class Entity:
-    """A thing of interest around the hero car that has a location and a shape"""
+    """A thing of interest around the hero car. Mainly used for Obstacles.
+
+    Has a location and a shape.
+    """
 
     confidence: float
     """The sensor's confidence that this entity is correct and actually exists."""
@@ -377,7 +386,9 @@ class Entity:
         )
 
     def to_marker(self) -> Marker:
-        """Creates an ROS marker based on the entity
+        """Creates a ROS marker based on the entity
+
+        The Marker only visualizes the transform and shape of the Entity.
 
         Returns:
             Marker: ROS marker message
@@ -407,6 +418,14 @@ class Entity:
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
+        """Creates a ROS marker based on the entity's motion
+
+        Returns:
+            Marker: ROS marker message
+
+        Raises:
+            Assertion: Entity has no motion
+        """
         assert self.motion is not None
         m = Marker()
         m.type = Marker.ARROW
@@ -430,6 +449,16 @@ class Entity:
         return m
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
+        """Creates a text marker at the entity's position
+
+        Args:
+            text (str): Text for the marker
+            offset (Optional[Vector2], optional): Position offset of the marker.
+                Defaults to None.
+
+        Returns:
+            Marker: ROS marker message
+        """
         if offset is None:
             offset = Vector2.zero()
         text_marker = Marker()
@@ -448,6 +477,11 @@ class Entity:
         return text_marker
 
     def to_shapely(self) -> "ShapelyEntity":
+        """Calculates the #ShapelyEntity for this entity
+
+        Returns:
+            ShapelyEntity: Container containing self and a shapely.Polygon
+        """
         return ShapelyEntity(self, self.shape.to_shapely(self.transform))
 
     def is_mergeable_with(self, other: "Entity") -> bool:
@@ -495,7 +529,7 @@ class Entity:
         -> It returns the velocity in the same x-direction as the hero.
 
         Returns:
-        - Optional[float]: Velocity of the entity in front in m/s.
+            Optional[float]: Velocity of the entity in front in m/s.
         """
 
         if self.motion is None:
@@ -517,7 +551,7 @@ class Entity:
         - result < 0: other moves in the backward direction of self
 
         Args:
-            other (Entity)
+            other (Entity): other
 
         Returns:
             Optional[float]: Delta velocity if both entities have one.
@@ -539,7 +573,7 @@ class Entity:
         - result < 0: other moves nearer to self
 
         Args:
-            other (Entity)
+            other (Entity): other
 
         Returns:
             Optional[float]: Delta velocity if both entities have one.
@@ -628,6 +662,9 @@ class Lanemarking(Entity):
     style: "Lanemarking.Style"
     position_index: int
     predicted: bool
+    """If this Lanemark was not actually detected by a sensor
+    but predicted based on other/previous lanemarks
+    """
 
     class Style(Enum):
         SOLID = 0
@@ -690,12 +727,12 @@ class Lanemarking(Entity):
 
 @dataclass(init=False)
 class TrafficLight(Entity):
-    """Traffic light or stop sign
+    """Traffic light stop line
 
-    Note: Class may be split up later
+    Note: This class is currently unused. Only #StopMark is used at an intersection.
 
-    TrafficLight and StopSign add only their stop line to the map.
-    They set the *is_stopmark* flag only if the car has to stop there.
+    TrafficLight is only a stop line on the map.
+    It sets the *is_stopmark* flag only if the car has to stop there.
     """
 
     state: "TrafficLight.State"
@@ -726,6 +763,8 @@ class StopMark(Entity):
     """Stop mark as a virtual obstacle for the ACC"""
 
     reason: str
+    """Why this StopMark exits. Only for visualization.
+    """
 
     def __init__(self, reason: str, **kwargs):
         super().__init__(**kwargs)
@@ -810,7 +849,7 @@ class ShapelyEntity:
         """Returns the distance to other in m.
 
         Args:
-            other (ShapelyEntity)
+            other (ShapelyEntity): other
 
         Returns:
             float: distance
