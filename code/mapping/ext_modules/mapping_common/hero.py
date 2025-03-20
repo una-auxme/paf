@@ -1,6 +1,10 @@
-"""Contains hero-related functions
+"""Contains attributes and functions specific to the hero
 
 **[API documentation](/doc/mapping/generated/mapping_common/hero.md)**
+
+Currently available:
+- Shape: Length/Width of the Hero based on the Lincoln MKZ 2020
+- Function to create a basic hero Entity
 """
 
 from mapping_common.entity import Car, Flags
@@ -21,7 +25,7 @@ def create_hero_entity() -> Car:
     """Creates a car-entity with the shape of the hero car
 
     Returns:
-        Car
+        Car: hero entity
     """
     shape = Rectangle(
         length=HERO_CAR_LENGTH,
