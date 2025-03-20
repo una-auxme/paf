@@ -1,8 +1,17 @@
 # Documentation of Planning
 
+- [Architecture Diagram](#architecture-diagram)
+- [Overview](#overview)
+  - [Global Planner (/global\_planner)](#global-planner-global_planner)
+    - [Preplanning / OpenDrive Converter (preplanning\_trajectory.py)](#preplanning--opendrive-converter-preplanning_trajectorypy)
+    - [Global Planner (global\_planner\_node.py)](#global-planner-global_planner_nodepy)
+    - [Global Planner Distance Publisher (global\_plan\_distance\_publisher.py)](#global-planner-distance-publisher-global_plan_distance_publisherpy)
+  - [Local Planner (/local\_planner)](#local-planner-local_planner)
+  - [Decision making (/behavior\_agent)](#decision-making-behavior_agent)
+
 ## Architecture Diagram
 
-**TO DO**: Add snippet from the global architecture diagram.
+So get an overview over the general architecture, check the [architecture diagram](link).
 
 ## Overview
 
