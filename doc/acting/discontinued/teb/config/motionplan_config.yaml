@@ -1,0 +1,3 @@
+lookahead_idx_count: 25
+lookbehind_idx_count: 10
+self_as_start: True

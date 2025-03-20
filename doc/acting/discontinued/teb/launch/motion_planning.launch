@@ -1,0 +1,25 @@
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+
+    <!-- <node pkg="local_planner" type="local_planner/dev_collision_publisher.py"
+       name="DevCollisionCheck" output="screen">
+        <param name="role_name" value="hero" />
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node> -->
+    <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
+        <param name="role_name" value="hero" />
+        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    </node>
+
+    <node pkg="teb_planner_pa" type="teb_planner_node_pa" name="teb_planner_node_pa"
+        output="screen">
+        <rosparam file="$(find planning)/config/teb_herocar_config.yaml" command="load" />
+    </node>
+    <node pkg="tf" type="static_transform_publisher" name="teb_map"
+        args="0.0 0.0 -703.0 0 0 0 1 hero teb_map 100" />
+
+    <node pkg="rviz" type="rviz" name="rviz_teb"
+        args="-d $(find teb_planner_pa)/cfg/rviz_teb_planner_node.rviz" />
+
+</launch>

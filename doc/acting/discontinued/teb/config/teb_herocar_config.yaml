@@ -1,0 +1,93 @@
+#https://mowito-navstack.readthedocs.io/en/latest/step_5c.html
+
+
+odom_topic: global
+map_frame: global
+
+# Trajectory
+
+# This setup results in nice points
+dt_ref: 0.3
+dt_hysteresis: 0.1
+min_samples: 3
+max_samples: 30
+
+# Homotopy Class Planner
+enable_homotopy_class_planning: False # this is very slow
+
+#global_plan_overwrite_orientation: True
+max_global_plan_lookahead_dist: 0.0
+#feasibility_check_no_poses: 5
+
+
+# Optimization
+no_inner_iterations: 30
+no_outer_iterations: 3
+optimization_activate: True
+optimization_verbose: False
+penalty_epsilon: 0.5
+
+
+# how nice the trajectory is, no kinks etc
+weight_max_vel_x: 250 # 10
+weight_max_vel_theta: 150
+weight_acc_lim_x: 200 # 10 # 50
+weight_acc_lim_theta: 220
+weight_kinematics_nh: 2000 # 1000 #increase for no kinks
+weight_kinematics_turning_radius: 170
+weight_optimaltime: 1
+
+
+
+weight_adapt_factor: 50 # very import tant
+
+
+# Vehicle info
+max_vel_x: 5
+max_vel_x_backwards: 0.1 # avoid backwards driving. This increases the cost for that.
+max_vel_theta: 10.0
+acc_lim_x: 0.1
+acc_lim_theta: 5
+
+
+xy_goal_tolerance:  0.2
+yaw_goal_tolerance: 0.1
+free_goal_vel: True
+
+
+ # Obstacles
+legacy_obstacle_association: True # important to use all obstacles
+include_dynamic_obstacles: False
+
+min_obstacle_dist: 0.5
+inflation_dist: 0.65
+
+weight_obstacle: 180.0 
+weight_inflation: 8.0
+weight_shortest_path: 3.0
+obstacle_cost_exponent: 0.1 # counter intuitive but better at 100 obstacles get ignored completely
+# Recovery 
+shrink_horizon_backup: False
+oscillation_recovery: True
+
+# ********************************************************************
+# Shape based on https://www.motortrend.com/cars/
+# lincoln/mkz/2020/specs/?trim=Base+Sedan
+# length: 4.9
+# width: 1.85
+
+footprint_model:
+    type: "circular"
+    radius: 0.925
+    # maybe use two circles
+    #type: "two_circles"
+    #front_radius: 0.925
+    #front_offset: 1.5
+    #rear_radius: 0.925
+    #rear_offset: 1.5
+
+weight_viapoint: 650.0 # this controls hoow directly we follow the original 
+min_turning_radius: 12        # Min turning radius of the carlike robot (compute value using a model or adjust with rqt_reconfigure manually)
+wheelbase: 2.85                # Wheelbase of our car
+cmd_angle_instead_rotvel: True # stage simulator takes the angle instead of the rotvel as input (twist message)
+
