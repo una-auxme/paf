@@ -20,34 +20,26 @@ from scipy.spatial.transform import Rotation as R
 
 from utils import (
     NUM_WAYPOINTS,
-    NUM_WAYPOINTS_OVERTAKE,
-    NUM_WAYPOINTS_OVERTAKE_UNSTUCK,
     TARGET_DISTANCE_TO_STOP,
     convert_to_ms,
     spawn_car,
 )
-
-
-sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
-from behaviors import behavior_speed as bs  # type: ignore # noqa: E402
-
 from teb_planner_pa_msgs.srv import Plan, PlanRequest, PlanResponse
 from mapping.msg import Map as MapMsg
-from mapping_common.entity import Entity
 from mapping_common.map import Map
-from mapping_common.transform import Transform2D
 from costmap_converter.msg import ObstacleArrayMsg, ObstacleMsg
 from copy import deepcopy
 import time
-
-# from scipy.spatial._kdtree import KDTree
-
 from typing import Optional
 from numpy.typing import NDArray
 
 from dynamic_reconfigure.server import Server
 from planning.cfg import MotionPlanConfig
 
+sys.path.append(os.path.abspath(sys.path[0] + "/../../planning/src/behavior_agent"))
+from behaviors import behavior_speed as bs  # type: ignore # noqa: E402
+
+# from scipy.spatial._kdtree import KDTree
 
 UNSTUCK_OVERTAKE_FLAG_CLEAR_DISTANCE = 7.0
 
@@ -235,7 +227,7 @@ class MotionPlanning(CompatibleNode):
         self.logdebug("MotionPlanning started")
         self.counter = 0
 
-        reconfigure_server = Server(MotionPlanConfig, self.dynamic_reconfigure_callback)
+        Server(MotionPlanConfig, self.dynamic_reconfigure_callback)
         self.LOOKAHEAD_IDX_COUNT: int
         self.LOOKBEHIND_IDX_COUNT: int
         self.SELF_AS_START: bool
@@ -409,9 +401,8 @@ class MotionPlanning(CompatibleNode):
                 self.original_trajectory.poses[behind_idx - 1],
             )
             # TODO: Fixed overtake Waypoint number... improve this
-            """The distance to the object ahead should maybe also be taken into account.
-                The original code however used it as an index which is totally incorrect.
-            """
+            # The distance to the object ahead should maybe also be taken into account.
+            # The original code however used it as an index which is totally incorrect.
 
         req.request.goal = self.original_trajectory.poses[goal_index].pose
         self.__set_orientation_from_poses(
@@ -484,7 +475,8 @@ class MotionPlanning(CompatibleNode):
         ) = R.from_euler("z", np.arctan2(a.y - b.y, a.x - b.x), degrees=False).as_quat()
 
     def __car_to_world(self, translation: NDArray) -> NDArray:
-        """Input a vector of x and y in car coordinates and transform to world coordinates.
+        """Input a vector of x and y in car coordinates and transform to world
+        coordinates.
         Args:
             translation (NDArray): 2D Vector in car coordinates
 
