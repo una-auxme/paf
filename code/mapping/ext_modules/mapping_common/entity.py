@@ -827,6 +827,12 @@ _entity_supported_classes = [
     StopMark,
     Pedestrian,
 ]
+"""Holds the entity classes supported for conversion to/from
+ROS messages
+
+To add a new entity subtype, add it to this array and override
+the _extract_kwargs() and to_ros_msg() methods accordingly.
+"""
 _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()

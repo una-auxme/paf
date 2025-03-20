@@ -11,9 +11,14 @@
 
 # mapping\_common.markers
 
-Contains markers-related functions
+Contains functions to easily create debug markers that can be visualized in RViz
 
 **[API documentation](/doc/mapping/generated/mapping_common/markers.md)**
+
+Overview of the main components:
+- debug_marker(): Creates a ROS Marker based on different objects
+- debug_marker_array(): Creates a ROS MarkerArray
+  based on list of ROS Markers
 
 <a id="mapping_common.markers.debug_marker"></a>
 
@@ -29,9 +34,9 @@ def debug_marker(base: Any,
                  scale_z: Optional[float] = None) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L20)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L25)
 
-Creates a marker based on *base*
+Creates a ROS Marker based on *base*
 
 **Arguments**:
 
@@ -59,7 +64,7 @@ Creates a marker based on *base*
 
 **Returns**:
 
-  Marker
+- `Marker` - Marker
 
 <a id="mapping_common.markers.debug_marker_array"></a>
 
@@ -73,14 +78,14 @@ def debug_marker_array(
         lifetime: Optional[rospy.Duration] = None) -> MarkerArray
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L135)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L140)
 
-Builds a MArkerArray based on *markers*
+Builds a ROS MarkerArray based on *markers*
 
 **Arguments**:
 
 - `namespace` _str_ - Namespace of the markers
-  markers (List[Marker])
+- `markers` _List[Marker]_ - markers
 - `timestamp` _Optional[rospy.Time], optional_ - Timestamp of all markers.
   Defaults to None. If None, the current ros time will be used
 - `lifetime` _Optional[rospy.Duration], optional_ - Marker lifetime.
@@ -89,5 +94,5 @@ Builds a MArkerArray based on *markers*
 
 **Returns**:
 
-  MarkerArray
+- `MarkerArray` - MarkerArray
 

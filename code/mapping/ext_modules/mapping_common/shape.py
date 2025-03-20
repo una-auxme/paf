@@ -401,6 +401,12 @@ class Polygon(Shape2D):
 
 
 _shape_supported_classes = [Rectangle, Circle, Polygon]
+"""Holds the shape classes supported for conversion to/from
+ROS messages
+
+To add a new shape subtype, add it to this array and override
+the _from_ros_msg() and to_ros_msg() methods accordingly.
+"""
 _shape_supported_classes_dict = {}
 for t in _shape_supported_classes:
     t_name = t.__name__.lower()

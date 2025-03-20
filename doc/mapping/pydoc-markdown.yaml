@@ -28,6 +28,7 @@ renderer:
       - mapping_common.hero
       - mapping_common.map
       - mapping_common.markers
+      - mapping_common.mask
       - mapping_common.shape
       - mapping_common.transform
     children:
@@ -51,6 +52,10 @@ renderer:
       name: markers
       contents:
       - mapping_common.markers.*
+    - title: Mask documentation
+      name: mask
+      contents:
+      - mapping_common.mask.*
     - title: Shape documentation
       name: shape
       contents:

@@ -21,9 +21,15 @@
 
 # mapping\_common.filter
 
-Contains filter-related functions
+Contains the postprocessing filters for the **Intermediate Layer**
 
 **[API documentation](/doc/mapping/generated/mapping_common/filter.md)**
+
+After collecting the sensor data in the *mapping_data_integration* node,
+several filters are applied to improve the Map before
+sending it to Planning/Acting.
+
+This module contains these filters and algorithms.
 
 <a id="mapping_common.filter.MapFilter"></a>
 
@@ -33,7 +39,7 @@ Contains filter-related functions
 class MapFilter()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L20)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L26)
 
 Abstract base class for all mapping filters
 
@@ -45,7 +51,7 @@ Abstract base class for all mapping filters
 def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L23)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L29)
 
 Filters the map.
 
@@ -59,7 +65,7 @@ Look into the class description for what the filter does
 **Returns**:
 
 - `Map` - New map with filter applied.
-  Note that unmodified entities are NOT deepcopied.
+  Note that unmodified entities might NOT be deepcopied.
 
 <a id="mapping_common.filter.LaneIndexFilter"></a>
 
@@ -70,7 +76,7 @@ Look into the class description for what the filter does
 class LaneIndexFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L39)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L45)
 
 Updates the Index of lanemark Entities if duplicates have been removed.
 
@@ -93,7 +99,7 @@ Then returns the updated map with all Entities
 def filter(map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L54)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L60)
 
 <a id="mapping_common.filter.GrowPedestriansFilter"></a>
 
@@ -104,7 +110,7 @@ def filter(map) -> Map
 class GrowPedestriansFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L90)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L96)
 
 Grow Pedestrians by 0.5 meter for a better detection of them (e.g. for the ACC)
 
@@ -123,7 +129,7 @@ Then returns the updated map with all Entities
 def filter(map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L101)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L107)
 
 <a id="mapping_common.filter.GrowthMergingFilter"></a>
 
@@ -134,7 +140,7 @@ def filter(map) -> Map
 class GrowthMergingFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L111)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L117)
 
 Merges entities in the map with growing them
 
@@ -157,6 +163,8 @@ Basic (very simplified) function:
 
 #### growth\_distance: `float`
 
+Growth amount in m
+
 <a id="mapping_common.filter.GrowthMergingFilter.min_merging_overlap_percent"></a>
 
 #### min\_merging\_overlap\_percent: `float`
@@ -173,6 +181,10 @@ Min overlap of the grown shapes in m2
 
 #### simplify\_tolerance: `float`
 
+The shapes are simplified after each merge.
+
+This controls the tolerance of the simplification.
+
 <a id="mapping_common.filter.GrowthMergingFilter.filter"></a>
 
 #### filter
@@ -181,5 +193,5 @@ Min overlap of the grown shapes in m2
 def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L140)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L152)
 

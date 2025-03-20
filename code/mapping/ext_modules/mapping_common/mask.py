@@ -1,6 +1,17 @@
-"""Contains mask-related functions
+"""Collection of functions to create shapely Geometry
 
 **[API documentation](/doc/mapping/generated/mapping_common/mask.md)**
+
+Overview of the main components:
+- Trajectory functions:
+  - Convert ROS Path to shapely.LineString and back: ros_path_to_line, line_to_ros_path:
+  - Accurate line splitting: split_line_at, clamp_line
+  - Trajectory generation functions: build_trajectory, build_trajectory_from_start
+- Collision mask generation:
+  - These masks can be used together with MapTree.get_overlapping_entities().
+  - For lead vehicle detection: project_plane, build_trajectory_shape,
+    build_lead_vehicle_collision_masks
+- Some lane mask functions (Main parts of lane mask generation are located in MapTree)
 """
 
 from typing import Optional, Tuple, List, Union
@@ -23,7 +34,7 @@ def curve_to_polygon(line: shapely.LineString, width: float) -> shapely.Polygon:
     """Creates a polygon with a specified width around a given line.
 
     Args:
-        line (shapely.LineString)
+        line (shapely.LineString): line
         width (float): Width of the result
 
     Returns:
@@ -53,11 +64,11 @@ def split_line_at(
 
     Args:
         line (shapely.LineString): Line to split
-        distance (float)
+        distance (float): length from the start
 
     Returns:
-        Tuple[Optional[LineString], Optional[LineString]]:
-            (before, after) Tuple: Line before and after the split.
+        Tuple[Optional[LineString], Optional[LineString]]: (before, after) Tuple:
+            Line before and after the split.
             Either of them might be None depending on the split position.
     """
     if len(line.coords) < 2:
@@ -136,10 +147,10 @@ def clamp_line(
 
     Args:
         line (shapely.LineString): Line to clamp
-        start_distance (float, optional):
-            Distance for the first cut from the line start point. Defaults to 0.0.
-        end_distance (Optional[float], optional):
-            Distance for the second cut from the original line start point.
+        start_distance (float, optional): Distance for the first cut
+            from the line start point. Defaults to 0.0.
+        end_distance (Optional[float], optional): Distance for the second cut
+            from the original line start point.
             If None only the starting section is cut off. Defaults to None.
 
     Returns:
@@ -161,6 +172,18 @@ def clamp_line(
 def ros_path_to_line(
     path: NavPath, start_idx: int = 0, end_idx: Optional[int] = None
 ) -> shapely.LineString:
+    """Converts a ROS path into a shapely line
+
+    Args:
+        path (NavPath): ROS nav_msgs.msg.Path
+        start_idx (int, optional): Points before the start index will
+            be left out. Defaults to 0.
+        end_idx (Optional[int], optional): Points after(including the)
+            end index will be left out. Defaults to None.
+
+    Returns:
+        shapely.LineString: line
+    """
     points = []
     poses_view = (
         path.poses[start_idx:] if end_idx is None else path.poses[start_idx:end_idx]
@@ -172,6 +195,14 @@ def ros_path_to_line(
 
 
 def line_to_ros_path(line: shapely.LineString) -> NavPath:
+    """Converts a shapely line into a ROS path
+
+    Args:
+        line (shapely.LineString): line
+
+    Returns:
+        Path: ROS nav_msgs.msg.Path
+    """
     path = NavPath()
     for coord in line.coords:
         pose = Pose(position=Point(coord[0], coord[1], 0))
@@ -197,7 +228,7 @@ def build_trajectory(
     The global_hero_transform can be built with
     mapping_common.map.build_global_hero_transform().
 
-    When centered is true, the trajectory start point will be centered onto (0, 0).
+    When centered is True, the trajectory start point will be centered onto (0, 0).
     Centered mode must not be used for navigating,
     but can be used for collision avoidance / acc.
 
@@ -305,15 +336,15 @@ def project_plane(
     """
     Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
-    Parameters:
-    - size_x (float): Length of the plane along the x-axis.
-    - size_y (float): Width of the plane along the y-axis.
-    - start_point(Optional[Point2], optional):
-        Start point in the low y-center of the rectangle.
-        Default: Point2.zero()
+    Arguments:
+        size_x (float): Length of the plane along the x-axis.
+        size_y (float): Width of the plane along the y-axis.
+        start_point(Optional[Point2], optional):
+            Start point in the low y-center of the rectangle.
+            Default: Point2.zero()
 
     Returns:
-    - Polygon: A Shapely Polygon representing the plane.
+        Polygon: A Shapely Polygon representing the plane.
     """
     if start_point is None:
         start_point = Point2.zero()
@@ -351,11 +382,10 @@ def build_lead_vehicle_collision_masks(
         front_mask_size (float): Size of the static mask in front
         max_trajectory_check_length (Optional[float], optional):
             Max length of the collision masks. Defaults to None.
-        rotate_front_mask (float, optional): rotates the static mask in front.
-            Usecase: Adjust with the steering angle.
-        max_centering_dist (Optional[float], optional):
-            Centers the trajectory part of the mask onto the front mask,
-            if they align closely enough
+        rotate_front_mask (float, optional): rotates the static mask
+            in front. Usecase: Adjust with the steering angle.
+        max_centering_dist (Optional[float], optional): Centers the trajectory part of
+            the mask onto the front mask, if they align closely enough.
             If None-> No centering.
 
     Returns:
@@ -410,8 +440,8 @@ def build_trajectory_from_start(
     Args:
         trajectory_local (NavPath): _description_
         start_point (Point2): _description_
-        max_centering_dist (Optional[float], optional):
-            Centers *trajectory_local* onto *start_point* if they align closely enough.
+        max_centering_dist (Optional[float], optional): Centers *trajectory_local*
+            onto *start_point* if they align closely enough.
             Defaults to None-> No centering.
 
     Returns:
@@ -452,11 +482,11 @@ def point_along_line_angle(x: float, y: float, angle: float, distance: float) ->
     """
     Calculates a point along a straight line with a given angle and distance.
 
-    Parameters:
-    - x (float): x-coordinate of the original position
-    - y (float): y-coordinate of the original position
-    - angle (float): Angle of the straight line (in rad)
-    - distance (float): Distance along the straight line (positive or negative)
+    Arguments:
+        x (float): x-coordinate of the original position
+        y (float): y-coordinate of the original position
+        angle (float): Angle of the straight line (in rad)
+        distance (float): Distance along the straight line (positive or negative)
     Returns:
         Point2(x,y): x-y-coordinates of new point as Point2
     """
