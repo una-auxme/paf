@@ -1,7 +1,7 @@
 # Detailed Description of the Radar Node
 
 ## 1. General Functionality
-The **Radar Node** is responsible for processing radar data from multiple sensors to improve environmental perception. It enables the detection of objects, their speeds, and distances, contributing to applications such as overtaking safety, turning maneuvers, and adaptive cruise control. 
+The **Radar Node** processes data from multiple radar sensors to improve environmental perception. It enables the detection of objects, their speeds, and distances, contributing to applications such as overtaking safety, turning maneuvers, and adaptive cruise control. 
 
 Initially, two forward-facing radar sensors were used to enhance long-range visibility and clustering robustness. However, after further evaluation, one of the sensors was repositioned to the rear to improve the detection of approaching vehicles, making overtaking and parking maneuvers safer. This configuration balances forward and rearward perception while maintaining overall system reliability.
 
@@ -13,12 +13,18 @@ This decision aligns with the objectives shown in the provided image, highlighti
 ## 2. Sensor Configuration
 The sensors are configured as follows:
 
-| Sensor  | x   | y    | z   | Horizontal FOV | Vertical FOV |
-|---------|-----|------|-----|----------------|--------------|
-| RADAR0  | 2.0 | -1.5 | 0.5 | 25             | 0.1          |
-| RADAR1  | -2.0 | -1.5 | 0.5 | 25             | 0.1          |
+| Sensor  | x   | y    | z   | Horizontal FOV | Vertical FOV | roll | pitch | yaw |
+|---------|-----|------|-----|----------------|--------------|------|-------|-----| 
+| RADAR0  | 2.0 | -1.5 | 0.5 | 25             | 0.1          | 0.0  | 0.0   | 0.0 |
+| RADAR1  | -2.0 | -1.5 | 0.5 | 25             | 0.1         | 0.0  | 0.0   | 180.0 |
 
 **Special Note:** RADAR1 is rotated 180° to face backward.
+
+Without a rearfacing radar the car was not able to change lanes or exit parking spaces safely as it was not possible to detect oncoming traffic in time. 
+
+To optimize detection, we set the vertical field of view to 0.1. This eliminates unnecessary points that would otherwise be directed straight at the ground or far above obsacles. This configuration allows for full utilization of the 1500 points returned by each sensor per second.
+
+The sensors operate at a rate of 20 Hz, resulting in 75 points per tick per sensor.
 
 ### 2.1 Decision for Radar Placement
 We initially deployed two forward-facing radar sensors but later opted for a configuration with one front-facing and one rear-facing sensor. The decision was based on the following considerations:
@@ -28,15 +34,13 @@ We initially deployed two forward-facing radar sensors but later opted for a con
 | **Two Forward-Facing Radars** | ✅ Wider long-range field of view <br> ✅ Higher data density → More robust clustering | ❌ Cannot directly detect speeds of approaching vehicles |
 | **One Front-Facing, One Rear-Facing Radar** | ✅ Detects speeds of approaching vehicles for safer overtaking & parking maneuvers <br> ✅ Better detection of distant vehicles when making left turns | ❌ Slightly reduced clustering quality for front detection <br> ❌ Narrower forward-facing field of view |
 
-2.2 Alternative Radar Placement
+### 2.2 Alternative Radar Placement
 
 In principle, it is possible to use four radar sensors instead of just two. However, due to the limitations in the CARLA qualifying phase, only two sensors are currently allowed.
 
 A future improvement could involve dynamically activating two radars for qualifying and then switching to four radars once full autonomy is permitted. This approach would significantly enhance the perception system by covering blind spots and improving clustering reliability.
 
-## 3. Main Components
-
-### 3.1 Initialization and ROS Parameters
+## 3 Initialization and ROS Parameters
 At startup, several parameters are retrieved via `get_param` to configure the node’s behavior:
 
 - `~dbscan_eps`: Maximum distance between two points in a cluster (default: `0.3`)
@@ -48,7 +52,7 @@ At startup, several parameters are retrieved via `get_param` to configure the no
 - `~accelerometer_arrow_size`: Scaling factor for IMU arrow visualization (default: `2.0`)
 - `~accelerometer_factor`: Scaling factor for pitch angle calculation (default: `0.05`)
 
-### 3.2 Data Processing
+## 4 Data Processing
 - **Receiving Sensor Data:**
   - Sensor data is received from `/carla/hero/RADAR0` and `/carla/hero/RADAR1` as `PointCloud2` messages.
   - Data can either be buffered or processed immediately.
@@ -63,26 +67,34 @@ At startup, several parameters are retrieved via `get_param` to configure the no
   - The interval is configured with `self.data_buffer_time` (default: `0.1s`).
   - **Buffering Option:** If `~data_buffered` is enabled, sensor data is collected over a short period before processing. This allows for better clustering but is generally not used in the final implementation.
 
-### 3.3 Data Filtering
-- Points below the calculated ground level are filtered out.
-- Points outside the maximum detection range (100m) are removed.
-- The `filter_points` function applies masking based on the computed pitch angle.
+- **Data Filtering:**
+  - Points below the calculated ground level are filtered out.
+  - The `filter_points` function applies masking based on the computed pitch angle.
+  
+- **Clustering:**
+  - DBSCAN (described here: LINK TO README?) is used for clustering radar points.
+  - Clustering criteria: x, y, z and velocity.
+  - **Clustering Parameters:**
+    - `eps` (maximum distance between points in a cluster) = 0.3
+    - `min_samples` (minimum number of points per cluster) = 3
+ 
+- **Cluster velocity:**
+  - The average velocity for each cluster is calculated.
+ 
+- **Additional debugging functions:**
+  - These functions can be used to improve radar clustering without depending on the intermediate layer
+    - filter_data: Filters data in x,y and z direction as well as maximum distance to the sensor.
+    - create_pointcloud2: Creates a colored pointcloud of radar points.
+    - generate_bounding_boxes, create_bounding_box_marker: Creates bounding boxes and markers of radar clusters.
+    - generate_cluster_info: Generates a string with cluster information.
 
-### 3.4 Clustering
-- DBSCAN is used for grouping radar points.
-- **Clustering Parameters:**
-  - `eps` (maximum distance between points in a cluster) = 0.3
-  - `min_samples` (minimum number of points per cluster) = 3
-- The average velocity per cluster is calculated.
-- Clustering can be disabled via the `~enable_clustering` parameter.
+- **Output to intermediate layer:**
+  - Clustered points array containing:
+    - points (clusterPointsNpArray): numpy array shape (N, 3)
+    - point_indices (indexArray): numpy array with the shape (N)
+    - object_speed_array (motionArray): numpy array with the shape (N) 
 
-### 3.5 Data Output
-- **Filtered Points:** Stored in `filtered_out_points` and published for visualization.
-- **Clustered Points:** Published as `PointCloud2` messages.
-- **Bounding Boxes:** An axis-aligned bounding box (AABB) is computed for each cluster and displayed in RViz.
-- **Cluster Information:** Metadata on clusters is provided in JSON format.
-
-## 4. ROS Topics
+## 5. ROS Topics
 | Topic | Type | Description |
 |----------------------------|---------------------------|--------------------------------------------------|
 | `/carla/hero/RADAR0` | `sensor_msgs/PointCloud2` | Input data from Radar 0 |
@@ -93,6 +105,6 @@ At startup, several parameters are retrieved via `get_param` to configure the no
 | `/paf/hero/Radar/ClusterInfo` | `std_msgs/String` | JSON with cluster information |
 | `/paf/hero/IMU` | `sensor_msgs/Imu` | Input data from the IMU sensor |
 
-## 5. Conclusion
+## 6. Conclusion
 This radar node enables robust processing of radar signals for object detection. By integrating DBSCAN clustering and IMU data, sensor data quality is improved. The generated bounding boxes and visualizations facilitate environmental analysis.
 
