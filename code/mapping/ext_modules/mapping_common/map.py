@@ -1,6 +1,12 @@
-"""Contains map-related functions
+"""Contains the Map class and functions for working with it
 
 **[API documentation](/doc/mapping/generated/mapping_common/map.md)**
+
+Overview of the main components:
+- **Map** class: Main datatype transmitted in the Intermediate Layer
+- MapTree: Acceleration structure for intersection checks on the Map.
+  Also includes all lane check functions used in the
+  behavior tree.
 """
 
 from dataclasses import dataclass, field
@@ -34,7 +40,12 @@ class LaneFreeState(Enum):
     LANEMARK_ANGLE_ERR = -2
     SHAPE_ERR = -3
 
-    def is_error(self):
+    def is_error(self) -> bool:
+        """If an error occurred when calculating the lane mask
+
+        Returns:
+            bool: True==Error
+        """
         return self.value < 0
 
 
@@ -58,7 +69,7 @@ class Map:
     - The map's x-axis is aligned with the heading of the hero car
     - The map's y-axis points to the left of the hero car
     - Coordinate system is a right-hand system like tf2 (can be visualized in RViz)
-    - The map might include the hero car as the first entity in entities
+    - The map might include the hero car as the **first entity** in entities
     """
 
     timestamp: Time = Time()
@@ -106,11 +117,11 @@ class Map:
 
         Args:
             direction (str): lanemarks on "left", "right" or "both" will be checked.
-            Other inputs will be ignored
+                Other inputs will be ignored
 
         Returns:
-            dict{uuid, coordinate}: dictionary with uuid of lanemark as keys
-            and coordinates as according entries
+            Dict[uuid, coordinate]: dictionary with uuid of lanemark as keys
+                and coordinates as according entries
         """
         if direction == "left":
             y_axis_line = LineString([[0, 0], [0, 8]])
@@ -144,19 +155,20 @@ class Map:
 
         **IMPORTANT**: The map
         MUST NOT BE MODIFIED WHILE USING THE TREE,
-        otherwise results will be invalid or crash
+        otherwise results will be invalid or crash.
 
-         Useful for for quickly calculating which entities of a map are
-        the nearest or (intersect, touch, etc.) with a given geometry
+        Useful for for quickly calculating which entities of a map are
+        the nearest or (intersect, touch, etc.) with a given geometry.
 
         Args:
             f (Optional[FlagFilter], optional): Filtering with FlagFilter.
                 Defaults to None.
+
             filter_fn (Optional[Callable[[Entity], bool]], optional):
                 Filtering with function/lambda. Defaults to None.
 
         Returns:
-            MapTree
+            MapTree: MapTree
         """
         return MapTree(self, f, filter_fn)
 
@@ -170,6 +182,7 @@ class Map:
         Args:
             f (Optional[FlagFilter], optional): Filtering with FlagFilter.
                 Defaults to None.
+
             filter_fn (Optional[Callable[[Entity], bool]], optional):
                 Filtering with function/lambda. Defaults to None.
 
@@ -188,9 +201,9 @@ class Map:
 
         Args:
             area_to_incorporate (Tuple[int, int]): the area, in which the entities
-            have to be plotted
+                have to be plotted
             resolution_scale (int): since the array has only integer indices,
-            scale the array
+                scale the array
 
         Returns:
             npt.NDArray: array with contours drawn in
@@ -278,9 +291,10 @@ class MapTree:
         Both filters need to match for the entity to match.
 
         Args:
-            map (Map)
+            map (Map): Map
             f (Optional[FlagFilter], optional): Filtering with FlagFilter.
                 Defaults to None.
+
             filter_fn (Optional[Callable[[Entity], bool]], optional):
                 Filtering with function/lambda. Defaults to None.
         """
@@ -341,11 +355,13 @@ class MapTree:
 
         Args:
             geo (shapely.Geometry): The geometry to query with
+
             predicate (Optional[ Literal[ &quot;intersects&quot;, &quot;within&quot;,
                 &quot;contains&quot;, &quot;overlaps&quot;, &quot;crosses&quot;,
                 &quot;touches&quot;, &quot;covers&quot;, &quot;covered_by&quot;,
                 &quot;contains_properly&quot;, &quot;dwithin&quot;, ] ], optional):
                 Which interaction to filter for. Defaults to None.
+
             distance (Optional[float], optional):
                 Must only be set for the &quot;dwithin&quot; predicate
                 and controls its distance. Defaults to None.
@@ -375,9 +391,10 @@ class MapTree:
             max_distance (Optional[float], optional): Maximum distance for the query.
                 Defaults to None.
             exclusive (bool, optional): If True, ignores entities
-            with a shape equal to geo. Defaults to False.
+                with a shape equal to geo. Defaults to False.
             all_matches (bool, optional): If True, all equidistant and intersected
-            geometries will be returned. If False only the nearest. Defaults to True.
+                geometries will be returned. If False only the nearest.
+                Defaults to True.
 
         Returns:
             List[Tuple[ShapelyEntity, float]]: A List of Tuples.
@@ -425,6 +442,7 @@ class MapTree:
                 &quot;touches&quot;, &quot;covers&quot;, &quot;covered_by&quot;,
                 &quot;contains_properly&quot;, &quot;dwithin&quot;, ] ], optional):
                 Which interaction to filter for. Defaults to None.
+
             distance (Optional[float], optional):
                 Must only be set for the &quot;dwithin&quot; predicate
                 and controls its distance. Defaults to None.
@@ -457,6 +475,7 @@ class MapTree:
         Calculates the nearest entity on that polygon
         Returns:
             Optional[Entity]: Entity in front
+
         This could be extended with a curved polygon
         if curved roads become a problem in the future
         """
@@ -505,30 +524,30 @@ class MapTree:
             - fallback: uses lanemarking as default and falls back to rectangle if
             lanemarking is not plausible
 
-        Parameters:
-        - right_lane (bool): If true, checks the right lane instead of the left lane
-        - lane_length (float): Sets the lane length that should be checked, in meters.
-          Default value is 20 meters.
-        - lane_transform (float): Transforms the checked lane box to the front (>0) or
-          back (<0) of the car, in meters. Default is 0 meter so the lane box originates
-           from the car position -> same distance to the front and rear get checked
-        - reduce_lane (float): Reduces the lane width that should be checked, in meters.
-            Default value is 1.5 meters.
-        - check_method (str): The method to check if the lane is free.
-        - lane_angle (float, optional): sets how many degrees the lanes may be skewed
-            in relation to each other that the check get executed. Defaults to 5.0 °,
-            only used for lanemarking method.
-        - min_coverage_percent (float, optional): how much an entity must collide
-            with the checkbox in percent. Defaults to 0.0.
-        - min_coverage_area (float, optional): how much an entity must collide
-            with the checkbox in m2. Defaults to 0.0.
-        - motion_aware (bool, optional): if true, the lane check will be aware of
-            the motion of the entities. Defaults to True.
+        Arguments:
+            right_lane (bool): If true, checks the right lane instead of the left lane
+            lane_length (float): Sets the lane length that should be checked, in meters.
+                Default value is 20 meters.
+            lane_transform (float): Transforms the checked lane box to the front (>0) or
+                back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+                from the car position -> same distance to the front and rear get checked
+            reduce_lane (float): Reduces the lane width that should be checked, in meters.
+                Default value is 1.5 meters.
+            check_method (str): The method to check if the lane is free.
+                Default is "rectangle".
+            lane_angle (float, optional): sets how many degrees the lanes may be skewed
+                in relation to each other that the check get executed. Defaults to 5.0 °,
+                only used for lanemarking method.
+            min_coverage_percent (float, optional): how much an entity must collide
+                with the checkbox in percent. Defaults to 0.0.
+            min_coverage_area (float, optional): how much an entity must collide
+                with the checkbox in m2. Defaults to 0.0.
+            motion_aware (bool, optional): if true, the lane check will be aware of
+                the motion of the entities. Defaults to True.
 
-        Default is "rectangle".
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
-            return LaneFreeState and if available the checkbox shape
+                return LaneFreeState and if available the checkbox shape
         """
         lane_state = LaneFreeState.TO_BE_CHECKED
         lane_box = None
@@ -608,15 +627,15 @@ class MapTree:
 
         Args:
             right_lane (bool, optional): if true checks for free lane on the right side.
-            Defaults to False.
+                Defaults to False.
             lane_length (float, optional): length of the checkbox. Defaults to 20.0.
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
-            (= width - reduce_lane). Defaults to 1.5.
+                (= width - reduce_lane). Defaults to 1.5.
 
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]:
-            return LaneFreeState and if available the checkbox shape
+                return LaneFreeState and if available the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
@@ -657,17 +676,17 @@ class MapTree:
 
         Args:
             right_lane (bool, optional): if true checks for free lane on the right side.
-            Defaults to False.
+                Defaults to False.
             lane_length (float, optional): length of the checkbox. Defaults to 20.0.
             lane_transform (float, optional): offset in x direction. Defaults to 0.0.
             reduce_lane (float, optional): impacts the width of checkbox
-            (= width - reduce_lane). Defaults to 1.5.
+                (= width - reduce_lane). Defaults to 1.5.
             lane_angle (float, optional): sets how many degrees the lanes may be skewed
-            in relation to each other that the check get executed. Defaults to 5.0 °
+                in relation to each other that the check get executed. Defaults to 5.0 °
 
         Returns:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]: return if lane is free
-            and the checkbox shape
+                and the checkbox shape
         """
         # checks which lane should be checked and set the multiplier for
         # the lane entity translation(>0 = left from car)
@@ -736,15 +755,18 @@ class MapTree:
         Checks if a Polygon lane box intersects with any
         relevant entities.
 
-        This is only meant to be used in intersections. Ignores entities
-        that are not moving towards the hero.
+        This is only meant to be used in intersections.
 
-        Parameters:
-        - lane_length (float): Sets the lane length that should be checked, in meters.
-          Default value is 20 meters.
-        - lane_transform_x (float): Transforms the checked lane box to the front (>0) or
-          back (<0) of the car, in meters. Default is 0 meter so the lane box originates
-           from the car position -> same distance to the front and rear get checked
+        **Ignores entities that are not moving towards the hero.**
+
+        Arguments:
+            lane_length (float): Sets the lane length that should be checked, in meters.
+                Default value is 20 meters.
+            lane_transform_x (float): Transforms the checked lane box to
+                the front (>0) or back (<0) of the car, in meters.
+                Default is 0 meter so the lane box originates from the car position
+                -> same distance to the front and rear get checked
+
         Returns:
             (bool, [shapely.Polygon]): lane is free / not free,
                 collision masks used for the check
@@ -798,11 +820,11 @@ class MapTree:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
             reference (ShapelyEntity): Entity for the nearest distance calculation
-            min_coverage_percent (float, optional):
-                How much of an entity has to be inside the collision mask in percent.
+            min_coverage_percent (float, optional): How much of an entity
+                has to be inside the collision mask in percent.
                 Defaults to 0.0.
-            min_coverage_area (float, optional):
-                How much of an entity has to be inside the collision mask in m2.
+            min_coverage_area (float, optional): How much of an entity
+                has to be inside the collision mask in m2.
                 Defaults to 0.0.
 
         Returns:
@@ -838,11 +860,11 @@ class MapTree:
         Args:
             mask (shapely.Geometry): A Shapely Geometry object representing
                 the target area.
-            min_coverage_percent (float, optional):
-                How much of an entity has to be inside the collision mask in percent.
+            min_coverage_percent (float, optional): How much of an entity
+                has to be inside the collision mask in percent.
                 Defaults to 0.0.
-            min_coverage_area (float, optional):
-                How much of an entity has to be inside the collision mask in m2.
+            min_coverage_area (float, optional): How much of an entity
+                has to be inside the collision mask in m2.
                 Defaults to 0.0.
 
         Returns:
@@ -912,7 +934,7 @@ def lane_free_filter() -> FlagFilter:
     """Creates the default flag filter for the lane free check
 
     Returns:
-        FlagFilter
+        FlagFilter: FlagFilter
     """
     filter = FlagFilter()
     filter.is_collider = True
