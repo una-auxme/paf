@@ -1,0 +1,13 @@
+# ********************** Carlike robot parameters ********************
+
+min_turning_radius: 6        # Min turning radius of the carlike robot (compute value using a model or adjust with rqt_reconfigure manually)
+wheelbase: 3                 # Wheelbase of our robot
+cmd_angle_instead_rotvel: True # stage simulator takes the angle instead of the rotvel as input (twist message)
+enable_homotopy_class_planning: False
+
+min_obstacle_dist: 1
+# ********************************************************************
+
+footprint_model:
+    type: "polygon"
+    vertices: [ [2.75, -0.2], [2.5, -0.2], [2.5, -0.7], [-2.75, -0.7], [-2.75, 0.7], [2.5, 0.7], [2.5, 0.2], [2.75, 0.2] ] # for type "polygon" but car-like

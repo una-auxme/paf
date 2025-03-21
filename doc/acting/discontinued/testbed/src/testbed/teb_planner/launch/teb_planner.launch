@@ -1,0 +1,12 @@
+<launch>
+
+    <node pkg="teb_planner" type="teb_planner.py" name="teb_planner" output="screen">
+        <param name="input_topic_name" value="paf/planning/trajectory" />
+        <param name="output_topic_name" value="paf/acting/trajectory" />
+    </node>
+
+    <node pkg="teb_planner_pa" type="teb_planner_node_pa" name="teb_planner_node_pa" output="screen">
+        <rosparam file="$(find teb_planner)/cfg/car_like_robot_params.yaml" command="load" />
+    </node>
+
+</launch>
