@@ -529,15 +529,16 @@ class MapTree:
             lane_length (float): Sets the lane length that should be checked, in meters.
                 Default value is 20 meters.
             lane_transform (float): Transforms the checked lane box to the front (>0) or
-                back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+                back (<0) of the car, in meters.
+                Default is 0 meter so the lane box originates
                 from the car position -> same distance to the front and rear get checked
-            reduce_lane (float): Reduces the lane width that should be checked, in meters.
-                Default value is 1.5 meters.
+            reduce_lane (float): Reduces the lane width that should be checked,
+                in meters. Default value is 1.5 meters.
             check_method (str): The method to check if the lane is free.
                 Default is "rectangle".
             lane_angle (float, optional): sets how many degrees the lanes may be skewed
-                in relation to each other that the check get executed. Defaults to 5.0 °,
-                only used for lanemarking method.
+                in relation to each other that the check get executed.
+                Defaults to 5.0 °. Only used for lanemarking method.
             min_coverage_percent (float, optional): how much an entity must collide
                 with the checkbox in percent. Defaults to 0.0.
             min_coverage_area (float, optional): how much an entity must collide

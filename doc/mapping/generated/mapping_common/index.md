@@ -109,7 +109,7 @@ Contains 2d transformation (position, rotation) functions
 **[API documentation](/doc/mapping/generated/mapping_common/transform.md)**
 
 Overview of the main components:
-- Transform2D: Homogeneous 2 dimensional transformation matrix. 
+- Transform2D: Homogeneous 2 dimensional transformation matrix.
   Can represent an arbitrary chain of translations and rotations.
 - Point2: Used for positions in 2d space
 - Vector2: Used for directions and offsets.

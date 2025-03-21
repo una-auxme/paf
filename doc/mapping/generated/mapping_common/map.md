@@ -620,15 +620,16 @@ lanemarking is not plausible
 - `lane_length` _float_ - Sets the lane length that should be checked, in meters.
   Default value is 20 meters.
 - `lane_transform` _float_ - Transforms the checked lane box to the front (>0) or
-  back (<0) of the car, in meters. Default is 0 meter so the lane box originates
+  back (<0) of the car, in meters.
+  Default is 0 meter so the lane box originates
   from the car position -> same distance to the front and rear get checked
-- `reduce_lane` _float_ - Reduces the lane width that should be checked, in meters.
-  Default value is 1.5 meters.
+- `reduce_lane` _float_ - Reduces the lane width that should be checked,
+  in meters. Default value is 1.5 meters.
 - `check_method` _str_ - The method to check if the lane is free.
   Default is "rectangle".
 - `lane_angle` _float, optional_ - sets how many degrees the lanes may be skewed
-  in relation to each other that the check get executed. Defaults to 5.0 °,
-  only used for lanemarking method.
+  in relation to each other that the check get executed.
+  Defaults to 5.0 °. Only used for lanemarking method.
 - `min_coverage_percent` _float, optional_ - how much an entity must collide
   with the checkbox in percent. Defaults to 0.0.
 - `min_coverage_area` _float, optional_ - how much an entity must collide
@@ -655,7 +656,7 @@ def is_lane_free_rectangle(
 ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L618)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L619)
 
 checks if the lane is free by using a checkbox with size and position
 according to inputs
@@ -689,7 +690,7 @@ def is_lane_free_lanemarking(
 ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L665)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L666)
 
 checks if a lane is free by using a checkbox that is placed between two lane
 markings. The lane is considered free if there are no colliding entities with
@@ -723,7 +724,7 @@ def is_lane_free_intersection(
 ) -> Tuple[bool, Optional[shapely.Polygon]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L749)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L750)
 
 Returns True if the opposing lane of our car is free.
 Checks if a Polygon lane box intersects with any
@@ -761,7 +762,7 @@ def get_nearest_entity(
 ) -> Optional[Tuple[ShapelyEntity, float]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L809)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L810)
 
 Returns the nearest entity to *reference* that have
 at least coverage % or area in the mask geometry.
@@ -795,7 +796,7 @@ def get_overlapping_entities(
         min_coverage_area: float = 0.0) -> List[ShapelyEntity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L851)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L852)
 
 Returns a list of entities that have at least coverage % or area in the
 mask geometry.
@@ -826,7 +827,7 @@ def build_global_hero_transform(x: float, y: float,
                                 heading: float) -> Transform2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L917)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L918)
 
 Builds a Transform2D representing the global position of the hero
 based on its coordinates and heading
@@ -850,7 +851,7 @@ based on its coordinates and heading
 def lane_free_filter() -> FlagFilter
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L933)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L934)
 
 Creates the default flag filter for the lane free check
 
