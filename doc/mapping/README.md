@@ -15,15 +15,18 @@
 
 ## General overview
 
-The **Intermediate Layer** receives most sensor information (everything except traffic light) from [perception](/doc/README.md#perception), puts it into a
-unified data format: [Map](./mapping/generated/mapping_common/map.md#map) and then forwards it to [planning](/doc/README.md#planning)/[acting](/doc/README.md#acting)
+The **Intermediate Layer** receives most sensor information (everything except traffic light) from [perception](/doc/README.md#perception)
+
+- puts it into a unified data format: [Map](/doc/mapping/generated/mapping_common/map.md#map)
+- applies [postprocessing filters](/doc/mapping/generated/mapping_common/filter.md)
+- and then forwards it to [planning](/doc/README.md#planning)/[acting](/doc/README.md#acting)
 
 The base data type is the [Map](/doc/mapping/generated/mapping_common/map.md#map). It consists out of [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
 These entities all have a [transform](/doc/mapping/generated/mapping_common/transform.md#transform2d) and a [shape](/doc/mapping/generated/mapping_common/shape.md#shape2d) and can be all kinds of colliders (car, pedestrian, etc.), lanemarkings or other localized things of interest around the hero car.
 
 The [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode) collects all sensor information and publishes the resulting map to `/paf/hero/mapping/init_data`
 
-The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support dynamic reconfigure.
+The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support dynamic reconfigure for managing sensor input and filter parameters
 
 ### Visualization
 
