@@ -110,8 +110,13 @@ class VelocityController(CompatibleNode):
             # revert driving
             if target_velocity < 0:
                 reverse = True
+                v = abs(target_velocity)
+                self.pid_t.setpoint = v
                 brake = 0
-                throttle = self.pid_t(abs(target_velocity))
+                throttle = self.pid_t(-self.__current_velocity)
+                if throttle < 0:
+                    brake = abs(throttle)
+                    throttle = 0
             # very low target_velocities -> stand
             elif target_velocity < 0.1:
                 reverse = False

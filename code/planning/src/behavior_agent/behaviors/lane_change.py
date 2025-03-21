@@ -8,6 +8,7 @@ from mapping_common.shape import Rectangle
 import rospy
 
 from agents.navigation.local_planner import RoadOption
+from perception.msg import Waypoint
 
 import mapping_common.mask
 from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
@@ -15,7 +16,7 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
 import shapely
-from . import behavior_speed as bs
+from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake import OVERTAKE_SPACE_STOPMARKS_ID
@@ -26,7 +27,7 @@ from .overtake_service_utils import (
     request_start_overtake,
     request_end_overtake,
     request_overtake_status,
-    _get_global_hero_transform,
+    get_global_hero_transform,
 )
 from .stop_mark_service_utils import (
     create_stop_marks_proxy,
@@ -82,19 +83,19 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the lane change
         """
         global LANECHANGE_FREE
-        lane_change = self.blackboard.get("/paf/hero/lane_change")
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
         trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
-        if lane_change is None or trajectory_local is None:
+        if waypoint is None or trajectory_local is None:
             return debug_status(
-                self.name, Status.FAILURE, "lane_change or trajectory_local is None"
+                self.name, Status.FAILURE, "waypoint or trajectory_local is None"
             )
         else:
-            self.change_detected = lane_change.isLaneChange
-            self.change_option = lane_change.roadOption
-            self.change_position = lane_change.position
+            self.change_detected = waypoint.waypoint_type == waypoint.TYPE_LANECHANGE
+            self.change_option = waypoint.roadOption
+            self.change_position = waypoint.position
             # get change distance from global change point (transfered to local
             #  hero coords) as this is more accurate than lanechange msg distance
-            hero_transform = _get_global_hero_transform()
+            hero_transform = get_global_hero_transform()
             local_pos: Point2 = hero_transform.inverse() * Point2.new(
                 self.change_position.x, self.change_position.y
             )
@@ -249,11 +250,11 @@ class Approach(py_trees.behaviour.Behaviour):
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Get lane change distance waypoint from blackboard
-        lane_change = self.blackboard.get("/paf/hero/lane_change")
-        if lane_change is not None:
-            self.change_distance = lane_change.distance
-            self.change_detected = lane_change.isLaneChange
-            self.change_option = lane_change.roadOption
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is not None:
+            self.change_distance = waypoint.distance
+            self.change_detected = waypoint.waypoint_type == Waypoint.TYPE_LANECHANGE
+            self.change_option = waypoint.roadOption
 
             # Check if change is to the left or right lane
             if self.change_option == RoadOption.CHANGELANELEFT:
@@ -420,9 +421,9 @@ class Wait(py_trees.behaviour.Behaviour):
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Update stopline info
-        lane_change = self.blackboard.get("/paf/hero/lane_change")
-        if lane_change is not None:
-            self.change_option = lane_change.roadOption
+        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        if waypoint is not None:
+            self.change_option = waypoint.roadOption
 
             # Check if change is to the left or right lane
             if self.change_option == RoadOption.CHANGELANELEFT:
@@ -510,7 +511,9 @@ class Change(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         rospy.loginfo("Lane Change: Change to next Lane")
-        self.lane_change = self.blackboard.get("/paf/hero/lane_change")
+        self.waypoint: Optional[Waypoint] = self.blackboard.get(
+            "/paf/hero/current_waypoint"
+        )
         self.change_position: Optional[Point] = None
         self.curr_behavior_pub.publish(bs.lc_enter_init.name)
 
@@ -525,12 +528,12 @@ class Change(py_trees.behaviour.Behaviour):
         """
         trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
 
-        if self.lane_change is None or trajectory_local is None:
+        if self.waypoint is None or trajectory_local is None:
             return debug_status(
-                self.name, Status.FAILURE, "lane_change or trajectory_local is None"
+                self.name, Status.FAILURE, "waypoint or trajectory_local is None"
             )
         else:
-            self.change_position = self.lane_change.position
+            self.change_position = self.waypoint.position
 
         if self.change_position is None:
             return debug_status(
@@ -539,7 +542,7 @@ class Change(py_trees.behaviour.Behaviour):
 
         # get change distance from five meter behind global change point
         # (transfered to local hero coords)
-        hero_transform = _get_global_hero_transform()
+        hero_transform = get_global_hero_transform()
         local_pos: Point2 = (
             hero_transform.inverse()
             * Point2.new(self.change_position.x, self.change_position.y)

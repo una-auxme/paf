@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 
+"""
+This node publishes the position and heading estimated by
+a (linear) Kalman Filter on the topics:
+  - kalman_pos
+  - kalman_heading
+
+The estimation is based on the data provided by the following sensors / topics:
+  - IMU -> provides acceleration
+  - unfiltered_pos (derived from the GPS sensor data) -> provides position
+  - Speedometer -> provides the speed in the current direction
+
+The state estimation is only done in a 2D plane.
+To estimate a 3D position, the z-coordinate of the car is calculated
+using a running average of the last GPS_RUNNING_AVG_ARGS measurements.
+The z-coordinate is therefore not estimated by the Kalman Filter.
+
+"""
+
 import numpy as np
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
@@ -17,18 +35,7 @@ from xml.etree import ElementTree as eTree
 GPS_RUNNING_AVG_ARGS = 10
 
 """
-For more information see the documentation in:
-../../doc/perception/kalman_filter.md
-
-This class implements a Kalman filter for a 3D object tracked in 2D space.
-It implements the data of the IMU and the GPS Sensors.
-The IMU Sensor provides the acceleration
-and the GPS Sensor provides the position.
-The Carla Speedometer provides the current Speed in the headed direction.
-
-The Z Coordinate (Latitude) is calculated by a simple Running Average of
-the last 10 (GPS_RUNNING_AVG_ARGS) GPS-z Measurements and
-is not in any way related to the Kalman Filter.
+DEFINITIONS:
 
 Noise values are derived from:
 https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py
@@ -72,10 +79,8 @@ The measurement covariance matrix R is defined as:
 
 class KalmanFilter(CompatibleNode):
     """
-    This class implements a Kalman filter for the
-    Heading and Position of the car.
-    For more information see the documentation in:
-    ../../doc/perception/kalman_filter.md
+    This class implements a Kalman filter to estimate the
+    position and heading of the car.
     """
 
     def __init__(self):
@@ -169,9 +174,6 @@ class KalmanFilter(CompatibleNode):
         # The measurement covariance matrix R is defined as:
         self.R = np.diag([0.0007, 0.0007, 0, 0, 0, 0])
 
-        # self.x_old_est = np.copy(self.x0)  # old state vector
-        # self.P_old_est = np.copy(self.P0)  # old state covariance matrix
-
         self.K = np.zeros((6, 6))  # Kalman gain
 
         self.latitude = 0  # latitude of the current position
@@ -250,7 +252,7 @@ class KalmanFilter(CompatibleNode):
             ]
         )
         self.x_est = np.copy(self.x_0)  # estimated initial state vector
-        self.P_est = np.eye(6) * 1  # estiamted initialstatecovariancematrix
+        self.P_est = np.eye(6) * 1  # estiamted initial state covariance matrix
 
         def loop():
             """
@@ -297,26 +299,26 @@ class KalmanFilter(CompatibleNode):
 
     def publish_kalman_heading(self):
         """
-        Publish the kalman heading
+        Publish the Kalman heading
         """
-        # Initialize the kalman-heading
+        # Initialize the Kalman heading
         kalman_heading = Float32()
 
-        # Fill the kalman-heading
+        # Set the Kalman heading
         kalman_heading.data = self.x_est[4, 0]
 
-        # Publish the kalman-heading
+        # Publish the Kalman heading
         self.kalman_heading_publisher.publish(kalman_heading)
 
     def publish_kalman_location(self):
         """
-        Publish the kalman location
+        Publish the Kalman position
         """
 
-        # Initialize the kalman-position
+        # Initialize the Kalman position
         kalman_position = PoseStamped()
 
-        # Fill the kalman-position
+        # Set the Kalman position
         kalman_position.header.frame_id = self.frame_id
         kalman_position.header.stamp = rospy.Time.now()
         kalman_position.header.seq = self.publish_seq
@@ -332,7 +334,7 @@ class KalmanFilter(CompatibleNode):
         kalman_position.pose.orientation.y = 0
         kalman_position.pose.orientation.z = 1
         kalman_position.pose.orientation.w = 0
-        # Publish the kalman-position
+        # Publish the Kalman position
         self.kalman_position_publisher.publish(kalman_position)
 
     def update_imu_data(self, imu_data):
@@ -371,8 +373,10 @@ class KalmanFilter(CompatibleNode):
 
     def update_gps_data(self, gps_data):
         """
-        Update the GPS Data
-        used for covariance matrix
+        This function is intended to update the GPS data
+        BUT: currently it does nothing
+        -> the position is updated by the update_unfiltered_pos function
+            -> the unfiltered position is the GPS data converted into x/y/z coordinates
         """
         # look up if covariance type is not 0 (0 = COVARANCE_TYPE_UNKNOWN)
         # (1 = approximated, 2 = diagonal known or 3 = known)
@@ -389,10 +393,10 @@ class KalmanFilter(CompatibleNode):
     def update_unfiltered_pos(self, unfiltered_pos):
         """
         Update the current position
-        ALSO: allows the kalman filter to start running
+        ALSO: allows the Kalman filter to start running
               by setting self.initialized to True
         """
-        # update GPS Measurements:
+        # Update GPS measurements:
         self.z_gps[0, 0] = unfiltered_pos.pose.position.x
         self.z_gps[1, 0] = unfiltered_pos.pose.position.y
 
@@ -404,7 +408,7 @@ class KalmanFilter(CompatibleNode):
 
         self.latitude = avg_z
 
-        # set self.initialized to True so that the kalman filter can start
+        # Set self.initialized to True so that the Kalman filter can start
         if not self.initialized:
             self.initialized = True
 
@@ -417,10 +421,10 @@ class KalmanFilter(CompatibleNode):
         self.z_v[1, 0] = velocity.speed * math.sin(self.x_est[2, 0])
 
     def get_geoRef(self, opendrive: String):
-        """_summary_
-        Reads the reference values for lat and lon from the carla OpenDriveMap
+        """
+        Reads the reference values for lat and lon from the Carla OpenDriveMap
         Args:
-            opendrive (String): OpenDrive Map from carla
+            opendrive (String): OpenDrive Map from Carla
         """
         root = eTree.fromstring(opendrive.data)
         header = root.find("header")

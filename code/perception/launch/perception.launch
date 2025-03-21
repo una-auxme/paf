@@ -4,40 +4,6 @@
   <arg name="view_camera" default="False" />
   <arg name="camera_resolution" default="1280" />
 
-
-
-  <!-- just for Debugging/ Optimizing purposes -> Uncomment to use and see plots -->
-  <!-- <node pkg="perception" type="position_heading_filter_debug_node.py" name="position_heading_filter_debug_node" output="screen">
-    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    <param name="role_name" value="$(arg role_name)" />
-  </node> -->
-  <!--<node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/position_debug/data[10] /paf/hero/position_debug/data[13] /paf/hero/position_debug/data[16]"/>-->
-  <!--<node pkg="rqt_plot" type="rqt_plot" output="screen" name="rqt_plot" args="/paf/hero/heading_debug/data[5] /paf/hero/heading_debug/data[6]" />-->
-
-  <node pkg="perception" type="kalman_filter.py" name="kalman_filter_node" output="screen">
-    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    <param name="role_name" value="$(arg role_name)" />
-  </node>
-
-  <node pkg="perception" type="position_heading_publisher_node.py" name="position_heading_publisher_node" output="screen">
-    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    <param name="role_name" value="$(arg role_name)" />
-    <param name="pos_filter" value="EKF" />
-    <param name="heading_filter" value="EKF" />
-    <!--
-        Position Filter values:
-        - "EKF" (Default)
-        - "Kalman"
-        - "RunningAvg"
-        - "None"
-        Heading Filter values:
-        - "EKF" (Default)
-        - "Kalman"
-        - "None"
-        - "Old" (Buggy for demonstration purposes only)
-      -->
-  </node>
-
   <node pkg="perception" type="vision_node.py" name="VisionNode" output="screen">
     <param name="role_name" value="$(arg role_name)" />
     <param name="view_camera" value="$(arg view_camera)" />
@@ -63,14 +29,8 @@
     <param name="tfs_debug" value="False"/>
   </node>
 
-  <node pkg="perception" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
-    <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    <param name="role_name" value="$(arg role_name)" />
-  </node>
-
   <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
     <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
-    <param name="range_topic" value="/carla/hero/LIDAR_range"/>
 
     <!-- Cluster configuration -->
     <param name="clustering_lidar_z_min" value="-1.4" />
@@ -95,6 +55,7 @@
     <param name="accelerometer_arrow_size" value="2"/>
     <param name="accelerometer_factor" value="0.05"/>
     <param name="enable_clustering" value="True"/>
+    <param name="enable_debug_info" value="False"/>
   </node>
 
 

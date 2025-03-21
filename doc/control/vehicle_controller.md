@@ -9,14 +9,14 @@
 
 ## General Introduction to the Vehicle Controller Component
 
-The [Vehicle Controller](../../code/control/src/vehicle_controller.py) collects all information from the other controllers in Control ```throttle```, ```brake```, ```pure_puresuit_steer``` and ```stanley_steer```
+The [Vehicle Controller](../../code/control/src/vehicle_controller.py) collects all information from the other controllers in Control ```throttle```, ```brake```, ```pure_puresuit_steer```
 to fill them into the CARLA-Vehicle Command Message ```vehicle_control_cmd``` and send this to the CARLA simulator.
 
 It also reacts to some special case - Messages from Planning, such as emergency-braking or executing the unstuck-routine.
 
 ## Vehicle Controller Output
 
-As the ```vehicle_control_cmd```-Message requires all 4 Inputs to be in the range of 0 to 1, the Vehicle Controller has to convert both steering signals ```pure_puresuit_steer``` and ```stanley_steer``` from Radians to [0,1].
+As the ```vehicle_control_cmd```-Message requires all 4 Inputs to be in the range of 0 to 1, the Vehicle Controller has to convert the steering signal ```pure_puresuit_steer``` from Radians to [0,1].
 
 The ```throttle``` and ```brake``` are already calculated in the correct range by the PID Controller of the Velocity Controller.
 

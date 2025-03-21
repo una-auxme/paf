@@ -8,6 +8,7 @@ on:
 
 jobs:
   drive:
+    timeout-minutes: 720
     runs-on: [self-hosted, drive]
     env:
       AGENT_VERSION: latest

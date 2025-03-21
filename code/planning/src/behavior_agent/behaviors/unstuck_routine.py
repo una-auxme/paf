@@ -9,7 +9,8 @@ from mapping_common.map import Map, MapTree
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from mapping_common.entity import Entity
 from mapping_common.entity import FlagFilter
-from . import behavior_speed as bs
+from local_planner.utils import get_distance
+from . import behavior_names as bs
 from .speed_alteration import add_speed_override
 from .debug_markers import add_debug_marker, debug_status, debug_marker
 from .overtake_service_utils import (
@@ -31,19 +32,6 @@ UNSTUCK_CLEAR_DISTANCE = 2.5  # default 1.5 (m)
 REVERSE_COLLISION_MARKER_COLOR = (209 / 255, 134 / 255, 0 / 255, 1.0)
 REVERSE_LOOKUP_DISTANCE = 1.0  # Distance that should be checked behind the car (m)
 REVERSE_LOOKUP_WIDTH_FACTOR = 1.25
-
-
-def get_distance(pos_1: np.ndarray, pos_2: np.ndarray):
-    """Calculate the distance between two positions
-
-    Args:
-        pos1 (np.array): Position 1 [#,#]
-        pos2 (np.array): Position 2 [#,#]
-
-    Returns:
-        float: Distance
-    """
-    return np.linalg.norm(pos_1 - pos_2)
 
 
 def pos_to_array(pos: PoseStamped):
@@ -142,17 +130,32 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             # reset stuck timer
             self.stuck_timer = rospy.Time.now()
 
+        # If we drove for more than 15 meter since last unstuck attempt
+        # --> indicates new stuck location --> reset unstuck_count
+        current_pos = pos_to_array(current_pos)
+        if get_distance(self.init_pos, current_pos) > 15:
+            self.unstuck_count = 0
+
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
         wait_behaviors = [bs.lc_wait.name, bs.ot_wait.name]
-        wait_long_behaviors = [bs.int_wait.name]
+        wait_long_behaviors = [bs.int_wait.name, bs.int_app_to_stop.name]
 
-        if curr_behavior is None or curr_behavior.data in wait_behaviors:
+        last_duration = TRIGGER_WAIT_STUCK_DURATION
+        if self.unstuck_count != 0:
+            TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(5)
+        elif curr_behavior is None or curr_behavior.data in wait_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(30)
         elif curr_behavior.data in wait_long_behaviors:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(60)
         else:
             TRIGGER_WAIT_STUCK_DURATION = rospy.Duration(15)
+
+        # Set back timer if the duration just got smaller
+        if TRIGGER_WAIT_STUCK_DURATION < last_duration:
+            # reset both timers
+            self.stuck_timer = rospy.Time.now()
+            self.wait_stuck_timer = rospy.Time.now()
 
         # update the stuck durations
         self.stuck_duration = rospy.Time.now() - self.stuck_timer
@@ -163,21 +166,6 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             or self.wait_stuck_duration >= TRIGGER_WAIT_STUCK_DURATION
         ):
             self.STUCK_DETECTED = True
-            self.unstuck_count += 1
-            request_end_overtake(self.end_overtake_proxy)
-            update_stop_marks(
-                self.stop_proxy,
-                id="unstuck",
-                reason="unstuck triggered",
-                is_global=False,
-                marks=[],
-                delete_all_others=True,
-            )
-            # If we drove for more than 10 meter since last unstuck attempt
-            # --> indicates new stuck location --> reset unstuck_count
-            current_pos = pos_to_array(current_pos)
-            if get_distance(self.init_pos, current_pos) > 10:
-                self.unstuck_count = 0
             self.init_pos = current_pos
             self.init_ros_stuck_time = rospy.Time.now()
             stuck_reason = "Stuck"
@@ -187,8 +175,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 stuck_dur = TRIGGER_WAIT_STUCK_DURATION.secs
             rospy.logfatal(
                 f"{stuck_reason} in one place for more than "
-                f"{stuck_dur} sec\n"
-                "  --> starting unstuck routine"
+                f"{stuck_dur} sec --> starting unstuck routine"
             )
 
     def update(self):
@@ -244,7 +231,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
                 add_speed_override(-2.0)
             else:
                 # skip waiting till UNSTUCK_DRIVE_DURATION reached
-                self.init_ros_stuck_time += UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
+                self.init_ros_stuck_time -= UNSTUCK_DRIVE_DURATION - curr_us_drive_dur
                 add_speed_override(0.0)
             return debug_status(
                 self.name,
@@ -255,9 +242,23 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         # (to pass stopmarkers before they are set again)
         elif curr_us_drive_dur < 2 * UNSTUCK_DRIVE_DURATION:
             self.curr_behavior_pub.publish(bs.us_forward.name)
-            if self.unstuck_count == 3:
+            if self.unstuck_count == 1:
+                request_end_overtake(self.end_overtake_proxy)
+                update_stop_marks(
+                    self.stop_proxy,
+                    id="unstuck",
+                    reason="unstuck triggered",
+                    is_global=False,
+                    marks=[],
+                    delete_all_others=True,
+                )
+            elif self.unstuck_count == 2:
                 request_start_overtake(
                     self.start_overtake_proxy, start_transition_length=0.0
+                )
+            elif self.unstuck_count == 3:
+                request_start_overtake(
+                    self.start_overtake_proxy, start_transition_length=0.0, offset=-1.0
                 )
                 self.unstuck_count = 0
             return debug_status(
@@ -272,6 +273,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             self.stuck_timer = rospy.Time.now()
             self.wait_stuck_timer = rospy.Time.now()
             self.STUCK_DETECTED = False
+            self.unstuck_count += 1
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,

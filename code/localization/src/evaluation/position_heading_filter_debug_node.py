@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
 """
-This node publishes all relevant topics for the ekf node.
+!!! WARNING !!!
+This node is currently not in use.
+
+With this node 2 filters can be compared to each other
+and to the unfiltered data.
+The position as well as the heading is compared.
 """
+
 import os
 import csv
 import math
@@ -11,7 +17,6 @@ from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, Header
 
-# from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Float32MultiArray
 import rospy
 import threading
@@ -19,21 +24,11 @@ import carla
 
 GPS_RUNNING_AVG_ARGS: int = 10
 DATA_SAVING_MAX_TIME: int = 45
-FOLDER_PATH: str = "/Position_Heading_Datasets"
+FOLDER_PATH: str = "/position_heading_datasets"
 
 
 class position_heading_filter_debug_node(CompatibleNode):
-    """
-    Node publishes a filtered gps signal.
-    This is achieved using a rolling average.
-    """
-
     def __init__(self):
-        """
-        Constructor / Setup
-        :return:
-        """
-
         super(position_heading_filter_debug_node, self).__init__(
             "position_heading_filter_debug_node"
         )
@@ -42,14 +37,12 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.role_name = self.get_param("role_name", "hero")
         self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
 
-        # carla attributes
-        CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
+        # Carla attributes
+        CARLA_HOST = os.environ.get("CARLA_SIM_HOST", "paf-carla-simulator-1")
         CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
         self.client = carla.Client(CARLA_HOST, CARLA_PORT)
         self.world = None
         self.carla_car = None
-
-        # self.set_carla_attributes()
 
         # Tracked Attributes for Debugging
         self.current_pos = PoseStamped()
@@ -63,7 +56,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.heading_debug_data = Float32MultiArray()
 
         # test_filter attributes for any new filter to be tested
-        # default is kalman filter
+        # currently it is the Extended Kalman Filter
         self.test_filter_pos = PoseStamped()
         self.test_filter_heading = Float32()
 
@@ -79,7 +72,7 @@ class position_heading_filter_debug_node(CompatibleNode):
 
         # region Subscriber START
 
-        # Current_pos subscriber:
+        # current_pos subscriber:
         self.current_pos_subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
@@ -87,7 +80,7 @@ class position_heading_filter_debug_node(CompatibleNode):
             qos_profile=1,
         )
 
-        # Current_heading subscriber:
+        # current_heading subscriber:
         self.current_heading_subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
@@ -98,26 +91,26 @@ class position_heading_filter_debug_node(CompatibleNode):
         # test_filter_pos subscriber:
         self.test_filter_pos_subscriber = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/kalman_pos",
+            f"/paf/{self.role_name}/ekf_pos",
             self.set_test_filter_pos,
             qos_profile=1,
         )
         # test_filter_heading subscriber:
         self.test_filter_heading_subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/kalman_heading",
+            f"/paf/{self.role_name}/ekf_heading",
             self.set_test_filter_heading,
             qos_profile=1,
         )
 
-        # Unfiltered_pos subscriber:
+        # unfiltered_pos subscriber:
         self.unfiltered_pos_subscriber = self.new_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/unfiltered_pos",
             self.set_unfiltered_pos,
             qos_profile=1,
         )
-        # Unfiltered_heading subscriber:
+        # unfiltered_heading subscriber:
         self.unfiltered_heading_subscriber = self.new_subscription(
             Float32,
             f"/paf/{self.role_name}/unfiltered_heading",
@@ -192,18 +185,21 @@ class position_heading_filter_debug_node(CompatibleNode):
     # main saving method for position data
     def save_position_data(self):
         """
-        This method saves the current location errors in a csv file.
+        This method saves the following position data into csv files:
+        - unfilterd
+        - ideal (Carla)
+        - estimated x or y position from current filter
+        - estimated x or y position from test filter
+        - respective errors
         in the folders of
-        paf/doc/perception/experiments/kalman_datasets
+        paf/code/localization/src/data/position_heading_datasets
+            /x_error
+            /y_error
         It does this for a limited amount of time.
         """
-        # stop saving data when max is reached
-        if rospy.get_time() > DATA_SAVING_MAX_TIME:
-            self.logwarn("STOPPED SAVING LOCATION DATA")
-            return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments/" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path_x = base_path + "/x_error"
         folder_path_y = base_path + "/y_error"
         # Ensure the directories exist
@@ -224,18 +220,20 @@ class position_heading_filter_debug_node(CompatibleNode):
     # main saving method for heading data
     def save_heading_data(self):
         """
-        This method saves the current heading errors in a csv file.
+        This method saves the following heading data into csv files:
+        - unfilterd
+        - ideal (Carla)
+        - estimated heading from current filter
+        - estimated heading from test filter
+        - respective errors
         in the folders of
-        paf/doc/perception/experiments/kalman_datasets
+        paf/code/localization/src/data/position_heading_datasets
+            /heading_error
         It does this for a limited amount of time.
         """
-        # if rospy.get_time() > 45 stop saving data:
-        if rospy.get_time() > DATA_SAVING_MAX_TIME:
-            self.logwarn("STOPPED SAVING HEADING DATA")
-            return
 
         # Specify the path to the folder where you want to save the data
-        base_path = "/workspace/code/perception/" "src/experiments" + FOLDER_PATH
+        base_path = "/workspace/code/localization/src/data/" + FOLDER_PATH
         folder_path_heading = base_path + "/heading_error"
 
         # Ensure the directories exist
@@ -350,17 +348,16 @@ class position_heading_filter_debug_node(CompatibleNode):
                 self.carla_car = actor
                 break
         if self.carla_car is None:
-            # self.logwarn("Carla Hero car still none!")
             return
         else:
-            # save carla Position
-            # for some reason the carla y is flipped
+            # save Carla position
+            # for some reason the Carla y is flipped
             carla_pos = self.carla_car.get_location()
             carla_pos.y = -carla_pos.y
             self.carla_current_pos = carla_pos
 
-            # save carla Heading
-            # for some reason the carla yaw is in flipped degrees
+            # save Carla heading
+            # for some reason the Carla yaw is in flipped degrees
             # -> convert to radians
             # -> also flip the sign to minus
             self.carla_current_heading = -math.radians(
@@ -413,8 +410,6 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         if self.carla_car is None:
-            # self.logwarn("""Carla Hero car still none!
-            #              Can not record data for position_debug yet.""")
             return
 
         debug = Float32MultiArray()
@@ -459,7 +454,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.position_debug_publisher.publish(debug)
 
         # for easier debugging with rqt_plot
-        # Publish carla Location as PoseStamped:
+        # Publish Carla location as PoseStamped:
         self.carla_pos_publisher.publish(
             carla_location_to_pose_stamped(self.carla_current_pos)
         )
@@ -489,8 +484,6 @@ class position_heading_filter_debug_node(CompatibleNode):
         """
 
         if self.carla_car is None:
-            # self.logwarn("""Carla Hero car still none!
-            #              Can not record data for heading_debug yet.""")
             return
 
         debug = Float32MultiArray()
@@ -538,22 +531,23 @@ class position_heading_filter_debug_node(CompatibleNode):
         self.world.wait_for_tick()
 
         # Wait for the car to be spawned
-        # Otherwise we save invalid data (before car teleports
-        # to start position)
+        # Otherwise we save invalid data
+        # (before car teleports to start position)
         rospy.sleep(5)
 
         def loop():
             """
             Loop for the data gathering
             """
+            initialized = False
+            printed_message = False
+            now = 0
             while True:
-                # update carla attributes
+                # update Carla attributes
                 self.set_carla_attributes()
 
-                # if carla_car still not found -> skip
+                # if Carla_car still not found -> skip
                 if self.carla_car is None:
-                    # self.logwarn("""Carla Hero car still none!
-                    #              Can not record data for debug yet.""")
                     continue
 
                 # update & publish pos debug and heading debug
@@ -562,10 +556,17 @@ class position_heading_filter_debug_node(CompatibleNode):
 
                 # save debug data in csv files
                 # (uncomment if not needed -> solely debugging with rqt_plot)
-                self.save_position_data()
-                self.save_heading_data()
+                if not initialized:
+                    now = rospy.get_time()
+                    initialized = True
+                while initialized and (rospy.get_time() - now) <= DATA_SAVING_MAX_TIME:
+                    self.save_position_data()
+                    self.save_heading_data()
+                if not printed_message:
+                    self.loginfo("Finished saving position and heading data")
+                    printed_message = True
 
-                rospy.sleep(self.control_loop_rate)
+                rospy.sleep(int(self.control_loop_rate))
 
         threading.Thread(target=loop).start()
         self.spin()
@@ -617,7 +618,7 @@ def main(args=None):
     :return:
     """
 
-    roscomp.init("position_heading_publisher_node_2", args=args)
+    roscomp.init("position_heading_filter_debug_node", args=args)
     try:
         node = position_heading_filter_debug_node()
         node.run()
