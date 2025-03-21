@@ -6,6 +6,36 @@ In the following diagram you can see all the nodes and topics used in the percep
 
 ![Perception Overview](../../doc/assets/perception/perception_overview.png)
 
+
+## Sensor overview 
+
+![Perception Overview](../../doc/assets/perception/carla_sensor_overview.png)
+
+The CARLA simulation vehicle is equipped with multiple sensors to perceive its surroundings and gather essential driving data:
+
+- **GNSS, IMU, Speedometer, OpenDrive Map (Center of the Car - Red Dot):**
+  - Position: x=0, y=0, z=0 
+  - **GNSS (GPS):** Provides geolocation data for vehicle positioning.  
+  - **IMU:** Measures acceleration and rotational speed to provide motion data.  
+  - **Speedometer:** Estimates the vehicle's linear velocity.  
+  - **OpenDrive Map:** Supplies HD map data in OpenDRIVE format, parsed as a string.  
+
+- **Radar (Dark Blue Blocks on the Sides):**
+  - Position: x=2/-2, y=1.5, z=0.5
+  - Fov: vertical = 0.1°, horicontal = 25°
+  - Detects objects and measures their relative velocity using radio waves up to 100m.  
+
+- **Lidar (Purple Circle at the Center):**
+  - Position: x=0, y=0, z=1.7 
+  - Uses laser pulses to generate a high-resolution 3D representation of the surroundings.  
+
+- **RGB Camera (Green Block at the Front):**
+  - Position: x=0, y=0, z=1.7
+  - Fov: 100°
+  - Captures visual information to support object detection and scene analysis.  
+
+([Source: leaderboard.carla.org](https://leaderboard.carla.org/get_started_v2_0/?utm_source=chatgpt.com))
+
 ## Object Detection / Distance and Segmentation
 
 - [Vision Node](./vision_node.md)
