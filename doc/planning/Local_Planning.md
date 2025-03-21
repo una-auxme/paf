@@ -12,11 +12,7 @@ The Local Planning component is responsible for evaluating short term decisions 
 
 The Local Planning in this project is divided in two components: Adaptive Cruise Control (ACC) and Motion Planning.
 
-The architecture can be seen below:
-
-![Planning_architecture.png](../assets/planning/Planning_architecture.png)
-
-The theoretical concepts of each Local Planning component are listed below.
+The responsibilities of each Local Planning component are listed below.
 
 ## Adaptive Cruise Control (ACC)
 
