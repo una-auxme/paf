@@ -13,7 +13,7 @@ This file provides an overview of the different nodes working together to locali
 
 ## Overview
 
-The following picture visualizes the localization process.
+The following image visualizes the localization process.
 
 ![Overview localization](../../doc/assets/localization/overview_localization.jpeg)
 
@@ -38,7 +38,7 @@ An even simpler approach is calculating the current state using a **Running Aver
 If you do not want to use a filter and simply make use of the raw sensor data then the **None** "filter" can be selected.
 
 The filter to be used is chosen in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file.
-You only need to set the `filter` argument accordingly, like shown in the following picture.
+You only need to set the `filter` argument accordingly, like shown in the following image.
 
 ![Filter choice](../assets/localization/filter_choice.jpeg)
 
@@ -67,7 +67,7 @@ To use a new filter two files need to be updated:
 - First make sure that in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file:
   - the `filter` argument is set to the name of your new filter
   - you add a `group` that checks if the `filter` argument is set to the name of your new filter
-  (_disclaimer_: the groups make it possible to save computational power by only starting the node(s), that are needed to estimate the state of the vehicle with the chosen filter)
+  (_note_: the groups make it possible to save computational power by only starting the node(s), that are needed to estimate the state of the vehicle with the chosen filter)
   - the node of the filter you want to use is included inside your new `group`
 
 - Then the according subscribers (for position and heading, respectively) need to be added in the init function of the [position_heading_publisher_node.py](https://github.com/una-auxme/paf/blob/main/code/localization/src/position_heading_publisher_node.py#L107-L161) file.

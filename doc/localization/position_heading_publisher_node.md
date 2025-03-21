@@ -28,7 +28,7 @@ The Running Average Filter calculates the average of the last few measurements a
 If you do not want to use a filter and simply make use of the raw sensor data then the None "filter" can be selected.
 
 In the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file the filter to be used is set.
-You only need to set the `filter` argument accordingly, like shown in the following picture.
+You only need to set the `filter` argument accordingly, like shown in the following image.
 
 ![Filter choice](../assets/localization/filter_choice.jpeg)
 
@@ -109,4 +109,4 @@ If `None` is selected as the Filter, it publishes the data as the `current_pos` 
 **`get_geoRef`**
 
 Reads the reference values for latitude and longitude from the carla OpenDriveMap.
-Otherwise we could not calculate the global Coordinate System.
+Otherwise we could not calculate the Global Coordinate System.

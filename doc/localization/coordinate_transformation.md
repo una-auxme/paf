@@ -1,35 +1,36 @@
 # Coordinate Transformation
 
-**Summary:** Used for various helper functions such as quat_to_heading, that are useful in a lot of cases. **It is not yet fully documented**.
+**Summary:** Used for various helper functions such as quat_to_heading, that can be useful in various cases.
 
-- [Coordinate Transformation](#coordinate-transformation)
-  - [Usage](#usage)
-  - [Methods](#methods)
-    - [quat\_to\_heading(quaternion)](#quat_to_headingquaternion)
+**Disclaimer:** It is not yet fully documented.
+Only the quat_to_heading function is, because it is the only function currently used.
+
+- [Usage](#usage)
+- [Overview of the code](#overview-of-the-code)
+    - [The quat_to_heading function](#the-quat_to_heading-function)
+    - [Other available functions](#other-available-functions)
 
 ## Usage
 
-Just importing the coordinate_transformation.py file is enough to use all of its funcions.
+Just importing the coordinate_transformation.py file is enough to use all of its functions.
 
 ```Python
 # Example
 from coordinate_transformation import quat_to_heading
 ```
 
-## Methods
+## Overview of the code
 
-This class provides multiple useful methods:
+This file provides multiple useful functions.
+However, quat_to_heading is the only one currently used.
+A list of all other available but unused functions is provided below.
 
-### quat_to_heading(quaternion)
+### The [quat_to_heading](https://github.com/una-auxme/paf/blob/main/code/localization/src/coordinate_transformation.py#L120-L143) function
 
-For the cars orientation we need the angle of the cars Heading around the **z-axis**.
-We are provided with a Quaternion of the cars Rotation with respect to the Global Coordinate System.
+We are often interested in the heading of the car, which is the cars rotation / angle around the z-axis.
+The IMU sensor measures the cars orientation as a quaternion with respect to the Global Coordinate System.
 
-Also the car always starts in the direction of the `x-axis`, which is what our `0 rad point` will be.
-
-To calculate the Heading we first need to create a Rotation Matrix out of the quaternion:
-
-`R = Rotation.from_quat(quaternion).rotation.as_matrix()`
+To calculate the heading, the quaternion needs to be transformed into a rotation matrix:
 
 $$
 R =
@@ -40,7 +41,8 @@ R =
 \end{bmatrix}
 $$
 
-The original vector `V` of the car is `(1,0,0)`, since it spawns looking into the x-axis direction.
+It is important to note, that the point which we consider `0 rad` is aligned with the x-axis.
+Therefore, if the car is not deflected, its position can be described with the following unit vector:
 
 $$
 V =
@@ -51,7 +53,7 @@ V =
 \end{bmatrix}
 $$
 
-To calculate our rotated vector `V'` we do the following:
+To calculate a rotated vector `V'`, the following calculation is performed:
 
 $$
 V' = R \cdot V
@@ -77,45 +79,26 @@ $$
 \end{bmatrix}
 $$
 
-So we end up with a vector that's rotated into the x-y plane with the new x and y coordinates being `a` and `d`:
+The result is a vector, that is rotated in the x-y-plane with the new x and y coordinates being `a` and `d`:
 
-![quat_to_angle](../../doc/assets/perception/quat_to_angle.png)
+![Visualization quat_to_heading](../assets/localization/quat_to_heading.png)
 
-Now all we need to do is calculate the angle $\theta$ around the z-axis which this vector creates between the x-axis and itself using the `atan` function:
+Now the angle $\theta$ around the z-axis, which correlates to the heading, can be calculated using the `atan2` function:
 
 $$
 \theta = atan2(\frac{d}{a})
 $$
 
-To conclude:
+However, Carla does not use a right-handed coordinate system like it is normally used in mathematics and in the image above.
+It uses a left-handed coordinate system instead.
+To incorporate that into the calculation, $\theta$ simply needs to be negated to get the correct heading.
 
-$$heading = \theta$$
+$$
+\text{heading} = - \theta
+$$
 
-```Python
+### Other available functions
 
-def quat_to_heading(quaternion):
-    """
-    Converts a quaternion to a heading of the car in radians
-    (see ../../doc/perception/coordinate_transformation.md)
-    :param quaternion: quaternion of the car as a list [q.x, q.y, q.z, q.w]
-                       where q is the quaternion
-    :return: heading of the car in radians (float)
-    """
-    # Create a Rotation object from the quaternion
-    rotation = Rotation.from_quat(quaternion)
-    # Convert the Rotation object to a matrix
-    rotation_matrix = rotation.as_matrix()
-    # calculate the angle around the z-axis (theta) from the matrix
-    theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
-
-    # arctan2 returns a theta so that:
-    # ---------------------------------------------------------------
-    # | 0 = x-axis | pi/2 = y-axis | pi = -x-axis | -pi/2 = -y-axis |
-    # ---------------------------------------------------------------
-    # heading is positive in counter clockwise rotations
-
-    heading = theta
-
-    return heading
-
-```
+- ecef_to_enu
+- geodetic_to_ecef
+- geodetic_to_enu
