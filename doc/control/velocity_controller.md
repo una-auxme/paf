@@ -28,19 +28,25 @@ As the Velocity Controller also has to handle braking, we currently use ```throt
 ![MISSING: PID-BRAKING-IMAGE](../assets/control/VelContr_PID_BrakingWithThrottlePID.png)
 
 ## Reverse driving
+
 In PAF24 the reverse driving was added properly.\
 The velocity_controler has three velocity checks (if there is a velocity published).
+
 ### target_velocity < 0
+
 use the PID to calculate throttle / breakpedal position.\
 Setting and publishing the flag ```reverse``` for the ```vehicle_controller```, so it can tell Carla to drive backwards.
 
 ### 0 <= target_velocity < 0.1
+
 The car will stop and stand stil until the ```target_velocity``` changes.
 
 ### target_velocity > 0.1
+
 Drive forward with the PID
 
 ### NOTE
+
 The PID was not changed in PAF24!\
 Tuning the PID for negativ speeds can be looked at if necessary.
 
