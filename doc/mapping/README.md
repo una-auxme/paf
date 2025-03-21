@@ -48,7 +48,7 @@ The MarkerArray is published to `/paf/hero/mapping/marker_array` and can be visu
   - **[API documentation](/doc/mapping/generated/nodes.md)**
 - [./msg](/code/mapping/msg/) contains the ROS message types for transmitting the map
   - ROS messages can be converted into [mapping_common](/doc/mapping/generated/mapping_common/index.md) python objects by using `<Type>.from_ros_msg(msg)`
-  - The message types should only used for transmitting data over ROS, not for any calculations.
+  - The message types should only be used for transmitting data over ROS, not for any calculations.
 
 ## Data flow overview
 

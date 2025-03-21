@@ -1,5 +1,5 @@
 # compose file for building the mapping documentation
-# with sphinx
+# with pydoc-markdown
 
 services:
   docs:
