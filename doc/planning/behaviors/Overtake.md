@@ -11,7 +11,11 @@
 
 ## General
 
-This behaviour is used to dynamically overtake an object in close proximity. An Overtake checks for traffic on the other lane and swaps lane when it is free. After the overtake is finished, the vehicle returns to the original lane when it is free. To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks.
+This behaviour is used to dynamically overtake an object in close proximity. An Overtake checks for traffic on the other lane and swaps lane when it is free.
+
+After the overtake is finished, the vehicle returns to the original lane when it is free.
+
+To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks.
 
 ## Overtake ahead
 
@@ -31,13 +35,13 @@ Retrieves the distance to the obstacle and determines if the other lane is clear
 
 Sets a stopmarker shortly before the obstacle so ACC automatically slows down the car while approaching to stop with a sensible distance.
 
-Returns SUCCESS if the vehicle has stopped or the oncoming lane is free, FAILURE if the overtake is aborted, and RUNNING while approaching the obstacle. 
+Returns SUCCESS if the vehicle has stopped or the oncoming lane is free, FAILURE if the overtake is aborted, and RUNNING while approaching the obstacle.
 
 If the other lane is free while still approaching, a flag is set to skip the wait behavior and a overtake service request is sent to initiate the lane change.
 
 ## Wait
 
-This handles wating for clear traffic on the other lane while the car has stopped behind the obstacle. 
+This handles wating for clear traffic on the other lane while the car has stopped behind the obstacle.
 
 Determines if the other lane is clear with a map function and a counter.
 
@@ -61,7 +65,7 @@ Runs until the overtake is fully finished by returning to the original lane and 
 
 Requests the current overtake status with a service function.
 
-While OVERTAKING, checks if the original lane is free with a map function. 
+While OVERTAKING, checks if the original lane is free with a map function.
 
 If it is free a request is sent to end the overtake and returns RUNNING.
 
