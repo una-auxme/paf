@@ -1,208 +1,159 @@
 # Evaluating filters
 
-## position_heading_filter_debug_node
+**Summary:** There are some nodes that can be used to evaluate and tune a filter or compare it to an old or new filter.
+All nodes needed for this can be found in the [evaluation](https://github.com/una-auxme/paf/tree/main/code/localization/src/evaluation) folder.
 
-The [position_heading_filter_debug_node](./position_heading_filter_debug_node.md) node is another useful node but it does not actively localize the vehicle.
-Instead it makes it possible to compare and tune different filters and the [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file is the recommended way to visualizes the results.
+**WARNING:** To compare filter estimations to the ground truth, the nodes, that are saving data, are connected to the Carla API.
+Therefore, the [evaluation](https://github.com/una-auxme/paf/tree/main/code/localization/src/evaluation) folder should be removed before submitting to the Leaderboard, because otherwise the project could get disqualified.
 
-This node processes the data provided by the IMU and GNSS so the errors between the is-state and the measured state can be seen.
-To get the is-state the Carla API is used to get the real position and heading of the car.
-Comparing the real position / heading with the position / heading estimated by a filter (e.g. Kalman Filter) the performance of a filter can be evaluated and the parameters used by the filter can be tuned.
+**Disclaimer:** All of the nodes described here are not launched by default.
+Please refer to Section [Starting the nodes](#starting-the-nodes) for an explanation of how the nodes can be started.
 
-The recommended way to look at the results is using the mathplotlib plots provided by the [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file even though they can also be shown via rqt_plots.
+- [Starting the nodes](#starting-the-nodes)
+    - [Include them in the localization.launch file](#include-them-in-the-localizationlaunch-file)
+    - [Start them from a shell](#start-them-from-a-shell)
+- [Comparing filters with focus on errors](#comparing-filters-with-focus-on-errors)
+    - [Usage](#usage)
+    - [position_heading_filter_debug_node.py](#position_heading_filter_debug_nodepy)
+        - [Getting started](#getting-started)
+        - [Inputs](#inputs)
+        - [Outputs](#outputs)
+    - [viz.py](#vizpy)
+- [Comparing filters with focus on the state]
+    - [save_filter_data.py]
+    - [visualize_filter_comparison.py]
 
-Because the node uses the Carla API and therefore uses the ground truth it should only be used for combaring and tuning filters and not for any other purposes.
-It might be best to remove this node before submitting to the official leaderboard because otherwise the project could get disqualified.
+## Starting the nodes
 
-For more details on the node see [position_heading_filter_debug_node](./position_heading_filter_debug_node.md) and [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py).
+There are two ways you can start the nodes: include them in the localization.launch file or start them from a shell.
 
-**Summary:** [position_heading_filter_debug_node.py](../../code/perception/src/position_heading_filter_debug_node.py):
+### Include them in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file
 
-The position_heading_filter_debug_node node is responsible for collecting sensor data from the IMU and GNSS and process the data in such a way, that it shows the errors between the real is-state and the measured state.
-The data can be looked at in rqt_plots or (better) in mathplotlib plots pre-made by the [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file.
+If you start a node this way, it is started by default every time you run the project.
 
-!!THIS NODE USES THE CARLA API!!
+For example the position_heading_filter_debug_node could be included this way.
+It is currently commented out in the [[localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch#L88-L94)] file.
+You can also uncomment the rqt_plots that seem useful to you.
 
-Using the Carla API could disqualify us from the leaderboard when submitting onto the official leaderboard.
-Uncomment (maybe even remove) this file when submitting to the official leaderboard.
-This file is only for debugging!
+Before starting nodes this way, please note the following:
 
-- [position\_heading\_filter\_debug\_node.py](#position_heading_filter_debug_nodepy)
-  - [Getting started](#getting-started)
-  - [Description](#description)
-    - [Inputs](#inputs)
-    - [Outputs](#outputs)
-  - [Visualization](#visualization)
+- If nodes are reading from saved .csv files, please make sure that these files exist before running the project.
+- If you don't want to save data and therefore create .csv files every time you run the project, please don't start the respective nodes this way.
 
-## Getting started
+### Start them from a shell
 
-Uncomment the position_heading_filter_debug_node.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
-You can also uncomment the rqt_plots that seem useful to you, or create your own ones from the data published.
+In a shell connected to ROS (build-agent &rarr; Attach Shell) you can start a node with the following scheme:
 
-If you are trying to implement a new position/ heading filter and want to tune it using this node, you will have to do the following things:
+`rosrun [package_name] [node_name]`
 
-1. Create a new Filter Node class (if not already done) AND publish a paf/hero/filter_name_pos AND/OR filter_name_heading
-2. Change the topic of the test_filter_subscribers to your topic (currently kalman)
+For example the command could look like this:
 
-![Subscriber Change](/doc/assets/perception/sensor_debug_change.png)
+`rosrun localization position_heading_filter_debug_node.py`
 
-If you want to save the debug in csv files for better debugging you should uncomment
-that part in the main loop of the file:
+Before starting nodes this way, please note the following:
 
-![Save Files as CSV](/doc/assets/perception/sensor_debug_data_saving.png)
+- If nodes are reading from saved .csv files, please make sure that these files exist before running the project.
 
----
+## Comparing filters with focus on errors
 
-## Description
+The files described below are useful for comparing different filter estimations and their errors.
 
-Running the node provides you with ideal position and heading topics that can be used to debug your sensor filters by giving you ideal values you should aim for.
+### Usage
 
-It also provides you with helpful data saving methods for plotting your data (with regards to ideal values) by using the [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file, which is a lot more customizable and nicer to use than rqt plots.
-If you want to know more about how to use that, you can go on to [Visualization](#visualization)
+The position_heading_filter_debug_node saves data in .csv files.
+Like mentioned in Section [Include them in the localization.launch file](#include-them-in-the-localizationlaunch-file) the data can be plotted using rqt_plots.
 
-An Example of rqt plot Output can be seen here:
-![Distance from current_pos to ideal_gps_pos (blue) and to carla_pos (red)](../assets/gnss_ohne_rolling_average.png)
+However, the recommended way is to look at the results using the [viz.py](#vizpy) file.
+This file visualizes the data in matplotlib plots.
 
-The file is using a main loop with a fixed refresh rate, that can be changed in the perception launch file.
-In this loop it does the following things:
+### [position_heading_filter_debug_node.py](../../code/localization/src/evaluation/position_heading_filter_debug_node.py)
 
-1. Refresh the Ideal Position and Heading (using the Carla API)
-2. Update & Publish the Position & Heading Debug Values (see [Outputs](#outputs) for more info)
-3. Save the debug data in CSV files in the corresponding folder in code/perception/experiments
+The position_heading_filter_debug_node compares a test filter to the current filter in regards to its x-, y- and heading-estimation.
+It also records the unfiltered position and heading, which is just preprocessed raw sensor data from the IMU and GPS sensor provided by the [position_heading_publisher_node](position_heading_publisher_node.md).
+Furthermore, the ground truth is saved, so a general evaluation is possible.
 
-    (can be outcommented if only working with rqt graphs is enough for you)
+The data is stored in .csv files in a numerically ordered "data_##.csv" format.
+The node creates subfolders in the folder `/workspace/code/localization/src/data/position_heading_datasets`.
+The data is saved in the corresponding subfolder:
 
-If activated it automatically saves the csv data in numerically ordered "data_##.csv" format.
+- `/x_error`
+- `/y_error`
+- `/heading_error`
 
-The CSV files columns are formatted in the following style:
+Below you can see an example for the formatting of such a .csv file:
 
-**X csv file example:**
 | Time | Unfiltered | Ideal(Carla) | Current | Test Filter | Unfiltered Error | Current Error | Test Filter Error |
 | ---- | ---------- | ------------ | ------- | ----------- | ---------------- | ------------- | ----------------- |
 | 0.1  | 10.0       | 10.1         | 10.2    | 10.3        | 0.1              | 0.2           | 0.3               |
 | 0.2  | 20.0       | 20.1         | 20.2    | 20.3        | 0.1              | 0.2           | 0.3               |
 
-**Y csv file example:**
-| Time | Unfiltered | Ideal (Carla) | Current | Test Filter | Unfiltered Error | Current Error | Test Filter Error |
-| ---- | ------------ | --------------- | --------- | ------------- | ------------------ | --------------- | -------------------- |
-| 0.1  | 10.0         | 10.1            | 10.2      | 10.3          | 0.1                | 0.2             | 0.3                  |
-| 0.2  | 20.0         | 20.1            | 20.2      | 20.3          | 0.1                | 0.2             | 0.3                  |
+So in conclusion:
+the is-state, the estimated state and the measured state and the corresponding errors can be compared.
+This makes it possible for the performance of a filter to be evaluated.
 
-**heading csv file example:**
-| Time | Unfiltered | Ideal(Carla) | Current | Test Filter | Unfiltered Error | Current Error | Test Filter Error |
-| ---- | ---------- | ------------ | ------- | ----------- | ---------------- | ------------- | ----------------- |
-| 0.1  | 10.0       | 10.1         | 10.2    | 10.3        | 0.1              | 0.2           | 0.3               |
-| 0.2  | 20.0       | 20.1         | 20.2    | 20.3        | 0.1              | 0.2           | 0.3               |
+#### Getting started
 
-### Inputs
+If you are implementing a new filter and want to evaluate it using this node, you will have to do the following steps:
 
-This node subscribes to the following needed topics:
+1. Create a new filter node (if not already done), that publishes two topics: one for its position estimation and one for its heading estimation.
+2. Change the topic of the test filter subscribers to your topics. (Currently the test filter EKF is compared to the currenly used filter (also EKF))
 
-- current agent position:
-  - `/paf/{role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- current agent heading:
-  - `/paf/{role_name}/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-- [Carla_API Position](https://carla.readthedocs.io/en/latest/python_api/)
-  - `get_location`
-- [Carla_API Heading](https://carla.readthedocs.io/en/latest/python_api/)
-  - `get_transform().rotation.yaw`
-- test filter position:
-  - `/paf/{role_name}/test_filter_name_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- test filter heading:
-  - `/paf/{role_name}/test_filter_name_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-- unfiltered position:
-  - `/paf/{role_name}/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- unfiltered heading:
-  - `/paf/{role_name}/unfiltered_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+![New test filter](/doc/assets/localization/new_test_filter.jpeg)
+
+If you do not want to save the data in .csv files anymore, you can comment out the [responsible lines of code](https://github.com/una-auxme/paf/blob/2fa0bde45dad9e3b8236c22fa0bbecc1e28a56cc/code/localization/src/evaluation/position_heading_filter_debug_node.py#L557-L567).
+Please note, that in this case the [viz.py](#vizpy) file can no longer be used for visualization and rqt_plots need to be used instead.
+
+#### Inputs
+
+The node gets input from various sources:
+
+- The current filter (EKF):
+    - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+    - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- The test filter (also EKF):
+    - `/paf/hero/ekf_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+    - `/paf/hero/ekf_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- The [Carla API](https://github.com/una-auxme/paf/blob/2fa0bde45dad9e3b8236c22fa0bbecc1e28a56cc/code/localization/src/evaluation/position_heading_filter_debug_node.py#L40-L45)
+- The preprocessed IMU and GPS sensor data:
+    - `/paf/hero/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+    - `/paf/hero/unfiltered_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
   
-### Outputs
+#### Outputs
 
-This node publishes the following topics:
+This node publishes several topics.
+They are needed for plotting with rqt_graphs.
 
-- Carla Position:
-  - `/paf/{self.role_name}/carla_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- Carla Heading:
-  - `/paf/{role_name}/carla_current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-- Position Debug:
-  - `/paf/{self.role_name}/position_debug` ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
-  - The Data is ordered in the following way:
+- `/paf/hero/carla_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- `/paf/hero/carla_current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+- `/paf/hero/position_debug` ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
+- `/paf/hero/heading_debug` ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
 
-```Python
-        """
-        unfiltered_pos.x in debug.data[0]
-        unfiltered_pos.y in debug.data[1]
-        carla_current_pos.x in debug.data[2]
-        carla_current_pos.y in debug.data[3]
-        current_pos.x in debug.data[4]
-        current_pos.y in debug.data[5]
-        test_filter_pos.x in debug.data[6]
-        test_filter_pos.y in debug.data[7]
+### [viz.py](../../code/localization/src/evaluation/viz.py)
 
-        carla_current_pos.x - unfiltered_pos.x in debug.data[8]
-        carla_current_pos.y - unfiltered_pos.y in debug.data[9]
-        sqrt[(carla_current_pos - unfiltered_pos)^2] in debug.data[10]
+The viz.py file can visualize the data saved by the position_heading_filter_debug_node.py in various plots.
 
-        carla_current_pos.x - current_pos.x in debug.data[11]
-        carla_current_pos.y - current_pos.y in debug.data[12]
-        sqrt[(carla_current_pos - current_pos)^2] in debug.data[13]
+Before starting this node, make sure that the corresponding .csv files exist first.
 
-        carla_current_pos.x - test_filter_pos.x in debug.data[14]
-        carla_current_pos.y - test_filter_pos.y in debug.data[15]
-        sqrt[(carla_current_pos - test_filter_pos)^2] in debug.data[16]
-        """
-```
+It can be used to visualize x- and y-position data as well as heading data.
 
-- Heading Debug:
-  - `/paf/{self.role_name}/heading_debug` ([Float32](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-  - The Data is ordered in the following way:
+Before you start, configure the main function to your liking.
+Comment out unwanted plots and include plots you want to see.
 
-```Python
-        """
-        unfiltered_heading in debug.data[0]
-        carla_current_heading in debug.data[1]
-        current_heading in debug.data[2]
-        test_filter_heading in debug.data[3]
-        carla_current_heading - unfiltered_heading in debug.data[4]
-        carla_current_heading - current_heading in debug.data[5]
-        carla_current_heading - test_filter_heading in debug.data[6]
-        """
-```
-
-## Visualization
-
-The visualisation of the saved csv data is a really useful tool for debugging and tuning filters.
-
-It can be used to debug X data, Y data and Heading (h) data.
-
-To be able to save data in csv files you just need to uncomment the saving methods in the main loop as stated in the [Getting Started](#getting-started) chapter.
-
-To use the [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file you will have to:
-
-1. Configure the main method to your likings inside the viz.py: ![picture](/doc/assets/perception/sensor_debug_viz_config.png)
-2. Open up an attached shell
-3. Navigate to the code/perception/src/experiments/Position_Heading folder using ```cd```
-4. run the viz.py using ```python viz.py```
-
-With this file you can plot:
+The available plots are:
 
 - Notched Box Graphs
-  - For X, Y and Headings
-  - using MAE, MSE error types
-- CEP Graphs
-  - For Position Errors
-- X,Y Point Coordinate Graph
-- Time Graphs:
-  - for X, Y and Heading
+  - For the x-position (using either MSE or MAE for calculating the error)
+  - For the y-position (using either MSE or MAE for calculating the error)
+  - For the heading (using either MSE or MAE for calculating the error)
+- CEP Graphs (for position errors)
+- Graphs showing the x- or y-positions
+- Graphs showing the heading
 
-All of which compare the test filter, with the ideal filter and currently running filter.
+All plots compare the test filter with the current filter and the ideal data (ground truth provided by Carla).
 
-You can also find the "best tuned" file using the ```plot_best_tuned_file_by_type``` method within a specified file range that you want to compare each file with. This can be useful if you try to tune your filter
-doing multiple runs and of course saving multiple files.
+You can also find the "best tuned" file using the `plot_best_tuned_file_by_type` method within a specified file range that you want to compare each file with.
+This can be useful if you try to tune your filter doing multiple runs and therefore saving multiple files (with the position_heading_filter_debug_node).
 
-The deciding factor for a best tuned file is the lowest IQR or the lowest MSE (Degault) which can also be set as an argument.
+The deciding factor for a best tuned file is the lowest IQR or the lowest MSE (Default) which can also be set as an argument.
 
-To use this method you have to change the ```FILE_START``` and
-```FILE_END``` values to the range of data you want to compare.
-
-Of course you can add more plots and other methods to this visualization file if needed.
-
+To use this method you have to change the `FILE_START` and `FILE_END` values at the [beginning of the file](https://github.com/una-auxme/paf/blob/2fa0bde45dad9e3b8236c22fa0bbecc1e28a56cc/code/localization/src/evaluation/viz.py#L18-L21) to the range of data you want to compare.
