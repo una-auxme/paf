@@ -51,6 +51,8 @@ This makes it possible for multiple filter nodes to be running and only the data
 Like mentioned above, the currently chosen filter is the EKF.
 Even though the Kalman Filter could be running with this setup, we chose to not start it, if it is not the chosen filter, because it was quite computationally intensive.
 
+However, our modular design makes it very easy to switch between different filters.
+
 ## The coordinate_transformation node
 
 The [coordinate_transformation](./coordinate_transformation) node provides useful helper functions such as quat_to_heading which transforms a given quaternion into the heading of the car.
