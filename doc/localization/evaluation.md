@@ -10,22 +10,22 @@ Therefore, the [evaluation](https://github.com/una-auxme/paf/tree/main/code/loca
 Please refer to Section [Starting the nodes](#starting-the-nodes) for an explanation of how the nodes can be started.
 
 - [Starting the nodes](#starting-the-nodes)
-    - [Include them in the localization.launch file](#include-them-in-the-localizationlaunch-file)
-    - [Start them from a shell](#start-them-from-a-shell)
+  - [Include them in the localization.launch file](#include-them-in-the-localizationlaunch-file)
+  - [Start them from a shell](#start-them-from-a-shell)
 - [Comparing filters with focus on errors](#comparing-filters-with-focus-on-errors)
-    - [Usage](#usage)
-    - [position_heading_filter_debug_node.py](#position_heading_filter_debug_nodepy)
-        - [Getting started](#getting-started)
-        - [Inputs](#inputs)
-        - [Outputs](#outputs)
-    - [viz.py](#vizpy)
+  - [Usage](#usage)
+  - [position_heading_filter_debug_node.py](#position_heading_filter_debug_nodepy)
+    - [Getting started](#getting-started)
+    - [Inputs](#inputs)
+    - [Outputs](#outputs)
+  - [viz.py](#vizpy)
 - [Comparing filters with focus on the state](#comparing-filters-with-focus-on-the-state)
-    - [Usage](#usage-1)
-    - [save_filter_data.py](#save_filter_datapy)
-        - [Getting started](#getting-started-1)
-        - [Inputs](#inputs-1)
-        - [Outputs](#outputs-1)
-    - [visualize_filter_comparison.py](#visualize_filter_comparisonpy)
+  - [Usage](#usage-1)
+  - [save_filter_data.py](#save_filter_datapy)
+    - [Getting started](#getting-started-1)
+    - [Inputs](#inputs-1)
+    - [Outputs](#outputs-1)
+  - [visualize_filter_comparison.py](#visualize_filter_comparisonpy)
 
 ## Starting the nodes
 
@@ -118,15 +118,15 @@ Please note, that in this case the [viz.py](#vizpy) file can no longer be used f
 The node gets input from various sources:
 
 - The current filter (EKF):
-    - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-    - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The test filter (also EKF):
-    - `/paf/hero/ekf_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-    - `/paf/hero/ekf_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/ekf_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/ekf_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The [Carla API](https://github.com/una-auxme/paf/blob/2fa0bde45dad9e3b8236c22fa0bbecc1e28a56cc/code/localization/src/evaluation/position_heading_filter_debug_node.py#L40-L45)
 - The preprocessed IMU and GPS sensor data:
-    - `/paf/hero/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-    - `/paf/hero/unfiltered_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/unfiltered_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
   
 #### Outputs
 
@@ -235,11 +235,11 @@ you can set for how many seconds in the simulation data is recorded.
 The node gets input from various sources:
 
 - The new filter (EKF):
-    - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-    - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The old filter (Kalman Filter):
-    - `/paf/hero/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-    - `/paf/hero/kalman_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/kalman_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The [Carla API](https://github.com/una-auxme/paf/blob/2fa0bde45dad9e3b8236c22fa0bbecc1e28a56cc/code/localization/src/evaluation/save_filter_data.py#L46-L51)
   
 #### Outputs

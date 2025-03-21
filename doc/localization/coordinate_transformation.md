@@ -7,8 +7,8 @@ Only the quat_to_heading function is, because it is the only function currently 
 
 - [Usage](#usage)
 - [Overview of the code](#overview-of-the-code)
-    - [The quat_to_heading function](#the-quat_to_heading-function)
-    - [Other available functions](#other-available-functions)
+  - [The quat_to_heading function](#the-quat_to_heading-function)
+  - [Other available functions](#other-available-functions)
 
 ## Usage
 
