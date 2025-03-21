@@ -1,6 +1,6 @@
-# Mapping package / Intermediate layer
+# Mapping package / Intermediate Layer
 
-**Summary:** The **Intermediate Layer** is a 2D top-down [**Map**](/doc/mapping/generated/mapping_common/map.md#map) containing [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
+**Summary:** The **Intermediate Layer** creates a 2D top-down [**Map**](/doc/mapping/generated/mapping_common/map.md#map) containing [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
 
 - [General overview](#general-overview)
   - [Visualization](#visualization)
@@ -27,9 +27,11 @@ The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/cod
 
 ### Visualization
 
-The [visualization node](/code/mapping_visualization/src/visualization.py) in the [mapping_visualization](/code/mapping_visualization/) package converts the map to a ROS MarkerArray.
+The [visualization node](/code/mapping_visualization/src/visualization.py) in the [mapping_visualization](/code/mapping_visualization/) package converts the map into a ROS MarkerArray.
 
 The MarkerArray is published to `/paf/hero/mapping/marker_array` and can be visualized and looked at in RViz.
+
+![Intermediate Layer in RViz](/doc/assets/mapping/intermediate_layer_3d.png "Intermediate Layer in RViz")
 
 ## Package structure
 
@@ -99,3 +101,5 @@ To regenerate them, run the [docker-compose.docs.yaml](/build/docker-compose.doc
 ## Troubleshooting
 
 Cython compile errors or import errors *related to the @dataclass decorators* are likely caused by an outdated docker image. Make sure the docker images are up-to-date.
+
+![Intermediate Layer RViz top down orthogonal view](/doc/assets/mapping/intermediate_layer_2d.png "Intermediate Layer RViz top down orthogonal view")

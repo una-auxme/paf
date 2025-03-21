@@ -54,9 +54,18 @@
 
 # mapping\_common.transform
 
-Contains transform-related functions
+Contains 2d transformation (position, rotation) functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/transform.md)**
+
+Overview of the main components:
+- Transform2D: Homogeneous 2 dimensional transformation matrix. 
+  Can represent an arbitrary chain of translations and rotations.
+- Point2: Used for positions in 2d space
+- Vector2: Used for directions and offsets.
+  Important: Transform2D does not apply translations to the vector.
+- The math operators have been overloaded to support typical operations
+  between Point2, Vector2 and Transform2D
 
 <a id="mapping_common.transform.Point2"></a>
 
@@ -67,7 +76,7 @@ Contains transform-related functions
 class Point2(_Coord2)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L47)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L57)
 
 2 dimensional point.
 
@@ -81,7 +90,7 @@ Receives both rotation and translation when transformed with a Transform2D
 def distance_to(other: "Point2") -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L52)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L62)
 
 <a id="mapping_common.transform.Point2.vector"></a>
 
@@ -91,7 +100,7 @@ def distance_to(other: "Point2") -> float
 def vector() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L55)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L65)
 
 <a id="mapping_common.transform.Point2.vector_to"></a>
 
@@ -101,7 +110,7 @@ def vector() -> "Vector2"
 def vector_to(other: "Point2") -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L58)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L68)
 
 <a id="mapping_common.transform.Point2.new"></a>
 
@@ -112,7 +121,7 @@ def vector_to(other: "Point2") -> "Vector2"
 def new(x: float, y: float) -> "Point2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L64)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L74)
 
 <a id="mapping_common.transform.Point2.zero"></a>
 
@@ -123,7 +132,7 @@ def new(x: float, y: float) -> "Point2"
 def zero() -> "Point2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L69)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L79)
 
 <a id="mapping_common.transform.Point2.from_vector"></a>
 
@@ -134,7 +143,7 @@ def zero() -> "Point2"
 def from_vector(v: "Vector2") -> "Point2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L73)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L83)
 
 <a id="mapping_common.transform.Point2.from_ros_msg"></a>
 
@@ -145,7 +154,7 @@ def from_vector(v: "Vector2") -> "Point2"
 def from_ros_msg(m: geometry_msgs.Point) -> "Point2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L77)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L87)
 
 <a id="mapping_common.transform.Point2.to_ros_msg"></a>
 
@@ -155,7 +164,7 @@ def from_ros_msg(m: geometry_msgs.Point) -> "Point2"
 def to_ros_msg() -> geometry_msgs.Point
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L80)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L90)
 
 <a id="mapping_common.transform.Point2.to_shapely"></a>
 
@@ -165,7 +174,7 @@ def to_ros_msg() -> geometry_msgs.Point
 def to_shapely() -> shapely.Point
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L83)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L93)
 
 <a id="mapping_common.transform.Point2.__add__"></a>
 
@@ -175,7 +184,7 @@ def to_shapely() -> shapely.Point
 def __add__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L86)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L96)
 
 <a id="mapping_common.transform.Point2.__sub__"></a>
 
@@ -185,7 +194,7 @@ def __add__(other)
 def __sub__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L95)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L105)
 
 <a id="mapping_common.transform.Vector2"></a>
 
@@ -196,7 +205,7 @@ def __sub__(other)
 class Vector2(_Coord2)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L106)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L116)
 
 2 dimensional direction vector.
 
@@ -210,7 +219,7 @@ Receives only the rotation when transformed with a Transform2D
 def length() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L111)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L121)
 
 Calculates the length of this vector
 
@@ -226,7 +235,7 @@ Calculates the length of this vector
 def normalized() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L121)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L131)
 
 Returns this direction Vector with length 1.0
 
@@ -244,7 +253,7 @@ If the vector is the zero vector, the result will be zero as well
 def angle_to(other: "Vector2") -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L134)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L144)
 
 Calculates the angle to *other*
 
@@ -268,7 +277,7 @@ Calculates the angle to *other*
 def point() -> Point2
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L158)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L169)
 
 <a id="mapping_common.transform.Vector2.new"></a>
 
@@ -279,7 +288,7 @@ def point() -> Point2
 def new(x: float, y: float) -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L162)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L173)
 
 <a id="mapping_common.transform.Vector2.zero"></a>
 
@@ -290,7 +299,7 @@ def new(x: float, y: float) -> "Vector2"
 def zero() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L167)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L178)
 
 <a id="mapping_common.transform.Vector2.forward"></a>
 
@@ -301,7 +310,7 @@ def zero() -> "Vector2"
 def forward() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L171)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L182)
 
 <a id="mapping_common.transform.Vector2.backward"></a>
 
@@ -312,7 +321,7 @@ def forward() -> "Vector2"
 def backward() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L175)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L186)
 
 <a id="mapping_common.transform.Vector2.left"></a>
 
@@ -323,7 +332,7 @@ def backward() -> "Vector2"
 def left() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L179)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L190)
 
 <a id="mapping_common.transform.Vector2.right"></a>
 
@@ -334,7 +343,7 @@ def left() -> "Vector2"
 def right() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L183)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L194)
 
 <a id="mapping_common.transform.Vector2.from_point"></a>
 
@@ -345,7 +354,7 @@ def right() -> "Vector2"
 def from_point(p: Point2) -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L187)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L198)
 
 <a id="mapping_common.transform.Vector2.from_ros_msg"></a>
 
@@ -356,7 +365,7 @@ def from_point(p: Point2) -> "Vector2"
 def from_ros_msg(m: geometry_msgs.Vector3) -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L191)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L202)
 
 <a id="mapping_common.transform.Vector2.to_ros_msg"></a>
 
@@ -366,7 +375,7 @@ def from_ros_msg(m: geometry_msgs.Vector3) -> "Vector2"
 def to_ros_msg() -> geometry_msgs.Vector3
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L194)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L205)
 
 <a id="mapping_common.transform.Vector2.__mul__"></a>
 
@@ -376,7 +385,7 @@ def to_ros_msg() -> geometry_msgs.Vector3
 def __mul__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L197)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L208)
 
 <a id="mapping_common.transform.Vector2.__rmul__"></a>
 
@@ -386,7 +395,7 @@ def __mul__(other)
 def __rmul__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L206)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L217)
 
 <a id="mapping_common.transform.Vector2.__truediv__"></a>
 
@@ -396,7 +405,7 @@ def __rmul__(other)
 def __truediv__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L213)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L224)
 
 <a id="mapping_common.transform.Vector2.__add__"></a>
 
@@ -406,7 +415,7 @@ def __truediv__(other)
 def __add__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L222)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L233)
 
 <a id="mapping_common.transform.Vector2.__sub__"></a>
 
@@ -416,7 +425,7 @@ def __add__(other)
 def __sub__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L235)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L246)
 
 <a id="mapping_common.transform.Vector2.__neg__"></a>
 
@@ -426,7 +435,7 @@ def __sub__(other)
 def __neg__() -> "Vector2"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L244)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L255)
 
 <a id="mapping_common.transform.Transform2D"></a>
 
@@ -437,22 +446,30 @@ def __neg__() -> "Vector2"
 class Transform2D()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L251)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L262)
 
-Homogeneous 2 dimensional transformation matrix
+Homogeneous 2 dimensional transformation matrix.
+
+Can represent an arbitrary chain of translations and rotations.
 
 Based on https://alexsm.com/homogeneous-transforms/
 
-## Examples:
-### Transform a Vector2
-v_transformed is (0.0, 1.0)
+Multiply Transform2D with [`Vector2`](#mapping_common.transform.Vector2) or [`Point2`](#mapping_common.transform.Point2) to apply its transformation.
 
-Note that Vectors are only directions/offsets and ignore translations.
+Further explanation:
+https://en.wikipedia.org/w/index.php?title=Transformation_matrix&oldid=1275425866#Composing_and_inverting_transformations
+
+**Examples**:
+
+  ##### Transform a Vector2
 ```python
 v = Vector2.new(1.0, 0.0)
 t = Transform2D.new_rotation(math.pi/2.0)
 v_transformed = t * v
 ```
+  v_transformed is (0.0, 1.0)
+  
+  Note that Vectors are only directions/offsets and ignore translations.
 
 <a id="mapping_common.transform.Transform2D.__init__"></a>
 
@@ -462,7 +479,7 @@ v_transformed = t * v
 def __init__(matrix: npt.NDArray[np.float64]) -> None
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L271)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L289)
 
 <a id="mapping_common.transform.Transform2D.translation"></a>
 
@@ -472,7 +489,7 @@ def __init__(matrix: npt.NDArray[np.float64]) -> None
 def translation() -> Vector2
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L278)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L296)
 
 Returns only the translation that this Transform applies
 
@@ -488,7 +505,7 @@ Returns only the translation that this Transform applies
 def rotation() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L288)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L306)
 
 Returns only the rotation that this Transform applies
 
@@ -507,7 +524,7 @@ Returns only the rotation that this Transform applies
 def inverse() -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L301)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L319)
 
 Returns an inverted Transformation matrix
 
@@ -524,7 +541,7 @@ Returns an inverted Transformation matrix
 def identity() -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L310)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L328)
 
 Returns the identity transform (no transformation)
 
@@ -541,7 +558,7 @@ Returns the identity transform (no transformation)
 def new_rotation(angle: float) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L319)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L337)
 
 Returns a transformation matrix consisting of a rotation around `angle`
 
@@ -561,7 +578,7 @@ Returns a transformation matrix consisting of a rotation around `angle`
 def new_translation(v: Vector2) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L337)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L355)
 
 Returns a transformation matrix consisting of a translation along `v`
 
@@ -578,7 +595,7 @@ Returns a transformation matrix consisting of a translation along `v`
 def new_rotation_translation(angle: float, v: Vector2) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L348)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L366)
 
 Returns a transformation matrix consisting of first a rotation around `angle`
 and then a translation along `v`.
@@ -600,7 +617,7 @@ and then a translation along `v`.
 def from_ros_msg(m: msg.Transform2D) -> "Transform2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L364)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L382)
 
 <a id="mapping_common.transform.Transform2D.to_ros_msg"></a>
 
@@ -610,7 +627,7 @@ def from_ros_msg(m: msg.Transform2D) -> "Transform2D"
 def to_ros_msg() -> msg.Transform2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L368)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L386)
 
 <a id="mapping_common.transform.Transform2D.__mul__"></a>
 
@@ -620,7 +637,7 @@ def to_ros_msg() -> msg.Transform2D
 def __mul__(other)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L372)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L390)
 
 <a id="mapping_common.transform.Transform2D.__eq__"></a>
 
@@ -630,5 +647,5 @@ def __mul__(other)
 def __eq__(value) -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L412)
+[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/transform.py#L430)
 

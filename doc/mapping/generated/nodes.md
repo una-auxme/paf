@@ -47,13 +47,23 @@ class MappingDataIntegrationNode(CompatibleNode)
 
 [[view_source]](/code/mapping/src/mapping_data_integration.py#L39)
 
-Creates the initial map data frame based on all kinds of sensor data
+Creates the initial map data frame based on all kinds of sensor data.
 
 It applies several filters to the map and
 then sends it off to other consumers (planning, acting)
 
 This node sends the maps off at a fixed rate.
 (-> It buffers incoming sensor data slightly)
+
+#### Services
+
+This node provides the following services:
+
+- **UpdateStopMarks**:
+  Allows a client to insert virtual StopMark Entities into the Map.
+
+  Each list of StopMarks has a unique id. With this id, a client
+  can update their specific list of marks.
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.lidar_data"></a>
 
@@ -99,7 +109,7 @@ StopMarks from the UpdateStopMarks service
 def __init__(name, **kwargs)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L63)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L73)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.dynamic_reconfigure_callback"></a>
 
@@ -109,7 +119,7 @@ def __init__(name, **kwargs)
 def dynamic_reconfigure_callback(config: "MappingIntegrationConfig", level)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L157)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L167)
 
 All currently used reconfigure options are queried dynamically.
 
@@ -125,7 +135,7 @@ def update_stopmarks_callback(
         req: UpdateStopMarksRequest) -> UpdateStopMarksResponse
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L171)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L181)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.heading_callback"></a>
 
@@ -135,7 +145,7 @@ def update_stopmarks_callback(
 def heading_callback(data: Float32)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L192)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L202)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.current_pos_callback"></a>
 
@@ -145,7 +155,7 @@ def heading_callback(data: Float32)
 def current_pos_callback(data: PoseStamped)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L195)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L205)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.hero_speed_callback"></a>
 
@@ -155,7 +165,7 @@ def current_pos_callback(data: PoseStamped)
 def hero_speed_callback(data: CarlaSpeedometer)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L198)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L208)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.lidar_clustered_points_callback"></a>
 
@@ -165,7 +175,7 @@ def hero_speed_callback(data: CarlaSpeedometer)
 def lidar_clustered_points_callback(data: ClusteredPointsArray)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L201)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L211)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.radar_clustered_points_callback"></a>
 
@@ -175,7 +185,7 @@ def lidar_clustered_points_callback(data: ClusteredPointsArray)
 def radar_clustered_points_callback(data: ClusteredPointsArray)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L204)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L214)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.vision_clustered_points_callback"></a>
 
@@ -185,7 +195,7 @@ def radar_clustered_points_callback(data: ClusteredPointsArray)
 def vision_clustered_points_callback(data: ClusteredPointsArray)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L207)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L217)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.lidar_callback"></a>
 
@@ -195,7 +205,7 @@ def vision_clustered_points_callback(data: ClusteredPointsArray)
 def lidar_callback(data: PointCloud2)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L210)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L220)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.entities_from_lidar_marker"></a>
 
@@ -205,7 +215,7 @@ def lidar_callback(data: PointCloud2)
 def entities_from_lidar_marker() -> List[Entity]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L213)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L223)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.entities_from_radar_marker"></a>
 
@@ -215,7 +225,7 @@ def entities_from_lidar_marker() -> List[Entity]
 def entities_from_radar_marker() -> List[Entity]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L251)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L261)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.lanemarkings_callback"></a>
 
@@ -225,7 +235,7 @@ def entities_from_radar_marker() -> List[Entity]
 def lanemarkings_callback(data: MapMsg)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L290)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L300)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.entities_from_lidar"></a>
 
@@ -235,7 +245,7 @@ def lanemarkings_callback(data: MapMsg)
 def entities_from_lidar() -> List[Entity]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L294)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L304)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.create_entities_from_clusters"></a>
 
@@ -245,7 +255,7 @@ def entities_from_lidar() -> List[Entity]
 def create_entities_from_clusters(sensortype="") -> List[Entity]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L342)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L352)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.create_hero_entity"></a>
 
@@ -255,7 +265,7 @@ def create_entities_from_clusters(sensortype="") -> List[Entity]
 def create_hero_entity() -> Optional[Car]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L461)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L471)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.publish_new_map_handler"></a>
 
@@ -265,7 +275,7 @@ def create_hero_entity() -> Optional[Car]
 def publish_new_map_handler(timer_event=None)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L472)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L482)
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.publish_new_map"></a>
 
@@ -275,7 +285,13 @@ def publish_new_map_handler(timer_event=None)
 def publish_new_map(timer_event=None)
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L478)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L488)
+
+Publishes a new map with the currently available data.
+
+**Arguments**:
+
+- `timer_event` __type_, optional_ - Defaults to None.
 
 <a id="mapping_data_integration.MappingDataIntegrationNode.get_current_map_filters"></a>
 
@@ -285,5 +301,12 @@ def publish_new_map(timer_event=None)
 def get_current_map_filters() -> List[MapFilter]
 ```
 
-[[view_source]](/code/mapping/src/mapping_data_integration.py#L539)
+[[view_source]](/code/mapping/src/mapping_data_integration.py#L554)
+
+Creates an array of filters for the Map
+based on the parameters of this node.
+
+**Returns**:
+
+- `List[MapFilter]` - Filters to apply to the Map
 

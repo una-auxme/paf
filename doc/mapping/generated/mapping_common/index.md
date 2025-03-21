@@ -17,7 +17,31 @@
 
 # mapping\_common
 
+The mapping_common library is the core component of the **Intermediate Layer**
 
+It contains the main dataclasses like Map end Entity
+and all algorithms for working with them.
+
+For a general overview of the **Intermediate Layer**
+[look here](/doc/mapping/README.md).
+
+### ROS interoperability
+
+For easier programming, mapping_common does not use ROS message types directly,
+but implements its own classes.
+
+All classes with equivalent ROS message types can be converted into and from
+ROS messages with the `<Object>.to_ros_msg()` and `<Class>.from_ros_msg(msg)`
+methods.
+
+### Cython
+
+This module is compiled with [Cython](https://cython.readthedocs.io/en/latest/).
+
+If changes have been made to this package,
+catkin_make needs to be executed to apply them!
+This step is automatically executed when using the
+[docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml).
 
 <a id="mapping_common.markers"></a>
 
@@ -62,17 +86,36 @@ Overview of the main components:
 
 # mapping\_common.shape
 
-Contains shape-related functions
+Contains shape classes and functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/shape.md)**
+
+Overview of the main components:
+- Abstract Shape2D base class. Subclasses: **Rectangle, Circle, Polygon**
+- Used to define the shape of entities in the Intermediate Layer
+- Shape calculations:
+  - For algorithms on shapes, the
+    **[shapely](https://shapely.readthedocs.io/en/stable/manual.html)** library
+    is used across the project.
+  - The Shape2D classes are interoperable with **shapely** via their
+    `Shape2D.to_shapely()` and `Polygon.from_shapely()` methods.
 
 <a id="mapping_common.transform"></a>
 
 # mapping\_common.transform
 
-Contains transform-related functions
+Contains 2d transformation (position, rotation) functions
 
 **[API documentation](/doc/mapping/generated/mapping_common/transform.md)**
+
+Overview of the main components:
+- Transform2D: Homogeneous 2 dimensional transformation matrix. 
+  Can represent an arbitrary chain of translations and rotations.
+- Point2: Used for positions in 2d space
+- Vector2: Used for directions and offsets.
+  Important: Transform2D does not apply translations to the vector.
+- The math operators have been overloaded to support typical operations
+  between Point2, Vector2 and Transform2D
 
 <a id="mapping_common.entity"></a>
 
