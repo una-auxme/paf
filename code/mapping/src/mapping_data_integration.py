@@ -37,13 +37,23 @@ from dynamic_reconfigure.server import Server
 
 
 class MappingDataIntegrationNode(CompatibleNode):
-    """Creates the initial map data frame based on all kinds of sensor data
+    """Creates the initial map data frame based on all kinds of sensor data.
 
     It applies several filters to the map and
     then sends it off to other consumers (planning, acting)
 
     This node sends the maps off at a fixed rate.
     (-> It buffers incoming sensor data slightly)
+
+    #### Services
+
+    This node provides the following services:
+
+    - **UpdateStopMarks**:
+      Allows a client to insert virtual StopMark Entities into the Map.
+
+      Each list of StopMarks has a unique id. With this id, a client
+      can update their specific list of marks.
     """
 
     lidar_data: Optional[PointCloud2] = None
@@ -156,9 +166,12 @@ class MappingDataIntegrationNode(CompatibleNode):
 
     def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
         """
-        All currently used reconfigure options are querried dynamically.
-        If you want to directly react on the change uncomment the following lines.
+        All currently used reconfigure options are queried dynamically.
+
+        The configuration options are located
+        [here](/code/mapping/launch/mapping.launch)
         """
+        # If you want to directly react on the change uncomment the following lines.
         # config["enable_merge_filter"]
         # config["merge_growth_distance"]
         # config["min_merging_overlap_percent"]
@@ -473,6 +486,11 @@ class MappingDataIntegrationNode(CompatibleNode):
             rospy.logfatal(f"Mapping data integration: {e}")
 
     def publish_new_map(self, timer_event=None):
+        """Publishes a new map with the currently available data.
+
+        Args:
+            timer_event (_type_, optional): Defaults to None.
+        """
         hero_car = self.create_hero_entity()
         if hero_car is None or self.current_pos is None or self.current_heading is None:
             return
@@ -534,6 +552,12 @@ class MappingDataIntegrationNode(CompatibleNode):
         self.map_publisher.publish(msg)
 
     def get_current_map_filters(self) -> List[MapFilter]:
+        """Creates an array of filters for the Map
+        based on the parameters of this node.
+
+        Returns:
+            List[MapFilter]: Filters to apply to the Map
+        """
         map_filters: List[MapFilter] = []
 
         if self.get_param("~enable_merge_filter"):

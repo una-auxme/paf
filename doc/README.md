@@ -7,6 +7,7 @@ This document provides an overview of the structure of the documentation.
 - [`research`](#research)
 - [`examples`](#examples)
 - [`perception`](#perception)
+- [`mapping`](#mapping)
 - [`planning`](#planning)
 - [`acting`](#acting)
 - [`assets`](#assets)
@@ -31,6 +32,13 @@ To-do
 ## `perception`
 
 The [`perception`](./perception/) folder contains documentation for the whole perception module and its individual components.
+
+## `mapping`
+
+The [`mapping`](./mapping/) folder contains documentation for the mapping package, often also called the **Intermediate Layer**.
+
+The **Intermediate Layer** receives most sensor information (everything except traffic light) from [perception](#perception), puts it into a
+unified data format: [Map](./mapping/generated/mapping_common/map.md#map) and then forwards it to [planning](#planning)/[acting](#acting)
 
 ## `planning`
 

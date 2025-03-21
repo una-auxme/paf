@@ -1,3 +1,13 @@
+"""Contains functions to easily create debug markers that can be visualized in RViz
+
+**[API documentation](/doc/mapping/generated/mapping_common/markers.md)**
+
+Overview of the main components:
+- debug_marker(): Creates a ROS Marker based on different objects
+- debug_marker_array(): Creates a ROS MarkerArray
+  based on list of ROS Markers
+"""
+
 from typing import Optional, List, Tuple, Any
 from collections.abc import Sequence
 
@@ -21,7 +31,7 @@ def debug_marker(
     color: Optional[Tuple[float, float, float, float]] = None,
     scale_z: Optional[float] = None,
 ) -> Marker:
-    """Creates a marker based on *base*
+    """Creates a ROS Marker based on *base*
 
     Args:
         base (Any): Currently supported: Entity, Shape2D, shapely.Polygon,
@@ -44,7 +54,7 @@ def debug_marker(
         TypeError: If the type of base is unsupported
 
     Returns:
-        Marker
+        Marker: Marker
     """
     if isinstance(base, Entity):
         marker = base.to_marker()
@@ -133,18 +143,18 @@ def debug_marker_array(
     timestamp: Optional[rospy.Time] = None,
     lifetime: Optional[rospy.Duration] = None,
 ) -> MarkerArray:
-    """Builds a MArkerArray based on *markers*
+    """Builds a ROS MarkerArray based on *markers*
 
     Args:
         namespace (str): Namespace of the markers
-        markers (List[Marker])
+        markers (List[Marker]): markers
         timestamp (Optional[rospy.Time], optional): Timestamp of all markers.
             Defaults to None. If None, the current ros time will be used
         lifetime (Optional[rospy.Duration], optional): Marker lifetime.
             Defaults to 0.5.
 
     Returns:
-        MarkerArray
+        MarkerArray: MarkerArray
     """
     if lifetime is None:
         lifetime = rospy.Duration.from_sec(0.5)

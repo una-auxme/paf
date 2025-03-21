@@ -1,3 +1,14 @@
+"""Contains Entity classes and functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/entity.md)**
+
+Overview of the main components:
+- **Entity** class and subclasses (Car, Pedestrian, etc..)
+- Entity attribute classes: Motion2D, Flags, TrackingInfo
+- ShapelyEntity: Container containing an Entity and its shape as shapely.Polygon
+
+"""
+
 from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
@@ -21,7 +32,8 @@ from mapping import msg
 class Motion2D:
     """Motion of an entity
 
-    Speeds are global (not relative to hero car).
+    Speed magnitudes are global (not relative to hero car).
+    The motion direction is relative as usual.
     """
 
     linear_motion: Vector2 = field(default_factory=lambda: Vector2.zero())
@@ -55,7 +67,7 @@ class Motion2D:
 class Flags:
     """Dedicated flags an entity can have.
 
-    Look into the FlagFilter class for an explanation fo the individual flags.
+    Look into the #FlagFilter class for an explanation of the individual flags.
 
     Note that attributes should not be accessed directly,
     but only the matches_filter function should be used
@@ -152,7 +164,11 @@ class FlagFilter:
 
 @dataclass
 class TrackingInfo:
-    """Information that might be required to consistently track entities"""
+    """Information that might be required to consistently track entities
+
+    Note: As of 03.2025, this class and attribute in #Entity is still completely unused.
+    PAF24 still left it in as a base/guidance for future tracking experiments
+    """
 
     visibility_time: Duration = field(default_factory=Duration)
     """How long the entity has been visible for. Never gets reset"""
@@ -165,13 +181,25 @@ class TrackingInfo:
     """In how many consecutive data frames the entity was not visible.
     Reset when the entity is visible again"""
     moving_time: Duration = field(default_factory=Duration)
-    """How long an entity was moving continuously. Reset when standing"""
+    """How long an entity was moving continuously. Reset when standing
+
+    This might be used to decide if we should overtake
+    """
     standing_time: Duration = field(default_factory=Duration)
-    """How long an entity stood still continuously. Reset when moving"""
+    """How long an entity stood still continuously. Reset when moving
+
+    This might be used to decide if we should overtake
+    """
     moving_time_sum: Duration = field(default_factory=Duration)
-    """Sums of all the time the entity was moving. Never gets reset"""
+    """Sums of all the time the entity was moving. Never gets reset
+
+    This might be used to decide if we should overtake
+    """
     standing_time_sum: Duration = field(default_factory=Duration)
-    """Sums of all the time the entity was standing still. Never gets reset"""
+    """Sums of all the time the entity was standing still. Never gets reset
+
+    This might be used to decide if we should overtake
+    """
     min_linear_speed: float = 0.0
     """Minimum linear speed of this entity ever recorded"""
     max_linear_speed: float = 0.0
@@ -209,7 +237,10 @@ class TrackingInfo:
 
 @dataclass
 class Entity:
-    """A thing of interest around the hero car that has a location and a shape"""
+    """A thing of interest around the hero car. Mainly used for Obstacles.
+
+    Has a location and a shape.
+    """
 
     confidence: float
     """The sensor's confidence that this entity is correct and actually exists."""
@@ -355,7 +386,9 @@ class Entity:
         )
 
     def to_marker(self) -> Marker:
-        """Creates an ROS marker based on the entity
+        """Creates a ROS marker based on the entity
+
+        The Marker only visualizes the transform and shape of the Entity.
 
         Returns:
             Marker: ROS marker message
@@ -385,6 +418,14 @@ class Entity:
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
+        """Creates a ROS marker based on the entity's motion
+
+        Returns:
+            Marker: ROS marker message
+
+        Raises:
+            Assertion: Entity has no motion
+        """
         assert self.motion is not None
         m = Marker()
         m.type = Marker.ARROW
@@ -408,6 +449,16 @@ class Entity:
         return m
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
+        """Creates a text marker at the entity's position
+
+        Args:
+            text (str): Text for the marker
+            offset (Optional[Vector2], optional): Position offset of the marker.
+                Defaults to None.
+
+        Returns:
+            Marker: ROS marker message
+        """
         if offset is None:
             offset = Vector2.zero()
         text_marker = Marker()
@@ -426,6 +477,11 @@ class Entity:
         return text_marker
 
     def to_shapely(self) -> "ShapelyEntity":
+        """Calculates the #ShapelyEntity for this entity
+
+        Returns:
+            ShapelyEntity: Container containing self and a shapely.Polygon
+        """
         return ShapelyEntity(self, self.shape.to_shapely(self.transform))
 
     def is_mergeable_with(self, other: "Entity") -> bool:
@@ -466,8 +522,14 @@ class Entity:
         """
         Returns the global x velocity of the entity in in m/s.
 
+        Note that *global* is a bit misleading in this case.
+        It does NOT mean global in relation to the hero's GPS coordinates,
+        but in the x-direction of the map this entity belongs to.
+
+        -> It returns the velocity in the same x-direction as the hero.
+
         Returns:
-        - Optional[float]: Velocity of the entity in front in m/s.
+            Optional[float]: Velocity of the entity in front in m/s.
         """
 
         if self.motion is None:
@@ -489,7 +551,7 @@ class Entity:
         - result < 0: other moves in the backward direction of self
 
         Args:
-            other (Entity)
+            other (Entity): other
 
         Returns:
             Optional[float]: Delta velocity if both entities have one.
@@ -511,7 +573,7 @@ class Entity:
         - result < 0: other moves nearer to self
 
         Args:
-            other (Entity)
+            other (Entity): other
 
         Returns:
             Optional[float]: Delta velocity if both entities have one.
@@ -600,6 +662,9 @@ class Lanemarking(Entity):
     style: "Lanemarking.Style"
     position_index: int
     predicted: bool
+    """If this Lanemark was not actually detected by a sensor
+    but predicted based on other/previous lanemarks
+    """
 
     class Style(Enum):
         SOLID = 0
@@ -662,12 +727,12 @@ class Lanemarking(Entity):
 
 @dataclass(init=False)
 class TrafficLight(Entity):
-    """Traffic light or stop sign
+    """Traffic light stop line
 
-    Note: Class may be split up later
+    Note: This class is currently unused. Only #StopMark is used at an intersection.
 
-    TrafficLight and StopSign add only their stop line to the map.
-    They set the *is_stopmark* flag only if the car has to stop there.
+    TrafficLight is only a stop line on the map.
+    It sets the *is_stopmark* flag only if the car has to stop there.
     """
 
     state: "TrafficLight.State"
@@ -698,6 +763,8 @@ class StopMark(Entity):
     """Stop mark as a virtual obstacle for the ACC"""
 
     reason: str
+    """Why this StopMark exits. Only for visualization.
+    """
 
     def __init__(self, reason: str, **kwargs):
         super().__init__(**kwargs)
@@ -760,6 +827,12 @@ _entity_supported_classes = [
     StopMark,
     Pedestrian,
 ]
+"""Holds the entity classes supported for conversion to/from
+ROS messages
+
+To add a new entity subtype, add it to this array and override
+the _extract_kwargs() and to_ros_msg() methods accordingly.
+"""
 _entity_supported_classes_dict = {}
 for t in _entity_supported_classes:
     t_name = t.__name__.lower()
@@ -782,7 +855,7 @@ class ShapelyEntity:
         """Returns the distance to other in m.
 
         Args:
-            other (ShapelyEntity)
+            other (ShapelyEntity): other
 
         Returns:
             float: distance
