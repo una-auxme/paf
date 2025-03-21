@@ -74,7 +74,7 @@ generate_dynamic_reconfigure_options(
 1. Add `dynamic_reconfigure` to the find_package section of the file.
 2. Add your `.cfg` file to the `generate_dynamic_reconfigure_options` section. (You might need to create this section by your own.)
 
-> [!NOTE] 
+> [!NOTE]
 > `catkin_make` needs to be executed in order to generate the config.
 > (For PAF leaderboard-launch this happens automatically)
 

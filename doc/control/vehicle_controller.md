@@ -60,5 +60,4 @@ The Vehicle Controller also reads ```current_behavior```-Messages, published by 
 This is done to drive in a specific way whenever we get into a stuck situation and the [Unstuck Behavior](/doc/planning/behaviors/Unstuck.md) is persued.
 
 Inside the Unstuck Behavior we want to drive backwards with inverted steering, which is why the steering angle published by [Pure Pursuit Controller](../../code/control/src/pure_pursuit_controller.py) gets inverted.
-
-```[Last updated 22.03.2025]```
+### Last updated 22.03.2025
