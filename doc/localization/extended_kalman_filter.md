@@ -16,6 +16,7 @@ The robot_localization package provides an implementation of this filter which f
   - [ekf\_config.yaml](#ekf_configyaml)
   - [odometry\_covariances.yaml](#odometry_covariancesyaml)
   - [sensor\_covariances.yaml](#sensor_covariancesyaml)
+- [Performance](#performance)
 - [Possible improvements](#possible-improvements)
 - [Theory on Extended Kalman Filters](#theory-on-extended-kalman-filters)
   - [1. Prediction](#1-prediction)
@@ -98,6 +99,19 @@ This file defines the covariance matrices for the Odometry data.
 ### [sensor_covariances.yaml](../../code/localization/config/sensor_covariances.yaml)
 
 This file contains the covariance matrices for GPS and IMU data.
+
+## Performance
+
+The EKF performs quite well for our purposes.
+A comparison of the formerly used (linear) Kalman Filter and the Extended Kalman Filter can be seen in the following image.
+
+![Comparison Kalman Filter and EKF](../assets/localization/comparison_kalman_ekf.png)
+
+The data shown in the image was collected while driving straight ahead.
+The orange line is the output of the Kalman Filter whereas the blue line is the estimation of the EKF.
+The dotted red line represents the maximum allowed error we wanted to allow: 0.5 meters.
+
+It can be seen, that the estimation of the x- and y-position is a lot more accurate and respects the allowed error better.
 
 ## Possible improvements
 
