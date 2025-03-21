@@ -33,6 +33,106 @@ The messages necessary to control the vehicle via the Carla bridge can be
 found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg).
 
 The miro-board can be found [here](https://miro.com/welcomeonboard/a1F0d1dya2FneWNtbVk4cTBDU1NiN3RiZUIxdGhHNzJBdk5aS3N4VmdBM0R5c2Z1VXZIUUN4SkkwNHpuWlk2ZXwzNDU4NzY0NTMwNjYwNzAyODIzfDI=?share_link_id=785020837509).
+
+
+ ```mermaid
+ graph TD
+
+    Perception ~~~ Localization
+
+    subgraph Localization
+        EKF
+    end
+
+    subgraph Control
+        PPC[Pure Pursuit Controller]
+        VC[Velocity Controller]
+        Vehicle[Vehicle Controller]
+    end
+
+    subgraph Perception
+        LDN[Lidar Distance Node]
+        RN[Radar Node]
+        VN[Vision Node]
+        LD[Lane Detection]
+        TLD[Traffic Light Detection]
+    end
+
+    subgraph Mapping
+        DI[Data Integration]
+        V[Visualization]
+    end
+    
+    subgraph Planning
+        GPD[Global Plan Distance]
+        GP[Global Planning]
+        BT[Behavior Tree]
+        subgraph Local
+            MP[Motion Planning]
+            ACC
+        end
+    end
+
+    RGB ---> VN
+    RGB ---> LD
+    LIDAR --> LDN
+    RADAR ---> RN
+
+    
+    
+    
+    SPEED --> Control
+    SPEED --> EKF
+    IMU --> EKF
+    GNSS --> EKF
+
+    LDN --> VN
+    LDN --> LD
+    VN --> TLD
+    RN --> DI
+    VN --> DI
+    LD --> DI
+    DI --> V
+    GP --> BT
+    TLD --> BT
+    
+
+    EKF --> GP
+    EKF --> GPD
+    MP --> ACC
+    DI --> ACC
+    DI --> BT
+    
+
+    GP --> MP
+
+    
+    PPC --> ACC
+
+    PPC --> Vehicle
+    PPC --> VC
+    VC --> Vehicle
+
+    GPD --> GP
+    
+
+    MP --> PPC
+
+    BT --> Vehicle
+
+    ACC --> VC
+    ACC --> Vehicle
+
+    Vehicle --> CB[Carla Bridge]
+    CB --> VSC[Vehicle]
+
+    Vehicle --> EKF
+    
+ ```
+
+
+
+
 ![Architecture overview](../assets/overview.jpg)*Connections between nodes visualized*
 
 ![Department node overview](../assets/research_assets/node_path_ros.png)*In- and outgoing topics for every node of the departments*
