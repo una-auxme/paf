@@ -1,278 +1,113 @@
 # Kalman Filter
 
-**Summary:** [kalman_filter.py](../../code/perception/src/kalman_filter.py):
+**Summary:** The [kalman_filter](../../code/localization/src/kalman_filter.py) node can be used to estimate the state (position and heading) of the vehicle by using an IMU and GPS sensor together with the Carla Speedometer.
 
-The Kalman Filter node is responsible for filtering the location and heading data, by using an IMU and GNSS sensor together with the carla speedometer.
+As of now it is working with a 2D x-y-transition model, which is why the current z-position is calculated with a rolling average.
+(That means, that the average of the last few measurements is used as a position estimation.
+The z-coordinate did not need more accuracy for our purposes.)
 
-As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a rolling average. (The z-coordinate did not need more accuracy for our purposes)
+Please note, that this node implements a linear Kalman Filter and NOT an Extended Kalman Filter (EKF) or any other non-linear variant of the Kalman Filter.
+For more information on the currently used EKF please refer to the [corresponding documentation](extended_kalman_filter.md).
 
-This implements the STANDARD Kalman Filter and NOT the Extended Kalman Filter or any other non-linear variant of the Kalman Filter.
-
-- [Kalman Filter](#kalman-filter)
-  - [Getting started](#getting-started)
-  - [Description](#description)
-    - [1. Predict](#1-predict)
-    - [2. Update](#2-update)
-    - [3. Publish Data](#3-publish-data)
-    - [Also Important](#also-important)
-    - [Inputs](#inputs)
-    - [Outputs](#outputs)
-  - [Performance](#performance)
+- [Getting started](#getting-started)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [Performance](#performance)
+  - [Error graphs](#error-graphs)
+  - [Plots showing the states](#plots-showing-the-states)
+  - [Possible improvements](#possible-improvements)
+- [Theory on linear Kalman Filters](#theory-on-linear-kalman-filters)
+  - [1. Prediction](#1-prediction)
+  - [2. Correction](#2-correction)
+  - [Extending the model](#extending-the-model)
 
 ## Getting started
 
-Uncomment the kalman_filter.py node in the [perception.launch](../../code/perception/launch/perception.launch) to start the node.
+To use the Kalman filter node for the state estimation, the `filter` argument in the [localization.launch](../../code/localization/launch/localization.launch) file needs to be changed from "EKF" to "Kalman".
+In the following image the relevant code lines can be seen.
 
-Also change the pos_filter and heading_filter parameter values of the position_heading_publisher_node in the [perception.launch](../../code/perception/launch/perception.launch) file,
-to **"Kalman"**, depending on if you want to use the Filter for both the Position and the Heading.
+![Filter choice](../assets/localization/filter_choice.jpeg)
 
-In the case of using the Filter for both, it should look like this:
-
-![Kalman Filter for both parameters](../../doc/assets/perception/kalman_installation_guide.png)
-
-No further installation needed.
-
----
-
-## Description
-
-Sources to understand the topic better:
-
-[Visally Explained Kalman Filters](https://www.youtube.com/watch?v=IFeCIbljreY&ab_channel=VisuallyExplained)
-
-[Understand & Code Kalman Filters](https://www.youtube.com/watch?v=TEKPcyBwEH8&ab_channel=CppMonk)
-
-Stackoverflow and other useful sites:
-
-[1](https://stackoverflow.com/questions/47210512/using-pykalman-on-raw-acceleration-data-to-calculate-position),
-[2](https://robotics.stackexchange.com/questions/11178/kalman-filter-gps-imu),
-[3](https://stackoverflow.com/questions/66167733/getting-3d-position-coordinates-from-an-imu-sensor-on-python),
-[4](https://github.com/Janudis/Extended-Kalman-Filter-GPS_IMU)
-
-This script implements a Kalman Filter.
-
-It is a recursive algorithm used to estimate the state of a system that can be modeled with **linear** equations.
-
-This Kalman Filter uses the location provided by a GNSS sensor (by using the unfiltered_ provided by the [position_heading_publisher_node](../../code/perception/src/position_heading_publisher_node.py))
-the orientation and angular velocity provided by the IMU sensor and the current speed in the headed direction by the Carla Speedometer.
-
-The noise values, which the filter was tuned with are derived from the official [LeaderBoard 2.0 Github repository](https://github.com/carla-simulator/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py):
-
-The Noise for the GPS Sensor is defined as:
-
-- "noise_alt_stddev": 0.000005
-- "noise_lat_stddev": 0.000005
-- "noise_lon_stddev": 0.000005
-
-The Noise for the IMU Sensor is defined as:
-
-- "noise_accel_stddev_x": 0.001
-- "noise_accel_stddev_y": 0.001
-- "noise_accel_stddev_z": 0.015
-
-As of now it is working with a 2D x-y-Transition model, which is why the current z-pos is calculated with a [rolling average](#also-important).
-
-```Python
-
-The state vector X is defined as:
-            [initial_x],
-            [initial_y],
-            [v_x],
-            [v_y],
-            [yaw],
-            [omega_z]
-
-The state transition matrix A is defined as:
-    '''
-        # [x                ...             ]
-        # [y                ...             ]
-        # [v_x              ...             ]
-        # [x_y              ...             ]
-        # [yaw              ...             ]
-        # [omega_z          ...             ]
-        x = x + v_x * dt
-        y = y + v_y * dt
-        v_x = v_x
-        v_y = v_y
-        yaw = yaw + omega_z * dt
-        omega_z = omega_z
-    '''
-    A = np.array([[1, 0, self.dt, 0, 0, 0],
-                    [0, 1, 0, self.dt, 0, 0],
-                    [0, 0, 1, 0, 0, self.dt],
-                    [0, 0, 0, 1, 0, 0],
-                    [0, 0, 0, 0, 1, 0],
-                    [0, 0, 0, 0, 0, 1]])
-
-The measurement matrix H is defined as:
-    '''
-        1. GPS: x, y
-        2. Velocity: v_x, v_y
-        3. IMU: yaw, omega_z
-        -> 6 measurements for a state vector of 6
-    '''
-    self.H = np.array([[1, 0, 0, 0, 0, 0],    # x
-                        [0, 1, 0, 0, 0, 0],   # y
-                        [0, 0, 1, 0, 0, 0],   # v_x
-                        [0, 0, 0, 1, 0, 0],   # v_y
-                        [0, 0, 0, 0, 1, 0],   # yaw
-                        [0, 0, 0, 0, 0, 1]])  # omega_z
-
-The process covariance matrix Q is defined as:
-    self.Q = np.diag([0.0001, 0.0001, 0.00001, 0.00001, 0.000001, 0.00001])
-
-The measurement covariance matrix R is defined as:
-    self.R = np.diag([0.0007, 0.0007, 0, 0, 0, 0])
-
-```
-
-Then 3 Steps are run in the frequency of the `control_loop_rate`:
-
-### 1. Predict
-
-```Python
-
-    # Predict the next state and covariance matrix, pretending the last
-    # velocity state estimate stayed constant
-    self.x_pred = self.A @ self.x_est 
-    self.P_pred = self.A @ self.P_est @ self.A.T + self.Q
-
-```
-
-### 2. Update
-
-```Python
-
-    # Measurementvector z
-    z = np.concatenate((self.z_gps, self.z_v, self.z_imu))
-    # Measurement residual y
-    y = z - self.H @ self.x_pred
-    # Residual covariance S
-    S = self.H @ self.P_pred @ self.H.T + self.R
-    # Kalman gain K
-    self.K = self.P_pred @ self.H.T @ np.linalg.inv(S)
-    # State estimate x_est
-    self.x_est = self.x_pred + self.K @ y
-    # State covariance estimate P_est
-    # (Joseph form of the covariance update equation)
-    self.P_est = (np.eye(6) - self.K @ self.H) @ self.P_pred
-
-```
-
-### 3. Publish Data
-
-```Python
-
-    # Publish the kalman-data:
-    self.publish_kalman_heading()
-    self.publish_kalman_location()
-
-```
-
-### Also Important
-
-The way that the xyz Position is created, only x and y are measured for the kalman filter, while the z component is filtered by a rolling average.
-
-```Python
-
-  GPS_RUNNING_AVG_ARGS: int = 10
-
-  self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
-  .
-  .
-  .
-    # update GPS Measurements:
-    self.z_gps[0, 0] = current_pos.pose.position.x
-    self.z_gps[1, 0] = current_pos.pose.position.y
-
-    z = current_pos.pose.position.z
-
-    self.avg_z = np.roll(self.avg_z, -1, axis=0)
-    self.avg_z[-1] = np.matrix([z])
-    avg_z = np.mean(self.avg_z, axis=0)
-
-    self.latitude = avg_z
-
-```
-
-The Kalman Location as well as the Kalman Heading are then subscribed to by the position_heading_publisher_node and republished as **current_heading** and **current_pos**
-
-### Inputs
+## Inputs
 
 This node subscribes to the following  topics:
 
-- IMU:
-  - `/carla/{role_name}/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
-- GPS:
-  - `/carla/{role_name}/GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
-- unfiltered agent position:
-  - `/paf/" + self.role_name + "/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-- Carla Speed:
-  - `/carla/" + self.role_name + "/Speed` CarlaSpeedometer
+- `/paf/hero/unfiltered_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html)) &rarr; for position data
+- `/carla/hero/Speed` (CarlaSpeedometer) &rarr; for velocity data
+- `/carla/hero/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html)) &rarr; for orientation and angular velocity data
+- `/carla/hero/OpenDRIVE` ([String](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html))
+- `/carla/hero/GPS` ([NavSatFix](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html)) &rarr; _disclaimer_: all functionality of the callback function to this topic is currenly commented out, because the already preprocessed unfiltered_pos data is used for the position estimation
 
-### Outputs
+## Outputs
 
 This node publishes the following topics:
 
-- Kalman Heading:
-  - `/paf/{role_name}/kalman_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- Kalman Position:
-  - `/paf/{self.role_name}/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-
-### Published / subscribed topics
-
-Therefore the published topics are:
-
-- `kalman_pos` (filtered position of the vehicle)
-- `kalman_heading` (filtered heading of the vehicle)
-
-The variables to be estimated are put together in the state vector. It consists of the following elements:
-
-- `x` (position on the x-axis)
-- `y` (position on the y-axis)
-- `v_x` (velocity in the x-direction)
-- `v_y` (velocity in the y-direction)
-- `yaw` (orientation, rotation around z-axis)
-- `omega_z` (angular velocity)
-
-The z-position is currently not estimated by the Kalman Filter and is calculated using the rolling average.
-
-The x-/y-position is measured by the GNSS sensor. The measurement is provided by the unfiltered_pos topic.
-
-The velocity in x-/y-direction can be derived from the speed measured by the Carla Speedometer in combination with the current orientation.
-
-To get the orientation and angular velocity of the vehicle the data provided by the IMU (Inertial Measurement Unit) sensor is used.
+- `/paf/hero/kalman_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- `/paf/hero/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
 ## Performance
 
-In the following graphs you will see the MSE/ MAE Boxed Graph of Location Error with respect to ideal Location.
+To assess the performance of a filter we can look at the errors of its estimation
+as well as plots, that show how well the states, that we are interested in (x/y-position and heading), are being estimated.
+
+### Error graphs
+
+The following two images show the MSE / MAE Boxed Graph of the position error with respect to the ideal position (ground truth).
 
 Lower values in the data mean smaller error values.
 
 Smaller boxes mean the data is closer together and less spread.
 
-The Kalman Filter was tuned to create the smallest MSE possible, which gives more weight to larger errors which we want to minimise.
+The Kalman Filter was tuned to create the smallest MSE possible, which gives more weight to larger errors.
 
-The MAE on the other hand shows a 1:1 representation in terms of distance from the ideal to the predicted location.
-![MSE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/localization/data_26_MSE_Boxed.png)
+![MSE Boxed Graph of position error with respect to ideal position](../assets/localization/mse_boxed.png)
 
-![MAE Boxed Graph of Location Error with respect to ideal Location](../../doc/assets/localization/data_26_MAE_Boxed.png)
+The MAE on the other hand shows a 1:1 representation in terms of distance from the ideal to the predicted position.
 
-As you see this data you might think the unfiltered data seems to be just as good if not even better than the previous rolling average filter (RAF).
+![MAE Boxed Graph of position error with respect to ideal position](../assets/localization/mae_boxed.png)
 
-This is not the case, since the RAF has a way smaller spread of datapoints, making the location data way smoother (Though with a large error) than without a filter.
+When you see this data, you might think, that the unfiltered data seems to be just as good if not even better than the previous Rolling Average Filter (RAF).
 
-The Kalman Filter on the other hand makes it possible for the data to be way below the 1 m error mark (with 0.48 m as its error median)
-and contain the data within a reasonable range.
+This is not the case, since the RAF has a way smaller spread of datapoints, making the position estimation way smoother than without a filter, even though the error is large.
 
-Keep in mind, that this Filter was tuned with simple movements which the Kalman Filter thrives in (driving in circles, straight, standing still), because there were no other possible movements at the time this filter was written.
+The Kalman Filter on the other hand makes it possible for the data to be way below the 1 meter error mark (with 0.48 m as its error median).
+Also, the data is within a reasonable range.
 
-When it comes to more complex movements (driving the leaderboard route) it performs a little worse. Maybe tuning the filter with these scenarios could improve the filter by a little bit.
+### Plots showing the states
 
-The most improvement could probably only be achieved by implementing more complex NON LINEAR Kalman Filters (Extended; Unscented; etc.) or other non linear Filters that come to mind.
+At first, these images might suggest, that the filter works quite well.
+However, if we look at the following three plots, that show not the errors, but the x- and y-position as well as the heading, we see that the Kalman Filter is not accurate enough for our purposes.
 
+The first picture shows the **x position** of the car.
+The green line represents the true position (ground truth) while the orange line depicts the raw / unfiltered data from the sensor.
+The purple line shows the result of the test filter which in this case is the Kalman filter.
+It can be seen that the filter follows the measurements too much which results in huge errors (almost 5 meters in the example image).
 
+![kalman_filter_x_pos](../../doc/assets/localization/kalman_filter_x_pos.png)
 
+The second picture shows the **y position** of the car.
+The colors are the same as above.
+The filter follows the measurements too much again.
+Huge errors can also be noticed here (almost 5 meters in the example picture).
+
+![kalman_filter_y_pos](../../doc/assets/localization/kalman_filter_y_pos.png)
+
+The last picture shows the **heading** of the car.
+The dotted red line represents the true heading of the car while the current heading (the green line) is the data produced by the Kalman filter.
+It can be seen that the filtered data is really close to the true heading so the Kalman Filter can estimate the heading quite well.
+
+![kalman_filter_heading](../../doc/assets/localization/kalman_filter_heading.png)
+
+### Possible improvements
+
+Please note, that the Kalman Filter was tuned with simple movements, like driving in circles, straight or standing still,
+because there were no other possible movements at the time this filter was written.
+The Kalman Filter performs well in these conditions.
+
+But when it comes to more complex movements (like driving the leaderboard route) it performs a little worse. Maybe tuning the filter in these scenarios could improve the performance a little bit.
+
+However, an even better performance can be achieved by using a non-linear filter like the Extended Kalman Filter (EKF).
+For a comparison between the Kalman Filter and the EKF, please refer to the [documentation of the EKF](extended_kalman_filter.md#performance).
 
 ## Theory on linear Kalman Filters
 
@@ -281,12 +116,16 @@ The filter uses discrete time intervals which means that the state is estimated 
 In the following the time difference between these steps is called $\Delta t$.
 
 For simpler calculations we assume that the car only drives in a plane, so the position only consists of the x- and y-coordinates.
-We also want to know the rotation of the vehicle in the x-y-plane, so the rotation around the z-axis. This is also known as yaw but in the following we will call it the heading.
+(_Note_: The published position has x/y/z coordinates. To accomodate that, the z-position is calculated using a rolling average.
+That means, that the average of the last few measurements is used as a position estimation.)
+
+We also want to know the rotation of the vehicle in the x-y-plane, so the rotation around the z-axis.
+This is also known as yaw, but in the following we will call it the heading.
 
 You could think that the state vector should therefore only consist of three components: the x-position, the y-position and the heading.
 But to calculate these entries we need some other variables (like the velocity) which are also included in the state vector.
 
-The Filter that was used up until now is a (linear) [Kalman Filter](kalman_filter.md). The state vector looks like this:
+The filter, that was used up until now, is a (linear) [Kalman Filter](kalman_filter.md). The state vector looks like this:
 
 $$
 \vec{x}_{state} =
@@ -316,15 +155,17 @@ $$
 
 After an initialization (of $x^+(0)$ and $P^+(0)$ ) the algorithm for the Kalman Filter consists of two steps which get repeated over and over:
 
-### 1. Prediction (KF)
+### 1. Prediction
 
-The state and its covariance matrix (the uncertainty of the state) are estimated. The formulas can be seen below (assuming there are no external inputs).
+The state $x$ and its covariance matrix $P$ (the uncertainty of the state) are estimated. The formulas can be seen below (assuming there are no external inputs).
 
 $x^-(k) = A(k-1) x^+(k-1)$
 
 $P^-(k) = A(k-1) P^+(k-1)A^T(k-1) + Q(k-1)$
 
-The matrix $A$ is a matrix that describes how the system operates by itself. So given the state vector and the calculation formulas for the entries the matrix would look like this:
+The matrix $A$ is state transition matrix.
+It describes, how the system operates by itself.
+So given the state vector and the calculation formulas for the entries the matrix would look like this:
 
 $$
 A =
@@ -340,10 +181,12 @@ $$
 
 The matrix $Q$ is the process noise covariance matrix. This means that it represents how much you trust your model.
 The entries in the matrix are set by you and can be adjusted.
+
 If the entries in the matrix are big, this means that there's a lot of uncertainty of the states of the model. As a consequence you trust the measurements more.
+
 If the entries in the matrix are small, this means that you trust the states in the model. As a consequence you trust the model more and the measurements less.
 
-### 2. Correction (KF)
+### 2. Correction
 
 The estimated state gets compared to the measured values. The state and its covariance matrix are corrected according to the error. The formulas are as follows (assuming there are no external inputs).
 
@@ -361,34 +204,19 @@ The matrix $R$ is the covariance matrix of the (measurement) noise. Its entries 
 
 The vector $y$ consists of the measurements.
 
-## Implementation of the linear Kalman Filter
+Below is a list of additional sources to help understand the topic better:
 
-The implementation of this (linear) Kalman Filter can be found in the file [kalman_filter.py](../../code/perception/src/kalman_filter.py)
+- [Visally Explained Kalman Filters](https://www.youtube.com/watch?v=IFeCIbljreY&ab_channel=VisuallyExplained)
+- [Understand & Code Kalman Filters](https://www.youtube.com/watch?v=TEKPcyBwEH8&ab_channel=CppMonk)
+- Stackoverflow and other useful sites:
+[1](https://stackoverflow.com/questions/47210512/using-pykalman-on-raw-acceleration-data-to-calculate-position),
+[2](https://robotics.stackexchange.com/questions/11178/kalman-filter-gps-imu),
+[3](https://stackoverflow.com/questions/66167733/getting-3d-position-coordinates-from-an-imu-sensor-on-python),
+[4](https://github.com/Janudis/Extended-Kalman-Filter-GPS_IMU)
 
-The [viz.py](../../code/perception/src/experiments/Position_Heading_Datasets/viz.py) file contains helpful functions to visualize and compare the differences between the true position/heading data (taken from the CARLA simulator), the raw data and the filtered data.
+### Extending the model
 
-The current results from the filter can be seen in the following three pictures.
-
-The first picture shows the x position of the car. The green line represents the true position while the orange line depicts the unfiltered data coming out from the sensor.
-The purple line shows the result of the test filter which in this case is the Kalman filter.
-It can be seen that the filter follows the measurements too much which results in huge errors (almost 5 meters in the example picture).
-
-![kalman_filter_x_pos](../../doc/assets/localization/kalman_filter_x_pos.png)
-
-The second picture shows the y position of the car. The colors are the same as above.
-The filter follows the measurements too much again. Huge errors can also be noticed here (almost 5 meters in the example picture).
-
-![kalman_filter_y_pos](../../doc/assets/localization/kalman_filter_y_pos.png)
-
-The last picture shows the heading of the car.
-The dotted red line represents the true heading of the car while the current heading (the green line) is the data produced by the Kalman filter.
-It can be seen that the filtered data is really close to the true heading so the focus for the next developed filter should be the improvement of the position data rather than the heading.
-
-![kalman_filter_heading](../../doc/assets/localization/kalman_filter_heading.png)
-
-## Extending the model
-
-Let's look closer at the calculation of the velocity in the x and y direction.
+Let's look closer at the calculation of the velocity in the x- and y- direction.
 It is currently assumed that we can measure the velocity in the respective directions independently.
 
 In truth the CARLA Speedometer (the sensor responsible for the velocity measurements) only outputs the velocity ($v$) of the vehicle.
@@ -398,49 +226,13 @@ $v_x = v \cdot cos(\varphi)$
 
 $v_y = v \cdot sin(\varphi)$
 
-This actually creates a problem because we need to use non-linear functions.
-Furthermore the velocities are dependent on the heading angle $\varphi$ which is also an entry in the state vector.
+This actually creates a problem, because we need to use non-linear functions.
+Furthermore, the velocities are dependent on the heading angle $\varphi$ which is also an entry in the state vector.
 
 As a result the matrix $A$ can not be used like before anymore.
-Instead we linearize the current mean and its covariance.
-This means that we will replace the current matrix $A$ with a Jacobian matrix.
+Instead, we need to linearize the current mean and its covariance.
+This means, that we will replace the current matrix $A$ with a Jacobian matrix.
 
-Currently it is assumed that the vehicle always drives at a constant velocity.
-In a normal car this assumption is often not satisfied.
-So to make the model more accurate we will add the acceleration of the vehicle to the equations.
-
-The measurements for the linear acceleration in each direction (x/y/z) are provided by the IMU sensor.
-Just like with the velocity we ignore the acceleration in the z direction for now and continue to assume that the vehicle drives in a plane.
-
-It is worth to mention that the velocity is no longer divided into two state vector entries $v_x$ and $v_y$ but is combined into the entry $v$.
-
-Now the state vector will look like this:
-
-$$
-\vec{x}_{state} =
-\begin{bmatrix}
-  x\\
-  y\\
-  v\\
-  a\\
-  \varphi\\
-  \dot{\varphi}\\
-\end{bmatrix}
-$$
-
-The meaning of the symbols used in the vector and their calculation is explained in the following table:
-
-$$
-\begin{array}{ c l l c }
-  \text{symbol} & \text{description} & \text{calculation} & \text{function} \\
-  x & \text{x-position} & x + v \cdot cos(\varphi) \cdot \Delta t + \frac{1}{2} \cdot a \cdot cos(\varphi) \cdot {\Delta t}^2 & f_1 \\
-  y & \text{y-position} & y + v \cdot sin(\varphi) \cdot \Delta t + \frac{1}{2} \cdot a \cdot sin(\varphi) \cdot {\Delta t}^2 & f_2 \\
-  v & \text{velocity} & v + a \cdot \Delta t & f_3 \\
-  a & \text{acceleration} & \sqrt{a_x^2 + a_y^2} & f_4 \\
-  \varphi & \text{heading / rotation around z-axis} & \varphi + \dot{\varphi} \cdot \Delta t & f_5 \\
-  \dot{\varphi} & \text{angular velocity around z-axis} & \dot{\varphi} & f_6 \\
-\end{array}
-$$
-
-As the filter is now non-linear it is called an **Extended Kalman Filter**.
-However the basic steps of a Kalman Filter are still maintained even though the formulas are slightly different.
+The filter is now non-linear and is called an **Extended Kalman Filter (EKF)**.
+However the basic steps of a Kalman Filter are still maintained, even though the formulas are slightly different.
+For more information on EKFs, please refer to the [corresponding documentation](extended_kalman_filter.md).
