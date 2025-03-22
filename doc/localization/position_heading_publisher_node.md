@@ -51,11 +51,11 @@ However, we choose to save computational power by only launching the node(s), th
 This node subscribes to the following topics:
 
 - OpenDrive Map:
-  - `/carla/hero/OpenDRIVE` ([String](https://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
+  - `/carla/hero/OpenDRIVE` ([String](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html))
 - IMU:
   - `/carla/hero/IMU` ([IMU](https://docs.ros.org/en/api/sensor_msgs/html/msg/Imu.html))
 - GPS:
-  - `/carla/hero/GPS` ([NavSatFix](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
+  - `/carla/hero/GPS` ([NavSatFix](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html))
 - Estimated heading (by the chosen filter):
   - e.g. `/paf/hero/ekf_heading` ([Float32](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - Estimated position (by the chosen filter):
@@ -108,5 +108,5 @@ If `None` is selected as the Filter, it publishes the data as the `current_pos` 
 
 **`get_geoRef`**
 
-Reads the reference values for latitude and longitude from the carla OpenDriveMap.
+Reads the reference values for latitude and longitude from the carla OpenDrive Map.
 Otherwise we could not calculate the Global Coordinate System.
