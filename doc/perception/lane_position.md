@@ -5,6 +5,16 @@ The lane_position Node processes the lanemask given by the Lanedetection Node an
 
 ---
 
+## Table of Contents
+
+1. [Lane_position Node System Diagram](#lane_position-node-system-diagram)
+2. [Inputs](#inputs)
+3. [Processing Steps](#processing-steps)
+4. [Outputs](#outputs)
+5. [Similar Topics](#similar-topics)
+
+---
+
 ## Lane_position Node System Diagram
 
 The following Chart displays the procedure and applied algorithms used to convert the lanemask to lanemarking entities.
@@ -28,7 +38,7 @@ The following Chart displays the procedure and applied algorithms used to conver
     The filtered lidar points are then categorised into clusters using a clustering algorithm in order to determine which points belong together to a lane marking. Algorithm used: DBSCAN
 
 4. Linear regression for all clusters:
-    A straight line is fitted to the points of each cluster using linear regression. The centre point and the gradient of this straight line are then determined.
+    A straight line is fitted to the points of each cluster using linear regression. The center point and the gradient of this straight line are then determined.
 
 5. Determine confidence:
     A specially developed algrotihmus calculates the confidence of the lanemarkings. It takes into account the size of the clusters, the standard deviation of the linear regression and the angle to the other straight lines.
@@ -43,7 +53,7 @@ The following Chart displays the procedure and applied algorithms used to conver
         - **normalized_clustersize**: The normalized cluster size.
         - **clustersize_weight**: The weight of the cluster size.
 
-6. Prediction of Lanemarkings (currently disabled):
+6. Prediction of Lanemarkings **(currently disabled)**:
     - use angle deviations to predict a lanemarking that better fits the orientation of the other found lanemarkings
     - if there is a lanemarking close to the car and no corresponding lanemarking on the other side of the car a marking with the same distance and orientation is predicted
 
@@ -55,3 +65,7 @@ The following Chart displays the procedure and applied algorithms used to conver
 
 - Map with lanemarking entities
 - Preprocessed lanemask for visualization purpose
+
+## Similar Topics
+
+The lanemarking Entities are used for the lane_free function to check wether a lane is free for a planned lane change. If you want to further read about this topic [click here](../planning/behaviors/LaneChange.md)
