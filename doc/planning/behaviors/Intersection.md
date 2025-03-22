@@ -8,40 +8,48 @@
   - [Approach](#approach)
   - [Wait](#wait)
   - [Enter](#enter)
-  - [Leave](#leave)
 
 ## General
 
-The Intersection behaviour is used to control the vehicle when it encounters a intersection. It handles stop signs as well as traffic lights.
-The Intersection sequence consists of the sub-behaviours "Approach", "Wait", "Enter" and "Leave".
+The intersection behavior is used to control the vehicle when it encounters an intersection. It handles stop signs as well as traffic lights.
+The intersection sequence consists of the sub-behaviors "Approach", "Wait", and "Enter".
 
-To enter the Intersection sequence "Intersection ahead" must firstly be successful.
+To enter the intersection sequence "Intersection ahead" must firstly be successful.
 
 ## Intersection ahead
 
-Successful when there is a stop line within a set distance.
+Successful when there is an intersection ahead which is extracted from the next waypoint.
+
+Sets a stopmarker as a virtual stopline.
+
+Tries to stay as long as possible in overtake behavior if currently overtaking before switching.
 
 ## Approach
 
-Handles approaching the intersection by slowing down the vehicle. Returns RUNNING while still far from the intersection, SUCCESS when the vehicle has stopped or has already entered the intersection and FAILURE when the path is faulty.
+Handles approaching the intersection.
 
-Calculates a virtual stopline based on whether a stopline or only a stop sign has been detected and publishes a distance to it. While the vehicle is not stopped at the virtual stopline nor has entered the intersection, int_app_to_stop is published as the current behaviour.
-This is used inside motion_planning to calculate a stopping velocity.
+Returns RUNNING while still far from the intersection, SUCCESS when the vehicle has stopped at a stopline or has already entered the intersection.
 
-A green light is approached with 30 km/h.
+Removes the stopline stopmarker in case of a green light.
+
+In case of a left turn a stopmarker is created on the left lane relative to the car so that when the car is driving over the stopline it stops shortly afterwards.
 
 ## Wait
 
 Handles wating at the stop line until the vehicle is allowed to drive.
 
-If the light is green or when there isn't a traffic light returns SUCCESS otherwise RUNNING.
+Waits 2 seconds at a stopline without a traffic light.
+
+In case of a left turn oncoming traffic is checked after driving over the stopline. This is based on a counter to avoid inconsistencies.
+
+The map function is_lane_free_intersection(...) for checking the oncoming traffic utilizes a big polygon to cover two lanes and only regards traffic driving towards the car.
+
+Returns SUCCESS when allowed to drive otherwise RUNNING.
 
 ## Enter
 
-Handles driving through the intersection. Uses 50 km/h as target speed.
+Handles driving through the intersection.
 
-Returns SUCCESS once the next waypoint is not this intersection anymore.
+In case of driving straight a low speed limit is set for ACC to avoid emergency vehicles. This is a temporary solution.
 
-## Leave
-
-Signifies that the vehicle has left the intersection and simply returns FAILURE to leave the Intersection sequence.
+Returns FAILURE to end the intersection behavior once the current intersection waypoint is far enough behind the car.
