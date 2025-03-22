@@ -9,11 +9,10 @@ save_filter_data.py file.
 
 An old filter (for example the EKF) can be compared to
 a new filter and the ground truth.
-Possible comparisons:
-  - x positions
-  - y positions
-  - z positions
-  - headings
+Possible plots:
+  - x positions and errors
+  - y positions and errors
+  - ground truth heading
 This nodes creates plots visualizing the comparisons.
 """
 

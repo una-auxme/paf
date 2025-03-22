@@ -16,15 +16,6 @@ In the following diagram you can see all the nodes and topics used in the percep
 - [Dataset Generator](./dataset_generator.md)
 - [Dataset Structure](./dataset_structure.md)
 
-## Localization
-
-An overview over the different nodes working together to localize the vehicle is provided in the [localization](./localization.md) file.
-
-- [Kalman Filter](./kalman_filter.md)
-- [Position Heading Publisher Node](./position_heading_publisher_node.md)
-- [Position Heading Filter Debug Node](./position_heading_filter_debug_node.md)
-- [Coordinate Transformation](./coordinate_transformation.md) (helper functions)
-
 ## Unused files
 
 - [Lidar Distance Utility](./lidar_distance_utility.md)
