@@ -56,9 +56,12 @@ An overview over the different nodes working together to localize the vehicle is
 
 ## DBSCAN
 
-DBSCAN is used multiple times as a clustering algorithm in perception. DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a clustering algorithm that groups together closely packed points and marks points in low-density regions as outliers or noise. It requires two parameters: epsilon (ε), which defines the maximum distance between two points to be considered neighbors, and minPts, the minimum number of points required to form a dense region. DBSCAN is particularly useful for datasets with clusters of varying shapes and sizes, as it does not require specifying the number of clusters in advance. Its key strength lies in its ability to handle noise and identify clusters in non-linear, irregular patterns.
+DBSCAN is used multiple times as a clustering algorithm in perception. DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a clustering algorithm that groups together closely packed points and marks points in low-density regions as outliers or noise. It requires two parameters:
+epsilon (ε), which defines the maximum distance between two points to be considered neighbors, and minPts, the minimum number of points required to form a dense region. DBSCAN is particularly useful for datasets with clusters of varying shapes and sizes, as it does not require specifying the number
+of clusters in advance. Its key strength lies in its ability to handle noise and identify clusters in non-linear, irregular patterns.
 
-DBSCAN can be extended to clustering in higher-dimensional spaces, such as when using 3D coordinates (\(x\), \(y\), \(z\)) or any \(n\)-dimensional feature vector. The main difference lies in the calculation of the distance between points, which is still typically done using the **Euclidean distance**. For points \(p = (x_p, y_p, z_p)\) and \(q = (x_q, y_q, z_q)\), the distance in 3D space is calculated as:
+DBSCAN can be extended to clustering in higher-dimensional spaces, such as when using 3D coordinates (\(x\), \(y\), \(z\)) or any \(n\)-dimensional feature vector. The main difference lies in the calculation of the distance between points, which is still typically done using the **Euclidean distance**.
+For points \(p = (x_p, y_p, z_p)\) and \(q = (x_q, y_q, z_q)\), the distance in 3D space is calculated as:
 
 $$
 \text{Dist}(p, q) = \sqrt{(x_p - x_q)^2 + (y_p - y_q)^2 + (z_p - z_q)^2}
