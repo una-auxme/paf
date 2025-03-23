@@ -3,6 +3,7 @@
 **Summary:** The **Intermediate Layer** creates a 2D top-down [**Map**](/doc/mapping/generated/mapping_common/map.md#map) containing [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
 
 - [General overview](#general-overview)
+  - [Map usage](#map-usage)
   - [Visualization](#visualization)
 - [Package structure](#package-structure)
 - [Data flow overview](#data-flow-overview)
@@ -21,12 +22,25 @@ The **Intermediate Layer** receives most sensor information (everything except t
 - applies [postprocessing filters](/doc/mapping/generated/mapping_common/filter.md)
 - and then forwards it to [planning](/doc/README.md#planning)/[acting](/doc/README.md#acting)
 
-The base data type is the [Map](/doc/mapping/generated/mapping_common/map.md#map). It consists out of [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
+The base data type is the [Map](/doc/mapping/generated/mapping_common/map.md#map). It consists of [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
 These entities all have a [transform](/doc/mapping/generated/mapping_common/transform.md#transform2d) and a [shape](/doc/mapping/generated/mapping_common/shape.md#shape2d) and can be all kinds of colliders (car, pedestrian, etc.), lanemarkings or other localized things of interest around the hero car.
 
-The [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode) collects all sensor information and publishes the resulting map to `/paf/hero/mapping/init_data`
+The [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode) collects all sensor information and publishes the resulting map to `/paf/hero/mapping/init_data`.
 
-The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support dynamic reconfigure for managing sensor input and filter parameters
+The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support [dynamic reconfigure](/doc/general/dynamic_reconfigure.md) for managing sensor input and filter parameters.
+
+### Map usage
+
+To do intersection checks on the map:
+
+- Subscribe to the `/paf/hero/mapping/init_data` topic
+- Convert the received message into a [Map](/doc/mapping/generated/mapping_common/map.md#map) object with [`Map.from_ros_msg(msg)`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.Map.from_ros_msg)
+- Create a [MapTree](/doc/mapping/generated/mapping_common/map.md#maptree) acceleration structure with [`map.build_tree()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.Map.build_tree)
+- Do intersection checks with
+  - [`map_tree.get_overlapping_entities()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_overlapping_entities)
+  - [`map_tree.get_nearest_entity()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_nearest_entity)
+  - [`map_tree.is_lane_free()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.is_lane_free)
+- Functions for creating collision masks can be found in the [mapping_common.mask](/doc/mapping/generated/mapping_common/mask.md) module
 
 ### Visualization
 
@@ -97,7 +111,7 @@ To disable the compilation, you can replace the `False` in [./ext_modules/.debug
 
 ## Auto-generated documentation
 
-The markdown files in the [./generated](/doc/mapping/generated/) folder are generated with `pydoc-markdown`.
+The API-documentation markdown files in the [./generated](/doc/mapping/generated/) folder are generated with `pydoc-markdown`.
 
 To regenerate them, run the [docker-compose.docs.yaml](/build/docker-compose.docs.yaml).
 
