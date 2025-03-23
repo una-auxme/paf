@@ -60,7 +60,9 @@ DBSCAN is used multiple times as a clustering algorithm in perception. DBSCAN (D
 
 DBSCAN can be extended to clustering in higher-dimensional spaces, such as when using 3D coordinates (\(x\), \(y\), \(z\)) or any \(n\)-dimensional feature vector. The main difference lies in the calculation of the distance between points, which is still typically done using the **Euclidean distance**. For points \(p = (x_p, y_p, z_p)\) and \(q = (x_q, y_q, z_q)\), the distance in 3D space is calculated as:
 
-Dist(p, q) = sqrt((x_p - x_q)^2 + (y_p - y_q)^2 + (z_p - z_q)^2)
+$$
+\text{Dist}(p, q) = \sqrt{(x_p - x_q)^2 + (y_p - y_q)^2 + (z_p - z_q)^2}
+$$
 
 In higher dimensions (\(n\)-dimensional space), the distance would be:
 
