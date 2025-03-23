@@ -1,7 +1,7 @@
 # The Extended Kalman Filter
 
-> [!IMPORTANT]
-> This is the currently used filter for localizing the vehicle.
+**IMPORTANT:**
+This is the currently used filter for localizing the vehicle.
 
 **Summary:**
 The state of the vehicle (position and heading) can be estimated using an Extended Kalman Filter.
