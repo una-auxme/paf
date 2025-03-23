@@ -14,7 +14,6 @@ The document contains an overview over all [nodes](#overview) and [topics](#topi
   - [Global Planning](#global-planning)
   - [Decision Making](#decision-making)
   - [Local Planning](#local-planning)
-    - [Collision Check](#collision-check)
     - [ACC](#acc)
     - [Motion Planning](#motion-planning)
 - [Acting](#acting)
@@ -165,13 +164,10 @@ Publishes:
 
 ### [Local Planning](../planning/Local_Planning.md)
 
-It consists of three components:
+It consists of two components:
 
-- Collision Check: Checks for collisions based on objects recieved from [Perception](#perception)
 - ACC: Generates a new speed based on a possible collision recieved from Collision Check and speedlimits recieved from [Global Planner](#global-planning)
 - Motion Planning: Decides the target speed and modifies trajectory if signal recieved from [Decision Making](#decision-making)
-
-#### [Collision Check](../planning//Collision_Check.md)
 
 Subscriptions:
 
