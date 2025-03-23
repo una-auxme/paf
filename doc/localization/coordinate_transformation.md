@@ -98,11 +98,12 @@ $$
 \text{heading} = - \theta
 $$
 
-### The [geodetic_to_enu](https://github.com/una-auxme/paf/blob/092a3a467eeec492fd722d1f6d0efbb20e0131a2/code/localization/src/coordinate_transformation.py#L42-L71) ([gnss_to_xyz](https://github.com/una-auxme/paf/blob/092a3a467eeec492fd722d1f6d0efbb20e0131a2/code/localization/src/coordinate_transformation.py#L38-L39)) function
+### The [geodetic_to_enu](https://github.com/una-auxme/paf/blob/092a3a467eeec492fd722d1f6d0efbb20e0131a2/code/localization/src/coordinate_transformation.py#L42-L71) (gnss_to_xyz) function
 
 This method is used by the [gps_transform](../../code/localization/src/gps_transform.py) node.
 The Carla GNSS-Sensor provides a latitude, longitude and altitude measurement.
-With the `geodetic_to_enu` / `gnss_to_xyz` method this can be transformed to the x/y/z space which is used in all other systems of our vehicle.
+With the [`geodetic_to_enu`](https://github.com/una-auxme/paf/blob/092a3a467eeec492fd722d1f6d0efbb20e0131a2/code/localization/src/coordinate_transformation.py#L42-L71) /
+[`gnss_to_xyz`](https://github.com/una-auxme/paf/blob/092a3a467eeec492fd722d1f6d0efbb20e0131a2/code/localization/src/coordinate_transformation.py#L38-L39) method this can be transformed to the x/y/z space which is used in all other systems of our vehicle.
 
 The `CoordinateTransformer` class is built in a way that makes it possible to provide a reference latitude and longitude (which lat, lon equals (0,0) in x-y space).
 This reference is provided in the OpenDrive Map received from Carla at startup.

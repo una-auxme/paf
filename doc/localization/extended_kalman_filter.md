@@ -89,7 +89,8 @@ v
 \end{bmatrix}
 $$
 
-where:  
+where:
+
 - \( $v$ \) is the speed (from Carla Speedometer)
 - \( $\theta$\) is the steering angle (from Control package)
 - \( $L$ \) is the wheelbase of the vehicle (from Vehicle Information)
