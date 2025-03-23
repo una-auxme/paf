@@ -45,8 +45,6 @@ This module includes the Nodes: \
 The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
 The local planning also executes behaviors e.g. changes the trajectory for an overtake.
 
-![Overtake](../assets/planning/Overtake_car_trajectory.png)
-
 ### [Decision making (/behavior_agent)](./Behavior_tree.md)
 
 This module includes the Nodes: BehaviorTree and its subbehaviors
