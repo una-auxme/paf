@@ -5,7 +5,6 @@ This document provides an overview of the structure of the documentation.
 - [`general`](#general)
 - [`development`](#development)
 - [`research`](#research)
-- [`examples`](#examples)
 - [`perception`](#perception)
 - [`planning`](#planning)
 - [`acting`](#acting)
@@ -25,10 +24,6 @@ The [`development`](./development/) folder contains guidelines for developing in
 ## `research`
 
 The [`research`](./research/) folder contains the findings of each group during the initial phase of the project.
-
-## `examples`
-
-To-do
 
 ## `perception`
 
