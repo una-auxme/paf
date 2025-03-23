@@ -891,7 +891,6 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_wait_stopped.name:
             speed = bs.ot_wait_stopped.speed
         elif behavior == bs.ot_wait_free.name:
-        elif behavior == bs.ot_wait_free.name:
             speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_init.name:
             speed = self.__get_speed_cruise()
