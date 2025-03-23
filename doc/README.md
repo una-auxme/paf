@@ -5,12 +5,13 @@ This document provides an overview of the structure of the documentation.
 - [`general`](#general)
 - [`development`](#development)
 - [`research`](#research)
-- [`examples`](#examples)
 - [`perception`](#perception)
 - [`planning`](#planning)
 - [`acting`](#acting)
 - [`assets`](#assets)
 - [`dev_talks`](#dev_talks)
+- [`localization`](#localization)
+- [`control`](#control)
 
 ## `general`
 
@@ -23,10 +24,6 @@ The [`development`](./development/) folder contains guidelines for developing in
 ## `research`
 
 The [`research`](./research/) folder contains the findings of each group during the initial phase of the project.
-
-## `examples`
-
-To-do
 
 ## `perception`
 
@@ -47,3 +44,11 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 ## `dev_talks`
 
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
+
+## `localization`
+
+The [`localization`](./localization/) folder contains documentation for the whole localization task.
+
+## `control`
+
+The [`controle`](./control/) folder contains documentation for all the controllers.
