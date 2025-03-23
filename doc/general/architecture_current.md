@@ -45,34 +45,48 @@ found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleCont
 
     subgraph Localization
         EKF
+        click EKF "https://github.com/una-auxme/paf/blob/main/doc/localization/extended_kalman_filter.md" _parent
     end
 
     subgraph Control
         PPC[Pure Pursuit Controller]
+        click PPC "https://github.com/una-auxme/paf/blob/main/doc/control/steering_controllers.md" _parent
         VC[Velocity Controller]
+        click VC "https://github.com/una-auxme/paf/blob/main/doc/control/velocity_controller.md" _parent
         Vehicle[Vehicle Controller]
+        click Vehicle "https://github.com/una-auxme/paf/blob/main/doc/control/vehicle_controller.md" _parent
     end
 
     subgraph Perception
         LDN[Lidar Distance Node]
+        click LDN "https://github.com/una-auxme/paf/blob/main/doc/perception/lidar_distance.md" _parent
         RN[Radar Node]
+        click RN "https://github.com/una-auxme/paf/blob/main/doc/perception/radar_node.md" _parent
         VN[Vision Node]
+        click VN "https://github.com/una-auxme/paf/blob/main/doc/perception/vision_node.md" _parent
         LD[Lane Detection]
+        click LD "https://github.com/una-auxme/paf/blob/main/doc/perception/Lanedetection_node.md" _parent
         TLD[Traffic Light Detection]
+        click TLD "https://github.com/una-auxme/paf/blob/main/doc/perception/traffic_light_detection.md" _parent
     end
 
     subgraph Mapping
         DI[Data Integration]
+        click DI "https://github.com/una-auxme/paf/tree/main/doc/mapping" _parent
         V[Visualization]
     end
 
     subgraph Planning
         GPD[Global Plan Distance]
         GP[Global Planning]
+        click GP "https://github.com/una-auxme/paf/blob/main/doc/planning/Global_Planner.md" _parent
         BT[Behavior Tree]
+        click BT "https://github.com/una-auxme/paf/blob/main/doc/planning/Behavior_tree.md" _parent
         subgraph Local
             MP[Motion Planning]
+            click MP "https://github.com/una-auxme/paf/blob/main/doc/planning/motion_planning.md" _parent
             ACC
+            click ACC "https://github.com/una-auxme/paf/blob/main/doc/planning/ACC.md" _parent
         end
     end
 
