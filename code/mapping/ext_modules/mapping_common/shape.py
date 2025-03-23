@@ -1,3 +1,18 @@
+"""Contains shape classes and functions
+
+**[API documentation](/doc/mapping/generated/mapping_common/shape.md)**
+
+Overview of the main components:
+- Abstract Shape2D base class. Subclasses: **Rectangle, Circle, Polygon**
+- Used to define the shape of entities in the Intermediate Layer
+- Shape calculations:
+  - For algorithms on shapes, the
+    **[shapely](https://shapely.readthedocs.io/en/stable/manual.html)** library
+    is used across the project.
+  - The Shape2D classes are interoperable with **shapely** via their
+    `Shape2D.to_shapely()` and `Polygon.from_shapely()` methods.
+"""
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -15,6 +30,8 @@ from .transform import Transform2D, Point2, Vector2
 from enum import Enum
 
 CIRCLE_APPROXIMATION_LENGTH = 0.5
+"""Precision when converting a Circle into a shapely.Polygon
+"""
 
 
 class MarkerStyle(Enum):
@@ -32,8 +49,10 @@ class Shape2D:
     """
 
     offset: Transform2D
-    """Local transformation of this shape based on
-    the transformation of the entity it is attached to"""
+    """Local transformation of this shape
+
+    If this shape is attached to an entity, this acts as an additional offset
+    on top of the entity's transformation."""
 
     @staticmethod
     def from_ros_msg(m: msg.Shape2D) -> "Shape2D":
@@ -102,7 +121,7 @@ class Shape2D:
             transform (Transform2D): Transforms the resulting Polygon
 
         Returns:
-            Polygon
+            Polygon: shapely Polygon
         """
         raise NotImplementedError
 
@@ -226,8 +245,11 @@ class Circle(Shape2D):
 class Polygon(Shape2D):
     """Polygon defined by a list of Point2 objects."""
 
-    # The points attribute does not have a redundant point for start and end
     points: List[Point2]
+    """Polygon points
+
+    The list does NOT have a redundant point for start and end.
+    """
 
     def __init__(self, points: List[Point2], offset: Optional[Transform2D] = None):
         assert len(points) >= 3, "Polygon requires at least 3 points."
@@ -375,8 +397,13 @@ class Polygon(Shape2D):
         If make_centered is False, the points will match the points of poly
         and no offset will be applied.
 
+        Args:
+            poly (shapely.Polygon): poly
+            make_centered (bool, optional): Center the polygon points.
+                Defaults to False.
+
         Returns:
-            Polygon
+            Polygon: Polygon
         """
         coords = poly.exterior.coords
         assert len(coords) >= 3, "Polygon requires at least 3 points."
@@ -394,6 +421,12 @@ class Polygon(Shape2D):
 
 
 _shape_supported_classes = [Rectangle, Circle, Polygon]
+"""Holds the shape classes supported for conversion to/from
+ROS messages
+
+To add a new shape subtype, add it to this array and override
+the _from_ros_msg() and to_ros_msg() methods accordingly.
+"""
 _shape_supported_classes_dict = {}
 for t in _shape_supported_classes:
     t_name = t.__name__.lower()
