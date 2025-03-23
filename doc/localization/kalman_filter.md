@@ -1,5 +1,9 @@
 # Kalman Filter
 
+> [!IMPORTANT]
+> This is **not** the currently used filter for localizing the vehicle.
+Please refer to the [EKF documentation](extended_kalman_filter.md) if you are interested in the currently used filter.
+
 **Summary:** The [kalman_filter](../../code/localization/src/kalman_filter.py) node can be used to estimate the state (position and heading) of the vehicle by using an IMU and GPS sensor together with the Carla Speedometer.
 
 As of now it is working with a 2D x-y-transition model, which is why the current z-position is calculated with a rolling average.

@@ -135,8 +135,8 @@ They are needed for plotting with rqt_graphs.
 
 - `/paf/hero/carla_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - `/paf/hero/carla_current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
-- `/paf/hero/position_debug` ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
-- `/paf/hero/heading_debug` ([Float32MultiArray](http://docs.ros.org/en/melodic/api/std_msgs/html/msg/Float32MultiArray.html))
+- `/paf/hero/position_debug` ([Float32MultiArray](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
+- `/paf/hero/heading_debug` ([Float32MultiArray](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 
 ### [viz.py](../../code/localization/src/evaluation/viz.py)
 

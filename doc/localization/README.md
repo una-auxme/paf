@@ -6,6 +6,7 @@ This file provides an overview of the different nodes working together to locali
 
 - [Overview](#overview)
 - [Available filters](#available-filters)
+  - [Choosing a filter](#choosing-a-filter)
 - [The position_heading_publisher_node](#the-position_heading_publisher_node)
 - [The coordinate_transformation node](#the-coordinate_transformation-node)
 - [Adding a new filter](#adding-a-new-filter)
@@ -26,6 +27,8 @@ The position and heading is often refered to as the **state** of the vehicle.
 
 ## Available filters
 
+> [!IMPORTANT]
+
 Currently the state of the car is estimated using an [Extended Kalman Filter (EKF)](./extended_kalman_filter.md).
 Several nodes work together to make this possible.
 A detailed explanation is provided in the corresponding [.md file](./extended_kalman_filter.md)
@@ -36,6 +39,8 @@ More details are provided in the correlating [.md file](./kalman_filter.md)
 An even simpler approach is calculating the current state using a **Running Average** which means that the average of the last few measurements is used as the current estimate.
 
 If you do not want to use a filter and simply make use of the raw sensor data then the **None** "filter" can be selected.
+
+### Choosing a filter
 
 The filter to be used is chosen in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file.
 You only need to set the `filter` argument accordingly, like shown in the following image.
@@ -55,12 +60,14 @@ However, our modular design makes it very easy to switch between different filte
 
 ## The coordinate_transformation node
 
-The [coordinate_transformation](./coordinate_transformation) node provides useful helper functions such as quat_to_heading which transforms a given quaternion into the heading of the car.
+The [coordinate_transformation](./coordinate_transformation) module provides useful helper functions such as `quat_to_heading` which transforms a given quaternion into the heading of the car.
 
-This node is used for example by the [position_heading_publisher_node](./position_heading_publisher_node) node or the [kalman_filter](./kalman_filter) node.
-Both nodes use the node for its quat_to_heading function and its CoordinateTransformer class.
+This module is used for example by the [position_heading_publisher_node](./position_heading_publisher_node) or the [kalman_filter](./kalman_filter) node.
+Both nodes use the module for its `quat_to_heading` function and its `CoordinateTransformer` class.
 
-Please note, that the node is not fully documented yet but the currently most important helper function quat_to_heading is.
+The `CoordinateTransformer` is also used by the [gps_transform](../../code/localization/src/gps_transform.py) node in order to transform from GNSS data to the x/y/z space.
+
+Please note, that the module is not fully documented yet, but the currently most important helper functions `quat_to_heading` and `geodetic_to_enu` are.
 
 ## Adding a new filter
 
