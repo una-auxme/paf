@@ -12,7 +12,7 @@ The document contains an overview over all [nodes](#overview) and [topics](#topi
   - [Radar Node (radar\_node.py)](#radar-node-radar_nodepy)
   - [Laneposition (lane\_position.py)](#laneposition-lane_positionpy)
 - [Localization](#localization)
-  - [Ekf state publisher (ekf\_state\_publisher.py)](#ekf-state-publisher-ekf_state_publisherpy)
+  - [EKF state publisher (ekf\_state\_publisher.py)](#ekf-state-publisher-ekf_state_publisherpy)
   - [Position Heading Publisher Node (position\_heading\_publisher\_node.py)](#position-heading-publisher-node-position_heading_publisher_nodepy)
 - [Mapping](#mapping)
   - [Mapping Data Integration (mapping\_data\_integration.py)](#mapping-data-integration-mapping_data_integrationpy)
@@ -192,9 +192,12 @@ Services:
 
 ## Localization
 
-For the localization the robot_localization package is used.
+The localization is currently done using an Extended Kalman Filter (EKF). The [robot_localization](https://docs.ros.org/en/melodic/api/robot_localization/html/index.html) package provides an implementation of this filter. However, several filters can be used.
+The filter is chosen in the [localization.launch](../../code/localization/launch/localization.launch) file.
+For more information see the [localization documentation](../localization/README.md).
+The position_heading_publisher_node publishes the output of the chosen filter as the current position and heading.
 
-### Ekf state publisher ([ekf_state_publisher.py](/../paf/code/localization/src/ekf_state_publisher.py))
+### EKF state publisher ([ekf_state_publisher.py](/../paf/code/localization/src/ekf_state_publisher.py))
 
 Subscriptions:
 
@@ -214,7 +217,8 @@ Services:
 
 ### Position Heading Publisher Node ([position_heading_publisher_node.py](/../paf/code/localization/src/position_heading_publisher_node.py))
 
-More information can be found [here](/doc/localization/architecture.md).
+The position_heading_publisher_node publishes the output of the chosen filter as the current position and heading.
+More information can be found [here](/doc/localization/position_heading_publisher_node.md).
 
 Subscriptions:
 
