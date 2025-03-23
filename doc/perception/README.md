@@ -44,6 +44,8 @@ The CARLA simulation vehicle is equipped with multiple sensors to perceive its s
 - [Traffic Light Detection](./traffic_light_detection.md)
 - [Dataset Generator](./dataset_generator.md)
 - [Dataset Structure](./dataset_structure.md)
+- [Lane Detection](./Lanedetection_node.md)
+  - The Lane Detection uses an camera Image to detect Lanemarkings and converts them to Entities for the intermediate Layer
 
 ## Localization
 
