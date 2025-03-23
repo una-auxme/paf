@@ -1,8 +1,17 @@
 # Documentation of Planning
 
+- [Architecture Diagram](#architecture-diagram)
+- [Overview](#overview)
+  - [Global Planner (/global\_planner)](#global-planner-global_planner)
+    - [Preplanning / OpenDrive Converter (preplanning\_trajectory.py)](#preplanning--opendrive-converter-preplanning_trajectorypy)
+    - [Global Planner (global\_planner\_node.py)](#global-planner-global_planner_nodepy)
+    - [Global Planner Distance Publisher (global\_plan\_distance\_publisher.py)](#global-planner-distance-publisher-global_plan_distance_publisherpy)
+  - [Local Planner (/local\_planner)](#local-planner-local_planner)
+  - [Decision making (/behavior\_agent)](#decision-making-behavior_agent)
+
 ## Architecture Diagram
 
-![Planning Architecture Diagram](../assets/planning/planning_structure.png)
+To get an overview over the general architecture, check the [architecture diagram](link).
 
 ## Overview
 
@@ -33,10 +42,8 @@ The decision making uses this information for triggering special events (e.g. la
 This module includes the Nodes: \
 [ACC (ACC.py)](./ACC.md) and [MotionPlanning (motion_planning.py)](./motion_planning.md)
 
-The Local Planning package is responsible for evaluating short term decisions in the local environment of the ego vehicle. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
+The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
 The local planning also executes behaviors e.g. changes the trajectory for an overtake.
-
-![Overtake](../assets/planning/Overtake_car_trajectory.png)
 
 ### [Decision making (/behavior_agent)](./Behavior_tree.md)
 
