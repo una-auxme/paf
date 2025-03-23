@@ -15,13 +15,13 @@ This behavior is used to dynamically overtake an object in close proximity. An o
 
 After the overtake is finished, the vehicle returns to the original lane as soon as it is free.
 
-To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks, see doc/planning/motion_planning.md.
+To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks, see [Motion Planning](../motion_planning.md).
 
 ## Overtake ahead
 
-Checks whether there is a object in front of the car that needs overtaking by using calculate_obstacle(...) which utilizes the map function get_nearest_entity(...).
+Checks whether there is an object in front of the car that needs overtaking by using calculate_obstacle(...) which utilizes the map function get_nearest_entity(...).
 
-If an on bstacle is in front, check its distance and speed.
+If an obstacle is in front, check its distance and speed.
 
 Increases a counter if an obstacle is detected within a certain threshold. Bicycles are checked with seperate conditions.
 
