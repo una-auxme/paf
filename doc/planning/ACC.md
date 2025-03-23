@@ -7,9 +7,8 @@ Based on this information, it calculates the desired speed and publishes it.
   - [Published Topics](#published-topics)
   - [Subscribed Topics](#subscribed-topics)
   - [Services](#services)
-- [Node Creation + Running Tests](#node-creation--running-tests)
+- [Debugging](#debugging)
 - [Functionality](#functionality)
-  - [Detailed Functionality](#detailed-functionality)
 
 ## ROS Data Interface
 
@@ -39,32 +38,15 @@ This module provides the following service:
 
 This service is currently used by the unstuck routine to drive backwards or stop. Apart from that, the intersection behavior uses it to be able to drive slowlier when going straight forward through an intersection (hotfix to avoid crashing into a firetruck).
 
-## Node Creation + Running Tests
-
-To run this node insert the following statement in the [planning.launch](../../code/planning/launch/planning.launch) file:
-
-```xml
-<node pkg="planning" type="ACC.py" name="ACC" output="screen">
-    <param name="role_name" value="hero" />
-    <param name="control_loop_rate" value="0.3" />
-</node>
-```
+## Debugging
 
 During development, the debugger can be a helpful tool. In order to be able to use the debugger, the planning.launch file has to be adapted. For more details, check the [debugging guide](../development/debugging.md).
 
 ## Functionality
 
-Each time the map from the intermediate layer is received, the ACC triggers the function `update_velocity` where the main logic of the ACC can be found. The most important steps are:
+Each time the map from the intermediate layer is received, the ACC triggers the function `update_velocity` where the main logic of the ACC can be found.
 
-- Definition of a trajectory mask and a rectangle in front of the car that is used to set the area in which a leading vehicle is searched. The rectangle is able to detect possible collisions that are close to the car while the trajectory mask checks the area at a higher distance from the car.
-- Calculation of the leading vehicle based on the trajectory mask and the rectangle.
-- Calculation of the desired speed using the function `calculate_velocity_based_on_lead`.
-- Publishing of the markers to visualize the masks, the chosen leading vehicle, and trajectory intersections.
-- Emergency braking if a slow obstacle is detected and the speed difference is too high.
-
-### Detailed Functionality
-
-The ACC node performs the following key functions:
+The following key functions are performed by the ACC node:
 
 1. **Initialization**:
    - Subscribes to various topics to receive data about the map, speed limits, trajectory, current behavior, and steering angle.
@@ -73,19 +55,24 @@ The ACC node performs the following key functions:
 
 2. **Update Velocity**:
    - Checks if the necessary data (map and trajectory) is available.
-   - Identifies the leading vehicle and calculates the desired speed based on the distance to the leading vehicle and the current speed.
+   - Defines a trajectory mask and a rectangle in front of the car that is used to set the area in which a leading vehicle is searched. The rectangle is able to detect possible collisions that are close to the car while the trajectory mask checks the area at a higher distance from the car.
+   - Publishes markers to visualize the masks, the chosen leading vehicle, and trajectory intersections.
+   ![Leading vehicle markers visualization](../assets/planning/ACC_trajectory_mask_visualization.PNG)
+   - Identifies the leading vehicle based on the trajectory mask and the rectangle.
+   - Calculates a reasonable speed depending on the leading vehicle using the function `calculate_velocity_based_on_lead`.
    - Considers speed limits, external speed limits, and trajectory-based cornering speeds.
-   - Publishes the desired speed, debugging markers, and emergency brake flag if necessary.
+   - Publishes the desired speed (minimum of the considered speeds), debugging markers, and emergency brake flag if necessary.
 
 3. **Calculate Velocity Based on Lead**:
-   - Uses a PI controller to calculate the desired speed based on the distance and speed of the leading vehicle.
-   - Ensures smooth acceleration and deceleration using configurable parameters.
+   - Calculation of the desired speed using the function `calculate_velocity_based_on_lead`. This function uses a PI controller to calculate the desired speed based on the distance and speed of the leading vehicle.
 
 4. **Calculate Velocity Based on Trajectory**:
    - Approximates a maximum safe cornering speed by tracing lines at an angle from the front of the car and measuring the distance at which they intersect with the trajectory.
+   ![Cornering speed visualization](../assets/planning/ACC_curve_speed_visualization.PNG)
    - Uses linear interpolation to calculate the desired speed based on the intersection distance.
 
 5. **Emergency Braking**:
+   - Emergency braking if a slow obstacle is detected and the speed difference is too high.
    - Triggers an emergency brake if a slow obstacle is detected, the speed difference is too high, and the vehicle is moving fast.
    - Publishes an emergency flag to notify the [vehicle controller](../../code/control/src/vehicle_controller.py).
 

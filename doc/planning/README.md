@@ -11,7 +11,7 @@
 
 ## Architecture Diagram
 
-So get an overview over the general architecture, check the [architecture diagram](link).
+To get an overview over the general architecture, check the [architecture diagram](link).
 
 ## Overview
 
@@ -42,7 +42,7 @@ The decision making uses this information for triggering special events (e.g. la
 This module includes the Nodes: \
 [ACC (ACC.py)](./ACC.md) and [MotionPlanning (motion_planning.py)](./motion_planning.md)
 
-The Local Planning package is responsible for evaluating short term decisions in the local environment of the ego vehicle. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
+The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
 The local planning also executes behaviors e.g. changes the trajectory for an overtake.
 
 ![Overtake](../assets/planning/Overtake_car_trajectory.png)
