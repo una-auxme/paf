@@ -858,7 +858,7 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.int_app_to_stop.name:
             speed = self.__calc_speed_to_stop_intersection()
         elif behavior == bs.int_wait.name:
-            speed == bs.int_wait.speed
+            speed = bs.int_wait.speed
         elif behavior == bs.int_enter.name:
             speed = bs.int_enter.speed
         elif behavior == bs.int_exit:
