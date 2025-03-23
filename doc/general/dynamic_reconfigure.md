@@ -14,7 +14,7 @@ Read more about dynamic reconfigure: [DynamicReconfigure](https://wiki.ros.org/d
 
 ## How to integrate into your Node
 
-In order to integrate Dynamic-Reconfigure with your Node the following steps need to be made.
+In order to integrate dynamic reconfigure with your Node the following steps need to be made.
 
 ### Dynamic Reconfigure Server, Config and Callback
 
@@ -48,10 +48,10 @@ Then the two most important lines:
 tab_inputs.add("flag_motion", int_t, 0, "Filter for motion.", 0, -1, 1)
 ```
 
-A Parameter is added with the name `flag_motion`. This needs to conform with the ROS parameter naming conventions. Then the type is specified `int_t`. The `0` after this is not relevant for most purposes. After this a tooltip is added which gets displayed in RQT when hovering over the parameter.
-The last three parameters are `Default value`, `Minimum value`and `Maxmimum value`. Which limit the slider.
+A parameter is added with the name `flag_motion`. This needs to be conform with the ROS parameter naming conventions. Then the type is specified `int_t`. The `0` after this is not relevant for most purposes. After this a tooltip is added which gets displayed in RQT when hovering over the parameter.
+The last three parameters are `Default value`, `Minimum value`and `Maxmimum value`, which limit the slider.
 
-For the last line naming is very important. Especially the last CamelCase parameter will determine the Name in the File to import.
+For the last line naming is very important. Especially the last CamelCase parameter will determine the name in the file to import.
 
 ```python
 exit(gen.generate(PACKAGE, "mapping_visualization", "MappingVisualization"))
@@ -80,7 +80,7 @@ generate_dynamic_reconfigure_options(
 
 #### Your Node
 
-Lastly you want to use the config in your Python-Node file. For this the following imports need to be made. The name of your config corresponds to the naming conventions in your `.cfg` file.
+Lastly you want to use the config in your python node file. For this the following imports need to be made. The name of your config corresponds to the naming conventions in your `.cfg` file.
 
 ```python
 from mapping_visualization.cfg import MappingVisualizationConfig
@@ -122,7 +122,7 @@ flag_motion: 0
 Then in the `.launch` file the `.yaml` needs to be loaded (inside a node tag):
 
 ```xml
-<rosparam file="$(find mappin_visualization)/config/your_yaml.yaml" command="load" />
+<rosparam file="$(find mapping_visualization)/config/your_yaml.yaml" command="load" />
 ```
 
 > [!WARNING]
