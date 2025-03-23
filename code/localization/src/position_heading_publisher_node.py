@@ -7,15 +7,10 @@ from this data and passes this information on to a different topic:
   - GPS data (/carla/hero/GPS) -> /paf/hero/unfiltered_pos
 
 Both signals can be filtered with the available filters:
-  - Position Filter values:
-      - "EKF" (Default)
-      - "Kalman"
-      - "RunningAvg"
-      - "None"
-  - Heading Filter values:
-      - "EKF" (Default)
-      - "Kalman"
-      - "None"
+  - "EKF" (Default)
+  - "Kalman"
+  - "RunningAvg" -> "None" is used for heading filter
+  - "None"
 The chosen filter is used to pass its outputs onto the topics:
   - /paf/hero/current_pos
   - /paf/hero/current_heading
@@ -23,8 +18,9 @@ The chosen filter is used to pass its outputs onto the topics:
 The filter is chosen in the localization.launch file.
 
 !!!
-When creating a new filter, the corresponding subscriber and publisher
-must be added in the constructor for clean modular programming
+When creating a new filter, the corresponding subscriber
+(and callback function if message types do not match)
+must be added in the constructor for clean modular programming.
 !!!
 
 """
