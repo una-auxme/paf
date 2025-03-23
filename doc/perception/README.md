@@ -66,9 +66,9 @@ $$
 
 In higher dimensions (\(n\)-dimensional space), the distance would be:
 
-\[
+$$
 \text{Dist}(p, q) = \sqrt{\sum_{i=1}^{n} (p_i - q_i)^2}
-\]
+$$
 
 Where \(p_i\) and \(q_i\) represent the \(i\)-th component of the points \(p\) and \(q\), respectively. The rest of the DBSCAN algorithm remains the same, with the \(\epsilon\)-neighborhood defined by the distance metric in this higher-dimensional space.
 
