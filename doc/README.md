@@ -46,7 +46,9 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
 
 ## `localization`
+
 The [`localization`](./localization/) folder contains documentation for the whole localization task.
 
 ## `control`
+
 The [`controle`](./control/) folder contains documentation for all the controllers.
