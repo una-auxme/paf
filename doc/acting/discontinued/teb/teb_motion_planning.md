@@ -66,8 +66,7 @@ The `teb_planner_node_pa` will also publish its view of the world. In order to v
 
 The TEB Planner was already integrated with dynamic-reconfigure. For this several files are necessary.
 
-#### [config/teb\_hero\_car.cfg](config/teb_herocar_config.yaml)
-
+#### [config/teb\_herocar\_config.yaml](config/teb_herocar_config.yaml)
 The hero_car planning config is the most important config file. It describes how the planner comes up with a path.
 In the acting documentation more info on the parameters is given. It is recommended not to manually test these parameters at launch, but rather play with RQT dynamic-reconfigure sliders to adjust them.
 

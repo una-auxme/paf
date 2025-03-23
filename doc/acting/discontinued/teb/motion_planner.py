@@ -681,7 +681,8 @@ class MotionPlanning(CompatibleNode):
             elif dist < 50:
                 return 7
             else:
-                8  # TODO add return
+            else:
+                return 8
 
         distance_corner = 0
         for i in range(len(corner) - 1):
@@ -891,7 +892,8 @@ class MotionPlanning(CompatibleNode):
         elif behavior == bs.ot_wait_stopped.name:
             speed = bs.ot_wait_stopped.speed
         elif behavior == bs.ot_wait_free.name:
-            speed == self.__get_speed_cruise()
+        elif behavior == bs.ot_wait_free.name:
+            speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_init.name:
             speed = self.__get_speed_cruise()
         elif behavior == bs.ot_enter_slow.name:
