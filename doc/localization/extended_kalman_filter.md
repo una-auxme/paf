@@ -1,7 +1,7 @@
 # The Extended Kalman Filter
 
-**IMPORTANT:**
-This is the currently used filter for localizing the vehicle.
+> [!IMPORTANT]
+> This is the currently used filter for localizing the vehicle.
 
 **Summary:**
 The state of the vehicle (position and heading) can be estimated using an Extended Kalman Filter.
@@ -78,14 +78,13 @@ $$
 $$
 \mathbf{v} =
 \begin{bmatrix}
-v_x \\
-v_y
-\end{bmatrix}
-=
+  v_x \\
+  v_y
+\end{bmatrix} =
 v
 \begin{bmatrix}
-\cos(\theta) \\
-\sin(\theta)
+  \cos(\theta) \\
+  \sin(\theta)
 \end{bmatrix}
 $$
 
