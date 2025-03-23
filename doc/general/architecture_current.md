@@ -43,18 +43,18 @@ The drawio-file can be found [here](../assets/nodes_visualization.drawio).
 ![Architecture overview](../assets/nodes_visualization.svg)
 *Connections between nodes visualized*
 
-## Perception
-
-The perception is responsible for the efficient conversion of raw sensor and map data into a useful
-environment representation that can be used by the [Planning](#Planning) for further processing.
-It provides localization of the agent, filtering noise from sensor data, preconditions images for further usage in other nodes and detects certain points of interest (at the moment only traffic lights).
-
-Further information regarding the perception can be found [here](../perception/README.md).
-Research for the perception can be found [here](../research/paf24/perception/).
-
 In the following, all subscribed and published topics and their corresponding nodes are listed with the format:
 
 - ```name of topic``` \(origin/destination node\) (typo of message) (link to ROS documentation of the message type)
+
+## Perception
+
+The perception is responsible for the efficient conversion of raw sensor and map data into a useful
+environment representation that is visualized in [Mapping](#Mapping) and can be used for further processing in the intermediate layer.
+Beyond that it provides localization of the agent and filtering noise from sensor data.
+
+Further information regarding the perception can be found [here](../perception/README.md).
+Research for the perception can be found [here](../research/paf24/perception/).
 
 ### Vision Node ([vision_node.py](/../paf/code/perception/src/vision_node.py))
 
@@ -106,6 +106,8 @@ Services:
 ### Lidar Node ([lidar_distance.py](/../paf/code/perception/src/lidar_distance.py))
 
 Processes LIDAR point clouds by filtering, clustering, generating bounding boxes and publishing the results.
+
+More information under [Lidar_node.md](../../doc/perception/lidar_distance.md).
 
 Subscriptions:
 
@@ -194,8 +196,6 @@ Services:
 
 The localization is currently done using an Extended Kalman Filter (EKF). The [robot_localization](https://docs.ros.org/en/melodic/api/robot_localization/html/index.html) package provides an implementation of this filter. However, several filters can be used.
 The filter is chosen in the [localization.launch](../../code/localization/launch/localization.launch) file.
-For more information see the [localization documentation](../localization/README.md).
-The position_heading_publisher_node publishes the output of the chosen filter as the current position and heading.
 
 ### EKF state publisher ([ekf_state_publisher.py](/../paf/code/localization/src/ekf_state_publisher.py))
 
@@ -218,6 +218,7 @@ Services:
 ### Position Heading Publisher Node ([position_heading_publisher_node.py](/../paf/code/localization/src/position_heading_publisher_node.py))
 
 The position_heading_publisher_node publishes the output of the chosen filter as the current position and heading.
+
 More information can be found [here](/doc/localization/position_heading_publisher_node.md).
 
 Subscriptions:
@@ -325,7 +326,9 @@ Services:
 
 ### MotionPlanning ([motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py))
 
-Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point. More about it can be found [here](../planning/motion_planning.md).
+Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point.
+
+More about it can be found [here](../planning/motion_planning.md).
 
 Subscriptions:
 
@@ -350,7 +353,9 @@ Services:
 
 ### PrePlanner ([global_planner_node.py](/../paf/code/planning/src/global_planner/global_planner_node.py))
 
-Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point. More about it can be found [here](../planning/Global_Planner.md).
+Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point.
+
+More about it can be found [here](../planning/Global_Planner.md).
 
 Subscriptions:
 
@@ -389,7 +394,9 @@ Services:
 
 Decides which speed is the right one to pass through a certain situation and
 also checks if an overtake is necessary.
-Everything is based on the data from the Perception [Perception](#Perception). More about the behavior tree can be found [here](../planning/Behavior_tree.md)
+Everything is based on the data from the Perception [Perception](#Perception).
+
+More about the behavior tree can be found [here](../planning/Behavior_tree.md)
 
 Subscriptions:
 
