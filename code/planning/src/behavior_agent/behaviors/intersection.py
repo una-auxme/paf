@@ -223,6 +223,13 @@ class Ahead(py_trees.behaviour.Behaviour):
 
         add_debug_entry(self.name, f"Stop line distance: {stop_line_distance}")
 
+        if (
+            stop_line_distance < 100
+            and stop_line_distance > OVER_STOP_LINE_DIST_THRESHOLD
+        ):
+            # Add the stop line early to avoid running over it at high speeds
+            set_line_stop(self.stop_proxy, stop_line_distance)
+
         if stop_line_distance > 25:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Stop line too far away"
@@ -241,7 +248,6 @@ class Ahead(py_trees.behaviour.Behaviour):
             overtake_status.status == overtake_status.OVERTAKE_QUEUED
             or overtake_status.status == overtake_status.OVERTAKING
         ):
-            set_line_stop(self.stop_proxy, stop_line_distance)
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,

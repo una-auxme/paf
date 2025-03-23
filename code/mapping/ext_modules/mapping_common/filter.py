@@ -1,3 +1,14 @@
+"""Contains the postprocessing filters for the **Intermediate Layer**
+
+**[API documentation](/doc/mapping/generated/mapping_common/filter.md)**
+
+After collecting the sensor data in the *mapping_data_integration* node,
+several filters are applied to improve the Map before
+sending it to Planning/Acting.
+
+This module contains these filters and algorithms.
+"""
+
 from dataclasses import dataclass
 from copy import deepcopy
 from typing import List, Tuple, Optional, Callable
@@ -25,7 +36,7 @@ class MapFilter:
 
         Returns:
             Map: New map with filter applied.
-                Note that unmodified entities are NOT deepcopied.
+                Note that unmodified entities might NOT be deepcopied.
         """
         raise NotImplementedError
 
@@ -123,6 +134,8 @@ class GrowthMergingFilter(MapFilter):
     """
 
     growth_distance: float
+    """Growth amount in m
+    """
     # Both checks ar OR-ed for merging
     min_merging_overlap_percent: float
     """Min overlap of the grown shapes in percent
@@ -131,6 +144,10 @@ class GrowthMergingFilter(MapFilter):
     """Min overlap of the grown shapes in m2
     """
     simplify_tolerance: float
+    """The shapes are simplified after each merge.
+
+    This controls the tolerance of the simplification.
+    """
 
     def filter(self, map: Map) -> Map:
         tree = map.build_tree()

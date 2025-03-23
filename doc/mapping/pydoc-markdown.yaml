@@ -1,0 +1,73 @@
+loaders:
+- type: python
+  search_path: [../../code/mapping/ext_modules]
+- type: python
+  search_path: [../../code/mapping/src]
+renderer:
+  type: mkdocs
+  output_directory: .build
+  markdown:
+    render_page_title: true
+    descriptive_class_title: false
+    render_typehint_in_data_header: true
+    render_toc: true
+    source_linker:
+      type: git
+      url_template: "/{path}#L{lineno}"
+  pages:
+  - title: Nodes
+    name: nodes
+    contents:
+      - mapping_data_integration.*
+  - title: Mapping Common
+    name: mapping_common
+    contents:
+      - mapping_common
+      - mapping_common.entity
+      - mapping_common.filter
+      - mapping_common.hero
+      - mapping_common.map
+      - mapping_common.markers
+      - mapping_common.mask
+      - mapping_common.shape
+      - mapping_common.transform
+    children:
+    - title: Entity documentation
+      name: entity
+      contents:
+      - mapping_common.entity.*
+    - title: Filter documentation
+      name: filter
+      contents:
+      - mapping_common.filter.*
+    - title: Hero documentation
+      name: hero
+      contents:
+      - mapping_common.hero.*
+    - title: Map documentation
+      name: map
+      contents:
+      - mapping_common.map.*
+    - title: Markers documentation
+      name: markers
+      contents:
+      - mapping_common.markers.*
+    - title: Mask documentation
+      name: mask
+      contents:
+      - mapping_common.mask.*
+    - title: Shape documentation
+      name: shape
+      contents:
+      - mapping_common.shape.*
+    - title: Transform documentation
+      name: transform
+      contents:
+      - mapping_common.transform.*
+processors:
+  - type: filter
+    expression: not (type(obj).__name__.lower() == "indirection" or (name.startswith("_") and not name.endswith("_")))
+    documented_only: false
+  - type: crossref
+  - type: smart
+  

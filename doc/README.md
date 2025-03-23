@@ -5,12 +5,14 @@ This document provides an overview of the structure of the documentation.
 - [`general`](#general)
 - [`development`](#development)
 - [`research`](#research)
-- [`examples`](#examples)
 - [`perception`](#perception)
+- [`mapping`](#mapping)
 - [`planning`](#planning)
 - [`acting`](#acting)
 - [`assets`](#assets)
 - [`dev_talks`](#dev_talks)
+- [`localization`](#localization)
+- [`control`](#control)
 
 ## `general`
 
@@ -24,13 +26,16 @@ The [`development`](./development/) folder contains guidelines for developing in
 
 The [`research`](./research/) folder contains the findings of each group during the initial phase of the project.
 
-## `examples`
-
-To-do
-
 ## `perception`
 
 The [`perception`](./perception/) folder contains documentation for the whole perception module and its individual components.
+
+## `mapping`
+
+The [`mapping`](./mapping/) folder contains documentation for the mapping package, often also called the **Intermediate Layer**.
+
+The **Intermediate Layer** receives most sensor information (everything except traffic light) from [perception](#perception), puts it into a
+unified data format: [Map](./mapping/generated/mapping_common/map.md#map) and then forwards it to [planning](#planning)/[acting](#acting)
 
 ## `planning`
 
@@ -47,3 +52,11 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 ## `dev_talks`
 
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
+
+## `localization`
+
+The [`localization`](./localization/) folder contains documentation for the whole localization task.
+
+## `control`
+
+The [`controle`](./control/) folder contains documentation for all the controllers.
