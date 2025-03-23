@@ -11,6 +11,8 @@ This document provides an overview of the structure of the documentation.
 - [`acting`](#acting)
 - [`assets`](#assets)
 - [`dev_talks`](#dev_talks)
+- [`localization`](#localization)
+- [`control`](#control)
 
 ## `general`
 
@@ -47,3 +49,9 @@ The [`assets`](./assets/) folder contains mainly images that are used inside the
 ## `dev_talks`
 
 The [`dev_talks`](./dev_talks/README.md) folder contains the protocols of each sprint review and roles that the students fill during the project.
+
+## `localization`
+The [`localization`](./localization/) folder contains documentation for the whole localization task.
+
+## `control`
+The [`controle`](./control/) folder contains documentation for all the controllers.
