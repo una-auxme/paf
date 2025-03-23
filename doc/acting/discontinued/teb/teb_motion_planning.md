@@ -8,7 +8,7 @@ This documentation provides an overview on how the discontinued files worked, in
   - [motion\_planner.py](#motion_plannerpy)
   - [launch/motion\_planning.launch](#launchmotion_planninglaunch)
   - [Configuration files](#configuration-files)
-    - [config/teb\_hero\_car.cfg](#configteb_hero_carcfg)
+    - [config/teb\_herocar\_config.yaml](#configteb_herocar_configyaml)
     - [config/motionplan\_config.yaml](#configmotionplan_configyaml)
     - [config/MotionPlan.cfg](#configmotionplancfg)
 
@@ -67,6 +67,7 @@ The `teb_planner_node_pa` will also publish its view of the world. In order to v
 The TEB Planner was already integrated with dynamic-reconfigure. For this several files are necessary.
 
 #### [config/teb\_herocar\_config.yaml](config/teb_herocar_config.yaml)
+
 The hero_car planning config is the most important config file. It describes how the planner comes up with a path.
 In the acting documentation more info on the parameters is given. It is recommended not to manually test these parameters at launch, but rather play with RQT dynamic-reconfigure sliders to adjust them.
 
