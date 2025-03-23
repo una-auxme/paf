@@ -38,10 +38,99 @@ found [here](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sens
 The messages necessary to control the vehicle via the Carla bridge can be
 found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg).
 
-The drawio-file can be found [here](../assets/nodes_visualization.drawio).
+``` mermaid
+ graph TD
 
-![Architecture overview](../assets/nodes_visualization.svg)
-*Connections between nodes visualized*
+    Perception ~~~ Localization
+
+    subgraph Localization
+        EKF
+    end
+
+    subgraph Control
+        PPC[Pure Pursuit Controller]
+        VC[Velocity Controller]
+        Vehicle[Vehicle Controller]
+    end
+
+    subgraph Perception
+        LDN[Lidar Distance Node]
+        RN[Radar Node]
+        VN[Vision Node]
+        LD[Lane Detection]
+        TLD[Traffic Light Detection]
+    end
+
+    subgraph Mapping
+        DI[Data Integration]
+        V[Visualization]
+    end
+
+    subgraph Planning
+        GPD[Global Plan Distance]
+        GP[Global Planning]
+        BT[Behavior Tree]
+        subgraph Local
+            MP[Motion Planning]
+            ACC
+        end
+    end
+
+    RGB ---> VN
+    RGB ---> LD
+    LIDAR --> LDN
+    RADAR ---> RN
+
+
+
+
+    SPEED --> Control
+    SPEED --> EKF
+    IMU --> EKF
+    GNSS --> EKF
+
+    LDN --> VN
+    LDN --> LD
+    VN --> TLD
+    RN --> DI
+    VN --> DI
+    LD --> DI
+    DI --> V
+    GP --> BT
+    TLD --> BT
+
+
+    EKF --> GP
+    EKF --> GPD
+    MP --> ACC
+    DI --> ACC
+    DI --> BT
+
+
+    GP --> MP
+
+
+    PPC --> ACC
+
+    PPC --> Vehicle
+    PPC --> VC
+    VC --> Vehicle
+
+    GPD --> GP
+
+
+    MP --> PPC
+
+    BT --> Vehicle
+
+    ACC --> VC
+    ACC --> Vehicle
+
+    Vehicle --> CB[Carla Bridge]
+    CB --> VSC[Vehicle]
+
+    Vehicle --> EKF
+```
 
 In the following, all subscribed and published topics and their corresponding nodes are listed with the format:
 
@@ -74,7 +163,7 @@ Publishes:
 - ```/VisionNode/parameter_update``` ([dynamic_reconfigure/Config](https://wiki.ros.org/dynamic_reconfigure))
 - ```/paf/hero/Center/segmented_image``` \(/rviz\) ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
 - ```/paf/hero/Center/segmented_traffic_light``` \(/TrafficLightNode\) ([sensor_msgs/Image](https://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html))
-- ```/paf/hero/visualization_pointcloud``` ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
+- ```/paf/hero/visualization_pointcloud``` ([mapping/ClusteredPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
 
 Services:
 
