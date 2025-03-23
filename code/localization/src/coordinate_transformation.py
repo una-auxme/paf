@@ -24,8 +24,8 @@ STD_H = 0.0
 
 
 class CoordinateTransformer:
-    """Object that is used to transform Coordinates between
-    xyz and gnss reference frame"""
+    """This class can be used to transform coordinates between
+    the x/y/z and GNSS reference frame"""
 
     la_ref = STD_LAT
     ln_ref = STD_LON
@@ -119,8 +119,7 @@ def ecef_to_enu(x, y, z, lat0, lon0, h0):
 
 def quat_to_heading(quaternion):
     """
-    Converts a quaternion to a heading of the car in radians
-    (see ../../doc/perception/coordinate_transformation.md)
+    Converts a quaternion to the heading of the car in radians
     :param quaternion: quaternion of the car as a list [q.x, q.y, q.z, q.w]
                        where q is the quaternion
     :return: heading of the car in radians (float)
@@ -129,7 +128,7 @@ def quat_to_heading(quaternion):
     rotation = Rotation.from_quat(quaternion)
     # Convert the Rotation object to a matrix
     rotation_matrix = rotation.as_matrix()
-    # calculate the angle around the z-axis (theta) from the matrix
+    # Calculate the angle around the z-axis (theta) from the matrix
     theta = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
 
     # arctan2 returns a theta so that:

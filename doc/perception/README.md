@@ -77,6 +77,13 @@ $$
 
 Where \(p_i\) and \(q_i\) represent the \(i\)-th component of the points \(p\) and \(q\), respectively. The rest of the DBSCAN algorithm remains the same, with the (ε)-neighborhood defined by the distance metric in this higher-dimensional space.
 
+## Unused files
+
+- [Lidar Distance Utility](./lidar_distance_utility.md)
+  - Not used since paf22
+- [Efficient PS](./efficientps.md)
+  - Not used scince paf22 and never successfully tested
+
 ## Experiments
 
 The overview of performance evaluations is located in the [experiments](./experiments/README.md) folder.
