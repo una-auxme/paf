@@ -7,7 +7,7 @@
 
 ## General Introduction to Velocity Controller
 
-The [velocity_controller](../../code/control/src/velocity_controller.py) implements our way to make the CARLA-Vehicle drive at a ```target_velocity``` (published by Planning) by using a tuned PID-Controller to calculate a ```throttle``` and a ```brake``` for the CARLA-Vehicle-Command.
+The [velocity_controller](../../code/control/src/velocity_controller.py) implements our way to make the CARLA-Vehicle drive at a ```target_velocity``` (published by the ACC) by using a tuned PID-Controller to calculate a ```throttle``` and a ```brake``` for the CARLA-Vehicle-Command.
 For more information about PID-Controllers and how they work, follow [this link](https://en.wikipedia.org/wiki/Proportional%E2%80%93integral%E2%80%93derivative_controller).
 
 **IMPORTANT:** The CARLA ```vehicle_control_cmd``` only allows you to use a ```throttle``` and a ```brake``` value, both with an allowed range from 0-1, to control the driven speed.
@@ -27,15 +27,27 @@ As the Velocity Controller also has to handle braking, we currently use ```throt
 
 ![MISSING: PID-BRAKING-IMAGE](../assets/control/VelContr_PID_BrakingWithThrottlePID.png)
 
-Currently, there is no general backwards-driving implemented here, as this was not needed (other than the [Unstuck Routine](/doc/planning/Behavior_detailed.md)).
+## Reverse driving
 
-Negative ```target_velocity``` signals are currently taken care off by  braking until we stand still.
-The ONLY exception is a ```target_velocity``` of **-3!**!
-A ```target_velocity``` of **-3** indicates the unstuck behavior is running, which expects the car to be driving backwards for a specific amount of time without steering.
+In PAF24 the reverse driving was added properly.\
+The velocity_controler has three velocity checks (if there is a velocity published).
 
-When implementing a general backwards driving approach this has to be kept in mind, because we DO NOT try to drive at the speed of -3 m/s. We only use the -3 as a keyword for driving backwards at full throttle for a specefic amount of time!
-(see _UnstuckBehavior_ in [maneuvers.py](/code/planning/src/behavior_agent/behaviours/maneuvers.py))
+### target_velocity < 0
 
-Currently, there is no secondary linearization for lower velocities implemented. If more accuracy in lower velocities is needed, a second tuning for lower velocites may be a smart way to improve the controller's performance!
+use the PID to calculate throttle / breakpedal position.\
+Setting and publishing the flag ```reverse``` for the ```vehicle_controller```, so it can tell Carla to drive backwards.
 
-**NOTE:** This Tuning was achieved back in the Leaderboard 1.0 and may not be optimal anymore in the current Leaderboard 2.0, you are welcome to retune this Controller, if necessary!
+### 0 <= target_velocity < 0.1
+
+The car will stop and stand stil until the ```target_velocity``` changes.
+
+### target_velocity > 0.1
+
+Drive forward with the PID
+
+### NOTE
+
+The PID was not changed in PAF24!\
+Tuning the PID for negativ speeds can be looked at if necessary.
+
+### Last updated 22.03.2025

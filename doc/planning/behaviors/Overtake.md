@@ -11,34 +11,64 @@
 
 ## General
 
-This behaviour is used to overtake an object in close proximity. This behaviour is currently not working and more like a initial prototype.
+This behavior is used to dynamically overtake an object in close proximity. An overtake checks for traffic on the other lane with the map function is_lane_free(...) and swaps lane as soon as it is free.
+
+After the overtake is finished, the vehicle returns to the original lane as soon as it is free.
+
+To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks, see [Motion Planning](../motion_planning.md).
 
 ## Overtake ahead
 
-Checks whether there is a object in front of the car that needs overtaking.
+Checks whether there is an object in front of the car that needs overtaking by using calculate_obstacle(...) which utilizes the map function get_nearest_entity(...).
 
-Estimates whether the car would collide with the object soon. If that is the case a counter gets incremented. When that counter reaches 4 SUCCESS is returned. If the object is not blocking the trajectory, FAILURE is returned.
+If an obstacle is in front, check its distance and speed.
+
+Increases a counter if an obstacle is detected within a certain threshold. Bicycles are checked with seperate conditions.
+
+Returns SUCCESS if the counter exceeds the limit, FAILURE if no obstacle is found, and RUNNING while waiting.
 
 ## Approach
 
-This is running while the obstacle is still in front of the car.
+Handles the procedure for approaching an obstacle before overtaking.
 
-Checks whether the oncoming traffic is far away or clear, if that is the case then ot_app_free is published as the current behaviour for the motion_planner and returns SUCCESS. Otherwise ot_app_blocked is published for the car to slow down.
+Retrieves the distance to the obstacle and determines if the other lane is clear with map function is_lane_free(...) and a counter.
 
-If the car stops behind the obstacle SUCCESS is also returned.
+Sets a stopmarker shortly before the obstacle, so the ACC automatically slows down the car while approaching to stop with a sensible distance.
+
+Returns SUCCESS if the vehicle has stopped or the oncoming lane is free, FAILURE if the overtake is aborted, and RUNNING while approaching the obstacle.
+
+If the other lane is free while still approaching, a flag is set to skip the wait behavior and an overtake service request is sent to initiate the lane change.
 
 ## Wait
 
-This handles wating for clear oncoming traffic if the car has stopped behind the obstacle. If the overtake is clear ot_wait_free gets published and SUCCESS is returned. Otherwise ot_wait_stopped gets published and the behaviour stays in RUNNING.
+This handles wating for clear traffic on the other lane while the car has stopped behind the obstacle.
 
-If the obstacle in front is gone the behaviour is aborted with FAILURE.
+Determines if the other lane is clear with is_lane_free(...) and a counter.
+
+When the other lane is free an overtake service request is sent to initiate the lane change.
+
+Returns SUCCESS when the lane is clear, FAILURE if the obstacle moves away or disappears, and RUNNING while waiting.
 
 ## Enter
 
 Handles switching the lane for overtaking.
 
-Waits for motion planner to finish the trajectory changes and for it to set the overtake_success flag.
+Removes the stopmarker so that the car can move.
+
+Requests the current overtake status with a service function.
+
+Returns SUCCESS when the status is OVERTAKING, RUNNING while the OVERTAKE_QUEUED and FAILURE if the status is NO_OVERTAKE, OVERTAKE_ENDING or unknown.
 
 ## Leave
 
-Runs until the overtake is fully finished and then leaves the behaviour.
+Runs until the overtake is fully finished by returning to the original lane and then leaves the behavior.
+
+Requests the current overtake status with a service function.
+
+While the overtake status is OVERTAKING, checks if the original lane is free with a map function.
+
+If it is free a request is sent to end the overtake and returns RUNNING.
+
+If there is an obstalce in front in close proximity while overtaking a request is sent to end the overtake as well.
+
+Returns FAILURE when the overtake is finished.
