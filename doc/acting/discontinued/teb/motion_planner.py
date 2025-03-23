@@ -681,7 +681,6 @@ class MotionPlanning(CompatibleNode):
             elif dist < 50:
                 return 7
             else:
-            else:
                 return 8
 
         distance_corner = 0
