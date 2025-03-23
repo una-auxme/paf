@@ -60,7 +60,6 @@ The `lidar_distance.py` node is part of the perception pipeline. This node proce
 - **Description:** Contains the calculated minimum distance to objects in various directions. Although the *Back*, *Left*, and *Right* directions are still actively processed in this node's image pipeline from PAF23, the current vision node only subscribes to and utilizes the *Center* image.  
   Support for the other directions has been intentionally preserved to allow future teams to easily extend the system with additional camera perspectives if needed.
 
-
 ### Marker Visualization
 
 - **Topic Name:** `~marker_topic` (Default: `/paf/hero/Lidar/Marker`)

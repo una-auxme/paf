@@ -4,8 +4,8 @@
 
 The **Radar Node** processes data from multiple radar sensors to improve environmental perception. It enables the detection of objects, their speeds, and distances, contributing to applications such as overtaking safety, turning maneuvers, and adaptive cruise control.
 
-Initially, two forward-facing radar sensors were used to enhance long-range visibility and clustering robustness. 
-However, after further evaluation, one of the sensors was repositioned to the rear to improve the detection of approaching vehicles, making overtaking and parking maneuvers safer. 
+Initially, two forward-facing radar sensors were used to enhance long-range visibility and clustering robustness.
+However, after further evaluation, one of the sensors was repositioned to the rear to improve the detection of approaching vehicles, making overtaking and parking maneuvers safer.
 This configuration balances forward and rearward perception while maintaining overall system reliability.
 
 This decision aligns with the objectives shown in the provided image, highlighting the motivation for using radar sensors:
@@ -25,7 +25,7 @@ The sensors are configured as follows:
 
 **Special Note:** RADAR1 is rotated 180° to face backward.
 
-Without a rearfacing radar the car was not able to change lanes or exit parking spaces safely as it was not possible to detect oncoming traffic in time. 
+Without a rearfacing radar the car was not able to change lanes or exit parking spaces safely as it was not possible to detect oncoming traffic in time.
 To optimize detection, we set the vertical field of view to 0.1. This eliminates unnecessary points that would otherwise be directed straight at the ground or far above obsacles. This configuration allows for full utilization of the 1500 points returned by each sensor per second.
 
 The sensors operate at a rate of 20 Hz, resulting in 75 points per tick per sensor.
