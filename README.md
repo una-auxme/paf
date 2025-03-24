@@ -6,11 +6,18 @@ The project is based on the [CARLA simulator](https://carla.org/) and uses the [
 In the future, the project aims to contribute to the [CARLA Autonomous Driving Challenge](https://leaderboard.carla.org/challenge/).
 The current maintainers of the project are @JulianTrommer and @ll7.
 
+## Video of the final presentation
+
+A presentation to show the achievements of the module was held on 2025-03-17.
+The recoding of it can be seen in the following video:
+
+[![Video of the final presentation](https://img.youtube.com/vi/NASVWiUFw2A/0.jpg)](https://www.youtube.com/watch?v=NASVWiUFw2A)
+
 ## Video of the latest agent
 
-The current state as of 2024-03-25 of the project can be seen in the following video:
+The current state as of 2025-03-17 of the project can be seen in the following video:
 
-[![Video of the latest agent](https://img.youtube.com/vi/2sR87lO9-Aw/0.jpg)](https://www.youtube.com/watch?v=2sR87lO9-Aw)
+Link will be provided later.
 
 ## Prerequisites
 
