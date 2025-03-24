@@ -23,6 +23,8 @@ As the project is still in early development, these requirements are subject to 
 
 ## Getting started
 
+Additional documentation can be found in the [doc](./doc/README.md) folder.
+
 ### Installation
 
 To run the project you have to install [docker](https://docs.docker.com/engine/install/) with NVIDIA GPU support,
