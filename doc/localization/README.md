@@ -42,7 +42,7 @@ If you do not want to use a filter and simply make use of the raw sensor data th
 
 ### Choosing a filter
 
-The filter to be used is chosen in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file.
+The filter to be used is chosen in the [localization.launch](./../../code/localization/launch/localization.launch) file.
 You only need to set the `filter` argument accordingly, like shown in the following image.
 
 ![Filter choice](../assets/localization/filter_choice.jpeg)
