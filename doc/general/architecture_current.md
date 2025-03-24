@@ -36,7 +36,7 @@ and [Acting](#Acting).
 The topics published by the Carla bridge can be
 found [here](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_sensors/).\
 The messages necessary to control the vehicle via the Carla bridge can be
-found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg).
+found [here](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_msgs/#carlaegovehiclecontrolmsg).
 
 The following is a simplified graph of the agent's architecture:
 
