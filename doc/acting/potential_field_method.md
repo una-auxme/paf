@@ -1,6 +1,9 @@
 # Potential Field Method for trajectory refinement
 
-**Summary:** This page informs about the potential field local planner which has been discontinued
+**Summary:** This page informs about the potential field local planner which has been **discontinued**
+
+> [!WARNING]
+> The Potential Field Method has been **discontinued** due to performance issues and bad GPS-localisation. The following information is for reference only.
 
 ## Table of contents
 
