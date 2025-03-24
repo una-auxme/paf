@@ -148,7 +148,7 @@ found [here](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleCont
 
 In the following, all subscribed and published topics and their corresponding nodes are listed with the format:
 
-- ```name of topic``` \(origin/destination node\) (typo of message) (link to ROS documentation of the message type)
+- ```name of topic``` \(origin/destination node\) (type of message) (link to ROS documentation of the message type)
 
 ## Perception
 
