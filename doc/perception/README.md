@@ -2,13 +2,18 @@
 
 This folder contains documentation of the perception components.
 
+- [Sensor overview](#sensor-overview)
+- [Object Detection / Distance and Segmentation](#object-detection--distance-and-segmentation)
+- [DBSCAN](#dbscan)
+- [Experiments](#experiments)
+
 In the following diagram you can see all the nodes and topics used in the perception, to show how they work together.
 
-![Perception Overview](../../doc/assets/perception/perception_overview.png)
+![Perception Overview](../../doc/assets/perception/perception_overview.jpeg)
 
 ## Sensor overview
 
-![Perception Overview](../../doc/assets/perception/carla_sensor_overview.png)
+![Sensor Overview](../../doc/assets/perception/carla_sensor_overview.png)
 
 The CARLA simulation vehicle is equipped with multiple sensors to perceive its surroundings and gather essential driving data:
 
@@ -37,24 +42,15 @@ The CARLA simulation vehicle is equipped with multiple sensors to perceive its s
 
 ## Object Detection / Distance and Segmentation
 
+- [Radar Node](radar_node.md)
+- [Lidar Distance](lidar_distance.md)
 - [Vision Node](./vision_node.md)
   - The Vision Node provides an adaptive interface that is able to perform object detection and image segmentation on multiple cameras at the same time
   (even though only one camera perceiving the front of the car is active at the moment).
-- [Distance to Objects](./distance_to_objects.md)
 - [Traffic Light Detection](./traffic_light_detection.md)
-- [Dataset Generator](./dataset_generator.md)
-- [Dataset Structure](./dataset_structure.md)
-- [Lane Detection](./Lanedetection_node.md)
-  - The Lane Detection uses an camera Image to detect Lanemarkings and converts them to Entities for the intermediate Layer
-
-## Localization
-
-An overview over the different nodes working together to localize the vehicle is provided in the [localization](./localization.md) file.
-
-- [Kalman Filter](./kalman_filter.md)
-- [Position Heading Publisher Node](./position_heading_publisher_node.md)
-- [Position Heading Filter Debug Node](./position_heading_filter_debug_node.md)
-- [Coordinate Transformation](./coordinate_transformation.md) (helper functions)
+- [Lane Detection Node](./Lanedetection_node.md)
+  - The Lane Detection uses a camera image to detect Lanemarkings and converts them to Entities for the intermediate Layer
+- [Lane Position](lane_position.md)
 
 ## DBSCAN
 
@@ -76,13 +72,6 @@ $$
 $$
 
 Where \(p_i\) and \(q_i\) represent the \(i\)-th component of the points \(p\) and \(q\), respectively. The rest of the DBSCAN algorithm remains the same, with the (ε)-neighborhood defined by the distance metric in this higher-dimensional space.
-
-## Unused files
-
-- [Lidar Distance Utility](./lidar_distance_utility.md)
-  - Not used since paf22
-- [Efficient PS](./efficientps.md)
-  - Not used scince paf22 and never successfully tested
 
 ## Experiments
 

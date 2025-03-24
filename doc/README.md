@@ -59,4 +59,4 @@ The [`localization`](./localization/) folder contains documentation for the whol
 
 ## `control`
 
-The [`controle`](./control/) folder contains documentation for all the controllers.
+The [`control`](./control/) folder contains documentation for all the controllers.
