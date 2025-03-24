@@ -13,12 +13,6 @@ The recoding of it can be seen in the following video:
 
 [![Video of the final presentation](https://img.youtube.com/vi/NASVWiUFw2A/0.jpg)](https://www.youtube.com/watch?v=NASVWiUFw2A)
 
-## Video of the latest agent
-
-The current state as of 2025-03-17 of the project can be seen in the following video:
-
-Link will be provided later.
-
 ## Prerequisites
 
 To be able to execute and develop the project, you need a Linux system equipped with:
