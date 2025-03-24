@@ -4,6 +4,12 @@
 
 - [General Introduction to Velocity Controller](#general-introduction-to-velocity-controller)
 - [Current Implementation](#current-implementation)
+- [Reverse driving](#reverse-driving)
+  - [target\_velocity \< 0](#target_velocity--0)
+  - [0 \<= target\_velocity \< 0.1](#0--target_velocity--01)
+  - [target\_velocity \> 0.1](#target_velocity--01)
+  - [NOTE](#note)
+  - [Last updated 22.03.2025](#last-updated-22032025)
 
 ## General Introduction to Velocity Controller
 
@@ -16,16 +22,16 @@ For more information about PID-Controllers and how they work, follow [this link]
 
 Currently, we use a tuned PID-Controller which was tuned for the speed of 14 m/s (around 50 km/h), as this is the most commonly driven velocity in this simulation:
 
-![MISSING: PID-TUNING-IMAGE](../assets/control/VelContr_PID_StepResponse.png)
+![PID-TUNING-IMAGE](../assets/control/VelContr_PID_StepResponse.png)
 
 Be aware, that the CARLA-Vehicle shifts gears automatically, resulting in the bumps you see!
 As PID-Controllers are linear by nature, the velocity-system is therefore linearized around 50 km/h, meaning the further you deviate from 50 km/h the worse the controller's performance gets:
 
-![MISSING: PID-LINEARIZATION-IMAGE](../assets/control/VelContr_PID_differentVelocities.png)
+![PID-LINEARIZATION-IMAGE](../assets/control/VelContr_PID_differentVelocities.png)
 
 As the Velocity Controller also has to handle braking, we currently use ```throttle```-optimized PID-Controller to calculate ```brake``` aswell (Since adding another Controller, like a P-Controller, did not work nearly as well!):
 
-![MISSING: PID-BRAKING-IMAGE](../assets/control/VelContr_PID_BrakingWithThrottlePID.png)
+![PID-BRAKING-IMAGE](../assets/control/VelContr_PID_BrakingWithThrottlePID.png)
 
 ## Reverse driving
 
