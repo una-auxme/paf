@@ -68,6 +68,7 @@ The following key functions are performed by the ACC node:
 
 4. **Calculate Velocity Based on Trajectory**:
    - Approximates a maximum safe cornering speed by tracing lines at an angle from the front of the car and measuring the distance at which they intersect with the trajectory.
+  
    ![Cornering speed visualization](../assets/planning/ACC_curve_speed_visualization.PNG)
    - Uses linear interpolation to calculate the desired speed based on the intersection distance.
 
