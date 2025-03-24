@@ -57,6 +57,7 @@ The following key functions are performed by the ACC node:
    - Checks if the necessary data (map and trajectory) is available.
    - Defines a trajectory mask and a rectangle in front of the car that is used to set the area in which a leading vehicle is searched. The rectangle is able to detect possible collisions that are close to the car while the trajectory mask checks the area at a higher distance from the car.
    - Publishes markers to visualize the masks, the chosen leading vehicle, and trajectory intersections.
+  
    ![Leading vehicle markers visualization](../assets/planning/ACC_trajectory_mask_visualization.PNG)
    - Identifies the leading vehicle based on the trajectory mask and the rectangle.
    - Calculates a reasonable speed depending on the leading vehicle using the function `calculate_velocity_based_on_lead`.
@@ -68,6 +69,7 @@ The following key functions are performed by the ACC node:
 
 4. **Calculate Velocity Based on Trajectory**:
    - Approximates a maximum safe cornering speed by tracing lines at an angle from the front of the car and measuring the distance at which they intersect with the trajectory.
+  
    ![Cornering speed visualization](../assets/planning/ACC_curve_speed_visualization.PNG)
    - Uses linear interpolation to calculate the desired speed based on the intersection distance.
 
