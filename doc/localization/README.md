@@ -7,8 +7,8 @@ This file provides an overview of the different nodes working together to locali
 - [Overview](#overview)
 - [Available filters](#available-filters)
   - [Choosing a filter](#choosing-a-filter)
-- [The position_heading_publisher_node](#the-position_heading_publisher_node)
-- [The coordinate_transformation node](#the-coordinate_transformation-node)
+- [The position\_heading\_publisher\_node](#the-position_heading_publisher_node)
+- [The coordinate\_transformation node](#the-coordinate_transformation-node)
 - [Adding a new filter](#adding-a-new-filter)
 - [Evaluating filters](#evaluating-filters)
 
@@ -73,7 +73,7 @@ Please note, that the module is not fully documented yet, but the currently most
 
 To use a new filter two files need to be updated:
 
-- First make sure that in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file:
+- First make sure that in the [localization.launch](./../../code/localization/launch/localization.launch) file:
   - the `filter` argument is set to the name of your new filter
   - you add a `group` that checks if the `filter` argument is set to the name of your new filter
   (_note_: the groups make it possible to save computational power by only starting the node(s), that are needed to estimate the state of the vehicle with the chosen filter)
