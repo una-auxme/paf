@@ -30,7 +30,7 @@ components that is needed for the preplanning component.
 After finishing that this node initiates the calculation of a trajectory based on the OpenDriveConverter
 from preplanning_trajectory.py. In the end the computed trajectory and prevailing speed limits are published.
 
-![img.png](../assets/Global_Plan.png)
+![Global Plan](../assets/Global_Plan.png)
 
 #### Global Planner Distance Publisher (global_plan_distance_publisher.py)
 
