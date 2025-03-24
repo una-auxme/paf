@@ -11,7 +11,7 @@
 
 ## Architecture Diagram
 
-To get an overview over the general architecture, check the [architecture diagram](link).
+To get an overview over the general architecture, check the [architecture diagram](../general/architecture_current.md#overview). It contains the planning components as well as all the other nodes and their relations.
 
 ## Overview
 
