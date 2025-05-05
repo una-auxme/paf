@@ -1,0 +1,192 @@
+ARG BASE_FLAVOUR=cuda
+
+FROM rocm/dev-ubuntu-24.04:6.4 AS agent-base-rocm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y software-properties-common
+
+# GPU vulkan driver update
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  add-apt-repository -y ppa:kisak/turtle && apt-get update && apt-get upgrade -y
+
+# https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
+FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04 AS agent-base-cuda
+
+############################################
+##### The main agent image starts here #####
+############################################
+FROM agent-base-${BASE_FLAVOUR} AS agent
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+#######################
+# Install ROS 2 Jazzy https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
+#######################
+ARG ROS_DISTRO=jazzy
+ENV ROS_DISTRO=${ROS_DISTRO}
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
+
+RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  add-apt-repository universe
+
+RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt update && apt install -y curl && \
+  curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list
+
+RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y \
+  ros-${ROS_DISTRO}-desktop \
+  ros-dev-tools \
+  python3-colcon-common-extensions
+
+# Required for rosdep since python 3.11
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+# Setup rosdep
+RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && \
+  bash -c "\
+  source /opt/ros/${ROS_DISTRO}/setup.bash && \
+  rosdep init"
+
+# Install paf project dependencies
+# RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#   apt-get update && apt-get install -y \
+#   ros-${ROS_DISTRO}-ackermann-msgs \
+#   ros-${ROS_DISTRO}-derived-object-msgs \
+#   ros-${ROS_DISTRO}-pcl-conversions \
+#   ros-${ROS_DISTRO}-rviz2 \
+#   ros-${ROS_DISTRO}-rqt \
+#   ros-${ROS_DISTRO}-pcl-ros \
+#   ros-${ROS_DISTRO}-rosbridge-suite \
+#   ros-${ROS_DISTRO}-rosbridge-server \
+#   ros-${ROS_DISTRO}-py-trees-ros \
+#   ros-${ROS_DISTRO}-rqt-reconfigure \
+#   ros-${ROS_DISTRO}-ament-cmake-pytest \
+#   ros-${ROS_DISTRO}-robot-localization \
+#   ros-${ROS_DISTRO}-tf2-ros \
+#   ros-${ROS_DISTRO}-tf2-eigen \
+#   ros-${ROS_DISTRO}-tf2-geometry-msgs
+
+
+# Not available in jazzy:
+#  ros-jazzy-carla-msgs \
+#  ros-jazzy-ros-numpy \
+#  ros-jazzy-robot-pose-ekf \
+#  ros-jazzy-rqt-py-trees \
+#  ros-jazzy-ros-pytest \, replaced with ros-jazzy-ament-cmake-pytest
+
+#################################
+# Create the internal workspace #
+#################################
+# This workspace at INTERNAL_WORKSPACE_DIR contains
+# - INTERNAL_ROS_WS: a ROS2 workspace for the PAF project packages (created later)
+# - INTERNAL_VENV: a venv for the python dependencies
+# INTERNAL_WORKSPACE_DIR is editable by non-root users (chmod at the end of this image)
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get upgrade -y && apt-get install -y \
+  python3.12 python3.12-venv python-is-python3
+
+# Build python venv
+ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
+ENV INTERNAL_VENV=${INTERNAL_WORKSPACE_DIR}/venv
+RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
+ENV PIP_CACHE_DIR=/${INTERNAL_WORKSPACE_DIR}/pip-cache
+ADD build/docker/agent/setup-scripts /root/setup-scripts/
+WORKDIR /root/setup-scripts
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  bash ./create_venv.sh ${INTERNAL_VENV}
+
+#################################################
+# Install carla leaderboard and scenario runner #
+#################################################
+ARG LEADERBOARD_GIT_BRANCH=leaderboard-2.1
+
+# Scenario runner
+ENV SCENARIO_RUNNER_ROOT=/opt/scenario_runner
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
+
+# Carla leaderboard
+ENV LEADERBOARD_ROOT=/opt/leaderboard
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
+
+############################
+# Install carla ros bridge #
+############################
+# The ros bridge is installed into a separate workspace that always has to be sourced BEFORE INTERNAL_ROS_WS
+
+ENV ROOT_ROS_WS=/root_ros2_ws
+RUN mkdir -p ${ROOT_ROS_WS}/src
+WORKDIR $ROOT_ROS_WS
+RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --recurse-submodules --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
+# Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
+RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt
+# The fix explained above works for humble
+# In jazzy, some deprecated header files got removed. This includes tf2_eigen.h (tf2_eigen.hpp should be used instead)
+# https://docs.ros.org/en/jazzy/Releases/Jazzy-Jalisco-Complete-Changelog.html#tf2-eigen
+# Restore the tf2-eigen.h: https://github.com/ros2/geometry2/pull/645
+RUN wget -O /opt/ros/jazzy/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  bash /root/setup-scripts/rosdep_install.sh ./src
+
+# Dependencies for the bridge as listed in ros-bridge/install_dependencies.sh and ros-bridge/CMakelists.txt
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y \
+  ros-${ROS_DISTRO}-rviz2 \
+  ros-${ROS_DISTRO}-ackermann-msgs \
+  ros-${ROS_DISTRO}-derived-object-msgs \
+  ros-${ROS_DISTRO}-cv-bridge \
+  ros-${ROS_DISTRO}-vision-opencv \
+  ros-${ROS_DISTRO}-rqt-image-view \
+  ros-${ROS_DISTRO}-rqt-gui-py \
+  ros-${ROS_DISTRO}-pcl-conversions \
+  ros-${ROS_DISTRO}-tf2-ros \
+  ros-${ROS_DISTRO}-tf2-eigen \
+  ros-${ROS_DISTRO}-tf2-geometry-msgs
+
+#FROM agent as bongo
+
+RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
+
+##########################################
+# Finish building the internal workspace #
+##########################################
+
+WORKDIR /root/setup-scripts
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  bash install_requirements.sh ${INTERNAL_VENV} \
+  requirements_carla.txt
+
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+
+FROM agent AS agent-dev
+
+# Dev tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y neovim htop
+
+RUN yes | unminimize
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get upgrade -y && apt-get install -y build-essential lsb-release software-properties-common \
+  python3.8 python3.8-venv python-is-python3 \
+  curl wget git \
+  man-db manpages-posix manpages-dev manpages-posix-dev
