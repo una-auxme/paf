@@ -7,6 +7,8 @@
 - [Add performance benchmarks](#add-performance-benchmarks)
   - [Approaches (benchmarks)](#approaches-benchmarks)
     - [Measure project startup time](#measure-project-startup-time)
+    - [Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)
+    - [Measure topic publish rates](#measure-topic-publish-rates)
     - [ros2\_benchmark for benchmarking parts of the node graph](#ros2_benchmark-for-benchmarking-parts-of-the-node-graph)
     - [ros2\_tracing for tracing the whole project](#ros2_tracing-for-tracing-the-whole-project)
   - [Status (benchmarks)](#status-benchmarks)
@@ -17,6 +19,9 @@
   - [Status (Carla)](#status-carla)
 - [Use official leaderboard release](#use-official-leaderboard-release)
 
+Priorities: LOW~NiceToHave, MED~VeryNiceToHave, HIGH~MustHave
+Efforts: LOW~CanBeDoneOnTheSide, MED~DayOfWork, HIGH~Week(s)ofWork
+
 ## **Docker improvements**
 
 **Docker specific improvements [here](./docker.md)**
@@ -24,6 +29,9 @@
 ## Integration of unit-tests into the CI
 
 Issue: [Improve the actions and their test coverage #385](https://github.com/una-auxme/paf/issues/385)
+
+Priority: MED
+Effort: MED-HIGH
 
 TODO
 
@@ -51,7 +59,32 @@ Problems:
 - Only able to measure startup
 - Measurements are probably subject to high fluctuations
 
-Priority: High? Should be done before the main ROS2 porting effort. *Discuss with project leaders*
+Effort: MED
+Priority: MED? Should be done before the main ROS2 porting effort. *Discuss with project leaders*
+
+#### Measure callback performance manually inside the nodes
+
+TODO Maybe a custom class for ROS2?
+
+#### Measure topic publish rates
+
+ROS1: <https://wiki.ros.org/Topics#Topic_statistics>
+ROS2: <https://docs.ros.org/en/jazzy/Concepts/Intermediate/About-Topic-Statistics.html>
+
+Pros:
+
+- Easy to activate for ROS1: Global parameter.
+- Available in ROS2
+
+Cons:
+
+- ROS2:
+  - Seems to be kinda unfinished: <https://github.com/ros2/ros2/issues/917>
+  - Has to be manually enabled for each subscriber: <https://github.com/ros-tooling/roadmap/issues/1>
+- Only works for topics (No services, actions)
+- Data only shows if a topic is too slow or fast enough for the simulator speed. It does not provide useful timing data if a topic reaches the simulator update rate.
+
+Recommendation: Prefer [manually measuring the nodes](#measure-callback-performance-manually-inside-the-nodes) instead
 
 #### [ros2_benchmark](https://github.com/NVIDIA-ISAAC-ROS/ros2_benchmark) for benchmarking parts of the node graph
 
@@ -84,7 +117,11 @@ General problems:
 - Benchmarks are highly dependent on the hardware they run on and the hardware is not standardized across the project. But at least the ci runner is always the same.
 - Benchmarks are highly dependent on background loads that run alongside the project.
 
-Recommendation: Implement startup benchmark? *Discuss with project leaders*
+Recommendation: Implement before main porting effort:
+
+- [Measure project startup time](#measure-project-startup-time)
+- [Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)
+- *Discuss with project leaders*
 
 ## Implement Correct Synchronization Mechanism for CARLA Simulation Steps
 

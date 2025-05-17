@@ -127,7 +127,7 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/un
 ############################
 # Install carla ros bridge #
 ############################
-# The ros bridge is installed into a separate workspace that always has to be sourced BEFORE INTERNAL_ROS_WS
+# The ros bridge is installed into a separate workspace ROOT_ROS_WS that always has to be sourced BEFORE INTERNAL_ROS_WS
 
 ENV ROOT_ROS_WS=/root_ros2_ws
 RUN mkdir -p ${ROOT_ROS_WS}/src
@@ -161,8 +161,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   ros-${ROS_DISTRO}-tf2-eigen \
   ros-${ROS_DISTRO}-tf2-geometry-msgs
 
-#FROM agent as bongo
-
 RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
 
 ##########################################
@@ -179,14 +177,14 @@ WORKDIR ${INTERNAL_WORKSPACE_DIR}
 FROM agent AS agent-dev
 
 # Dev tools
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y neovim htop
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#   apt-get update && apt-get install -y neovim htop
 
-RUN yes | unminimize
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get upgrade -y && apt-get install -y build-essential lsb-release software-properties-common \
-  python3.8 python3.8-venv python-is-python3 \
-  curl wget git \
-  man-db manpages-posix manpages-dev manpages-posix-dev
+# RUN yes | unminimize
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#   apt-get update && apt-get upgrade -y && apt-get install -y build-essential lsb-release software-properties-common \
+#   python3.8 python3.8-venv python-is-python3 \
+#   curl wget git \
+#   man-db manpages-posix manpages-dev manpages-posix-dev
