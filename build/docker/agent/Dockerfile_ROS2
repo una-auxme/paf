@@ -105,9 +105,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 ENV INTERNAL_VENV=${INTERNAL_WORKSPACE_DIR}/venv
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
-ENV PIP_CACHE_DIR=/${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/agent/setup-scripts /root/setup-scripts/
-WORKDIR /root/setup-scripts
+ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
+ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
+WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash ./create_venv.sh ${INTERNAL_VENV}
 
@@ -143,7 +143,7 @@ RUN wget -O /opt/ros/jazzy/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.g
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  bash /root/setup-scripts/rosdep_install.sh ./src
+  bash ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src
 
 # Dependencies for the bridge as listed in ros-bridge/install_dependencies.sh and ros-bridge/CMakelists.txt
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -163,18 +163,64 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
 
+# WIP: Install carla API
+# install dependencies for libgit2 and Carla PythonAPI
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y wget unzip
+
+ENV CARLA_ROOT=/opt/carla
+# Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
+# If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
+RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip --quiet -O PythonAPI.zip \
+  && unzip PythonAPI.zip \
+  && rm PythonAPI.zip \
+  && mkdir -p ${CARLA_ROOT} \
+  && mv PythonAPI ${CARLA_ROOT}/PythonAPI
+
+
 ##########################################
 # Finish building the internal workspace #
 ##########################################
 
-WORKDIR /root/setup-scripts
+WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash install_requirements.sh ${INTERNAL_VENV} \
   requirements_carla.txt
 
-WORKDIR ${INTERNAL_WORKSPACE_DIR}
+# Setup carla + leaderboard python dependencies
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/carla.pth && \
+  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/carla.pth && \
+  echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/leaderboard.pth && \
+  echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/leaderboard.pth
+# "Fix" the carla python API
+RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
+  apt-get install -y ./libtiff5.deb && \
+  rm libtiff5.deb
 
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+ADD build/docker/agent/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
+
+RUN ${INTERNAL_WORKSPACE_DIR}/setup-scripts/setup_user.sh
+
+###########################################
+##### The agent-dev image starts here #####
+###########################################
 FROM agent AS agent-dev
+ARG PAF_USERNAME=root
+ARG PAF_UID=0
+ARG PAF_GID=0
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y sudo
+
+# Allow duplicated uids with -o
+RUN groupadd --gid $PAF_GID $PAF_USERNAME -o \
+  && useradd --uid $PAF_UID --gid $PAF_GID -m $PAF_USERNAME -o \
+  && apt-get update \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
+  && chmod 0440 /etc/sudoers.d/$PAF_USERNAME
 
 # Dev tools
 # RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -188,3 +234,13 @@ FROM agent AS agent-dev
 #   python3.8 python3.8-venv python-is-python3 \
 #   curl wget git \
 #   man-db manpages-posix manpages-dev manpages-posix-dev
+
+######################################
+# Set internal workspace permissions #
+######################################
+
+# Make the internal workspace editable by all users
+RUN chown -R ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
+
+USER $PAF_USERNAME
+RUN ${INTERNAL_WORKSPACE_DIR}/setup-scripts/setup_user.sh
