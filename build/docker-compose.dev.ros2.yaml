@@ -25,14 +25,14 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:ro
       - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
     environment:
-      - DESKTOP_SESSION=${DESKTOP_SESSION}
-      - DISPLAY=${DISPLAY}
-      - XDG_SESSION_DESKTOP=${XDG_SESSION_DESKTOP}
-      - XDG_SESSION_TYPE=${XDG_SESSION_TYPE}
-      - XAUTHORITY=${XAUTHORITY}
-      - XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}
-      - XDG_SESSION_CLASS=${XDG_SESSION_CLASS}
-      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - DESKTOP_SESSION
+      - DISPLAY
+      - XDG_SESSION_DESKTOP
+      - XDG_SESSION_TYPE
+      - XAUTHORITY
+      - XDG_CURRENT_DESKTOP
+      - XDG_SESSION_CLASS
+      - XDG_RUNTIME_DIR
       - CARLA_SIM_HOST=carla-simulator
     network_mode: host
     command: bash -c "sleep infinity"

@@ -1,6 +1,6 @@
 ARG BASE_FLAVOUR=cuda
 
-FROM rocm/dev-ubuntu-24.04:6.4 AS agent-base-rocm
+FROM rocm/dev-ubuntu-22.04:6.4 AS agent-base-rocm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   add-apt-repository -y ppa:kisak/turtle && apt-get update && apt-get upgrade -y
 
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
-FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04 AS agent-base-cuda
+FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS agent-base-cuda
 
 ############################################
 ##### The main agent image starts here #####
@@ -26,7 +26,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #######################
 # Install ROS 2 Jazzy https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
 #######################
-ARG ROS_DISTRO=jazzy
+ARG ROS_DISTRO=humble
 ENV ROS_DISTRO=${ROS_DISTRO}
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -96,10 +96,11 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # - INTERNAL_VENV: a venv for the python dependencies
 # INTERNAL_WORKSPACE_DIR is editable by non-root users (chmod at the end of this image)
 
+ENV PYTHON_VERSION=3.10
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
-  python3.12 python3.12-venv python-is-python3
+  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python-is-python3
 
 # Build python venv
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
@@ -139,7 +140,7 @@ RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_director
 # In jazzy, some deprecated header files got removed. This includes tf2_eigen.h (tf2_eigen.hpp should be used instead)
 # https://docs.ros.org/en/jazzy/Releases/Jazzy-Jalisco-Complete-Changelog.html#tf2-eigen
 # Restore the tf2-eigen.h: https://github.com/ros2/geometry2/pull/645
-RUN wget -O /opt/ros/jazzy/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
+# RUN wget -O /opt/ros/${ROS_DISTRO}/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -189,10 +190,10 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   requirements_carla.txt
 
 # Setup carla + leaderboard python dependencies
-RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/carla.pth && \
-  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/carla.pth && \
-  echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/leaderboard.pth && \
-  echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python3.12/site-packages/leaderboard.pth
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
+  echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 # "Fix" the carla python API
 RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
   apt-get install -y ./libtiff5.deb && \
@@ -219,7 +220,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN groupadd --gid $PAF_GID $PAF_USERNAME -o \
   && useradd --uid $PAF_UID --gid $PAF_GID -m $PAF_USERNAME -o \
   && apt-get update \
-  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
+  && echo $PAF_USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
   && chmod 0440 /etc/sudoers.d/$PAF_USERNAME
 
 # Dev tools
