@@ -1,8 +1,8 @@
 services:
   # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
   carla-simulator:
-    #command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN}
-    command: bash -c "sleep infinity"
+    command: /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN}
+    #command: bash -c "sleep infinity"
     #image: ghcr.io/una-auxme/paf23:leaderboard-2.0
     #image: nvcr.io/nvidia/cuda:12.8.1-runtime-ubuntu24.04
     image: carla:0.9.15
@@ -23,7 +23,6 @@ services:
               capabilities: [ gpu ]
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
     user: ${PAF_UID}:${PAF_GID}
-    privileged: true
     expose:
       - 2000
       - 2001
@@ -38,7 +37,7 @@ services:
       - XAUTHORITY
       - XDG_CURRENT_DESKTOP
       - XDG_SESSION_CLASS
-      #- XDG_RUNTIME_DIR
+      - XDG_RUNTIME_DIR
     networks:
       - carla
     volumes:

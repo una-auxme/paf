@@ -16,6 +16,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
 FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS agent-base-cuda
 
+FROM carla-api:latest as carla-api
+
 ############################################
 ##### The main agent image starts here #####
 ############################################
@@ -173,11 +175,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ENV CARLA_ROOT=/opt/carla
 # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
 # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
-RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip --quiet -O PythonAPI.zip \
-  && unzip PythonAPI.zip \
-  && rm PythonAPI.zip \
-  && mkdir -p ${CARLA_ROOT} \
-  && mv PythonAPI ${CARLA_ROOT}/PythonAPI
+# RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip --quiet -O PythonAPI.zip \
+#   && unzip PythonAPI.zip \
+#   && rm PythonAPI.zip \
+#   && mkdir -p ${CARLA_ROOT} \
+#   && mv PythonAPI ${CARLA_ROOT}/PythonAPI
+
+COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
 
 
 ##########################################
@@ -191,7 +195,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
 
 # Setup carla + leaderboard python dependencies
 RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.15-py3.8-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
   echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
   echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 # "Fix" the carla python API
@@ -219,7 +223,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # Allow duplicated uids with -o
 RUN groupadd --gid $PAF_GID $PAF_USERNAME -o \
   && useradd --uid $PAF_UID --gid $PAF_GID -m $PAF_USERNAME -o \
-  && apt-get update \
   && echo $PAF_USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
   && chmod 0440 /etc/sudoers.d/$PAF_USERNAME
 
