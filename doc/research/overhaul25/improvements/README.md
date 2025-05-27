@@ -12,6 +12,7 @@
     - [ros2\_benchmark for benchmarking parts of the node graph](#ros2_benchmark-for-benchmarking-parts-of-the-node-graph)
     - [ros2\_tracing for tracing the whole project](#ros2_tracing-for-tracing-the-whole-project)
   - [Status (benchmarks)](#status-benchmarks)
+- [Create simple script for restarting all PAF nodes without restarting the leaderboard](#create-simple-script-for-restarting-all-paf-nodes-without-restarting-the-leaderboard)
 - [Implement Correct Synchronization Mechanism for CARLA Simulation Steps](#implement-correct-synchronization-mechanism-for-carla-simulation-steps)
 - [Add more cython annotations in the mapping\_common package](#add-more-cython-annotations-in-the-mapping_common-package)
 - [Fix Carla crashes](#fix-carla-crashes)
@@ -19,8 +20,8 @@
   - [Status (Carla)](#status-carla)
 - [Use official leaderboard release](#use-official-leaderboard-release)
 
-Priorities: LOW~NiceToHave, MED~VeryNiceToHave, HIGH~MustHave
-Efforts: LOW~CanBeDoneOnTheSide, MED~DayOfWork, HIGH~Week(s)ofWork
+Priorities: LOW-NiceToHave, MED-VeryNiceToHave, HIGH-MustHave
+Efforts: LOW-CanBeDoneOnTheSide, MED-DayOfWork, HIGH-Week(s)ofWork
 
 ## **Docker improvements**
 
@@ -122,6 +123,12 @@ Recommendation: Implement before main porting effort:
 - [Measure project startup time](#measure-project-startup-time)
 - [Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)
 - *Discuss with project leaders*
+
+## Create simple script for restarting all PAF nodes without restarting the leaderboard
+
+Would allow rapid development and does not run into the Carla memory leak
+
+Restart should exclude some nodes like the GlobalPlanner
 
 ## Implement Correct Synchronization Mechanism for CARLA Simulation Steps
 

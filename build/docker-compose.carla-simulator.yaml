@@ -5,13 +5,13 @@ services:
     #command: bash -c "sleep infinity"
     #image: ghcr.io/una-auxme/paf23:leaderboard-2.0
     #image: nvcr.io/nvidia/cuda:12.8.1-runtime-ubuntu24.04
-    image: carla:0.9.15
+    image: carla-leaderboard:2.1
     # devices:
     #   - /dev/kfd
     #   - /dev/dri
-    build:
-      dockerfile: build/docker/carla/Dockerfile
-      context: ../
+    # build:
+    #   dockerfile: build/docker/carla/Dockerfile
+    #   context: ../
     init: true
     deploy:
       resources:
@@ -23,7 +23,7 @@ services:
               capabilities: [ gpu ]
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
     user: ${PAF_UID}:${PAF_GID}
-    expose:
+    ports:
       - 2000
       - 2001
       - 2002

@@ -14,9 +14,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   add-apt-repository -y ppa:kisak/turtle && apt-get update && apt-get upgrade -y
 
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
-FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS agent-base-cuda
+# FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu20.04 AS agent-base-cuda
+FROM ubuntu:20.04 AS agent-base-cuda
 
-FROM carla-api:latest as carla-api
+FROM carla-leaderboard-api:2.1 as carla-api
 
 ############################################
 ##### The main agent image starts here #####
@@ -28,7 +29,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #######################
 # Install ROS 2 Jazzy https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
 #######################
-ARG ROS_DISTRO=humble
+ARG ROS_DISTRO=foxy
 ENV ROS_DISTRO=${ROS_DISTRO}
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -98,7 +99,7 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # - INTERNAL_VENV: a venv for the python dependencies
 # INTERNAL_WORKSPACE_DIR is editable by non-root users (chmod at the end of this image)
 
-ENV PYTHON_VERSION=3.10
+ENV PYTHON_VERSION=3.8
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
@@ -127,6 +128,23 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/ca
 ENV LEADERBOARD_ROOT=/opt/leaderboard
 RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
 
+WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
+ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  bash ./create_venv.sh ${LEADERBOARD_VENV}
+
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  bash install_requirements.sh ${LEADERBOARD_VENV} \
+  $LEADERBOARD_ROOT/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt
+
+# Setup carla + leaderboard python dependencies
+ENV CARLA_ROOT=/opt/carla
+COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
+  echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
+
 ############################
 # Install carla ros bridge #
 ############################
@@ -144,9 +162,9 @@ RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_director
 # Restore the tf2-eigen.h: https://github.com/ros2/geometry2/pull/645
 # RUN wget -O /opt/ros/${ROS_DISTRO}/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  bash ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#   bash ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src
 
 # Dependencies for the bridge as listed in ros-bridge/install_dependencies.sh and ros-bridge/CMakelists.txt
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -188,20 +206,20 @@ COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
 # Finish building the internal workspace #
 ##########################################
 
-WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
-RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-  bash install_requirements.sh ${INTERNAL_VENV} \
-  requirements_carla.txt
+# WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
+# RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+#   bash install_requirements.sh ${INTERNAL_VENV} \
+#   requirements_carla.txt
 
-# Setup carla + leaderboard python dependencies
-RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.15-py3.8-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-  echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
-  echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
+# # Setup carla + leaderboard python dependencies
+# RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+#   echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+#   echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
+#   echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 # "Fix" the carla python API
-RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
-  apt-get install -y ./libtiff5.deb && \
-  rm libtiff5.deb
+# RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
+#   apt-get install -y ./libtiff5.deb && \
+#   rm libtiff5.deb
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 ADD build/docker/agent/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
@@ -218,11 +236,12 @@ ARG PAF_GID=0
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y sudo
+  apt-get update && apt-get install -y sudo \
+  neovim nano iputils-ping
 
 # Allow duplicated uids with -o
 RUN groupadd --gid $PAF_GID $PAF_USERNAME -o \
-  && useradd --uid $PAF_UID --gid $PAF_GID -m $PAF_USERNAME -o \
+  && useradd --uid $PAF_UID --gid $PAF_GID -m -s /bin/bash $PAF_USERNAME -o \
   && echo $PAF_USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
   && chmod 0440 /etc/sudoers.d/$PAF_USERNAME
 

@@ -8,6 +8,7 @@ The project currently uses ROS 1 noetic as its backbone. It is EOL in May 2025.
   - [1. Build a basic ROS 2 Dockerfile](#1-build-a-basic-ros-2-dockerfile)
     - [Steps (Dockerfile)](#steps-dockerfile)
     - [Problems (Dockerfile)](#problems-dockerfile)
+      - [**Major issue: Carla API**](#major-issue-carla-api)
     - [Status (Dockerfile)](#status-dockerfile)
   - [2. ROS package dependencies](#2-ros-package-dependencies)
   - [3. Take measurements with the ROS1 codebase](#3-take-measurements-with-the-ros1-codebase)
@@ -33,11 +34,12 @@ The project currently uses ROS 1 noetic as its backbone. It is EOL in May 2025.
 
 This should make sure that the issues described [here](https://github.com/una-auxme/paf/issues/253) are fixable.
 
-The preferred ROS 2 Distribution is [Jazzy Jalisco](https://docs.ros.org/en/rolling/Releases/Release-Jazzy-Jalisco.html) which is supported until 2029.
+~~The preferred ROS 2 Distribution is [Jazzy Jalisco](https://docs.ros.org/en/rolling/Releases/Release-Jazzy-Jalisco.html) which is supported until 2029.
 The main reason for using jazzy is the longer support window than Humble Hawksbill (EOL 2027).
-Should issues arise specifically related to jazzy, a fallback to humble is relatively easy by switching the ROS distribution in the Dockerfile.
+Should issues arise specifically related to jazzy, a fallback to humble is relatively easy by switching the ROS distribution in the Dockerfile.~~
+The ROS 2 Distribution is [Foxy Fitzroy](https://docs.ros.org/en/rolling/Releases/Release-Foxy-Fitzroy.html), because [of issues with the Carla API](#major-issue-carla-api).
 
-The base docker image is Ubuntu 24.04 based. To simplify GPU dependencies a GPU-vendor image is used (Nvidia-CUDA/AMD-ROCM).
+The base docker image is Ubuntu ~~24.04~~20.04 based. To simplify GPU dependencies a GPU-vendor image is used (Nvidia-CUDA/AMD-ROCM).
 This removes a lot of complex steps from the Dockerfile. (Manual ROS installation is a lot easier than manual CUDA installation)
 
 Further possible improvements to the docker/build system can be found [here](../improvements/docker.md).
@@ -74,6 +76,28 @@ Some of them will be implemented directly as part of the ROS2 porting effort.
     - xmlschema==1.0.18
     - antlr4-python3-runtime==4.10
   - Other packages have no locked version but might still break because of major upgrades: [Merged requirements list](../../../../build/docker/agent/setup-scripts/requirements_carla.txt)
+
+##### **Major issue: Carla API**
+
+The Carla API from the leaderboard release officially only supports up to Python 3.8.
+
+- It segfaults with 3.10 (ubuntu 22.04) and 3.12 (ubuntu 24.04)
+- The API from the 0.9.15 release also segfaults with these versions
+- Using a nightly release from the [ue4-dev](https://github.com/carla-simulator/carla/tree/ue4-dev) branch:
+  - In 3.10, it crashes with `undefined symbol: _PyTraceMalloc_NewReference`
+  - In 3.12, it crashes because the `imp` module does not exist anymore in 3.12
+- [General issue for the segfaults](https://github.com/carla-simulator/carla/issues/8662)
+
+The Carla API has to run with the same python version as ROS 2 since the leaderboard and carla-ros-bridge use both simultaneously
+
+Possible Solutions:
+
+- Use ROS 2 Foxy. Ships with python 3.8 but is **EOL**
+- Try to compile Carla from source. Is a lot of effort and might still not work. Also breaks compatibility with the official leaderboard. Not recommended.
+- Try to use an older python version with ROS 2 humble/jazzy. Might work, but requires building ROS from source. Investigation pending...
+- Wait for [a new Carla leaderboard release](https://github.com/carla-simulator/carla/tree/ue4/0.9.16)
+
+**→ The project will use ROS 2 Foxy for now.** Foxy is EOL, but the initial port to any ROS 2 version makes future version upgrades quite easy.
 
 #### Status (Dockerfile)
 

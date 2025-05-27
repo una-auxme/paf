@@ -27,27 +27,30 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ############################################
 ##### The main agent image starts here #####
 ############################################
-FROM carla-base-${BASE_FLAVOUR} AS carla
+FROM carla-base-${BASE_FLAVOUR} AS carla-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y \
+  xz-utils
+
 ENV CARLA_ROOT=/opt/carla
-RUN --mount=type=bind,target=/opt/carla.tar.gz,source=build/docker/carla/CARLA_Latest.tar.gz,rw \
-  chown root:root /opt/carla.tar.gz && \
+RUN --mount=type=bind,target=/opt/carla.tar.xz,source=build/docker/carla/CARLA_Leaderboard_2.0.tar.xz \
   mkdir -p ${CARLA_ROOT} && \
-  tar -xf /opt/carla.tar.gz -C ${CARLA_ROOT}
+  tar --no-same-owner -xf /opt/carla.tar.xz -C ${CARLA_ROOT} --strip-components=1
 WORKDIR ${CARLA_ROOT}
 RUN chmod +x CarlaUE4.sh && chmod +x ./CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping
-# RUN --mount=type=bind,target=${CARLA_ROOT}/Import/additional-maps.tar.gz,source=build/docker/carla/additional-maps.tar.gz,rw \
-#   chown root:root ${CARLA_ROOT}/Import/additional-maps.tar.gz && \
-#   chmod +x ./ImportAssets.sh && ./ImportAssets.sh
+
+
+FROM alpine as carla-api
+
+COPY --from=carla-base /opt/carla/PythonAPI /opt/carla/PythonAPI
+
+FROM carla-base as carla
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt install -y \
   xdg-user-dirs xdg-utils
-
-FROM alpine as carla-api
-
-COPY --from=carla /opt/carla/PythonAPI /opt/carla/PythonAPI
-
