@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get install -y libvulkan1 vulkan-tools libnvidia-gl-570
 
 ############################################
-##### The main agent image starts here #####
+##### The main carla image starts here #####
 ############################################
 FROM carla-base-${BASE_FLAVOUR} AS carla
 
@@ -49,11 +49,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt install -y \
   xdg-user-dirs xdg-utils
 
-FROM ${BASE_IMAGE} as carla-api
+FROM ${BASE_IMAGE} AS carla-api
 
 COPY --from=carla /opt/carla/PythonAPI /opt/carla/PythonAPI
 
-FROM carla-api as carla-ros-bridge
+##################################################
+##### The carla-ros-bridge image starts here #####
+##################################################
+FROM carla-api AS carla-ros-bridge
 
 #####################################
 # Install python build dependencies #
@@ -74,7 +77,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 
 ##################################
 # Compile python 3.8 from source #
@@ -87,7 +89,8 @@ RUN mkdir python38 && \
   rm python38.tgz
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/python38
-RUN ./configure --enable-optimizations --prefix=/usr && \
+# CFLAGS=-fPIC is required because the ros build cannot dynamically relink non implemented functions otherwise
+RUN CFLAGS=-fPIC ./configure --enable-optimizations --prefix=/usr && \
   make -j$(nproc) && \
   make altinstall
 ENV PYTHON_VERSION=3.8
@@ -181,15 +184,48 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   "
 
 # Install python dependencies again but this time including the ROS ones
+# The pip freeze... uses the installed system packages as requirement for the venv (without versions)
+WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
+ADD build/docker/carla/requirements_ros_build.txt ./requirements_ros_build.txt
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-  cd ${INTERNAL_WORKSPACE_DIR}/setup-scripts && \
   pip freeze | awk -F "==" '{ print $1 }' > ./requirements_ros_build_freeze.txt && \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
   ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt ./requirements_ros_build_freeze.txt
+WORKDIR ${ROS_ROOT}
 
+# Remove some conflicting libraries because ros ships its own version
+# https://github.com/ros2/orocos_kdl_vendor/issues/29
+RUN apt-get remove -y pybind11-dev liborocos-kdl-dev liborocos-kdl1.5 libshiboken2-dev
+
+# # In jazzy, some deprecated header files got removed. This includes tf2_eigen.h (tf2_eigen.hpp should be used instead)
+# # https://docs.ros.org/en/jazzy/Releases/Jazzy-Jalisco-Complete-Changelog.html#tf2-eigen
+# # Restore the tf2-eigen.h: https://github.com/ros2/geometry2/pull/645
+RUN wget -O /${ROS_ROOT}/src/ros2/geometry2/tf2_eigen/include/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
 
 RUN bash -c " \
   source ${LEADERBOARD_VENV}/bin/activate && \
-  colcon build --symlink-install \
+  colcon build \
+  --packages-ignore \
+  qt_gui_cpp rqt_gui_cpp \
   "
 
+RUN echo source "${ROS_ROOT}/install/setup.bash" >> ~/.bashrc
+
+############################
+# Install carla ros bridge #
+############################
+# The ros bridge is installed into a separate workspace ROOT_ROS_WS
+
+ENV ROOT_ROS_WS=/root_ros2_ws
+RUN mkdir -p ${ROOT_ROS_WS}/src
+WORKDIR $ROOT_ROS_WS
+RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --recurse-submodules --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
+# Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
+RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt
+# The fix explained above works for humble
+
+RUN bash -c "\
+  source ${LEADERBOARD_VENV}/bin/activate && \
+  source ${ROS_ROOT}/install/setup.bash && \
+  colcon build"
+RUN echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> ~/.bashrc

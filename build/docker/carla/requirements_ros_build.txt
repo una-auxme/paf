@@ -11,5 +11,9 @@ pytest-rerunfailures
 pytest-runner
 pytest-timeout
 
-# Rosdep does not install python dependencies via pip (uses apt instead) -> dependencies below
+# Missing build dependencies below:
+# Other dependencies are installed based on the installed system packages in the Dockerfile
 catkin_pkg
+empy
+pyyaml
+lark
