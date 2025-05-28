@@ -9,3 +9,4 @@ fi
 
 docker build -t carla-leaderboard:2.1 --target carla -f ./Dockerfile ../../../
 docker build -t carla-leaderboard-api:2.1 --target carla-api -f ./Dockerfile ../../../
+docker build -t carla-leaderboard-ros-bridge:2.1 --target carla-ros-bridge -f ./Dockerfile ../../../

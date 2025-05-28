@@ -15,7 +15,7 @@ echo Python executable: "$(which python)"
 echo Pip executable: "$(which pip)"
 echo Added requirements: "${ADDED_REQUIREMENTS[@]}"
 
-pip_tmpdir=~/.pip-tmpdir-distrobox
+pip_tmpdir=~/.pip-tmpdir-docker
 mkdir -p ${pip_tmpdir}
 
 TMPDIR=${pip_tmpdir} pip install -U "${ADDED_REQUIREMENTS[@]}"

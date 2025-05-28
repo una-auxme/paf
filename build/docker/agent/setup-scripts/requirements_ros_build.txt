@@ -1,0 +1,15 @@
+# From https://docs.ros.org/en/jazzy/Installation/Alternatives/Ubuntu-Development-Setup.html
+flake8-blind-except
+flake8-class-newline
+flake8-deprecated
+mypy
+pytest
+pytest-cov
+pytest-mock
+pytest-repeat
+pytest-rerunfailures
+pytest-runner
+pytest-timeout
+
+# Rosdep does not install python dependencies via pip (uses apt instead) -> dependencies below
+catkin_pkg
