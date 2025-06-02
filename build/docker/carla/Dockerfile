@@ -204,10 +204,12 @@ RUN wget -O /${ROS_ROOT}/src/ros2/geometry2/tf2_eigen/include/tf2_eigen/tf2_eige
 
 RUN bash -c " \
   source ${LEADERBOARD_VENV}/bin/activate && \
-  colcon build \
+  colcon build --merge-install \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release \
   --packages-ignore \
   qt_gui_cpp rqt_gui_cpp \
-  "
+  " && \
+  rm -r ${ROS_ROOT}/build ${ROS_ROOT}/log
 
 RUN echo source "${ROS_ROOT}/install/setup.bash" >> ~/.bashrc
 
@@ -219,13 +221,31 @@ RUN echo source "${ROS_ROOT}/install/setup.bash" >> ~/.bashrc
 ENV ROOT_ROS_WS=/root_ros2_ws
 RUN mkdir -p ${ROOT_ROS_WS}/src
 WORKDIR $ROOT_ROS_WS
-RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --recurse-submodules --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
+RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
 # Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
 RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt
-# The fix explained above works for humble
+
+RUN git clone --recurse-submodules -b 1.0.0 --single-branch https://github.com/ros-perception/pcl_msgs ./src/pcl_msgs
+RUN git clone --recurse-submodules -b 2.6.3 --single-branch https://github.com/ros-perception/perception_pcl ./src/perception_pcl
+
+# Always use bash because we need to build in the venv with python 3.8
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && \
+  bash -c " \
+  source ${LEADERBOARD_VENV}/bin/activate && \
+  source ${ROS_ROOT}/install/setup.bash && \
+  rosdep update && \
+  rosdep install --from-paths src --ignore-src -y \
+  "
 
 RUN bash -c "\
   source ${LEADERBOARD_VENV}/bin/activate && \
   source ${ROS_ROOT}/install/setup.bash && \
-  colcon build"
+  colcon build \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release \
+  " && \
+  rm -r ${ROOT_ROS_WS}/build ${ROOT_ROS_WS}/log
 RUN echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> ~/.bashrc
+
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
