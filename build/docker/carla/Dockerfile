@@ -114,14 +114,15 @@ RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
 ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
+ADD build/docker/carla/requirements_ros_build.txt ./requirements_ros_build.txt
 ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   python3.8 -m venv "${LEADERBOARD_VENV}" && \
-  echo source "${LEADERBOARD_VENV}/bin/activate" >> ~/.bashrc
+  echo source "${LEADERBOARD_VENV}/bin/activate" >> /.env.bash
 
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
-  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt
+  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt
 
 # Setup carla + leaderboard python dependencies
 ENV CARLA_ROOT=/opt/carla
@@ -177,7 +178,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
   bash -c " \
-  source ${LEADERBOARD_VENV}/bin/activate && \
+  source /.env.bash && \
   rosdep init && rosdep update && \
   rosdep install --from-paths src --ignore-src -y \
   --skip-keys 'fastcdr rti-connext-dds-6.0.1 urdfdom_headers' \
@@ -186,7 +187,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # Install python dependencies again but this time including the ROS ones
 # The pip freeze... uses the installed system packages as requirement for the venv (without versions)
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
-ADD build/docker/carla/requirements_ros_build.txt ./requirements_ros_build.txt
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   pip freeze | awk -F "==" '{ print $1 }' > ./requirements_ros_build_freeze.txt && \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
@@ -203,7 +203,7 @@ RUN apt-get remove -y pybind11-dev liborocos-kdl-dev liborocos-kdl1.5 libshiboke
 RUN wget -O /${ROS_ROOT}/src/ros2/geometry2/tf2_eigen/include/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
 
 RUN bash -c " \
-  source ${LEADERBOARD_VENV}/bin/activate && \
+  source /.env.bash && \
   colcon build --merge-install \
   --cmake-args -DCMAKE_BUILD_TYPE=Release \
   --packages-ignore \
@@ -211,14 +211,14 @@ RUN bash -c " \
   " && \
   rm -r ${ROS_ROOT}/build ${ROS_ROOT}/log
 
-RUN echo source "${ROS_ROOT}/install/setup.bash" >> ~/.bashrc
+RUN echo source "${ROS_ROOT}/install/setup.bash" >> /.env.bash
 
 ############################
 # Install carla ros bridge #
 ############################
 # The ros bridge is installed into a separate workspace ROOT_ROS_WS
 
-ENV ROOT_ROS_WS=/root_ros2_ws
+ENV ROOT_ROS_WS=${INTERNAL_WORKSPACE_DIR}/root_ros2_ws
 RUN mkdir -p ${ROOT_ROS_WS}/src
 WORKDIR $ROOT_ROS_WS
 RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
@@ -233,8 +233,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
   bash -c " \
-  source ${LEADERBOARD_VENV}/bin/activate && \
-  source ${ROS_ROOT}/install/setup.bash && \
+  source /.env.bash && \
   rosdep update && \
   rosdep install --from-paths src --ignore-src -y \
   "
@@ -246,6 +245,27 @@ RUN bash -c "\
   --cmake-args -DCMAKE_BUILD_TYPE=Release \
   " && \
   rm -r ${ROOT_ROS_WS}/build ${ROOT_ROS_WS}/log
-RUN echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> ~/.bashrc
+RUN echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> /.env.bash
 
+####################
+# Setup ros2 agent #
+####################
+
+# Use dummy package because the leaderboards wants to launch something
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
+RUN mkdir -p ros2_ws/src
+ADD build/docker/carla/ros_bridge_dummy ros2_ws/src/
+RUN bash -c " \
+  source /.env.bash && \
+  cd ros2_ws && \
+  colcon build" && \
+  echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> /.env.bash
+
+# The agent launches the dummy package
+ADD build/docker/carla/agent_ros2_bridge.py ./
+CMD [ "bash", "-c", "sleep infinity"  ]
+
+RUN echo "source /.env.bash" >> ~/.bashrc
+ADD build/docker/carla/wait_for_carla.py /
+ADD build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]

@@ -33,8 +33,6 @@ services:
       - XDG_CURRENT_DESKTOP
       - XDG_SESSION_CLASS
       - XDG_RUNTIME_DIR
-      - CARLA_SIM_HOST=carla-simulator
-      - ROUTE=/opt/leaderboard/data/routes_devtest.xml
     command: bash -c "sleep infinity"
     networks:
       - carla

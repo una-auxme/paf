@@ -13,7 +13,10 @@ class PAFAgent(ROS2Agent):
         self.track = Track.MAP
 
     def get_ros_entrypoint(self):
-        return {}
+        return {
+            "package": "ros_bridge_dummy",
+            "launch_file": "dummy.launch",
+        }
 
     def sensors(self):
         sensors = [
