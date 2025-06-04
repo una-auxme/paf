@@ -40,7 +40,7 @@ services:
       - ./CustomCarlaSettings.ini:/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini
 
   carla-ros-bridge:
-    #command: python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP
+    command: python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP
     image: carla-leaderboard-ros-bridge:2.1
     environment:
       - CARLA_SIM_HOST=carla-simulator

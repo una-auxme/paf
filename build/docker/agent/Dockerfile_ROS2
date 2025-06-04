@@ -101,7 +101,7 @@ ENV PYTHON_VERSION=3.12
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
-  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python-is-python3
+  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-pip python-is-python3
 
 # Build python venv
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
@@ -111,7 +111,10 @@ ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
 ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-  bash ./create_venv.sh ${INTERNAL_VENV}
+  bash ./create_venv.sh ${INTERNAL_VENV} && \
+  bash ./install_requirements.sh ${INTERNAL_VENV} ./requirements_ros_build.txt && \
+  echo source "${INTERNAL_VENV}/bin/activate" >> /.env.bash && \
+  echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> /.env.bash
 
 #################################################
 # Install carla leaderboard and scenario runner #
@@ -161,7 +164,10 @@ RUN wget -O /opt/ros/${ROS_DISTRO}/include/tf2_eigen/tf2_eigen/tf2_eigen.h https
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  bash ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src
+  bash -c " \
+  source /.env.bash && \
+  ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src \
+  "
 
 # Dependencies for the bridge as listed in ros-bridge/install_dependencies.sh and ros-bridge/CMakelists.txt
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -179,7 +185,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   ros-${ROS_DISTRO}-tf2-eigen \
   ros-${ROS_DISTRO}-tf2-geometry-msgs
 
-RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
+RUN bash -c "source /.env.bash && colcon build" && \
+  echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> /.env.bash
 
 # WIP: Install carla API
 # install dependencies for libgit2 and Carla PythonAPI
@@ -221,9 +228,6 @@ RUN bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 ADD build/docker/agent/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
 
-RUN echo source "${INTERNAL_VENV}/bin/activate" >> /.env.bash && \
-  echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> /.env.bash && \
-  echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> /.env.bash
 RUN echo source /.env.bash >> ~/.bashrc
 
 ADD build/docker/agent/entrypoint_ros2.sh /entrypoint.sh

@@ -265,6 +265,11 @@ RUN bash -c " \
 ADD build/docker/carla/agent_ros2_bridge.py ./
 CMD [ "bash", "-c", "sleep infinity"  ]
 
+# For the envsubst command in the entrypoint
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y \
+  gettext-base
 RUN echo "source /.env.bash" >> ~/.bashrc
 ADD build/docker/carla/wait_for_carla.py /
 ADD build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
