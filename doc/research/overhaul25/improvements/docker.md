@@ -33,12 +33,15 @@ The ROS2 behavior is currently unknown... (but the [documentation](https://docs.
 
 Main benefit even with the system packages: Allows updating pip and other system packages.
 
-Problems: None really. The venv always has to be sourced, but the docker entrypoint does it automatically for the developer.
+Problems: ~~None really. The venv always has to be sourced, but the docker entrypoint does it automatically for the developer.~~
+
+- When ros2 has been installed from apt sources (as usual), it's tools (like) colcon will often use the python interpreter they were built with.  
+  This means they will use /usr/bin/python even if a venv has been activated. This often leads to import errors when using for example `ros2 run` because dependencies are only available in the venv.
 
 Effort estimate: LOW. Initializing the venv is simple and sourcing can be done together with the sourcing of the ROS environment.
 
-Recommendation: Use a venv.  
-Different package managers can be used for managing the venv.  
+Recommendation: ~~Use a venv.~~  Use system native packages + always use a non-root user in the Dockerfile to allow for local package installation.  
+~~Different package managers can be used for managing the venv.~~  
 **More considerations about the python dependency management in ROS can be found [here](../ros2_porting/python_porting.md#dependency-management-options)**
 
 ## Move explicitly installed ROS dependencies into the package.xml and install them with rosdep

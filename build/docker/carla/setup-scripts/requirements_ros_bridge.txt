@@ -1,0 +1,2 @@
+# More ros_bridge python dependencies
+cv_bridge

@@ -1,4 +1,0 @@
-# Build tools that override the system-native ones
-# This is very important for rosdep and colcon since they use the environment they were installed into independent of any loaded venv
-rosdep
-colcon-common-extensions

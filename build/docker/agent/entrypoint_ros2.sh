@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 
-source /.env.bash
+source "${INTERNAL_WORKSPACE_DIR}/.env.bash"
 
 exec "$@"

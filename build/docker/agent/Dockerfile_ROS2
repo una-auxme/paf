@@ -101,20 +101,29 @@ ENV PYTHON_VERSION=3.12
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
-  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-pip python-is-python3
+  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python-is-python3 \
+  sudo
 
-# Build python venv
+# Create the paf user
+ARG PAF_USERNAME=paf
+ARG PAF_UID=1000
+ARG PAF_GID=1000
+
+# Allow duplicated uids with -o
+RUN groupadd --gid ${PAF_GID} ${PAF_USERNAME} -o \
+  && useradd --uid ${PAF_UID} --gid $PAF_GID -m -s /bin/bash ${PAF_USERNAME} -o \
+  && echo ${PAF_USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${PAF_USERNAME} \
+  && chmod 0440 /etc/sudoers.d/${PAF_USERNAME}
+
+# Build internal workspace
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
-ENV INTERNAL_VENV=${INTERNAL_WORKSPACE_DIR}/venv
-RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
+RUN mkdir -p ${INTERNAL_WORKSPACE_DIR} && \
+  chown ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
+USER ${PAF_USERNAME}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
 ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
-WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
-RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-  bash ./create_venv.sh ${INTERNAL_VENV} && \
-  bash ./install_requirements.sh ${INTERNAL_VENV} ./requirements_ros_build.txt && \
-  echo source "${INTERNAL_VENV}/bin/activate" >> /.env.bash && \
-  echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> /.env.bash
+
+RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
 #################################################
 # Install carla leaderboard and scenario runner #
@@ -151,6 +160,8 @@ ARG LEADERBOARD_GIT_BRANCH=leaderboard-2.1
 ############################
 # The ros bridge is installed into a separate workspace ROOT_ROS_WS that always has to be sourced BEFORE INTERNAL_ROS_WS
 
+USER ${PAF_USERNAME}
+
 ENV ROOT_ROS_WS=${INTERNAL_WORKSPACE_DIR}/root_ros2_ws
 RUN mkdir -p ${ROOT_ROS_WS}/src
 WORKDIR $ROOT_ROS_WS
@@ -160,14 +171,8 @@ RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_director
 # In jazzy, some deprecated header files got removed. This includes tf2_eigen.h (tf2_eigen.hpp should be used instead)
 # https://docs.ros.org/en/jazzy/Releases/Jazzy-Jalisco-Complete-Changelog.html#tf2-eigen
 # Restore the tf2-eigen.h: https://github.com/ros2/geometry2/pull/645
+USER root
 RUN wget -O /opt/ros/${ROS_DISTRO}/include/tf2_eigen/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  bash -c " \
-  source /.env.bash && \
-  ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src \
-  "
 
 # Dependencies for the bridge as listed in ros-bridge/install_dependencies.sh and ros-bridge/CMakelists.txt
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -185,8 +190,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   ros-${ROS_DISTRO}-tf2-eigen \
   ros-${ROS_DISTRO}-tf2-geometry-msgs
 
-RUN bash -c "source /.env.bash && colcon build" && \
-  echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> /.env.bash
+USER ${PAF_USERNAME}
+# Other dependencies via rosdep
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src \
+  "
+
+RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && colcon build" && \
+  echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
 # WIP: Install carla API
 # install dependencies for libgit2 and Carla PythonAPI
@@ -224,53 +238,30 @@ RUN bash -c "source /.env.bash && colcon build" && \
 # RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
 #   apt-get install -y ./libtiff5.deb && \
 #   rm libtiff5.deb
+USER ${PAF_USERNAME}
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 ADD build/docker/agent/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
 
-RUN echo source /.env.bash >> ~/.bashrc
+RUN echo source ${INTERNAL_WORKSPACE_DIR}/.env.bash >> ~/.bashrc
 
+USER root
 ADD build/docker/agent/entrypoint_ros2.sh /entrypoint.sh
+USER ${PAF_USERNAME}
 ENTRYPOINT [ "/entrypoint.sh" ]
 
 ###########################################
 ##### The agent-dev image starts here #####
 ###########################################
 FROM agent AS agent-dev
-ARG PAF_USERNAME=root
-ARG PAF_UID=0
-ARG PAF_GID=0
+
+# Dev tools
+USER root
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y sudo \
-  neovim nano iputils-ping
+  apt-get update && apt-get install -y \
+  neovim htop nano iputils-ping \
+  man-db manpages-posix manpages-dev manpages-posix-dev
 
-# Allow duplicated uids with -o
-RUN groupadd --gid $PAF_GID $PAF_USERNAME -o \
-  && useradd --uid $PAF_UID --gid $PAF_GID -m -s /bin/bash $PAF_USERNAME -o \
-  && echo $PAF_USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$PAF_USERNAME \
-  && chmod 0440 /etc/sudoers.d/$PAF_USERNAME
-
-# Dev tools
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-#   apt-get update && apt-get install -y neovim htop
-
-# RUN yes | unminimize
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-#   apt-get update && apt-get upgrade -y && apt-get install -y build-essential lsb-release software-properties-common \
-#   python3.8 python3.8-venv python-is-python3 \
-#   curl wget git \
-#   man-db manpages-posix manpages-dev manpages-posix-dev
-
-######################################
-# Set internal workspace permissions #
-######################################
-
-# Make the internal workspace editable by the paf user
-RUN chown -R ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
-
-USER $PAF_USERNAME
-RUN echo source /.env.bash >> ~/.bashrc
+USER ${PAF_USERNAME}

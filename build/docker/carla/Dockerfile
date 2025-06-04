@@ -112,9 +112,8 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/un
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
+ADD build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
-ADD build/docker/carla/requirements_ros_build.txt ./requirements_ros_build.txt
 ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   python3.8 -m venv "${LEADERBOARD_VENV}" && \
@@ -122,7 +121,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
 
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
-  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt
+  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt ./requirements_ros_bridge.txt
 
 # Setup carla + leaderboard python dependencies
 ENV CARLA_ROOT=/opt/carla
@@ -227,6 +226,7 @@ RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_director
 
 RUN git clone --recurse-submodules -b 1.0.0 --single-branch https://github.com/ros-perception/pcl_msgs ./src/pcl_msgs
 RUN git clone --recurse-submodules -b 2.6.3 --single-branch https://github.com/ros-perception/perception_pcl ./src/perception_pcl
+RUN git clone --recurse-submodules -b 4.0.0 --single-branch https://github.com/astuff/astuff_sensor_msgs.git ./src/astuff_sensor_msgs
 
 # Always use bash because we need to build in the venv with python 3.8
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

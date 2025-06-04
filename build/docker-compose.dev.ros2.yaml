@@ -33,7 +33,11 @@ services:
       - XDG_CURRENT_DESKTOP
       - XDG_SESSION_CLASS
       - XDG_RUNTIME_DIR
-    command: bash -c "sleep infinity"
+    command: |
+      bash -c " \
+        (rqt &) && \
+        rviz2 -d /workspace/rviz2.rviz \
+      "
     networks:
       - carla
 
