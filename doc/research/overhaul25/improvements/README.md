@@ -7,6 +7,7 @@
 - [Add performance benchmarks](#add-performance-benchmarks)
   - [Approaches (benchmarks)](#approaches-benchmarks)
     - [Measure project startup time](#measure-project-startup-time)
+    - [Measure docker build times](#measure-docker-build-times)
     - [Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)
     - [Measure topic publish rates](#measure-topic-publish-rates)
     - [ros2\_benchmark for benchmarking parts of the node graph](#ros2_benchmark-for-benchmarking-parts-of-the-node-graph)
@@ -61,11 +62,21 @@ Problems:
 - Measurements are probably subject to high fluctuations
 
 Effort: MED
-Priority: MED? Should be done before the main ROS2 porting effort. *Discuss with project leaders*
+Priority: MED? Should be done before the main ROS2 porting effort.
+
+Status: Planned
+
+#### Measure docker build times
+
+TODO
+
+Status: Planned
 
 #### Measure callback performance manually inside the nodes
 
-TODO Maybe a custom class for ROS2?
+Maybe a custom class for ROS2?
+
+Status: Not planned
 
 #### Measure topic publish rates
 
@@ -85,11 +96,11 @@ Cons:
 - Only works for topics (No services, actions)
 - Data only shows if a topic is too slow or fast enough for the simulator speed. It does not provide useful timing data if a topic reaches the simulator update rate.
 
-Recommendation: Prefer [manually measuring the nodes](#measure-callback-performance-manually-inside-the-nodes) instead
+Status: Prefer [manually measuring the nodes](#measure-callback-performance-manually-inside-the-nodes) instead
 
 #### [ros2_benchmark](https://github.com/NVIDIA-ISAAC-ROS/ros2_benchmark) for benchmarking parts of the node graph
 
-TODO
+Status: Not planned
 
 #### [ros2_tracing](https://github.com/ros2/ros2_tracing) for tracing the whole project
 
@@ -109,7 +120,9 @@ Con:
 - Does not measure project startup times
 - Probably overkill for our needs
 
-Recommendation: Move to future research? *Discuss with project leaders*
+Recommendation: Move to future research?
+
+Status: Not planned
 
 ### Status (benchmarks)
 
@@ -121,8 +134,8 @@ General problems:
 Recommendation: Implement before main porting effort:
 
 - [Measure project startup time](#measure-project-startup-time)
-- [Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)
-- *Discuss with project leaders*
+- [Measure docker build times](#measure-docker-build-times)
+- ~~[Measure callback performance manually inside the nodes](#measure-callback-performance-manually-inside-the-nodes)~~
 
 ## Create simple script for restarting all PAF nodes without restarting the leaderboard
 
@@ -152,7 +165,7 @@ Status: Discuss steps once the ROS2 port is done
 Benefits: performance improvements of unknown quantity. The current performance improvements from cython are unknown -> benefit of further annotations is also unknown.
 
 An investigation including before/after benchmarks might make sense since the intermediate layer seems to be a major performance bottleneck for the system.  
--> Soft Dependency on [Add performance benchmarks](#add-performance-benchmarks)
+➡ Soft Dependency on [Add performance benchmarks](#add-performance-benchmarks)
 
 Priority: Low, since the project works without it and improvements mainly lead to faster evaluation.
 

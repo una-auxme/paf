@@ -24,6 +24,10 @@ class ROS2LeaderboardTestNode(Node):
             QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL),
         )
 
+        # Periodically send out the status signal,
+        # because otherwise, the leaderboard does not start the simulation.
+        # This has to use system time, because the leaderboard
+        # only sends out clock signals AFTER the simulation has started.
         system_clock = rclpy.clock.Clock(clock_type=rclpy.clock.ClockType.SYSTEM_TIME)
         self.create_timer(0.5, self.publish_status, clock=system_clock)
 
