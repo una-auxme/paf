@@ -8,14 +8,27 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common
 
-# GPU vulkan driver update
+# GPU vulkan driver install
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  add-apt-repository -y ppa:kisak/turtle && apt-get update && apt-get upgrade -y
+  add-apt-repository -y ppa:kisak/turtle && apt-get update && \
+  apt-get upgrade -y && apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
 
 # https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
 # FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu20.04 AS agent-base-cuda
 FROM ubuntu:24.04 AS agent-base-cuda
+ARG NVIDIA_DRIVER_VERSION=550
+# https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.17.5/docker-specialized.html#nvidia-require-constraints
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
+
+# GPU vulkan driver install
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get upgrade -y && \
+  apt-get install -y libvulkan1 vulkan-tools libnvidia-gl-${NVIDIA_DRIVER_VERSION} \
+  nvidia-cuda-toolkit
 
 ############################################
 ##### The main agent image starts here #####
@@ -25,7 +38,7 @@ FROM agent-base-${BASE_FLAVOUR} AS agent
 ENV DEBIAN_FRONTEND=noninteractive
 
 #######################
-# Install ROS 2 Jazzy https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
+# Install ROS 2 Jazzy # https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
 #######################
 ARG ROS_DISTRO=jazzy
 ENV ROS_DISTRO=${ROS_DISTRO}
@@ -61,41 +74,13 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   source /opt/ros/${ROS_DISTRO}/setup.bash && \
   rosdep init"
 
-# Install paf project dependencies
-# RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
-#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-#   apt-get update && apt-get install -y \
-#   ros-${ROS_DISTRO}-ackermann-msgs \
-#   ros-${ROS_DISTRO}-derived-object-msgs \
-#   ros-${ROS_DISTRO}-pcl-conversions \
-#   ros-${ROS_DISTRO}-rviz2 \
-#   ros-${ROS_DISTRO}-rqt \
-#   ros-${ROS_DISTRO}-pcl-ros \
-#   ros-${ROS_DISTRO}-rosbridge-suite \
-#   ros-${ROS_DISTRO}-rosbridge-server \
-#   ros-${ROS_DISTRO}-py-trees-ros \
-#   ros-${ROS_DISTRO}-rqt-reconfigure \
-#   ros-${ROS_DISTRO}-ament-cmake-pytest \
-#   ros-${ROS_DISTRO}-robot-localization \
-#   ros-${ROS_DISTRO}-tf2-ros \
-#   ros-${ROS_DISTRO}-tf2-eigen \
-#   ros-${ROS_DISTRO}-tf2-geometry-msgs
-
-
-# Not available in jazzy:
-#  ros-jazzy-carla-msgs \
-#  ros-jazzy-ros-numpy \
-#  ros-jazzy-robot-pose-ekf \
-#  ros-jazzy-rqt-py-trees \
-#  ros-jazzy-ros-pytest \, replaced with ros-jazzy-ament-cmake-pytest
-
 #################################
 # Create the internal workspace #
 #################################
 # This workspace at INTERNAL_WORKSPACE_DIR contains
-# - INTERNAL_ROS_WS: a ROS2 workspace for the PAF project packages (created later)
-# - INTERNAL_VENV: a venv for the python dependencies
-# INTERNAL_WORKSPACE_DIR is editable by non-root users (chmod at the end of this image)
+# - PAF_ROS_WS: a ROS2 workspace for the PAF project packages
+# - CARLA_ROS_WS: a ROS2 workspace for the carla ros bridge packages
+# INTERNAL_WORKSPACE_DIR is editable by the user with PAF_UID and PAF_GID
 
 ENV PYTHON_VERSION=3.12
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -125,46 +110,18 @@ ADD build/docker/agent-ros2/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-script
 
 RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
-#################################################
-# Install carla leaderboard and scenario runner #
-#################################################
-ARG LEADERBOARD_GIT_BRANCH=leaderboard-2.1
-
-# # Scenario runner
-# ENV SCENARIO_RUNNER_ROOT=/opt/scenario_runner
-# RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
-
-# # Carla leaderboard
-# ENV LEADERBOARD_ROOT=/opt/leaderboard
-# RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
-
-# WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
-# ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
-# RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-#   bash ./create_venv.sh ${LEADERBOARD_VENV}
-
-# RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-#   bash install_requirements.sh ${LEADERBOARD_VENV} \
-#   $LEADERBOARD_ROOT/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt
-
-# # Setup carla + leaderboard python dependencies
-# ENV CARLA_ROOT=/opt/carla
-# COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
-# RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-#   echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-#   echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
-#   echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
-
 ############################
 # Install carla ros bridge #
 ############################
-# The ros bridge is installed into a separate workspace ROOT_ROS_WS that always has to be sourced BEFORE INTERNAL_ROS_WS
+# The ros bridge is installed into a separate workspace CARLA_ROS_WS that always has to be sourced BEFORE PAF_ROS_WS
+
+ARG LEADERBOARD_GIT_BRANCH=leaderboard-2.1
 
 USER ${PAF_USERNAME}
 
-ENV ROOT_ROS_WS=${INTERNAL_WORKSPACE_DIR}/root_ros2_ws
-RUN mkdir -p ${ROOT_ROS_WS}/src
-WORKDIR $ROOT_ROS_WS
+ENV CARLA_ROS_WS=${INTERNAL_WORKSPACE_DIR}/carla_ros2_ws
+RUN mkdir -p ${CARLA_ROS_WS}/src
+WORKDIR ${CARLA_ROS_WS}
 RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
 # Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
 RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt
@@ -200,47 +157,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   "
 
 RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && colcon build" && \
-  echo source "${ROOT_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
-
-# WIP: Install carla API
-# install dependencies for libgit2 and Carla PythonAPI
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-#   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-#   apt-get update && apt-get install -y wget unzip
-
-# ENV CARLA_ROOT=/opt/carla
-# # Download Carla PythonAPI (alternative to getting it from the Carla-Image, which is commented out above)
-# # If the PythonAPI/Carla version changes, either update the link, or refer to the comment at the top of this file.
-# # RUN wget https://github.com/una-auxme/paf/releases/download/v0.0.1/PythonAPI_Leaderboard-2.0.zip --quiet -O PythonAPI.zip \
-# #   && unzip PythonAPI.zip \
-# #   && rm PythonAPI.zip \
-# #   && mkdir -p ${CARLA_ROOT} \
-# #   && mv PythonAPI ${CARLA_ROOT}/PythonAPI
-
-# COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
-
+  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
 ##########################################
 # Finish building the internal workspace #
 ##########################################
 
-# WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
-# RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-#   bash install_requirements.sh ${INTERNAL_VENV} \
-#   requirements_carla.txt
-
-# # Setup carla + leaderboard python dependencies
-# RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-#   echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-#   echo "${SCENARIO_RUNNER_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
-#   echo "${LEADERBOARD_ROOT}" >>"${INTERNAL_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
-# "Fix" the carla python API
-# RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
-#   apt-get install -y ./libtiff5.deb && \
-#   rm libtiff5.deb
 USER ${PAF_USERNAME}
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
+
+# TODO: create PAF_ROS_WS
+
 ADD build/docker/agent-ros2/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/.env.bash >> ~/.bashrc

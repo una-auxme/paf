@@ -17,8 +17,6 @@ services:
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
     user: ${PAF_UID}:${PAF_GID}
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
       - DESKTOP_SESSION
       - DISPLAY
       - XDG_SESSION_DESKTOP
