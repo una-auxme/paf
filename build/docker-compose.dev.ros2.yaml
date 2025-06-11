@@ -6,7 +6,7 @@ services:
     # Set the image name so different users don't collide
     image: agent-dev-${PAF_USERNAME}
     build:
-      dockerfile: build/docker/agent/Dockerfile_ROS2
+      dockerfile: build/docker/agent-ros2/Dockerfile
       context: ../
       args:
         PAF_USERNAME: ${PAF_USERNAME}
@@ -19,6 +19,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
+              count: "all"
               capabilities: [ gpu ]
     volumes:
       - ../:/workspace

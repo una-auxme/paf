@@ -121,7 +121,7 @@ RUN mkdir -p ${INTERNAL_WORKSPACE_DIR} && \
   chown ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
 USER ${PAF_USERNAME}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/agent/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
+ADD build/docker/agent-ros2/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 
 RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
@@ -241,12 +241,12 @@ RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && colcon build" && \
 USER ${PAF_USERNAME}
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
-ADD build/docker/agent/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
+ADD build/docker/agent-ros2/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/.env.bash >> ~/.bashrc
 
 USER root
-ADD build/docker/agent/entrypoint_ros2.sh /entrypoint.sh
+ADD build/docker/agent-ros2/entrypoint_ros2.sh /entrypoint.sh
 USER ${PAF_USERNAME}
 ENTRYPOINT [ "/entrypoint.sh" ]
 
