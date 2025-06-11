@@ -156,7 +156,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src \
   "
 
-RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && colcon build" && \
+RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \
   echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
 
 ##########################################
