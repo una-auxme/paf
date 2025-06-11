@@ -15,6 +15,7 @@ pytest-timeout
 # This is very important for rosdep and colcon since they use the environment they were installed into independent of any loaded venv
 rosdep
 colcon-common-extensions
+vcstool
 
 # Missing build dependencies below:
 # Other dependencies are installed based on the installed system packages in the Dockerfile
