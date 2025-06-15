@@ -21,8 +21,8 @@
   - [Status (Carla)](#status-carla)
 - [Use official leaderboard release](#use-official-leaderboard-release)
 
-Priorities: LOW-NiceToHave, MED-VeryNiceToHave, HIGH-MustHave
-Efforts: LOW-CanBeDoneOnTheSide, MED-DayOfWork, HIGH-Week(s)ofWork
+Priorities: LOW=NiceToHave, MED=VeryNiceToHave, HIGH=MustHave  
+Efforts: LOW=CanBeDoneOnTheSide, MED=DayOfWork, HIGH=Week(s)ofWork
 
 ## **Docker improvements**
 

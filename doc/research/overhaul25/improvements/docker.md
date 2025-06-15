@@ -19,8 +19,8 @@
 - [Enable caching for pip and apt in the Dockerfile](#enable-caching-for-pip-and-apt-in-the-dockerfile)
 - [Add support for AMD GPUs](#add-support-for-amd-gpus)
 
-Priorities: LOW-NiceToHave, MED-VeryNiceToHave, HIGH-MustHave
-Efforts: LOW-CanBeDoneOnTheSide, MED-DayOfWork, HIGH-Week(s)ofWork
+Priorities: LOW=NiceToHave, MED=VeryNiceToHave, HIGH=MustHave  
+Efforts: LOW=CanBeDoneOnTheSide, MED=DayOfWork, HIGH=Week(s)ofWork
 
 More ideas and experiments can be found in [[Feature]: Development container refactor #545](https://github.com/una-auxme/paf/issues/545)
 

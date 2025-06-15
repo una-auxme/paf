@@ -71,6 +71,7 @@ Some of them will be implemented directly as part of the ROS2 porting effort.
 - [FIXED] The carla<->[ros_bridge](https://carla.readthedocs.io/projects/ros-bridge/en/latest/ros_installation_ros2/) officially only supports ROS 2 Foxy (already EOL)  
   Users were apparently able to get the bridge working with ROS 2 Humble: <https://github.com/carla-simulator/ros-bridge/issues/737>  
   But it requires patched build files.
+  - The [first try to port to ROS2](https://github.com/una-auxme/paf/issues/253) failed because of this issue
 - [FIXED] Ubuntu 24.04 ships with Python 3.12 (Upgrade from 3.8). Some dependencies have to be upgraded. More info below and [here](./python_porting.md#necessary-dependency-upgrades)
 - [[FIXED](#carla-solution)] The Carla API for the leaderboard officially only supports python3.8. Humble uses at least python3.10 and Jazzy 3.12
   - Importing the Carla PythonAPI from the leaderboard segfaults with python3.10 AND 3.12 (humble and jazzy)

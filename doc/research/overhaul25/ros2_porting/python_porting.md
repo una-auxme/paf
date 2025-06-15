@@ -24,7 +24,7 @@
 
 - <https://docs.ros.org/en/jazzy/How-To-Guides/Migrating-from-ROS1.html>
 
-This lists contains required changes specifically for ROS packages containing python nodes.
+This chapter contains required changes specifically for ROS packages containing python nodes.
 For general package changes, see [here](./README.md#migrate-package-base-files-to-colcon)
 
 ### setup.py
@@ -38,7 +38,7 @@ It should still be possible to leave them in src, but it's not the default.
 
 ## Python file changes
 
-The chapter contains required changes for the python nodes/files.
+This chapter contains required changes for the python nodes/files.
 
 ### General
 
@@ -96,8 +96,8 @@ Pros:
 
 Cons:
 
-- Per package dependencies (might lead to conflicts)
-- Requires the python package to have a rosdep key
+- Per package dependencies (Might lead to conflicts)
+- Requires each python dependency to have a rosdep key
 - Versioning seems inflexible if very up-to-date packages are needed
 
 ### pip (optional: venv)
