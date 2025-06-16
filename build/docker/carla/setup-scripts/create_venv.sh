@@ -3,8 +3,7 @@ set -e
 
 VENV_DIR=$1
 
-# We need system packages for rosdep dependencies :(
-python3 -m venv --system-site-packages "${VENV_DIR}"
+python3 -m venv "${VENV_DIR}"
 
 source "${VENV_DIR}/bin/activate"
 

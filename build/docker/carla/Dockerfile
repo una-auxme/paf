@@ -23,7 +23,7 @@ ARG NVIDIA_DRIVER_VERSION=550
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.17.5/docker-specialized.html#nvidia-require-constraints
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
-ENV NVIDIA_REQUIRE_DRIVER "driver>=${NVIDIA_DRIVER_VERSION}"
+ENV NVIDIA_REQUIRE_DRIVER="driver>=${NVIDIA_DRIVER_VERSION}"
 
 # GPU vulkan driver install
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -164,11 +164,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update &&  apt-get install -y \
-  ros-dev-tools
-
 ###########################
 # Build ROS 2 from source #
 ###########################
@@ -176,7 +171,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ENV ROS_ROOT=${INTERNAL_WORKSPACE_DIR}/ros_${ROS_DISTRO}
 RUN mkdir -p ${ROS_ROOT}/src
 WORKDIR ${ROS_ROOT}
-RUN vcs import --input https://raw.githubusercontent.com/ros2/ros2/${ROS_DISTRO}/ros2.repos src
+RUN bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  vcs import --input https://raw.githubusercontent.com/ros2/ros2/${ROS_DISTRO}/ros2.repos src \
+  "
 
 # Always use bash because we need to build in the venv with python 3.8
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
