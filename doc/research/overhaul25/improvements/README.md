@@ -48,7 +48,8 @@ Startup performance is very important for the development iteration speed and in
 
 A simple approach might be to measure the time between container startup (Start of bash command) and the response of certain nodes of the system.
 
-For the response, a similar approach to the debug_logger with `multiprocessing.connection` might be used, because it is independent of ROS and Carla.
+~~For the response, a similar approach to the debug_logger with `multiprocessing.connection` might be used, because it is independent of ROS and Carla.~~
+The implemented solution simply waits for the first `/carla/hero/status` message sent by the vehicle_controller node.
 
 Benefits:
 
@@ -64,7 +65,7 @@ Problems:
 Effort: MED
 Priority: MED? Should be done before the main ROS2 porting effort.
 
-Status: Planned
+Status: Implemented
 
 #### Measure docker build times
 
