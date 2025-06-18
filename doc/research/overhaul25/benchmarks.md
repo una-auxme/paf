@@ -5,6 +5,8 @@
 - [Hardware](#hardware)
 - [Build time results](#build-time-results)
   - [ROS1 Build Run 1](#ros1-build-run-1)
+  - [ROS1 Build Run 2](#ros1-build-run-2)
+  - [ROS1 Build Run 3](#ros1-build-run-3)
 - [Startup time results](#startup-time-results)
   - [ROS1 Startup Run 1](#ros1-startup-run-1)
   - [ROS1 Startup Run 2](#ros1-startup-run-2)
@@ -128,7 +130,21 @@ For each run:
 
 ### ROS1 Build Run 1
 
-1.
+1. 501.5s
+2. 206.9s
+3. 40.3s
+
+### ROS1 Build Run 2
+
+1. 491.5s
+2. 215.0s
+3. 40.2s
+
+### ROS1 Build Run 3
+
+1. 496.3s
+2. 214.3s
+3. 40.1s
 
 ## Startup time results
 
