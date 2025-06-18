@@ -65,13 +65,11 @@ Problems:
 Effort: MED
 Priority: MED? Should be done before the main ROS2 porting effort.
 
-Status: Implemented
+Status: Implemented, Results available for ROS1
 
 #### Measure docker build times
 
-TODO
-
-Status: Planned
+Status: Implemented, Results available for ROS1
 
 #### Measure callback performance manually inside the nodes
 
