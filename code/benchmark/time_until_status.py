@@ -5,13 +5,14 @@ import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 import time
+import sys
 
 
 class TimeUntilStatusNode(CompatibleNode):
 
-    def __init__(self):
+    def __init__(self, start_time: int):
         super().__init__(type(self).__name__)
-        self.start_time = time.time_ns()
+        self.start_time = start_time
         self.loginfo(f"{type(self).__name__} started measuring...")
         self.new_subscription(
             Bool,
@@ -38,8 +39,9 @@ class TimeUntilStatusNode(CompatibleNode):
 
 
 def main():
+    start_time = int(sys.argv[1])
     roscomp.init(TimeUntilStatusNode.__name__)
-    node = TimeUntilStatusNode()
+    node = TimeUntilStatusNode(start_time)
     node.spin()
 
 
