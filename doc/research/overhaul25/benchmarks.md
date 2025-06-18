@@ -7,6 +7,8 @@
   - [ROS1 Build Run 1](#ros1-build-run-1)
 - [Startup time results](#startup-time-results)
   - [ROS1 Startup Run 1](#ros1-startup-run-1)
+  - [ROS1 Startup Run 2](#ros1-startup-run-2)
+  - [ROS1 Startup Run 3](#ros1-startup-run-3)
 
 [List of proposed benchmarks](./improvements/README.md#add-performance-benchmarks)
 
@@ -142,4 +144,18 @@ For each run the system was freshly (re-)booted and three consecutive startups a
 
 ### ROS1 Startup Run 1
 
-1.
+1. Time until first status: 45635961060ns, 45635961.06us, 45635.96ms, 45.64s
+2. Time until first status: 45815162617ns, 45815162.62us, 45815.16ms, 45.82s
+3. Time until first status: 43093707026ns, 43093707.03us, 43093.71ms, 43.09s
+
+### ROS1 Startup Run 2
+
+1. Time until first status: 44411100244ns, 44411100.24us, 44411.10ms, 44.41s
+2. Time until first status: 45354573686ns, 45354573.69us, 45354.57ms, 45.35s
+3. Time until first status: 42329437110ns, 42329437.11us, 42329.44ms, 42.33s
+
+### ROS1 Startup Run 3
+
+1. Time until first status: 46146589435ns, 46146589.44us, 46146.59ms, 46.15s
+2. Time until first status: 45830634022ns, 45830634.02us, 45830.63ms, 45.83s
+3. Time until first status: 42807641118ns, 42807641.12us, 42807.64ms, 42.81s
