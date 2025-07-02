@@ -2,7 +2,7 @@
 # Base image. Use docker-compose.dev.<your-gpu-type>.yml for AMD/Intel/Nvidia.
 
 include:
-  - docker-compose.carla.ros2.yaml
+  - docker-compose.carla.base.yaml
 
 services:
   agent-dev:

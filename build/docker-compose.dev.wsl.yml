@@ -3,7 +3,7 @@
 # https://github.com/microsoft/wslg/blob/main/samples/container/Containers.md#containerizing-gui-applications-with-wslg
 
 include:
-  - docker-compose.carla.ros2.yaml
+  - docker-compose.carla.wsl.yaml
 
 services:
   agent-dev:

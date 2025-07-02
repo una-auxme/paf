@@ -3,21 +3,10 @@ services:
   carla-simulator:
     command: |
       bash -c "\
-      /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN} \
+      /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN} \
       "
     # The image has to be built locally with ./docker/carla/build_carla.sh
-    image: carla-leaderboard:2.1
-    # devices:
-    #   - /dev/kfd
-    #   - /dev/dri
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: "all"
-              capabilities: [ gpu ]
-              # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
+    image: carla-leaderboard-gpu:2.1
     user: ${PAF_UID}:${PAF_GID}
     environment:
       - DESKTOP_SESSION
@@ -33,7 +22,7 @@ services:
     volumes:
       - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./CustomCarlaSettings.ini:/home/carla/CarlaUE4/Config/CustomCarlaSettings.ini
+      - ./CustomCarlaSettings.ini:/CustomCarlaSettings.ini
 
   carla-ros-bridge:
     command: |

@@ -2,7 +2,7 @@
 # Nvidia only, WSL + Linux
 
 include:
-  - docker-compose.carla.ros2.yaml
+  - docker-compose.carla.cuda.yaml
 
 services:
   agent-dev:
@@ -21,7 +21,7 @@ services:
           devices:
             - driver: nvidia
               count: "all"
-              capabilities: [ gpu ]
+              capabilities: [gpu]
     # Uncomment below if you also have intel/amd integrated graphics (Laptop)
     # devices:
     #   - /dev/dri

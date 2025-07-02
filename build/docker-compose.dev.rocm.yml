@@ -2,7 +2,7 @@
 # AMD on Linux only.
 
 include:
-  - docker-compose.carla.ros2.yaml
+  - docker-compose.carla.gpu.yaml
 
 services:
   agent-dev:
