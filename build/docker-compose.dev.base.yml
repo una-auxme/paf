@@ -1,3 +1,6 @@
+# Docker compose configuration with desktop gpu support for ROS development
+# Base image. Use docker-compose.dev.<your-gpu-type>.yml for AMD/Intel/Nvidia.
+
 include:
   - docker-compose.carla.ros2.yaml
 
@@ -14,17 +17,6 @@ services:
         PAF_GID: ${PAF_GID}
       target: agent-dev
     shm_size: 2gb
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: "all"
-              capabilities: [ gpu ]
-    volumes:
-      - ../:/workspace
-      - /tmp/.X11-unix:/tmp/.X11-unix:ro
-      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
     environment:
       - DESKTOP_SESSION
       - DISPLAY
@@ -34,11 +26,11 @@ services:
       - XDG_CURRENT_DESKTOP
       - XDG_SESSION_CLASS
       - XDG_RUNTIME_DIR
-    command: |
-      bash -c " \
-        (rqt &) && \
-        rviz2 -d /workspace/rviz2.rviz \
-      "
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
+      - ../:/workspace
+      - ./volumes/home:/home
     networks:
       - carla
 

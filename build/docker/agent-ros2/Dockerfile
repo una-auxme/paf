@@ -1,6 +1,14 @@
-ARG BASE_FLAVOUR=cuda
+# Currently supported BASE_FLAVOUR:
+# - generic: no gpu support
+# - gpu: base for amd + intel (vulkan and opengl drivers only)
+# - rocm: amd with compute
+# - cuda: nvidia with compute
+ARG BASE_FLAVOUR=generic
+ARG BASE_IMAGE=ubuntu:24.04
 
-FROM rocm/dev-ubuntu-24.04:6.4 AS agent-base-rocm
+FROM ${BASE_IMAGE} AS agent-base-generic
+
+FROM agent-base-generic AS agent-base-gpu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,15 +16,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common
 
-# GPU vulkan driver install
+# GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   add-apt-repository -y ppa:kisak/turtle && apt-get update && \
   apt-get upgrade -y && apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
 
-# https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
-# FROM nvcr.io/nvidia/cuda:12.8.1-cudnn-runtime-ubuntu20.04 AS agent-base-cuda
-FROM ubuntu:24.04 AS agent-base-cuda
+FROM agent-base-gpu AS agent-base-rocm
+# No changes needed here, only pytorch installation requires changes
+
+FROM agent-base-gpu AS agent-base-cuda
 ARG NVIDIA_DRIVER_VERSION=550
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.17.5/docker-specialized.html#nvidia-require-constraints
 ENV NVIDIA_VISIBLE_DEVICES=all
@@ -27,13 +36,18 @@ ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y libvulkan1 vulkan-tools libnvidia-gl-${NVIDIA_DRIVER_VERSION} \
+  apt-get install -y libnvidia-gl-${NVIDIA_DRIVER_VERSION} \
   nvidia-cuda-toolkit
 
 ############################################
 ##### The main agent image starts here #####
 ############################################
 FROM agent-base-${BASE_FLAVOUR} AS agent
+# Redefine these args, because they are not inherited
+ARG BASE_FLAVOUR
+ENV BASE_FLAVOUR=${BASE_FLAVOUR}
+
+ENV DOCKER_RESOURCE_BASE=build/docker/agent-ros2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -86,7 +100,7 @@ ENV PYTHON_VERSION=3.12
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
-  python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python3-pip python-is-python3 \
+  python${PYTHON_VERSION} python3-pip python-is-python3 \
   sudo
 
 # Create the paf user
@@ -94,9 +108,13 @@ ARG PAF_USERNAME=paf
 ARG PAF_UID=1000
 ARG PAF_GID=1000
 
+# Delete exiting user or group with paf ids if they exist
+RUN (userdel -r $(id -u -n ${PAF_UID})) || true && \
+  (groupdel $(id -g -n ${PAF_GID})) || true
 # Allow duplicated uids with -o
-RUN groupadd --gid ${PAF_GID} ${PAF_USERNAME} -o \
-  && useradd --uid ${PAF_UID} --gid $PAF_GID -m -s /bin/bash ${PAF_USERNAME} -o \
+RUN groupadd --gid ${PAF_GID} ${PAF_USERNAME}\
+  && useradd --uid ${PAF_UID} --gid $PAF_GID -m -s /bin/bash ${PAF_USERNAME}\
+  && passwd -d ${PAF_USERNAME} \
   && echo ${PAF_USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${PAF_USERNAME} \
   && chmod 0440 /etc/sudoers.d/${PAF_USERNAME}
 
@@ -105,10 +123,7 @@ ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR} && \
   chown ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
 USER ${PAF_USERNAME}
-ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/agent-ros2/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
-
-RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ############################
 # Install carla ros bridge #
@@ -152,13 +167,15 @@ USER ${PAF_USERNAME}
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
-  ${INTERNAL_WORKSPACE_DIR}/setup-scripts/rosdep_install.sh ./src \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  sudo apt-get update && \
+  rosdep update --rosdistro ${ROS_DISTRO} && \
+  rosdep install -r --ignore-src --from-paths src --rosdistro ${ROS_DISTRO} -y \
   "
 
-RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \
-  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ##########################################
 # Finish building the internal workspace #
@@ -167,17 +184,20 @@ RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
 USER ${PAF_USERNAME}
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
+ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
+RUN mkdir -p ./scripts/
+COPY ${DOCKER_RESOURCE_BASE}/scripts/install-python-requirements.sh ./scripts/
 
-# TODO: create PAF_ROS_WS
+# Create the main agent workspace
+ENV PAF_ROS_WS=${INTERNAL_WORKSPACE_DIR}/paf_ros2_ws
+RUN mkdir ${PAF_ROS_WS}
 
-ADD build/docker/agent-ros2/user-scripts ${INTERNAL_WORKSPACE_DIR}/user-scripts/
-
-RUN echo source ${INTERNAL_WORKSPACE_DIR}/.env.bash >> ~/.bashrc
-
-USER root
-ADD build/docker/agent-ros2/entrypoint_ros2.sh /entrypoint.sh
-USER ${PAF_USERNAME}
-ENTRYPOINT [ "/entrypoint.sh" ]
+##############################################
+##### The agent-deploy image starts here #####
+##############################################
+# The deploy image is just an experiment for now / reference for discussion
+# TODO
+RUN echo source ${INTERNAL_WORKSPACE_DIR}/env.bash >> ~/.bashrc
 
 ###########################################
 ##### The agent-dev image starts here #####
@@ -194,3 +214,38 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   man-db manpages-posix manpages-dev manpages-posix-dev
 
 USER ${PAF_USERNAME}
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
+COPY ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
+  ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
+  ${DOCKER_RESOURCE_BASE}/scripts/leaderboard.sh \
+  ./scripts/
+
+ENTRYPOINT [ "${INTERNAL_WORKSPACE_DIR}/scripts/entrypoint-dev.sh" ]
+
+# Install package.xml dependencies (but allow it to fail, because this is a dev container)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  --mount=type=bind,target=${PAF_ROS_WS}/src,source=src \
+  bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  sudo apt-get update && \
+  rosdep update --rosdistro ${ROS_DISTRO} && \
+  (rosdep install -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y || \
+  echo 'echo WARNING: rosdep install failed, check your docker build with --progress=plain.' >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  "
+# Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid=${PAF_UID},gid=${PAF_GID} \
+  --mount=type=bind,target=${PAF_ROS_WS}/src,source=src \
+  (./scripts/install-python-requirements.sh || \
+  echo "echo WARNING: pip install failed, check your docker build with --progress=plain." >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc)
+
+RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc
+
+USER root
+# Make a backup of the home directories, because they get mounted as a volume
+RUN mkdir -p /opt/home-bk && cp -ar /home/. -t /opt/home-bk/
+USER ${PAF_USERNAME}
+
+# Just keep this container open because it is used as a dev environment
+CMD [ "/bin/sleep", "infinity" ]

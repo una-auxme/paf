@@ -1,0 +1,22 @@
+# Docker compose configuration with desktop gpu support for ROS development
+# Intel/AMD on WSL (use cuda for nvidia)
+# https://github.com/microsoft/wslg/blob/main/samples/container/Containers.md#containerizing-gui-applications-with-wslg
+
+include:
+  - docker-compose.carla.ros2.yaml
+
+services:
+  agent-dev:
+    extends:
+      file: docker-compose.dev.base.yml
+      service: agent-dev
+    build:
+      args:
+        PAF_USERNAME: ${PAF_USERNAME}
+        PAF_UID: ${PAF_UID}
+        PAF_GID: ${PAF_GID}
+        BASE_FLABOUR: gpu
+    devices:
+      - /dev/dxg
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl
