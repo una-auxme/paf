@@ -226,7 +226,7 @@ ENTRYPOINT [ "${INTERNAL_WORKSPACE_DIR}/scripts/entrypoint-dev.sh" ]
 # Install package.xml dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  --mount=type=bind,target=${PAF_ROS_WS}/src,source=src \
+  --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   sudo apt-get update && \
@@ -236,7 +236,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   "
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid=${PAF_UID},gid=${PAF_GID} \
-  --mount=type=bind,target=${PAF_ROS_WS}/src,source=src \
+  --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
   (./scripts/install-python-requirements.sh || \
   echo "echo WARNING: pip install failed, check your docker build with --progress=plain." >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc)
 

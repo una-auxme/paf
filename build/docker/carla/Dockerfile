@@ -239,7 +239,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   rosdep update && \
-  rosdep install --from-paths src --ignore-src -y \
+  rosdep install -r --from-paths src --ignore-src -y \
   "
 
 RUN bash -c "\
