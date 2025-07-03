@@ -67,13 +67,14 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt update && apt install -y curl && \
-  curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list
+  apt-get update && apt-get install curl -y && \
+  export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}') && \
+  curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb" && \
+  dpkg -i /tmp/ros2-apt-source.deb
 
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y \
+  apt-get update && apt-get upgrade -y && apt-get install -y \
   ros-${ROS_DISTRO}-desktop \
   ros-dev-tools \
   python3-colcon-common-extensions
@@ -221,8 +222,13 @@ COPY ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/leaderboard.sh \
   ./scripts/
 
-ENTRYPOINT [ "${INTERNAL_WORKSPACE_DIR}/scripts/entrypoint-dev.sh" ]
+VOLUME [ "/workspace" ]
+# Link the workspace into the PAF_ROS_WS
+RUN ln -s -T /workspace/code ${PAF_ROS_WS}/src
 
+ENTRYPOINT [ "/internal_workspace/scripts/entrypoint-dev.sh" ]
+
+WORKDIR ${PAF_ROS_WS}
 # Install package.xml dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -237,7 +243,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid=${PAF_UID},gid=${PAF_GID} \
   --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
-  (./scripts/install-python-requirements.sh || \
+  (${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh || \
   echo "echo WARNING: pip install failed, check your docker build with --progress=plain." >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc)
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc

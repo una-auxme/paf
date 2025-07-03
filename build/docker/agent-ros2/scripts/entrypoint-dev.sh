@@ -13,7 +13,6 @@ trap _term SIGTERM SIGINT
 # It does not get automatically loaded, because the entrypoint is not an interactive shell
 source "${INTERNAL_WORKSPACE_DIR}/dev.bashrc"
 
-
 devbuild || echo "WARNING: Build failed, proceeding anyway..."
 
 echo "source ${PAF_ROS_WS}/install/local_setup.bash" >>"${INTERNAL_WORKSPACE_DIR}/env.bash"
@@ -25,7 +24,7 @@ sudo cp -ar --update=older /opt/home-bk/. -t /home/
 
 ros2 run rqt_console rqt_console &
 ros2 run rqt_gui rqt_gui &
-ros2 run rviz2 rviz2 &
+ros2 run rviz2 rviz2 -d /workspace/rviz2.rviz &
 
 "$@" &
 wait "$!"
