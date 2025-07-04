@@ -33,6 +33,8 @@ services:
       - ../volumes/home:/home
     networks:
       - carla
+    cap_add:
+      - SYS_ADMIN
 
 networks:
   carla:

@@ -22,7 +22,11 @@ devbuild() {
   cd "${PAF_ROS_WS}" || return $?
 
   # Build the ros workspace
-  colcon build --symlink-install || return $?
+  colcon build --symlink-install || {
+    cd "${CURRENT_DIR}" && return $?
+  }
+
+  cd "${CURRENT_DIR}" || true
 
   cat <<EOF
 
@@ -33,6 +37,5 @@ EOF
 
   devsource || return $?
 
-  cd "${CURRENT_DIR}" || return $?
 }
 export -f devbuild

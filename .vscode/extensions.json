@@ -2,7 +2,6 @@
     "recommendations": [
         "davidanson.vscode-markdownlint",
         "github.vscode-pull-request-github",
-        "ms-iot.vscode-ros",
         "vscode-icons-team.vscode-icons",
         "yzhang.markdown-all-in-one",
         "njpwerner.autodocstring",
@@ -14,6 +13,10 @@
         "valentjn.vscode-ltex",
         "ms-python.black-formatter",
         "augustocdias.tasks-shell-input",
-        "ktnrg45.vscode-cython"
+        "ktnrg45.vscode-cython",
+        "ranch-hand-robotics.rde-pack",
+        "timonwong.shellcheck",
+        "editorconfig.editorconfig",
+        "phil294.git-log--graph"
     ]
 }

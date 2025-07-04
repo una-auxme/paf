@@ -214,6 +214,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   neovim htop nano iputils-ping \
   man-db manpages-posix manpages-dev manpages-posix-dev
 
+# Vs Code. This makes it possible to start VS Code fully inside the container.
+# Not required to only attach the host's VS Code to the container.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
+  install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
+  echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" |sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null && \
+  rm -f packages.microsoft.gpg && \
+  apt-get update && apt-get install -y code
+
 USER ${PAF_USERNAME}
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./

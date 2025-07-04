@@ -25,6 +25,7 @@ sudo cp -ar --update=older /opt/home-bk/. -t /home/
 ros2 run rqt_console rqt_console &
 ros2 run rqt_gui rqt_gui &
 ros2 run rviz2 rviz2 -d /workspace/rviz2.rviz &
+code /workspace &
 
 "$@" &
 wait "$!"
