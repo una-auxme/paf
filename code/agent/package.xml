@@ -3,8 +3,8 @@
 <package format="3">
   <name>agent</name>
   <version>0.0.0</version>
-  <description>The agent package</description>
-  <maintainer email="carla@todo.todo">carla</maintainer>
+  <description>TODO: Package description</description>
+  <maintainer email="paf@todo.todo">paf</maintainer>
   <license>MIT</license>
 
   <test_depend>python3-pytest</test_depend>

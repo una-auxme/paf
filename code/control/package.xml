@@ -4,7 +4,7 @@
   <name>control</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="peter.viechter@student.uni-augsburg.de">peter</maintainer>
+  <maintainer email="paf@todo.todo">paf</maintainer>
   <license>MIT</license>
 
   <test_depend>python3-pytest</test_depend>
