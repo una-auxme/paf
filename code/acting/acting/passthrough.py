@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
-from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
@@ -10,6 +7,11 @@ from nav_msgs.msg import Path
 
 from dataclasses import dataclass
 from typing import Type, Dict
+
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from rclpy.subscription import Subscription
 
 
 @dataclass
@@ -19,7 +21,7 @@ class TopicMapping:
     topic_type: Type
 
 
-class Passthrough(CompatibleNode):
+class Passthrough(Node):
     """This nodes sole purpose is to pass through all messages that control needs.
     The purpose of this is that Control-Package should not have any global dependencies,
     but is only dependent on the acting package.
@@ -67,17 +69,19 @@ class Passthrough(CompatibleNode):
     ]
 
     def __init__(self):
-        self.publishers: Dict[str, Publisher] = {}
-        self.subscribers: Dict[str, Subscriber] = {}
+        super().__init__(type(self).__name__)
+
+        self.pt_publishers: Dict[str, Publisher] = {}
+        self.pt_subscribers: Dict[str, Subscription] = {}
         for topic in self.mapped_topics:
-            self.publishers[topic.pub_name] = self.new_publisher(
+            self.pt_publishers[topic.pub_name] = self.create_publisher(
                 topic.topic_type, topic.pub_name, qos_profile=1
             )
 
-            self.subscribers[topic.pub_name] = self.new_subscription(
+            self.pt_subscribers[topic.pub_name] = self.create_subscription(
                 topic.topic_type,
                 topic.sub_name,
-                callback=self.publishers[topic.pub_name].publish,
+                callback=self.pt_publishers[topic.pub_name].publish,
                 qos_profile=1,
             )
 
@@ -86,15 +90,15 @@ def main(args=None):
     """Start the node.
     This is the entry point, if called by a launch file.
     """
-    roscomp.init("passthrough", args=args)
+    rclpy.init(args=args)
 
     try:
         node = Passthrough()
-        node.spin()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        roscomp.shutdown()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

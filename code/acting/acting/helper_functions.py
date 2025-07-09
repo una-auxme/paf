@@ -10,10 +10,9 @@ from math import dist as euclid_dist, floor, sqrt, sin, cos
 from typing import List, Tuple
 import numpy as np
 from geometry_msgs.msg import PoseStamped
-from tf.transformations import euler_from_quaternion
 from nav_msgs.msg import Path
 from scipy.spatial.transform import Rotation
-import rospy
+from transforms3d.euler import quat2euler
 
 
 def vectors_to_angle_abs(x1: float, y1: float, x2: float, y2: float) -> float:
@@ -136,12 +135,12 @@ def calc_egocar_yaw(pose: PoseStamped) -> float:
     :return: normalized yaw of the vehicle
     """
     quaternion = (
+        pose.pose.orientation.w,
         pose.pose.orientation.x,
         pose.pose.orientation.y,
         pose.pose.orientation.z,
-        pose.pose.orientation.w,
     )
-    _, _, yaw = euler_from_quaternion(quaternion)
+    _, _, yaw = quat2euler(quaternion)
     return normalize_angle(yaw)
 
 
@@ -265,13 +264,12 @@ def interpolate_route(orig_route: List[Tuple[float, float]], interval_m=0.5):
 
 def generate_path_from_trajectory(trajectory) -> Path:
     path_msg = Path()
-    path_msg.header = rospy.Header()
-    path_msg.header.stamp = rospy.Time.now()
+    path_msg.header = trajectory.header
     path_msg.header.frame_id = "hero"
     path_msg.poses = []
     for wp in trajectory:
         pos = PoseStamped()
-        pos.header.stamp = rospy.Time.now()
+        pos.header.stamp = trajectory.header.stamp
         pos.header.frame_id = "hero"
         pos.pose.position.x = wp[0]
         pos.pose.position.y = wp[1]

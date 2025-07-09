@@ -21,6 +21,6 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": ["passthrough = acting.passthrough:main"],
     },
 )
