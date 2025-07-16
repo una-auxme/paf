@@ -22,7 +22,7 @@ class VelocityController(Node):
         self.control_loop_rate = (
             self.control_loop_rate_param.get_parameter_value().double_value
         )
-        self.role_name_param = self.declare_parameter("role_name", "ego_vehicle")
+        self.role_name_param = self.declare_parameter("role_name", "hero")
         self.role_name = self.role_name_param.get_parameter_value().string_value
 
         self.FIXED_SPEED_param = self.declare_parameter("fixed_speed", 0.0)
@@ -165,8 +165,6 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        rclpy.shutdown()
 
 
 if __name__ == "__main__":

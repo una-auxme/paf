@@ -1,19 +1,17 @@
-#!/usr/bin/env python
 import math
 import time
 
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
 from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
-from ros_compatibility.qos import QoSProfile, DurabilityPolicy
+import rclpy
+import rclpy.clock
+import rclpy.time
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Bool, Float32, String
-
-from dynamic_reconfigure.server import Server
-from control.cfg import ControllerConfig
-import rospy
+from rosgraph_msgs.msg import Clock
 
 
-class VehicleController(CompatibleNode):
+class VehicleController(Node):
     """
     This node is responsible for collecting all data needed for the
     vehicle_control_cmd and sending it.
@@ -30,47 +28,52 @@ class VehicleController(CompatibleNode):
 
     def __init__(self):
         super(VehicleController, self).__init__("vehicle_controller")
-        self.loginfo("VehicleController node started")
+        self.get_logger().info("VehicleController node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
-        self.role_name = self.get_param("role_name", "ego_vehicle")
+        self.control_loop_rate_param = self.declare_parameter("control_loop_rate", 0.05)
+        self.control_loop_rate = (
+            self.control_loop_rate_param.get_parameter_value().double_value
+        )
+        self.role_name_param = self.declare_parameter("role_name", "hero")
+        self.role_name = self.role_name_param.get_parameter_value().string_value
+        self.loop_sleep_time_param = self.declare_parameter("loop_sleep_time", 0.2)
+        # Manual control
+        self.MANUAL_OVERRIDE_param = self.declare_parameter("manual_steer", False)
+        self.MANUAL_STEER_param = self.declare_parameter("manual_throttle", 0.0)
+        self.MANUAL_THROTTLE_param = self.declare_parameter(
+            "manual_override_active", 0.0
+        )
 
         # State variables
         self.__curr_behavior = None
         self.__reverse = False
         self.__emergency = False
-        self.__velocity = 0.0
         self.__brake = 0.0
         self.__throttle = 0.0
         self._p_steer = 0.0
 
-        # Manual control
-        self.MANUAL_OVERRIDE = False
-        self.MANUAL_STEER = 0.0
-        self.MANUAL_THROTTLE = 0.0
-
         # Initialize publishers
-        self.control_publisher = self.new_publisher(
+        self.control_publisher = self.create_publisher(
             CarlaEgoVehicleControl,
             f"/carla/{self.role_name}/vehicle_control_cmd",
             qos_profile=10,
         )
-        self.status_pub = self.new_publisher(
+        self.status_pub = self.create_publisher(
             Bool,
             f"/carla/{self.role_name}/status",
             qos_profile=QoSProfile(
                 depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
             ),
         )
-        self.controller_pub = self.new_publisher(
+        self.controller_pub = self.create_publisher(
             Float32,
             f"/paf/{self.role_name}/controller",
             qos_profile=QoSProfile(
                 depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL
             ),
         )
-        self.emergency_pub = self.new_publisher(
+        self.emergency_pub = self.create_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
             qos_profile=QoSProfile(
@@ -79,61 +82,68 @@ class VehicleController(CompatibleNode):
         )
 
         # Initialize subscribers
-        self.new_subscription(
+        self.create_subscription(
             String,
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
             qos_profile=1,
         )
-        self.new_subscription(
+        self.create_subscription(
             Bool,
             f"/paf/{self.role_name}/emergency",
             self.__set_emergency,
             qos_profile=1,
         )
-        self.new_subscription(
+        self.create_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__get_velocity,
             qos_profile=1,
         )
-        self.new_subscription(
+        self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/throttle",
             self.__set_throttle,
             qos_profile=1,
         )
-        self.new_subscription(
+        self.create_subscription(
             Float32, f"/paf/{self.role_name}/brake", self.__set_brake, qos_profile=1
         )
-        self.new_subscription(
+        self.create_subscription(
             Bool, f"/paf/{self.role_name}/reverse", self.__set_reverse, qos_profile=1
         )
-        self.new_subscription(
+        self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
             self.__set_pure_pursuit_steer,
             qos_profile=1,
         )
 
-        # Dynamic reconfigure
-        Server(ControllerConfig, self.dynamic_reconfigure_callback)
-
         # Control message
         self.message = CarlaEgoVehicleControl()
 
-    def dynamic_reconfigure_callback(self, config: ControllerConfig, level):
-        self.MANUAL_STEER = config["manual_steer"]
-        self.MANUAL_THROTTLE = config["manual_throttle"]
-        self.MANUAL_OVERRIDE = config["manual_override_active"]
-        return config
+        # Periodically send out the status signal,
+        # because otherwise, the leaderboard does not start the simulation.
+        # This has to use system time, because the leaderboard
+        # only sends out clock signals AFTER the simulation has started.
+        system_clock = rclpy.clock.Clock(clock_type=rclpy.clock.ClockType.SYSTEM_TIME)
+        self.create_timer(0.5, self.publish_status, clock=system_clock)
+
+        self.clock_sub = self.create_subscription(Clock, "/clock", self.loop_handler, 1)
+        self.get_logger().info("VehicleController node initialized.")
 
     def update_control_message(self):
         """Update the control message based on the current state."""
-        if self.MANUAL_OVERRIDE:
-            self.message.reverse = self.MANUAL_THROTTLE < 0
-            self.message.throttle = self.MANUAL_THROTTLE
-            self.message.steer = self.MANUAL_STEER
+        MANUAL_OVERRIDE = self.MANUAL_OVERRIDE_param.get_parameter_value().bool_value
+
+        if MANUAL_OVERRIDE:
+            MANUAL_THROTTLE = (
+                self.MANUAL_THROTTLE_param.get_parameter_value().double_value
+            )
+            MANUAL_STEER = self.MANUAL_STEER_param.get_parameter_value().double_value
+            self.message.reverse = MANUAL_THROTTLE < 0
+            self.message.throttle = MANUAL_THROTTLE
+            self.message.steer = MANUAL_STEER
             self.message.brake = 0.0
             self.message.hand_brake = False
         elif self.__emergency:
@@ -152,35 +162,13 @@ class VehicleController(CompatibleNode):
             self.message.hand_brake = False
             self.message.manual_gear_shift = False
 
-        self.message.header.stamp = rospy.get_rostime()
-
-    def run(self):
-        """Main loop of the node."""
-        self.status_pub.publish(True)
-        self.loginfo("VehicleController node running")
-
-        def spin_loop(timer_event=None):
-            self.loop_sleep_time = self.get_param("loop_sleep_time", 0.2)
-            self.update_control_message()
-            self.control_publisher.publish(self.message)
-            time.sleep(self.loop_sleep_time)
-
-        def spin_loop_handler(timer_event=None):
-            try:
-                spin_loop()
-            except Exception as e:
-                rospy.logfatal(e)
-
-        self.new_timer(self.control_loop_rate, spin_loop_handler)
-        self.spin()
-
     # Subscriber callbacks
     def __set_curr_behavior(self, data: String):
         self.__curr_behavior = data.data
 
     def __set_emergency(self, data: Bool):
         if data.data and not self.__emergency:
-            self.logerr("Emergency braking engaged")
+            self.get_logger().error("Emergency braking engaged")
             self.__emergency = True
 
     def __get_velocity(self, data: CarlaSpeedometer):
@@ -189,7 +177,7 @@ class VehicleController(CompatibleNode):
             self.__emergency_brake(False)
             for _ in range(7):
                 self.emergency_pub.publish(Bool(False))
-            self.loginfo("Emergency braking disengaged")
+            self.get_logger().info("Emergency braking disengaged")
 
     def __set_throttle(self, data: Float32):
         self.__throttle = data.data
@@ -215,16 +203,34 @@ class VehicleController(CompatibleNode):
             self.message.brake = 0.0
             self.message.hand_brake = False
 
+    def publish_status(self):
+        self.status_pub.publish(Bool(data=True))
+
+    def loop(self, clock: Clock):
+        """Main control loop"""
+        self.update_control_message()
+        self.message.header.stamp = rclpy.time.Time(
+            seconds=clock.clock.sec, nanoseconds=clock.clock.nanosec
+        ).to_msg()
+        self.control_publisher.publish(self.message)
+
+        loop_sleep_time = self.loop_sleep_time_param.get_parameter_value().double_value
+        time.sleep(loop_sleep_time)
+
+    def loop_handler(self, clock: Clock):
+        try:
+            self.loop(clock)
+        except Exception as e:
+            self.get_logger().fatal(e)
+
 
 def main(args=None):
-    roscomp.init("vehicle_controller", args=args)
+    rclpy.init(args=args)
     try:
         node = VehicleController()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":
