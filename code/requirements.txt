@@ -1,1 +1,5 @@
+# General quaternion transformations
 transforms3d==0.4.2
+
+# Pid controller for control
+simple-pid==2.0.1
