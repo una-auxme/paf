@@ -7,6 +7,7 @@ import rclpy.clock
 import rclpy.time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy
+from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from std_msgs.msg import Bool, Float32, String
 from rosgraph_msgs.msg import Clock
 
@@ -37,12 +38,42 @@ class VehicleController(Node):
         )
         self.role_name_param = self.declare_parameter("role_name", "hero")
         self.role_name = self.role_name_param.get_parameter_value().string_value
-        self.loop_sleep_time_param = self.declare_parameter("loop_sleep_time", 0.2)
+        self.loop_sleep_time_param = self.declare_parameter(
+            "loop_sleep_time",
+            0.2,
+            descriptor=ParameterDescriptor(
+                description="This sleep time is used to slow down the vehicle "
+                "controller to a reasonable speed",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.05, to_value=0.4, step=0.01)
+                ],
+            ),
+        )
         # Manual control
-        self.MANUAL_OVERRIDE_param = self.declare_parameter("manual_steer", False)
-        self.MANUAL_STEER_param = self.declare_parameter("manual_throttle", 0.0)
+        self.MANUAL_OVERRIDE_param = self.declare_parameter(
+            "manual_override_active",
+            False,
+            descriptor=ParameterDescriptor(description="Activate Manual Override"),
+        )
+        self.MANUAL_STEER_param = self.declare_parameter(
+            "manual_steer",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Steering input sent to carla.",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        )
         self.MANUAL_THROTTLE_param = self.declare_parameter(
-            "manual_override_active", 0.0
+            "manual_throttle",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Steering input sent to carla.",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                ],
+            ),
         )
 
         # State variables
