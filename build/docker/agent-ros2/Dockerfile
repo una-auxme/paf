@@ -247,16 +247,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   sudo apt-get update && \
   rosdep update --rosdistro ${ROS_DISTRO} && \
-  (rosdep install -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y || \
-  echo 'echo WARNING: rosdep install failed, check your docker build with --progress=plain.' >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  ((rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y |& tee ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log; exit \${PIPESTATUS[0]}) \
+  || echo \"echo -e \\\"\\\\e[31mERROR: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
   "
 
 USER root
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
-RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid=${PAF_UID},gid=${PAF_GID} \
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid=0,gid=0 \
   --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
-  (${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh || \
-  echo "echo WARNING: pip install failed, check your docker build with --progress=plain." >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc)
+  bash -c " \
+  ((${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh |& tee ${INTERNAL_WORKSPACE_DIR}/pip_install.log; exit \${PIPESTATUS[0]}) \
+  || echo \"echo -e \\\"\\\\e[31mERROR: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  "
 USER ${PAF_USERNAME}
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc

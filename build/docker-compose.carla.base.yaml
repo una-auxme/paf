@@ -27,7 +27,7 @@ services:
   carla-ros-bridge:
     command: |
       bash -c "\
-      python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP \
+      python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --timeout=36000 --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP \
       "
     image: carla-leaderboard-ros-bridge:2.1
     environment:

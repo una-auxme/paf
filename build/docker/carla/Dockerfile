@@ -55,6 +55,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt-get install -y \
   xdg-user-dirs xdg-utils
 
+COPY build/docker/carla/carla_entrypoint.sh /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
+
 FROM ${BASE_IMAGE} AS carla-api
 
 COPY --from=carla /opt/carla/PythonAPI /opt/carla/PythonAPI
@@ -118,7 +121,7 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/un
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
+COPY build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
 ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
@@ -258,7 +261,7 @@ RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPA
 # Use dummy package because the leaderboards wants to launch something
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 RUN mkdir -p ros2_ws/src
-ADD build/docker/carla/ros_bridge_dummy ros2_ws/src/
+COPY build/docker/carla/ros_bridge_dummy ros2_ws/src/
 RUN bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   cd ros2_ws && \
@@ -266,10 +269,10 @@ RUN bash -c " \
   echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 # The agent launches the dummy package
-ADD build/docker/carla/agent_ros2_bridge.py ./
+COPY build/docker/carla/agent_ros2_bridge.py ./
 CMD [ "bash", "-c", "sleep infinity"  ]
 
 RUN echo "source ${INTERNAL_WORKSPACE_DIR}/env.bash" >> ~/.bashrc
-ADD build/docker/carla/wait_for_carla.py /
-ADD build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
+COPY build/docker/carla/wait_for_carla.py /
+COPY build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
