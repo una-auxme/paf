@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <node pkg="ros_bridge_dummy" exec="sleep_node" name="dummy_sleep_node" />
+  <node pkg="paf_leaderboard_ros_bridge" exec="sleep_node" name="dummy_sleep_node" />
 </launch>

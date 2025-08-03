@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = "ros_bridge_dummy"
+package_name = "paf_leaderboard_ros_bridge"
 
 setup(
     name=package_name,
@@ -21,6 +21,6 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["sleep_node = ros_bridge_dummy.sleep_node:main"],
+        "console_scripts": ["sleep_node = paf_leaderboard_ros_bridge.sleep_node:main"],
     },
 )
