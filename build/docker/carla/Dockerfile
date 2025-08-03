@@ -261,7 +261,7 @@ RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPA
 # Use dummy package because the leaderboards wants to launch something
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 RUN mkdir -p ros2_ws/src
-COPY build/docker/carla/ros_bridge_dummy ros2_ws/src/
+COPY build/docker/carla/paf_leaderboard_ros_bridge ros2_ws/src/
 RUN bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   cd ros2_ws && \

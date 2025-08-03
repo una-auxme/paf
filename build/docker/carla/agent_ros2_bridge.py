@@ -13,7 +13,7 @@ class PAFAgent(ROS2Agent):
 
     def get_ros_entrypoint(self):
         return {
-            "package": "ros_bridge_dummy",
+            "package": "paf_leaderboard_ros_bridge",
             "launch_file": "leaderboard.sleep.xml",
         }
 
