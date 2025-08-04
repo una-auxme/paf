@@ -3,6 +3,8 @@
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
 
+    <set_parameter name="use_sim_time" value="true" />
+
     <!-- perception -->
     <!-- <include
         file="$(find perception)/launch/perception.launch">
@@ -13,11 +15,10 @@
     </include> -->
 
     <!-- acting -->
-    <!-- <include
-        file="$(find-pkg-share acting)/launch/acting.launch">
-        <arg name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <arg name="role_name" value="$(arg role_name)" />
-    </include> -->
+    <include file="$(find-pkg-share acting)/launch/acting.xml">
+        <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+        <arg name="role_name" value="$(var role_name)" />
+    </include>
 
     <!-- debugging -->
     <!-- <include

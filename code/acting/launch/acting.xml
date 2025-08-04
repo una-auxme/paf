@@ -2,14 +2,14 @@
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
 
-    <!--Passthrough
-    all messages the control package needs-->
-    <node pkg="acting" type="passthrough.py" name="passthrough" output="screen">
-        <param name="role_name" value="$(arg role_name)" />
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
+    <!--Passthrough all messages the control package needs-->
+    <node pkg="acting" exec="passthrough" name="passthrough">
+        <param name="role_name" value="$(var role_name)" />
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
     </node>
 
-    <include file="$(find control)/launch/control.launch">
-        <arg name="control_loop_rate" value="$(arg control_loop_rate)" />
+    <include file="$(find-pkg-share control)/launch/control.xml">
+        <arg name="role_name" value="$(var role_name)" />
+        <arg name="control_loop_rate" value="$(var control_loop_rate)" />
     </include>
 </launch>

@@ -26,9 +26,10 @@ devbuild || echo "WARNING: Build failed, proceeding anyway..."
 echo "source ${PAF_ROS_WS}/install/local_setup.bash" >>"${INTERNAL_WORKSPACE_DIR}/env.bash"
 devsource || "WARNING: ROS workspace could not be sourced"
 
-ros2 run rqt_console rqt_console &
-ros2 run rqt_gui rqt_gui &
-ros2 run rviz2 rviz2 -d /workspace/rviz2.rviz &
+ros_gui_params=(--ros-args --param use_sim_time:=true)
+ros2 run rqt_console rqt_console "${ros_gui_params[@]}" &
+ros2 run rqt_gui rqt_gui "${ros_gui_params[@]}" &
+ros2 run rviz2 rviz2 -d /workspace/rviz2.rviz "${ros_gui_params[@]}" &
 code /workspace &
 
 "$@" &

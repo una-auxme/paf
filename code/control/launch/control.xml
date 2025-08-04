@@ -13,24 +13,23 @@
     -->
     <arg name="loop_sleep_time" default="0.2" />
 
-    <node pkg="control" type="velocity_controller.py" name="velocity_controller" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <param name="role_name" value="$(arg role_name)" />
-        <rosparam file="$(find control)/config/velocity_config.yaml" command="load" />
-
+    <node pkg="control" exec="velocity_controller" name="velocity_controller">
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
+        <param name="role_name" value="$(var role_name)" />
+        <param from="$(find-pkg-share control)/config/control.yaml"/>
     </node>
 
-    <node pkg="control" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
+    <!-- <node pkg="control" type="pure_pursuit_controller.py" name="pure_pursuit_controller" output="screen">
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <param name="role_name" value="$(arg role_name)" />
         <rosparam file="$(find control)/config/pure_pursuit_config.yaml" command="load" />
-    </node>
+    </node> -->
 
-    <node pkg="control" type="vehicle_controller.py" name="vehicle_controller" output="screen">
-        <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-        <param name="loop_sleep_time" value="$(arg loop_sleep_time)" />
-        <param name="role_name" value="$(arg role_name)" />
-        <rosparam file="$(find control)/config/controller_config.yaml" command="load" />
+    <node pkg="control" exec="vehicle_controller" name="vehicle_controller">
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
+        <param name="loop_sleep_time" value="$(var loop_sleep_time)" />
+        <param name="role_name" value="$(var role_name)" />
+        <param from="$(find-pkg-share control)/config/control.yaml"/>
     </node>
 
 </launch>

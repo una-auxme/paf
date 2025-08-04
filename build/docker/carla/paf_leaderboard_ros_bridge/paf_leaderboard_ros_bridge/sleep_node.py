@@ -3,7 +3,6 @@ from rclpy.node import Node
 
 
 class SleepNode(Node):
-
     def __init__(self):
         super().__init__("sleep_node")
         timer_period = 20.0  # seconds
@@ -15,12 +14,11 @@ class SleepNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
-    sleep_node = SleepNode()
-
-    rclpy.spin(sleep_node)
-
-    rclpy.shutdown()
+    try:
+        node = SleepNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":

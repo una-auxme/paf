@@ -149,6 +149,9 @@ class VelocityController(Node):
         FIXED_SPEED_OVERRIDE = (
             self.FIXED_SPEED_OVERRIDE_param.get_parameter_value().bool_value
         )
+        self.get_logger().info(
+            f"FIXED_SPEED_OVERRIDE: {FIXED_SPEED_OVERRIDE}, FIXED_SPEED: {FIXED_SPEED}"
+        )
 
         target_velocity = (
             self.__target_velocity if not FIXED_SPEED_OVERRIDE else FIXED_SPEED
