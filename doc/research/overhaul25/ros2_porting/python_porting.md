@@ -11,7 +11,7 @@
 - [Necessary dependency upgrades](#necessary-dependency-upgrades)
 - [Dependency management options](#dependency-management-options)
   - [rosdep dependency management](#rosdep-dependency-management)
-  - [pip (optional: venv)](#pip-optional-venv)
+  - [pip ~~(optional: venv)~~](#pip-optional-venv)
   - [conda](#conda)
   - [uv](#uv)
   - [Conclusion/Status](#conclusionstatus)
@@ -100,7 +100,7 @@ Cons:
 - Requires each python dependency to have a rosdep key
 - Versioning seems inflexible if very up-to-date packages are needed
 
-### pip (optional: venv)
+### pip ~~(optional: venv)~~
 
 The required dependencies can be either tracked in a project-level `requirements.txt` or in each of the package's setup.py.
 
@@ -108,7 +108,7 @@ Pros:
 
 - The [documentation](https://docs.ros.org/en/jazzy/How-To-Guides/Using-Python-Packages.html) directly references this installation method as a possible solution.
 - Pip is the python ecosystem standard
-- [Use a venv for python dependencies](../improvements/docker.md#use-a-venv-for-python-dependencies)
+- ~~[Use a venv for python dependencies](../improvements/docker.md#use-a-venv-for-python-dependencies)~~
 
 Cons:
 

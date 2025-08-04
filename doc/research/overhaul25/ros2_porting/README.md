@@ -257,11 +257,20 @@ Necessary adjustments:
 
 ##### Dynamic reconfigure
 
-TODO
+Dynamic reconfigure does not exist in ROS2. Instead all ros parameters have to be declared on a node (optionally with description and range).  
+These can then be edited in the rqt *Parameter Reconfigure* ui (Sometimes still called *Dynamic Reconfigure*)
+
+Parameter changes are received via a callback and have to be applied to the node. A helper function `paf_common.parameters.update_attributes()` has been created to simplify that process for most nodes.
+
+The accompanying \<config\>.yaml files containing the parameter values are merged into one for each package and now contain subsections for each node.
 
 #### Migrate Python packages/code to ROS2
 
 The planned process for porting individual python packages and nodes is described [here](./python_porting.md).
+
+Current status:
+
+- [DONE] Port the agent, acting and control packages
 
 ### 5. Compare measurements to identify problems
 
