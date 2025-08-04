@@ -1,5 +1,6 @@
 import math
 import time
+from typing import List
 
 from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
 import rclpy
@@ -7,9 +8,14 @@ import rclpy.clock
 import rclpy.time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy
-from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+    FloatingPointRange,
+)
 from std_msgs.msg import Bool, Float32, String
 from rosgraph_msgs.msg import Clock
+from paf_common.parameters import update_attributes
 
 
 class VehicleController(Node):
@@ -32,48 +38,68 @@ class VehicleController(Node):
         self.get_logger().info("VehicleController node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate_param = self.declare_parameter("control_loop_rate", 0.05)
         self.control_loop_rate = (
-            self.control_loop_rate_param.get_parameter_value().double_value
+            self.declare_parameter("control_loop_rate", 0.05)
+            .get_parameter_value()
+            .double_value
         )
-        self.role_name_param = self.declare_parameter("role_name", "hero")
-        self.role_name = self.role_name_param.get_parameter_value().string_value
-        self.loop_sleep_time_param = self.declare_parameter(
-            "loop_sleep_time",
-            0.2,
-            descriptor=ParameterDescriptor(
-                description="This sleep time is used to slow down the vehicle "
-                "controller to a reasonable speed",
-                floating_point_range=[
-                    FloatingPointRange(from_value=0.05, to_value=0.4, step=0.01)
-                ],
-            ),
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+        self.loop_sleep_time = (
+            self.declare_parameter(
+                "loop_sleep_time",
+                0.2,
+                descriptor=ParameterDescriptor(
+                    description="This sleep time is used to slow down the vehicle "
+                    "controller to a reasonable speed",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.05, to_value=0.4, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
         # Manual control
-        self.MANUAL_OVERRIDE_param = self.declare_parameter(
-            "manual_override_active",
-            False,
-            descriptor=ParameterDescriptor(description="Activate Manual Override"),
+        self.manual_override_active = (
+            self.declare_parameter(
+                "manual_override_active",
+                False,
+                descriptor=ParameterDescriptor(description="Activate Manual Override"),
+            )
+            .get_parameter_value()
+            .bool_value
         )
-        self.MANUAL_STEER_param = self.declare_parameter(
-            "manual_steer",
-            0.0,
-            descriptor=ParameterDescriptor(
-                description="Steering input sent to carla.",
-                floating_point_range=[
-                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
-                ],
-            ),
+        self.manual_steer = (
+            self.declare_parameter(
+                "manual_steer",
+                0.0,
+                descriptor=ParameterDescriptor(
+                    description="Steering input sent to carla.",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
-        self.MANUAL_THROTTLE_param = self.declare_parameter(
-            "manual_throttle",
-            0.0,
-            descriptor=ParameterDescriptor(
-                description="Steering input sent to carla.",
-                floating_point_range=[
-                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
-                ],
-            ),
+        self.manual_throttle = (
+            self.declare_parameter(
+                "manual_throttle",
+                0.0,
+                descriptor=ParameterDescriptor(
+                    description="Steering input sent to carla.",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
 
         # State variables
@@ -161,20 +187,20 @@ class VehicleController(Node):
         self.create_timer(0.5, self.publish_status, clock=system_clock)
 
         self.clock_sub = self.create_subscription(Clock, "/clock", self.loop_handler, 1)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info("VehicleController node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def update_control_message(self):
         """Update the control message based on the current state."""
-        MANUAL_OVERRIDE = self.MANUAL_OVERRIDE_param.get_parameter_value().bool_value
 
-        if MANUAL_OVERRIDE:
-            MANUAL_THROTTLE = (
-                self.MANUAL_THROTTLE_param.get_parameter_value().double_value
-            )
-            MANUAL_STEER = self.MANUAL_STEER_param.get_parameter_value().double_value
-            self.message.reverse = MANUAL_THROTTLE < 0
-            self.message.throttle = MANUAL_THROTTLE
-            self.message.steer = MANUAL_STEER
+        if self.manual_override_active:
+            self.message.reverse = self.manual_throttle < 0
+            self.message.throttle = self.manual_throttle
+            self.message.steer = self.manual_steer
             self.message.brake = 0.0
             self.message.hand_brake = False
         elif self.__emergency:
@@ -245,8 +271,7 @@ class VehicleController(Node):
         ).to_msg()
         self.control_publisher.publish(self.message)
 
-        loop_sleep_time = self.loop_sleep_time_param.get_parameter_value().double_value
-        time.sleep(loop_sleep_time)
+        time.sleep(self.loop_sleep_time)
 
     def loop_handler(self, clock: Clock):
         try:

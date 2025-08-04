@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from carla_msgs.msg import CarlaSpeedometer
 import rclpy
 from rclpy.node import Node
@@ -7,6 +7,8 @@ from rclpy.subscription import Subscription
 from simple_pid import PID
 from std_msgs.msg import Float32, Bool
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from paf_common.parameters import update_attributes
+from rclpy.parameter import Parameter
 
 
 class VelocityController(Node):
@@ -19,63 +21,87 @@ class VelocityController(Node):
         super().__init__("velocity_controller")
         self.get_logger().info("VelocityController node initializing...")
 
-        self.control_loop_rate_param = self.declare_parameter(
-            "control_loop_rate",
-            0.05,
-        )
         self.control_loop_rate = (
-            self.control_loop_rate_param.get_parameter_value().double_value
+            self.declare_parameter(
+                "control_loop_rate",
+                0.05,
+            )
+            .get_parameter_value()
+            .double_value
         )
-        self.role_name_param = self.declare_parameter("role_name", "hero")
-        self.role_name = self.role_name_param.get_parameter_value().string_value
-
-        self.FIXED_SPEED_param = self.declare_parameter(
-            "fixed_speed",
-            0.0,
-            descriptor=ParameterDescriptor(
-                description="Drive with fixed speed / disregard input",
-                floating_point_range=[
-                    FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
-                ],
-            ),
-        )
-        self.FIXED_SPEED_OVERRIDE_param = self.declare_parameter(
-            "fixed_speed_active",
-            False,
-            descriptor=ParameterDescriptor(
-                description="Activate fixed speed mode disregards input"
-            ),
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
         )
 
-        self.pid_p_param = self.declare_parameter(
-            "pid_p",
-            0.60,
-            descriptor=ParameterDescriptor(
-                description="P for PID controller",
-                floating_point_range=[
-                    FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
-                ],
-            ),
+        self.fixed_speed = (
+            self.declare_parameter(
+                "fixed_speed",
+                0.0,
+                descriptor=ParameterDescriptor(
+                    description="Drive with fixed speed / disregard input",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
-        self.pid_i_param = self.declare_parameter(
-            "pid_i",
-            0.00076,
-            descriptor=ParameterDescriptor(
-                description="I for PID controller",
-                floating_point_range=[
-                    FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
-                ],
-            ),
+        self.fixed_speed_active = (
+            self.declare_parameter(
+                "fixed_speed_active",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Activate fixed speed mode disregards input"
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
         )
-        self.pid_d_param = self.declare_parameter(
-            "pid_d",
-            0.63,
-            descriptor=ParameterDescriptor(
-                description="D for PID controller",
-                floating_point_range=[
-                    FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
-                ],
-            ),
+
+        self.pid_p = (
+            self.declare_parameter(
+                "pid_p",
+                0.60,
+                descriptor=ParameterDescriptor(
+                    description="P for PID controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.pid_i = (
+            self.declare_parameter(
+                "pid_i",
+                0.00076,
+                descriptor=ParameterDescriptor(
+                    description="I for PID controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.pid_d = (
+            self.declare_parameter(
+                "pid_d",
+                0.63,
+                descriptor=ParameterDescriptor(
+                    description="D for PID controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
 
         self.target_velocity_sub: Subscription = self.create_subscription(
@@ -107,15 +133,20 @@ class VelocityController(Node):
         self.__current_velocity: Optional[float] = None
         self.__target_velocity: Optional[float] = None
         self.pid_t = PID(
-            self.pid_p_param.get_parameter_value().double_value,
-            self.pid_i_param.get_parameter_value().double_value,
-            self.pid_d_param.get_parameter_value().double_value,
+            self.pid_p,
+            self.pid_i,
+            self.pid_d,
         )
         # since we use this for braking aswell, allow -1 to 0.
         self.pid_t.output_limits = (-1.0, 1.0)
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info("VelocityController node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def loop(self):
         """
@@ -141,20 +172,12 @@ class VelocityController(Node):
             )
             return
 
-        self.pid_t.Kp = self.pid_p_param.get_parameter_value().double_value
-        self.pid_t.Ki = self.pid_i_param.get_parameter_value().double_value
-        self.pid_t.Kd = self.pid_d_param.get_parameter_value().double_value
-
-        FIXED_SPEED = self.FIXED_SPEED_param.get_parameter_value().double_value
-        FIXED_SPEED_OVERRIDE = (
-            self.FIXED_SPEED_OVERRIDE_param.get_parameter_value().bool_value
-        )
-        self.get_logger().info(
-            f"FIXED_SPEED_OVERRIDE: {FIXED_SPEED_OVERRIDE}, FIXED_SPEED: {FIXED_SPEED}"
-        )
+        self.pid_t.Kp = self.pid_p
+        self.pid_t.Ki = self.pid_i
+        self.pid_t.Kd = self.pid_d
 
         target_velocity = (
-            self.__target_velocity if not FIXED_SPEED_OVERRIDE else FIXED_SPEED
+            self.__target_velocity if not self.fixed_speed_active else self.fixed_speed
         )
         # revert driving
         if target_velocity < 0:
