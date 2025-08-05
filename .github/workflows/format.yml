@@ -3,10 +3,12 @@ name: Check code format
 on:
   pull_request:
     branches:
-      - "main"
+      - main
+      - ros2-dev
   push:
     branches:
       - main
+      - ros2-dev
 
 jobs:
     format:
