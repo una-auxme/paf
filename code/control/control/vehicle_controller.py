@@ -35,7 +35,7 @@ class VehicleController(Node):
 
     def __init__(self):
         super(VehicleController, self).__init__("vehicle_controller")
-        self.get_logger().info("VehicleController node initializing...")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
         self.control_loop_rate = (
@@ -188,7 +188,7 @@ class VehicleController(Node):
 
         self.clock_sub = self.create_subscription(Clock, "/clock", self.loop_handler, 1)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
-        self.get_logger().info("VehicleController node initialized.")
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""

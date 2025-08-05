@@ -19,7 +19,7 @@ class VelocityController(Node):
 
     def __init__(self):
         super().__init__("velocity_controller")
-        self.get_logger().info("VelocityController node initializing...")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         self.control_loop_rate = (
             self.declare_parameter(
@@ -142,7 +142,7 @@ class VelocityController(Node):
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
-        self.get_logger().info("VelocityController node initialized.")
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""

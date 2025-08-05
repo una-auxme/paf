@@ -70,6 +70,7 @@ class Passthrough(Node):
 
     def __init__(self):
         super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         self.pt_publishers: Dict[str, Publisher] = {}
         self.pt_subscribers: Dict[str, Subscription] = {}
@@ -84,6 +85,8 @@ class Passthrough(Node):
                 callback=self.pt_publishers[topic.pub_name].publish,
                 qos_profile=1,
             )
+
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
 
 def main(args=None):
