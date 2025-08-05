@@ -7,34 +7,59 @@ The message is calculated using the following data:
   - the current steering angle (topic: /carla/hero/vehicle_control_command)
 """
 
-import rospy
-from ros_compatibility.node import CompatibleNode
-import ros_compatibility as roscomp
+from typing import List
+import rclpy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 from nav_msgs.msg import Odometry
 from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
 import numpy as np
+from paf_common.parameters import update_attributes
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+)
 
-from localization.cfg import OdometryCovarianceConfig
-from dynamic_reconfigure.server import Server
 
 # our car: Lincoln MKZ 2020
 WHEELBASE_MKZ_2020 = 2.85
 MAX_STEERING_ANGLE_MKZ_2020 = np.deg2rad(70)
 
 
-class OdometryNode(CompatibleNode):
+class OdometryNode(Node):
     def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.__use_odometry_yaml_covariance: bool
-        self.__odometry_pose_covariance_translation: float
-        self.__odometry_pose_covariance_rotation: float
-        self.__odometry_twist_covariance_linear: float
-        self.__odometry_twist_covariance_angular: float
-        Server(OdometryCovarianceConfig, self.dynamic_reconfigure_callback)
-
-        self.role_name: str = self.get_param("role_name", "hero")
-        self.loop_rate: float = self.get_param("control_loop_rate", 0.05)
+        # Parameters
+        self.loop_rate = (
+            self.declare_parameter("loop_rate", 0.05).get_parameter_value().double_value
+        )
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+        self.pose_covariance = (
+            self.declare_parameter(
+                "pose_covariance",
+                descriptor=ParameterDescriptor(
+                    description="Covariance for Odometry Pose",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
+        self.twist_covariance = (
+            self.declare_parameter(
+                "twist_covariance",
+                descriptor=ParameterDescriptor(
+                    description="Covariance for Odometry Twist",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
 
         # Node starts only if at least one steer angle
         # and one speed message was received
@@ -47,36 +72,30 @@ class OdometryNode(CompatibleNode):
         self.steering_angle: float = 0.0  # Steering angle in radians
 
         # ROS Publishers and Subscribers
-        self.odom_pub = self.new_publisher(Odometry, "/wheel/odometry", qos_profile=1)
+        self.odom_pub = self.create_publisher(
+            Odometry, "/wheel/odometry", qos_profile=1
+        )
 
-        self.speed_sub = self.new_subscription(
+        self.speed_sub = self.create_subscription(
             CarlaSpeedometer,
             "/carla/" + self.role_name + "/Speed",
             self.speed_callback,
             qos_profile=1,
         )
-        self.steering_sub = self.new_subscription(
+        self.steering_sub = self.create_subscription(
             CarlaEgoVehicleControl,
             "/carla/" + self.role_name + "/vehicle_control_cmd",
             self.steering_callback,
             qos_profile=1,
         )
 
-    def dynamic_reconfigure_callback(self, config: "OdometryCovarianceConfig", label):
-        self.__use_odometry_yaml_covariance = config["use_yaml_covariance_odometry"]
-        self.__odometry_pose_covariance_translation = config[
-            "odometry_pose_covariance_translation"
-        ]
-        self.__odometry_pose_covariance_rotation = config[
-            "odometry_pose_covariance_rotation"
-        ]
-        self.__odometry_twist_covariance_linear = config[
-            "odometry_twist_covariance_linear"
-        ]
-        self.__odometry_twist_covariance_angular = config[
-            "odometry_twist_covariance_angular"
-        ]
-        return config
+        self.create_timer(self.loop_rate, self.publish_odometry_handler)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def speed_callback(self, msg: CarlaSpeedometer):
         """Saves Carlas reported speed in a buffer.
@@ -135,16 +154,13 @@ class OdometryNode(CompatibleNode):
 
         # Create Odometry message from calculated data.
         odom = Odometry()
-        odom.header.stamp = rospy.Time.now()
+        odom.header.stamp = self.get_clock().now().to_msg()
         odom.header.frame_id = "odom"
         odom.child_frame_id = self.role_name
         odom.pose.pose.position.z = 0.0
 
         # The pose message is disabled in ekf_config.yaml
-        if self.__use_odometry_yaml_covariance:
-            odom.pose.covariance = rospy.get_param("~pose_covariance")
-        else:
-            pass
+        odom.pose.covariance = self.pose_covariance
 
         # The velocity (twist) must be set. (Angular x, y are also disabled.)
         odom.twist.twist.linear.x = vx
@@ -153,34 +169,19 @@ class OdometryNode(CompatibleNode):
 
         odom.twist.twist.angular.z = omega
 
-        if self.__use_odometry_yaml_covariance:
-            odom.twist.covariance = rospy.get_param("~twist_covariance")
-        else:
-            linear = np.diag(np.full(3, self.__odometry_twist_covariance_linear))
-            angular = np.diag(np.full(3, self.__odometry_twist_covariance_angular))
-            cov = np.zeros((6, 6), dtype=np.float32)
-            cov[:3, :3] = linear
-            cov[3:, 3:] = angular
-            odom.twist.covariance = list(cov.flatten())
+        odom.twist.covariance = self.twist_covariance
 
         # Publish Odometry message
         self.odom_pub.publish(odom)
 
-    def publish_odometry_handler(self, timer_event=None):
+    def publish_odometry_handler(self):
+        if not self.initialized:
+            return
+
         try:
             self.publish_odometry()
         except Exception as e:
-            rospy.logfatal(e)
-
-    def run(self):
-        # wait until Speedometer and steering angle msg are received
-        while not self.initialized:
-            rospy.sleep(1)
-        rospy.sleep(1)
-
-        self.new_timer(self.loop_rate, lambda _: self.publish_odometry_handler())
-
-        self.spin()
+            self.get_logger().fatal(e)
 
 
 def main(args=None):
@@ -188,15 +189,13 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init("odometry_fusion", args=args)
+    rclpy.init(args=args)
 
     try:
         node = OdometryNode()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":

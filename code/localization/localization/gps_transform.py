@@ -19,7 +19,7 @@ from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import Odometry
 from paf_common.parameters import update_attributes
 
-from coordinate_transformation import CoordinateTransformer
+from localization.coordinate_transformation import CoordinateTransformer
 
 
 class GpsTransform(Node):

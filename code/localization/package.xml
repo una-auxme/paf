@@ -7,6 +7,8 @@
   <maintainer email="vinzenz.malke@uni-a.de">Vinzenz Malke</maintainer>
   <license>MIT</license>
 
+  <depend>robot_localization</depend>
+
   <test_depend>python3-pytest</test_depend>
 
   <export>

@@ -12,18 +12,18 @@ When a message is received the covariance is added and the data is sent out agai
 The nodes outputs are used by the local and global EKFs and the gps_transform node.
 """
 
-import rospy
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
+from typing import List
+import rclpy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 from sensor_msgs.msg import Imu, NavSatFix
+from paf_common.parameters import update_attributes
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+)
 
 
-from localization.cfg import SensorCovarianceConfig
-from dynamic_reconfigure.server import Server
-import numpy as np
-
-
-class SensorCovarianceFusion(CompatibleNode):
+class SensorCovarianceFusion(Node):
 
     def __init__(self):
         """
@@ -31,23 +31,58 @@ class SensorCovarianceFusion(CompatibleNode):
         :return:
         """
         super().__init__("sensor_covariance_fusion")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.__use_gps_yaml_covariance: bool
-        self.__gps_covariance: float
-
-        self.__use_imu_yaml_covariance: bool
-        self.__imu_orientation_covariance: float
-        self.__imu_angular_velocity_covariance: float
-        self.__imu_linear_acceleration_covariance_xy: float
-        self.__imu_linear_acceleration_covariance_z: float
-        Server(SensorCovarianceConfig, self.dynamic_reconfigure_callback)
+        # Parameters
+        self.imu_orientation = (
+            self.declare_parameter(
+                "imu_orientation",
+                descriptor=ParameterDescriptor(
+                    description="IMU Covariance for Orientation",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
+        self.imu_angular_velocity = (
+            self.declare_parameter(
+                "imu_angular_velocity",
+                descriptor=ParameterDescriptor(
+                    description="IMU Covariance for Angular Velocity",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
+        self.imu_linear_acceleration = (
+            self.declare_parameter(
+                "imu_linear_acceleration",
+                descriptor=ParameterDescriptor(
+                    description="IMU Covariance for Linear Acceleration",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
+        self.gps_position = (
+            self.declare_parameter(
+                "gps_position",
+                descriptor=ParameterDescriptor(
+                    description="Alt,Lat,Long Covariance",
+                ),
+            )
+            .get_parameter_value()
+            .double_array_value
+        )
 
         # The publishers (topic names have to coincide with ekf_config.yaml)
-        self.imu_publisher = self.new_publisher(Imu, "/imu/data", qos_profile=10)
-        self.gps_publisher = self.new_publisher(NavSatFix, "/gps/fix", qos_profile=10)
+        self.imu_publisher = self.create_publisher(Imu, "/imu/data", qos_profile=10)
+        self.gps_publisher = self.create_publisher(
+            NavSatFix, "/gps/fix", qos_profile=10
+        )
 
         # Initialize the subscriber for the IMU data
-        self.imu_subscriber = self.new_subscription(
+        self.imu_subscriber = self.create_subscription(
             Imu,
             "/carla/hero/IMU",
             self.imu_callback,
@@ -55,29 +90,19 @@ class SensorCovarianceFusion(CompatibleNode):
         )
 
         # Initialize the subscriber for the Gps data
-        self.gps_subscriber = self.new_subscription(
+        self.gps_subscriber = self.create_subscription(
             NavSatFix,
             "/carla/hero/GPS",
             self.gps_callback,
             qos_profile=1,
         )
 
-    def dynamic_reconfigure_callback(self, config: "SensorCovarianceConfig", level):
-        self.__use_gps_yaml_covariance = config["use_yaml_covariance_gps"]
-        self.__gps_covariance = config["gps_covariance"]
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
-        self.__use_imu_yaml_covariance = config["use_yaml_covariance_imu"]
-        self.__imu_orientation_covariance = config["imu_orientation_covariance"]
-        self.__imu_angular_velocity_covariance = config[
-            "imu_angular_velocity_covariance"
-        ]
-        self.__imu_linear_acceleration_covariance_xy = config[
-            "imu_linear_acceleration_covariance_xy"
-        ]
-        self.__imu_linear_acceleration_covariance_z = config[
-            "imu_linear_acceleration_covariance_z"
-        ]
-        return config
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def imu_callback(self, imu: Imu):
         """An IMU message is received.
@@ -85,28 +110,9 @@ class SensorCovarianceFusion(CompatibleNode):
         Adds covariances and sends out again.
         """
 
-        if self.__use_imu_yaml_covariance:
-            imu.orientation_covariance = rospy.get_param("~imu_orientation")
-            imu.angular_velocity_covariance = rospy.get_param("~imu_angular_velocity")
-            imu.linear_acceleration_covariance = rospy.get_param(
-                "~imu_linear_acceleration"
-            )
-        else:
-            imu.orientation_covariance = np.diag(
-                np.full(3, self.__imu_orientation_covariance)
-            ).flatten()
-
-            imu.angular_velocity_covariance = np.diag(
-                np.full(3, self.__imu_angular_velocity_covariance)
-            ).flatten()
-
-            imu.linear_acceleration_covariance = np.diag(
-                np.full(3, self.__imu_linear_acceleration_covariance_xy)
-            ).flatten()
-
-            imu.linear_acceleration_covariance[8] = (
-                self.__imu_linear_acceleration_covariance_z
-            )
+        imu.orientation_covariance = self.imu_orientation
+        imu.angular_velocity_covariance = self.imu_angular_velocity
+        imu.linear_acceleration_covariance = self.imu_linear_acceleration
 
         self.imu_publisher.publish(imu)
 
@@ -115,26 +121,19 @@ class SensorCovarianceFusion(CompatibleNode):
 
         Add covariances and sent out again.
         """
-        if self.__use_gps_yaml_covariance:
-            gps.position_covariance = rospy.get_param("~gps_position")
-        else:
-            gps.position_covariance = np.diag(
-                np.full(3, self.__gps_covariance)
-            ).flatten()
+        gps.position_covariance = self.gps_position
 
         self.gps_publisher.publish(gps)
 
 
 def main(args=None):
-    roscomp.init("sensor_covariance_fusion", args=args)
+    rclpy.init(args=args)
 
     try:
         node = SensorCovarianceFusion()
-        node.spin()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":

@@ -28,8 +28,8 @@ from std_msgs.msg import Float32, UInt32, String
 from sensor_msgs.msg import NavSatFix, Imu
 from carla_msgs.msg import CarlaSpeedometer
 import math
-from coordinate_transformation import CoordinateTransformer
-from coordinate_transformation import quat_to_heading
+from localization.coordinate_transformation import CoordinateTransformer
+from localization.coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
 from paf_common.parameters import update_attributes
 

@@ -25,21 +25,27 @@ must be added in the constructor for clean modular programming.
 
 """
 
+from typing import List
+import rclpy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 import numpy as np
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 
 from std_msgs.msg import Float32, String
-from coordinate_transformation import CoordinateTransformer
-from coordinate_transformation import quat_to_heading
+from localization.coordinate_transformation import CoordinateTransformer
+from localization.coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
+from paf_common.parameters import update_attributes
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+)
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
 
-class PositionHeadingPublisherNode(CompatibleNode):
+class PositionHeadingPublisherNode(Node):
 
     def __init__(self):
         """
@@ -47,28 +53,51 @@ class PositionHeadingPublisherNode(CompatibleNode):
         :return:
         """
 
-        super(PositionHeadingPublisherNode, self).__init__(
-            "position_heading_publisher_node"
-        )
+        super().__init__("position_heading_publisher_node")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
+        # Configuration parameters
+        self.control_loop_rate = (
+            self.declare_parameter("control_loop_rate", 0.05)
+            .get_parameter_value()
+            .double_value
+        )
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+        # Filter used:
         """
         Possible Filters:
         Pos: EKF, Kalman, RunningAvg, None
         Heading: EKF, Kalman, None
         """
-        # Filter used:
-        self.pos_filter = self.get_param("pos_filter", "EKF")
-        self.heading_filter = self.get_param("heading_filter", "EKF")
-        self.loginfo(
-            "position_heading_publisher_node started with Pos Filter:"
-            + self.pos_filter
-            + " and Heading Filter: "
-            + self.heading_filter
+        self.pos_filter = (
+            self.declare_parameter(
+                "pos_filter",
+                "EKF",
+                descriptor=ParameterDescriptor(
+                    description="Options: EKF, Kalman, RunningAvg, None"
+                ),
+            )
+            .get_parameter_value()
+            .string_value
         )
-
-        # basic info
-        self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
+        self.heading_filter = (
+            self.declare_parameter(
+                "heading_filter",
+                "EKF",
+                descriptor=ParameterDescriptor(
+                    description="Options: EKF, Kalman, None"
+                ),
+            )
+            .get_parameter_value()
+            .string_value
+        )
+        self.get_logger().info(
+            f"Pos Filter: {self.pos_filter}, Heading Filter: {self.heading_filter}"
+        )
 
         # todo: automatically detect town
         self.transformer = None
@@ -79,21 +108,21 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         # region Subscriber START
 
-        self.map_sub = self.new_subscription(
+        self.map_sub = self.create_subscription(
             String,
             "/carla/" + self.role_name + "/OpenDRIVE",
             self.get_geoRef,
             qos_profile=1,
         )
 
-        self.imu_subscriber = self.new_subscription(
+        self.imu_subscriber = self.create_subscription(
             Imu,
             "/carla/" + self.role_name + "/IMU",
             self.publish_unfiltered_heading,
             qos_profile=1,
         )
 
-        self.gps_subscriber = self.new_subscription(
+        self.gps_subscriber = self.create_subscription(
             NavSatFix,
             "/carla/" + self.role_name + "/GPS",
             self.publish_unfiltered_gps,
@@ -103,21 +132,21 @@ class PositionHeadingPublisherNode(CompatibleNode):
         # Create subscribers depending on the filter used
         # Position Filter:
         if self.pos_filter == "EKF":
-            self.ekf_pos_subscriber = self.new_subscription(
+            self.ekf_pos_subscriber = self.create_subscription(
                 PoseStamped,
                 "/paf/" + self.role_name + "/ekf_pos",
                 self.publish_filter_pos_as_current_pos,
                 qos_profile=1,
             )
         elif self.pos_filter == "Kalman":
-            self.kalman_pos_subscriber = self.new_subscription(
+            self.kalman_pos_subscriber = self.create_subscription(
                 PoseStamped,
                 "/paf/" + self.role_name + "/kalman_pos",
                 self.publish_filter_pos_as_current_pos,
                 qos_profile=1,
             )
         elif self.pos_filter == "RunningAvg":
-            self.gps_subscriber_for_running_avg = self.new_subscription(
+            self.gps_subscriber_for_running_avg = self.create_subscription(
                 NavSatFix,
                 "/carla/" + self.role_name + "/GPS",
                 self.publish_running_avg_pos_as_current_pos,
@@ -134,14 +163,14 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         # Heading Filter:
         if self.heading_filter == "EKF":
-            self.ekf_heading_subscriber = self.new_subscription(
+            self.ekf_heading_subscriber = self.create_subscription(
                 Float32,
                 "/paf/" + self.role_name + "/ekf_heading",
                 self.publish_current_heading,
                 qos_profile=1,
             )
         elif self.heading_filter == "Kalman":
-            self.kalman_heading_subscriber = self.new_subscription(
+            self.kalman_heading_subscriber = self.create_subscription(
                 Float32,
                 "/paf/" + self.role_name + "/kalman_heading",
                 self.publish_current_heading,
@@ -160,25 +189,32 @@ class PositionHeadingPublisherNode(CompatibleNode):
 
         # region Publisher START
         # Orientation
-        self.unfiltered_heading_publisher = self.new_publisher(
+        self.unfiltered_heading_publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/unfiltered_heading", qos_profile=1
         )
 
         # 3D Odometry (GPS) for filters -> converted to x/y/z coordinates
-        self.unfiltered_gps_publisher = self.new_publisher(
+        self.unfiltered_gps_publisher = self.create_publisher(
             PoseStamped, f"/paf/{self.role_name}/unfiltered_pos", qos_profile=1
         )
         # Publishes current_pos depending on the filter used
-        self.cur_pos_publisher = self.new_publisher(
+        self.cur_pos_publisher = self.create_publisher(
             PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
         )
         # Publishes current_heading depending on the filter used
         self.__heading: float = 0
-        self.__heading_publisher = self.new_publisher(
+        self.__heading_publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
         )
 
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
     # endregion Publisher END
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     # region HEADING FUNCTIONS
     def publish_unfiltered_heading(self, data: Imu):
@@ -347,13 +383,6 @@ class PositionHeadingPublisherNode(CompatibleNode):
         CoordinateTransformer.ref_set = True
         self.transformer = CoordinateTransformer()
 
-    def run(self):
-        """
-        Control loop
-        :return:
-        """
-        self.spin()
-
 
 def main(args=None):
     """
@@ -361,14 +390,12 @@ def main(args=None):
     :param args:
     :return:
     """
-    roscomp.init("position_heading_publisher_node", args=args)
+    rclpy.init(args=args)
     try:
         node = PositionHeadingPublisherNode()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":

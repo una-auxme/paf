@@ -26,7 +26,11 @@ def update_attributes(obj: Node, params: List[Parameter]) -> SetParametersResult
         if hasattr(obj, param.name):
             new_value = param.value
             orig_value = getattr(obj, param.name)
-            if type(orig_value) is not type(new_value):
+            if (
+                orig_value is not None
+                and not isinstance(new_value, type(orig_value))
+                and not isinstance(orig_value, type(new_value))
+            ):
                 error_reason = "type mismatch"
             else:
                 setattr(obj, param.name, param.value)
