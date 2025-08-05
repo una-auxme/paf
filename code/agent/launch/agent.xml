@@ -16,8 +16,8 @@
 
     <!-- acting -->
     <include file="$(find-pkg-share acting)/launch/acting.xml">
-        <arg name="control_loop_rate" value="$(var control_loop_rate)" />
-        <arg name="role_name" value="$(var role_name)" />
+      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+      <arg name="role_name" value="$(var role_name)" />
     </include>
 
     <!-- debugging -->
@@ -34,7 +34,8 @@
     </include> -->
 
     <!-- kalman localization with robot localization package -->
-    <!-- <include
-        file="$(find localization)/launch/localization.launch">
-    </include> -->
+    <include file="$(find-pkg-share localization)/launch/localization.xml">
+      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+      <arg name="role_name" value="$(var role_name)" />
+    </include>
 </launch>

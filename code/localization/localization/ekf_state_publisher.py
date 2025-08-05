@@ -24,6 +24,7 @@ from std_msgs.msg import Float32
 from scipy.spatial.transform import Rotation as R
 import tf2_ros
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 
 
 class EKFStatePublisher(Node):
@@ -64,7 +65,7 @@ class EKFStatePublisher(Node):
         try:
             self.publish_heading(timer_event)
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def publish_heading(self, timer_event):
         try:
@@ -89,8 +90,8 @@ class EKFStatePublisher(Node):
 
             self.position_publisher.publish(position)
             self.heading_publisher.publish(Float32(data=heading))
-        except Exception as ex:
-            self.get_logger().info(ex)
+        except Exception as e:
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
 
 def main(args=None):

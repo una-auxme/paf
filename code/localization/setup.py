@@ -22,6 +22,14 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "ekf_state_publisher = localization.ekf_state_publisher:main",
+            "gps_transform = localization.gps_transform:main",
+            "kalman_filter = localization.kalman_filter:main",
+            "odometry_fusion = localization.odometry_fusion:main",
+            "position_heading_publisher_node = "
+            "localization.position_heading_publisher_node:main",
+            "sensor_covariance_fusion = localization.sensor_covariance_fusion:main",
+        ],
     },
 )

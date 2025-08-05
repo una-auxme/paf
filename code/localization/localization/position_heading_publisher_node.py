@@ -237,11 +237,11 @@ class PositionHeadingPublisherNode(Node):
         # published as current heading, since it is not filtered
         if self.heading_filter == "None":
             self.__heading = heading
-            self.__heading_publisher.publish(self.__heading)
+            self.__heading_publisher.publish(Float32(data=self.__heading))
         else:
             # in each other case the heading is published as unfiltered heading
             # for further filtering in other nodes such as the EKF
-            self.unfiltered_heading_publisher.publish(heading)
+            self.unfiltered_heading_publisher.publish(Float32(data=heading))
 
     def publish_current_heading(self, data: Float32):
         """
@@ -251,7 +251,7 @@ class PositionHeadingPublisherNode(Node):
         :return:
         """
         self.__heading = data.data
-        self.__heading_publisher.publish(self.__heading)
+        self.__heading_publisher.publish(Float32(data=self.__heading))
 
     # insert new heading functions here...
 

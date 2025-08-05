@@ -16,9 +16,8 @@ from carla_msgs.msg import CarlaSpeedometer, CarlaEgoVehicleControl
 import math
 import numpy as np
 from paf_common.parameters import update_attributes
-from rcl_interfaces.msg import (
-    ParameterDescriptor,
-)
+from paf_common.exceptions import emsg_with_trace
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType, ParameterValue
 
 
 # our car: Lincoln MKZ 2020
@@ -43,6 +42,7 @@ class OdometryNode(Node):
         self.pose_covariance = (
             self.declare_parameter(
                 "pose_covariance",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="Covariance for Odometry Pose",
                 ),
@@ -53,6 +53,7 @@ class OdometryNode(Node):
         self.twist_covariance = (
             self.declare_parameter(
                 "twist_covariance",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="Covariance for Odometry Twist",
                 ),
@@ -181,7 +182,7 @@ class OdometryNode(Node):
         try:
             self.publish_odometry()
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
 
 def main(args=None):

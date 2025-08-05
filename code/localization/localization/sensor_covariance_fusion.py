@@ -18,9 +18,7 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import Imu, NavSatFix
 from paf_common.parameters import update_attributes
-from rcl_interfaces.msg import (
-    ParameterDescriptor,
-)
+from rcl_interfaces.msg import ParameterDescriptor, ParameterValue, ParameterType
 
 
 class SensorCovarianceFusion(Node):
@@ -37,6 +35,7 @@ class SensorCovarianceFusion(Node):
         self.imu_orientation = (
             self.declare_parameter(
                 "imu_orientation",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="IMU Covariance for Orientation",
                 ),
@@ -47,6 +46,7 @@ class SensorCovarianceFusion(Node):
         self.imu_angular_velocity = (
             self.declare_parameter(
                 "imu_angular_velocity",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="IMU Covariance for Angular Velocity",
                 ),
@@ -57,6 +57,7 @@ class SensorCovarianceFusion(Node):
         self.imu_linear_acceleration = (
             self.declare_parameter(
                 "imu_linear_acceleration",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="IMU Covariance for Linear Acceleration",
                 ),
@@ -67,6 +68,7 @@ class SensorCovarianceFusion(Node):
         self.gps_position = (
             self.declare_parameter(
                 "gps_position",
+                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
                 descriptor=ParameterDescriptor(
                     description="Alt,Lat,Long Covariance",
                 ),

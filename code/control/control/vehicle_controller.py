@@ -16,6 +16,7 @@ from rcl_interfaces.msg import (
 from std_msgs.msg import Bool, Float32, String
 from rosgraph_msgs.msg import Clock
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 
 
 class VehicleController(Node):
@@ -92,7 +93,7 @@ class VehicleController(Node):
                 "manual_throttle",
                 0.0,
                 descriptor=ParameterDescriptor(
-                    description="Steering input sent to carla.",
+                    description="Throttle input sent to carla.",
                     floating_point_range=[
                         FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
                     ],
@@ -277,7 +278,7 @@ class VehicleController(Node):
         try:
             self.loop(clock)
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
 
 def main(args=None):

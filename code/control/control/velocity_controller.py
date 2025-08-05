@@ -8,6 +8,7 @@ from simple_pid import PID
 from std_msgs.msg import Float32, Bool
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
 
 
@@ -214,7 +215,7 @@ class VelocityController(Node):
         try:
             self.loop()
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         self.__current_velocity = float(data.speed)
