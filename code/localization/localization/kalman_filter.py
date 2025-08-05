@@ -18,19 +18,20 @@ The z-coordinate is therefore not estimated by the Kalman Filter.
 
 """
 
+from typing import List
+import rclpy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 import numpy as np
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, UInt32, String
 from sensor_msgs.msg import NavSatFix, Imu
 from carla_msgs.msg import CarlaSpeedometer
-import rospy
 import math
-import threading
 from coordinate_transformation import CoordinateTransformer
 from coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
+from paf_common.parameters import update_attributes
 
 GPS_RUNNING_AVG_ARGS = 10
 
@@ -77,7 +78,7 @@ The measurement covariance matrix R is defined as:
 """
 
 
-class KalmanFilter(CompatibleNode):
+class KalmanFilter(Node):
     """
     This class implements a Kalman filter to estimate the
     position and heading of the car.
@@ -88,19 +89,28 @@ class KalmanFilter(CompatibleNode):
         Constructor / Setup
         :return:
         """
-        super(KalmanFilter, self).__init__("kalman_filter_node")
+        super().__init__("kalman_filter_node")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.loginfo("KalmanFilter node started")
         # basic info
         self.transformer = None  # for coordinate transformation
-        self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", "0.001")
+        self.control_loop_rate = (
+            self.declare_parameter("control_loop_rate", 0.001)
+            .get_parameter_value()
+            .double_value
+        )
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
         self.publish_seq = UInt32(0)
         self.frame_id = "map"
 
         self.dt = self.control_loop_rate
 
         self.initialized = False
+        self.first_loop = True
 
         # state vector X
         """
@@ -180,21 +190,21 @@ class KalmanFilter(CompatibleNode):
 
         # Subscriber
         # Initialize the subscriber for the OpenDrive Map
-        self.map_sub = self.new_subscription(
+        self.map_sub = self.create_subscription(
             String,
             "/carla/" + self.role_name + "/OpenDRIVE",
             self.get_geoRef,
             qos_profile=1,
         )
         # Initialize the subscriber for the IMU Data
-        self.imu_subscriber = self.new_subscription(
+        self.imu_subscriber = self.create_subscription(
             Imu,
             "/carla/" + self.role_name + "/IMU",
             self.update_imu_data,
             qos_profile=1,
         )
         # Initialize the subscriber for the GPS Data
-        self.gps_subscriber = self.new_subscription(
+        self.gps_subscriber = self.create_subscription(
             NavSatFix,
             "/carla/" + self.role_name + "/GPS",
             self.update_gps_data,
@@ -203,14 +213,14 @@ class KalmanFilter(CompatibleNode):
         # Initialize the subscriber for the unfiltered_pos in XYZ
         self.avg_z = np.zeros((GPS_RUNNING_AVG_ARGS, 1))
         self.avg_gps_counter: int = 0
-        self.unfiltered_pos_subscriber = self.new_subscription(
+        self.unfiltered_pos_subscriber = self.create_subscription(
             PoseStamped,
             "/paf/" + self.role_name + "/unfiltered_pos",
             self.update_unfiltered_pos,
             qos_profile=1,
         )
         # Initialize the subscriber for the velocity
-        self.velocity_subscriber = self.new_subscription(
+        self.velocity_subscriber = self.create_subscription(
             CarlaSpeedometer,
             "/carla/" + self.role_name + "/Speed",
             self.update_velocity,
@@ -219,56 +229,55 @@ class KalmanFilter(CompatibleNode):
 
         # Publisher
         # Initialize the publisher for the kalman-position
-        self.kalman_position_publisher = self.new_publisher(
+        self.kalman_position_publisher = self.create_publisher(
             PoseStamped, "/paf/" + self.role_name + "/kalman_pos", qos_profile=1
         )
         # Initialize the publisher for the kalman-heading
-        self.kalman_heading_publisher = self.new_publisher(
+        self.kalman_heading_publisher = self.create_publisher(
             Float32, "/paf/" + self.role_name + "/kalman_heading", qos_profile=1
         )
 
-    def run(self):
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.create_timer(self.control_loop_rate, self.main_loop)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
+
+    def main_loop(self):
         """
         Run the Kalman Filter
         """
         # wait until the car receives the first GPS Data
         # from the update_unfiltered_pos method
-        while not self.initialized:
-            rospy.sleep(1)
-        rospy.sleep(1)
+        if not self.initialized:
+            return
 
-        self.loginfo("KalmanFilter started its loop!")
+        if self.first_loop:
+            self.get_logger().info("KalmanFilter started its loop!")
+            # initialize the state vector x_est and the covariance matrix P_est
+            # initial state vector x_0
+            self.x_0 = np.array(
+                [
+                    [self.z_gps[0, 0]],
+                    [self.z_gps[1, 0]],
+                    [self.z_v[0, 0]],
+                    [self.z_v[1, 0]],
+                    [self.z_imu[0, 0]],
+                    [self.z_imu[1, 0]],
+                ]
+            )
+            self.x_est = np.copy(self.x_0)  # estimated initial state vector
+            self.P_est = np.eye(6) * 1  # estiamted initial state covariance matrix
+            self.first_loop = False
 
-        # initialize the state vector x_est and the covariance matrix P_est
-        # initial state vector x_0
-        self.x_0 = np.array(
-            [
-                [self.z_gps[0, 0]],
-                [self.z_gps[1, 0]],
-                [self.z_v[0, 0]],
-                [self.z_v[1, 0]],
-                [self.z_imu[0, 0]],
-                [self.z_imu[1, 0]],
-            ]
-        )
-        self.x_est = np.copy(self.x_0)  # estimated initial state vector
-        self.P_est = np.eye(6) * 1  # estiamted initial state covariance matrix
+        self.predict()
+        self.update()
 
-        def loop():
-            """
-            Loop for the Kalman Filter
-            """
-            while True:
-                self.predict()
-                self.update()
-
-                # Publish the kalman-data:
-                self.publish_kalman_heading()
-                self.publish_kalman_location()
-                rospy.sleep(self.control_loop_rate)
-
-        threading.Thread(target=loop).start()
-        self.spin()
+        # Publish the kalman-data:
+        self.publish_kalman_heading()
+        self.publish_kalman_location()
 
     def predict(self):
         """
@@ -320,7 +329,7 @@ class KalmanFilter(CompatibleNode):
 
         # Set the Kalman position
         kalman_position.header.frame_id = self.frame_id
-        kalman_position.header.stamp = rospy.Time.now()
+        kalman_position.header.stamp = self.get_clock().now().to_msg()
         kalman_position.header.seq = self.publish_seq
 
         self.publish_seq.data += 1
@@ -409,8 +418,7 @@ class KalmanFilter(CompatibleNode):
         self.latitude = avg_z
 
         # Set self.initialized to True so that the Kalman filter can start
-        if not self.initialized:
-            self.initialized = True
+        self.initialized = True
 
     def update_velocity(self, velocity):
         """
@@ -453,15 +461,13 @@ def main(args=None):
     Main function starts the node
     :param args:
     """
-    roscomp.init("kalman_filter_node", args=args)
+    rclpy.init(args=args)
 
     try:
         node = KalmanFilter()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":
