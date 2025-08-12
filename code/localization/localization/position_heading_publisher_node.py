@@ -202,7 +202,7 @@ class PositionHeadingPublisherNode(Node):
             PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
         )
         # Publishes current_heading depending on the filter used
-        self.__heading: float = 0
+        self.__heading: float = 0.0
         self.__heading_publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
         )
@@ -293,10 +293,10 @@ class PositionHeadingPublisherNode(Node):
             cur_pos.pose.position.y = avg_y
             cur_pos.pose.position.z = avg_z
 
-            cur_pos.pose.orientation.x = 0
-            cur_pos.pose.orientation.y = 0
-            cur_pos.pose.orientation.z = 1
-            cur_pos.pose.orientation.w = 0
+            cur_pos.pose.orientation.x = 0.0
+            cur_pos.pose.orientation.y = 0.0
+            cur_pos.pose.orientation.z = 1.0
+            cur_pos.pose.orientation.w = 0.0
 
             self.cur_pos_publisher.publish(cur_pos)
 
@@ -337,10 +337,10 @@ class PositionHeadingPublisherNode(Node):
             unfiltered_pos.pose.position.y = y
             unfiltered_pos.pose.position.z = z
 
-            unfiltered_pos.pose.orientation.x = 0
-            unfiltered_pos.pose.orientation.y = 0
-            unfiltered_pos.pose.orientation.z = 1
-            unfiltered_pos.pose.orientation.w = 0
+            unfiltered_pos.pose.orientation.x = 0.0
+            unfiltered_pos.pose.orientation.y = 0.0
+            unfiltered_pos.pose.orientation.z = 1.0
+            unfiltered_pos.pose.orientation.w = 0.0
 
             # In the case of using "None" filter, the pos is
             # published as current pos, since it is not filtered

@@ -166,7 +166,7 @@ class OdometryNode(Node):
         # The velocity (twist) must be set. (Angular x, y are also disabled.)
         odom.twist.twist.linear.x = vx
         odom.twist.twist.linear.y = vy
-        odom.twist.twist.linear.z = 0
+        odom.twist.twist.linear.z = 0.0
 
         odom.twist.twist.angular.z = omega
 

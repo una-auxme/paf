@@ -68,30 +68,36 @@ class EKFStatePublisher(Node):
             self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def publish_heading(self, timer_event):
-        try:
-            transform: TransformStamped = self.tf_buffer.lookup_transform(
-                "global",  # Target frame
-                "hero",  # Source frame
-                Time(),  # Get the latest available transform
-                Duration(seconds=self.loop_rate),
-            )  # Timeout duration
-            position = PoseStamped()
-            position.header.frame_id = "global"
-            position.pose.orientation = transform.transform.rotation
-            position.pose.position = transform.transform.translation
-            quaternion = (
-                transform.transform.rotation.x,
-                transform.transform.rotation.y,
-                transform.transform.rotation.z,
-                transform.transform.rotation.w,
+        if not self.tf_buffer.can_transform("global", "hero", Time()):
+            self.get_logger().warn(
+                "Transform not available yet. Waiting for transform.",
+                throttle_duration_sec=2,
             )
-            rot = R.from_quat(quaternion)
-            heading = rot.as_euler("xyz", degrees=False)[2]
+        transform: TransformStamped = self.tf_buffer.lookup_transform(
+            "global",  # Target frame
+            "hero",  # Source frame
+            Time(),  # Get the latest available transform
+            Duration(seconds=self.loop_rate),
+        )  # Timeout duration
+        position = PoseStamped()
+        position.header.frame_id = "global"
+        position.pose.orientation = transform.transform.rotation
 
-            self.position_publisher.publish(position)
-            self.heading_publisher.publish(Float32(data=heading))
-        except Exception as e:
-            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
+        translation = transform.transform.translation
+        position.pose.position.x = translation.x
+        position.pose.position.y = translation.y
+        position.pose.position.z = translation.z
+        quaternion = (
+            transform.transform.rotation.x,
+            transform.transform.rotation.y,
+            transform.transform.rotation.z,
+            transform.transform.rotation.w,
+        )
+        rot = R.from_quat(quaternion)
+        heading = rot.as_euler("xyz", degrees=False)[2]
+
+        self.position_publisher.publish(position)
+        self.heading_publisher.publish(Float32(data=heading))
 
 
 def main(args=None):
