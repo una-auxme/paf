@@ -148,10 +148,9 @@ For each run:
 
 ## Startup time results
 
-3 runs of 3 startups each are measured with the [time_until_status](../../../../code/benchmark/time_until_status.py) node.
+3 runs of 3 startups each are measured with the [time_until_status](../../../code/benchmark/time_until_status.py) node.
 
 For ROS1 the [docker-compose.leaderboard.yaml](../../../build/docker-compose.leaderboard.yaml) is started with `docker compose up`.
-
 For each run the system was freshly (re-)booted and three consecutive startups are executed:
 
 - First with the container deleted/non-existing
