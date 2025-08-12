@@ -7,9 +7,6 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,5 +19,36 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# Include any interface dependencies here:
+# find_package(<dependency> REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(unique_identifier_msgs REQUIRED)
+
+# Add all your interface files here:
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Entity.msg"
+  "msg/Flags.msg"
+  "msg/Map.msg"
+  "msg/Motion2D.msg"
+  "msg/Shape2D.msg"
+  "msg/TrackingInfo.msg"
+  "msg/Transform2D.msg"
+  "msg/TypeCar.msg"
+  "msg/TypeLanemarking.msg"
+  "msg/TypeTrafficLight.msg"
+  "msg/TypeStopMark.msg"
+  "msg/ClusteredPointsArray.msg"
+
+  "srv/UpdateStopMarks.srv"
+
+  DEPENDENCIES # Add packages that above messages depend on
+  std_msgs
+  unique_identifier_msgs
+  geometry_msgs
+  sensor_msgs
+)
 
 ament_package()
