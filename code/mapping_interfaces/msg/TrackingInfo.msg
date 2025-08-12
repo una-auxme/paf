@@ -1,10 +1,10 @@
-duration visibility_time
-duration invisibility_time
+builtin_interfaces/Duration visibility_time
+builtin_interfaces/Duration invisibility_time
 uint32 visibility_frame_count
 uint32 invisibility_frame_count
-duration moving_time
-duration standing_time
-duration moving_time_sum
-duration standing_time_sum
+builtin_interfaces/Duration moving_time
+builtin_interfaces/Duration standing_time
+builtin_interfaces/Duration moving_time_sum
+builtin_interfaces/Duration standing_time_sum
 float64 min_linear_speed
 float64 max_linear_speed

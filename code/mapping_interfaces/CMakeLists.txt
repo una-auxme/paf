@@ -45,7 +45,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/UpdateStopMarks.srv"
 
   DEPENDENCIES # Add packages that above messages depend on
-  std_msgs
   unique_identifier_msgs
   geometry_msgs
   sensor_msgs

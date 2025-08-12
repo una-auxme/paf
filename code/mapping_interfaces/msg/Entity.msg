@@ -1,10 +1,10 @@
-Header header
+std_msgs/Header header
 float64 confidence
 float64 priority
 Flags flags
 Shape2D shape
 Transform2D transform
-uuid_msgs/UniqueID uuid
+unique_identifier_msgs/UUID uuid
 string[] sensor_id
 Motion2D motion
 TrackingInfo tracking_info
