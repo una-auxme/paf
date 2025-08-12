@@ -26,9 +26,26 @@ This step is automatically executed when using the
 
 """
 
+from typing import Optional
+from rclpy.impl.rcutils_logger import RcutilsLogger
+import rclpy.logging
 import cython
 
 if cython.compiled:
     print("mapping_common is compiled!")
 else:
     print("mapping_common is not compiled!")
+
+_mapping_common_logger: Optional[RcutilsLogger] = None
+
+
+def set_logger(logger: RcutilsLogger):
+    global _mapping_common_logger
+    _mapping_common_logger = logger
+
+
+def get_logger():
+    if _mapping_common_logger is None:
+        return rclpy.logging.get_logger("mapping_common")
+    else:
+        return _mapping_common_logger

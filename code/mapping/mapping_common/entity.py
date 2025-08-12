@@ -16,16 +16,17 @@ from dataclasses import dataclass, field
 import shapely
 
 from uuid import UUID, uuid4
-from genpy.rostime import Time, Duration
+from rclpy.time import Time
+from rclpy.duration import Duration
 from std_msgs.msg import Header
-import uuid_msgs.msg as uuid_msgs
+import unique_identifier_msgs.msg as uuid_msgs
 from visualization_msgs.msg import Marker
-import rospy
 
+from mapping_common import get_logger
 from mapping_common.shape import Shape2D
 from mapping_common.transform import Vector2, Transform2D, Point2
 
-from mapping import msg
+from mapping_interfaces import msg
 
 
 @dataclass
@@ -208,28 +209,28 @@ class TrackingInfo:
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
         return TrackingInfo(
-            visibility_time=m.visibility_time,
-            invisibility_time=m.invisibility_time,
+            visibility_time=Duration.from_msg(m.visibility_time),
+            invisibility_time=Duration.from_msg(m.invisibility_time),
             visibility_frame_count=m.visibility_frame_count,
             invisibility_frame_count=m.invisibility_frame_count,
-            moving_time=m.moving_time,
-            standing_time=m.standing_time,
-            moving_time_sum=m.moving_time_sum,
-            standing_time_sum=m.standing_time_sum,
+            moving_time=Duration.from_msg(m.moving_time),
+            standing_time=Duration.from_msg(m.standing_time),
+            moving_time_sum=Duration.from_msg(m.moving_time_sum),
+            standing_time_sum=Duration.from_msg(m.standing_time_sum),
             min_linear_speed=m.min_linear_speed,
             max_linear_speed=m.max_linear_speed,
         )
 
     def to_ros_msg(self) -> msg.TrackingInfo:
         return msg.TrackingInfo(
-            visibility_time=self.visibility_time,
-            invisibility_time=self.invisibility_time,
+            visibility_time=self.visibility_time.to_msg(),
+            invisibility_time=self.invisibility_time.to_msg(),
             visibility_frame_count=self.visibility_frame_count,
             invisibility_frame_count=self.invisibility_frame_count,
-            moving_time=self.moving_time,
-            standing_time=self.standing_time,
-            moving_time_sum=self.moving_time_sum,
-            standing_time_sum=self.standing_time_sum,
+            moving_time=self.moving_time.to_msg(),
+            standing_time=self.standing_time.to_msg(),
+            moving_time_sum=self.moving_time_sum.to_msg(),
+            standing_time_sum=self.standing_time_sum.to_msg(),
             min_linear_speed=self.min_linear_speed,
             max_linear_speed=self.max_linear_speed,
         )
@@ -319,7 +320,7 @@ class Entity:
         if msg_type_lower in _entity_supported_classes_dict:
             entity_type = _entity_supported_classes_dict[msg_type_lower]
         if entity_type is None:
-            rospy.logerr(
+            get_logger().error(
                 f"Received entity type '{m.type_name}' is not supported."
                 f"Base class 'Entity' will be used instead."
                 f"The type must be one of {_entity_supported_classes_dict.keys()}"
@@ -378,7 +379,7 @@ class Entity:
             transform=self.transform.to_ros_msg(),
             header=Header(stamp=self.timestamp),
             flags=flags,
-            uuid=uuid_msgs.UniqueID(uuid=self.uuid.bytes),
+            uuid=uuid_msgs.UUID(uuid=self.uuid.bytes),
             sensor_id=self.sensor_id,
             motion=motion,
             tracking_info=tracking_info,
@@ -430,7 +431,7 @@ class Entity:
         m = Marker()
         m.type = Marker.ARROW
         m.action = Marker.ADD
-        m.lifetime = Duration.from_sec(2 / 20.0)
+        m.lifetime = Duration(seconds=2 / 20.0)
         m.pose.position.x = self.transform.translation().x()
         m.pose.position.y = self.transform.translation().y()
         m.pose.position.z = 0.0
@@ -464,7 +465,7 @@ class Entity:
         text_marker = Marker()
         text_marker.type = Marker.TEXT_VIEW_FACING
         text_marker.action = Marker.ADD
-        text_marker.lifetime = Duration.from_sec(2 / 20.0)
+        text_marker.lifetime = Duration(seconds=2 / 20.0)
         text_marker.pose.position.x = self.transform.translation().x() + offset.x()
         text_marker.pose.position.y = self.transform.translation().y() + offset.y()
         text_marker.pose.position.z = 1.5
@@ -861,4 +862,4 @@ class ShapelyEntity:
             float: distance
         """
 
-        return shapely.distance(self.poly, other.poly)
+        return float(shapely.distance(self.poly, other.poly))

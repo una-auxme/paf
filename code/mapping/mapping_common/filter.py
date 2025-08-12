@@ -14,9 +14,9 @@ from copy import deepcopy
 from typing import List, Tuple, Optional, Callable
 from uuid import UUID
 
-import rospy
 import shapely
 
+from mapping_common import get_logger
 from .map import Map
 from .entity import ShapelyEntity, Entity, FlagFilter, Pedestrian
 from .shape import Polygon, Shape2D
@@ -57,7 +57,7 @@ class LaneIndexFilter(MapFilter):
     Then returns the updated map with all Entities
     """
 
-    def filter(self, map) -> Map:
+    def filter(self, map: Map) -> Map:
         try:
             lanemark_f = FlagFilter(is_lanemark=True)
             other_f = FlagFilter(is_lanemark=False)
@@ -88,7 +88,7 @@ class LaneIndexFilter(MapFilter):
 
             return updated_map
         except Exception as e:
-            rospy.logwarn(f"Error in LaneIndexFilter: {e}")
+            get_logger().warn(f"Error in LaneIndexFilter: {e}")
             return map  # Return original map on error
 
 
@@ -104,7 +104,7 @@ class GrowPedestriansFilter(MapFilter):
     Then returns the updated map with all Entities
     """
 
-    def filter(self, map) -> Map:
+    def filter(self, map: Map) -> Map:
         for entity in map.entities:
             if isinstance(entity, Pedestrian):
                 shape_grown = _grow_polygon(entity.shape.to_shapely(), 0.5)
