@@ -16,8 +16,6 @@ The project currently uses ROS 1 noetic as its backbone. It is EOL in May 2025.
     - [~~Quality indicators~~](#quality-indicators)
     - [Performance indicators](#performance-indicators)
     - [Benchmark results](#benchmark-results)
-      - [Build time](#build-time)
-      - [Startup time](#startup-time)
   - [4. Main porting effort: Migrate ROS packages](#4-main-porting-effort-migrate-ros-packages)
     - [Migrate package base files to colcon](#migrate-package-base-files-to-colcon)
       - [package.xml](#packagexml)
@@ -215,15 +213,7 @@ The relevant ones for comparing ros1➡ros2 are:
 
 #### Benchmark results
 
-Only *build times* and *startup times* were measured.
-
-##### Build time
-
-TODO
-
-##### Startup time
-
-TODO
+The benchmark results can be found [➡ here](../benchmarks.md)
 
 ### 4. Main porting effort: Migrate ROS packages
 
