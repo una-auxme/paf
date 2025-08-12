@@ -73,6 +73,7 @@ class EKFStatePublisher(Node):
                 "Transform not available yet. Waiting for transform.",
                 throttle_duration_sec=2,
             )
+            return
         transform: TransformStamped = self.tf_buffer.lookup_transform(
             "global",  # Target frame
             "hero",  # Source frame
