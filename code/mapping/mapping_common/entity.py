@@ -18,8 +18,7 @@ import shapely
 
 from uuid import UUID, uuid4
 from rclpy.clock_type import ClockType
-from rclpy.time import Time
-from rclpy.duration import Duration
+from builtin_interfaces.msg import Time, Duration
 from std_msgs.msg import Header
 import unique_identifier_msgs.msg as uuid_msgs
 from visualization_msgs.msg import Marker
@@ -211,28 +210,28 @@ class TrackingInfo:
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
         return TrackingInfo(
-            visibility_time=Duration.from_msg(m.visibility_time),
-            invisibility_time=Duration.from_msg(m.invisibility_time),
+            visibility_time=m.visibility_time,
+            invisibility_time=m.invisibility_time,
             visibility_frame_count=m.visibility_frame_count,
             invisibility_frame_count=m.invisibility_frame_count,
-            moving_time=Duration.from_msg(m.moving_time),
-            standing_time=Duration.from_msg(m.standing_time),
-            moving_time_sum=Duration.from_msg(m.moving_time_sum),
-            standing_time_sum=Duration.from_msg(m.standing_time_sum),
+            moving_time=m.moving_time,
+            standing_time=m.standing_time,
+            moving_time_sum=m.moving_time_sum,
+            standing_time_sum=m.standing_time_sum,
             min_linear_speed=m.min_linear_speed,
             max_linear_speed=m.max_linear_speed,
         )
 
     def to_ros_msg(self) -> msg.TrackingInfo:
         return msg.TrackingInfo(
-            visibility_time=self.visibility_time.to_msg(),
-            invisibility_time=self.invisibility_time.to_msg(),
+            visibility_time=self.visibility_time,
+            invisibility_time=self.invisibility_time,
             visibility_frame_count=self.visibility_frame_count,
             invisibility_frame_count=self.invisibility_frame_count,
-            moving_time=self.moving_time.to_msg(),
-            standing_time=self.standing_time.to_msg(),
-            moving_time_sum=self.moving_time_sum.to_msg(),
-            standing_time_sum=self.standing_time_sum.to_msg(),
+            moving_time=self.moving_time,
+            standing_time=self.standing_time,
+            moving_time_sum=self.moving_time_sum,
+            standing_time_sum=self.standing_time_sum,
             min_linear_speed=self.min_linear_speed,
             max_linear_speed=self.max_linear_speed,
         )
@@ -253,7 +252,7 @@ class Entity:
     """Shape2D for collision calculations"""
     transform: Transform2D
     """Transform2D based on the map origin (hero car)"""
-    timestamp: Time = field(default_factory=lambda: Time(clock_type=ClockType.ROS_TIME))
+    timestamp: Time = field(default_factory=Time)
     """When adding the entity its timestamp is the timestamp
     of the associated sensor data
     (might slightly differ to the timestamp of the Map)
@@ -355,7 +354,7 @@ class Entity:
             "priority": m.priority,
             "shape": Shape2D.from_ros_msg(m.shape),
             "transform": Transform2D.from_ros_msg(m.transform),
-            "timestamp": Time.from_msg(m.header.stamp),
+            "timestamp": m.header.stamp,
             "flags": Flags.from_ros_msg(m.flags),
             "uuid": UUID(bytes=m.uuid.uuid.tobytes()),
             "sensor_id": m.sensor_id,
@@ -380,7 +379,7 @@ class Entity:
             priority=self.priority,
             shape=self.shape.to_ros_msg(),
             transform=self.transform.to_ros_msg(),
-            header=Header(stamp=self.timestamp.to_msg()),
+            header=Header(stamp=self.timestamp),
             flags=flags,
             uuid=uuid_msgs.UUID(uuid=uuid),
             sensor_id=self.sensor_id,

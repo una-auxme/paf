@@ -27,7 +27,7 @@ from cv2 import line
 from mapping_common import get_logger
 import mapping_common.mask
 
-from rclpy.time import Time
+from builtin_interfaces.msg import Time
 from rclpy.clock_type import ClockType
 
 from mapping_interfaces import msg
@@ -73,7 +73,7 @@ class Map:
     - The map might include the hero car as the **first entity** in entities
     """
 
-    timestamp: Time = field(default_factory=lambda: Time(clock_type=ClockType.ROS_TIME))
+    timestamp: Time = field(default_factory=Time)
     """The timestamp this map was created at.
 
     Should be the time when this map was initially sent off
@@ -247,11 +247,11 @@ class Map:
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
         entities = [Entity.from_ros_msg(e) for e in m.entities]
-        return Map(timestamp=Time.from_msg(m.header.stamp), entities=entities)
+        return Map(timestamp=m.header.stamp, entities=entities)
 
     def to_ros_msg(self) -> msg.Map:
         entities = [e.to_ros_msg() for e in self.entities]
-        header = Header(stamp=self.timestamp.to_msg())
+        header = Header(stamp=self.timestamp)
         return msg.Map(header=header, entities=entities)
 
 

@@ -20,7 +20,7 @@ from mapping_common.transform import Transform2D, Vector2, Point2
 from visualization_msgs.msg import Marker, MarkerArray
 from transforms3d.euler import euler2quat
 
-from rclpy.time import Time
+from builtin_interfaces.msg import Time
 from rclpy.duration import Duration
 
 
@@ -162,7 +162,7 @@ def debug_marker_array(
 
     marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
     for id, marker in enumerate(markers):
-        marker.header.stamp = timestamp.to_msg()
+        marker.header.stamp = timestamp
         marker.ns = namespace
         marker.id = id
         marker.lifetime = lifetime.to_msg()

@@ -567,7 +567,7 @@ class MappingDataIntegrationNode(Node):
                 priority=priority,
                 shape=shape,
                 transform=transform,
-                timestamp=Time.from_msg(data.header.stamp),
+                timestamp=data.header.stamp,
                 flags=flags,
             )
             lidar_entities.append(e)
@@ -661,7 +661,7 @@ class MappingDataIntegrationNode(Node):
                 object_class = objectclassarray[indexarray == label][0]
 
             flags = Flags(is_collider=True)
-            timestamp = self.get_clock().now()
+            timestamp = self.get_clock().now().to_msg()
             if object_class == 4:
                 entity = Pedestrian(
                     confidence=1,
@@ -701,9 +701,8 @@ class MappingDataIntegrationNode(Node):
             return None
 
         motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
-        timestamp = self.hero_speed.header.stamp
         hero = mapping_common.hero.create_hero_entity()
-        hero.timestamp = Time.from_msg(timestamp)
+        hero.timestamp = self.hero_speed.header.stamp
         hero.motion = motion
         return hero
 
@@ -779,7 +778,7 @@ class MappingDataIntegrationNode(Node):
 
             entities.extend(marks)
 
-        stamp = self.get_clock().now()
+        stamp = self.get_clock().now().to_msg()
         map = Map(timestamp=stamp, entities=entities)
 
         for filter in self.get_current_map_filters():
