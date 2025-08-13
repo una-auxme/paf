@@ -3,9 +3,11 @@
 <package format="3">
   <name>mapping</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="peter.viechter@student.uni-augsburg.de">peter</maintainer>
+  <description>The mapping package for the intermediate layer</description>
+  <maintainer email="peter.viechter@student.uni-augsburg.de">Peter Viechter</maintainer>
   <license>MIT</license>
+
+  <depend>ros2_numpy</depend>
 
   <test_depend>python3-pytest</test_depend>
 

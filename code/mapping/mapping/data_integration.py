@@ -1,15 +1,15 @@
-#!/usr/bin/env python
-
-
-from ros_compatibility.node import CompatibleNode
-import ros_compatibility as roscomp
-import ros_numpy
-import rospy
 from visualization_msgs.msg import Marker
 import numpy as np
 from typing import List, Optional, Dict
 from copy import deepcopy
 
+import rclpy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rclpy.time import Time
+import ros2_numpy
+
+from paf_common.parameters import update_attributes
 import mapping_common.map
 import mapping_common.hero
 from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
@@ -23,8 +23,12 @@ from mapping_common.filter import (
     GrowPedestriansFilter,
 )
 
-from mapping.msg import Map as MapMsg, ClusteredPointsArray
-from mapping.srv import UpdateStopMarks, UpdateStopMarksRequest, UpdateStopMarksResponse
+from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
+from mapping_interfaces.srv import UpdateStopMarks
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+    FloatingPointRange,
+)
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
@@ -32,11 +36,8 @@ from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
 
-from mapping.cfg import MappingIntegrationConfig
-from dynamic_reconfigure.server import Server
 
-
-class MappingDataIntegrationNode(CompatibleNode):
+class MappingDataIntegrationNode(Node):
     """Creates the initial map data frame based on all kinds of sensor data.
 
     It applies several filters to the map and
@@ -70,74 +71,312 @@ class MappingDataIntegrationNode(CompatibleNode):
     current_pos: Optional[Point2] = None
     current_heading: Optional[float] = None
 
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self):
+        super().__init__("mapping_data_integration")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        mapping_common.set_logger(self.get_logger())
+
+        # Parameters
+
+        self.map_publish_rate = (
+            self.declare_parameter("map_publish_rate", 0.05)
+            .get_parameter_value()
+            .double_value
+        )
+
+        # Parameters: Enable entity sources
+
+        self.enable_radar_cluster = (
+            self.declare_parameter(
+                "enable_radar_cluster",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable Radar Cluster integration",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_lidar_cluster = (
+            self.declare_parameter(
+                "enable_lidar_cluster",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable Lidar Cluster integration",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_vision_cluster = (
+            self.declare_parameter(
+                "enable_vision_cluster",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable Vision Node Cluster integration",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_raw_lidar_points = (
+            self.declare_parameter(
+                "enable_raw_lidar_points",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Enable raw lidar input",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_lane_marker = (
+            self.declare_parameter(
+                "enable_lane_marker",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable Lane Mark integration",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_stop_marks = (
+            self.declare_parameter(
+                "enable_stop_marks",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable stop marks from the UpdateStopMarks service",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        # Parameters: Filtering
+
+        self.filter_enable_lane_index = (
+            self.declare_parameter(
+                "filter_enable_lane_index",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable the lane index filter",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.filter_enable_pedestrian_grow = (
+            self.declare_parameter(
+                "filter_enable_pedestrian_grow",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable the pedestrian grow filter",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.filter_enable_merge = (
+            self.declare_parameter(
+                "filter_enable_merge",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable the merging filter",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.filter_merge_growth_distance = (
+            self.declare_parameter(
+                "filter_merge_growth_distance",
+                0.3,
+                descriptor=ParameterDescriptor(
+                    description="Amount shapes grow before merging in meters",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.filter_merge_min_overlap_percent = (
+            self.declare_parameter(
+                "filter_merge_min_overlap_percent",
+                0.5,
+                descriptor=ParameterDescriptor(
+                    description="Min overlap of the grown shapes in percent",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.filter_merge_min_overlap_area = (
+            self.declare_parameter(
+                "filter_merge_min_overlap_area",
+                0.5,
+                descriptor=ParameterDescriptor(
+                    description="Min overlap of the grown shapes in m2",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.polygon_simplify_tolerance = (
+            self.declare_parameter(
+                "polygon_simplify_tolerance",
+                0.1,
+                descriptor=ParameterDescriptor(
+                    description="The polygon simplify tolerance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.01, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        # Parameters: Lidar (Only relevant for the raw lider point input)
+
+        self.lidar_z_min = (
+            self.declare_parameter(
+                "lidar_z_min",
+                -1.5,
+                descriptor=ParameterDescriptor(
+                    description="Excludes lidar points below this height",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=-10.0, to_value=2.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.lidar_z_max = (
+            self.declare_parameter(
+                "lidar_z_max",
+                1.0,
+                descriptor=ParameterDescriptor(
+                    description="Exclude lidar points above this height",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.lidar_shape_radius = (
+            self.declare_parameter(
+                "lidar_shape_radius",
+                0.15,
+                descriptor=ParameterDescriptor(
+                    description="The radius with which lidar points get added to map",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.lidar_priority = (
+            self.declare_parameter(
+                "lidar_priority",
+                0.25,
+                descriptor=ParameterDescriptor(
+                    description="The priority lidar points have in the map",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.lidar_discard_probability = (
+            self.declare_parameter(
+                "lidar_discard_probability",
+                0.9,
+                descriptor=ParameterDescriptor(
+                    description="Discard this many lidar points. "
+                    "Important for performance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
 
         # For the stop marks:
         self.stop_marks = {}
 
-        self.current_pos_sub = self.new_subscription(
+        self.current_pos_sub = self.create_subscription(
             PoseStamped,
             "/paf/hero/current_pos",
             self.current_pos_callback,
             qos_profile=1,
         )
-        self.head_sub = self.new_subscription(
+        self.head_sub = self.create_subscription(
             Float32,
             "/paf/hero/current_heading",
             self.heading_callback,
             qos_profile=1,
         )
-        self.update_stop_marks_service = rospy.Service(
-            "/paf/hero/mapping/update_stop_marks",
+        self.update_stop_marks_service = self.create_service(
             UpdateStopMarks,
+            "/paf/hero/mapping/update_stop_marks",
             self.update_stopmarks_callback,
         )
 
         # Sensor subscriptions:
         self.lanemarkings = None
 
-        self.new_subscription(
-            topic=self.get_param("~lidar_topic", "/carla/hero/LIDAR"),
+        self.create_subscription(
+            topic="/carla/hero/LIDAR",
             msg_type=PointCloud2,
             callback=self.lidar_callback,
             qos_profile=1,
         )
 
-        self.new_subscription(
-            topic=self.get_param(
-                "~lanemarkings_init_topic", "/paf/hero/mapping/init_lanemarkings"
-            ),
+        self.create_subscription(
+            topic="/paf/hero/mapping/init_lanemarkings",
             msg_type=MapMsg,
             callback=self.lanemarkings_callback,
             qos_profile=1,
         )
-        self.new_subscription(
-            topic=self.get_param("~hero_speed_topic", "/carla/hero/Speed"),
+        self.create_subscription(
+            topic="/carla/hero/Speed",
             msg_type=CarlaSpeedometer,
             callback=self.hero_speed_callback,
             qos_profile=1,
         )
-        self.new_subscription(
-            topic=self.get_param(
-                "~clustered_points_lidar_topic", "/paf/hero/Lidar/clustered_points"
-            ),
+        self.create_subscription(
+            topic="/paf/hero/Lidar/clustered_points",
             msg_type=ClusteredPointsArray,
             callback=self.lidar_clustered_points_callback,
             qos_profile=1,
         )
-        self.new_subscription(
-            topic=self.get_param(
-                "~clustered_points_vision_topic", "/paf/hero/visualization_pointcloud"
-            ),
+        self.create_subscription(
+            topic="/paf/hero/visualization_pointcloud",
             msg_type=ClusteredPointsArray,
             callback=self.vision_clustered_points_callback,
             qos_profile=1,
         )
-        self.new_subscription(
-            topic=self.get_param(
-                "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
-            ),
+        self.create_subscription(
+            topic="/paf/hero/Radar/clustered_points",
             msg_type=ClusteredPointsArray,
             callback=self.radar_clustered_points_callback,
             qos_profile=1,
@@ -145,59 +384,47 @@ class MappingDataIntegrationNode(CompatibleNode):
 
         # Publishers:
 
-        self.map_publisher = self.new_publisher(
+        self.map_publisher = self.create_publisher(
             msg_type=MapMsg,
-            topic=self.get_param("~map_init_topic", "/paf/hero/mapping/init_data"),
+            topic="/paf/hero/mapping/init_data",
             qos_profile=1,
         )
 
-        self.cluster_points_publisher = self.new_publisher(
+        self.cluster_points_publisher = self.create_publisher(
             msg_type=PointCloud2,
-            topic=self.get_param(
-                "~cluster_points_topic", "/paf/hero/mapping/clusterpoints"
-            ),
+            topic="/paf/hero/mapping/clusterpoints",
             qos_profile=1,
         )
 
-        Server(MappingIntegrationConfig, self.dynamic_reconfigure_callback)
+        self.create_timer(self.map_publish_rate, self.publish_new_map_handler)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
-        self.rate = self.get_param("~map_publish_rate", 20)
-        self.new_timer(1.0 / self.rate, self.publish_new_map_handler)
-
-    def dynamic_reconfigure_callback(self, config: "MappingIntegrationConfig", level):
-        """
-        All currently used reconfigure options are queried dynamically.
-
-        The configuration options are located
-        [here](/code/mapping/launch/mapping.launch)
-        """
-        # If you want to directly react on the change uncomment the following lines.
-        # config["enable_merge_filter"]
-        # config["merge_growth_distance"]
-        # config["min_merging_overlap_percent"]
-        # config["min_merging_overlap_area"]
-        return config
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def update_stopmarks_callback(
-        self, req: UpdateStopMarksRequest
-    ) -> UpdateStopMarksResponse:
-        if req.delete_all_others:
+        self, request: UpdateStopMarks.Request, response: UpdateStopMarks.Response
+    ) -> UpdateStopMarks.Response:
+        if request.delete_all_others:
             self.stop_marks = {}
 
         entities = []
-        for e in req.marks:
+        for e in request.marks:
             entity = Entity.from_ros_msg(e)
             if not isinstance(entity, StopMark):
-                rospy.logwarn_throttle(
-                    0.5,
+                self.get_logger().warn(
                     "Entity received from UpdateStopMarks service is not a StopMark."
                     " ignoring...",
+                    throttle_duration=0.5,
                 )
                 continue
             entities.append(entity)
-        self.stop_marks[req.id] = entities
+        self.stop_marks[request.id] = entities
 
-        return UpdateStopMarksResponse(success=True)
+        response.success = True
+        return response
 
     def heading_callback(self, data: Float32):
         self.current_heading = data.data
@@ -223,13 +450,13 @@ class MappingDataIntegrationNode(CompatibleNode):
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
         if data is None or not hasattr(data, "markers") or data.markers is None:
-            rospy.logwarn("No valid marker data received.")
+            self.get_logger().warn("No valid marker data received.")
             return []
 
         lidar_entities = []
         for marker in data.markers:
             if marker.type != Marker.CUBE:
-                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
+                self.get_logger().warn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
             # Extract position (center of the cube)
             x_center = marker.pose.position.x
@@ -262,13 +489,13 @@ class MappingDataIntegrationNode(CompatibleNode):
         data = self.radar_marker_data
         if data is None or not hasattr(data, "markers") or data.markers is None:
             # Handle cases where data or markers are invalid
-            rospy.logwarn("No valid marker data received.")
+            self.get_logger().warn("No valid marker data received.")
             return []
 
         radar_entities = []
         for marker in data.markers:
             if marker.type != Marker.CUBE:
-                rospy.logwarn(f"Skipping non-CUBE marker with ID: {marker.id}")
+                self.get_logger().warn(f"Skipping non-CUBE marker with ID: {marker.id}")
                 continue
             # Extract position (center of the cube)
             x_center = marker.pose.position.x
@@ -306,14 +533,14 @@ class MappingDataIntegrationNode(CompatibleNode):
             return []
 
         data = self.lidar_data
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        coordinates = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
         coordinates = coordinates.view(
             (coordinates.dtype[0], len(coordinates.dtype.names))
         )
-        shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
-        z_min = self.get_param("~lidar_z_min", -1.5)
-        z_max = self.get_param("~lidar_z_max", 1.0)
-        priority = self.get_param("~lidar_priority", 0.25)
+        shape = Circle(self.lidar_shape_radius)
+        z_min = self.lidar_z_min
+        z_max = self.lidar_z_max
+        priority = self.lidar_priority
 
         # Ignore street level lidar points and stuff above
         filtered_coordinates = coordinates[
@@ -324,10 +551,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         sampled_coordinates = filtered_coordinates[
             np.random.choice(
                 coordinate_count,
-                int(
-                    coordinate_count
-                    * (1.0 - self.get_param("~lidar_discard_probability", 0.9))
-                ),
+                int(coordinate_count * (1.0 - self.lidar_discard_probability)),
                 replace=False,
             ),
             :,
@@ -342,7 +566,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                 priority=priority,
                 shape=shape,
                 transform=transform,
-                timestamp=data.header.stamp,
+                timestamp=Time.from_msg(data.header.stamp),
                 flags=flags,
             )
             lidar_entities.append(e)
@@ -363,13 +587,13 @@ class MappingDataIntegrationNode(CompatibleNode):
         if data is None:
             return []
 
-        clusterpointsarray = np.array(data.clusterPointsArray).reshape(-1, 3)
+        clusterpointsarray = np.array(data.cluster_points_array).reshape(-1, 3)
 
-        indexarray = np.array(data.indexArray)
+        indexarray = np.array(data.index_array)
 
         motion_array_converted = (
-            np.array([Motion2D.from_ros_msg(m) for m in data.motionArray])
-            if data.motionArray
+            np.array([Motion2D.from_ros_msg(m) for m in data.motion_array])
+            if data.motion_array
             else None
         )
 
@@ -381,7 +605,7 @@ class MappingDataIntegrationNode(CompatibleNode):
         for label in unique_labels:
             if label == -1:
                 # -1 noise or invalid cluster
-                rospy.logwarn("label -1")
+                self.get_logger().warn("label -1")
                 continue
 
             # Filter points for current cluster
@@ -391,7 +615,7 @@ class MappingDataIntegrationNode(CompatibleNode):
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
                 if sensortype == "radar":
-                    shape = Circle(self.get_param("~lidar_shape_radius", 0.15))
+                    shape = Circle(self.lidar_shape_radius)
                     transform = Transform2D.new_translation(
                         Vector2.new(cluster_points_xy[0, 0], cluster_points_xy[0, 1])
                     )
@@ -407,10 +631,12 @@ class MappingDataIntegrationNode(CompatibleNode):
                 cluster_polygon = MultiPoint(cluster_points_xy)
                 cluster_polygon_hull = cluster_polygon.convex_hull
                 if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                    rospy.loginfo("Empty hull")
+                    self.get_logger().info("Empty hull", throttle_duration=0.5)
                     continue
                 if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                    rospy.loginfo("Cluster is not polygon, continue")
+                    self.get_logger().info(
+                        "Cluster is not polygon, continue", throttle_duration=0.5
+                    )
                     continue
 
                 shape = Polygon.from_shapely(
@@ -434,13 +660,14 @@ class MappingDataIntegrationNode(CompatibleNode):
                 object_class = objectclassarray[indexarray == label][0]
 
             flags = Flags(is_collider=True)
+            timestamp = self.get_clock().now()
             if object_class == 4:
                 entity = Pedestrian(
                     confidence=1,
                     priority=0.9,
                     shape=shape,
                     transform=transform,
-                    timestamp=rospy.Time.now(),
+                    timestamp=timestamp,
                     flags=flags,
                     motion=motion,
                 )
@@ -450,7 +677,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                     priority=0.75,
                     shape=shape,
                     transform=transform,
-                    timestamp=rospy.Time.now(),
+                    timestamp=timestamp,
                     flags=flags,
                     motion=motion,
                 )
@@ -460,7 +687,7 @@ class MappingDataIntegrationNode(CompatibleNode):
                     priority=0.25,
                     shape=shape,
                     transform=transform,
-                    timestamp=rospy.Time.now(),
+                    timestamp=timestamp,
                     flags=flags,
                     motion=motion,
                 )
@@ -475,17 +702,17 @@ class MappingDataIntegrationNode(CompatibleNode):
         motion = Motion2D(Vector2.forward() * self.hero_speed.speed)
         timestamp = self.hero_speed.header.stamp
         hero = mapping_common.hero.create_hero_entity()
-        hero.timestamp = timestamp
+        hero.timestamp = Time.from_msg(timestamp)
         hero.motion = motion
         return hero
 
-    def publish_new_map_handler(self, timer_event=None):
+    def publish_new_map_handler(self):
         try:
             self.publish_new_map()
         except Exception as e:
-            rospy.logfatal(f"Mapping data integration: {e}")
+            self.get_logger().fatal(f"Mapping data integration: {e}")
 
-    def publish_new_map(self, timer_event=None):
+    def publish_new_map(self):
         """Publishes a new map with the currently available data.
 
         Args:
@@ -498,37 +725,37 @@ class MappingDataIntegrationNode(CompatibleNode):
         entities: List[Entity] = []
         entities.append(hero_car)
 
-        if self.get_param("~enable_lidar_cluster"):
+        if self.enable_lidar_cluster:
             if self.lidar_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
             else:
                 return
 
-        if self.get_param("~enable_radar_cluster"):
+        if self.enable_radar_cluster:
             if self.radar_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="radar"))
             else:
                 return
 
-        if self.get_param("~enable_vision_cluster"):
+        if self.enable_vision_cluster:
             if self.vision_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="vision"))
             else:
                 return
 
-        if self.get_param("~enable_lane_marker"):
+        if self.enable_lane_marker:
             if self.lanemarkings is not None:
                 entities.extend(self.lanemarkings)
             else:
                 return
 
-        if self.get_param("~enable_raw_lidar_points"):
+        if self.enable_raw_lidar_points:
             if self.lidar_data is not None:
                 entities.extend(self.entities_from_lidar())
             else:
                 return
 
-        if self.get_param("~enable_stop_marks"):
+        if self.enable_stop_marks:
             hero_transform_inv = mapping_common.map.build_global_hero_transform(
                 self.current_pos.x(),
                 self.current_pos.y(),
@@ -543,7 +770,7 @@ class MappingDataIntegrationNode(CompatibleNode):
 
             entities.extend(marks)
 
-        stamp = rospy.get_rostime()
+        stamp = self.get_clock().now()
         map = Map(timestamp=stamp, entities=entities)
 
         for filter in self.get_current_map_filters():
@@ -560,29 +787,32 @@ class MappingDataIntegrationNode(CompatibleNode):
         """
         map_filters: List[MapFilter] = []
 
-        if self.get_param("~enable_merge_filter"):
+        if self.filter_enable_merge:
             map_filters.append(
                 GrowthMergingFilter(
-                    growth_distance=self.get_param("~merge_growth_distance"),
-                    min_merging_overlap_percent=self.get_param(
-                        "~min_merging_overlap_percent"
-                    ),
-                    min_merging_overlap_area=self.get_param(
-                        "~min_merging_overlap_area"
-                    ),
-                    simplify_tolerance=self.get_param("~polygon_simplify_tolerance"),
+                    growth_distance=self.filter_merge_growth_distance,
+                    min_merging_overlap_percent=self.filter_merge_min_overlap_percent,
+                    min_merging_overlap_area=self.filter_merge_min_overlap_area,
+                    simplify_tolerance=self.polygon_simplify_tolerance,
                 )
             )
-        if self.get_param("~enable_lane_index_filter"):
+        if self.filter_enable_lane_index:
             map_filters.append(LaneIndexFilter())
-        if self.get_param("~enable_pedestrian_grow_filter"):
+        if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
 
         return map_filters
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = MappingDataIntegrationNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    name = "mapping_data_integration"
-    roscomp.init(name)
-    node = MappingDataIntegrationNode(name)
-    node.spin()
+    main()

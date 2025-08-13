@@ -62,13 +62,16 @@ def main():
         ],
         install_requires=["setuptools"],
         zip_safe=True,
-        maintainer="peter",
+        maintainer="Peter Viechter",
         maintainer_email="peter.viechter@student.uni-augsburg.de",
-        description="TODO: Package description",
+        description="The mapping package for the intermediate layer",
         license="MIT",
         tests_require=["pytest"],
         entry_points={
-            "console_scripts": [],
+            "console_scripts": [
+                "data_integration = mapping.data_integration:main",
+                "visualization = mapping.visualization:main",
+            ],
         },
         **ext_modules
     )

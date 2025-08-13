@@ -1,67 +1,102 @@
-#!/usr/bin/env python
+from typing import Optional, List
 
-
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from rclpy.parameter import Parameter
+from rclpy.duration import Duration
 from visualization_msgs.msg import Marker, MarkerArray
-from mapping.msg import Map as MapMsg
+from mapping_interfaces.msg import Map as MapMsg
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+    FloatingPointRange,
+)
 
-from rospy import Publisher
-from rospy import Duration
-
-from mapping_common.entity import Entity, FlagFilter
+from mapping_common.entity import FlagFilter
 from mapping_common.map import Map
 
-from mapping_visualization.cfg import MappingVisualizationConfig
-from dynamic_reconfigure.server import Server
-
-from typing import Optional
+from paf_common.parameters import update_attributes
 
 MARKER_NAMESPACE: str = "map"
 
 
-class Visualization(CompatibleNode):
+class Visualization(Node):
     """The visualization for the intermediate layer.
 
     This Node will publish the marker array composed of the different entities.
     """
 
-    def __init__(self, args):
+    def __init__(self):
         super().__init__("mapping_visualization")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.marker_publisher: Publisher = self.new_publisher(
+        self.map_topic = (
+            self.declare_parameter("map_topic", "/paf/hero/mapping/init_data")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.show_meta_markers = (
+            self.declare_parameter(
+                "show_meta_markers",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Show meta information for entities",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray, "/paf/hero/mapping/marker_array", qos_profile=1
         )
 
-        self.new_subscription(
-            topic=self.get_param("~map_topic", "/paf/hero/mapping/init_data"),
+        self.create_map_sub()
+
+        self.value_map = {-1: False, 0: None, 1: True}
+        flag_descriptor = ParameterDescriptor(
+            description="Select 0 for ANY, -1 for ISNOT and +1 for IS "
+            "in order to filter",
+            floating_point_range=[
+                FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
+            ],
+        )
+        for flag in [
+            "flag_motion",
+            "flag_collider",
+            "flag_tracked",
+            "flag_stopmark",
+            "flag_lanemark",
+            "flag_ignored",
+            "flag_hero",
+        ]:
+            value = (
+                self.declare_parameter(flag, 0, descriptor=flag_descriptor)
+                .get_parameter_value()
+                .integer_value
+            )
+            setattr(self, flag, value)
+
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        old_map_topic = self.map_topic
+        result = update_attributes(self, params)
+        if old_map_topic != self.map_topic:
+            self.destroy_subscription(self.map_sub)
+            self.create_map_sub()
+        return result
+
+    def create_map_sub(self):
+        self.map_sub = self.create_subscription(
+            topic=self.map_topic,
             msg_type=MapMsg,
             callback=self.map_callback,
             qos_profile=1,
         )
-
-        self.value_map = {-1: False, 0: None, 1: True}
-        self.flag_motion: Optional[bool] = None
-        self.flag_collider: Optional[bool] = None
-        self.flag_tracked: Optional[bool] = None
-        self.flag_stopmark: Optional[bool] = None
-        self.flag_lanemark: Optional[bool] = None
-        self.flag_ignored: Optional[bool] = None
-        self.flag_hero: Optional[bool] = None
-        self.show_meta_markers: bool = True
-
-        Server(MappingVisualizationConfig, self.dynamic_reconfigure_callback)
-
-    def dynamic_reconfigure_callback(self, config: "MappingVisualizationConfig", level):
-        self.flag_motion = self.value_map.get(config["flag_motion"])
-        self.flag_collider = self.value_map.get(config["flag_collider"])
-        self.flag_tracked = self.value_map.get(config["flag_tracked"])
-        self.flag_stopmark = self.value_map.get(config["flag_stopmark"])
-        self.flag_lanemark = self.value_map.get(config["flag_lanemark"])
-        self.flag_ignored = self.value_map.get(config["flag_ignored"])
-        self.flag_hero = self.value_map.get(config["flag_hero"])
-        self.show_meta_markers = config["flag_show_meta_markers"]
-        return config
 
     def map_callback(self, data: MapMsg):
         map = Map.from_ros_msg(data)
@@ -69,7 +104,7 @@ class Visualization(CompatibleNode):
         marker_array = MarkerArray()
         marker_array.markers.append(self.create_deleteall_marker())
 
-        marker_timestamp = roscomp.ros_timestamp(self.get_time(), from_sec=True)
+        marker_timestamp = self.get_clock().now().to_msg()
         markers = []
         filter = FlagFilter(
             has_motion=self.flag_motion,
@@ -93,7 +128,7 @@ class Visualization(CompatibleNode):
             marker.header.frame_id = "hero"
             marker.ns = MARKER_NAMESPACE
             marker.id = id + 1000
-            marker.lifetime = Duration.from_sec(2 / 20.0)
+            marker.lifetime = Duration(seconds=2 / 20.0).to_msg()
             marker_array.markers.append(marker)
 
         self.marker_publisher.publish(marker_array)
@@ -106,33 +141,15 @@ class Visualization(CompatibleNode):
         """
         return Marker(ns=MARKER_NAMESPACE, action=Marker.DELETEALL)
 
-    def create_marker_from_entity(self, id, entity: Entity, timestamp) -> Marker:
-        marker = entity.to_marker()
-        marker.header.frame_id = "hero"
-        marker.header.stamp = timestamp
-        marker.ns = MARKER_NAMESPACE
-        marker.id = id
-        marker.lifetime = Duration.from_sec(2.0 / 20.0)
-
-        return marker
-
 
 def main(args=None):
-    """Main function to start the node.
-
-    Args:
-        args (_type_, optional): Runtime args, do not get processed. Defaults to None.
-    """
-
-    roscomp.init("mapping_visualization")
+    rclpy.init(args=args)
 
     try:
-        node = Visualization(args)
-        node.spin()
+        node = Visualization()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":

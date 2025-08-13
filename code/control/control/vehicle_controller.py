@@ -35,7 +35,7 @@ class VehicleController(Node):
     """
 
     def __init__(self):
-        super(VehicleController, self).__init__("vehicle_controller")
+        super().__init__("vehicle_controller")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
