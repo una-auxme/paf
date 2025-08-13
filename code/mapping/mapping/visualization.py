@@ -9,7 +9,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from mapping_interfaces.msg import Map as MapMsg
 from rcl_interfaces.msg import (
     ParameterDescriptor,
-    FloatingPointRange,
+    IntegerRange,
 )
 
 from mapping_common.entity import FlagFilter
@@ -58,9 +58,7 @@ class Visualization(Node):
         flag_descriptor = ParameterDescriptor(
             description="Select 0 for ANY, -1 for ISNOT and +1 for IS "
             "in order to filter",
-            floating_point_range=[
-                FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
-            ],
+            integer_range=[IntegerRange(from_value=-1, to_value=1)],
         )
         for flag in [
             "flag_motion",
@@ -107,13 +105,13 @@ class Visualization(Node):
         marker_timestamp = self.get_clock().now().to_msg()
         markers = []
         filter = FlagFilter(
-            has_motion=self.flag_motion,
-            is_collider=self.flag_collider,
-            is_tracked=self.flag_tracked,
-            is_stopmark=self.flag_stopmark,
-            is_lanemark=self.flag_lanemark,
-            is_ignored=self.flag_ignored,
-            is_hero=self.flag_hero,
+            has_motion=self.value_map.get(self.flag_motion),
+            is_collider=self.value_map.get(self.flag_collider),
+            is_tracked=self.value_map.get(self.flag_tracked),
+            is_stopmark=self.value_map.get(self.flag_stopmark),
+            is_lanemark=self.value_map.get(self.flag_lanemark),
+            is_ignored=self.value_map.get(self.flag_ignored),
+            is_hero=self.value_map.get(self.flag_hero),
         )
         for entity in map.entities:
             if not entity.matches_filter(filter):

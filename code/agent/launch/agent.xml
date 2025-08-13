@@ -26,12 +26,8 @@
     </include> -->
 
     <!-- mapping -->
-    <!-- <include file="$(find mapping)/launch/mapping.launch">
-    </include> -->
-
-    <!-- mapping visualization -->
-    <!-- <include file="$(find mapping_visualization)/launch/visualization.launch">
-    </include> -->
+    <include file="$(find-pkg-share mapping)/launch/mapping.xml">
+    </include>
 
     <!-- kalman localization with robot localization package -->
     <include file="$(find-pkg-share localization)/launch/localization.xml">

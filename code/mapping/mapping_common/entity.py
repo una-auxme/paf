@@ -355,7 +355,7 @@ class Entity:
             "priority": m.priority,
             "shape": Shape2D.from_ros_msg(m.shape),
             "transform": Transform2D.from_ros_msg(m.transform),
-            "timestamp": m.header.stamp,
+            "timestamp": Time.from_msg(m.header.stamp),
             "flags": Flags.from_ros_msg(m.flags),
             "uuid": UUID(bytes=m.uuid.uuid.tobytes()),
             "sensor_id": m.sensor_id,
@@ -380,7 +380,7 @@ class Entity:
             priority=self.priority,
             shape=self.shape.to_ros_msg(),
             transform=self.transform.to_ros_msg(),
-            header=Header(stamp=self.timestamp),
+            header=Header(stamp=self.timestamp.to_msg()),
             flags=flags,
             uuid=uuid_msgs.UUID(uuid=uuid),
             sensor_id=self.sensor_id,
@@ -399,9 +399,9 @@ class Entity:
         """
         m = self.shape.to_marker(self.transform)
 
-        m.color.r = 1
-        m.color.g = 1
-        m.color.b = 1
+        m.color.r = 1.0
+        m.color.g = 1.0
+        m.color.b = 1.0
         m.color.a = 0.5
         m.pose.position.z = m.scale.z / 2.0
         return m
@@ -655,9 +655,9 @@ class Car(Entity):
     def to_marker(self) -> Marker:
         m = super().to_marker()
         # [0, 0, 255],  # 10: Vehicles
-        m.color.r = 0
-        m.color.g = 0
-        m.color.b = 255 / 255
+        m.color.r = 0.0
+        m.color.g = 0.0
+        m.color.b = 1.0
         return m
 
 
@@ -709,14 +709,14 @@ class Lanemarking(Entity):
 
         if self.predicted:
             m.color.a = 0.5
-            m.color.r = int(255 * self.confidence)
-            m.color.g = 0
-            m.color.b = 0
+            m.color.r = self.confidence
+            m.color.g = 0.0
+            m.color.b = 0.0
         else:
             m.color.a = 0.5
-            m.color.r = 0
-            m.color.g = 0
-            m.color.b = int(255 * self.confidence)
+            m.color.r = 0.0
+            m.color.g = 0.0
+            m.color.b = self.confidence
 
         m.scale.z = 0.1
         m.pose.position.z = m.scale.z / 2.0
@@ -787,9 +787,9 @@ class StopMark(Entity):
 
     def to_marker(self) -> Marker:
         m = super().to_marker()
-        m.color.r = 255 / 255
-        m.color.g = 126 / 255
-        m.color.b = 0 / 255
+        m.color.r = 1.0
+        m.color.g = 0.5
+        m.color.b = 0.0
 
         m.scale.z = 0.2
         m.pose.position.z = 0.1

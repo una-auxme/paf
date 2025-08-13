@@ -10,6 +10,7 @@ from rclpy.time import Time
 import ros2_numpy
 
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 import mapping_common.map
 import mapping_common.hero
 from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
@@ -631,11 +632,11 @@ class MappingDataIntegrationNode(Node):
                 cluster_polygon = MultiPoint(cluster_points_xy)
                 cluster_polygon_hull = cluster_polygon.convex_hull
                 if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                    self.get_logger().info("Empty hull", throttle_duration=0.5)
+                    self.get_logger().info("Empty hull", throttle_duration_sec=0.5)
                     continue
                 if not isinstance(cluster_polygon_hull, shapely.Polygon):
                     self.get_logger().info(
-                        "Cluster is not polygon, continue", throttle_duration=0.5
+                        "Cluster is not polygon, continue", throttle_duration_sec=0.5
                     )
                     continue
 
@@ -710,7 +711,7 @@ class MappingDataIntegrationNode(Node):
         try:
             self.publish_new_map()
         except Exception as e:
-            self.get_logger().fatal(f"Mapping data integration: {e}")
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def publish_new_map(self):
         """Publishes a new map with the currently available data.
@@ -725,35 +726,43 @@ class MappingDataIntegrationNode(Node):
         entities: List[Entity] = []
         entities.append(hero_car)
 
+        missing_data = []
         if self.enable_lidar_cluster:
             if self.lidar_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
             else:
-                return
+                missing_data.append("lidar_clustered_points")
 
         if self.enable_radar_cluster:
             if self.radar_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="radar"))
             else:
-                return
+                missing_data.append("radar_clustered_points")
 
         if self.enable_vision_cluster:
             if self.vision_clustered_points_data is not None:
                 entities.extend(self.create_entities_from_clusters(sensortype="vision"))
             else:
-                return
+                missing_data.append("vision_clustered_points")
 
         if self.enable_lane_marker:
             if self.lanemarkings is not None:
                 entities.extend(self.lanemarkings)
             else:
-                return
+                missing_data.append("lanemarkings")
 
         if self.enable_raw_lidar_points:
             if self.lidar_data is not None:
                 entities.extend(self.entities_from_lidar())
             else:
-                return
+                missing_data.append("raw_lidar_points")
+
+        if missing_data:
+            self.get_logger().warn(
+                f"Missing data: {missing_data}. Unable to publish map.",
+                throttle_duration_sec=2.0,
+            )
+            return
 
         if self.enable_stop_marks:
             hero_transform_inv = mapping_common.map.build_global_hero_transform(
