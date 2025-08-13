@@ -20,9 +20,9 @@ import shapely
 import math
 import copy
 
-import rospy
-from mapping import msg
-from tf.transformations import quaternion_from_euler
+from mapping_common import get_logger
+from mapping_interfaces import msg
+from transforms3d.euler import euler2quat
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 
@@ -65,7 +65,7 @@ class Shape2D:
         if msg_type_lower in _shape_supported_classes_dict:
             shape_type = _shape_supported_classes_dict[msg_type_lower]
         if shape_type is None:
-            rospy.logerr(
+            get_logger().error(
                 f"Received shape type '{m.type_name}' is not supported."
                 f"'Circle' shape with radius 0.5 m will be used instead."
                 f"The type must be one of {_shape_supported_classes_dict.keys()}"
@@ -105,11 +105,11 @@ class Shape2D:
         m.pose.position.y = transl.y()
         m.pose.position.z = 0.0
         (
+            m.pose.orientation.w,
             m.pose.orientation.x,
             m.pose.orientation.y,
             m.pose.orientation.z,
-            m.pose.orientation.w,
-        ) = quaternion_from_euler(0, 0, shape_transform.rotation())
+        ) = euler2quat(0, 0, shape_transform.rotation())
 
         m.scale.z = 1.0
         return m

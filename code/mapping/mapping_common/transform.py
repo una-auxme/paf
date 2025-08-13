@@ -21,7 +21,7 @@ import math
 import shapely
 
 from geometry_msgs import msg as geometry_msgs
-from mapping import msg
+from mapping_interfaces import msg
 
 
 @dataclass(init=False, eq=False)

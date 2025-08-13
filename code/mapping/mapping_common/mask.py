@@ -17,7 +17,6 @@ Overview of the main components:
 from typing import Optional, Tuple, List, Union
 
 import shapely
-import shapely.ops
 import numpy as np
 import numpy.typing as npt
 import math

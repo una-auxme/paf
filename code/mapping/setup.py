@@ -39,8 +39,6 @@ def main():
         #       file=sys.stderr)
         pass
     else:
-        if "mapping_common" in packages:
-            packages.remove("mapping_common")
         ext_modules = {
             "ext_modules": cythonize(
                 extensions, language_level="3", annotate=True, quiet=True

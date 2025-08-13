@@ -17,9 +17,11 @@ from mapping_common.entity import Entity
 from mapping_common.shape import Shape2D, MarkerStyle, Polygon, Circle
 from mapping_common.transform import Transform2D, Vector2, Point2
 
-import rospy
 from visualization_msgs.msg import Marker, MarkerArray
-from tf.transformations import quaternion_from_euler
+from transforms3d.euler import euler2quat
+
+from rclpy.time import Time
+from rclpy.duration import Duration
 
 
 def debug_marker(
@@ -110,11 +112,11 @@ def debug_marker(
         marker.pose.position.x = transl.x()
         marker.pose.position.y = transl.y()
         (
+            marker.pose.orientation.w,
             marker.pose.orientation.x,
             marker.pose.orientation.y,
             marker.pose.orientation.z,
-            marker.pose.orientation.w,
-        ) = quaternion_from_euler(0, 0, transform.rotation())
+        ) = euler2quat(0, 0, transform.rotation())
     if offset:
         marker.pose.position.x += offset.x()
         marker.pose.position.y += offset.y()
@@ -140,16 +142,15 @@ def debug_marker(
 def debug_marker_array(
     namespace: str,
     markers: List[Marker],
-    timestamp: Optional[rospy.Time] = None,
-    lifetime: Optional[rospy.Duration] = None,
+    timestamp: Time,
+    lifetime: Optional[Duration] = None,
 ) -> MarkerArray:
     """Builds a ROS MarkerArray based on *markers*
 
     Args:
         namespace (str): Namespace of the markers
         markers (List[Marker]): markers
-        timestamp (Optional[rospy.Time], optional): Timestamp of all markers.
-            Defaults to None. If None, the current ros time will be used
+        timestamp (Time): Timestamp of all markers.
         lifetime (Optional[rospy.Duration], optional): Marker lifetime.
             Defaults to 0.5.
 
@@ -157,16 +158,14 @@ def debug_marker_array(
         MarkerArray: MarkerArray
     """
     if lifetime is None:
-        lifetime = rospy.Duration.from_sec(0.5)
-    if timestamp is None:
-        timestamp = rospy.get_rostime()
+        lifetime = Duration(seconds=0.5)
 
     marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
     for id, marker in enumerate(markers):
-        marker.header.stamp = timestamp
+        marker.header.stamp = timestamp.to_msg()
         marker.ns = namespace
         marker.id = id
-        marker.lifetime = lifetime
+        marker.lifetime = lifetime.to_msg()
         marker_array.markers.append(marker)
 
     return marker_array

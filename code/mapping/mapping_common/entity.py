@@ -12,10 +12,12 @@ Overview of the main components:
 from typing import List, Optional, Dict
 from enum import Enum
 from dataclasses import dataclass, field
+import numpy as np
 
 import shapely
 
 from uuid import UUID, uuid4
+from rclpy.clock_type import ClockType
 from rclpy.time import Time
 from rclpy.duration import Duration
 from std_msgs.msg import Header
@@ -251,7 +253,7 @@ class Entity:
     """Shape2D for collision calculations"""
     transform: Transform2D
     """Transform2D based on the map origin (hero car)"""
-    timestamp: Time = field(default_factory=Time)
+    timestamp: Time = field(default_factory=lambda: Time(clock_type=ClockType.ROS_TIME))
     """When adding the entity its timestamp is the timestamp
     of the associated sensor data
     (might slightly differ to the timestamp of the Map)
@@ -355,7 +357,7 @@ class Entity:
             "transform": Transform2D.from_ros_msg(m.transform),
             "timestamp": m.header.stamp,
             "flags": Flags.from_ros_msg(m.flags),
-            "uuid": UUID(bytes=m.uuid.uuid),
+            "uuid": UUID(bytes=m.uuid.uuid.tobytes()),
             "sensor_id": m.sensor_id,
             "motion": motion,
             "tracking_info": tracking_info,
@@ -372,6 +374,7 @@ class Entity:
             if self.tracking_info is not None
             else msg.TrackingInfo()
         )
+        uuid = np.frombuffer(self.uuid.bytes, dtype=np.int8)
         return msg.Entity(
             confidence=self.confidence,
             priority=self.priority,
@@ -379,7 +382,7 @@ class Entity:
             transform=self.transform.to_ros_msg(),
             header=Header(stamp=self.timestamp),
             flags=flags,
-            uuid=uuid_msgs.UUID(uuid=self.uuid.bytes),
+            uuid=uuid_msgs.UUID(uuid=uuid),
             sensor_id=self.sensor_id,
             motion=motion,
             tracking_info=tracking_info,

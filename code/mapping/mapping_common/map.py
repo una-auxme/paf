@@ -19,17 +19,18 @@ import numpy as np
 import numpy.typing as npt
 import math
 
-from genpy.rostime import Time
 from std_msgs.msg import Header
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.entity import Entity, FlagFilter, ShapelyEntity
 from mapping_common.shape import Rectangle
 from cv2 import line
+from mapping_common import get_logger
 import mapping_common.mask
 
-import rospy
+from rclpy.time import Time
+from rclpy.clock_type import ClockType
 
-from mapping import msg
+from mapping_interfaces import msg
 
 
 class LaneFreeState(Enum):
@@ -72,7 +73,7 @@ class Map:
     - The map might include the hero car as the **first entity** in entities
     """
 
-    timestamp: Time = Time()
+    timestamp: Time = field(default_factory=lambda: Time(clock_type=ClockType.ROS_TIME))
     """The timestamp this map was created at.
 
     Should be the time when this map was initially sent off
@@ -245,12 +246,12 @@ class Map:
 
     @staticmethod
     def from_ros_msg(m: msg.Map) -> "Map":
-        entities = list(map(lambda e: Entity.from_ros_msg(e), m.entities))
-        return Map(timestamp=m.header.stamp, entities=entities)
+        entities = [Entity.from_ros_msg(e) for e in m.entities]
+        return Map(timestamp=Time.from_msg(m.header.stamp), entities=entities)
 
     def to_ros_msg(self) -> msg.Map:
-        entities = list(map(lambda e: e.to_ros_msg(), self.entities))
-        header = Header(stamp=self.timestamp)
+        entities = [e.to_ros_msg() for e in self.entities]
+        header = Header(stamp=self.timestamp.to_msg())
         return msg.Map(header=header, entities=entities)
 
 
@@ -725,7 +726,7 @@ class MapTree:
         further_rotation = lane_further_hero.transform.rotation()
         lanemark_angle = np.rad2deg(abs(close_rotation - further_rotation))
         if lanemark_angle > lane_angle:
-            rospy.logwarn(
+            get_logger().warn(
                 f"Lane free check: Lanemarkings angle {lanemark_angle} too big, \
                 should be < {lane_angle}°. Aborting check."
             )
@@ -844,9 +845,9 @@ class MapTree:
 
         def calc_intersection_distance(e: ShapelyEntity) -> float:
             intersection = shapely.intersection(e.poly, mask)
-            return shapely.distance(reference.poly, intersection)
+            return float(shapely.distance(reference.poly, intersection))
 
-        query_distances = map(lambda e: (e, calc_intersection_distance(e)), query)
+        query_distances = [(e, calc_intersection_distance(e)) for e in query]
         return min(query_distances, key=lambda e: e[1])
 
     def get_overlapping_entities(
