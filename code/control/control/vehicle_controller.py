@@ -92,7 +92,7 @@ class VehicleController(Node):
                 "manual_throttle",
                 0.0,
                 descriptor=ParameterDescriptor(
-                    description="Steering input sent to carla.",
+                    description="Throttle input sent to carla.",
                     floating_point_range=[
                         FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
                     ],
