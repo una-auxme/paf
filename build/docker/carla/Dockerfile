@@ -1,7 +1,10 @@
-ARG BASE_FLAVOUR=cuda
+# Currently supported BASE_FLAVOUR:
+# - gpu: base for amd + intel (vulkan and opengl drivers only)
+# - cuda: nvidia
+ARG BASE_FLAVOUR=gpu
 ARG BASE_IMAGE=ubuntu:24.04
 
-FROM ${BASE_IMAGE} AS carla-base-rocm
+FROM ${BASE_IMAGE} AS carla-base-gpu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -9,16 +12,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y software-properties-common
 
-# GPU vulkan driver install
+# GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   add-apt-repository -y ppa:kisak/turtle && apt-get update && \
   apt-get upgrade -y && apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
 
-# https://catalog.ngc.nvidia.com/orgs/nvidia/containers/cuda
-# FROM nvcr.io/nvidia/cuda:12.6.3-runtime-ubuntu24.04 AS carla-base-cuda
-# The cuda runtime image breaks vulkan support
-FROM ${BASE_IMAGE} AS carla-base-cuda
+FROM carla-base-gpu AS carla-base-cuda
 ARG NVIDIA_DRIVER_VERSION=550
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.17.5/docker-specialized.html#nvidia-require-constraints
 ENV NVIDIA_VISIBLE_DEVICES=all
@@ -29,7 +29,7 @@ ENV NVIDIA_REQUIRE_DRIVER="driver>=${NVIDIA_DRIVER_VERSION}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y libvulkan1 vulkan-tools libnvidia-gl-${NVIDIA_DRIVER_VERSION}
+  apt-get install -y libnvidia-gl-${NVIDIA_DRIVER_VERSION}
 
 ############################################
 ##### The main carla image starts here #####
@@ -52,8 +52,11 @@ RUN chmod +x CarlaUE4.sh && chmod +x ./CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Sh
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt install -y \
+  apt-get update && apt-get install -y \
   xdg-user-dirs xdg-utils
+
+COPY build/docker/carla/carla_entrypoint.sh /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
 
 FROM ${BASE_IMAGE} AS carla-api
 
@@ -118,12 +121,12 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/un
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
-ADD build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
+COPY build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
 ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   python3.8 -m venv "${LEADERBOARD_VENV}" && \
-  echo source "${LEADERBOARD_VENV}/bin/activate" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+  echo source "${LEADERBOARD_VENV}/bin/activate" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
@@ -172,7 +175,7 @@ ENV ROS_ROOT=${INTERNAL_WORKSPACE_DIR}/ros_${ROS_DISTRO}
 RUN mkdir -p ${ROS_ROOT}/src
 WORKDIR ${ROS_ROOT}
 RUN bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   vcs import --input https://raw.githubusercontent.com/ros2/ros2/${ROS_DISTRO}/ros2.repos src \
   "
 
@@ -181,7 +184,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
   bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   rosdep init && rosdep update && \
   rosdep install --from-paths src --ignore-src -y \
   --skip-keys 'fastcdr rti-connext-dds-6.0.1 urdfdom_headers' \
@@ -206,7 +209,7 @@ RUN apt-get remove -y pybind11-dev liborocos-kdl-dev liborocos-kdl1.5 libshiboke
 RUN wget -O /${ROS_ROOT}/src/ros2/geometry2/tf2_eigen/include/tf2_eigen/tf2_eigen.h https://raw.githubusercontent.com/ros2/geometry2/1621942bc2ad1270ee0bfc1f6b7a44a5849a7b5e/tf2_eigen/include/tf2_eigen/tf2_eigen.h
 
 RUN bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   colcon build --merge-install \
   --cmake-args -DCMAKE_BUILD_TYPE=Release \
   --packages-ignore \
@@ -214,7 +217,7 @@ RUN bash -c " \
   " && \
   rm -r ${ROS_ROOT}/build ${ROS_ROOT}/log
 
-RUN echo source "${ROS_ROOT}/install/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+RUN echo source "${ROS_ROOT}/install/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ############################
 # Install carla ros bridge #
@@ -237,9 +240,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
   bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   rosdep update && \
-  rosdep install --from-paths src --ignore-src -y \
+  rosdep install -r --from-paths src --ignore-src -y \
   "
 
 RUN bash -c "\
@@ -249,7 +252,7 @@ RUN bash -c "\
   --cmake-args -DCMAKE_BUILD_TYPE=Release \
   " && \
   rm -r ${CARLA_ROS_WS}/build ${CARLA_ROS_WS}/log
-RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ####################
 # Setup ros2 agent #
@@ -258,23 +261,18 @@ RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPA
 # Use dummy package because the leaderboards wants to launch something
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 RUN mkdir -p ros2_ws/src
-ADD build/docker/carla/ros_bridge_dummy ros2_ws/src/
+COPY build/docker/carla/paf_leaderboard_ros_bridge ros2_ws/src/
 RUN bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/.env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   cd ros2_ws && \
   colcon build" && \
-  echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/.env.bash
+  echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 # The agent launches the dummy package
-ADD build/docker/carla/agent_ros2_bridge.py ./
+COPY build/docker/carla/agent_ros2_bridge.py ./
 CMD [ "bash", "-c", "sleep infinity"  ]
 
-# For the envsubst command in the entrypoint
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y \
-  gettext-base
-RUN echo "source ${INTERNAL_WORKSPACE_DIR}/.env.bash" >> ~/.bashrc
-ADD build/docker/carla/wait_for_carla.py /
-ADD build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
+RUN echo "source ${INTERNAL_WORKSPACE_DIR}/env.bash" >> ~/.bashrc
+COPY build/docker/carla/wait_for_carla.py /
+COPY build/docker/carla/bridge_entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]

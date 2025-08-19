@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+
+    <set_parameter name="use_sim_time" value="true" />
+
+    <!-- perception -->
+    <!-- <include
+        file="$(find perception)/launch/perception.launch">
+    </include> -->
+
+    <!-- planning -->
+    <!-- <include file="$(find planning)/launch/planning.launch">
+    </include> -->
+
+    <!-- acting -->
+    <include file="$(find-pkg-share acting)/launch/acting.xml">
+        <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+        <arg name="role_name" value="$(var role_name)" />
+    </include>
+
+    <!-- debugging -->
+    <!-- <include
+        file="$(find debugging)/launch/debugging.launch">
+    </include> -->
+
+    <!-- mapping -->
+    <!-- <include file="$(find mapping)/launch/mapping.launch">
+    </include> -->
+
+    <!-- mapping visualization -->
+    <!-- <include file="$(find mapping_visualization)/launch/visualization.launch">
+    </include> -->
+
+    <!-- kalman localization with robot localization package -->
+    <!-- <include
+        file="$(find localization)/launch/localization.launch">
+    </include> -->
+</launch>

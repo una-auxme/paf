@@ -1,0 +1,15 @@
+vehicle_controller:
+  ros__parameters:
+    manual_override_active: False
+    manual_steer: 0.0
+    manual_throttle: 0.0
+
+    loop_sleep_time: 0.2
+
+velocity_controller:
+  ros__parameters:
+    pid_p: 0.6
+    pid_i: 0.00076
+    pid_d: 0.63
+    fixed_speed: 0.0
+    fixed_speed_active: False

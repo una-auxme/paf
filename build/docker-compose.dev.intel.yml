@@ -1,0 +1,19 @@
+# Docker compose configuration with desktop gpu support for ROS development
+# Intel on Linux only.
+
+include:
+  - docker-compose.carla.gpu.yaml
+
+services:
+  agent-dev:
+    extends:
+      file: docker-compose.dev.base.yml
+      service: agent-dev
+    build:
+      args:
+        PAF_USERNAME: ${PAF_USERNAME}
+        PAF_UID: ${PAF_UID}
+        PAF_GID: ${PAF_GID}
+        BASE_FLAVOUR: gpu
+    devices:
+      - /dev/dri

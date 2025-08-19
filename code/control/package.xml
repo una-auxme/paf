@@ -1,22 +1,15 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>control</name>
   <version>0.0.0</version>
-  <description>The control package for PAF Carla</description>
+  <description>TODO: Package description</description>
+  <maintainer email="paf@todo.todo">paf</maintainer>
+  <license>MIT</license>
 
-  <maintainer email="vinzenz@malke.info">Vinzenz Malke</maintainer>
-
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
-
-
-  <exec_depend>message_runtime</exec_depend>
-  <buildtool_depend>catkin</buildtool_depend>
-
+  <test_depend>python3-pytest</test_depend>
 
   <export>
+    <build_type>ament_python</build_type>
   </export>
 </package>

@@ -8,14 +8,13 @@ def get_entry_point():
 
 
 class PAFAgent(ROS2Agent):
-
     def setup(self, path_to_conf_file):
         self.track = Track.MAP
 
     def get_ros_entrypoint(self):
         return {
-            "package": "ros_bridge_dummy",
-            "launch_file": "dummy.launch",
+            "package": "paf_leaderboard_ros_bridge",
+            "launch_file": "leaderboard.sleep.xml",
         }
 
     def sensors(self):
