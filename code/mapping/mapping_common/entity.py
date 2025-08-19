@@ -17,7 +17,6 @@ import numpy as np
 import shapely
 
 from uuid import UUID, uuid4
-from rclpy.clock_type import ClockType
 from builtin_interfaces.msg import Time, Duration
 from std_msgs.msg import Header
 import unique_identifier_msgs.msg as uuid_msgs

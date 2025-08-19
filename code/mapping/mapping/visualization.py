@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List
 
 import rclpy
 from rclpy.node import Node

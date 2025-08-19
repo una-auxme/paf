@@ -28,7 +28,6 @@ from mapping_common import get_logger
 import mapping_common.mask
 
 from builtin_interfaces.msg import Time
-from rclpy.clock_type import ClockType
 
 from mapping_interfaces import msg
 

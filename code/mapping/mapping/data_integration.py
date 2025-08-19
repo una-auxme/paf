@@ -6,7 +6,6 @@ from copy import deepcopy
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from rclpy.time import Time
 import ros2_numpy
 
 from paf_common.parameters import update_attributes
