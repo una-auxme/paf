@@ -31,7 +31,7 @@ class OdometryNode(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.loop_rate = (
+        self.control_loop_rate = (
             self.declare_parameter("loop_rate", 0.05).get_parameter_value().double_value
         )
         self.role_name = (
@@ -90,7 +90,7 @@ class OdometryNode(Node):
             qos_profile=1,
         )
 
-        self.create_timer(self.loop_rate, self.publish_odometry_handler)
+        self.create_timer(self.control_loop_rate, self.publish_odometry_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
@@ -136,7 +136,7 @@ class OdometryNode(Node):
         this data to our output topic.
         """
 
-        dt = self.loop_rate
+        dt = self.control_loop_rate
         velocity = self.speed
         steering_angle = -self.steering_angle
 
