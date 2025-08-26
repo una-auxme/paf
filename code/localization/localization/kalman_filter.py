@@ -24,7 +24,7 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 import numpy as np
 from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Float32, UInt32, String
+from std_msgs.msg import Float32, String
 from sensor_msgs.msg import NavSatFix, Imu
 from carla_msgs.msg import CarlaSpeedometer
 import math
@@ -104,7 +104,6 @@ class KalmanFilter(Node):
             .get_parameter_value()
             .string_value
         )
-        self.publish_seq = UInt32(0)
         self.frame_id = "map"
 
         self.dt = self.control_loop_rate
@@ -330,9 +329,6 @@ class KalmanFilter(Node):
         # Set the Kalman position
         kalman_position.header.frame_id = self.frame_id
         kalman_position.header.stamp = self.get_clock().now().to_msg()
-        kalman_position.header.seq = self.publish_seq
-
-        self.publish_seq.data += 1
 
         kalman_position.pose.position.x = self.x_est[0, 0]
         kalman_position.pose.position.y = self.x_est[1, 0]
