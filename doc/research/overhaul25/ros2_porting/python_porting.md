@@ -141,7 +141,7 @@ Cons:
 
 ### Conclusion/Status
 
-Recommendation: Use pip + venv + requirements.txt as this combination is well-documented, widely-used, and officially compatible with ROS 2.
+Recommendation: Use pip + requirements.txt (no venv) as this combination is well-documented, widely-used, and officially compatible with ROS 2.
 
 ## Other porting options
 

@@ -5,7 +5,8 @@ cd "${SCRIPT_DIR}"
 
 _term() {
   echo "Caught SIGTERM signal!"
-  kill -TERM "$(jobs -p)" 2>/dev/null
+  # shellcheck disable=SC2046
+  kill -TERM $(jobs -p) 2>/dev/null
 }
 trap _term SIGTERM SIGINT
 
@@ -24,7 +25,7 @@ source "${INTERNAL_WORKSPACE_DIR}/dev.bashrc"
 devbuild || echo "WARNING: Build failed, proceeding anyway..."
 
 echo "source ${PAF_ROS_WS}/install/local_setup.bash" >>"${INTERNAL_WORKSPACE_DIR}/env.bash"
-devsource || "WARNING: ROS workspace could not be sourced"
+devsource || echo "WARNING: ROS workspace could not be sourced"
 
 ros_gui_params=(--ros-args --param use_sim_time:=true)
 ros2 run rqt_console rqt_console "${ros_gui_params[@]}" &

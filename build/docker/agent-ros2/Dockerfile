@@ -110,14 +110,13 @@ ARG PAF_UID=1000
 ARG PAF_GID=1000
 
 # Delete exiting user or group with paf ids if they exist
-RUN (userdel -r $(id -u -n ${PAF_UID})) || true && \
-  (groupdel $(id -g -n ${PAF_GID})) || true
-# Allow duplicated uids with -o
-RUN groupadd --gid ${PAF_GID} ${PAF_USERNAME}\
-  && useradd --uid ${PAF_UID} --gid $PAF_GID -m -s /bin/bash ${PAF_USERNAME}\
-  && passwd -d ${PAF_USERNAME} \
-  && echo ${PAF_USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${PAF_USERNAME} \
-  && chmod 0440 /etc/sudoers.d/${PAF_USERNAME}
+RUN if getent passwd "${PAF_UID}"; then userdel -r $(id -u -n "${PAF_UID}"); fi && \
+  if getent group "${PAF_GID}"; then groupdel $(id -g -n "${PAF_GID}"); fi
+RUN groupadd --gid "${PAF_GID}" "${PAF_USERNAME}" \
+  && useradd --uid "${PAF_UID}" --gid "$PAF_GID" -m -s /bin/bash "${PAF_USERNAME}" \
+  && passwd -d "${PAF_USERNAME}" \
+  && echo "${PAF_USERNAME}" ALL=\(root\) NOPASSWD:ALL > "/etc/sudoers.d/${PAF_USERNAME}" \
+  && chmod 0440 "/etc/sudoers.d/${PAF_USERNAME}"
 
 # Build internal workspace
 ENV INTERNAL_WORKSPACE_DIR=/internal_workspace

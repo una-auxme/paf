@@ -141,7 +141,7 @@ class VelocityController(Node):
         # since we use this for braking aswell, allow -1 to 0.
         self.pid_t.output_limits = (-1.0, 1.0)
 
-        self.loop_timer = self.create_timer(self.control_loop_rate, self.loop)
+        self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
