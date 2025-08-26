@@ -15,7 +15,7 @@ services:
         PAF_USERNAME: ${PAF_USERNAME}
         PAF_UID: ${PAF_UID}
         PAF_GID: ${PAF_GID}
-        BASE_FLABOUR: gpu
+        BASE_FLAVOUR: gpu
     devices:
       - /dev/dxg
     volumes:
