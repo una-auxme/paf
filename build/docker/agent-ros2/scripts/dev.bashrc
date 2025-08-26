@@ -5,7 +5,7 @@
 # Activate WSL gpu drivers if available
 # https://github.com/microsoft/wslg/blob/main/samples/container/Containers.md#containerizing-gui-applications-with-wslg
 if [ -d /usr/lib/wsl/lib ]; then
-  LD_LIBRARY_PATH=/usr/lib/wsl/lib:${LD_LIBRARY_PATH}
+  export LD_LIBRARY_PATH=/usr/lib/wsl/lib:${LD_LIBRARY_PATH}
 fi
 
 source "${INTERNAL_WORKSPACE_DIR}/scripts/devfunctions.bash"

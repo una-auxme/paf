@@ -200,7 +200,7 @@ class VehicleController(Node):
 
         if self.manual_override_active:
             self.message.reverse = self.manual_throttle < 0
-            self.message.throttle = self.manual_throttle
+            self.message.throttle = abs(self.manual_throttle)
             self.message.steer = self.manual_steer
             self.message.brake = 0.0
             self.message.hand_brake = False
@@ -234,7 +234,7 @@ class VehicleController(Node):
         if self.__emergency and data.speed < 0.1:
             self.__emergency_brake(False)
             for _ in range(7):
-                self.emergency_pub.publish(Bool(False))
+                self.emergency_pub.publish(Bool(data=False))
             self.get_logger().info("Emergency braking disengaged")
 
     def __set_throttle(self, data: Float32):
