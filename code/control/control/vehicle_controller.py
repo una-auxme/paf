@@ -233,7 +233,7 @@ class VehicleController(Node):
         if self.__emergency and data.speed < 0.1:
             self.__emergency_brake(False)
             for _ in range(7):
-                self.emergency_pub.publish(Bool(False))
+                self.emergency_pub.publish(Bool(data=False))
             self.get_logger().info("Emergency braking disengaged")
 
     def __set_throttle(self, data: Float32):
