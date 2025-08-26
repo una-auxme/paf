@@ -199,7 +199,7 @@ class VehicleController(Node):
 
         if self.manual_override_active:
             self.message.reverse = self.manual_throttle < 0
-            self.message.throttle = self.manual_throttle
+            self.message.throttle = abs(self.manual_throttle)
             self.message.steer = self.manual_steer
             self.message.brake = 0.0
             self.message.hand_brake = False
