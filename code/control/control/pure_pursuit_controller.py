@@ -1,26 +1,23 @@
-#!/usr/bin/env python
+from typing import Optional
 import math
 from math import atan, sin
-import ros_compatibility as roscomp
-import rospy
+import numpy as np
+
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from rclpy.subscription import Subscription
+
 from carla_msgs.msg import CarlaSpeedometer
 from nav_msgs.msg import Path
-from ros_compatibility.node import CompatibleNode
-from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32
-from acting.msg import Debug
 from visualization_msgs.msg import MarkerArray
-import numpy as np
+
 
 import mapping_common.mask
 import mapping_common.hero
 from mapping_common.transform import Vector2, Point2
 from mapping_common.markers import debug_marker, debug_marker_array
-
-from typing import Optional
-
-from control.cfg import PurePursuitConfig
-from dynamic_reconfigure.server import Server
 
 
 # Constant: wheelbase of car
@@ -30,19 +27,28 @@ MARKER_NAMESPACE = "pp_controller"
 PP_CONTROLLER_MARKER_COLOR = (20 / 255, 232 / 255, 95 / 255, 0.5)
 
 
-class PurePursuitController(CompatibleNode):
+class PurePursuitController(Node):
     def __init__(self):
-        super(PurePursuitController, self).__init__("pure_pursuit_controller")
-        self.loginfo("PurePursuitController node started")
+        super().__init__("pure_pursuit_controller")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
-        self.role_name = self.get_param("role_name", "ego_vehicle")
+        # Configuration parameters
+        self.control_loop_rate = (
+            self.declare_parameter("control_loop_rate", 0.05)
+            .get_parameter_value()
+            .double_value
+        )
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
 
-        self.trajectory_sub: Subscriber = self.new_subscription(
+        self.trajectory_sub: Subscription = self.new_subscription(
             Path, "/paf/acting/trajectory_local", self.__set_trajectory, qos_profile=1
         )
 
-        self.velocity_sub: Subscriber = self.new_subscription(
+        self.velocity_sub: Subscription = self.new_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__set_velocity,
@@ -128,7 +134,7 @@ class PurePursuitController(CompatibleNode):
                 rospy.logfatal(e)
 
         self.new_timer(self.control_loop_rate, loop_handler)
-        self.spin()
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def __calculate_steer(self) -> Optional[float]:
         """
@@ -206,10 +212,6 @@ class PurePursuitController(CompatibleNode):
 
 
 def main(args=None):
-    """
-    main function starts the pure pursuit controller node
-    :param args:
-    """
     roscomp.init("pure_pursuit_controller", args=args)
 
     try:
