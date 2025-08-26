@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import math
 from math import atan, sin
 import numpy as np
@@ -12,12 +12,16 @@ from carla_msgs.msg import CarlaSpeedometer
 from nav_msgs.msg import Path
 from std_msgs.msg import Float32
 from visualization_msgs.msg import MarkerArray
-
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 
 import mapping_common.mask
 import mapping_common.hero
 from mapping_common.transform import Vector2, Point2
 from mapping_common.markers import debug_marker, debug_marker_array
+
+from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 
 
 # Constant: wheelbase of car
@@ -44,27 +48,80 @@ class PurePursuitController(Node):
             .string_value
         )
 
-        self.trajectory_sub: Subscription = self.new_subscription(
+        self.k_lad = (
+            self.declare_parameter(
+                "k_lad",
+                0.85,
+                descriptor=ParameterDescriptor(
+                    description="Impact of velocity on lookahead distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.min_la_distance = (
+            self.declare_parameter(
+                "min_la_distance",
+                3.0,
+                descriptor=ParameterDescriptor(
+                    description="Minimal lookahead distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.max_la_distance = (
+            self.declare_parameter(
+                "max_la_distance",
+                25.0,
+                descriptor=ParameterDescriptor(
+                    description="Maximal lookahead distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=10.0, to_value=50.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.k_pub = (
+            self.declare_parameter(
+                "k_pub",
+                0.8,
+                descriptor=ParameterDescriptor(
+                    description="Proportional factor of published steer",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.1, to_value=3.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.trajectory_sub: Subscription = self.create_subscription(
             Path, "/paf/acting/trajectory_local", self.__set_trajectory, qos_profile=1
         )
 
-        self.velocity_sub: Subscription = self.new_subscription(
+        self.velocity_sub: Subscription = self.create_subscription(
             CarlaSpeedometer,
             f"/carla/{self.role_name}/Speed",
             self.__set_velocity,
             qos_profile=1,
         )
 
-        self.pure_pursuit_steer_pub: Publisher = self.new_publisher(
+        self.pure_pursuit_steer_pub: Publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/pure_pursuit_steer", qos_profile=1
         )
 
-        self.debug_msg_pub: Publisher = self.new_publisher(
-            Debug, f"/paf/{self.role_name}/pure_p_debug", qos_profile=1
-        )
-
         # Publish debugging marker
-        self.marker_publisher: Publisher = self.new_publisher(
+        self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray,
             f"/paf/{self.role_name}/control/pp_debug_markers",
             qos_profile=1,
@@ -73,68 +130,51 @@ class PurePursuitController(Node):
         self.__path: Optional[Path] = None
         self.__velocity: Optional[float] = None
 
-        # Tuneable Values for PurePursuit-Algorithm
-        self.K_LAD: float
-        self.MIN_LA_DISTANCE: float
-        self.MAX_LA_DISTANCE: float
-        self.K_PUB: float
-        Server(PurePursuitConfig, self.dynamic_reconfigure_callback)
+        self.loop_timer = self.create_timer(self.control_loop_rate, self.loop)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
-    def dynamic_reconfigure_callback(self, config: "PurePursuitConfig", level):
-        self.K_LAD = config["k_lad"]
-        self.MIN_LA_DISTANCE = config["min_la_distance"]
-        self.MAX_LA_DISTANCE = config["max_la_distance"]
-        self.K_PUB = -config["k_pub"]  # -0.80  # (-4.75) would be optimal in dev-launch
-        # "-1" because it is inverted to the steering carla expects
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
-        return config
-
-    def run(self):
+    def loop(self):
         """
-        Starts the main loop of the node
+        Main loop of the acting node
+        :param timer_event: Timer event from ROS
         :return:
         """
-        self.loginfo("PurePursuitController node running")
+        if self.__path is None:
+            self.get_logger().warn(
+                "PurePursuitController hasn't received a path "
+                "yet and can therefore not publish steering",
+                throttle_duration_sec=1,
+            )
+            return
 
-        def loop(timer_event=None):
-            """
-            Main loop of the acting node
-            :param timer_event: Timer event from ROS
-            :return:
-            """
-            if self.__path is None:
-                rospy.logwarn_throttle(
-                    1.0,
-                    "PurePursuitController hasn't received a path "
-                    "yet and can therefore not publish steering",
-                )
-                return
+        if self.__velocity is None:
+            self.get_logger().warn(
+                "PurePursuitController hasn't received the "
+                "velocity of the vehicle yet "
+                "and can therefore not publish steering",
+                throttle_duration_sec=1,
+            )
+            return
 
-            if self.__velocity is None:
-                rospy.logwarn_throttle(
-                    1.0,
-                    "PurePursuitController hasn't received the "
-                    "velocity of the vehicle yet "
-                    "and can therefore not publish steering",
-                )
-                return
+        steering_angle = self.__calculate_steer()
+        if steering_angle is None:
+            self.get_logger().error(
+                "PurePursuitController: Failed to calculate steering",
+                throttle_duration_sec=0.5,
+            )
+        else:
+            self.pure_pursuit_steer_pub.publish(steering_angle)
 
-            steering_angle = self.__calculate_steer()
-            if steering_angle is None:
-                rospy.logerr_throttle(
-                    0.5, "PurePursuitController: Failed to calculate steering"
-                )
-            else:
-                self.pure_pursuit_steer_pub.publish(steering_angle)
-
-        def loop_handler(timer_event=None):
-            try:
-                loop()
-            except Exception as e:
-                rospy.logfatal(e)
-
-        self.new_timer(self.control_loop_rate, loop_handler)
-        self.get_logger().info(f"{type(self).__name__} node initialized.")
+    def loop_handler(self):
+        try:
+            self.loop()
+        except Exception as e:
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def __calculate_steer(self) -> Optional[float]:
         """
@@ -152,7 +192,7 @@ class PurePursuitController(Node):
 
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
         look_ahead_dist = np.clip(
-            self.K_LAD * self.__velocity, self.MIN_LA_DISTANCE, self.MAX_LA_DISTANCE
+            self.k_lad * self.__velocity, self.min_la_distance, self.max_la_distance
         )
         # Get the target position on the trajectory in look_ahead distance
         (look_ahead_traj, _) = mapping_common.mask.split_line_at(
@@ -173,7 +213,7 @@ class PurePursuitController(Node):
         alpha = min(max(-math.pi * 0.5, alpha), math.pi * 0.5)
         # https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/PurePursuit.html
         steering_angle = atan((2 * L_VEHICLE * sin(alpha)) / look_ahead_dist)
-        steering_angle = self.K_PUB * steering_angle  # Needed for unknown reason
+        steering_angle = self.k_pub * steering_angle  # Needed for unknown reason
 
         # for debugging ->
         target_marker = debug_marker(target_point, color=PP_CONTROLLER_MARKER_COLOR)
@@ -187,23 +227,18 @@ class PurePursuitController(Node):
             color=(1.0, 1.0, 1.0, 1.0),
         )
         m_array = debug_marker_array(
-            MARKER_NAMESPACE, [target_marker, target_v_marker, steer_angle_marker]
+            MARKER_NAMESPACE,
+            [target_marker, target_v_marker, steer_angle_marker],
+            self.get_clock().now().to_msg(),
         )
         self.marker_publisher.publish(m_array)
 
-        debug_msg = Debug()
-        debug_msg.heading = 0.0
-        debug_msg.target_heading = alpha
-        debug_msg.l_distance = look_ahead_dist
-        debug_msg.steering_angle = steering_angle
-        self.debug_msg_pub.publish(debug_msg)
-        # <-
         return steering_angle
 
     def __set_trajectory(self, data: Path):
         path_len = len(data.poses)
         if path_len < 1:
-            self.loginfo("Pure Pursuit: Empty path received and disregarded")
+            self.get_logger().info("Pure Pursuit: Empty path received and disregarded")
             return
         self.__path = data
 
@@ -212,15 +247,12 @@ class PurePursuitController(Node):
 
 
 def main(args=None):
-    roscomp.init("pure_pursuit_controller", args=args)
-
+    rclpy.init(args=args)
     try:
         node = PurePursuitController()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":
