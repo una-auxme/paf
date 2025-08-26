@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>control</name>
+  <name>localization</name>
   <version>0.0.0</version>
-  <description>The control package for PAF Carla</description>
-  <maintainer email="vinzenz@malke.info">Vinzenz Malke</maintainer>
+  <description>PAF Localization package</description>
+  <maintainer email="vinzenz.malke@uni-a.de">Vinzenz Malke</maintainer>
   <license>MIT</license>
+
+  <depend>robot_localization</depend>
 
   <test_depend>python3-pytest</test_depend>
 

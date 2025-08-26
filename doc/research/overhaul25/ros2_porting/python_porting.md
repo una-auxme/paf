@@ -45,6 +45,10 @@ This chapter contains required changes for the python nodes/files.
 - Package python requirements (requirements.txt) may need major version upgrades -> API changes?
 - All nodes have to use the **rclpy API instead of rospy**
   - The nodes now need to be based on a class that inherits from `rclpy.node.Node` instead of using global functions.
+  - The rclpy API is a lot more restrictive than rospy when it comes to type conversions.
+    - Wrong types of message fields (like int vs float) that are automatically converted in rospy lead to an assertion in rclpy that is not catchable by an exception handler and does not print a stack trace by default.
+      PYTHONFAULTHANDLER=1 can be set to enable printing the stack in this case.
+    - Int or float are not converted into their respective message type anymore when publishing.
   - This [example](https://docs.ros.org/en/jazzy/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Publisher-And-Subscriber.html#write-the-publisher-node) should translate nicely into the nodes that just subscribe to and publish topics.
   - Setting up timers, publisher, subscribers and services is quite similar to rospy and the structure of existing nodes does not have to change much.
   - **The main problem is calling blocking functions (services) inside a callback (timer, subscription, etc..) which leads to deadlocks with the default single-threaded executor.** [Source](https://docs.ros.org/en/jazzy/How-To-Guides/Sync-Vs-Async.html). Methods for handling:

@@ -16,6 +16,7 @@ from rcl_interfaces.msg import (
 from std_msgs.msg import Bool, Float32, String
 from rosgraph_msgs.msg import Clock
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 
 
 class VehicleController(Node):
@@ -35,7 +36,7 @@ class VehicleController(Node):
 
     def __init__(self):
         super(VehicleController, self).__init__("vehicle_controller")
-        self.get_logger().info("VehicleController node initializing...")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
         self.control_loop_rate = (
@@ -188,7 +189,7 @@ class VehicleController(Node):
 
         self.clock_sub = self.create_subscription(Clock, "/clock", self.loop_handler, 1)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
-        self.get_logger().info("VehicleController node initialized.")
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""
@@ -277,7 +278,7 @@ class VehicleController(Node):
         try:
             self.loop(clock)
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
 
 def main(args=None):

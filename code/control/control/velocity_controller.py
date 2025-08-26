@@ -8,6 +8,7 @@ from simple_pid import PID
 from std_msgs.msg import Float32, Bool
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
 
 
@@ -19,7 +20,7 @@ class VelocityController(Node):
 
     def __init__(self):
         super().__init__("velocity_controller")
-        self.get_logger().info("VelocityController node initializing...")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         self.control_loop_rate = (
             self.declare_parameter(
@@ -142,7 +143,7 @@ class VelocityController(Node):
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
-        self.get_logger().info("VelocityController node initialized.")
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""
@@ -214,7 +215,7 @@ class VelocityController(Node):
         try:
             self.loop()
         except Exception as e:
-            self.get_logger().fatal(e)
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def __get_current_velocity(self, data: CarlaSpeedometer):
         self.__current_velocity = float(data.speed)

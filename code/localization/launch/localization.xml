@@ -1,0 +1,72 @@
+<launch>
+  <arg name="role_name" default="hero" />
+  <arg name="control_loop_rate" default="0.05" />
+
+  <!--
+  Possible filter values:
+  - "EKF" (Default)
+  - "Kalman"
+  - "RunningAvg" -> "None" is used for heading filter
+  - "None"
+  -->
+  <arg name="filter" default="EKF" />
+
+  <group if="$(eval '\'$(var filter)\' == \'EKF\'')">
+    <!-- nodes to estimate state using an Extended Kalman Filter (EKF) -->
+
+    <node pkg="localization" exec="sensor_covariance_fusion" name="sensor_covariance_fusion">
+      <param from="$(find-pkg-share localization)/config/localization.yaml"/>
+    </node>
+
+    <node pkg="localization" exec="odometry_fusion" name="odometry_fusion">
+      <param name="role_name" value="$(var role_name)" />
+      <param name="control_loop_rate" value="$(var control_loop_rate)" />
+      <param from="$(find-pkg-share localization)/config/localization.yaml"/>
+    </node>
+
+    <node pkg="localization" exec="gps_transform" name="gps_transformation">
+    </node>
+
+    <node pkg="robot_localization" exec="ekf_node" name="ekf_local">
+      <remap from="/odometry/filtered" to="/odometry/filtered_local" />
+      <param from="$(find-pkg-share localization)/config/localization.yaml"/>
+    </node>
+
+    <node pkg="robot_localization" exec="ekf_node" name="ekf_global">
+      <param from="$(find-pkg-share localization)/config/localization.yaml"/>
+    </node>
+
+    <node pkg="localization" exec="ekf_state_publisher" name="ekf_state_publisher">
+      <param name="role_name" value="$(var role_name)" />
+      <param name="control_loop_rate" value="$(var control_loop_rate)" />
+    </node>
+  </group>
+
+  <group if="$(eval '\'$(var filter)\' == \'Kalman\'')">
+    <!-- node to estimate state using a (linear) Kalman filter -->
+    <node pkg="localization" exec="kalman_filter" name="kalman_filter_node">
+      <param name="control_loop_rate" value="$(var control_loop_rate)" />
+      <param name="role_name" value="$(var role_name)" />
+    </node>
+  </group>
+
+  <!-- node that decides which filter is used to estimate the current state (position and heading) -->
+  <let name="heading_filter" value="$(var filter)" if="$(eval '\'$(var filter)\' != \'RunningAvg\'')"/>
+  <let name="heading_filter" value="None" if="$(eval '\'$(var filter)\' == \'RunningAvg\'')"/>
+  <node pkg="localization" exec="position_heading_publisher_node" name="position_heading_publisher_node">
+    <param name="control_loop_rate" value="$(var control_loop_rate)" />
+    <param name="role_name" value="$(var role_name)" />
+
+    <param name="pos_filter" value="$(var filter)"/>
+    <param name="heading_filter" value="$(var heading_filter)"/>
+  </node>
+
+
+  <!-- just for debugging / optimizing purposes -> uncomment to use and see plots -->
+  <!-- <node pkg="localization" exec="position_heading_filter_debug_node" name="position_heading_filter_debug_node">
+    <param name="control_loop_rate" value="$(var control_loop_rate)" />
+    <param name="role_name" value="$(var role_name)" />
+  </node> -->
+  <!--<node pkg="rqt_plot" exec="rqt_plot" name="rqt_plot" args="/paf/hero/position_debug/data[10] /paf/hero/position_debug/data[13] /paf/hero/position_debug/data[16]"/>-->
+  <!--<node pkg="rqt_plot" exec="rqt_plot" name="rqt_plot" args="/paf/hero/heading_debug/data[5] /paf/hero/heading_debug/data[6]" />-->
+</launch>

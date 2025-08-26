@@ -192,10 +192,14 @@ COPY ${DOCKER_RESOURCE_BASE}/scripts/install-python-requirements.sh ./scripts/
 ENV PAF_ROS_WS=${INTERNAL_WORKSPACE_DIR}/paf_ros2_ws
 RUN mkdir ${PAF_ROS_WS}
 
+# Enable the python fault handler for printing stack traces on segfaults/c-assertions
+ENV PYTHONFAULTHANDLER=1
+
 ##############################################
 ##### The agent-deploy image starts here #####
 ##############################################
 # The deploy image is just an experiment for now / reference for discussion
+FROM agent AS agent-deploy
 # TODO
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/env.bash >> ~/.bashrc
 
