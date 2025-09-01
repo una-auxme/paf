@@ -417,7 +417,7 @@ class MappingDataIntegrationNode(Node):
                 self.get_logger().warn(
                     "Entity received from UpdateStopMarks service is not a StopMark."
                     " ignoring...",
-                    throttle_duration=0.5,
+                    throttle_duration_sec=0.5,
                 )
                 continue
             entities.append(entity)

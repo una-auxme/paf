@@ -335,9 +335,13 @@ def _grow_merge_pair(
         shapely.intersection(growns[0], pair[1].poly),
         shapely.intersection(growns[1], pair[0].poly),
     ]
+    area0 = pair[0].poly.area
+    area1 = pair[1].poly.area
+    if area0 <= 0.0 or area1 <= 0.0:
+        return None
     percentage_overlaps = [
-        g_o_intersections[0].area / pair[1].poly.area,
-        g_o_intersections[1].area / pair[0].poly.area,
+        g_o_intersections[0].area / area1,
+        g_o_intersections[1].area / area0,
     ]
     # the bigger the percentage_overlaps, the more of a shape lies
     # within the intersecting area.
