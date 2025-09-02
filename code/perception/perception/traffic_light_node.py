@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+from typing import List
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
 
-from ros_compatibility.node import CompatibleNode
-import ros_compatibility as roscomp
-from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
-from perception.msg import TrafficLightState
+from perception_interfaces.msg import TrafficLightState
 from cv_bridge import CvBridge
 from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (  # noqa: E501
     TrafficLightInference,
@@ -12,20 +12,48 @@ from traffic_light_detection.src.traffic_light_detection.traffic_light_inference
 import cv2
 import numpy as np
 
-import rospy
 from visualization_msgs.msg import Marker
 
+from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
+from rclpy.parameter import Parameter
 
-class TrafficLightNode(CompatibleNode):
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
+
+class TrafficLightNode(Node):
+    def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        # Parameters
+
+        self.control_loop_rate = (
+            self.declare_parameter(
+                "control_loop_rate",
+                0.05,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+        self.side = (
+            self.declare_parameter("side", "Center").get_parameter_value().string_value
+        )
+        self.model = (
+            self.declare_parameter("model", "").get_parameter_value().string_value
+        )
+        self.tfs_debug = (
+            self.declare_parameter("tfs_debug", False).get_parameter_value().bool_value
+        )
+
         # general setup
         self.bridge = CvBridge()
-        self.role_name = self.get_param("role_name", "hero")
-        self.side = self.get_param("side", "Center")
-        self.classifier = TrafficLightInference(self.get_param("model", ""))
-        self.last_info_time = rospy.get_rostime()
-        self.visual_debug = self.get_param("tfs_debug", False)
+
+        self.classifier = TrafficLightInference(self.model)
+        self.last_info_time = self.get_clock().now()
         self.traffic_light_msg = TrafficLightState()
         self.traffic_light_msg.state = 0
 
@@ -33,10 +61,18 @@ class TrafficLightNode(CompatibleNode):
         self.setup_camera_subscriptions()
         self.setup_traffic_light_publishers()
 
+        self.create_timer(self.control_loop_rate, self.loop_handler)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
+
     def setup_camera_subscriptions(self):
         """receives images and runs handel_camera_image"""
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.handle_camera_image,
             topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
             qos_profile=1,
@@ -44,14 +80,14 @@ class TrafficLightNode(CompatibleNode):
 
     def setup_traffic_light_publishers(self):
         # publishes current state of traffic light
-        self.traffic_light_publisher = self.new_publisher(
+        self.traffic_light_publisher = self.create_publisher(
             msg_type=TrafficLightState,
             topic=f"/paf/{self.role_name}/{self.side}/traffic_light_state",
             qos_profile=1,
         )
         # publishes a debug visualization of the current state
-        self.marker_pub = rospy.Publisher(
-            "/paf/hero/TrafficLight/state/debug_marker", Marker, queue_size=10
+        self.marker_pub = self.create_publisher(
+            Marker, "/paf/hero/TrafficLight/state/debug_marker", 10
         )
 
     def handle_camera_image(self, image):
@@ -77,34 +113,30 @@ class TrafficLightNode(CompatibleNode):
         state = result if result in [1, 2, 4] else 0
         self.traffic_light_msg.state = state
         if state != 0:
-            self.last_info_time = rospy.get_rostime()
+            self.last_info_time = self.get_clock().now()
 
-    def run(self):
-        def loop(timer_event=None):
-            # check if the last state was received more than 2 seconds ago
-            if (
-                self.last_info_time + rospy.Duration(2) < rospy.get_rostime()
-                and self.traffic_light_msg.state != 0
-            ):
-                self.traffic_light_msg.state = 0
-            self.traffic_light_publisher.publish(self.traffic_light_msg)
-            if self.visual_debug:
-                self.traffic_light_visualization(self.traffic_light_msg.state)
+    def loop(self):
+        # check if the last state was received more than 2 seconds ago
+        if (
+            self.last_info_time + Duration(seconds=2.0) < self.get_clock().now()
+            and self.traffic_light_msg.state != 0
+        ):
+            self.traffic_light_msg.state = 0
+        self.traffic_light_publisher.publish(self.traffic_light_msg)
+        if self.tfs_debug:
+            self.traffic_light_visualization(self.traffic_light_msg.state)
 
-        def loop_handler(timer_event=None):
-            try:
-                loop()
-            except Exception as e:
-                rospy.logfatal(e)
-
-        self.new_timer(0.05, loop_handler)
-        self.spin()
+    def loop_handler(self):
+        try:
+            self.loop()
+        except Exception as e:
+            self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def traffic_light_visualization(self, state):
         # pulishes a debug visualization of the current state
         text_marker = Marker()
         text_marker.header.frame_id = "hero"
-        text_marker.header.stamp = rospy.Time.now()
+        text_marker.header.stamp = self.get_clock().now().to_msg()
         text_marker.ns = "traffic_light"
         text_marker.id = 1
         text_marker.type = Marker.TEXT_VIEW_FACING
@@ -182,7 +214,15 @@ def is_front(image):
         return False
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = TrafficLightNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    roscomp.init("TrafficLightNode")
-    node = TrafficLightNode("TrafficLightNode")
-    node.run()
+    main()
