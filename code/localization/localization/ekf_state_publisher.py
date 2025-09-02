@@ -17,7 +17,8 @@ import rclpy
 from rclpy.publisher import Publisher
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from rclpy.time import Time, Duration
+from rclpy.time import Time
+from rclpy.duration import Duration
 
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from std_msgs.msg import Float32

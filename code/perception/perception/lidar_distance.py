@@ -1,25 +1,110 @@
-#!/usr/bin/env python
+from typing import List
+
 from joblib import Parallel, delayed
 from perception_utils import array_to_clustered_points
-import rospy
-import ros_numpy
 import numpy as np
 from lidar_filter_utility import bounding_box, remove_field_name
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
-from tf.transformations import quaternion_from_matrix
+from transforms3d.quaternions import mat2quat
+
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
+from rclpy.time import Time
+import rclpy.logging
+import ros2_numpy
+
+from paf_common.parameters import update_attributes
+from rclpy.parameter import Parameter
+
 from visualization_msgs.msg import Marker, MarkerArray
-from mapping.msg import ClusteredPointsArray
+from mapping_interfaces.msg import ClusteredPointsArray
 
 
-class LidarDistance:
+class LidarDistance(Node):
     """See doc/perception/lidar_distance_utility.md on
     how to configute this node
     """
 
     def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        # Parameters
+        self.clustering_lidar_z_min = (
+            self.declare_parameter(
+                "clustering_lidar_z_min",
+                -1.4,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.dbscan_eps = (
+            self.declare_parameter(
+                "dbscan_eps",
+                0.4,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.dbscan_min_samples = (
+            self.declare_parameter(
+                "dbscan_min_samples",
+                10,
+            )
+            .get_parameter_value()
+            .integer_value
+        )
+
         self.cluster_buffer = []
+        self.bridge = CvBridge()  # OpenCV bridge for image conversions
+
+        # Publisher for filtered point clouds
+        self.pub_pointcloud = self.create_publisher(
+            PointCloud2,
+            "/carla/hero/LIDAR_filtered",
+            qos_profile=1,
+        )
+
+        # Publishers for distance images in various directions
+        self.dist_array_center_publisher = self.create_publisher(
+            msg_type=ImageMsg, topic="/paf/hero/Center/dist_array", qos_profile=10
+        )
+        self.dist_array_back_publisher = self.create_publisher(
+            msg_type=ImageMsg, topic="/paf/hero/Back/dist_array", qos_profile=10
+        )
+        self.dist_array_left_publisher = self.create_publisher(
+            msg_type=ImageMsg, topic="/paf/hero/Left/dist_array", qos_profile=10
+        )
+        self.dist_array_right_publisher = self.create_publisher(
+            msg_type=ImageMsg, topic="/paf/hero/Right/dist_array", qos_profile=10
+        )
+        self.marker_visualization_lidar_publisher = self.create_publisher(
+            msg_type=MarkerArray, topic="/paf/hero/Lidar/Marker", qos_profile=10
+        )
+
+        self.clustered_points_publisher = self.create_publisher(
+            msg_type=ClusteredPointsArray,
+            topic="/paf/hero/Lidar/clustered_points",
+            qos_profile=10,
+        )
+
+        # Subscriber for LIDAR data (point clouds)
+        self.create_subscription(
+            msg_type=PointCloud2,
+            topic="/carla/hero/LIDAR",
+            callback=self.callback,
+            qos_profile=10,
+        )
+
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def callback(self, data):
         """
@@ -31,68 +116,6 @@ class LidarDistance:
         """
         self.start_clustering(data)
         self.start_image_calculation(data)
-
-    def listener(self):
-        """
-        Initializes the ROS node, creates publishers/subscribers, and keeps it active.
-        """
-        rospy.init_node("lidar_distance")
-        self.bridge = CvBridge()  # OpenCV bridge for image conversions
-
-        # Publisher for filtered point clouds
-        self.pub_pointcloud = rospy.Publisher(
-            rospy.get_param(
-                "~point_cloud_topic",
-                "/carla/hero/" + rospy.get_namespace() + "_filtered",
-            ),
-            PointCloud2,
-            queue_size=1,
-        )
-
-        # Publishers for distance images in various directions
-        self.dist_array_center_publisher = rospy.Publisher(
-            rospy.get_param("~image_distance_topic", "/paf/hero/Center/dist_array"),
-            ImageMsg,
-            queue_size=10,
-        )
-        self.dist_array_back_publisher = rospy.Publisher(
-            rospy.get_param("~image_distance_topic", "/paf/hero/Back/dist_array"),
-            ImageMsg,
-            queue_size=10,
-        )
-        self.dist_array_left_publisher = rospy.Publisher(
-            rospy.get_param("~image_distance_topic", "/paf/hero/Left/dist_array"),
-            ImageMsg,
-            queue_size=10,
-        )
-        self.dist_array_right_publisher = rospy.Publisher(
-            rospy.get_param("~image_distance_topic", "/paf/hero/Right/dist_array"),
-            ImageMsg,
-            queue_size=10,
-        )
-        self.marker_visualization_lidar_publisher = rospy.Publisher(
-            rospy.get_param("~marker_topic", "/paf/hero/Lidar/Marker"),
-            MarkerArray,
-            queue_size=10,
-        )
-
-        self.clustered_points_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~clustered_points_lidar_topic", "/paf/hero/Lidar/clustered_points"
-            ),
-            ClusteredPointsArray,
-            queue_size=10,
-        )
-
-        # Subscriber for LIDAR data (point clouds)
-        rospy.Subscriber(
-            rospy.get_param("~source_topic", "/carla/hero/LIDAR"),
-            PointCloud2,
-            self.callback,
-        )
-
-        rospy.loginfo("Lidar Processor Node started.")
-        rospy.spin()
 
     def start_clustering(self, data):
         """
@@ -111,12 +134,7 @@ class LidarDistance:
         """
 
         # Convert PointCloud2 data to a NumPy structured array
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
-
-        # Retrieve ROS parameters with default values
-        z_min = rospy.get_param("~clustering_lidar_z_min", -1.4)
-        eps = rospy.get_param("~dbscan_eps", 0.4)
-        min_samples = rospy.get_param("~dbscan_min_samples", 10)
+        coordinates = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
 
         filtered_coordinates = coordinates[
             ~(
@@ -126,13 +144,13 @@ class LidarDistance:
                 & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
             )
             & (
-                coordinates["z"] > z_min
+                coordinates["z"] > self.clustering_lidar_z_min
             )  # Exclude points below a certain height (street)
         ]
 
         # Perform DBSCAN clustering
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
-            filtered_coordinates, eps, min_samples
+            filtered_coordinates, self.dbscan_eps, self.dbscan_min_samples
         )
 
         # Extract x, y, z coordinates into a separate array
@@ -181,7 +199,7 @@ class LidarDistance:
 
         :param data: LIDAR point cloud in ROS PointCloud2 format.
         """
-        coordinates = ros_numpy.point_cloud2.pointcloud2_to_array(data)
+        coordinates = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
 
         # Directions to process
         directions = ["Center", "Back", "Left", "Right"]
@@ -215,7 +233,9 @@ class LidarDistance:
         # Select parameters for the given focus
         params = bounding_box_params.get(focus)
         if not params:
-            rospy.logwarn(f"Unknown focus: {focus}. Skipping image calculation.")
+            self.get_logger().warn(
+                f"Unknown focus: {focus}. Skipping image calculation."
+            )
             return None
 
         # Apply bounding box filter
@@ -304,7 +324,9 @@ class LidarDistance:
                 )
             )
         else:
-            rospy.logwarn(f"Unknown focus: {focus}. Skipping image calculation.")
+            self.get_logger().warn(
+                f"Unknown focus: {focus}. Skipping image calculation."
+            )
             return None
 
         # Project 3D points to 2D image coordinates
@@ -406,7 +428,9 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LID
     marker.header.frame_id = frame_id  # Reference frame for the marker
     marker.ns = "marker_lidar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
-    marker.lifetime = rospy.Duration(0.1)  # Marker visibility duration in seconds
+    marker.lifetime = Duration(
+        seconds=0.1
+    ).to_msg()  # Marker visibility duration in seconds
     marker.type = Marker.CUBE  # Use a cube for the bounding box
     marker.action = Marker.ADD  # Action to add or modify the marker
 
@@ -451,11 +475,11 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", frame_id="hero/LID
         marker.pose.position.z = center[2]
 
         # Convert eigenvectors to quaternion
-        quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
-        marker.pose.orientation.x = quaternion[0]
-        marker.pose.orientation.y = quaternion[1]
-        marker.pose.orientation.z = quaternion[2]
-        marker.pose.orientation.w = quaternion[3]
+        quaternion = mat2quat(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
+        marker.pose.orientation.x = quaternion[1]
+        marker.pose.orientation.y = quaternion[2]
+        marker.pose.orientation.z = quaternion[3]
+        marker.pose.orientation.w = quaternion[0]
 
         marker.scale.x = width
         marker.scale.y = length
@@ -497,7 +521,11 @@ def calculate_aabb(cluster_points):
     return x_min, x_max, y_min, y_max, z_min, z_max
 
 
-def array_to_pointcloud2(points, header="hero/Lidar"):
+def array_to_pointcloud2(
+    points,
+    stamp: Time,
+    header="hero/Lidar",
+):
     """
     Converts an array of points into a ROS PointCloud2 message.
 
@@ -515,10 +543,10 @@ def array_to_pointcloud2(points, header="hero/Lidar"):
     )
 
     # Create a PointCloud2 message from the structured array
-    pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(points_structured)
+    pointcloud_msg = ros2_numpy.point_cloud2.array_to_pointcloud2(points_structured)
 
     # Set the timestamp and header for the message
-    pointcloud_msg.header.stamp = rospy.Time.now()
+    pointcloud_msg.header.stamp = stamp.to_msg()
     pointcloud_msg.header = header
 
     return pointcloud_msg
@@ -534,14 +562,18 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     :return: Dictionary with cluster IDs and their corresponding point clouds.
     """
     if coordinates.shape[0] == 0:
-        rospy.logerr("The input array 'coordinates' is empty.")
+        rclpy.logging.get_logger("lidar_distance").warn(
+            "The input array 'coordinates' is empty."
+        )
         return {}
 
     # Extract x, y, and z from the coordinates for DBSCAN clustering
     xyz = np.column_stack((coordinates["x"], coordinates["y"], coordinates["z"]))
 
     if xyz.shape[0] == 0:
-        rospy.logwarn("No data points available for DBSCAN. Skipping clustering.")
+        rclpy.logging.get_logger("lidar_distance").warn(
+            "No data points available for DBSCAN. Skipping clustering."
+        )
         return {}
 
     # Apply DBSCAN to compute cluster labels for the point cloud
@@ -565,9 +597,15 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     return clusters, labels
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = LidarDistance()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    """
-    Initialisiert die LidarDistance-Klasse und startet die Listener-Methode.
-    """
-    lidar_distance = LidarDistance()
-    lidar_distance.listener()
+    main()
