@@ -24,30 +24,15 @@ endif()
 # find_package(<dependency> REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(unique_identifier_msgs REQUIRED)
 
 # Add all your interface files here:
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Entity.msg"
-  "msg/Flags.msg"
-  "msg/Map.msg"
-  "msg/Motion2D.msg"
-  "msg/Shape2D.msg"
-  "msg/TrackingInfo.msg"
-  "msg/Transform2D.msg"
-  "msg/TypeCar.msg"
-  "msg/TypeLanemarking.msg"
-  "msg/TypeTrafficLight.msg"
-  "msg/TypeStopMark.msg"
-  "msg/ClusteredPointsArray.msg"
-
-  "srv/UpdateStopMarks.srv"
+  "msg/MinDistance.msg"
+  "msg/TrafficLightState.msg"
+  "msg/Waypoint.msg"
 
   DEPENDENCIES # Add packages that above messages depend on
-  unique_identifier_msgs
   geometry_msgs
-  sensor_msgs
 )
 
 ament_package()
