@@ -1,7 +1,11 @@
-#!/usr/bin/env python
+from typing import List
 from perception_utils import array_to_clustered_points
-import rospy
-import ros_numpy
+import ros2_numpy
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile
+from rclpy.time import Time
+from rclpy.duration import Duration
 import numpy as np
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import Imu, PointCloud2, PointField
@@ -9,26 +13,28 @@ from sklearn.cluster import DBSCAN
 
 from sklearn.preprocessing import StandardScaler
 import json
-from sensor_msgs import point_cloud2
 from visualization_msgs.msg import Marker, MarkerArray
-from tf.transformations import quaternion_from_matrix
+from transforms3d.quaternions import mat2quat
+from transforms3d.euler import euler2quat
 
 import struct
 from collections import defaultdict
 from rosgraph_msgs.msg import Clock
-from ros_compatibility.node import CompatibleNode
 from mapping_common.entity import Motion2D
 from mapping_common.transform import Vector2
-from mapping.msg import ClusteredPointsArray
+from mapping_interfaces.msg import ClusteredPointsArray
+from paf_common.parameters import update_attributes
+from rclpy.parameter import Parameter
 
-import tf
 from collections import deque
 
 
-class RadarNode(CompatibleNode):
+class RadarNode(Node):
     """See doc/perception/radar_node.md on how to configure this node."""
 
     def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
         # collect all data from the sensors
         self.sensor_data_buffer = defaultdict(list)
         # Alternative: only one set of data
@@ -54,6 +60,131 @@ class RadarNode(CompatibleNode):
         self.accel_z_buffer = deque(maxlen=5)
 
         self.current_pitch = 0.0
+
+        # Parameters
+
+        self.accelerometer_arrow_size = (
+            self.declare_parameter(
+                "accelerometer_arrow_size",
+                2.0,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.accelerometer_factor = (
+            self.declare_parameter(
+                "accelerometer_factor",
+                0.05,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.imu_debug = (
+            self.declare_parameter(
+                "imu_debug",
+                False,
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.dbscan_eps = (
+            self.declare_parameter(
+                "dbscan_eps",
+                0.3,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.dbscan_samples = (
+            self.declare_parameter(
+                "dbscan_samples",
+                2,
+            )
+            .get_parameter_value()
+            .integer_value
+        )
+        self.data_buffered = (
+            self.declare_parameter(
+                "data_buffered",
+                False,
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.data_buffer_time = (
+            self.declare_parameter(
+                "data_buffer_time",
+                0.1,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.enable_clustering = (
+            self.declare_parameter(
+                "enable_clustering",
+                False,
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+        self.enable_debug_info = (
+            self.declare_parameter(
+                "enable_debug_info",
+                False,
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        # Publishers
+        self.visualization_radar_publisher = self.create_publisher(
+            PointCloud2, "/paf/hero/Radar/Visualization", 10
+        )
+        self.marker_visualization_radar_publisher = self.create_publisher(
+            MarkerArray, "/paf/hero/Radar/Marker", 10
+        )
+
+        qos_profile = QoSProfile(depth=10, latch=True)
+        self.entity_radar_publisher = self.create_publisher(
+            ClusteredPointsArray, "/paf/hero/Radar/clustered_points", qos_profile
+        )
+        self.cluster_info_radar_publisher = self.create_publisher(
+            String, "/paf/hero/Radar/ClusterInfo", 10
+        )
+        self.visualization_radar_break_filtered = self.create_publisher(
+            PointCloud2, "/paf/hero/Radar/radar_break_filtered", 10
+        )
+        self.combined_points = self.create_publisher(
+            PointCloud2, "/paf/hero/Radar/combined_points", 10
+        )
+        self.marker_pub = self.create_publisher(
+            Marker, "/paf/hero/Radar/IMU/ground_filter/debug_marker", 10
+        )
+
+        # Subscribers
+        self.create_subscription(
+            PointCloud2,
+            "/carla/hero/RADAR0",
+            lambda msg: self.callback(msg, "RADAR0"),
+            10,
+        )
+        self.create_subscription(
+            PointCloud2,
+            "/carla/hero/RADAR1",
+            lambda msg: self.callback(msg, "RADAR1"),
+            10,
+        )
+        self.create_subscription(Clock, "/clock", self.time_check, 10)
+
+        self.create_subscription(Imu, "/carla/hero/IMU", self.imu_callback, 10)
+
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def time_check(self, time):
         """
@@ -82,7 +213,7 @@ class RadarNode(CompatibleNode):
             state updates and function calls.
         """
 
-        if not self.get_param("data_buffered", False):
+        if not self.data_buffered:
             return
 
         sec = time.clock.secs
@@ -120,10 +251,6 @@ class RadarNode(CompatibleNode):
         - None. The function updates internal states and publishes markers.
         """
 
-        self.acc_arrow_size = float(self.get_param("~accelerometer_arrow_size", 2.0))
-        self.acc_factor = float(self.get_param("~accelerometer_factor", 0.05))
-        self.imu_debug = self.get_param("~imu_debug", False)
-
         self.accel_x_buffer.append(msg.linear_acceleration.x)
         self.accel_z_buffer.append(msg.linear_acceleration.z)
 
@@ -137,12 +264,12 @@ class RadarNode(CompatibleNode):
 
         # Calculate pitch angle (in radians)
         self.current_pitch = -np.arctan2(accel_x_avg, accel_z_avg)
-        self.current_pitch *= self.acc_factor
+        self.current_pitch *= self.accelerometer_factor
 
         self.current_roll = 0.0
 
         if self.imu_debug:
-            self.publish_ground_projection_marker(self.acc_arrow_size)
+            self.publish_ground_projection_marker(self.accelerometer_arrow_size)
 
     def publish_ground_projection_marker(self, acc_arrow_size):
         """
@@ -155,7 +282,7 @@ class RadarNode(CompatibleNode):
         # Arrow marker for the angle of inclination
         arrow_marker = Marker()
         arrow_marker.header.frame_id = "hero"
-        arrow_marker.header.stamp = rospy.Time.now()
+        arrow_marker.header.stamp = self.get_clock().now().to_msg()
         arrow_marker.ns = "ground_filter"
         arrow_marker.id = 1
         arrow_marker.type = Marker.ARROW
@@ -175,18 +302,16 @@ class RadarNode(CompatibleNode):
         arrow_marker.pose.position.z = 1.0
 
         # Orientation of the arrow based on pitch
-        quaternion = tf.transformations.quaternion_from_euler(
-            self.current_roll, self.current_pitch, 0
-        )
-        arrow_marker.pose.orientation.x = quaternion[0]
-        arrow_marker.pose.orientation.y = quaternion[1]
-        arrow_marker.pose.orientation.z = quaternion[2]
-        arrow_marker.pose.orientation.w = quaternion[3]
+        quaternion = euler2quat(self.current_roll, self.current_pitch, 0)
+        arrow_marker.pose.orientation.x = quaternion[1]
+        arrow_marker.pose.orientation.y = quaternion[2]
+        arrow_marker.pose.orientation.z = quaternion[3]
+        arrow_marker.pose.orientation.w = quaternion[0]
 
         # Highlighter for the pitch angle
         text_marker = Marker()
         text_marker.header.frame_id = "hero"
-        text_marker.header.stamp = rospy.Time.now()
+        text_marker.header.stamp = self.get_clock().now().to_msg()
         text_marker.ns = "ground_filter"
         text_marker.id = 2
         text_marker.type = Marker.TEXT_VIEW_FACING
@@ -266,18 +391,11 @@ class RadarNode(CompatibleNode):
             NotImplementedError: If `sensor_name` is unknown.
         """
 
-        self.dbscan_eps = float(self.get_param("~dbscan_eps", 0.3))
-        self.dbscan_samples = int(self.get_param("~dbscan_samples", 3))
-        self.data_buffered = self.get_param("~data_buffered", False)
-        self.data_buffer_time = float(self.get_param("~data_buffer_time", 0.1))
-        self.enable_clustering = bool(self.get_param("~enable_clustering", False))
-        self.enable_debug_info = bool(self.get_param("~enable_debug_info", False))
-
         # Sets flag for time_check to know when data is available
         self.datacollecting_started = True
 
         if sensor_name not in self.sensor_data:
-            rospy.logwarn(f"Unknown sensor: {sensor_name}")
+            self.get_logger().warn(f"Unknown sensor: {sensor_name}")
             raise NotImplementedError
 
         # Save data either in buffer or in single register
@@ -352,11 +470,13 @@ class RadarNode(CompatibleNode):
 
         if not combined_points:
             self.entity_radar_publisher.publish(ClusteredPointsArray())
-            rospy.logwarn("No Radarpoints to process!")
+            self.get_logger().warn("No Radarpoints to process!")
             return
 
         combined_points_filtered_out = np.array(combined_points_filtered_out)
-        cloud2 = create_pointcloud2(combined_points_filtered_out, None, True)
+        cloud2 = create_pointcloud2(
+            self.get_clock().now(), combined_points_filtered_out, None, True
+        )
         self.visualization_radar_break_filtered.publish(cloud2)
 
         combined_points = np.array(combined_points)
@@ -370,7 +490,9 @@ class RadarNode(CompatibleNode):
                 min_samples=self.dbscan_samples,
             )
 
-            cloud = create_pointcloud2(combined_points, cluster_labels, False)
+            cloud = create_pointcloud2(
+                self.get_clock().now(), combined_points, cluster_labels, False
+            )
             self.visualization_radar_publisher.publish(cloud)
 
             points_with_labels = np.hstack(
@@ -388,7 +510,7 @@ class RadarNode(CompatibleNode):
             self.marker_visualization_radar_publisher.publish(marker_array)
 
             header = Header()
-            header.stamp = rospy.Time.now()
+            header.stamp = self.get_clock().now().to_msg()
             header.frame_id = "hero/RADAR"
 
             clusterPointsNpArray = points_with_labels[:, :3]
@@ -402,7 +524,11 @@ class RadarNode(CompatibleNode):
             motionArray = [m.to_ros_msg() for m in motionArray]
 
             clusteredpoints = array_to_clustered_points(
-                clusterPointsNpArray, indexArray, motionArray, header_id="hero/RADAR"
+                self.get_clock().now(),
+                clusterPointsNpArray,
+                indexArray,
+                motionArray,
+                header_id="hero/RADAR",
             )
             self.entity_radar_publisher.publish(clusteredpoints)
 
@@ -416,6 +542,7 @@ class RadarNode(CompatibleNode):
                 Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
             ]
             clusteredpoints = array_to_clustered_points(
+                self.get_clock().now(),
                 combined_points[:, :3],
                 np.arange(len(combined_points)),
                 motionArray,
@@ -446,7 +573,7 @@ class RadarNode(CompatibleNode):
         """
 
         if sensor_name not in self.sensor_config:
-            rospy.logwarn(f"Unknown sensor: {sensor_name}")
+            self.get_logger().warn(f"Unknown sensor: {sensor_name}")
             return np.array([])
 
         data_array = pointcloud2_to_array(msg)
@@ -469,68 +596,6 @@ class RadarNode(CompatibleNode):
 
         return transformed_points
 
-    def listener(self):
-        """Initializes the node and its publishers."""
-        rospy.init_node("radar_node")
-
-        self.visualization_radar_publisher = rospy.Publisher(
-            rospy.get_param("~visualization_topic", "/paf/hero/Radar/Visualization"),
-            PointCloud2,
-            queue_size=10,
-        )
-        self.marker_visualization_radar_publisher = rospy.Publisher(
-            rospy.get_param("~marker_topic", "/paf/hero/Radar/Marker"),
-            MarkerArray,
-            queue_size=10,
-        )
-        self.entity_radar_publisher = rospy.Publisher(
-            rospy.get_param(
-                "~clustered_points_radar_topic", "/paf/hero/Radar/clustered_points"
-            ),
-            ClusteredPointsArray,
-            queue_size=10,
-            latch=True,
-        )
-        self.cluster_info_radar_publisher = rospy.Publisher(
-            rospy.get_param("~clusterInfo_topic_topic", "/paf/hero/Radar/ClusterInfo"),
-            String,
-            queue_size=10,
-        )
-        rospy.Subscriber(
-            "/carla/hero/RADAR0", PointCloud2, self.callback, callback_args="RADAR0"
-        )
-        rospy.Subscriber(
-            "/carla/hero/RADAR1", PointCloud2, self.callback, callback_args="RADAR1"
-        )
-        rospy.Subscriber(
-            "/clock",
-            Clock,
-            self.time_check,
-        )
-
-        rospy.Subscriber(
-            "/carla/hero/IMU",
-            Imu,
-            self.imu_callback,
-        )
-        self.visualization_radar_break_filtered = rospy.Publisher(
-            rospy.get_param(
-                "~visualization_topic", "/paf/hero/Radar/radar_break_filtered"
-            ),
-            PointCloud2,
-            queue_size=10,
-        )
-        self.combined_points = rospy.Publisher(
-            rospy.get_param("~combined_points", "/paf/hero/Radar/combined_points"),
-            PointCloud2,
-            queue_size=10,
-        )
-        self.marker_pub = rospy.Publisher(
-            "/paf/hero/Radar/IMU/ground_filter/debug_marker", Marker, queue_size=10
-        )
-
-        rospy.spin()
-
 
 def pointcloud2_to_array(pointcloud_msg):
     """
@@ -548,7 +613,7 @@ def pointcloud2_to_array(pointcloud_msg):
     """
 
     # Convert PointCloud2 message to a numpy structured array
-    cloud_array = ros_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
+    cloud_array = ros2_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
 
     # Stack the x, y, z coordinates with velocity to form a 2D array
     return np.column_stack(
@@ -673,7 +738,9 @@ def generate_color_map(num_clusters):
     return colors
 
 
-def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
+def create_pointcloud2(
+    stamp: Time, clustered_points, cluster_labels, filtered_out_points
+):
     """
     Creates a PointCloud2 message from radar points with color mapping for clusters.
 
@@ -687,10 +754,6 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
     Returns:
         PointCloud2: A PointCloud2 message containing the radar point cloud data.
     """
-    header = Header()
-    header.stamp = rospy.Time.now()
-    header.frame_id = "hero"
-
     points = []
 
     # Define colors based on filtering flag
@@ -724,7 +787,7 @@ def create_pointcloud2(clustered_points, cluster_labels, filtered_out_points):
         PointField("rgb", 12, PointField.FLOAT32, 1),
     ]
 
-    return point_cloud2.create_cloud(header, fields, points)
+    return ros2_numpy.point_cloud2.array_to_pointcloud2(fields, stamp.to_msg(), "hero")
 
 
 def calculate_aabb(cluster_points):
@@ -813,7 +876,9 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
     marker.header.frame_id = "hero"  # Reference frame for the marker
     marker.ns = "marker_radar"  # Namespace to group related markers
     marker.id = int(label)  # Use the label as the unique marker ID
-    marker.lifetime = rospy.Duration(bbox_lifetime)  # Marker visibility duration
+    marker.lifetime = Duration(
+        seconds=bbox_lifetime
+    ).to_msg()  # Marker visibility duration
     marker.type = Marker.CUBE  # Use a cube to represent the bounding box
     marker.action = Marker.ADD  # Action to add or modify the marker
 
@@ -852,12 +917,12 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
         marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = center
 
         # Convert eigenvectors (rotation matrix) to quaternion for OBB
-        quaternion = quaternion_from_matrix(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
+        quaternion = mat2quat(np.vstack([eigenvectors.T, [0, 0, 0]]).T)
         (
+            marker.pose.orientation.w,
             marker.pose.orientation.x,
             marker.pose.orientation.y,
             marker.pose.orientation.z,
-            marker.pose.orientation.w,
         ) = quaternion
 
         # Set scale for OBB
@@ -958,6 +1023,15 @@ def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     return json.dumps(cluster_info)
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = RadarNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    radar_node = RadarNode()
-    radar_node.listener()
+    main()

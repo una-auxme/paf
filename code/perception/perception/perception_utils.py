@@ -1,8 +1,9 @@
-from mapping.msg import ClusteredPointsArray
-import rospy
+from mapping_interfaces.msg import ClusteredPointsArray
+from rclpy.time import Time
 
 
 def array_to_clustered_points(
+    stamp: Time,
     points,
     point_indices,
     object_speed_array=None,
@@ -25,17 +26,17 @@ def array_to_clustered_points(
     # Create the ClusteredPointsArray message
     clustered_points = ClusteredPointsArray()
     clustered_points.header.frame_id = header_id
-    clustered_points.header.stamp = rospy.Time.now()
+    clustered_points.header.stamp = stamp.to_msg()
 
     # Flatten the points array into a single list of [x1, y1, z1, x2, y2, z2, ...]
-    clustered_points.clusterPointsArray = points.flatten().tolist()
+    clustered_points.cluster_points_array = points.flatten().tolist()
 
     # Populate the indexArray
-    clustered_points.indexArray = point_indices.astype(int).tolist()
+    clustered_points.index_array = point_indices.astype(int).tolist()
 
     # Populate the motionArray if object_speed_array is provided
     if object_speed_array is not None:
-        clustered_points.motionArray = object_speed_array
+        clustered_points.motion_array = object_speed_array
         # rospy.logerr("Motion2D is not implemented")
 
     # Populate the object_class if object_class_array is provided
