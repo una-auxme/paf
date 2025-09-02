@@ -1,24 +1,22 @@
-#!/usr/bin/env python3
-
+from typing import List
 import copy
-from ros_compatibility.node import CompatibleNode
-import ros_compatibility as roscomp
 from sklearn.cluster import DBSCAN
 import torch
 import cv2
 from vision_node_helper import coco_to_carla, carla_colors
-from rospy.numpy_msg import numpy_msg
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
 import numpy as np
 from ultralytics import YOLO
-import rospy
 from ultralytics.utils.ops import scale_masks
-from mapping.msg import ClusteredPointsArray
+from mapping_interfaces.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
-from dynamic_reconfigure.server import Server
-from perception.cfg import TrafficLightConfig
+
+from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
+from rclpy.parameter import Parameter
 
 
 class VisionNode(CompatibleNode):
@@ -32,8 +30,9 @@ class VisionNode(CompatibleNode):
     Advanced features are limited to ultralytics models and center view.
     """
 
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # dictionary of pretrained models
         self.model_dict = {
@@ -61,15 +60,13 @@ class VisionNode(CompatibleNode):
         self.MAX_X: int
         self.MAX_Y: int
         self.MIN_PROB: float
-        Server(TrafficLightConfig, self.dynamic_reconfigure_callback)
 
-    def dynamic_reconfigure_callback(self, config: "TrafficLightConfig", level):
-        # sets the defined variables dynamically
-        self.MIN_X = config["min_x"]
-        self.MAX_X = config["max_x"]
-        self.MAX_Y = config["max_y"]
-        self.MIN_PROB = config["min_prob"]
-        return config
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def setup_subscriber(self):
         self.new_subscription(

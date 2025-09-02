@@ -30,8 +30,6 @@
   </node>
 
   <node pkg="perception" type="lidar_distance.py" name="lidar_distance" output="screen">
-    <param name="point_cloud_topic" value="/carla/hero/LIDAR_filtered"/>
-
     <!-- Cluster configuration -->
     <param name="clustering_lidar_z_min" value="-1.4" />
     <param name="dbscan_eps" value="0.4" />
@@ -43,12 +41,8 @@
   </node>
 
   <node pkg="perception" type="radar_node.py" name="radar_node" output="screen">
-    <param name="point_cloud_topic_0" value="/carla/hero/RADAR0"/>
-    <param name="point_cloud_topic_1" value="/carla/hero/RADAR1"/>
-    <param name="visualization_topic" value="/paf/hero/Radar/radar_break_filtered"/>
     <param name="dbscan_eps" value="0.3"/>
     <param name="dbscan_samples" value="1"/>
-    <param name="clustered_points_radar_topic" value="/paf/hero/Radar/clustered_points"/>
     <param name="data_buffered" value="False"/>
     <param name="data_buffer_time" value="0.1"/>
     <param name="imu_debug" value="False"/>
@@ -60,32 +54,19 @@
 
 
   <node pkg="perception" type="lane_position.py" name="lane_position" output="screen">
-    <param name="epsilon_clustering" value="1.8"/>
-    <!--parameter to play with, if you want to fine-tune the performance-->
-    <param name="min_samples_clustering" value="4"/>
-    <!--parameter to play with, if you want to fine-tune the performance-->
+    <param name="epsilon" value="1.8"/>
+    <param name="min_samples" value="4"/>
     <param name="confidence_threshold" value="0.6"/>
-    <!--parameter to play with, if you want to fine-tune the performance-->
     <param name="angle_weight" value="0.3"/>
-    <!--confidence calculation-->
     <param name="size_weight" value="0.3"/>
-    <!--confidence calculation-->
     <param name="std_dev_weight" value="0.4"/>
-    <!--confidence calculation-->
-    <param name="angle_normalization" value="25"/>
-    <!--confidence calculation-->
-    <param name="size_normalization" value="15"/>
-    <!--confidence calculation-->
+    <param name="angle_normalization" value="25.0"/>
+    <param name="size_normalization" value="15.0"/>
     <param name="std_dev_normalization" value="0.1"/>
-    <!--confidence calculation-->
-    <param name="angle_prediction_threshold" value="5"/>
-    <!--predictions currently disabled-->
+    <param name="angle_prediction_threshold" value="5.0"/>
     <param name="y_tolerance" value="1.0"/>
-    <!--prevents multiple entities at same position (room for improvment)-->
-    <param name="line_length" value="15"/>
-    <!--minimum lanemarking size-->
+    <param name="line_length" value="15.0"/>
     <param name="line_width" value="0.5"/>
-    <!--lanemarking width-->
   </node>
 
 </launch>
