@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+# General imports
+from typing import List
+
 # ROS imports
-import rospy
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
+import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import Image as ImageMsg
-from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
 
 # intermediate Layer imports
@@ -12,7 +12,12 @@ from mapping_common.shape import Rectangle
 from mapping_common.entity import Lanemarking, Flags
 from mapping_common.transform import Transform2D, Vector2
 from mapping_common.map import Map
-from mapping.msg import Map as MapMsg
+from mapping_interfaces.msg import Map as MapMsg
+
+from paf_common.parameters import update_attributes
+from paf_common.exceptions import emsg_with_trace
+from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from rclpy.parameter import Parameter
 
 # clustering imports
 import numpy as np
@@ -20,60 +25,174 @@ from sklearn.cluster import DBSCAN
 import cv2
 
 
-class lane_position(CompatibleNode):
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
+class lane_position(Node):
+    def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
         self.bridge = CvBridge()
         self.dist_arrays = []
 
         # get parameters from launch file
-        self.line_length = self.get_param(
-            "line_length"
-        )  # predefined length of the lanemarkings
-        self.line_width = self.get_param("line_width")  # width of the lanemarkings
-        self.epsilon = self.get_param(
-            "epsilon_clustering"
-        )  # epsilon for clustering algorithm
-        self.min_samples = self.get_param(
-            "min_samples_clustering"
-        )  # min samples for clustering
+        self.line_length = (
+            self.declare_parameter(
+                "line_length",
+                15.0,
+                descriptor=ParameterDescriptor(
+                    description="predefined length of the lanemarkings",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.line_width = (
+            self.declare_parameter(
+                "line_width",
+                0.5,
+                descriptor=ParameterDescriptor(
+                    description="width of the lanemarkings",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.epsilon = (
+            self.declare_parameter(
+                "epsilon",
+                1.8,
+                descriptor=ParameterDescriptor(
+                    description="epsilon for clustering algorithm",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.min_samples = (
+            self.declare_parameter(
+                "min_samples",
+                4,
+                descriptor=ParameterDescriptor(
+                    description="min samples for clustering",
+                ),
+            )
+            .get_parameter_value()
+            .integer_value
+        )
 
         # confidence parameters:
-        # weights for confidence calculation
-        self.angle_weight = self.get_param("angle_weight")
-        self.size_weight = self.get_param("size_weight")
-        self.std_dev_weight = self.get_param("std_dev_weight")
-        self.angle_normalization = self.get_param(
-            "angle_normalization"
-        )  # max acceptable angle for normalization
-        self.size_normalization = self.get_param(
-            "size_normalization"
-        )  # max acceptable cluster size for normalization
-        self.std_dev_normalization = self.get_param(
-            "std_dev_normalization"
-        )  # max acceptable standard deviation in linearregression for normalization
-        self.angle_prediction_threshold = self.get_param("angle_prediction_threshold")
-        self.confidence_threshold = self.get_param("confidence_threshold")
+        self.angle_weight = (
+            self.declare_parameter(
+                "angle_weight",
+                0.3,
+                descriptor=ParameterDescriptor(
+                    description="weight for confidence calculation",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.size_weight = (
+            self.declare_parameter(
+                "size_weight",
+                0.3,
+                descriptor=ParameterDescriptor(
+                    description="weight for confidence calculation",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.std_dev_weight = (
+            self.declare_parameter(
+                "std_dev_weight",
+                0.4,
+                descriptor=ParameterDescriptor(
+                    description="weight for confidence calculation",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.angle_normalization = (
+            self.declare_parameter(
+                "angle_normalization",
+                25.0,
+                descriptor=ParameterDescriptor(
+                    description="max acceptable angle for normalization",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.size_normalization = (
+            self.declare_parameter(
+                "size_normalization",
+                15.0,
+                descriptor=ParameterDescriptor(
+                    description="max acceptable cluster size for normalization",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.std_dev_normalization = (
+            self.declare_parameter(
+                "std_dev_normalization",
+                0.1,
+                descriptor=ParameterDescriptor(
+                    description="max acceptable standard deviation "
+                    "in linearregression for normalization",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.angle_prediction_threshold = (
+            self.declare_parameter(
+                "angle_prediction_threshold",
+                5.0,
+                descriptor=ParameterDescriptor(
+                    description="predictions currently disabled",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.confidence_threshold = (
+            self.declare_parameter("confidence_threshold", 0.6)
+            .get_parameter_value()
+            .double_value
+        )
 
-        self.y_tolerance = self.get_param(
-            "y_tolerance"
-        )  # min distance that lanemarkings have to have, new lanemarkings within this
-        # distance are ignored
+        self.y_tolerance = (
+            self.declare_parameter(
+                "y_tolerance",
+                1.0,
+                descriptor=ParameterDescriptor(
+                    description="min distance that lanemarkings have to have, "
+                    "new lanemarkings within this distance are ignored",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
 
         self.setup_subscriptions()
         self.setup_publishers()
 
-    def run(self):
-        self.spin()
-        pass
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def setup_subscriptions(self):
         """
         sets up a subscriber to the lanemask
         """
 
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.lanemask_handler,
             topic="/paf/hero/Center/lane_mask",
             qos_profile=1,
@@ -84,8 +203,8 @@ class lane_position(CompatibleNode):
         depth image of the selected camera angle
         """
 
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.distance_array_handler,
             topic="/paf/hero/Center/dist_array",
             qos_profile=1,
@@ -96,19 +215,17 @@ class lane_position(CompatibleNode):
         (not necessary for functionality)
         topic: /Lane/label_image
         """
-        self.label_image_publisher = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
+        self.label_image_publisher = self.create_publisher(
+            msg_type=ImageMsg,
             topic="/paf/hero/Lane/label_image",
             qos_profile=1,
         )
         """sets up a publisher for the map with lanemarking entities
         topic: /paf/hero/mapping/init_lanemarkings
         """
-        self.map_publisher = self.new_publisher(
+        self.map_publisher = self.create_publisher(
             msg_type=MapMsg,
-            topic=self.get_param(
-                "~map_init_topic", "/paf/hero/mapping/init_lanemarkings"
-            ),
+            topic="/paf/hero/mapping/init_lanemarkings",
             qos_profile=1,
         )
 
@@ -287,7 +404,7 @@ class lane_position(CompatibleNode):
         if Lanemarkings is None:
             return
 
-        stamp = rospy.get_rostime()
+        stamp = self.get_clock().now().to_msg()
         map = Map(timestamp=stamp, entities=Lanemarkings)
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
@@ -456,8 +573,10 @@ class lane_position(CompatibleNode):
             )  # HDBSCAN
             labels = clustering.labels_
         except Exception as e:
-            rospy.logwarn(
-                f"could not cluster points for lane position calculation: {str(e)}"
+            self.get_logger().warn(
+                "could not cluster points for lane position calculation: "
+                f"{emsg_with_trace(e)}",
+                throttle_duration_sec=2,
             )
 
         # Find the unique cluster labels (excluding -1 for outliers)
@@ -523,7 +642,15 @@ class lane_position(CompatibleNode):
         return predicted_lanemarkings
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = lane_position()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    roscomp.init("lane_position_node")
-    node = lane_position("lane_position_node")
-    node.run()
+    main()
