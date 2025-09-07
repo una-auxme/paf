@@ -8,20 +8,17 @@ from torchvision.datasets import ImageFolder
 from torchvision.transforms import ToTensor
 from dvclive import Live
 from ruamel.yaml import YAML
-import sys
-import os
 
-sys.path.append(os.path.abspath(sys.path[0] + "/.."))
-from traffic_light_detection.transforms import (  # noqa: E402
+from .transforms import (
     Normalize,
     ResizeAndPadToSquare,
     load_image,
 )
-from data_generation.weights_organizer import WeightsOrganizer  # noqa: E402
-from traffic_light_detection.classification_model import (  # noqa: E402
+from data_generation.weights_organizer import WeightsOrganizer
+from .classification_model import (
     ClassificationModel,
 )
-from traffic_light_config import TrafficLightConfig  # noqa: E402
+from .traffic_light_config import TrafficLightConfig
 
 
 class TrafficLightTraining:
