@@ -6,9 +6,9 @@
     <set_parameter name="use_sim_time" value="true" />
 
     <!-- perception -->
-    <!-- <include
-        file="$(find perception)/launch/perception.launch">
-    </include> -->
+    <include
+        file="$(find-pkg-share perception)/launch/perception.xml">
+    </include>
 
     <!-- planning -->
     <!-- <include file="$(find planning)/launch/planning.launch">
