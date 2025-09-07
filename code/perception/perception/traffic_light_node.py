@@ -6,9 +6,6 @@ from rclpy.duration import Duration
 from sensor_msgs.msg import Image as ImageMsg
 from perception_interfaces.msg import TrafficLightState
 from cv_bridge import CvBridge
-from traffic_light_detection.src.traffic_light_detection.traffic_light_inference import (  # noqa: E501
-    TrafficLightInference,
-)
 import cv2
 import numpy as np
 
@@ -17,6 +14,10 @@ from visualization_msgs.msg import Marker
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
+
+from traffic_light_detection.traffic_light_inference import (
+    TrafficLightInference,
+)
 
 
 class TrafficLightNode(Node):

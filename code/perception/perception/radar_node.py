@@ -1,9 +1,7 @@
 from typing import List
-from perception_utils import array_to_clustered_points
 import ros2_numpy
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile
 from rclpy.time import Time
 from rclpy.duration import Duration
 import numpy as np
@@ -27,6 +25,8 @@ from paf_common.parameters import update_attributes
 from rclpy.parameter import Parameter
 
 from collections import deque
+
+from .perception_utils import array_to_clustered_points
 
 
 class RadarNode(Node):
@@ -145,9 +145,8 @@ class RadarNode(Node):
             MarkerArray, "/paf/hero/Radar/Marker", 10
         )
 
-        qos_profile = QoSProfile(depth=10, latch=True)
         self.entity_radar_publisher = self.create_publisher(
-            ClusteredPointsArray, "/paf/hero/Radar/clustered_points", qos_profile
+            ClusteredPointsArray, "/paf/hero/Radar/clustered_points", 10
         )
         self.cluster_info_radar_publisher = self.create_publisher(
             String, "/paf/hero/Radar/ClusterInfo", 10

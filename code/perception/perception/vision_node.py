@@ -3,7 +3,6 @@ import copy
 from sklearn.cluster import DBSCAN
 import torch
 import cv2
-from vision_node_helper import coco_to_carla, carla_colors
 from sensor_msgs.msg import Image as ImageMsg
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
@@ -11,14 +10,15 @@ import numpy as np
 from ultralytics import YOLO
 from ultralytics.utils.ops import scale_masks
 from mapping_interfaces.msg import ClusteredPointsArray
-from perception_utils import array_to_clustered_points
 
 import rclpy
 from rclpy.node import Node
-from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from rcl_interfaces.msg import ParameterDescriptor
 from paf_common.parameters import update_attributes
-from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
+
+from .vision_node_helper import coco_to_carla, carla_colors
+from .perception_utils import array_to_clustered_points
 
 
 class VisionNode(Node):
