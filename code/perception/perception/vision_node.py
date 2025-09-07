@@ -13,13 +13,15 @@ from ultralytics.utils.ops import scale_masks
 from mapping_interfaces.msg import ClusteredPointsArray
 from perception_utils import array_to_clustered_points
 
+import rclpy
+from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
 
 
-class VisionNode(CompatibleNode):
+class VisionNode(Node):
     """
     VisionNode:
 
@@ -45,9 +47,74 @@ class VisionNode(CompatibleNode):
 
         # general setup
         self.bridge = CvBridge()
-        self.role_name = self.get_param("role_name", "hero")
-        self.view_camera = self.get_param("view_camera")
-        self.camera_resolution = self.get_param("camera_resolution")
+
+        # Parameters
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+        self.view_camera = (
+            self.declare_parameter("view_camera", False)
+            .get_parameter_value()
+            .bool_value
+        )
+        self.camera_resolution = (
+            self.declare_parameter("camera_resolution", 1280)
+            .get_parameter_value()
+            .integer_value
+        )
+        self.model = (
+            self.declare_parameter("model", "yolo11m-seg")
+            .get_parameter_value()
+            .string_value
+        )
+        # Traffic light parameters
+        self.min_x: int = (
+            self.declare_parameter(
+                "min_x",
+                485,
+                descriptor=ParameterDescriptor(
+                    description="Left End of Traffic Light bounding box",
+                ),
+            )
+            .get_parameter_value()
+            .integer_value
+        )
+        self.max_x: int = (
+            self.declare_parameter(
+                "max_x",
+                780,
+                descriptor=ParameterDescriptor(
+                    description="Right End of Traffic Light bounding box",
+                ),
+            )
+            .get_parameter_value()
+            .integer_value
+        )
+        self.max_y: int = (
+            self.declare_parameter(
+                "max_y",
+                360,
+                descriptor=ParameterDescriptor(
+                    description="Lower End of Traffic Light bounding box measuring "
+                    "from the top. (0,0) is the top left corner",
+                ),
+            )
+            .get_parameter_value()
+            .integer_value
+        )
+        self.min_prob: float = (
+            self.declare_parameter(
+                "min_prob",
+                0.30,
+                descriptor=ParameterDescriptor(
+                    description="Minimal Probability, that it's a light",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
 
         self.depth_images = []
         self.lidar_array = None
@@ -55,11 +122,6 @@ class VisionNode(CompatibleNode):
         self.setup_subscriber()
         self.setup_publisher()
         self.setup_model()
-
-        self.MIN_X: int
-        self.MAX_X: int
-        self.MAX_Y: int
-        self.MIN_PROB: float
 
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
@@ -69,15 +131,15 @@ class VisionNode(CompatibleNode):
         return update_attributes(self, params)
 
     def setup_subscriber(self):
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.handle_camera_image,
             topic=f"/carla/{self.role_name}/Center/image",
             qos_profile=1,
         )
 
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.handle_lidar_array,
             topic="/paf/hero/Center/dist_array",
             qos_profile=1,
@@ -88,27 +150,27 @@ class VisionNode(CompatibleNode):
         sets up all publishers for the Vision-Node
         """
 
-        self.pointcloud_publisher = self.new_publisher(
-            msg_type=numpy_msg(ClusteredPointsArray),
+        self.pointcloud_publisher = self.create_publisher(
+            msg_type=ClusteredPointsArray,
             topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
 
-        self.publisher_center = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
+        self.publisher_center = self.create_publisher(
+            msg_type=ImageMsg,
             topic=f"/paf/{self.role_name}/Center/segmented_image",
             qos_profile=1,
         )
 
-        self.traffic_light_publisher = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
+        self.traffic_light_publisher = self.create_publisher(
+            msg_type=ImageMsg,
             topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
             qos_profile=1,
         )
 
     def setup_model(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model_info = self.model_dict[self.get_param("model")]
+        model_info = self.model_dict[self.model]
         self.model = model_info[0]
         self.weights = model_info[1]
         self.type = model_info[2]
@@ -117,13 +179,13 @@ class VisionNode(CompatibleNode):
 
         print("Vision Node Configuration:")
         print("Device -> ", self.device)
-        print(f"Model -> {self.get_param('model')},")
+        print(f"Model -> {self.model},")
         print(f"Type -> {self.type}, Framework -> {self.framework}")
 
         if self.framework == "ultralytics":
             self.model = self.model(self.weights)
         else:
-            rospy.logerr("Framework not supported")
+            self.get_logger().error("Framework not supported")
 
     def handle_camera_image(self, image):
         """
@@ -133,9 +195,6 @@ class VisionNode(CompatibleNode):
         Args:
             image (image msg): Image from camera scubscription
         """
-        self.role_name = self.get_param("role_name", "hero")
-        self.view_camera = self.get_param("view_camera")
-        self.camera_resolution = self.get_param("camera_resolution")
         prediction = self.predict_ultralytics(
             image=image,
             image_size=self.camera_resolution,
@@ -182,7 +241,7 @@ class VisionNode(CompatibleNode):
             (cv image): visualization output for rvizw
         """
         if lidar_array is None or lidar_array.size == 0:
-            rospy.logerr("No valid lidar data found")
+            self.get_logger().error("No valid lidar data found")
             return None
         scaled_masks = None
         cv_image = self.bridge.imgmsg_to_cv2(
@@ -209,7 +268,7 @@ class VisionNode(CompatibleNode):
         masks = output[0].masks.data.clone().detach().cpu()
         # check if the masks and box_classess size is correct
         if masks.size(0) != len(box_classes):
-            rospy.logerr("Masks and box classes size mismatch")
+            self.get_logger().error("Masks and box classes size mismatch")
             self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
 
@@ -222,7 +281,7 @@ class VisionNode(CompatibleNode):
         ).squeeze(1)
         # check if the scaled masks are valid
         if scaled_masks is None or scaled_masks.size(0) == 0:
-            rospy.logerr("No scaled masks found")
+            self.get_logger().error("No scaled masks found")
             self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         valid_points, class_indices = self.process_segmentation_mask(
@@ -240,6 +299,7 @@ class VisionNode(CompatibleNode):
             return None
         # self.publish_distance_output(clustered_points, carla_classes_indices)
         clustered_lidar_points_msg = array_to_clustered_points(
+            self.get_clock().now(),
             clustered_points,
             cluster_indices,
             object_class_array=carla_classes_indices,
@@ -384,10 +444,10 @@ class VisionNode(CompatibleNode):
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
         # set the dynamic values
-        min_x = self.MIN_X
-        max_x = self.MAX_X
-        max_y = self.MAX_Y  # 360  # middle of image
-        min_prob = self.MIN_PROB  # 0.30
+        min_x = self.min_x
+        max_x = self.max_x
+        max_y = self.max_y  # 360  # middle of image
+        min_prob = self.min_prob  # 0.30
 
         # calculate on every bounding box
         for index in indices:
@@ -420,12 +480,16 @@ class VisionNode(CompatibleNode):
             # publish cropped traffic light image to the topic
             self.traffic_light_publisher.publish(traffic_light_image)
 
-    def run(self):
-        self.spin()
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = VisionNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
         pass
 
 
 if __name__ == "__main__":
-    roscomp.init("VisionNode")
-    node = VisionNode("VisionNode")
-    node.run()
+    main()
