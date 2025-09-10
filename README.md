@@ -18,7 +18,9 @@ The recoding of it can be seen in the following video:
 To be able to execute and develop the project, you need a Linux system equipped with:
 
 - NVIDIA GPU (everything >= RTX 3070 should be fine)
-- A minimum of 16G of RAM - A minimum of 100G of free disk space
+- NVIDIA driver version 550 or newer (required for CUDA 12.4+ images used by this project)
+- A minimum of 16G of RAM
+- A minimum of 100G of free disk space
 
 As the project is still in early development, these requirements are subject to change.
 
