@@ -141,7 +141,8 @@ RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYT
   echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 
 # "Fix" libtiff.so.5 missing for the carla python API
-RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
+# Note: the .10 package was removed from the archive; use .11 which is available.
+RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.11_amd64.deb -O libtiff5.deb && \
   apt-get install -y ./libtiff5.deb && \
   rm libtiff5.deb
 
