@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#!/usr/bin/env bash
-set -euo pipefail
-
 # Minimum required NVIDIA driver major version
 REQUIRED=550
 
