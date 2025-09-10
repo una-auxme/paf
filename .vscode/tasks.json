@@ -2,6 +2,18 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Check NVIDIA driver (>= 550)",
+            "type": "shell",
+            "command": "bash ${workspaceFolder}/scripts/check-nvidia.sh",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "detail": "Verifies that the host NVIDIA driver is >= 550 and surfaces a warning in Problems view if not."
+        },
+        {
             "label": "Run 'catkin_make' in docker container. Choose container from list of running containers.",
             "type": "shell",
             "command": "docker exec -it ${input:container_name} bash -c 'cd /catkin_ws && source /opt/ros/noetic/setup.bash && source devel/setup.bash && catkin_make'",
