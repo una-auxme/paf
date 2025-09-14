@@ -7,6 +7,7 @@ from rclpy.duration import Duration
 import numpy as np
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import Imu, PointCloud2, PointField
+from sensor_msgs_py import point_cloud2
 from sklearn.cluster import DBSCAN
 
 from sklearn.preprocessing import StandardScaler
@@ -753,6 +754,10 @@ def create_pointcloud2(
     Returns:
         PointCloud2: A PointCloud2 message containing the radar point cloud data.
     """
+    header = Header()
+    header.stamp = stamp.to_msg()
+    header.frame_id = "hero"
+
     points = []
 
     # Define colors based on filtering flag
@@ -780,13 +785,13 @@ def create_pointcloud2(
 
     # Define PointCloud2 fields
     fields = [
-        PointField("x", 0, PointField.FLOAT32, 1),
-        PointField("y", 4, PointField.FLOAT32, 1),
-        PointField("z", 8, PointField.FLOAT32, 1),
-        PointField("rgb", 12, PointField.FLOAT32, 1),
+        PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+        PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+        PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+        PointField(name="rgb", offset=12, datatype=PointField.FLOAT32, count=1),
     ]
 
-    return ros2_numpy.point_cloud2.array_to_pointcloud2(fields, stamp.to_msg(), "hero")
+    return point_cloud2.create_cloud(header, fields, points)
 
 
 def calculate_aabb(cluster_points):

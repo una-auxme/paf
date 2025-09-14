@@ -190,7 +190,10 @@ class LidarDistance(Node):
         cluster_points_np = points_with_labels[:, :3]
         index_array = points_with_labels[:, -1]
         clustered_points_msg = array_to_clustered_points(
-            cluster_points_np, index_array, header_id="hero/LIDAR"
+            self.get_clock().now(),
+            cluster_points_np,
+            index_array,
+            header_id="hero/LIDAR",
         )
         self.clustered_points_publisher.publish(clustered_points_msg)
 
@@ -247,6 +250,9 @@ class LidarDistance(Node):
         reconstruct_coordinates_xyz = np.array(
             remove_field_name(reconstruct_coordinates, "intensity").tolist()
         )
+
+        if not reconstruct_coordinates_xyz.size:
+            return None
 
         # Reconstruct the image based on the focus
         return self.reconstruct_img_from_lidar(reconstruct_coordinates_xyz, focus=focus)

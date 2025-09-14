@@ -15,7 +15,7 @@ from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
 
-from traffic_light_detection.traffic_light_inference import (
+from traffic_light_detection.src.traffic_light_inference import (
     TrafficLightInference,
 )
 

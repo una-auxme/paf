@@ -323,7 +323,7 @@ class lane_position(Node):
             lanemarking = Lanemarking(
                 style=style,
                 confidence=confidence,
-                priority=1,
+                priority=1.0,
                 shape=shape,
                 transform=transform,
                 timestamp=timestamp,
@@ -467,6 +467,9 @@ class lane_position(Node):
             median_angle_deviations: array with median deviations
         """
         angles = np.array(angles)
+        if angles.size <= 1:
+            # Abort if we found le one angle
+            return np.zeros(angles.shape, dtype=np.float64)
         # calculate the median deviation to other lanemarkings
         angle_diff = np.abs(angles[:, None] - angles)
         # Set diagonal to np.nan, to ignore it while calculating the median

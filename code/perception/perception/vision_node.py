@@ -241,7 +241,9 @@ class VisionNode(Node):
             (cv image): visualization output for rvizw
         """
         if lidar_array is None or lidar_array.size == 0:
-            self.get_logger().error("No valid lidar data found")
+            self.get_logger().error(
+                "No valid lidar data found", throttle_duration_sec=2
+            )
             return None
         scaled_masks = None
         cv_image = self.bridge.imgmsg_to_cv2(
@@ -268,7 +270,9 @@ class VisionNode(Node):
         masks = output[0].masks.data.clone().detach().cpu()
         # check if the masks and box_classess size is correct
         if masks.size(0) != len(box_classes):
-            self.get_logger().error("Masks and box classes size mismatch")
+            self.get_logger().error(
+                "Masks and box classes size mismatch", throttle_duration_sec=2
+            )
             self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
 
@@ -281,7 +285,7 @@ class VisionNode(Node):
         ).squeeze(1)
         # check if the scaled masks are valid
         if scaled_masks is None or scaled_masks.size(0) == 0:
-            self.get_logger().error("No scaled masks found")
+            self.get_logger().error("No scaled masks found", throttle_duration_sec=2)
             self.pointcloud_publisher.publish(ClusteredPointsArray())
             return None
         valid_points, class_indices = self.process_segmentation_mask(
