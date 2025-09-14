@@ -1,15 +1,12 @@
 Panels:
   - Class: rviz_common/Displays
-    Help Height: 78
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /PointCloud21
-        - /PointCloud21/Status1
+        - /Camera-Center1/Visibility1
       Splitter Ratio: 0.5
-    Tree Height: 387
+    Tree Height: 1137
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -27,7 +24,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: Radar1-Back
 Visualization Manager:
   Class: ""
   Displays:
@@ -49,20 +46,6 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz_default_plugins/Image
-      Enabled: true
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Image
-      Normalize Range: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /carla/hero/Center/image
-      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -74,19 +57,19 @@ Visualization Manager:
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 0
+      Decay Time: 0.10000000149011612
       Enabled: true
       Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0.9985725283622742
-      Min Color: 0; 0; 0
-      Min Intensity: 0.7146578431129456
-      Name: PointCloud2
+      Max Color: 200; 200; 200
+      Max Intensity: 0.9985722899436951
+      Min Color: 100; 100; 100
+      Min Intensity: 0.7233225107192993
+      Name: Lidar
       Position Transformer: XYZ
       Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Size (Pixels): 4
+      Size (m): 0.05000000074505806
+      Style: Points
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -94,32 +77,32 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /carla/hero/LIDAR
       Use Fixed Frame: true
-      Use rainbow: true
+      Use rainbow: false
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
+        Max Value: 0.5385465621948242
+        Min Value: 0.46397653222084045
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz_default_plugins/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 255; 0; 0
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
-      Max Color: 255; 255; 255
+      Max Color: 255; 0; 0
       Max Intensity: 4096
-      Min Color: 0; 0; 0
+      Min Color: 100; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: Radar0-Front
       Position Transformer: XYZ
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 5
       Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Style: Points
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -127,7 +110,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /carla/hero/RADAR0
       Use Fixed Frame: true
-      Use rainbow: true
+      Use rainbow: false
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -138,21 +121,21 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz_default_plugins/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 255; 0; 0
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
-      Max Color: 255; 255; 255
+      Max Color: 255; 0; 0
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: PointCloud2
+      Name: Radar1-Back
       Position Transformer: XYZ
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 5
       Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Style: Points
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -160,12 +143,95 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /carla/hero/RADAR1
       Use Fixed Frame: true
-      Use rainbow: true
+      Use rainbow: false
+      Value: true
+    - Class: rviz_default_plugins/Camera
+      Enabled: true
+      Far Plane Distance: 100
+      Image Rendering: background and overlay
+      Name: Camera-Center
+      Overlay Alpha: 0.5
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /carla/hero/Center/image
+      Value: true
+      Visibility:
+        Grid: true
+        Lidar: false
+        Mapping: true
+        Radar0-Front: true
+        Radar1-Back: true
+        TF: true
+        Value: true
+      Zoom Factor: 1
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        global:
+          Value: true
+        hero:
+          Value: true
+        hero/Center:
+          Value: true
+        hero/GPS:
+          Value: true
+        hero/IMU:
+          Value: true
+        hero/LIDAR:
+          Value: true
+        hero/RADAR0:
+          Value: true
+        hero/RADAR1:
+          Value: true
+        odom:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        global:
+          {}
+        odom:
+          hero:
+            hero/Center:
+              {}
+            hero/GPS:
+              {}
+            hero/IMU:
+              {}
+            hero/LIDAR:
+              {}
+            hero/RADAR0:
+              {}
+            hero/RADAR1:
+              {}
+      Update Interval: 0
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Mapping
+      Namespaces:
+        map: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /paf/hero/mapping/marker_array
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: hero/LIDAR
+    Fixed Frame: hero
     Frame Rate: 30
   Name: root
   Tools:
@@ -208,7 +274,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 23.82587432861328
+      Distance: 23.898771286010742
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -223,20 +289,20 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4204002916812897
+      Pitch: 0.23540055751800537
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.4367282390594482
+      Yaw: 3.0729634761810303
     Saved: ~
 Window Geometry:
+  Camera-Center:
+    collapsed: false
   Displays:
     collapsed: false
-  Height: 1036
+  Height: 2088
   Hide Left Dock: false
   Hide Right Dock: false
-  Image:
-    collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000002110000036cfc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003e0000020f000000ca00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000213000001970000000000000000fb0000000a0049006d0061006700650100000253000001570000001600ffffff000000010000010f0000036cfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003e0000036c000000a600fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000064a0000003efc0100000002fb0000000800540069006d006501000000000000064a000002c600fffffffb0000000800540069006d006501000000000000045000000000000000000000031e0000036c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000041e0000078efc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000690000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000004ac000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001a00430061006d006500720061002d00430065006e00740065007201000004ed000002dc0000001600fffffffb0000000a0049006d00610067006500000003130000013a0000000000000000fb0000000c00430061006d0065007200610100000257000001480000000000000000000000010000010f0000078efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003b0000078e000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000f000000003efc0100000002fb0000000800540069006d0065010000000000000f000000025300fffffffb0000000800540069006d00650100000000000004500000000000000000000009c70000078e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -245,6 +311,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1610
-  X: 207
-  Y: 332
+  Width: 3840
+  X: 1680
+  Y: 0

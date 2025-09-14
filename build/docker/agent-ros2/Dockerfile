@@ -137,6 +137,8 @@ USER ${PAF_USERNAME}
 ENV CARLA_ROS_WS=${INTERNAL_WORKSPACE_DIR}/carla_ros2_ws
 RUN mkdir -p ${CARLA_ROS_WS}/src
 WORKDIR ${CARLA_ROS_WS}
+# ros2_numpy is not a dependency of the ros-bridge but currently does not have a rosdep key -> Also installed in the CARLA_ROS_WS
+RUN git clone --recurse-submodules -b ${ROS_DISTRO} --single-branch https://github.com/Box-Robotics/ros2_numpy.git ./src/ros2_numpy
 RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
 # Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
 RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt

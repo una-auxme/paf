@@ -1,0 +1,59 @@
+<launch>
+  <arg name="map_publish_rate" default="0.05" />
+
+  <arg name="enable_radar_cluster" default="False" />
+  <arg name="enable_lidar_cluster" default="False" />
+  <arg name="enable_vision_cluster" default="False" />
+  <arg name="enable_raw_lidar_points" default="False" />
+  <arg name="enable_lane_marker" default="False" />
+  <arg name="enable_stop_marks" default="True" />
+
+  <arg name="lidar_z_min" default="-1.5" />
+  <arg name="lidar_z_max" default="1.0" />
+  <arg name="lidar_shape_radius" default="0.15" />
+  <arg name="lidar_priority" default="0.25" />
+  <arg name="lidar_discard_probability" default="0.9" />
+
+  <arg name="radar_shape_radius" default="0.15" />
+
+  <arg name="filter_enable_merge" default="True" />
+  <arg name="filter_merge_growth_distance" default="0.65" />
+  <arg name="filter_merge_min_overlap_percent" default="0.5" />
+  <arg name="filter_merge_min_overlap_area" default="1.0" />
+
+  <arg name="filter_enable_lane_index" default="True" />
+  <arg name="filter_enable_pedestrian_grow" default="True" />
+
+  <arg name="polygon_simplify_tolerance" default="0.1" />
+
+  <node pkg="mapping" exec="data_integration" name="mapping_data_integration">
+    <param name="map_publish_rate" value="$(var map_publish_rate)" />
+
+    <param name="enable_radar_cluster" value="$(var enable_radar_cluster)" />
+    <param name="enable_lidar_cluster" value="$(var enable_lidar_cluster)" />
+    <param name="enable_vision_cluster" value="$(var enable_vision_cluster)" />
+    <param name="enable_raw_lidar_points" value="$(var enable_raw_lidar_points)" />
+    <param name="enable_lane_marker" value="$(var enable_lane_marker)" />
+    <param name="enable_stop_marks" value="$(var enable_stop_marks)" />
+
+    <!-- Raw Lidar entity configuration -->
+    <param name="lidar_z_min" value="$(var lidar_z_min)" />
+    <param name="lidar_z_max" value="$(var lidar_z_max)" />
+    <param name="lidar_shape_radius" value="$(var lidar_shape_radius)" />
+    <param name="lidar_priority" value="$(var lidar_priority)" />
+    <param name="lidar_discard_probability" value="$(var lidar_discard_probability)" />
+
+    <!-- Map filter configuration -->
+    <param name="filter_enable_merge" value="$(var filter_enable_merge)" />
+    <param name="filter_merge_growth_distance" value="$(var filter_merge_growth_distance)" />
+    <param name="filter_merge_min_overlap_percent" value="$(var filter_merge_min_overlap_percent)" />
+    <param name="filter_merge_min_overlap_area" value="$(var filter_merge_min_overlap_area)" />
+    <param name="filter_enable_lane_index" value="$(var filter_enable_lane_index)" />
+    <param name="filter_enable_pedestrian_grow" value="$(var filter_enable_pedestrian_grow)" />
+    <param name="polygon_simplify_tolerance" value="$(var polygon_simplify_tolerance)" />
+  </node>
+
+  <node pkg="mapping" exec="visualization" name="mapping_visualization">
+  </node>
+
+</launch>

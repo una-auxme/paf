@@ -1,5 +1,11 @@
+numpy==1.26.4
+
 # General quaternion transformations
 transforms3d==0.4.2
 
 # Pid controller for control
 simple-pid==2.0.1
+
+# Mapping
+cython==3.0.11
+shapely==2.0.6
