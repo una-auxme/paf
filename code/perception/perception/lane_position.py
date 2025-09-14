@@ -16,7 +16,7 @@ from mapping_interfaces.msg import Map as MapMsg
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
-from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.parameter import Parameter
 
 # clustering imports
@@ -571,9 +571,7 @@ class lane_position(Node):
         try:
             clustering = DBSCAN(
                 eps=self.epsilon, min_samples=self.min_samples, algorithm="ball_tree"
-            ).fit(
-                points
-            )  # HDBSCAN
+            ).fit(points)  # HDBSCAN
             labels = clustering.labels_
         except Exception as e:
             self.get_logger().warn(
