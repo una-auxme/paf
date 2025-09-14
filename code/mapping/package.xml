@@ -8,6 +8,7 @@
   <license>MIT</license>
 
   <depend>ros2_numpy</depend>
+  <depend>mapping_interfaces</depend>
 
   <test_depend>python3-pytest</test_depend>
 

@@ -27,7 +27,7 @@ from cv2 import line
 from mapping_common import get_logger
 import mapping_common.mask
 
-from builtin_interfaces.msg import Time
+from builtin_interfaces.msg import Time as TimeMsg
 
 from mapping_interfaces import msg
 
@@ -72,7 +72,7 @@ class Map:
     - The map might include the hero car as the **first entity** in entities
     """
 
-    timestamp: Time = field(default_factory=Time)
+    timestamp: TimeMsg = field(default_factory=TimeMsg)
     """The timestamp this map was created at.
 
     Should be the time when this map was initially sent off

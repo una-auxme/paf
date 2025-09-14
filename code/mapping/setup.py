@@ -1,20 +1,8 @@
 import os
 from glob import glob
 from setuptools import find_packages, setup
-from setuptools.extension import Extension
-from Cython.Build import cythonize
 
 import numpy as np
-
-extensions = [
-    Extension(
-        "*",
-        sources=["mapping_common/*.py"],
-        # https://cython.readthedocs.io/en/latest/src/userguide/numpy_tutorial.html
-        include_dirs=[np.get_include()],
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-    ),
-]
 
 
 def is_debug_enabled() -> bool:
@@ -39,6 +27,18 @@ def main():
         #       file=sys.stderr)
         pass
     else:
+        from setuptools.extension import Extension
+        from Cython.Build import cythonize
+
+        extensions = [
+            Extension(
+                "*",
+                sources=["mapping_common/**/*.py"],
+                # https://cython.readthedocs.io/en/latest/src/userguide/numpy_tutorial.html
+                include_dirs=[np.get_include()],
+                define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+            ),
+        ]
         ext_modules = {
             "ext_modules": cythonize(
                 extensions, language_level="3", annotate=True, quiet=True

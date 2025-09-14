@@ -20,7 +20,8 @@ from mapping_common.transform import Transform2D, Vector2, Point2
 from visualization_msgs.msg import Marker, MarkerArray
 from transforms3d.euler import euler2quat
 
-from builtin_interfaces.msg import Time
+from builtin_interfaces.msg import Time as TimeMsg
+from builtin_interfaces.msg import Duration as DurationMsg
 from rclpy.duration import Duration
 
 
@@ -142,30 +143,30 @@ def debug_marker(
 def debug_marker_array(
     namespace: str,
     markers: List[Marker],
-    timestamp: Time,
-    lifetime: Optional[Duration] = None,
+    timestamp: TimeMsg,
+    lifetime: Optional[DurationMsg] = None,
 ) -> MarkerArray:
     """Builds a ROS MarkerArray based on *markers*
 
     Args:
         namespace (str): Namespace of the markers
         markers (List[Marker]): markers
-        timestamp (Time): Timestamp of all markers.
-        lifetime (Optional[rospy.Duration], optional): Marker lifetime.
+        timestamp (builtin_interfaces.msg.Time): Timestamp of all markers.
+        lifetime (Optional[builtin_interfaces.msg.Duration], optional): Marker lifetime.
             Defaults to 0.5.
 
     Returns:
         MarkerArray: MarkerArray
     """
     if lifetime is None:
-        lifetime = Duration(seconds=0.5)
+        lifetime = Duration(seconds=0.5).to_msg()
 
     marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
     for id, marker in enumerate(markers):
         marker.header.stamp = timestamp
         marker.ns = namespace
         marker.id = id
-        marker.lifetime = lifetime.to_msg()
+        marker.lifetime = lifetime
         marker_array.markers.append(marker)
 
     return marker_array

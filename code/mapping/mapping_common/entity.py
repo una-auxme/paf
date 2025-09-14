@@ -17,7 +17,9 @@ import numpy as np
 import shapely
 
 from uuid import UUID, uuid4
-from builtin_interfaces.msg import Time, Duration
+from builtin_interfaces.msg import Time as TimeMsg
+from builtin_interfaces.msg import Duration as DurationMsg
+from rclpy.duration import Duration
 from std_msgs.msg import Header
 import unique_identifier_msgs.msg as uuid_msgs
 from visualization_msgs.msg import Marker
@@ -171,9 +173,9 @@ class TrackingInfo:
     PAF24 still left it in as a base/guidance for future tracking experiments
     """
 
-    visibility_time: Duration = field(default_factory=Duration)
+    visibility_time: DurationMsg = field(default_factory=DurationMsg)
     """How long the entity has been visible for. Never gets reset"""
-    invisibility_time: Duration = field(default_factory=Duration)
+    invisibility_time: DurationMsg = field(default_factory=DurationMsg)
     """How long the entity has been uninterruptedly not visible.
     Reset when the entity is visible again"""
     visibility_frame_count: int = 0
@@ -181,22 +183,22 @@ class TrackingInfo:
     invisibility_frame_count: int = 0
     """In how many consecutive data frames the entity was not visible.
     Reset when the entity is visible again"""
-    moving_time: Duration = field(default_factory=Duration)
+    moving_time: DurationMsg = field(default_factory=DurationMsg)
     """How long an entity was moving continuously. Reset when standing
 
     This might be used to decide if we should overtake
     """
-    standing_time: Duration = field(default_factory=Duration)
+    standing_time: DurationMsg = field(default_factory=DurationMsg)
     """How long an entity stood still continuously. Reset when moving
 
     This might be used to decide if we should overtake
     """
-    moving_time_sum: Duration = field(default_factory=Duration)
+    moving_time_sum: DurationMsg = field(default_factory=DurationMsg)
     """Sums of all the time the entity was moving. Never gets reset
 
     This might be used to decide if we should overtake
     """
-    standing_time_sum: Duration = field(default_factory=Duration)
+    standing_time_sum: DurationMsg = field(default_factory=DurationMsg)
     """Sums of all the time the entity was standing still. Never gets reset
 
     This might be used to decide if we should overtake
@@ -251,7 +253,7 @@ class Entity:
     """Shape2D for collision calculations"""
     transform: Transform2D
     """Transform2D based on the map origin (hero car)"""
-    timestamp: Time = field(default_factory=Time)
+    timestamp: TimeMsg = field(default_factory=TimeMsg)
     """When adding the entity its timestamp is the timestamp
     of the associated sensor data
     (might slightly differ to the timestamp of the Map)
@@ -372,7 +374,7 @@ class Entity:
             if self.tracking_info is not None
             else msg.TrackingInfo()
         )
-        uuid = np.frombuffer(self.uuid.bytes, dtype=np.int8)
+        uuid = np.frombuffer(self.uuid.bytes, dtype=np.uint8)
         return msg.Entity(
             confidence=self.confidence,
             priority=self.priority,
@@ -432,7 +434,7 @@ class Entity:
         m = Marker()
         m.type = Marker.ARROW
         m.action = Marker.ADD
-        m.lifetime = Duration(seconds=2 / 20.0)
+        m.lifetime = Duration(seconds=2 / 20.0).to_msg()
         m.pose.position.x = self.transform.translation().x()
         m.pose.position.y = self.transform.translation().y()
         m.pose.position.z = 0.0
@@ -466,7 +468,7 @@ class Entity:
         text_marker = Marker()
         text_marker.type = Marker.TEXT_VIEW_FACING
         text_marker.action = Marker.ADD
-        text_marker.lifetime = Duration(seconds=2 / 20.0)
+        text_marker.lifetime = Duration(seconds=2 / 20.0).to_msg()
         text_marker.pose.position.x = self.transform.translation().x() + offset.x()
         text_marker.pose.position.y = self.transform.translation().y() + offset.y()
         text_marker.pose.position.z = 1.5
