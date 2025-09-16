@@ -129,7 +129,7 @@ class PurePursuitController(Node):
         self.__path: Optional[Path] = None
         self.__velocity: Optional[float] = None
 
-        self.loop_timer = self.create_timer(self.control_loop_rate, self.loop)
+        self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
@@ -138,11 +138,7 @@ class PurePursuitController(Node):
         return update_attributes(self, params)
 
     def loop(self):
-        """
-        Main loop of the acting node
-        :param timer_event: Timer event from ROS
-        :return:
-        """
+        """Main loop of the controller."""
         if self.__path is None:
             self.get_logger().warn(
                 "PurePursuitController hasn't received a path "
@@ -178,7 +174,6 @@ class PurePursuitController(Node):
     def __calculate_steer(self) -> Optional[float]:
         """
         Calculates the steering angle based on the current information
-        :return:
         """
         hero = mapping_common.hero.create_hero_entity()
         hero_front_x = hero.get_front_x()
