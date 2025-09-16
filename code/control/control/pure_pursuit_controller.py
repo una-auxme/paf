@@ -1,7 +1,6 @@
 from typing import Optional, List
 import math
 from math import atan, sin
-import numpy as np
 
 import rclpy
 from rclpy.node import Node
@@ -168,7 +167,7 @@ class PurePursuitController(Node):
                 throttle_duration_sec=0.5,
             )
         else:
-            self.pure_pursuit_steer_pub.publish(steering_angle)
+            self.pure_pursuit_steer_pub.publish(Float32(data=steering_angle))
 
     def loop_handler(self):
         try:
@@ -191,8 +190,9 @@ class PurePursuitController(Node):
             return None
 
         # la_dist = MIN_LA_DISTANCE <= K_LAD * velocity <= MAX_LA_DISTANCE
-        look_ahead_dist = np.clip(
-            self.k_lad * self.__velocity, self.min_la_distance, self.max_la_distance
+        look_ahead_dist = max(
+            self.min_la_distance,
+            min(self.k_lad * self.__velocity, self.max_la_distance),
         )
         # Get the target position on the trajectory in look_ahead distance
         (look_ahead_traj, _) = mapping_common.mask.split_line_at(
