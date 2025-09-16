@@ -27,9 +27,11 @@ find_package(geometry_msgs REQUIRED)
 
 # Add all your interface files here:
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/MinDistance.msg"
-  "msg/TrafficLightState.msg"
-  "msg/Waypoint.msg"
+  "srv/StartOvertake.srv"
+  "srv/EndOvertake.srv"
+  "srv/OvertakeStatus.srv"
+
+  "srv/SpeedAlteration.srv"
 
   DEPENDENCIES # Add packages that above messages depend on
   geometry_msgs
