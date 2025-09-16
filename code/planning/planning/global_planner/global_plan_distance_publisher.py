@@ -1,47 +1,44 @@
-#!/usr/bin/env python
-
 """
 This node publishes the distance to the next waypoint and the
 stop line of an intersection specified by the global waypoint in front of
 it.
 """
 
-from rospy import Subscriber, Publisher
-import ros_compatibility as roscomp
-from ros_compatibility.node import CompatibleNode
+from typing import Optional, List
+
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from rclpy.subscription import Subscription
 from geometry_msgs.msg import PoseStamped
 from carla_msgs.msg import CarlaRoute
 from nav_msgs.msg import Path
-from agents.navigation.local_planner import RoadOption
 
-from perception.msg import Waypoint
+from perception_interfaces.msg import Waypoint
 
 import math
 
 
-class GlobalPlanDistance(CompatibleNode):
+class GlobalPlanDistance(Node):
 
     def __init__(self):
-        """
-        Constructor
-        :return:
-        """
-
-        super(GlobalPlanDistance, self).__init__("global_plan_distance" "_publisher")
-        self.loginfo("GlobalPlanDistance node started")
+        super().__init__("global_plan_distance_publisher")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # basic info
-        self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", "0.05")
-        self.publish_loop_rate = 0.05  # 20Hz rate like the sensors
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
 
         self.current_pos = None
         self.trajectory_local = None
         self.global_route = None
-        self.road_options = None
+        self.road_options: Optional[List[int]] = None
 
         # Subscriber
-        self.pos_subscriber = self.new_subscription(
+        self.pos_subscriber = self.create_subscription(
             PoseStamped,
             "/paf/" + self.role_name + "/current_pos",
             self.update_position,
@@ -49,23 +46,25 @@ class GlobalPlanDistance(CompatibleNode):
         )
 
         # Get trajectory only for checking of the motion_planning has initialized
-        self.trajectory_local_sub: Subscriber = self.new_subscription(
+        self.trajectory_local_sub: Subscription = self.create_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory_local",
             self.__set_trajectory_local,
             qos_profile=1,
         )
 
-        self.global_plan_subscriber = self.new_subscription(
+        self.global_plan_subscriber = self.create_subscription(
             CarlaRoute,
             "/carla/" + self.role_name + "/global_plan",
             self.update_global_route,
             qos_profile=1,
         )
 
-        self.waypoint_publisher: Publisher = self.new_publisher(
+        self.waypoint_publisher: Publisher = self.create_publisher(
             Waypoint, "/paf/" + self.role_name + "/current_waypoint", qos_profile=1
         )
+
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def __set_trajectory_local(self, data: Path):
         """Receive trajectory from motion planner
@@ -111,15 +110,15 @@ class GlobalPlanDistance(CompatibleNode):
         # if the road option indicates an intersection, the distance to the
         # next waypoint is also the distance to the stop line
         if self.road_options[0] in {
-            RoadOption.VOID,
-            RoadOption.LEFT,
-            RoadOption.RIGHT,
-            RoadOption.STRAIGHT,
+            CarlaRoute.VOID,
+            CarlaRoute.LEFT,
+            CarlaRoute.RIGHT,
+            CarlaRoute.STRAIGHT,
         }:
             waypoint_type = Waypoint.TYPE_INTERSECTION
         elif self.road_options[0] in {
-            RoadOption.CHANGELANELEFT,
-            RoadOption.CHANGELANERIGHT,
+            CarlaRoute.CHANGELANELEFT,
+            CarlaRoute.CHANGELANERIGHT,
         }:
             waypoint_type = Waypoint.TYPE_LANECHANGE
 
@@ -140,10 +139,10 @@ class GlobalPlanDistance(CompatibleNode):
             if (
                 len(self.road_options) > 1
                 and self.road_options[0]
-                in {RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT}
+                in {CarlaRoute.CHANGELANELEFT, CarlaRoute.CHANGELANERIGHT}
                 and self.road_options[0] == self.road_options[1]
             ):
-                self.road_options[1] = RoadOption.LANEFOLLOW
+                self.road_options[1] = CarlaRoute.LANEFOLLOW
 
     def update_global_route(self, route):
         """
@@ -156,32 +155,15 @@ class GlobalPlanDistance(CompatibleNode):
             self.global_route = list(route.poses)
             self.road_options = list(route.road_options)
 
-    def run(self):
-        """
-        Control loop
-
-        :return:
-        """
-
-        self.spin()
-
 
 def main(args=None):
-    """
-    main function
+    rclpy.init(args=args)
 
-    :param args:
-    :return:
-    """
-
-    roscomp.init("position_publisher", args=args)
     try:
         node = GlobalPlanDistance()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
 
 
 if __name__ == "__main__":
