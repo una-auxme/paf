@@ -3,7 +3,7 @@ from math import cos, degrees, sin
 from typing import Tuple, Optional
 from xml.etree import ElementTree as eTree
 
-from global_planner import help_functions
+from . import help_functions
 
 # Check small distance between two points
 SMALL_DIST = 0.001
@@ -12,14 +12,14 @@ STEP_SIZE = 0.5
 # distance between points in linear interpolation
 INTERVALL = 1.0
 # difference to the target point
-TARGET_DIFF = 5
+TARGET_DIFF = 5.0
 LINE = 0.0
 # Value to convert mph in m/s
 MPH = 2.24
 # Value to convert kmh/h in m/s
 KMH = 3.6
 # Default speed for passing a junction in m/s
-DEFAULT_MS = 12
+DEFAULT_MS = 12.0
 # Road value from openDrive format
 ROAD = -1
 # Change lane commands from leaderboard
@@ -807,8 +807,8 @@ class OpenDriveConverter:
         """
         radians = abs(radians)
         deg = degrees(radians)
-        if deg > 360:
-            deg = 360 - degrees(radians)
+        if deg > 360.0:
+            deg = 360.0 - degrees(radians)
         return deg
 
     def next_action_id(

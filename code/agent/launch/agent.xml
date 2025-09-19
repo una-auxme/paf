@@ -11,8 +11,8 @@
     </include>
 
     <!-- planning -->
-    <!-- <include file="$(find planning)/launch/planning.launch">
-    </include> -->
+    <include file="$(find-pkg-share planning)/launch/planning.xml">
+    </include>
 
     <!-- acting -->
     <include file="$(find-pkg-share acting)/launch/acting.xml">

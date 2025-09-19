@@ -11,9 +11,11 @@ from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from nav_msgs.msg import Path
 from std_msgs.msg import Float32MultiArray, String
 
-from global_planner.preplanning_trajectory import OpenDriveConverter
-
 from mapping_common.transform import Point2
+
+from paf_common.exceptions import emsg_with_trace
+
+from .preplanning_trajectory import OpenDriveConverter
 
 # TODO: These definition do not align with the CarlaRoute.RIGHT, etc.. definitions.
 # -> Check for possible bugs
@@ -104,6 +106,7 @@ class PrePlanner(Node):
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _global_route_callback(self, data: CarlaRoute) -> None:
+        self.get_logger().info("Received global route.")
         self.update_global_route(data)
 
     def update_global_route(self, data: CarlaRoute) -> None:
@@ -214,8 +217,8 @@ class PrePlanner(Node):
         # Transforming the calculated waypoints into a Path msg
         stamped_poses = []
         for i in range(len(way_x)):
-            position = Point(way_x[i], way_y[i], 0)  # way_speed[i])
-            quaternion = euler2quat(0, 0, way_yaw[i])
+            position = Point(x=way_x[i], y=way_y[i], z=0.0)  # way_speed[i])
+            quaternion = euler2quat(0.0, 0.0, way_yaw[i])
             orientation = Quaternion(
                 x=quaternion[1], y=quaternion[2], z=quaternion[3], w=quaternion[0]
             )
@@ -279,7 +282,9 @@ class PrePlanner(Node):
         :param data: updated CarlaWorldInformation
         """
         if len(self.last_agent_positions) < self.last_agent_positions_count_target:
-            rospy.loginfo_throttle(0.5, "PrePlanner: Waiting for agent positions")
+            self.get_logger().info(
+                "PrePlanner: Waiting for agent positions", throttle_duration_sec=2
+            )
             self.last_agent_positions.append(data.pose.position)
             self.agent_pos = None
             self.agent_ori = None
@@ -300,8 +305,9 @@ class PrePlanner(Node):
         self.last_agent_positions.append(agent_pos)
 
         if not self.position_stabilized:
-            rospy.logwarn_throttle(
-                0.5, "PrePlanner: Waiting for agent position to stabilize"
+            self.get_logger().info(
+                "PrePlanner: Waiting for agent position to stabilize",
+                throttle_duration_sec=2,
             )
             self.agent_pos = None
             self.agent_ori = None
@@ -310,19 +316,20 @@ class PrePlanner(Node):
         self.agent_pos = agent_pos
         self.agent_ori = data.pose.orientation
         if self.global_route_backup is not None:
-            self.loginfo(
-                "PrePlanner: Received a pose update -> retrying route preplanning"
+            self.get_logger().info(
+                "PrePlanner: Received a pose update -> retrying route preplanning",
+                throttle_duration_sec=2,
             )
             try:
                 self.update_global_route(self.global_route_backup)
             except Exception as e:
-                self.logerr(f"Preplanner failed: {e}")
+                self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
     def dev_load_world_info(self):
         file_path = "/workspace/code/planning/src/global_planner/string_world_info.txt"
         with open(file_path, "r") as file:
             file_content = file.read()
-        self.logerr("DATA READ")
+        self.get_logger().warn("DATA READ")
         self.world_info_callback(file_content)
 
 

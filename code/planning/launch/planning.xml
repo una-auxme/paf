@@ -1,8 +1,8 @@
 <launch>
     <arg name="role_name" default="hero" />
-    <arg name="control_loop_rate" default="0.05" /> 
+    <arg name="control_loop_rate" default="0.05" />
 
-    <node pkg="planning" type="ACC.py" name="ACC" output="screen">
+    <!-- <node pkg="planning" type="ACC.py" name="ACC" output="screen">
         <param name="role_name" value="hero" />
         <param name="control_loop_rate" value="$(arg control_loop_rate)" />
         <rosparam file="$(find planning)/config/acc_config.yaml" command="load" />
@@ -10,8 +10,8 @@
     <node pkg="planning" type="motion_planning.py" name="MotionPlanning" output="screen">
            <param name="role_name" value="hero" />
            <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-    </node>
-  
+    </node> -->
+
     <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
            <param name="from_txt" value="True" />
            <param name="sampling_resolution" value="75.0" />
@@ -19,22 +19,18 @@
            <param name="global_route_txt" value="/code/planning/src/global_planner/global_route.txt" />
            <param name="role_name" value="hero" />
     </node> -->
-    
-    <node pkg="planning" type="global_planner_node.py" name="PrePlanner" output="screen">
+
+    <node pkg="planning" exec="global_planner_node" name="PrePlanner">
            <param name="role_name" value="hero" />
-           <param name="control_loop_rate" value="1" />
-           <param name="distance_spawn_to_first_wp" value="100" />
+           <param name="distance_spawn_to_first_wp" value="100.0" />
     </node>
 
-    <node pkg="planning" type="global_plan_distance_publisher.py" name="GlobalPlanDistance" output="screen">
-           <param name="control_loop_rate" value="$(arg control_loop_rate)" />
-           <param name="role_name" value="$(arg role_name)" />
+    <node pkg="planning" exec="global_plan_distance_publisher" name="GlobalPlanDistance">
+           <param name="role_name" value="$(var role_name)" />
     </node>
 
-    <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen">
+    <!-- <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen">
        <rosparam file="$(find planning)/config/behavior_config.yaml" command="load" />
-    </node>
+    </node> -->
 
-    <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
-    
 </launch>

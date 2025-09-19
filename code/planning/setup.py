@@ -22,6 +22,10 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "global_planner_node = planning.global_planner.global_planner_node:main",
+            "global_plan_distance_publisher = "
+            "planning.global_planner.global_plan_distance_publisher:main",
+        ],
     },
 )
