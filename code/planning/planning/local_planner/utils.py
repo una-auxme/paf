@@ -1,8 +1,9 @@
 from scipy.spatial.transform import Rotation
 import numpy as np
 import math
-import carla
-import os
+
+# import carla
+# import os
 
 
 """
@@ -148,44 +149,44 @@ def convert_to_ms(speed: float):
     return speed / 3.6
 
 
-def spawn_car(distance):
-    """Only used for testing, spawns a car in the given distance
+# def spawn_car(distance):
+#     """Only used for testing, spawns a car in the given distance
 
-    Args:
-        distance (float): distance
-    """
-    CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
-    CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
+#     Args:
+#         distance (float): distance
+#     """
+#     CARLA_HOST = os.environ.get("CARLA_HOST", "paf-carla-simulator-1")
+#     CARLA_PORT = int(os.environ.get("CARLA_PORT", "2000"))
 
-    client = carla.Client(CARLA_HOST, CARLA_PORT)
+#     client = carla.Client(CARLA_HOST, CARLA_PORT)
 
-    world = client.get_world()
-    world.wait_for_tick()
+#     world = client.get_world()
+#     world.wait_for_tick()
 
-    blueprint_library = world.get_blueprint_library()
-    # bp = blueprint_library.filter('vehicle.*')[0]
-    # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
-    bp = blueprint_library.filter("model3")[0]
-    for actor in world.get_actors():
-        if actor.attributes.get("role_name") == "hero":
-            ego_vehicle = actor
-            break
+#     blueprint_library = world.get_blueprint_library()
+#     # bp = blueprint_library.filter('vehicle.*')[0]
+#     # vehicle = world.spawn_actor(bp, world.get_map().get_spawn_points()[0])
+#     bp = blueprint_library.filter("model3")[0]
+#     for actor in world.get_actors():
+#         if actor.attributes.get("role_name") == "hero":
+#             ego_vehicle = actor
+#             break
 
-    spawnPoint = carla.Transform(
-        ego_vehicle.get_location() + carla.Location(y=distance.data),
-        ego_vehicle.get_transform().rotation,
-    )
+#     spawnPoint = carla.Transform(
+#         ego_vehicle.get_location() + carla.Location(y=distance.data),
+#         ego_vehicle.get_transform().rotation,
+#     )
 
-    vehicle = world.spawn_actor(bp, spawnPoint)
-    vehicle.set_autopilot(False)
-    # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
+#     vehicle = world.spawn_actor(bp, spawnPoint)
+#     vehicle.set_autopilot(False)
+#     # vehicle.set_target_velocity(carla.Vector3D(0, 6, 0))
 
-    # Spawn second vehicle
-    # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
-    #                               carla.Location(x=2.5, y=distance.data + 1),
-    #                               ego_vehicle.get_transform().rotation)
-    # vehicle2 = world.spawn_actor(bp, spawnpoint2)
-    # vehicle2.set_autopilot(False)
+#     # Spawn second vehicle
+#     # spawnpoint2 = carla.Transform(ego_vehicle.get_location() +
+#     #                               carla.Location(x=2.5, y=distance.data + 1),
+#     #                               ego_vehicle.get_transform().rotation)
+#     # vehicle2 = world.spawn_actor(bp, spawnpoint2)
+#     # vehicle2.set_autopilot(False)
 
 
 def interpolate_speed(

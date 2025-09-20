@@ -1,21 +1,20 @@
-#!/usr/bin/env python
 import math
 from typing import Optional, List, Tuple
 
 import shapely
 
-import ros_compatibility as roscomp
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from rclpy.subscription import Subscription
+from rclpy.qos import QoSProfile, DurabilityPolicy
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
+from paf_common.parameters import update_attributes
 
 from nav_msgs.msg import Path
-from ros_compatibility.node import CompatibleNode
-import rospy
-from rospy import Publisher, Subscriber
-from ros_compatibility.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import Float32, String, Bool
 from visualization_msgs.msg import Marker, MarkerArray
-
-from planning.cfg import ACCConfig
-from dynamic_reconfigure.server import Server
 
 import mapping_common.markers
 import mapping_common.shape
@@ -26,19 +25,15 @@ from mapping_common.map import Map
 from mapping_common.entity import FlagFilter, Entity
 from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2, Point2, Transform2D
-from mapping.msg import Map as MapMsg
+from mapping_interfaces.msg import Map as MapMsg
 
-from planning.srv import (
-    SpeedAlteration,
-    SpeedAlterationRequest,
-    SpeedAlterationResponse,
-)
+from planning_interfaces.srv import SpeedAlteration
 
 MARKER_NAMESPACE: str = "acc"
 ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
 
 
-class ACC(CompatibleNode):
+class ACC(Node):
     """ACC (Adaptive Cruise Control) calculates and publishes the desired speed based on
     possible collisions, the current speed, the trajectory, and the speed limits."""
 
@@ -54,11 +49,190 @@ class ACC(CompatibleNode):
     emergency_count: int = 0
 
     def __init__(self):
-        super(ACC, self).__init__("ACC")
-        self.role_name = self.get_param("role_name", "hero")
+        super().__init__("ACC")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        # Parameters
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.k_p = (
+            self.declare_parameter(
+                "k_p",
+                0.5,
+                descriptor=ParameterDescriptor(
+                    description="Kp used for the PI controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.k_i = (
+            self.declare_parameter(
+                "k_i",
+                1.2,
+                descriptor=ParameterDescriptor(
+                    description="Ki used for the PI controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.t_gap = (
+            self.declare_parameter(
+                "t_gap",
+                1.9,
+                descriptor=ParameterDescriptor(
+                    description="Time gap used for the PI controller",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.d_min = (
+            self.declare_parameter(
+                "d_min",
+                0.7,
+                descriptor=ParameterDescriptor(
+                    description="Minimal distance to the object in front when standing",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.hard_approach_distance = (
+            self.declare_parameter(
+                "hard_approach_distance",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Minimum distance when closely approaching an obstacle",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.hard_approach_speed = (
+            self.declare_parameter(
+                "hard_approach_speed",
+                1.0,
+                descriptor=ParameterDescriptor(
+                    description="Minimum speed when closely approaching an obstacle",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.acceleration_factor = (
+            self.declare_parameter(
+                "acceleration_factor",
+                1.0,
+                descriptor=ParameterDescriptor(
+                    description="Adjusts the acceleration",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.curve_line_angle = (
+            self.declare_parameter(
+                "curve_line_angle",
+                15.0,
+                descriptor=ParameterDescriptor(
+                    description="Angle (deg!) of the line used to calculate the curve distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.min_curve_speed = (
+            self.declare_parameter(
+                "min_curve_speed",
+                4.0,
+                descriptor=ParameterDescriptor(
+                    description="Minimum desired curve speed at min_curve_distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.min_curve_distance = (
+            self.declare_parameter(
+                "min_curve_distance",
+                2.0,
+                descriptor=ParameterDescriptor(
+                    description="Distance to the intersection with the trajectory",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.max_curve_speed = (
+            self.declare_parameter(
+                "max_curve_speed",
+                30.0,
+                descriptor=ParameterDescriptor(
+                    description="Maximum desired curve speed at max_curve_distance",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=50.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.max_curve_distance = (
+            self.declare_parameter(
+                "max_curve_distance",
+                50.0,
+                descriptor=ParameterDescriptor(
+                    description="Adjusts the acceleration",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
 
         # Get Map
-        self.map_sub: Subscriber = self.new_subscription(
+        self.map_sub: Subscription = self.create_subscription(
             MapMsg,
             f"/paf/{self.role_name}/mapping/init_data",
             self.__set_map,
@@ -66,7 +240,7 @@ class ACC(CompatibleNode):
         )
 
         # Get current speed limit
-        self.speed_limit_sub: Subscriber = self.new_subscription(
+        self.speed_limit_sub: Subscription = self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/speed_limit",
             self.__set_speed_limit,
@@ -74,7 +248,7 @@ class ACC(CompatibleNode):
         )
 
         # Get trajectory for collision mask calculation
-        self.trajectory_local_sub: Subscriber = self.new_subscription(
+        self.trajectory_local_sub: Subscription = self.create_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory_local",
             self.__set_trajectory_local,
@@ -82,7 +256,7 @@ class ACC(CompatibleNode):
         )
 
         # Get current behavior
-        self.curr_behavior_sub: Subscriber = self.new_subscription(
+        self.curr_behavior_sub: Subscription = self.create_subscription(
             String,
             f"/paf/{self.role_name}/curr_behavior",
             self.__set_curr_behavior,
@@ -90,7 +264,7 @@ class ACC(CompatibleNode):
         )
 
         # Get current steering to adjust the front collision mask
-        self.steer_sub: Subscriber = self.new_subscription(
+        self.steer_sub: Subscription = self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/pure_pursuit_steer",
             self.__set_steer,
@@ -98,12 +272,12 @@ class ACC(CompatibleNode):
         )
 
         # Publish desired speed to acting
-        self.velocity_pub: Publisher = self.new_publisher(
+        self.velocity_pub: Publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
         )
 
         # Publish to emergency break if needed
-        self.emergency_pub = self.new_publisher(
+        self.emergency_pub = self.create_publisher(
             Bool,
             f"/paf/{self.role_name}/emergency",
             qos_profile=QoSProfile(
@@ -112,19 +286,22 @@ class ACC(CompatibleNode):
         )
 
         # Publish debugging marker
-        self.marker_publisher: Publisher = self.new_publisher(
+        self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray, f"/paf/{self.role_name}/acc/debug_markers", qos_profile=1
         )
 
-        self.speed_service = rospy.Service(
-            f"/paf/{self.role_name}/acc/speed_alteration",
+        self.speed_service = self.create_service(
             SpeedAlteration,
+            f"/paf/{self.role_name}/acc/speed_alteration",
             self.handle_speed_alteration,
         )
 
-        Server(ACCConfig, self.dynamic_reconfigure_callback)
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
-        self.logdebug("ACC initialized")
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
 
     def __set_speed_limit(self, data: Float32):
         self.speed_limit = data.data
@@ -132,9 +309,6 @@ class ACC(CompatibleNode):
     def __set_map(self, data: MapMsg):
         self.map = Map.from_ros_msg(data)
         self.update_velocity()
-
-    def dynamic_reconfigure_callback(self, config: "ACCConfig", level):
-        return config
 
     def __set_trajectory_local(self, data: Path):
         """Receive trajectory from motion planner
@@ -160,14 +334,6 @@ class ACC(CompatibleNode):
         """
         self.steer = data.data
 
-    def run(self):
-        """
-        Control loop
-        :return:
-        """
-
-        self.spin()
-
     def update_velocity(self):
         """
         Permanent checks if distance to a possible object is too small and
@@ -175,15 +341,15 @@ class ACC(CompatibleNode):
         """
         if self.map is None or self.trajectory_local is None:
             # We don't have the necessary data to drive safely
-            self.velocity_pub.publish(0)
+            self.velocity_pub.publish(Float32(data=0.0))
             return
 
         hero = self.map.hero()
         if hero is None or hero.motion is None:
             # We currenly have no hero data.
             # -> cannot drive safely
-            rospy.logerr("ACC: No hero with motion found in map!")
-            self.velocity_pub.publish(0)
+            self.get_logger().error("ACC: No hero with motion found in map!")
+            self.velocity_pub.publish(Float32(data=0.0))
             return
         hero_width = max(1.0, hero.get_width())
 
@@ -300,7 +466,7 @@ class ACC(CompatibleNode):
                 else:
                     self.emergency_count = 0
             else:
-                self.emergency_pub.publish(Bool(True))
+                self.emergency_pub.publish(Bool(data=True))
                 self.emergency_count = 0
             marker_text += f"\nEmergency count: {self.emergency_count}/5"
         else:
@@ -318,7 +484,9 @@ class ACC(CompatibleNode):
 
         self.velocity_pub.publish(desired_speed)
 
-        marker_array = debug_marker_array(MARKER_NAMESPACE, debug_markers)
+        marker_array = debug_marker_array(
+            MARKER_NAMESPACE, debug_markers, self.get_clock().now().to_msg()
+        )
         self.marker_publisher.publish(marker_array)
 
     def calculate_velocity_based_on_lead(
@@ -338,13 +506,13 @@ class ACC(CompatibleNode):
             float: Desired speed
         """
         desired_speed: float = float("inf")
-        d_min: float = rospy.get_param("~d_min")
+        d_min: float = self.d_min
 
         # PI controller which chooses the desired speed
-        Kp: float = rospy.get_param("~Kp")
-        Ki: float = rospy.get_param("~Ki")
-        T_gap: float = rospy.get_param("~T_gap")
-        acceleration_factor: float = rospy.get_param("~acceleration_factor")
+        Kp: float = self.k_p
+        Ki: float = self.k_i
+        T_gap: float = self.t_gap
+        acceleration_factor: float = self.acceleration_factor
 
         desired_distance = d_min + T_gap * hero_velocity
         delta_d = lead_distance - desired_distance
@@ -355,8 +523,8 @@ class ACC(CompatibleNode):
         desired_speed = hero_velocity + speed_adjustment
 
         # Use at least hard_approach_speed until hard_approach_distance is reached
-        if lead_distance - rospy.get_param("~hard_approach_distance") > 0:
-            desired_speed = max(desired_speed, rospy.get_param("~hard_approach_speed"))
+        if lead_distance - self.hard_approach_distance > 0:
+            desired_speed = max(desired_speed, self.hard_approach_speed)
 
         # desired speed should not be negative, only drive forward
         desired_speed = max(desired_speed, 0.0)
@@ -391,8 +559,8 @@ class ACC(CompatibleNode):
         )
 
         # Creates lines that exit the car left and right at an angle
-        curve_angle: float = math.radians(rospy.get_param("~curve_line_angle"))
-        max_curve_distance: float = rospy.get_param("~max_curve_distance")
+        curve_angle: float = math.radians(self.curve_line_angle)
+        max_curve_distance: float = self.max_curve_distance
         curve_line_end_base = (Vector2.forward() * max_curve_distance).point()
         curve_line_angles = [curve_angle, -curve_angle]
         curve_line_offsets = [
@@ -435,15 +603,16 @@ class ACC(CompatibleNode):
         )
 
         # Linear interpolation of the desired curve speed based on the intersection_dist
-        min_curve_speed: float = rospy.get_param("~min_curve_speed")
-        min_curve_distance: float = rospy.get_param("~min_curve_distance")
-        max_curve_speed: float = rospy.get_param("~max_curve_speed")
+        min_curve_speed: float = self.min_curve_speed
+        min_curve_distance: float = self.min_curve_distance
+        max_curve_speed: float = self.max_curve_speed
 
         intersection_dist = max(0, intersection_dist - min_curve_distance)
         max_curve_distance = max(0, max_curve_distance - min_curve_distance)
         if max_curve_distance == 0:
-            rospy.logwarn_throttle(
-                1.0, "ACC: max_curve_distance should not be <= min_curve_distance"
+            self.get_logger().warn(
+                "ACC: max_curve_distance should not be <= min_curve_distance",
+                throttle_duration_sec=2,
             )
             return (float("inf"), debug_markers)
 
@@ -453,7 +622,9 @@ class ACC(CompatibleNode):
         )
         return (desired_speed, debug_markers)
 
-    def handle_speed_alteration(self, req: SpeedAlterationRequest):
+    def handle_speed_alteration(
+        self, req: SpeedAlteration.Request, res: SpeedAlteration.Response
+    ):
         self.speed_override = (
             None if not req.speed_override_active else req.speed_override
         )
@@ -461,21 +632,19 @@ class ACC(CompatibleNode):
             None if not req.speed_limit_active else req.speed_limit
         )
 
-        response = SpeedAlterationResponse(success=True)
-        return response
+        res.success = True
+        return res
 
 
-if __name__ == "__main__":
-    """
-    main function starts the ACC node
-    :param args:
-    """
-    roscomp.init("ACC")
+def main(args=None):
+    rclpy.init(args=args)
 
     try:
         node = ACC()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
+
+
+if __name__ == "__main__":
+    main()

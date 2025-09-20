@@ -26,6 +26,7 @@ setup(
             "global_planner_node = planning.global_planner.global_planner_node:main",
             "global_plan_distance_publisher = "
             "planning.global_planner.global_plan_distance_publisher:main",
+            "ACC = planning.local_planner.ACC:main",
         ],
     },
 )
