@@ -28,6 +28,7 @@ setup(
             "planning.global_planner.global_plan_distance_publisher:main",
             "ACC = planning.local_planner.ACC:main",
             "motion_planning = planning.local_planner.motion_planning:main",
+            "behavior_tree = planning.behavior_agent.behavior_tree:main",
         ],
     },
 )

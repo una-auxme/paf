@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+from rclpy.qos import QoSProfile
 
 import py_trees
 import py_trees_ros
@@ -8,15 +7,15 @@ from std_msgs.msg import Float32, String
 from carla_msgs.msg import CarlaSpeedometer
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
-from mapping.msg import Map as MapMsg
+from mapping_interfaces.msg import Map as MapMsg
 from mapping_common.map import Map
 
-from perception.msg import Waypoint, TrafficLightState
+from perception_interfaces.msg import Waypoint, TrafficLightState
 
 BLACKBOARD_MAP_ID = "/import/map"
 
 
-class ImportMapBehavior(py_trees.Behaviour):
+class ImportMapBehavior(py_trees.behaviour.Behaviour):
     """Converts the /paf/hero/mapping/init_data from the Blackboard into
     the Map type and puts it into the blackboard at *BLACKBOARD_MAP_ID*
     """
@@ -33,7 +32,7 @@ class ImportMapBehavior(py_trees.Behaviour):
             return py_trees.common.Status.FAILURE
 
         map = Map.from_ros_msg(map_msg)
-        self.blackboard.set(BLACKBOARD_MAP_ID, map, overwrite=True)
+        self.blackboard.set(BLACKBOARD_MAP_ID, map)
         return py_trees.common.Status.SUCCESS
 
 
@@ -102,13 +101,17 @@ def create_node(role_name):
         },
     ]
 
-    topics2blackboard = py_trees.composites.Parallel("Topics to Blackboard")
+    qos_profile = QoSProfile(depth=1)
+    topics2blackboard = py_trees.composites.Parallel(
+        "Topics to Blackboard", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     for topic in topics:
         topics2blackboard.add_child(
             py_trees_ros.subscribers.ToBlackboard(
                 name=topic["name"],
                 topic_name=topic["name"],
                 topic_type=topic["msg"],
+                qos_profile=qos_profile,
                 blackboard_variables={topic["name"]: None},
                 clearing_policy=topic["clearing-policy"],
             )

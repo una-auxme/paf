@@ -53,6 +53,8 @@ class MotionPlanning(Node):
         super().__init__("MotionPlanning")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
+        mapping_common.set_logger(self.get_logger())
+
         self.role_name = (
             self.declare_parameter("role_name", "hero")
             .get_parameter_value()

@@ -7,6 +7,11 @@
   <maintainer email="peter.viechter@student.uni-augsburg.de">peter</maintainer>
   <license>MIT</license>
 
+  <depend>py_trees</depend>
+  <depend>py_trees_ros</depend>
+  <depend>py_trees_ros_interfaces</depend>
+  <depend>py_trees_ros_viewer</depend>
+
   <test_depend>python3-pytest</test_depend>
 
   <export>

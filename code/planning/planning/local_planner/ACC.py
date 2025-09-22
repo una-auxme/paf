@@ -52,6 +52,8 @@ class ACC(Node):
         super().__init__("ACC")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
+        mapping_common.set_logger(self.get_logger())
+
         # Parameters
         self.role_name = (
             self.declare_parameter("role_name", "hero")
