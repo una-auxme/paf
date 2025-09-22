@@ -1,13 +1,25 @@
-from typing import List
+from typing import List, Optional
 import sys
 
 import rclpy
+import rclpy.executors
+import rclpy.callback_groups
+from rclpy.callback_groups import CallbackGroup
 from rclpy.node import Node
+from std_msgs.msg import String
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import (
     SetParametersResult,
+)
+from visualization_msgs.msg import MarkerArray, Marker
+from mapping_interfaces.srv import UpdateStopMarks
+from planning_interfaces.srv import (
+    SpeedAlteration,
+    StartOvertake,
+    EndOvertake,
+    OvertakeStatus,
 )
 
 import py_trees
@@ -37,7 +49,9 @@ Source: https://github.com/ll7/psaf2
 """
 
 
-def grow_a_tree(role_name):
+def grow_a_tree(
+    role_name: str, node: "BehaviorTree", callback_group: Optional[CallbackGroup] = None
+):
 
     rules = Parallel(
         "Rules",
@@ -120,7 +134,7 @@ def grow_a_tree(role_name):
                             ),
                         ],
                     ),
-                    cruise.Cruise("Cruise"),
+                    cruise.Cruise("Cruise", node.curr_behavior_pub),
                 ],
             )
         ],
@@ -132,10 +146,14 @@ def grow_a_tree(role_name):
         children=[
             debug_markers.DebugMarkerBlackboardSetupBehavior(),
             speed_alteration.SpeedAlterationSetupBehavior(),
-            topics2blackboard.create_node(role_name),
+            topics2blackboard.create_node(role_name, callback_group=callback_group),
             rules,
-            speed_alteration.SpeedAlterationRequestBehavior(),
-            debug_markers.DebugMarkerBlackboardPublishBehavior(),
+            speed_alteration.SpeedAlterationRequestBehavior(
+                node.speed_alteration_client
+            ),
+            debug_markers.DebugMarkerBlackboardPublishBehavior(
+                node.get_clock(), node.marker_publisher, node.info_publisher
+            ),
             Running("Idle"),
         ],
     )
@@ -152,7 +170,9 @@ class BehaviorTree(Node):
         behaviors.set_logger(self.get_logger())
 
         self.blackboard = py_trees.blackboard.Blackboard()
+        self.client_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
 
+        # Parameters
         self.control_loop_rate = (
             self.declare_parameter(
                 "control_loop_rate",
@@ -168,10 +188,54 @@ class BehaviorTree(Node):
         )
         register_parameters(self)
 
-        root = grow_a_tree(self.role_name)
+        # Publishers
+        self.curr_behavior_pub = self.create_publisher(
+            String, "/paf/hero/curr_behavior", 1
+        )
+        self.marker_publisher = self.create_publisher(
+            MarkerArray, "/paf/hero/behavior_tree/debug_markers", 1
+        )
+        self.info_publisher = self.create_publisher(
+            Marker, "/paf/hero/behavior_tree/info_marker", 1
+        )
+
+        # Service clients
+        self.speed_alteration_client = self.create_client(
+            SpeedAlteration,
+            "/paf/hero/acc/speed_alteration",
+            callback_group=self.client_callback_group,
+        )
+        self.stop_marks_client = self.create_client(
+            UpdateStopMarks,
+            "/paf/hero/mapping/update_stop_marks",
+            callback_group=self.client_callback_group,
+        )
+        self.start_overtake_client = self.create_client(
+            StartOvertake,
+            "/paf/hero/motion_planning/start_overtake",
+            callback_group=self.client_callback_group,
+        )
+        self.end_overtake_client = self.create_client(
+            EndOvertake,
+            "/paf/hero/motion_planning/end_overtake",
+            callback_group=self.client_callback_group,
+        )
+        self.overtake_status_client = self.create_client(
+            OvertakeStatus,
+            "/paf/hero/motion_planning/overtake_status",
+            callback_group=self.client_callback_group,
+        )
+        for client in self.clients:
+            while not client.wait_for_service(timeout_sec=2.0):
+                self.get_logger().warn(
+                    f"Waiting for the {client.service_name} service "
+                    "to become available..."
+                )
+
+        root = grow_a_tree(self.role_name, self, callback_group=None)
         self.behavior_tree = py_trees_ros.trees.BehaviourTree(root)
 
-        if not self.behavior_tree.setup(timeout=15):
+        if not self.behavior_tree.setup(node=self, timeout=15):
             self.get_logger().fatal("Behavior tree Setup failed.")
             sys.exit(1)
 
@@ -245,9 +309,19 @@ class BehaviorTree(Node):
 def main(args=None):
     rclpy.init(args=args)
 
+    # Executor with exactly two threads
+    # - One for the behavior tree tick timer
+    # - One for internal ros callback
+    # Note that this thread split is not enforced, but the two threads
+    #   are necessary to not deadlock the node when issuing service calls
+    # IMPORTANT: services must only be called
+    #   from inside the timer callback -> from inside the behaviours
+    executor = rclpy.executors.MultiThreadedExecutor(num_threads=2)
+
     try:
         node = BehaviorTree()
-        rclpy.spin(node)
+        executor.add_node(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
 

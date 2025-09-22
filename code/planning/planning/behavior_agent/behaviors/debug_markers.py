@@ -2,14 +2,18 @@ from typing import List, Optional, Dict, Tuple
 from dataclasses import dataclass, field
 import time
 
+from rclpy.publisher import Publisher
+from rclpy.clock import Clock
+
 from mapping_common.markers import debug_marker, debug_marker_array
 from mapping_common.transform import Vector2
 
 import py_trees
 
-import rospy
-from visualization_msgs.msg import MarkerArray, Marker
+from visualization_msgs.msg import Marker
 from std_msgs.msg import String
+
+from . import get_logger
 
 MARKER_NAMESPACE: str = "behavior_tree"
 
@@ -35,7 +39,7 @@ def add_debug_marker(m: Marker):
     blackboard = py_trees.blackboard.Blackboard()
     marker_list: Optional[List[Marker]] = blackboard.get(DEBUG_MARKER_LIST_ID)
     if marker_list is None:
-        rospy.logwarn(_marker_error_msg)
+        get_logger().warn(_marker_error_msg)
         return
 
     marker_list.append(m)
@@ -55,7 +59,7 @@ def add_debug_entry(
     blackboard = py_trees.blackboard.Blackboard()
     info_dict: Optional[Dict] = blackboard.get(DEBUG_INFO_DICT_ID)
     if info_dict is None:
-        rospy.logwarn(_info_error_msg)
+        get_logger().warn(_info_error_msg)
         return
 
     if behavior_name in info_dict:
@@ -88,7 +92,7 @@ def debug_status(
         DEBUG_INFO_DICT_ID
     )
     if info_dict is None:
-        rospy.logwarn(_info_error_msg)
+        get_logger().warn(_info_error_msg)
         return status
 
     if behavior_name in info_dict:
@@ -136,13 +140,13 @@ class BehaviorDebugInfo:
         return result
 
 
-class DebugMarkerBlackboardSetupBehavior(py_trees.Behaviour):
+class DebugMarkerBlackboardSetupBehavior(py_trees.behaviour.Behaviour):
     """Sets up an empty list/dict for the *DEBUG_MARKER_LIST_ID* and
     *DEBUG_INFO_DICT_ID* in the blackboard
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(type(self).__name__, *args, **kwargs)
+    def __init__(self):
+        super().__init__(type(self).__name__)
         self.blackboard = py_trees.blackboard.Blackboard()
 
     def update(self):
@@ -151,27 +155,28 @@ class DebugMarkerBlackboardSetupBehavior(py_trees.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
-class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
+class DebugMarkerBlackboardPublishBehavior(py_trees.behaviour.Behaviour):
     """Reads the markers and debug entries from *DEBUG_MARKER_LIST_ID* and
     *DEBUG_INFO_DICT_ID* inside the blackboard and publishes them into ROS/RViz
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(type(self).__name__, *args, **kwargs)
+    def __init__(
+        self, clock: Clock, marker_publisher: Publisher, info_publisher: Publisher
+    ):
+        super().__init__(type(self).__name__)
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.marker_publisher = rospy.Publisher(
-            "/paf/hero/behavior_tree/debug_markers", MarkerArray, queue_size=1
-        )
-        self.info_publisher = rospy.Publisher(
-            "/paf/hero/behavior_tree/info_marker", Marker, queue_size=1
-        )
+        self.clock = clock
+        self.marker_publisher = marker_publisher
+        self.info_publisher = info_publisher
 
     def update(self):
         marker_list: Optional[List[Marker]] = self.blackboard.get(DEBUG_MARKER_LIST_ID)
         if marker_list is None:
-            rospy.logwarn(_marker_error_msg)
+            get_logger().warn(_marker_error_msg)
         else:
-            marker_array = debug_marker_array(MARKER_NAMESPACE, marker_list)
+            marker_array = debug_marker_array(
+                MARKER_NAMESPACE, marker_list, self.clock.now().to_msg()
+            )
             self.marker_publisher.publish(marker_array)
 
         info_dict: Optional[Dict[str, BehaviorDebugInfo]] = self.blackboard.get(
@@ -191,7 +196,7 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.Behaviour):
             f"Behavior Tree Overview:"
         )
         if info_dict is None:
-            rospy.logwarn(_info_error_msg)
+            get_logger().warn(_info_error_msg)
         else:
             info_items = list(info_dict.items())
             info_items.sort(key=lambda i: i[1]._sys_creation_time)

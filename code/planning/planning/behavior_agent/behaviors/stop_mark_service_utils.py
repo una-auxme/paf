@@ -1,32 +1,28 @@
-import rospy
 from typing import Union, List, Optional
 from copy import deepcopy
 
 import shapely
 
-from mapping.srv import UpdateStopMarks, UpdateStopMarksRequest, UpdateStopMarksResponse
+from rclpy.client import Client
+
+from mapping_interfaces.srv import UpdateStopMarks
 
 from mapping_common.transform import Transform2D
 from mapping_common.entity import StopMark, Flags
 from mapping_common.shape import Shape2D, Polygon
 
 from .overtake_service_utils import get_global_hero_transform
-
-
-def create_stop_marks_proxy() -> rospy.ServiceProxy:
-    service = rospy.ServiceProxy("/paf/hero/mapping/update_stop_marks", UpdateStopMarks)
-    service.wait_for_service()
-    return service
+from . import get_logger
 
 
 def update_stop_marks(
-    proxy: rospy.ServiceProxy,
+    client: Client,
     id: str,
     reason: str,
     is_global: bool = False,
     marks: Optional[List[Union[StopMark, Shape2D, shapely.Polygon]]] = None,
     delete_all_others: bool = False,
-) -> Optional[UpdateStopMarksResponse]:
+) -> Optional[UpdateStopMarks.Response]:
     """Convenience function for the UpdateStopMarks service
     of the mapping_data_integration.
 
@@ -37,8 +33,7 @@ def update_stop_marks(
     The service definition can be found in mapping/srv/UpdateStopMarks.srv.
 
     Args:
-        proxy (rospy.ServiceProxy): Service proxy to use for sending the request.
-            Use create_stop_marks_proxy() to create it.
+        client (Client): Service client to use for sending the request.
         id (str): Identifier of this set of StopMarks
         reason (str): Reason for this set of StopMarks
         is_global (bool, optional): If False, the coordinates of *marks*
@@ -89,7 +84,7 @@ def update_stop_marks(
                 transform=transform,
             )
         else:
-            rospy.logerr(f"Unsupported stop mark type: ${type(mark)}")
+            get_logger().error(f"Unsupported stop mark type: ${type(mark)}")
             continue
 
         if not is_global:
@@ -99,8 +94,8 @@ def update_stop_marks(
 
     ros_entities = [e.to_ros_msg() for e in global_marks]
 
-    req = UpdateStopMarksRequest(
+    req = UpdateStopMarks.Request(
         id=id, delete_all_others=delete_all_others, marks=ros_entities
     )
 
-    return proxy(req)
+    return client.call(req)

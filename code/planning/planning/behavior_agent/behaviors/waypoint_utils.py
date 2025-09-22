@@ -2,7 +2,7 @@ from typing import Optional
 from py_trees.blackboard import Blackboard
 
 from nav_msgs.msg import Path
-from perception.msg import Waypoint
+from perception_interfaces.msg import Waypoint
 
 import mapping_common.hero
 import mapping_common.mask

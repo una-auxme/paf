@@ -1,3 +1,6 @@
+from typing import Optional
+
+from rclpy.callback_groups import CallbackGroup
 from rclpy.qos import QoSProfile
 
 import py_trees
@@ -41,7 +44,7 @@ Source: https://github.com/ll7/psaf2
 """
 
 
-def create_node(role_name):
+def create_node(role_name: str, callback_group: Optional[CallbackGroup] = None):
     """
     This function initializes the topics which will be written to the decision
     tree blackboard and accessible by the decision tree.
@@ -106,16 +109,16 @@ def create_node(role_name):
         "Topics to Blackboard", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
     )
     for topic in topics:
-        topics2blackboard.add_child(
-            py_trees_ros.subscribers.ToBlackboard(
-                name=topic["name"],
-                topic_name=topic["name"],
-                topic_type=topic["msg"],
-                qos_profile=qos_profile,
-                blackboard_variables={topic["name"]: None},
-                clearing_policy=topic["clearing-policy"],
-            )
+        new_child = py_trees_ros.subscribers.ToBlackboard(
+            name=topic["name"],
+            topic_name=topic["name"],
+            topic_type=topic["msg"],
+            qos_profile=qos_profile,
+            blackboard_variables={topic["name"]: None},
+            clearing_policy=topic["clearing-policy"],
         )
+        new_child.callback_group = callback_group
+        topics2blackboard.add_child(new_child)
 
     topics2blackboard.add_child(ImportMapBehavior())
 

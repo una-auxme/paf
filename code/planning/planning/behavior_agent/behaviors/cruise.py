@@ -1,6 +1,6 @@
 import py_trees
-import rospy
-from std_msgs.msg import String
+
+from rclpy.publisher import Publisher
 
 from . import behavior_names as bs
 
@@ -16,15 +16,9 @@ class Cruise(py_trees.behaviour.Behaviour):
     following the trajectory = acting
     """
 
-    def __init__(self, name):
-        super(Cruise, self).__init__(name)
-        rospy.loginfo("Starting Cruise")
-
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/curr_behavior", String, queue_size=1
-        )
-        return True
+    def __init__(self, name, curr_behavior_pub: Publisher):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
 
     def initialise(self):
         self.curr_behavior_pub.publish(bs.cruise.name)

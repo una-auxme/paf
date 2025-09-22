@@ -1,12 +1,13 @@
 import py_trees
 from py_trees.common import Status
-import rospy
 from typing import Optional
 
+from rclpy.client import Client
+
 from std_msgs.msg import String
-from perception.msg import Waypoint, TrafficLightState
-from planning.srv import OvertakeStatusResponse
-from agents.navigation.local_planner import RoadOption
+from perception_interfaces.msg import Waypoint, TrafficLightState
+from planning_interfaces.srv import OvertakeStatus
+from carla_msgs.msg import CarlaRoute
 
 import mapping_common.hero
 from mapping_common.map import Map
@@ -18,7 +19,6 @@ import shapely
 
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
-    create_stop_marks_proxy,
     update_stop_marks,
 )
 from .overtake_service_utils import (
@@ -96,11 +96,11 @@ at least once
 """
 
 
-def set_line_stop(proxy: rospy.ServiceProxy, distance: float):
+def set_line_stop(client: Client, distance: float):
     """Sets the stop line at distance from the front of the hero
 
     Args:
-        proxy (rospy.ServiceProxy)
+        client (Client)
         distance (float): distance from the front of the hero
     """
     hero = mapping_common.hero.create_hero_entity()
@@ -109,7 +109,7 @@ def set_line_stop(proxy: rospy.ServiceProxy, distance: float):
     )
     mask = Rectangle(0.5, 10.0, offset=transform)
     update_stop_marks(
-        proxy,
+        client,
         id=INTERSECTION_LINE_STOPMARKS_ID,
         reason="intersection stop",
         is_global=False,
@@ -117,9 +117,9 @@ def set_line_stop(proxy: rospy.ServiceProxy, distance: float):
     )
 
 
-def unset_line_stop(proxy: rospy.ServiceProxy):
+def unset_line_stop(client: Client):
     update_stop_marks(
-        proxy,
+        client,
         id=INTERSECTION_LINE_STOPMARKS_ID,
         reason="intersection clear",
         is_global=False,
@@ -127,7 +127,7 @@ def unset_line_stop(proxy: rospy.ServiceProxy):
     )
 
 
-def set_left_stop(proxy: rospy.ServiceProxy):
+def set_left_stop(client: Client):
     # Just an empty map
     map = Map()
     # We just use the lane free function to create the shape for our stopmarker
@@ -141,7 +141,7 @@ def set_left_stop(proxy: rospy.ServiceProxy):
     )
     if isinstance(mask, shapely.Polygon):
         update_stop_marks(
-            proxy,
+            client,
             id=INTERSECTION_LEFT_STOPMARKS_ID,
             reason="intersection left stop",
             is_global=False,
@@ -149,9 +149,9 @@ def set_left_stop(proxy: rospy.ServiceProxy):
         )
 
 
-def unset_left_stop(proxy: rospy.ServiceProxy):
+def unset_left_stop(client: Client):
     update_stop_marks(
-        proxy,
+        client,
         id=INTERSECTION_LEFT_STOPMARKS_ID,
         reason="intersection left clear",
         is_global=False,
@@ -162,7 +162,7 @@ def unset_left_stop(proxy: rospy.ServiceProxy):
 def apply_emergency_vehicle_speed_fix():
     if (
         CURRENT_INTERSECTION_WAYPOINT is not None
-        and CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.STRAIGHT
+        and CURRENT_INTERSECTION_WAYPOINT.road_option == CarlaRoute.STRAIGHT
         and INTERSECTION_HAS_TRAFFIC_LIGHT
     ):
         # We drive slower in straight intersections with traffic light
@@ -177,14 +177,16 @@ class Ahead(py_trees.behaviour.Behaviour):
      intersection.
     """
 
-    def __init__(self, name):
+    def __init__(
+        self,
+        name: str,
+    ):
         super(Ahead, self).__init__(name)
-
-    def setup(self, timeout):
-        self.blackboard = py_trees.blackboard.Blackboard()
         self.stop_proxy = create_stop_marks_proxy()
+
+    def setup(self, **kwargs):
+        self.blackboard = py_trees.blackboard.Blackboard()
         self.overtake_status_proxy = create_overtake_status_proxy()
-        return True
 
     def initialise(self):
         global INTERSECTION_HAS_TRAFFIC_LIGHT
@@ -388,7 +390,7 @@ class Approach(py_trees.behaviour.Behaviour):
                     self.name, py_trees.common.Status.SUCCESS, "Driving over stop_line"
                 )
 
-        if CURRENT_INTERSECTION_WAYPOINT.roadOption == RoadOption.LEFT:
+        if CURRENT_INTERSECTION_WAYPOINT.roadOption == CarlaRoute.LEFT:
             set_left_stop(self.stop_proxy)
 
         return debug_status(
@@ -485,7 +487,7 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         add_debug_entry(self.name, f"Intersection type: {self.intersection_type}")
 
-        if self.intersection_type == RoadOption.LEFT and not self.left_marker_set:
+        if self.intersection_type == CarlaRoute.LEFT and not self.left_marker_set:
             set_left_stop(self.stop_proxy)
             self.left_marker_set = True
 
@@ -544,7 +546,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.over_stop_line = True
 
         unset_line_stop(self.stop_proxy)
-        if self.intersection_type != RoadOption.LEFT:
+        if self.intersection_type != CarlaRoute.LEFT:
             if self.over_stop_line:
                 return debug_status(
                     self.name,

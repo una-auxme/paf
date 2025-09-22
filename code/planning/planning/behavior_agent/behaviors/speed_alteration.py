@@ -1,11 +1,9 @@
 from typing import Optional
-import rospy
 import py_trees
 
-from planning.srv import (
-    SpeedAlteration,
-    SpeedAlterationRequest,
-)
+from rclpy.client import Client
+
+from planning_interfaces.srv import SpeedAlteration
 
 
 SPEED_OVERRIDE_ID: str = "/speed/override"
@@ -31,13 +29,13 @@ def add_speed_limit(speed_limit: float):
     blackboard.set(SPEED_LIMIT_ID, speed_limit)
 
 
-class SpeedAlterationSetupBehavior(py_trees.Behaviour):
+class SpeedAlterationSetupBehavior(py_trees.behaviour.Behaviour):
     """Sets up the *SPEED_OVERRIDE_ID*
     and *SPEED_LIMIT_ID* in the blackboard to None
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(type(self).__name__, *args, **kwargs)
+    def __init__(self):
+        super().__init__(type(self).__name__)
         self.blackboard = py_trees.blackboard.Blackboard()
 
     def update(self):
@@ -47,21 +45,20 @@ class SpeedAlterationSetupBehavior(py_trees.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
-class SpeedAlterationRequestBehavior(py_trees.Behaviour):
+class SpeedAlterationRequestBehavior(py_trees.behaviour.Behaviour):
     """Reads the speed override and limit from *SPEED_OVERRIDE_ID*
     and *SPEED_LIMIT_ID* requests them from the SpeedAlteration service
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(type(self).__name__, *args, **kwargs)
-        self.blackboard = py_trees.blackboard.Blackboard()
-        self.service = rospy.ServiceProxy(
-            "/paf/hero/acc/speed_alteration", SpeedAlteration
+    def __init__(self, speed_alteration_client: Client):
+        super().__init__(
+            type(self).__name__,
         )
-        self.service.wait_for_service()
+        self.blackboard = py_trees.blackboard.Blackboard()
+        self.client = speed_alteration_client
 
     def update(self):
-        req = SpeedAlterationRequest()
+        req = SpeedAlteration.Request()
         speed_override = self.blackboard.get(SPEED_OVERRIDE_ID)
         speed_limit = self.blackboard.get(SPEED_LIMIT_ID)
 
@@ -77,6 +74,6 @@ class SpeedAlterationRequestBehavior(py_trees.Behaviour):
             req.speed_limit_active = True
             req.speed_limit = speed_limit
 
-        self.service(req)
+        self.client.call(req)
 
         return py_trees.common.Status.SUCCESS

@@ -146,7 +146,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                     # and want a lanechange to left
                     end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_start_overtake(
-                        proxy=self.end_overtake_proxy,
+                        client=self.end_overtake_proxy,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
                         end_transition_length=end_transition_length,
                     )
@@ -310,7 +310,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         lanechange_offset = 2.5
                     end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_start_overtake(
-                        proxy=self.start_overtake_proxy,
+                        client=self.start_overtake_proxy,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
                             self.change_distance + 10.0, lanechange_offset
