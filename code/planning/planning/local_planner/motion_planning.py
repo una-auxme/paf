@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import math
 from typing import Optional
 
@@ -6,23 +5,17 @@ import numpy as np
 import shapely
 from shapely import LineString
 
-import ros_compatibility as roscomp
-import rospy
+import rclpy
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+
 from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
-from ros_compatibility.node import CompatibleNode
-from rospy import Publisher, Subscriber
 from std_msgs.msg import Float32, Float32MultiArray
-from planning.srv import (
+from planning_interfaces.srv import (
     StartOvertake,
     EndOvertake,
     OvertakeStatus,
-    StartOvertakeRequest,
-    EndOvertakeRequest,
-    OvertakeStatusRequest,
-    StartOvertakeResponse,
-    EndOvertakeResponse,
-    OvertakeStatusResponse,
 )
 
 import mapping_common.hero
@@ -39,7 +32,7 @@ OVERTAKE_ENDING_DIST_THRESHOLD: float = 0.2
 """
 
 
-class MotionPlanning(CompatibleNode):
+class MotionPlanning(Node):
     """
     This node received the trajectory_global from the PrePlanner/global_planner.
 
@@ -57,16 +50,21 @@ class MotionPlanning(CompatibleNode):
     """
 
     def __init__(self):
-        super(MotionPlanning, self).__init__("MotionPlanning")
-        self.role_name = self.get_param("role_name", "hero")
-        self.control_loop_rate = self.get_param("control_loop_rate", 0.05)
+        super().__init__("MotionPlanning")
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
 
         # Overtake related stuff
-        self.overtake_request: Optional[StartOvertakeRequest] = None
+        self.overtake_request: Optional[StartOvertake.Request] = None
         """If an overtake is queued or running, this is populated
         """
-        self.overtake_status: OvertakeStatusResponse = OvertakeStatusResponse(
-            status=OvertakeStatusResponse.NO_OVERTAKE
+        self.overtake_status: OvertakeStatus.Response = OvertakeStatus.Response(
+            status=OvertakeStatus.Response.NO_OVERTAKE
         )
 
         # Trajectory related stuff
@@ -84,27 +82,27 @@ class MotionPlanning(CompatibleNode):
 
         # Subscriber
 
-        self.head_sub = self.new_subscription(
+        self.head_sub = self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
             qos_profile=1,
         )
 
-        self.trajectory_sub = self.new_subscription(
+        self.trajectory_sub = self.create_subscription(
             Path,
             f"/paf/{self.role_name}/trajectory_global",
             self.__set_global_trajectory,
             qos_profile=1,
         )
         # Get initial set of speed limits from global planner
-        self.speed_limit_OD_sub: Subscriber = self.new_subscription(
+        self.speed_limit_OD_sub = self.create_subscription(
             Float32MultiArray,
             f"/paf/{self.role_name}/speed_limits_OpenDrive",
             self.__set_speed_limits_opendrive,
             qos_profile=1,
         )
-        self.current_pos_sub = self.new_subscription(
+        self.current_pos_sub = self.create_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.__set_current_pos,
@@ -113,44 +111,44 @@ class MotionPlanning(CompatibleNode):
 
         # Services
 
-        self.start_overtake_service = rospy.Service(
-            f"/paf/{self.role_name}/motion_planning/start_overtake",
+        self.start_overtake_service = self.create_service(
             StartOvertake,
+            f"/paf/{self.role_name}/motion_planning/start_overtake",
             self.__start_overtake_callback,
         )
 
-        self.end_overtake_service = rospy.Service(
-            f"/paf/{self.role_name}/motion_planning/end_overtake",
+        self.end_overtake_service = self.create_service(
             EndOvertake,
+            f"/paf/{self.role_name}/motion_planning/end_overtake",
             self.__end_overtake_callback,
         )
 
-        self.overtake_status_service = rospy.Service(
-            f"/paf/{self.role_name}/motion_planning/overtake_status",
+        self.overtake_status_service = self.create_service(
             OvertakeStatus,
+            f"/paf/{self.role_name}/motion_planning/overtake_status",
             self.__overtake_status_callback,
         )
 
         # Publisher
 
-        self.global_trajectory_pub: Publisher = self.new_publisher(
+        self.global_trajectory_pub: Publisher = self.create_publisher(
             msg_type=Path, topic=f"/paf/{self.role_name}/trajectory", qos_profile=1
         )
-        self.local_trajectory_pub: Publisher = self.new_publisher(
+        self.local_trajectory_pub: Publisher = self.create_publisher(
             msg_type=Path,
             topic=f"/paf/{self.role_name}/trajectory_local",
             qos_profile=1,
         )
-        self.speed_limit_publisher: Publisher = self.new_publisher(
+        self.speed_limit_publisher: Publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
 
-        self.logdebug("MotionPlanning started")
         self.counter = 0
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def __start_overtake_callback(
-        self, req: StartOvertakeRequest
-    ) -> StartOvertakeResponse:
+        self, req: StartOvertake.Request, res: StartOvertake.Response
+    ) -> StartOvertake.Response:
         msg = "Received request for overtake"
         if self.overtake_request is not None:
             if sign(req.offset) == sign(self.overtake_request.offset):
@@ -163,22 +161,26 @@ class MotionPlanning(CompatibleNode):
                 msg = "Overwrote existing overtake."
             if (
                 req.has_start_pos
-                and self.overtake_status.status == OvertakeStatusResponse.OVERTAKING
+                and self.overtake_status.status == OvertakeStatus.Response.OVERTAKING
             ):
                 # We are already overtaking, continue to do so
                 req.has_start_pos = False
                 msg += " Ignored new start point, because overtake is already running."
 
-        if self.overtake_status.status == OvertakeStatusResponse.NO_OVERTAKE:
-            self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_QUEUED
+        if self.overtake_status.status == OvertakeStatus.Response.NO_OVERTAKE:
+            self.overtake_status.status = OvertakeStatus.Response.OVERTAKE_QUEUED
 
         self.overtake_status.offset = req.offset
         self.overtake_request = req
 
-        rospy.loginfo(f"MotionPlanning: {msg}")
-        return StartOvertakeResponse(success=True, msg=msg)
+        self.get_logger().info(f"MotionPlanning: {msg}")
+        res.success = True
+        res.msg = msg
+        return res
 
-    def __end_overtake_callback(self, req: EndOvertakeRequest) -> EndOvertakeResponse:
+    def __end_overtake_callback(
+        self, req: EndOvertake.Request, res: EndOvertake.Response
+    ) -> EndOvertake.Response:
         msg = "No overtake aborted: No overtake has been running"
         if self.overtake_request is not None:
             if req.has_end_pos:
@@ -189,17 +191,21 @@ class MotionPlanning(CompatibleNode):
             else:
                 self.overtake_request = None
                 msg = "Cancelled existing overtake"
-                if self.overtake_status.status == OvertakeStatusResponse.OVERTAKING:
-                    self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_ENDING
+                if self.overtake_status.status == OvertakeStatus.Response.OVERTAKING:
+                    self.overtake_status.status = (
+                        OvertakeStatus.Response.OVERTAKE_ENDING
+                    )
                 else:
-                    self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
+                    self.overtake_status.status = OvertakeStatus.Response.NO_OVERTAKE
 
-        rospy.loginfo(f"MotionPlanning: {msg}")
-        return EndOvertakeResponse(success=True, msg=msg)
+        self.get_logger().info(f"MotionPlanning: {msg}")
+        res.success = True
+        res.msg = msg
+        return res
 
     def __overtake_status_callback(
-        self, req: OvertakeStatusRequest
-    ) -> OvertakeStatusResponse:
+        self, req: OvertakeStatus.Request, res: OvertakeStatus.Response
+    ) -> OvertakeStatus.Response:
         return self.overtake_status
 
     def __set_heading(self, data: Float32):
@@ -263,18 +269,20 @@ class MotionPlanning(CompatibleNode):
         if local_trajectory is None:
             # Try to reinitialize trajectory on next position update
             self.init_trajectory = True
-            rospy.logfatal_throttle(1.0, "MotionPlanning: Empty trajectory")
+            self.get_logger().fatal(
+                "MotionPlanning: Empty trajectory", throttle_duration_sec=1.0
+            )
             return
 
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
 
-        local_path.header.stamp = rospy.get_rostime()
+        local_path.header.stamp = self.get_clock().now().to_msg()
         local_path.header.frame_id = "hero"
         # Publish local path
         self.local_trajectory_pub.publish(local_path)
         # Publish the global path for reference
-        self.global_trajectory.header.stamp = rospy.get_rostime()
+        self.global_trajectory.header.stamp = self.get_clock().now().to_msg()
         self.global_trajectory.header.frame_id = "global"
         self.global_trajectory_pub.publish(self.global_trajectory)
         # Publish speed limit
@@ -286,8 +294,9 @@ class MotionPlanning(CompatibleNode):
                 self.speed_limits_OD[self.current_global_waypoint_idx]
             )
         else:
-            rospy.logwarn_throttle(
-                1, "Motion planning: No speed limit available for current waypoint"
+            self.get_logger().warn(
+                "Motion planning: No speed limit available for current waypoint",
+                throttle_duration_sec=1.0,
             )
 
     def _update_current_global_waypoint_idx(self):
@@ -347,7 +356,7 @@ class MotionPlanning(CompatibleNode):
         if self.overtake_request is None:
             distance_to_trajectory = shapely.distance(global_trajectory, front_point_s)
             if distance_to_trajectory < TRAJECTORY_DISTANCE_THRESHOLD:
-                self.overtake_status.status = OvertakeStatusResponse.NO_OVERTAKE
+                self.overtake_status.status = OvertakeStatus.Response.NO_OVERTAKE
             return global_trajectory
 
         hero_point = hero_transform.translation().point()
@@ -384,9 +393,9 @@ class MotionPlanning(CompatibleNode):
                 > overtake_trajectory.length - OVERTAKE_ENDING_DIST_THRESHOLD
             ):
                 # If we are after the end of the overtake -> delete overtake_request
-                rospy.loginfo("MotionPlanning: Overtake ending")
+                self.get_logger().info("MotionPlanning: Overtake ending")
                 self.overtake_request = None
-                self.overtake_status.status = OvertakeStatusResponse.OVERTAKE_ENDING
+                self.overtake_status.status = OvertakeStatus.Response.OVERTAKE_ENDING
 
         if overtake_trajectory is None:
             return global_trajectory
@@ -405,7 +414,7 @@ class MotionPlanning(CompatibleNode):
         # Using the front (hood) position for the check is better
         distance_to_overtake = shapely.distance(overtake_trajectory, front_point_s)
         if distance_to_overtake < TRAJECTORY_DISTANCE_THRESHOLD:
-            self.overtake_status.status = OvertakeStatusResponse.OVERTAKING
+            self.overtake_status.status = OvertakeStatus.Response.OVERTAKING
 
         # Apply "smooth" transition by cropping the before and after parts
         ot_length = overtake_trajectory.length
@@ -436,7 +445,7 @@ class MotionPlanning(CompatibleNode):
         self.global_trajectory = data
         # TODO: Only reinit if we receive a different trajectory
         self.init_trajectory = True
-        self.loginfo("Global trajectory received")
+        self.get_logger().info("Global trajectory received")
 
     def __set_speed_limits_opendrive(self, data: Float32MultiArray):
         """Recieve speed limits from OpenDrive via global planner
@@ -445,9 +454,6 @@ class MotionPlanning(CompatibleNode):
             data (Float32MultiArray): speed limits per waypoint
         """
         self.speed_limits_OD = data.data
-
-    def run(self):
-        self.spin()
 
 
 def sign(f: float) -> float:
@@ -464,12 +470,15 @@ def sign(f: float) -> float:
     return math.copysign(1.0, f)
 
 
-if __name__ == "__main__":
-    roscomp.init("MotionPlanning")
+def main(args=None):
+    rclpy.init(args=args)
+
     try:
         node = MotionPlanning()
-        node.run()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    finally:
-        roscomp.shutdown()
+
+
+if __name__ == "__main__":
+    main()
