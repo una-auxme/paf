@@ -113,14 +113,32 @@ def grow_a_tree(
                                 "Laneswitch",
                                 memory=True,
                                 children=[
-                                    lane_change.Ahead("Lane Change Ahead?"),
+                                    lane_change.Ahead(
+                                        "Lane Change Ahead?",
+                                        node.overtake_status_client,
+                                        node.end_overtake_client,
+                                        node.stop_marks_client,
+                                    ),
                                     Sequence(
                                         "Lane Change Actions",
                                         memory=True,
                                         children=[
-                                            lane_change.Approach("Approach Change"),
-                                            lane_change.Wait("Wait Change"),
-                                            lane_change.Change("Execute Change"),
+                                            lane_change.Approach(
+                                                "Approach Change",
+                                                node.curr_behavior_pub,
+                                                node.start_overtake_client,
+                                                node.stop_marks_client,
+                                            ),
+                                            lane_change.Wait(
+                                                "Wait Change",
+                                                node.curr_behavior_pub,
+                                                node.stop_marks_client,
+                                            ),
+                                            lane_change.Change(
+                                                "Execute Change",
+                                                node.curr_behavior_pub,
+                                                node.stop_marks_client,
+                                            ),
                                         ],
                                     ),
                                 ],

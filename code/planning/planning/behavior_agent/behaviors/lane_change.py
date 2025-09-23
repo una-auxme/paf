@@ -1,38 +1,37 @@
 import py_trees
 from py_trees.common import Status
 from typing import Optional
-from std_msgs.msg import String
-from geometry_msgs.msg import Point
-from planning.srv import OvertakeStatusResponse
-from mapping_common.shape import Rectangle
-import rospy
+import shapely
 
-from agents.navigation.local_planner import RoadOption
-from perception.msg import Waypoint
+from rclpy.client import Client
+from rclpy.publisher import Publisher
+
+from carla_msgs.msg import CarlaRoute
+from geometry_msgs.msg import Point
+from planning_interfaces.srv import OvertakeStatus
+from perception_interfaces.msg import Waypoint
 
 import mapping_common.mask
 from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
-import shapely
+from mapping_common.shape import Rectangle
+
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake import OVERTAKE_SPACE_STOPMARKS_ID
 from .overtake_service_utils import (
-    create_start_overtake_proxy,
-    create_end_overtake_proxy,
-    create_overtake_status_proxy,
     request_start_overtake,
     request_end_overtake,
     request_overtake_status,
     get_global_hero_transform,
 )
 from .stop_mark_service_utils import (
-    create_stop_marks_proxy,
     update_stop_marks,
 )
+from . import get_logger
 
 from local_planner.utils import (
     TARGET_DISTANCE_TO_STOP_LANECHANGE,
@@ -55,22 +54,27 @@ class Ahead(py_trees.behaviour.Behaviour):
     lane change.
     """
 
-    def __init__(self, name):
-        super(Ahead, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        overtake_status_client: Client,
+        end_overtake_client: Client,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.overtake_status_client = overtake_status_client
+        self.end_overtake_client = end_overtake_client
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.overtake_status_proxy = create_overtake_status_proxy()
-        self.end_overtake_proxy = create_end_overtake_proxy()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
         global LANECHANGE_FREE
         LANECHANGE_FREE = False
         self.change_detected = False
         self.change_distance: Optional[float] = None
-        self.change_option: Optional[RoadOption] = None
+        self.change_option: Optional[int] = None
         self.change_position: Optional[Point] = None
 
     def update(self):
@@ -90,8 +94,8 @@ class Ahead(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "waypoint or trajectory_local is None"
             )
         else:
-            self.change_detected = waypoint.waypoint_type == waypoint.TYPE_LANECHANGE
-            self.change_option = waypoint.roadOption
+            self.change_detected = waypoint.waypoint_type == Waypoint.TYPE_LANECHANGE
+            self.change_option = waypoint.road_option
             self.change_position = waypoint.position
             # get change distance from global change point (transfered to local
             #  hero coords) as this is more accurate than lanechange msg distance
@@ -113,13 +117,17 @@ class Ahead(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "At least one change parameter is None"
             )
 
-        overtake_status: OvertakeStatusResponse = request_overtake_status(
-            self.overtake_status_proxy
-        )
+        overtake_status = request_overtake_status(self.overtake_status_client)
+        if overtake_status is None:
+            return debug_status(
+                self.name,
+                py_trees.common.Status.FAILURE,
+                "Unable to get overtake status",
+            )
 
         # multiplier for y coord, direction for left or right lane change
         lane_pos = 1
-        if self.change_option == RoadOption.CHANGELANERIGHT:
+        if self.change_option == CarlaRoute.CHANGELANERIGHT:
             lane_pos = -1
 
         if (
@@ -129,7 +137,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         ):
             # delete stop marks from overtake as they could block lane change
             update_stop_marks(
-                self.stop_proxy,
+                self.stop_client,
                 id=OVERTAKE_SPACE_STOPMARKS_ID,
                 reason="lanechange delete overtake marks",
                 is_global=False,
@@ -138,15 +146,15 @@ class Ahead(py_trees.behaviour.Behaviour):
             # if overtake in process and lanechange is planned to left:
             # just end overtake on the left lane and lanechange is finished
             if (
-                overtake_status == OvertakeStatusResponse.OVERTAKING
-                or overtake_status == OvertakeStatusResponse.OVERTAKE_QUEUED
+                overtake_status == OvertakeStatus.Response.OVERTAKING
+                or overtake_status == OvertakeStatus.Response.OVERTAKE_QUEUED
             ):
-                if self.change_option == RoadOption.CHANGELANELEFT:
+                if self.change_option == CarlaRoute.CHANGELANELEFT:
                     # change overtake end to the same lane if we are already in overtake
                     # and want a lanechange to left
                     end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_start_overtake(
-                        client=self.end_overtake_proxy,
+                        client=self.end_overtake_client,
                         local_end_pos=Point2.new(self.change_distance + 10.0, 0.0),
                         end_transition_length=end_transition_length,
                     )
@@ -158,7 +166,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                         "no lane change",
                     )
                 else:
-                    request_end_overtake(self.end_overtake_proxy)
+                    request_end_overtake(self.end_overtake_client)
                     return debug_status(
                         self.name, Status.RUNNING, "Lane change ahead, aborted overtake"
                     )
@@ -175,7 +183,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                     ),
                 )
                 update_stop_marks(
-                    self.stop_proxy,
+                    self.stop_client,
                     id=LANECHANGE_STOPMARK_ID,
                     reason="lane blocked",
                     is_global=False,
@@ -202,24 +210,26 @@ class Approach(py_trees.behaviour.Behaviour):
     vehicle down appropriately.
     """
 
-    def __init__(self, name):
-        super(Approach, self).__init__(name)
-        rospy.loginfo("Init -> Lane Change Behavior: Approach")
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        start_overtake_client: Client,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.start_overtake_client = start_overtake_client
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        self.start_overtake_proxy = create_start_overtake_proxy()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
-        rospy.loginfo("Approaching Change")
+        get_logger().info("Approaching Change")
         self.change_detected = False
         self.change_distance: Optional[float] = None
-        self.change_option: Optional[RoadOption] = None
+        self.change_option: Optional[int] = None
         self.change_direction: Optional[LaneFreeDirection] = None
         self.counter_lanefree = 0
         self.curr_behavior_pub.publish(bs.lc_app_init.name)
@@ -254,12 +264,12 @@ class Approach(py_trees.behaviour.Behaviour):
         if waypoint is not None:
             self.change_distance = waypoint.distance
             self.change_detected = waypoint.waypoint_type == Waypoint.TYPE_LANECHANGE
-            self.change_option = waypoint.roadOption
+            self.change_option = waypoint.road_option
 
             # Check if change is to the left or right lane
-            if self.change_option == RoadOption.CHANGELANELEFT:
+            if self.change_option == CarlaRoute.CHANGELANELEFT:
                 self.change_direction = LaneFreeDirection.LEFT
-            elif self.change_option == RoadOption.CHANGELANERIGHT:
+            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
                 self.change_direction = LaneFreeDirection.RIGHT
 
         if (
@@ -310,7 +320,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         lanechange_offset = 2.5
                     end_transition_length = min(15.0, self.change_distance + 9.0)
                     request_start_overtake(
-                        client=self.start_overtake_proxy,
+                        client=self.start_overtake_client,
                         offset=lanechange_offset,
                         local_end_pos=Point2.new(
                             self.change_distance + 10.0, lanechange_offset
@@ -318,7 +328,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         end_transition_length=end_transition_length,
                     )
                     update_stop_marks(
-                        self.stop_proxy,
+                        self.stop_client,
                         id=LANECHANGE_STOPMARK_ID,
                         reason="lane not blocked",
                         is_global=False,
@@ -382,20 +392,22 @@ class Wait(py_trees.behaviour.Behaviour):
     This behavior handles the waiting in front of the lane change.
     """
 
-    def __init__(self, name):
-        super(Wait, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
-        rospy.loginfo("Lane Change Wait")
-        self.change_option: Optional[RoadOption] = None
+        get_logger().info("Lane Change Wait")
+        self.change_option: Optional[int] = None
         self.change_direction: Optional[LaneFreeDirection] = None
         self.counter_lanefree = 0
 
@@ -423,12 +435,12 @@ class Wait(py_trees.behaviour.Behaviour):
         # Update stopline info
         waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
         if waypoint is not None:
-            self.change_option = waypoint.roadOption
+            self.change_option = waypoint.road_option
 
             # Check if change is to the left or right lane
-            if self.change_option == RoadOption.CHANGELANELEFT:
+            if self.change_option == CarlaRoute.CHANGELANELEFT:
                 self.change_direction = LaneFreeDirection.LEFT
-            elif self.change_option == RoadOption.CHANGELANERIGHT:
+            elif self.change_option == CarlaRoute.CHANGELANERIGHT:
                 self.change_direction = LaneFreeDirection.RIGHT
 
         if self.change_option is None or self.change_direction is None:
@@ -452,7 +464,7 @@ class Wait(py_trees.behaviour.Behaviour):
             # using a counter to account for inconsistencies
             if self.counter_lanefree > 1:
                 update_stop_marks(
-                    self.stop_proxy,
+                    self.stop_client,
                     id=LANECHANGE_STOPMARK_ID,
                     reason="lane not blocked",
                     is_global=False,
@@ -498,19 +510,21 @@ class Change(py_trees.behaviour.Behaviour):
     lane change procedure.
     """
 
-    def __init__(self, name):
-        super(Change, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
-        rospy.loginfo("Lane Change: Change to next Lane")
+        get_logger().info("Lane Change: Change to next Lane")
         self.waypoint: Optional[Waypoint] = self.blackboard.get(
             "/paf/hero/current_waypoint"
         )
@@ -561,7 +575,7 @@ class Change(py_trees.behaviour.Behaviour):
             self.curr_behavior_pub.publish(bs.lc_exit.name)
             # delete stop marks just in case
             update_stop_marks(
-                self.stop_proxy,
+                self.stop_client,
                 id=LANECHANGE_STOPMARK_ID,
                 reason="lane not blocked",
                 is_global=False,
