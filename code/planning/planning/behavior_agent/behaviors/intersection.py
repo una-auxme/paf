@@ -3,8 +3,10 @@ from py_trees.common import Status
 from typing import Optional
 
 from rclpy.client import Client
+from rclpy.publisher import Publisher
+from rclpy.clock import Clock
+from rclpy.duration import Duration
 
-from std_msgs.msg import String
 from perception_interfaces.msg import Waypoint, TrafficLightState
 from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
@@ -22,8 +24,6 @@ from .stop_mark_service_utils import (
     update_stop_marks,
 )
 from .overtake_service_utils import (
-    create_overtake_status_proxy,
-    create_end_overtake_proxy,
     request_overtake_status,
     request_end_overtake,
 )
@@ -31,6 +31,7 @@ from .speed_alteration import add_speed_limit
 from .waypoint_utils import calculate_waypoint_distance
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from .topics2blackboard import BLACKBOARD_MAP_ID
+from . import get_logger
 
 INTERSECTION_MARKER_COLOR = (222 / 255, 23 / 255, 214 / 255, 1.0)
 
@@ -177,16 +178,13 @@ class Ahead(py_trees.behaviour.Behaviour):
      intersection.
     """
 
-    def __init__(
-        self,
-        name: str,
-    ):
-        super(Ahead, self).__init__(name)
-        self.stop_proxy = create_stop_marks_proxy()
+    def __init__(self, name: str, stop_client: Client, overtake_status_client: Client):
+        super().__init__(name)
+        self.stop_client = stop_client
+        self.overtake_status_client = overtake_status_client
 
     def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.overtake_status_proxy = create_overtake_status_proxy()
 
     def initialise(self):
         global INTERSECTION_HAS_TRAFFIC_LIGHT
@@ -230,7 +228,7 @@ class Ahead(py_trees.behaviour.Behaviour):
             and stop_line_distance > OVER_STOP_LINE_DIST_THRESHOLD
         ):
             # Add the stop line early to avoid running over it at high speeds
-            set_line_stop(self.stop_proxy, stop_line_distance)
+            set_line_stop(self.stop_client, stop_line_distance)
 
         if stop_line_distance > 25:
             return debug_status(
@@ -241,14 +239,18 @@ class Ahead(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Already over stop line"
             )
 
-        overtake_status: OvertakeStatusResponse = request_overtake_status(
-            self.overtake_status_proxy
-        )
+        overtake_status = request_overtake_status(self.overtake_status_client)
+        if overtake_status is None:
+            return debug_status(
+                self.name,
+                py_trees.common.Status.FAILURE,
+                "Unable to get overtake status",
+            )
 
         # Stay in the overtake behavior as long as we can
         if stop_line_distance > INTERSECTION_START_MIN_DISTANCE and (
-            overtake_status.status == overtake_status.OVERTAKE_QUEUED
-            or overtake_status.status == overtake_status.OVERTAKING
+            overtake_status.status == OvertakeStatus.Response.OVERTAKE_QUEUED
+            or overtake_status.status == OvertakeStatus.Response.OVERTAKING
         ):
             return debug_status(
                 self.name,
@@ -261,7 +263,7 @@ class Ahead(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.INVALID:
-            unset_line_stop(self.stop_proxy)
+            unset_line_stop(self.stop_client)
 
 
 class Approach(py_trees.behaviour.Behaviour):
@@ -272,27 +274,29 @@ class Approach(py_trees.behaviour.Behaviour):
     vehicle down appropriately.
     """
 
-    def __init__(self, name):
-        super(Approach, self).__init__(name)
-        rospy.loginfo("Approach started")
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+        end_overtake_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
+        self.end_overtake_client = end_overtake_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
-        self.end_overtake_proxy = create_end_overtake_proxy()
-        return True
 
     def initialise(self):
         """
         This initializes the variables needed to save information about the
         stop line, stop signs and the traffic light.
         """
-        rospy.loginfo("Approaching Intersection")
+        get_logger().info("Approaching Intersection")
         self.curr_behavior_pub.publish(bs.int_app_init.name)
-        request_end_overtake(self.end_overtake_proxy)
+        request_end_overtake(self.end_overtake_client)
 
     def update(self):
         """
@@ -308,7 +312,9 @@ class Approach(py_trees.behaviour.Behaviour):
         """
         global CURRENT_INTERSECTION_WAYPOINT
         if CURRENT_INTERSECTION_WAYPOINT is None:
-            rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
             return debug_status(
                 self.name,
                 Status.FAILURE,
@@ -362,7 +368,7 @@ class Approach(py_trees.behaviour.Behaviour):
             or traffic_light_status.state == TrafficLightState.RED
         ):
             self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
-            set_line_stop(self.stop_proxy, stop_line_distance)
+            set_line_stop(self.stop_client, stop_line_distance)
 
             # We are stopping: check if we are standing < WAIT_TARGET_DISTANCE
             # in front of the line
@@ -384,14 +390,14 @@ class Approach(py_trees.behaviour.Behaviour):
         else:
             # Green light
             self.curr_behavior_pub.publish(bs.int_app_green.name)
-            unset_line_stop(self.stop_proxy)
+            unset_line_stop(self.stop_client)
             if stop_line_distance < WAIT_TARGET_DISTANCE:
                 return debug_status(
                     self.name, py_trees.common.Status.SUCCESS, "Driving over stop_line"
                 )
 
-        if CURRENT_INTERSECTION_WAYPOINT.roadOption == CarlaRoute.LEFT:
-            set_left_stop(self.stop_proxy)
+        if CURRENT_INTERSECTION_WAYPOINT.road_option == CarlaRoute.LEFT:
+            set_left_stop(self.stop_client)
 
         return debug_status(
             self.name,
@@ -401,7 +407,7 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_line_stop(self.stop_proxy)
+            unset_line_stop(self.stop_client)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -410,32 +416,38 @@ class Wait(py_trees.behaviour.Behaviour):
     section until the vehicle is allowed to drive through.
     """
 
-    def __init__(self, name):
-        super(Wait, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        clock: Clock,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.clock = clock
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
         self.green_light_time = None
-        return True
 
     def initialise(self):
-        rospy.loginfo("Wait Intersection")
+        get_logger().info("Wait Intersection")
         global CURRENT_INTERSECTION_WAYPOINT
         if CURRENT_INTERSECTION_WAYPOINT is None:
-            rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
             return
         self.waypoint = CURRENT_INTERSECTION_WAYPOINT
 
-        self.green_light_time = rospy.get_rostime()
+        self.green_light_time = self.clock.now()
         self.over_stop_line = False
         self.oncoming_counter = 0
-        self.stop_time = rospy.get_rostime()
+        self.stop_time = self.clock.now()
         self.was_red = False
-        self.intersection_type = self.waypoint.roadOption
+        self.intersection_type = self.waypoint.road_option
         self.left_marker_set = False
 
     def update(self):
@@ -488,12 +500,12 @@ class Wait(py_trees.behaviour.Behaviour):
         add_debug_entry(self.name, f"Intersection type: {self.intersection_type}")
 
         if self.intersection_type == CarlaRoute.LEFT and not self.left_marker_set:
-            set_left_stop(self.stop_proxy)
+            set_left_stop(self.stop_client)
             self.left_marker_set = True
 
         # First check if we still need to wait at the stop line
         if self.over_stop_line is False:
-            set_line_stop(self.stop_proxy, dist)
+            set_line_stop(self.stop_client, dist)
             if dist <= OVER_STOP_LINE_DIST_THRESHOLD:
                 self.over_stop_line = True
             elif (
@@ -501,7 +513,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 or traffic_light_status.state == TrafficLightState.YELLOW
             ):
                 # Wait at traffic light
-                self.green_light_time = rospy.get_rostime()
+                self.green_light_time = self.clock.now()
                 self.curr_behavior_pub.publish(bs.int_wait.name)
                 self.was_red = True
                 return debug_status(
@@ -511,16 +523,16 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
             elif traffic_light_status.state == TrafficLightState.UNKNOWN:
                 # Wait at least 2 seconds at stopline
-                if rospy.get_rostime() - self.stop_time > rospy.Duration(2):
+                if self.clock.now() - self.stop_time > Duration(seconds=2.0):
                     self.over_stop_line = True
-                    unset_line_stop(self.stop_proxy)
+                    unset_line_stop(self.stop_client)
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
                     "Waiting at stopline",
                 )
             elif (
-                rospy.get_rostime() - self.green_light_time < rospy.Duration(1)
+                self.clock.now() - self.green_light_time < Duration(seconds=1.0)
                 and traffic_light_status.state == TrafficLightState.GREEN
                 and self.was_red
             ):
@@ -531,13 +543,13 @@ class Wait(py_trees.behaviour.Behaviour):
                     "Wait Confirm green light!",
                 )
             elif (
-                rospy.get_rostime() - self.green_light_time > rospy.Duration(1)
+                self.clock.now() - self.green_light_time > Duration(seconds=1.0)
                 and traffic_light_status.state == TrafficLightState.GREEN
                 and self.was_red
             ):
                 # Drive through intersection
                 self.over_stop_line = True
-                unset_line_stop(self.stop_proxy)
+                unset_line_stop(self.stop_client)
                 return debug_status(
                     self.name, py_trees.common.Status.RUNNING, "Driving through..."
                 )
@@ -545,7 +557,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 # Light was green when switching to wait, drive through intersection
                 self.over_stop_line = True
 
-        unset_line_stop(self.stop_proxy)
+        unset_line_stop(self.stop_client)
         if self.intersection_type != CarlaRoute.LEFT:
             if self.over_stop_line:
                 return debug_status(
@@ -573,7 +585,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 "/params/left_check_debug"
             ):
                 self.curr_behavior_pub.publish(bs.int_enter.name)
-                unset_left_stop(self.stop_proxy)
+                unset_left_stop(self.stop_client)
                 return debug_status(
                     self.name, py_trees.common.Status.SUCCESS, "Intersection clear"
                 )
@@ -591,8 +603,8 @@ class Wait(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_line_stop(self.stop_proxy)
-            unset_left_stop(self.stop_proxy)
+            unset_line_stop(self.stop_client)
+            unset_left_stop(self.stop_client)
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -601,20 +613,22 @@ class Enter(py_trees.behaviour.Behaviour):
     after a certain distance threshold and ends the intersection behavior.
     """
 
-    def __init__(self, name):
-        super(Enter, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
-        rospy.loginfo("Enter Intersection")
-        unset_line_stop(self.stop_proxy)
+        get_logger().info("Enter Intersection")
+        unset_line_stop(self.stop_client)
         self.curr_behavior_pub.publish(bs.int_enter.name)
 
     def update(self):
@@ -627,7 +641,9 @@ class Enter(py_trees.behaviour.Behaviour):
         """
         global CURRENT_INTERSECTION_WAYPOINT
         if CURRENT_INTERSECTION_WAYPOINT is None:
-            rospy.logerr("Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set")
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
             return debug_status(
                 self.name,
                 Status.FAILURE,
