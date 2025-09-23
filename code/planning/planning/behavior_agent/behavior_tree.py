@@ -1,5 +1,4 @@
 from typing import List, Optional
-import sys
 
 import rclpy
 import rclpy.executors
@@ -300,9 +299,7 @@ class BehaviorTree(Node):
         root = grow_a_tree(self.role_name, self, callback_group=None)
         self.behavior_tree = py_trees_ros.trees.BehaviourTree(root)
 
-        if not self.behavior_tree.setup(node=self, timeout=15):
-            self.get_logger().fatal("Behavior tree Setup failed.")
-            sys.exit(1)
+        self.behavior_tree.setup(node=self, timeout=15.0)
 
         self.loop_timer = self.create_timer(
             self.control_loop_rate, self.tick_tree_handler
