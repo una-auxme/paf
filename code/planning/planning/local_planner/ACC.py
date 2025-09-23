@@ -26,7 +26,7 @@ from mapping_interfaces.msg import Map as MapMsg
 from planning_interfaces.srv import SpeedAlteration
 
 MARKER_NAMESPACE: str = "acc"
-ACC_MARKER_COLOR = (0, 1.0, 1.0, 0.5)
+ACC_MARKER_COLOR = (0.0, 1.0, 1.0, 0.5)
 
 
 class ACC(Node):
