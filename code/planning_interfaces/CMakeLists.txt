@@ -24,6 +24,8 @@ endif()
 # find_package(<dependency> REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(carla_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 # Add all your interface files here:
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -33,8 +35,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/SpeedAlteration.srv"
 
+  "srv/GetCarlaRoute.srv"
+  "srv/GetOpenDriveString.srv"
+  "srv/GetPath.srv"
+
   DEPENDENCIES # Add packages that above messages depend on
   geometry_msgs
+  carla_msgs
+  nav_msgs
 )
 
 ament_package()
