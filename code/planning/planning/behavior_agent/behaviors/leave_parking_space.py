@@ -6,6 +6,8 @@ import shapely
 from rclpy.client import Client
 from rclpy.publisher import Publisher
 
+from std_msgs.msg import String
+
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
     update_stop_marks,
@@ -125,7 +127,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 ):
                     # Either the lane is free or
                     # we started moving away from out start point
-                    self.curr_behavior_pub.publish(bs.parking.name)
+                    self.curr_behavior_pub.publish(String(data=bs.parking.name))
                     update_stop_marks(
                         self.stop_client,
                         id=self.name,

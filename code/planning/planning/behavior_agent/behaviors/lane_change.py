@@ -6,6 +6,7 @@ import shapely
 from rclpy.client import Client
 from rclpy.publisher import Publisher
 
+from std_msgs.msg import String
 from carla_msgs.msg import CarlaRoute
 from geometry_msgs.msg import Point
 from planning_interfaces.srv import OvertakeStatus
@@ -33,7 +34,7 @@ from .stop_mark_service_utils import (
 )
 from . import get_logger
 
-from local_planner.utils import (
+from planning.local_planner.utils import (
     TARGET_DISTANCE_TO_STOP_LANECHANGE,
     TARGET_DISTANCE_TO_TRIGGER_LANECHANGE,
 )
@@ -232,7 +233,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.change_option: Optional[int] = None
         self.change_direction: Optional[LaneFreeDirection] = None
         self.counter_lanefree = 0
-        self.curr_behavior_pub.publish(bs.lc_app_init.name)
+        self.curr_behavior_pub.publish(String(data=bs.lc_app_init.name))
 
     def update(self):
         """
@@ -247,7 +248,7 @@ class Approach(py_trees.behaviour.Behaviour):
         global LANECHANGE_FREE
 
         if LANECHANGE_FREE:
-            self.curr_behavior_pub.publish(bs.lc_app_free.name)
+            self.curr_behavior_pub.publish(String(data=bs.lc_app_free.name))
             return debug_status(
                 self.name,
                 py_trees.common.Status.SUCCESS,
@@ -334,14 +335,14 @@ class Approach(py_trees.behaviour.Behaviour):
                         is_global=False,
                         marks=[],
                     )
-                    self.curr_behavior_pub.publish(bs.lc_app_free.name)
+                    self.curr_behavior_pub.publish(String(data=bs.lc_app_free.name))
                     return debug_status(
                         self.name,
                         Status.SUCCESS,
                         "Lane Change: Lane free, changing directly",
                     )
                 else:
-                    self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
+                    self.curr_behavior_pub.publish(String(data=bs.lc_app_blocked.name))
                     return debug_status(
                         self.name,
                         Status.RUNNING,
@@ -360,7 +361,7 @@ class Approach(py_trees.behaviour.Behaviour):
                         "Lane Change: Lane free state unknown, "
                         f"keep count {self.counter_lanefree}/2, stay in current lane",
                     )
-                self.curr_behavior_pub.publish(bs.lc_app_blocked.name)
+                self.curr_behavior_pub.publish(String(data=bs.lc_app_blocked.name))
 
         # currently TARGET_DISTANCE_TO_STOP_LANECHANGE == 5 (see utils.py)
         if self.change_distance <= TARGET_DISTANCE_TO_STOP_LANECHANGE:
@@ -420,7 +421,7 @@ class Wait(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.SUCCESS, when lane free returns True
         """
         if LANECHANGE_FREE:
-            self.curr_behavior_pub.publish(bs.lc_app_free.name)
+            self.curr_behavior_pub.publish(String(data=bs.lc_app_free.name))
             return debug_status(
                 self.name,
                 py_trees.common.Status.SUCCESS,
@@ -470,21 +471,21 @@ class Wait(py_trees.behaviour.Behaviour):
                     is_global=False,
                     marks=[],
                 )
-                self.curr_behavior_pub.publish(bs.lc_wait_free.name)
+                self.curr_behavior_pub.publish(String(data=bs.lc_wait_free.name))
                 return debug_status(
                     self.name,
                     Status.SUCCESS,
                     "Lane Change Wait: Change now clear, changing",
                 )
             else:
-                self.curr_behavior_pub.publish(bs.lc_wait.name)
+                self.curr_behavior_pub.publish(String(data=bs.lc_wait.name))
                 return debug_status(
                     self.name,
                     Status.RUNNING,
                     f"Lane Change Wait: Free with count {self.counter_lanefree}/2",
                 )
         else:
-            self.curr_behavior_pub.publish(bs.lc_wait.name)
+            self.curr_behavior_pub.publish(String(data=bs.lc_wait.name))
             if lc_free is LaneFreeState.BLOCKED:
                 self.counter_lanefree = 0
                 return debug_status(
@@ -529,7 +530,7 @@ class Change(py_trees.behaviour.Behaviour):
             "/paf/hero/current_waypoint"
         )
         self.change_position: Optional[Point] = None
-        self.curr_behavior_pub.publish(bs.lc_enter_init.name)
+        self.curr_behavior_pub.publish(String(data=bs.lc_enter_init.name))
 
     def update(self):
         """
@@ -572,7 +573,7 @@ class Change(py_trees.behaviour.Behaviour):
                 "Lane Change Change: Driving to the next lane and end of lanechange",
             )
         else:
-            self.curr_behavior_pub.publish(bs.lc_exit.name)
+            self.curr_behavior_pub.publish(String(data=bs.lc_exit.name))
             # delete stop marks just in case
             update_stop_marks(
                 self.stop_client,

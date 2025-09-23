@@ -1,5 +1,5 @@
 import py_trees
-
+from std_msgs.msg import String
 from rclpy.publisher import Publisher
 
 from . import behavior_names as bs
@@ -21,7 +21,7 @@ class Cruise(py_trees.behaviour.Behaviour):
         self.curr_behavior_pub = curr_behavior_pub
 
     def initialise(self):
-        self.curr_behavior_pub.publish(bs.cruise.name)
+        self.curr_behavior_pub.publish(String(data=bs.cruise.name))
 
     def update(self):
         """
@@ -31,7 +31,7 @@ class Cruise(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.RUNNING, keeps the decision tree from
         finishing
         """
-        self.curr_behavior_pub.publish(bs.cruise.name)
+        self.curr_behavior_pub.publish(String(data=bs.cruise.name))
         return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):

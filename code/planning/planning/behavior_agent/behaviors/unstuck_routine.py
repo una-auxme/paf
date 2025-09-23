@@ -13,7 +13,7 @@ import mapping_common.mask
 from mapping_common.map import Map, MapTree
 from mapping_common.entity import Entity
 from mapping_common.entity import FlagFilter
-from local_planner.utils import get_distance
+from planning.local_planner.utils import get_distance
 
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -241,7 +241,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         curr_us_drive_dur = self.clock.now() - self.init_ros_stuck_time
         # stuck detected, starting unstuck routine for UNSTUCK_DRIVE_DURATION seconds
         if curr_us_drive_dur < UNSTUCK_DRIVE_DURATION:
-            self.curr_behavior_pub.publish(bs.us_unstuck.name)
+            self.curr_behavior_pub.publish(String(data=bs.us_unstuck.name))
             tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
             hero: Optional[Entity] = tree.map.hero()
             if hero is None:
@@ -267,7 +267,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         # drive for UNSTUCK_DRIVE_DURATION forwards again
         # (to pass stopmarkers before they are set again)
         elif curr_us_drive_dur < 2.0 * UNSTUCK_DRIVE_DURATION:
-            self.curr_behavior_pub.publish(bs.us_forward.name)
+            self.curr_behavior_pub.publish(String(data=bs.us_forward.name))
             if self.unstuck_count == 1:
                 request_end_overtake(self.end_overtake_client)
                 update_stop_marks(
@@ -295,7 +295,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         else:
             add_speed_override(0.0)
             request_end_overtake(self.end_overtake_client)
-            self.curr_behavior_pub.publish(bs.us_stop.name)
+            self.curr_behavior_pub.publish(String(data=bs.us_stop.name))
             self.stuck_timer = self.clock.now()
             self.wait_stuck_timer = self.clock.now()
             self.STUCK_DETECTED = False

@@ -28,7 +28,7 @@ from .stop_mark_service_utils import (
 )
 from . import get_logger
 
-from local_planner.utils import (
+from planning.local_planner.utils import (
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
 )
 
@@ -344,12 +344,12 @@ class Approach(py_trees.behaviour.Behaviour):
                     request_start_overtake(
                         self.start_overtake_client, start_transition_length=5.0
                     )
-                    self.curr_behavior_pub.publish(bs.ot_app_free.name)
+                    self.curr_behavior_pub.publish(String(data=bs.ot_app_free.name))
                     # bool to skip Wait since oncoming is free
                     OVERTAKE_FREE = True
                     return debug_status(self.name, Status.SUCCESS, "Overtake free")
                 else:
-                    self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
+                    self.curr_behavior_pub.publish(String(data=bs.ot_app_blocked.name))
                     return debug_status(
                         self.name,
                         Status.RUNNING,
@@ -361,13 +361,13 @@ class Approach(py_trees.behaviour.Behaviour):
                 add_debug_entry(
                     self.name, "Overtake Approach: oncoming blocked slowing down"
                 )
-                self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
+                self.curr_behavior_pub.publish(String(data=bs.ot_app_blocked.name))
 
         elif self.ot_distance > 20.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle too far away")
 
         if self.ot_distance < TARGET_DISTANCE_TO_STOP_OVERTAKE:
-            self.curr_behavior_pub.publish(bs.ot_app_blocked.name)
+            self.curr_behavior_pub.publish(String(data=bs.ot_app_blocked.name))
             return debug_status(
                 self.name, Status.SUCCESS, "Overtake Approach: stopping behind obstacle"
             )
@@ -423,7 +423,7 @@ class Wait(py_trees.behaviour.Behaviour):
         """
         global OVERTAKE_FREE
         if OVERTAKE_FREE:
-            self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+            self.curr_behavior_pub.publish(String(data=bs.ot_wait_free.name))
             return debug_status(
                 self.name, py_trees.common.Status.SUCCESS, "Overtake free"
             )
@@ -467,7 +467,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
         set_space_stop_mark(self.stop_client, obstacle=entity)
 
-        self.curr_behavior_pub.publish(bs.ot_wait.name)
+        self.curr_behavior_pub.publish(String(data=bs.ot_wait.name))
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
@@ -481,7 +481,7 @@ class Wait(py_trees.behaviour.Behaviour):
         if ot_free is LaneFreeState.FREE:
             self.ot_counter += 1
             if self.ot_counter > 3:
-                self.curr_behavior_pub.publish(bs.ot_wait_free.name)
+                self.curr_behavior_pub.publish(String(data=bs.ot_wait_free.name))
                 request_start_overtake(
                     self.start_overtake_client, start_transition_length=0.0
                 )
@@ -527,7 +527,7 @@ class Enter(py_trees.behaviour.Behaviour):
         trigger the replanning
         """
         get_logger().info("Enter Overtake")
-        self.curr_behavior_pub.publish(bs.ot_enter_init.name)
+        self.curr_behavior_pub.publish(String(data=bs.ot_enter_init.name))
 
     def update(self):
         """
@@ -593,7 +593,7 @@ class Leave(py_trees.behaviour.Behaviour):
         self.blackboard = py_trees.blackboard.Blackboard()
 
     def initialise(self):
-        self.curr_behavior_pub.publish(bs.ot_leave.name)
+        self.curr_behavior_pub.publish(String(data=bs.ot_leave.name))
 
     def update(self):
         """

@@ -7,6 +7,7 @@ from rclpy.publisher import Publisher
 from rclpy.clock import Clock
 from rclpy.duration import Duration
 
+from std_msgs.msg import String
 from perception_interfaces.msg import Waypoint, TrafficLightState
 from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
@@ -295,7 +296,7 @@ class Approach(py_trees.behaviour.Behaviour):
         stop line, stop signs and the traffic light.
         """
         get_logger().info("Approaching Intersection")
-        self.curr_behavior_pub.publish(bs.int_app_init.name)
+        self.curr_behavior_pub.publish(String(data=bs.int_app_init.name))
         request_end_overtake(self.end_overtake_client)
 
     def update(self):
@@ -367,7 +368,7 @@ class Approach(py_trees.behaviour.Behaviour):
             or traffic_light_status.state == TrafficLightState.YELLOW
             or traffic_light_status.state == TrafficLightState.RED
         ):
-            self.curr_behavior_pub.publish(bs.int_app_to_stop.name)
+            self.curr_behavior_pub.publish(String(data=bs.int_app_to_stop.name))
             set_line_stop(self.stop_client, stop_line_distance)
 
             # We are stopping: check if we are standing < WAIT_TARGET_DISTANCE
@@ -389,7 +390,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 )
         else:
             # Green light
-            self.curr_behavior_pub.publish(bs.int_app_green.name)
+            self.curr_behavior_pub.publish(String(data=bs.int_app_green.name))
             unset_line_stop(self.stop_client)
             if stop_line_distance < WAIT_TARGET_DISTANCE:
                 return debug_status(
@@ -460,7 +461,7 @@ class Wait(py_trees.behaviour.Behaviour):
                  to green or no traffic light is detected and oncoming is free
                  when turning left.
         """
-        self.curr_behavior_pub.publish(bs.int_wait.name)
+        self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
         map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
@@ -514,7 +515,7 @@ class Wait(py_trees.behaviour.Behaviour):
             ):
                 # Wait at traffic light
                 self.green_light_time = self.clock.now()
-                self.curr_behavior_pub.publish(bs.int_wait.name)
+                self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
                 self.was_red = True
                 return debug_status(
                     self.name,
@@ -569,7 +570,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.RUNNING, "Driving over stop line"
             )
 
-        self.curr_behavior_pub.publish(bs.int_wait.name)
+        self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
         intersection_clear, intersection_mask = tree.is_lane_free_intersection(
             lane_length=self.blackboard.get("/params/left_check_length"),
             lane_transform_x=self.blackboard.get("/params/left_check_x_transform"),
@@ -584,7 +585,7 @@ class Wait(py_trees.behaviour.Behaviour):
             if self.oncoming_counter > 2 and not self.blackboard.get(
                 "/params/left_check_debug"
             ):
-                self.curr_behavior_pub.publish(bs.int_enter.name)
+                self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
                 unset_left_stop(self.stop_client)
                 return debug_status(
                     self.name, py_trees.common.Status.SUCCESS, "Intersection clear"
@@ -629,7 +630,7 @@ class Enter(py_trees.behaviour.Behaviour):
     def initialise(self):
         get_logger().info("Enter Intersection")
         unset_line_stop(self.stop_client)
-        self.curr_behavior_pub.publish(bs.int_enter.name)
+        self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
 
     def update(self):
         """
@@ -670,7 +671,7 @@ class Enter(py_trees.behaviour.Behaviour):
             )
 
         apply_emergency_vehicle_speed_fix()
-        self.curr_behavior_pub.publish(bs.int_enter.name)
+        self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         return debug_status(
             self.name, py_trees.common.Status.RUNNING, "Driving through..."
         )
