@@ -3,34 +3,30 @@ from py_trees.common import Status
 from typing import Optional, Tuple, Union
 from std_msgs.msg import String
 
-import rospy
+from rclpy.client import Client
+from rclpy.publisher import Publisher
 
-import mapping_common.map
 import mapping_common.mask
-import mapping_common.entity
 from mapping_common.map import Map, MapTree, LaneFreeState
 from mapping_common.entity import ShapelyEntity, Entity, StopMark
 from mapping_common.markers import debug_marker
 from mapping_common.transform import Transform2D, Vector2, Point2
 import shapely
 from mapping_common.entity import FlagFilter, Car
-from planning.srv import OvertakeStatusResponse
+from planning_interfaces.srv import OvertakeStatus
 
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, debug_status, add_debug_entry
 from .overtake_service_utils import (
-    create_start_overtake_proxy,
-    create_end_overtake_proxy,
-    create_overtake_status_proxy,
     request_start_overtake,
     request_end_overtake,
     request_overtake_status,
 )
 from .stop_mark_service_utils import (
-    create_stop_marks_proxy,
     update_stop_marks,
 )
+from . import get_logger
 
 from local_planner.utils import (
     TARGET_DISTANCE_TO_STOP_OVERTAKE,
@@ -41,7 +37,7 @@ OVERTAKE_MARKER_COLOR = (17 / 255, 232 / 255, 35 / 255, 1.0)
 OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
 
 
-def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
+def set_space_stop_mark(client: Client, obstacle: Entity):
     reason = "Obstacle: overtake space"
     transform = (
         Transform2D.new_translation(Vector2.backward() * 3.5) * obstacle.transform
@@ -54,7 +50,7 @@ def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
         transform=transform,
     )
     update_stop_marks(
-        proxy,
+        client,
         id=OVERTAKE_SPACE_STOPMARKS_ID,
         reason=reason,
         is_global=False,
@@ -62,9 +58,9 @@ def set_space_stop_mark(proxy: rospy.ServiceProxy, obstacle: Entity):
     )
 
 
-def unset_space_stop_mark(proxy: rospy.ServiceProxy):
+def unset_space_stop_mark(client: Client):
     update_stop_marks(
-        proxy,
+        client,
         id=OVERTAKE_SPACE_STOPMARKS_ID,
         reason="no obstacle",
         is_global=False,
@@ -167,19 +163,18 @@ class Ahead(py_trees.behaviour.Behaviour):
     ahead
     """
 
-    def __init__(self, name):
-        super(Ahead, self).__init__(name)
+    def __init__(self, name: str, stop_client: Client):
+        super().__init__(name)
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
         # Counter for detecting overtake situation
         self.counter_overtake = 0
         self.old_obstacle_distance = 200
-        unset_space_stop_mark(self.stop_proxy)
+        unset_space_stop_mark(self.stop_client)
 
     def update(self):
         """
@@ -258,24 +253,26 @@ class Approach(py_trees.behaviour.Behaviour):
     It then handles the procedure for overtaking.
     """
 
-    def __init__(self, name):
-        super(Approach, self).__init__(name)
-        rospy.loginfo("Init -> Overtake Behavior: Approach")
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        start_overtake_client: Client,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.start_overtake_client = start_overtake_client
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.start_overtake_proxy = create_start_overtake_proxy()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
         """
         This initializes the overtaking distance to a default value.
         """
-        rospy.loginfo("Approaching Overtake")
+        get_logger().info("Approaching Overtake")
         global OVERTAKE_FREE
         self.ot_distance = 30
         self.ot_counter = 0
@@ -326,7 +323,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 self.name, Status.FAILURE, "Overtake entity started moving"
             )
 
-        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        set_space_stop_mark(self.stop_client, obstacle=entity)
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
@@ -345,7 +342,7 @@ class Approach(py_trees.behaviour.Behaviour):
                 if self.ot_counter > 3:
                     add_debug_entry(self.name, "Overtake is free not slowing down!")
                     request_start_overtake(
-                        self.start_overtake_proxy, start_transition_length=5.0
+                        self.start_overtake_client, start_transition_length=5.0
                     )
                     self.curr_behavior_pub.publish(bs.ot_app_free.name)
                     # bool to skip Wait since oncoming is free
@@ -384,7 +381,7 @@ class Approach(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_space_stop_mark(self.stop_proxy)
+            unset_space_stop_mark(self.stop_client)
 
 
 class Wait(py_trees.behaviour.Behaviour):
@@ -394,20 +391,23 @@ class Wait(py_trees.behaviour.Behaviour):
     The Ego vehicle is waiting to get a clear path for overtaking.
     """
 
-    def __init__(self, name):
-        super(Wait, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        start_overtake_client: Client,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.start_overtake_client = start_overtake_client
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
-        self.start_overtake_proxy = create_start_overtake_proxy()
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
-        rospy.loginfo("Waiting for Overtake")
+        get_logger().info("Waiting for Overtake")
         # slightly less distance since we have already stopped
         self.clear_distance = 50
         self.ot_counter = 0
@@ -465,7 +465,7 @@ class Wait(py_trees.behaviour.Behaviour):
         if obstacle_speed > 3.0:
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
-        set_space_stop_mark(self.stop_proxy, obstacle=entity)
+        set_space_stop_mark(self.stop_client, obstacle=entity)
 
         self.curr_behavior_pub.publish(bs.ot_wait.name)
         ot_free, ot_mask = tree.is_lane_free(
@@ -483,7 +483,7 @@ class Wait(py_trees.behaviour.Behaviour):
             if self.ot_counter > 3:
                 self.curr_behavior_pub.publish(bs.ot_wait_free.name)
                 request_start_overtake(
-                    self.start_overtake_proxy, start_transition_length=0.0
+                    self.start_overtake_client, start_transition_length=0.0
                 )
                 return debug_status(self.name, Status.SUCCESS, "Overtake free")
             else:
@@ -497,7 +497,7 @@ class Wait(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
-            unset_space_stop_mark(self.stop_proxy)
+            unset_space_stop_mark(self.stop_client)
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -506,48 +506,55 @@ class Enter(py_trees.behaviour.Behaviour):
     overtaking procedure.
     """
 
-    def __init__(self, name):
-        super(Enter, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        overtake_status_client: Client,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.overtake_status_client = overtake_status_client
+        self.stop_client = stop_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.overtake_status_proxy = create_overtake_status_proxy()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
         """
         This prints a state status message and publishes the behavior to
         trigger the replanning
         """
-        rospy.loginfo("Enter Overtake")
+        get_logger().info("Enter Overtake")
         self.curr_behavior_pub.publish(bs.ot_enter_init.name)
 
     def update(self):
         """
         Waits for the hero to enter the overtake.
         """
-        unset_space_stop_mark(self.stop_proxy)
-        status: OvertakeStatusResponse = request_overtake_status(
-            self.overtake_status_proxy
-        )
+        unset_space_stop_mark(self.stop_client)
+        status = request_overtake_status(self.overtake_status_client)
+        if status is None:
+            return debug_status(
+                self.name,
+                py_trees.common.Status.FAILURE,
+                "Unable to get overtake status",
+            )
 
-        if status.status == OvertakeStatusResponse.OVERTAKING:
+        if status.status == OvertakeStatus.Response.OVERTAKING:
             return debug_status(self.name, Status.SUCCESS, "Overtaking")
-        elif status.status == OvertakeStatusResponse.OVERTAKE_QUEUED:
+        elif status.status == OvertakeStatus.Response.OVERTAKE_QUEUED:
             return debug_status(
                 self.name,
                 Status.RUNNING,
                 "Overtake queued. Waiting for OvertakeStatusResponse.OVERTAKING...",
             )
-        elif status.status == OvertakeStatusResponse.NO_OVERTAKE:
+        elif status.status == OvertakeStatus.Response.NO_OVERTAKE:
             return debug_status(
                 self.name, Status.FAILURE, "Abort: OvertakeStatusResponse.NO_OVERTAKE"
             )
-        elif status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
+        elif status.status == OvertakeStatus.Response.OVERTAKE_ENDING:
             return debug_status(
                 self.name,
                 Status.FAILURE,
@@ -570,17 +577,20 @@ class Leave(py_trees.behaviour.Behaviour):
     reached, the vehicle performed the overtake.
     """
 
-    def __init__(self, name):
-        super(Leave, self).__init__(name)
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        overtake_status_client: Client,
+        end_overtake_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.overtake_status_client = overtake_status_client
+        self.end_overtake_client = end_overtake_client
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/" "curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.overtake_status_proxy = create_overtake_status_proxy()
-        self.end_overtake_proxy = create_end_overtake_proxy()
-        return True
 
     def initialise(self):
         self.curr_behavior_pub.publish(bs.ot_leave.name)
@@ -597,16 +607,20 @@ class Leave(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        status: OvertakeStatusResponse = request_overtake_status(
-            self.overtake_status_proxy
-        )
+        status = request_overtake_status(self.overtake_status_client)
+        if status is None:
+            return debug_status(
+                self.name,
+                py_trees.common.Status.FAILURE,
+                "Unable to get overtake status",
+            )
 
-        if status.status == OvertakeStatusResponse.NO_OVERTAKE:
+        if status.status == OvertakeStatus.Response.NO_OVERTAKE:
             return debug_status(
                 self.name, Status.FAILURE, "OvertakeStatusResponse.NO_OVERTAKE"
             )
 
-        if status.status == OvertakeStatusResponse.OVERTAKING:
+        if status.status == OvertakeStatus.Response.OVERTAKING:
             # First: check if our right lane is free and end overtake if possible
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=True,
@@ -618,7 +632,7 @@ class Leave(py_trees.behaviour.Behaviour):
             if isinstance(ot_mask, shapely.Polygon):
                 add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
             if ot_free is LaneFreeState.FREE:
-                request_end_overtake(self.end_overtake_proxy)
+                request_end_overtake(self.end_overtake_client)
                 return debug_status(
                     self.name,
                     Status.RUNNING,
@@ -643,14 +657,14 @@ class Leave(py_trees.behaviour.Behaviour):
                 _, obstacle_distance = obstacle
                 add_debug_entry(self.name, f"Obstacle distance: {obstacle_distance}")
                 if obstacle_distance < 5.0:
-                    request_end_overtake(self.end_overtake_proxy)
+                    request_end_overtake(self.end_overtake_client)
                     return debug_status(
                         self.name,
                         Status.RUNNING,
                         "Obstacle in front. Finishing overtake...",
                     )
 
-        if status.status == OvertakeStatusResponse.OVERTAKE_ENDING:
+        if status.status == OvertakeStatus.Response.OVERTAKE_ENDING:
             return debug_status(
                 self.name,
                 Status.RUNNING,

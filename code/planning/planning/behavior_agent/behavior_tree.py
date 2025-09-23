@@ -155,15 +155,37 @@ def grow_a_tree(
                                 "Overtake",
                                 memory=True,
                                 children=[
-                                    overtake.Ahead("Overtake Ahead?"),
+                                    overtake.Ahead(
+                                        "Overtake Ahead?", node.stop_marks_client
+                                    ),
                                     Sequence(
                                         "Overtake Actions",
                                         memory=True,
                                         children=[
-                                            overtake.Approach("Approach Overtake"),
-                                            overtake.Wait("Wait Overtake"),
-                                            overtake.Enter("Enter Overtake"),
-                                            overtake.Leave("Leave Overtake"),
+                                            overtake.Approach(
+                                                "Approach Overtake",
+                                                node.curr_behavior_pub,
+                                                node.start_overtake_client,
+                                                node.stop_marks_client,
+                                            ),
+                                            overtake.Wait(
+                                                "Wait Overtake",
+                                                node.curr_behavior_pub,
+                                                node.start_overtake_client,
+                                                node.stop_marks_client,
+                                            ),
+                                            overtake.Enter(
+                                                "Enter Overtake",
+                                                node.curr_behavior_pub,
+                                                node.overtake_status_client,
+                                                node.stop_marks_client,
+                                            ),
+                                            overtake.Leave(
+                                                "Leave Overtake",
+                                                node.curr_behavior_pub,
+                                                node.overtake_status_client,
+                                                node.end_overtake_client,
+                                            ),
                                         ],
                                     ),
                                 ],
