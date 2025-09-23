@@ -1,19 +1,19 @@
 from typing import Optional
 import py_trees
 from py_trees.common import Status
-import rospy
-from std_msgs.msg import String
 import shapely
 
+from rclpy.client import Client
+from rclpy.publisher import Publisher
 
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
-    create_stop_marks_proxy,
     update_stop_marks,
     get_global_hero_transform,
 )
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
+from . import get_logger
 
 import mapping_common.map
 from mapping_common.map import Map, LaneFreeState
@@ -31,18 +31,20 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
     to leave the parking space.
     """
 
-    def __init__(self, name):
-        super(LeaveParkingSpace, self).__init__(name)
-        rospy.loginfo("LeaveParkingSpace started")
+    def __init__(
+        self,
+        name: str,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+    ):
+        super().__init__(name)
+        self.curr_behavior_pub = curr_behavior_pub
+        self.stop_client = stop_client
         self.finished = False
+        get_logger().info("LeaveParkingSpace started")
 
-    def setup(self, timeout):
-        self.curr_behavior_pub = rospy.Publisher(
-            "/paf/hero/curr_behavior", String, queue_size=1
-        )
+    def setup(self, **kwargs):
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.stop_proxy = create_stop_marks_proxy()
-        return True
 
     def initialise(self):
         self.added_stop: bool = False
@@ -62,10 +64,10 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
             reduce_lane=0.5,
         )
         if not isinstance(mask, shapely.Polygon):
-            rospy.logfatal("Lanemask is not a polygon.")
+            get_logger().fatal("Lanemask is not a polygon.")
         else:
             update_stop_marks(
-                self.stop_proxy,
+                self.stop_client,
                 id=self.name,
                 reason="lane blocked",
                 is_global=False,
@@ -125,7 +127,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                     # we started moving away from out start point
                     self.curr_behavior_pub.publish(bs.parking.name)
                     update_stop_marks(
-                        self.stop_proxy,
+                        self.stop_client,
                         id=self.name,
                         reason="lane not blocked",
                         is_global=False,
@@ -159,7 +161,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
             update_stop_marks(
-                self.stop_proxy,
+                self.stop_client,
                 id=self.name,
                 reason="unparking terminated",
                 is_global=False,

@@ -67,7 +67,9 @@ def grow_a_tree(
                         memory=False,
                         children=[
                             leave_parking_space.LeaveParkingSpace(
-                                "Leave Parking Space"
+                                "Leave Parking Space",
+                                node.curr_behavior_pub,
+                                node.stop_marks_client,
                             ),
                             Sequence(
                                 "Intersection",
