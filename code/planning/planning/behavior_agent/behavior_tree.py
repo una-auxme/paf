@@ -26,6 +26,7 @@ from py_trees.common import ParallelPolicy
 from py_trees.composites import Parallel, Selector, Sequence
 from py_trees.behaviours import Running
 import py_trees_ros
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behaviors
 from .behaviors import (
@@ -233,7 +234,7 @@ class BehaviorTree(Node):
         mapping_common.set_logger(self.get_logger())
         behaviors.set_logger(self.get_logger())
 
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
         self.client_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
 
         # Parameters
@@ -326,7 +327,7 @@ class BehaviorTree(Node):
             error_reason = None
             if self.blackboard.exists(blackboard_key):
                 new_value = param.value
-                orig_value = self.blackboard.get(blackboard_key)
+                orig_value = self.blackboard.try_get(blackboard_key)
                 if (
                     orig_value is not None
                     and not isinstance(new_value, type(orig_value))

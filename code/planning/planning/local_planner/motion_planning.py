@@ -293,7 +293,7 @@ class MotionPlanning(Node):
             and len(self.speed_limits_OD) > self.current_global_waypoint_idx
         ):
             self.speed_limit_publisher.publish(
-                self.speed_limits_OD[self.current_global_waypoint_idx]
+                Float32(data=self.speed_limits_OD[self.current_global_waypoint_idx])
             )
         else:
             self.get_logger().warn(

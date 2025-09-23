@@ -16,11 +16,7 @@ from nav_msgs.msg import Path
 from std_msgs.msg import Float32, String, Bool
 from visualization_msgs.msg import Marker, MarkerArray
 
-import mapping_common.markers
-import mapping_common.shape
-import mapping_common.map
 import mapping_common.mask
-import mapping_common.entity
 from mapping_common.map import Map
 from mapping_common.entity import FlagFilter, Entity
 from mapping_common.markers import debug_marker, debug_marker_array
@@ -484,7 +480,7 @@ class ACC(Node):
             )
         )
 
-        self.velocity_pub.publish(desired_speed)
+        self.velocity_pub.publish(Float32(data=desired_speed))
 
         marker_array = debug_marker_array(
             MARKER_NAMESPACE, debug_markers, self.get_clock().now().to_msg()

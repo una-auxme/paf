@@ -19,6 +19,7 @@ from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2
 import shapely
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
@@ -185,7 +186,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.overtake_status_client = overtake_status_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         global INTERSECTION_HAS_TRAFFIC_LIGHT
@@ -199,7 +200,9 @@ class Ahead(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if we are too far away from
                  the intersection
         """
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        waypoint: Optional[Waypoint] = self.blackboard.try_get(
+            "/paf/hero/current_waypoint"
+        )
         if waypoint is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "No waypoint"
@@ -288,7 +291,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.end_overtake_client = end_overtake_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         """
@@ -323,7 +326,7 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
         # Update Light Info
-        traffic_light_status: Optional[TrafficLightState] = self.blackboard.get(
+        traffic_light_status: Optional[TrafficLightState] = self.blackboard.try_get(
             "/paf/hero/Center/traffic_light_state"
         )
         traffic_light_detected: bool = False
@@ -375,7 +378,7 @@ class Approach(py_trees.behaviour.Behaviour):
             # in front of the line
 
             # get speed
-            speedometer = self.blackboard.get("/carla/hero/Speed")
+            speedometer = self.blackboard.try_get("/carla/hero/Speed")
             if speedometer is None:
                 return debug_status(
                     self.name,
@@ -430,7 +433,7 @@ class Wait(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
         self.green_light_time = None
 
     def initialise(self):
@@ -462,7 +465,7 @@ class Wait(py_trees.behaviour.Behaviour):
                  when turning left.
         """
         self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Map is None"
@@ -479,7 +482,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 "Missing information for stop_line distance calculation",
             )
 
-        traffic_light_status = self.blackboard.get(
+        traffic_light_status = self.blackboard.try_get(
             "/paf/hero/Center/traffic_light_state"
         )
         traffic_light_detected: bool = False
@@ -582,7 +585,7 @@ class Wait(py_trees.behaviour.Behaviour):
         )
         if intersection_clear:
             self.oncoming_counter += 1
-            if self.oncoming_counter > 2 and not self.blackboard.get(
+            if self.oncoming_counter > 2 and not self.blackboard.try_get(
                 "/params/left_check_debug"
             ):
                 self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
@@ -625,7 +628,7 @@ class Enter(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Enter Intersection")

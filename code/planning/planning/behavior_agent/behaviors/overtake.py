@@ -14,6 +14,7 @@ from mapping_common.transform import Transform2D, Vector2, Point2
 import shapely
 from mapping_common.entity import FlagFilter, Car
 from planning_interfaces.srv import OvertakeStatus
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -76,7 +77,7 @@ Source: https://github.com/ll7/psaf2
 def calculate_obstacle(
     behavior_name: str,
     tree: MapTree,
-    blackboard: py_trees.blackboard.Blackboard,
+    blackboard: Blackboard,
     front_mask_size: float,
     trajectory_check_length: float,
     overlap_percent: float = 0.0,
@@ -88,7 +89,7 @@ def calculate_obstacle(
         behavior_name (str): Name of the behavior using the function.
             Input self.name here
         tree (MapTree): Filtered map tree for querying entities
-        blackboard (py_trees.blackboard.Blackboard): Blackboard for fetching data
+        blackboard (Blackboard): Blackboard for fetching data
         front_mask_size (float): Length of the static box collision mask in front
         trajectory_check_length (float): Length of the trajectory collision mask
         overlap_percent (float):
@@ -107,7 +108,7 @@ def calculate_obstacle(
                 - No obstacle: None
     """
     # data preparation
-    trajectory = blackboard.get("/paf/hero/trajectory_local")
+    trajectory = blackboard.try_get("/paf/hero/trajectory_local")
     if trajectory is None:
         return debug_status(behavior_name, Status.FAILURE, "trajectory_local is None")
 
@@ -168,7 +169,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         # Counter for detecting overtake situation
@@ -186,7 +187,7 @@ class Ahead(py_trees.behaviour.Behaviour):
                  to overtake.
         """
 
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Map is None"
@@ -266,7 +267,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         """
@@ -291,7 +292,7 @@ class Approach(py_trees.behaviour.Behaviour):
         """
         global OVERTAKE_FREE
 
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Map is None"
@@ -404,7 +405,7 @@ class Wait(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Waiting for Overtake")
@@ -428,7 +429,7 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.SUCCESS, "Overtake free"
             )
 
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Map is None"
@@ -519,7 +520,7 @@ class Enter(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         """
@@ -590,7 +591,7 @@ class Leave(py_trees.behaviour.Behaviour):
         self.end_overtake_client = end_overtake_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         self.curr_behavior_pub.publish(String(data=bs.ot_leave.name))
@@ -600,7 +601,7 @@ class Leave(py_trees.behaviour.Behaviour):
         Abort this subtree, if overtake distance is big enough
         :return: py_trees.common.Status.FAILURE, to exit this subtree
         """
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(
                 self.name, py_trees.common.Status.FAILURE, "Map is None"

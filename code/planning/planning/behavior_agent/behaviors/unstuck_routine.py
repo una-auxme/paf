@@ -14,6 +14,7 @@ from mapping_common.map import Map, MapTree
 from mapping_common.entity import Entity
 from mapping_common.entity import FlagFilter
 from planning.local_planner.utils import get_distance
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -116,7 +117,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
         self.stuck_timer = self.clock.now()
         self.wait_stuck_timer = self.clock.now()
         self.unstuck_count = 0
@@ -125,15 +126,17 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     def initialise(self):
         global TRIGGER_WAIT_STUCK_DURATION
         self.STUCK_DETECTED = False
-        current_pos = self.blackboard.get("/paf/hero/current_pos")
-        current_speed = self.blackboard.get("/carla/hero/Speed")
-        target_speed = self.blackboard.get("/paf/hero/target_velocity")
-        curr_behavior = self.blackboard.get("/paf/hero/curr_behavior")
+        current_pos = self.blackboard.try_get("/paf/hero/current_pos")
+        current_speed = self.blackboard.try_get("/carla/hero/Speed")
+        target_speed = self.blackboard.try_get("/paf/hero/target_velocity")
+        curr_behavior = self.blackboard.try_get("/paf/hero/curr_behavior")
 
         # check for None values and return if so
         if current_speed is None or target_speed is None or current_pos is None:
             get_logger().info(
-                "current_speed, target_speed or current_pos is None",
+                f"Available: current_speed: {current_speed is not None}, "
+                f"target_speed: {target_speed is not None}, "
+                f"current_pos: {current_pos is not None}",
                 throttle_duration_sec=2,
             )
             return
@@ -213,9 +216,9 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.FAILURE, unstuck routine finished or
         not need to be triggered
         """
-        current_pos = self.blackboard.get("/paf/hero/current_pos")
-        current_speed = self.blackboard.get("/carla/hero/Speed")
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        current_pos = self.blackboard.try_get("/paf/hero/current_pos")
+        current_speed = self.blackboard.try_get("/carla/hero/Speed")
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
 
         if current_pos is None or current_speed is None or map is None:
             return debug_status(

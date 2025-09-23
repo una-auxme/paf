@@ -4,6 +4,7 @@ import py_trees
 from rclpy.client import Client
 
 from planning_interfaces.srv import SpeedAlteration
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 
 SPEED_OVERRIDE_ID: str = "/speed/override"
@@ -16,14 +17,14 @@ SPEED_LIMIT_ID: str = "/speed/limit"
 
 def add_speed_override(speed_override: float):
     """Sets a speed which overrides prior speed"""
-    blackboard = py_trees.blackboard.Blackboard()
+    blackboard = Blackboard()
     blackboard.set(SPEED_OVERRIDE_ID, speed_override)
 
 
 def add_speed_limit(speed_limit: float):
     """Sets an additional speed limit"""
-    blackboard = py_trees.blackboard.Blackboard()
-    current_limit: Optional[float] = blackboard.get(SPEED_LIMIT_ID)
+    blackboard = Blackboard()
+    current_limit: Optional[float] = blackboard.try_get(SPEED_LIMIT_ID)
     if current_limit is not None:
         speed_limit = min(speed_limit, current_limit)
     blackboard.set(SPEED_LIMIT_ID, speed_limit)
@@ -36,7 +37,7 @@ class SpeedAlterationSetupBehavior(py_trees.behaviour.Behaviour):
 
     def __init__(self):
         super().__init__(type(self).__name__)
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def update(self):
         self.blackboard.set(SPEED_OVERRIDE_ID, None)
@@ -54,13 +55,13 @@ class SpeedAlterationRequestBehavior(py_trees.behaviour.Behaviour):
         super().__init__(
             type(self).__name__,
         )
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
         self.client = speed_alteration_client
 
     def update(self):
         req = SpeedAlteration.Request()
-        speed_override = self.blackboard.get(SPEED_OVERRIDE_ID)
-        speed_limit = self.blackboard.get(SPEED_LIMIT_ID)
+        speed_override = self.blackboard.try_get(SPEED_OVERRIDE_ID)
+        speed_limit = self.blackboard.try_get(SPEED_LIMIT_ID)
 
         if speed_override is None:
             req.speed_override_active = False

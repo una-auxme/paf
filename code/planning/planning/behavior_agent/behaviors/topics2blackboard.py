@@ -14,6 +14,7 @@ from mapping_interfaces.msg import Map as MapMsg
 from mapping_common.map import Map
 
 from perception_interfaces.msg import Waypoint, TrafficLightState
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 BLACKBOARD_MAP_ID = "/import/map"
 
@@ -26,11 +27,11 @@ class ImportMapBehavior(py_trees.behaviour.Behaviour):
     def __init__(self, *args, **kwargs):
         super().__init__(type(self).__name__, *args, **kwargs)
 
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def update(self):
         map_data_topic = "/paf/hero/mapping/init_data"
-        map_msg = self.blackboard.get(map_data_topic)
+        map_msg = self.blackboard.try_get(map_data_topic)
         if map_msg is None:
             return py_trees.common.Status.FAILURE
 

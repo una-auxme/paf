@@ -12,8 +12,10 @@ import py_trees
 
 from visualization_msgs.msg import Marker
 from std_msgs.msg import String
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import get_logger
+
 
 MARKER_NAMESPACE: str = "behavior_tree"
 
@@ -36,8 +38,8 @@ def add_debug_marker(m: Marker):
     DebugMarkerBlackboardSetupBehavior and the
     DebugMarkerBlackboardPublishBehavior
     """
-    blackboard = py_trees.blackboard.Blackboard()
-    marker_list: Optional[List[Marker]] = blackboard.get(DEBUG_MARKER_LIST_ID)
+    blackboard = Blackboard()
+    marker_list: Optional[List[Marker]] = blackboard.try_get(DEBUG_MARKER_LIST_ID)
     if marker_list is None:
         get_logger().warn(_marker_error_msg)
         return
@@ -56,8 +58,8 @@ def add_debug_entry(
             Recommended: Inside the Behavior, use *self.name*
         entry (str): Debug entry
     """
-    blackboard = py_trees.blackboard.Blackboard()
-    info_dict: Optional[Dict] = blackboard.get(DEBUG_INFO_DICT_ID)
+    blackboard = Blackboard()
+    info_dict: Optional[Dict] = blackboard.try_get(DEBUG_INFO_DICT_ID)
     if info_dict is None:
         get_logger().warn(_info_error_msg)
         return
@@ -87,8 +89,8 @@ def debug_status(
     Returns:
         py_trees.common.Status: _description_
     """
-    blackboard = py_trees.blackboard.Blackboard()
-    info_dict: Optional[Dict[str, BehaviorDebugInfo]] = blackboard.get(
+    blackboard = Blackboard()
+    info_dict: Optional[Dict[str, BehaviorDebugInfo]] = blackboard.try_get(
         DEBUG_INFO_DICT_ID
     )
     if info_dict is None:
@@ -147,7 +149,7 @@ class DebugMarkerBlackboardSetupBehavior(py_trees.behaviour.Behaviour):
 
     def __init__(self):
         super().__init__(type(self).__name__)
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def update(self):
         self.blackboard.set(DEBUG_MARKER_LIST_ID, [])
@@ -164,13 +166,15 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.behaviour.Behaviour):
         self, clock: Clock, marker_publisher: Publisher, info_publisher: Publisher
     ):
         super().__init__(type(self).__name__)
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
         self.clock = clock
         self.marker_publisher = marker_publisher
         self.info_publisher = info_publisher
 
     def update(self):
-        marker_list: Optional[List[Marker]] = self.blackboard.get(DEBUG_MARKER_LIST_ID)
+        marker_list: Optional[List[Marker]] = self.blackboard.try_get(
+            DEBUG_MARKER_LIST_ID
+        )
         if marker_list is None:
             get_logger().warn(_marker_error_msg)
         else:
@@ -179,11 +183,11 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.behaviour.Behaviour):
             )
             self.marker_publisher.publish(marker_array)
 
-        info_dict: Optional[Dict[str, BehaviorDebugInfo]] = self.blackboard.get(
+        info_dict: Optional[Dict[str, BehaviorDebugInfo]] = self.blackboard.try_get(
             DEBUG_INFO_DICT_ID
         )
 
-        current_behavior_topic_msg: Optional[String] = self.blackboard.get(
+        current_behavior_topic_msg: Optional[String] = self.blackboard.try_get(
             "/paf/hero/curr_behavior"
         )
         current_behavior_topic = (

@@ -7,6 +7,7 @@ from perception_interfaces.msg import Waypoint
 import mapping_common.hero
 import mapping_common.mask
 from mapping_common.transform import Point2, Vector2
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from .overtake_service_utils import get_global_hero_transform
 
@@ -27,7 +28,9 @@ def calculate_waypoint_distance(
     Returns:
         Optional[float]: None, if information is missing in the blackboard
     """
-    trajectory_local_msg: Optional[Path] = blackboard.get("/paf/hero/trajectory_local")
+    trajectory_local_msg: Optional[Path] = blackboard.try_get(
+        "/paf/hero/trajectory_local"
+    )
     if trajectory_local_msg is None:
         return None
     hero = mapping_common.hero.create_hero_entity()

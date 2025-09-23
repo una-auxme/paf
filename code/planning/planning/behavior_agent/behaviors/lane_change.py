@@ -18,6 +18,7 @@ from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
 from .topics2blackboard import BLACKBOARD_MAP_ID
@@ -68,7 +69,7 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         global LANECHANGE_FREE
@@ -88,8 +89,10 @@ class Ahead(py_trees.behaviour.Behaviour):
                  the lane change
         """
         global LANECHANGE_FREE
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
-        trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
+        waypoint: Optional[Waypoint] = self.blackboard.try_get(
+            "/paf/hero/current_waypoint"
+        )
+        trajectory_local = self.blackboard.try_get("/paf/hero/trajectory_local")
         if waypoint is None or trajectory_local is None:
             return debug_status(
                 self.name, Status.FAILURE, "waypoint or trajectory_local is None"
@@ -224,7 +227,7 @@ class Approach(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Approaching Change")
@@ -255,13 +258,15 @@ class Approach(py_trees.behaviour.Behaviour):
                 "Lanechange free, skipping Approach and exit lane change behavior",
             )
 
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(self.name, Status.FAILURE, "Lane Change: Map is None")
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Get lane change distance waypoint from blackboard
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        waypoint: Optional[Waypoint] = self.blackboard.try_get(
+            "/paf/hero/current_waypoint"
+        )
         if waypoint is not None:
             self.change_distance = waypoint.distance
             self.change_detected = waypoint.waypoint_type == Waypoint.TYPE_LANECHANGE
@@ -404,7 +409,7 @@ class Wait(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Lane Change Wait")
@@ -428,13 +433,15 @@ class Wait(py_trees.behaviour.Behaviour):
                 "Lanechange free, skipping Wait and exit lane change behavior",
             )
 
-        map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(self.name, Status.FAILURE, "Lane Change: Map is None")
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         # Update stopline info
-        waypoint: Optional[Waypoint] = self.blackboard.get("/paf/hero/current_waypoint")
+        waypoint: Optional[Waypoint] = self.blackboard.try_get(
+            "/paf/hero/current_waypoint"
+        )
         if waypoint is not None:
             self.change_option = waypoint.road_option
 
@@ -522,11 +529,11 @@ class Change(py_trees.behaviour.Behaviour):
         self.stop_client = stop_client
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Lane Change: Change to next Lane")
-        self.waypoint: Optional[Waypoint] = self.blackboard.get(
+        self.waypoint: Optional[Waypoint] = self.blackboard.try_get(
             "/paf/hero/current_waypoint"
         )
         self.change_position: Optional[Point] = None
@@ -541,7 +548,7 @@ class Change(py_trees.behaviour.Behaviour):
                  py_trees.common.Status.FAILURE, if no next path point can be
                  detected.
         """
-        trajectory_local = self.blackboard.get("/paf/hero/trajectory_local")
+        trajectory_local = self.blackboard.try_get("/paf/hero/trajectory_local")
 
         if self.waypoint is None or trajectory_local is None:
             return debug_status(

@@ -6,7 +6,13 @@ import shapely
 from rclpy.client import Client
 from rclpy.publisher import Publisher
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
+
+import mapping_common.map
+from mapping_common.map import Map, LaneFreeState
+from mapping_common.markers import debug_marker
+from mapping_common.transform import Point2
+from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
 from .stop_mark_service_utils import (
@@ -16,13 +22,6 @@ from .stop_mark_service_utils import (
 from .topics2blackboard import BLACKBOARD_MAP_ID
 from .debug_markers import add_debug_marker, add_debug_entry, debug_status
 from . import get_logger
-
-import mapping_common.map
-from mapping_common.map import Map, LaneFreeState
-from mapping_common.markers import debug_marker
-from mapping_common.transform import Point2
-
-from std_msgs.msg import Float32
 
 UNPARKING_MARKER_COLOR = (219 / 255, 255 / 255, 0.0, 1.0)
 
@@ -46,7 +45,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         get_logger().info("LeaveParkingSpace started")
 
     def setup(self, **kwargs):
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = Blackboard()
 
     def initialise(self):
         self.added_stop: bool = False
@@ -89,10 +88,12 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
 
         if not self.finished:
-            acc_speed: Optional[Float32] = self.blackboard.get("/paf/hero/acc_velocity")
-            map: Optional[Map] = self.blackboard.get(BLACKBOARD_MAP_ID)
+            acc_speed: Optional[Float32] = self.blackboard.try_get(
+                "/paf/hero/acc_velocity"
+            )
+            map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
             hero_transform = get_global_hero_transform()
-            trajectory = self.blackboard.get("/paf/hero/trajectory_local")
+            trajectory = self.blackboard.try_get("/paf/hero/trajectory_local")
 
             if (
                 acc_speed is not None
