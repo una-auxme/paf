@@ -61,7 +61,14 @@ def grow_a_tree(
                 "Priorities",
                 memory=False,
                 children=[
-                    unstuck_routine.UnstuckRoutine("Unstuck Routine"),
+                    unstuck_routine.UnstuckRoutine(
+                        "Unstuck Routine",
+                        node.get_clock(),
+                        node.curr_behavior_pub,
+                        node.start_overtake_client,
+                        node.end_overtake_client,
+                        node.stop_marks_client,
+                    ),
                     Selector(
                         "Road Features",
                         memory=False,
