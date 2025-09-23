@@ -20,16 +20,17 @@
     </node> -->
 
     <node pkg="planning" exec="global_planner_node" name="PrePlanner">
-           <param name="role_name" value="hero" />
-           <param name="distance_spawn_to_first_wp" value="100.0" />
+      <param name="role_name" value="hero" />
+      <param name="distance_spawn_to_first_wp" value="100.0" />
     </node>
 
     <node pkg="planning" exec="global_plan_distance_publisher" name="GlobalPlanDistance">
-           <param name="role_name" value="$(var role_name)" />
+      <param name="role_name" value="$(var role_name)" />
     </node>
 
-    <!-- <node pkg="planning" type="behavior_tree.py" name="behavior_agent" output="screen">
-       <rosparam file="$(find planning)/config/behavior_config.yaml" command="load" />
+    <!-- <node pkg="planning" exec="behavior_tree" name="behavior_agent">
+      <param name="role_name" value="$(var role_name)" />
+      <param from="$(find-pkg-share planning)/config/planning.yaml"/>
     </node> -->
 
 </launch>

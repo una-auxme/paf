@@ -4,7 +4,6 @@ from typing import List
 
 from carla_msgs.msg import CarlaEgoVehicleControl, CarlaSpeedometer
 import rclpy
-import rclpy.clock
 import rclpy.time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy
@@ -117,13 +116,6 @@ class VehicleController(Node):
             f"/carla/{self.role_name}/vehicle_control_cmd",
             qos_profile=10,
         )
-        self.status_pub = self.create_publisher(
-            Bool,
-            f"/carla/{self.role_name}/status",
-            qos_profile=QoSProfile(
-                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
-            ),
-        )
         self.controller_pub = self.create_publisher(
             Float32,
             f"/paf/{self.role_name}/controller",
@@ -179,13 +171,6 @@ class VehicleController(Node):
 
         # Control message
         self.message = CarlaEgoVehicleControl()
-
-        # Periodically send out the status signal,
-        # because otherwise, the leaderboard does not start the simulation.
-        # This has to use system time, because the leaderboard
-        # only sends out clock signals AFTER the simulation has started.
-        system_clock = rclpy.clock.Clock(clock_type=rclpy.clock.ClockType.SYSTEM_TIME)
-        self.create_timer(0.5, self.publish_status, clock=system_clock)
 
         self.clock_sub = self.create_subscription(Clock, "/clock", self.loop_handler, 1)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
@@ -260,9 +245,6 @@ class VehicleController(Node):
             self.__emergency = False
             self.message.brake = 0.0
             self.message.hand_brake = False
-
-    def publish_status(self):
-        self.status_pub.publish(Bool(data=True))
 
     def loop(self, clock: Clock):
         """Main control loop"""

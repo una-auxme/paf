@@ -21,6 +21,8 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "data_management_node = agent.data_management_node:main",
+        ],
     },
 )
