@@ -569,6 +569,9 @@ class lane_position(Node):
         """
         labels = []
         try:
+            if points.shape[0] < 1:
+                # No samples available
+                return
             clustering = DBSCAN(
                 eps=self.epsilon, min_samples=self.min_samples, algorithm="ball_tree"
             ).fit(

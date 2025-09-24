@@ -28,9 +28,9 @@
       <param name="role_name" value="$(var role_name)" />
     </node>
 
-    <!-- <node pkg="planning" exec="behavior_tree" name="behavior_agent">
+    <node pkg="planning" exec="behavior_tree" name="behavior_agent">
       <param name="role_name" value="$(var role_name)" />
       <param from="$(find-pkg-share planning)/config/planning.yaml"/>
-    </node> -->
+    </node>
 
 </launch>
