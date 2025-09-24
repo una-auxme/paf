@@ -196,7 +196,7 @@ class GlobalPlanDistance(Node):
         route: CarlaRoute = response.data
         self.global_route = list(route.poses)
         self.road_options = list(route.road_options)
-        self.get_logger().info("Global plan updated successfully.")
+        self.get_logger().info("Global plan received successfully.")
 
 
 def main(args=None):

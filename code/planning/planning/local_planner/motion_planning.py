@@ -1,21 +1,24 @@
 import math
-from typing import Optional
+from typing import Optional, List
 
 import numpy as np
 import shapely
 from shapely import LineString
 
 import rclpy
+import rclpy.callback_groups
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 
 from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, Bool
 from planning_interfaces.srv import (
     StartOvertake,
     EndOvertake,
     OvertakeStatus,
+    GetPath,
+    GetSpeedLimits,
 )
 
 import mapping_common.hero
@@ -75,44 +78,42 @@ class MotionPlanning(Node):
         self.global_trajectory: Optional[Path] = None
         self.init_trajectory: bool = True
         """If the trajectory has changed and we need to do initialization"""
-        self.speed_limits_OD = None
+        self.speed_limits_OD: Optional[List[float]] = None
         self.current_global_waypoint_idx: int = 0
         """Index of the !!ROUGHLY!! current waypoint of self.global_trajectory
 
         Look in self._update_current_global_waypoint_idx() for why it even exists
         """
 
-        # Subscriber
-
-        self.head_sub = self.create_subscription(
+        # Subscriptions
+        self.create_subscription(
             Float32,
             f"/paf/{self.role_name}/current_heading",
             self.__set_heading,
             qos_profile=1,
         )
-
-        self.trajectory_sub = self.create_subscription(
-            Path,
-            f"/paf/{self.role_name}/trajectory_global",
-            self.__set_global_trajectory,
-            qos_profile=1,
-        )
-        # Get initial set of speed limits from global planner
-        self.speed_limit_OD_sub = self.create_subscription(
-            Float32MultiArray,
-            f"/paf/{self.role_name}/speed_limits_OpenDrive",
-            self.__set_speed_limits_opendrive,
-            qos_profile=1,
-        )
-        self.current_pos_sub = self.create_subscription(
+        self.create_subscription(
             PoseStamped,
             f"/paf/{self.role_name}/current_pos",
             self.__set_current_pos,
             qos_profile=1,
         )
 
-        # Services
+        self.create_subscription(
+            Bool,
+            f"/paf/{self.role_name}/data/planning/global_trajectory_updated",
+            self.__update_global_trajectory,
+            qos_profile=1,
+        )
+        # Get initial set of speed limits from global planner
+        self.create_subscription(
+            Bool,
+            f"/paf/{self.role_name}/data/planning/speed_limits_updated",
+            self.__update_speed_limits_opendrive,
+            qos_profile=1,
+        )
 
+        # Services
         self.start_overtake_service = self.create_service(
             StartOvertake,
             f"/paf/{self.role_name}/motion_planning/start_overtake",
@@ -144,6 +145,27 @@ class MotionPlanning(Node):
         self.speed_limit_publisher: Publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
+
+        # Service clients
+        self.client_callback_group = (
+            rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        )
+        self.global_trajectory_client = self.create_client(
+            GetPath,
+            f"/paf/{self.role_name}/data/planning/get_global_trajectory",
+            callback_group=self.client_callback_group,
+        )
+        self.speed_limits_client = self.create_client(
+            GetSpeedLimits,
+            f"/paf/{self.role_name}/data/planning/get_speed_limits",
+            callback_group=self.client_callback_group,
+        )
+        for client in self.clients:
+            while not client.wait_for_service(timeout_sec=2.0):
+                self.get_logger().warn(
+                    f"Waiting for the {client.service_name} service "
+                    "to become available..."
+                )
 
         self.counter = 0
         self.get_logger().info(f"{type(self).__name__} node initialized.")
@@ -218,7 +240,7 @@ class MotionPlanning(Node):
         """
         self.current_heading = data.data
 
-    def __set_current_pos(self, data: PoseStamped):
+    async def __set_current_pos(self, data: PoseStamped):
         """Sets the current position and
         publishes a new trajectory_local based on it
 
@@ -226,9 +248,13 @@ class MotionPlanning(Node):
             data (PoseStamped): current position
         """
         self.current_pos = Point2.from_ros_msg(data.pose.position)
-        self.publish_local_trajectory()
+        await self.publish_local_trajectory()
 
-    def publish_local_trajectory(self):
+    async def publish_local_trajectory(self):
+        if self.global_trajectory is None:
+            await self.__update_global_trajectory()
+        if self.speed_limits_OD is None:
+            await self.__update_speed_limits_opendrive()
         if (
             self.current_heading is None
             or self.global_trajectory is None
@@ -306,7 +332,7 @@ class MotionPlanning(Node):
         algorithm to a certain part of the trajectory.
         This saves processing time and
         avoids bugs with a "looping"/self-crossing trajectory"""
-        if self.current_pos is None:
+        if self.current_pos is None or self.global_trajectory is None:
             return
         while len(self.global_trajectory.poses) > self.current_global_waypoint_idx + 1:
             pose0: Pose = self.global_trajectory.poses[
@@ -438,24 +464,65 @@ class MotionPlanning(Node):
         overtake_trajectory = LineString(coords)
         return overtake_trajectory
 
-    def __set_global_trajectory(self, data: Path):
+    async def __update_global_trajectory(self, data: Bool = Bool(data=True)):
         """get current trajectory global planning
 
         Args:
             data (Path): Trajectory waypoints
         """
-        self.global_trajectory = data
+        if not data.data:
+            return
+
+        self.get_logger().info("Requesting global trajectory...")
+        req = GetPath.Request()
+        response: Optional[GetPath.Response] = (
+            await self.global_trajectory_client.call_async(req)
+        )
+        if response is None:
+            self.get_logger().warn(
+                f"{self.global_trajectory_client.service_name} service returned None."
+            )
+            return
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.global_trajectory_client.service_name} service failed: "
+                f"{response.msg}."
+            )
+            return
+
+        self.global_trajectory = response.data
         # TODO: Only reinit if we receive a different trajectory
         self.init_trajectory = True
-        self.get_logger().info("Global trajectory received")
+        self.get_logger().info("Global trajectory received successfully")
 
-    def __set_speed_limits_opendrive(self, data: Float32MultiArray):
+    async def __update_speed_limits_opendrive(self, data: Bool = Bool(data=True)):
         """Recieve speed limits from OpenDrive via global planner
 
         Args:
             data (Float32MultiArray): speed limits per waypoint
         """
-        self.speed_limits_OD = data.data
+        if not data.data:
+            return
+
+        self.get_logger().info("Requesting speed_limits...")
+        req = GetSpeedLimits.Request()
+        response: Optional[GetSpeedLimits.Response] = (
+            await self.speed_limits_client.call_async(req)
+        )
+        if response is None:
+            self.get_logger().warn(
+                f"{self.speed_limits_client.service_name} service returned None."
+            )
+            return
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.speed_limits_client.service_name} service failed: "
+                f"{response.msg}."
+            )
+            return
+        speed_limits: Float32MultiArray = response.data
+        self.speed_limits_OD = list(speed_limits.data)
+        self.get_logger().info("Speed limits received successfully.")
 
 
 def sign(f: float) -> float:
