@@ -1,15 +1,23 @@
 from collections import deque
-from typing import Deque
+from typing import Deque, Optional
 from xml.etree import ElementTree as eTree
 
 import rclpy
+import rclpy.callback_groups
 from rclpy.node import Node
+from rclpy.service import Service
 
 from transforms3d.euler import euler2quat
-from carla_msgs.msg import CarlaRoute  # , CarlaWorldInfo
+from carla_msgs.msg import CarlaRoute
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, Bool
+from planning_interfaces.srv import (
+    GetCarlaRoute,
+    GetOpenDriveString,
+    GetPath,
+    GetSpeedLimits,
+)
 
 from mapping_common.transform import Point2
 
@@ -43,16 +51,20 @@ class PrePlanner(Node):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.path_backup = Path()
-
+        # Working variables
         self.odc = None
-        self.global_route_backup = None
+        self.route_recalculation_required: bool = True
         self.position_stabilized: bool = False
         self.last_agent_positions: Deque[Point] = deque()
         self.last_agent_positions_count_target = 5
         self.agent_pos = None
         self.agent_ori = None
 
+        # Result/service variables
+        self.global_trajectory: Optional[Path] = None
+        self.speed_limits: Optional[Float32MultiArray] = None
+
+        # Parameters
         self.role_name = (
             self.declare_parameter("role_name", "hero")
             .get_parameter_value()
@@ -67,49 +79,127 @@ class PrePlanner(Node):
             .double_value
         )
 
-        self.map_sub = self.create_subscription(
-            msg_type=String,
-            topic=f"/carla/{self.role_name}/OpenDRIVE",
-            callback=self.world_info_callback,
+        # Services
+        # Get created only after data is available
+        self.speed_limits_service: Optional[Service] = None
+        self.global_trajectory_service: Optional[Service] = None
+
+        # Subscriptions
+        self.create_subscription(
+            msg_type=Bool,
+            topic=f"/paf/{self.role_name}/data/planning/open_drive_updated",
+            callback=self.trigger_route_recalculation,
             qos_profile=10,
         )
 
-        self.global_plan_sub = self.create_subscription(
-            msg_type=CarlaRoute,
-            topic="/carla/" + self.role_name + "/global_plan",
-            callback=self._global_route_callback,
+        self.create_subscription(
+            msg_type=Bool,
+            topic=f"/paf/{self.role_name}/data/planning/global_plan_updated",
+            callback=self.trigger_route_recalculation,
             qos_profile=10,
         )
 
-        self.current_pos_sub = self.create_subscription(
+        self.create_subscription(
             msg_type=PoseStamped,
             topic="/paf/" + self.role_name + "/current_pos",
             callback=self.position_callback,
             qos_profile=1,
         )
 
-        self.path_pub = self.create_publisher(
-            msg_type=Path,
-            topic="/paf/" + self.role_name + "/trajectory_global",
+        # Publishers
+        self.global_trajectory_updated_pub = self.create_publisher(
+            msg_type=Bool,
+            topic=f"/paf/{self.role_name}/data/planning/global_trajectory_updated",
             qos_profile=1,
         )
 
-        self.speed_limit_pub = self.create_publisher(
-            msg_type=Float32MultiArray,
-            topic=f"/paf/{self.role_name}/speed_limits_OpenDrive",
+        self.speed_limit_updated_pub = self.create_publisher(
+            msg_type=Bool,
+            topic=f"/paf/{self.role_name}/data/planning/speed_limits_updated",
             qos_profile=1,
         )
 
-        # uncomment for self.dev_load_world_info() for dev_launch
-        # self.dev_load_world_info()
+        # Service clients
+        self.client_callback_group = (
+            rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        )
+        self.open_drive_client = self.create_client(
+            GetOpenDriveString,
+            f"/paf/{self.role_name}/data/planning/get_open_drive",
+            callback_group=self.client_callback_group,
+        )
+        self.global_plan_client = self.create_client(
+            GetCarlaRoute,
+            f"/paf/{self.role_name}/data/planning/get_global_plan",
+            callback_group=self.client_callback_group,
+        )
+        for client in self.clients:
+            while not client.wait_for_service(timeout_sec=2.0):
+                self.get_logger().warn(
+                    f"Waiting for the {client.service_name} service "
+                    "to become available..."
+                )
 
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
-    def _global_route_callback(self, data: CarlaRoute) -> None:
-        self.get_logger().info("Received global route.")
-        self.update_global_route(data)
+    def trigger_route_recalculation(self, b: Bool = Bool(data=True)):
+        if b.data:
+            self.get_logger().info("Global route recalculation was triggered.")
+            self.route_recalculation_required = True
 
-    def update_global_route(self, data: CarlaRoute) -> None:
+    def update_global_trajectory(self, new_global_trajectory: Path):
+        self.get_logger().info("Updated global trajectory.")
+        self.global_trajectory = new_global_trajectory
+        if self.global_trajectory_service is None:
+            self.global_trajectory_service = self.create_service(
+                GetPath,
+                f"/paf/{self.role_name}/data/planning/get_global_trajectory",
+                self.get_global_trajectory_service,
+            )
+            self.get_logger().info(
+                f"Started {self.global_trajectory_service.service_name} service."
+            )
+        self.global_trajectory_updated_pub.publish(Bool(data=True))
+
+    def get_global_trajectory_service(
+        self, req: GetPath.Request, res: GetPath.Response
+    ) -> GetPath.Response:
+        if self.global_trajectory is not None:
+            res.success = True
+            res.msg = "success"
+            res.data = self.global_trajectory
+        else:
+            res.success = False
+            res.msg = "data not available"
+        return res
+
+    def update_speed_limits(self, new_speed_limits: Float32MultiArray):
+        self.get_logger().info("Updated speed limits.")
+        self.speed_limits = new_speed_limits
+        if self.speed_limits_service is None:
+            self.speed_limits_service = self.create_service(
+                GetSpeedLimits,
+                f"/paf/{self.role_name}/data/planning/get_speed_limits",
+                self.get_speed_limits_service,
+            )
+            self.get_logger().info(
+                f"Started {self.speed_limits_service.service_name} service."
+            )
+        self.speed_limit_updated_pub.publish(Bool(data=True))
+
+    def get_speed_limits_service(
+        self, req: GetSpeedLimits.Request, res: GetSpeedLimits.Response
+    ) -> GetSpeedLimits.Response:
+        if self.speed_limits is not None:
+            res.success = True
+            res.msg = "success"
+            res.data = self.speed_limits
+        else:
+            res.success = False
+            res.msg = "data not available"
+        return res
+
+    async def process_global_plan(self) -> bool:
         """
         when the global route gets updated a new trajectory is calculated with
         the help of OpenDriveConverter and published into
@@ -117,21 +207,30 @@ class PrePlanner(Node):
         :param data: global Route
         """
         if self.odc is None:
-            self.get_logger().warn(
-                "PrePlanner: global route got updated before map... "
-                "therefore the OpenDriveConverter couldn't be "
-                "initialised yet"
-            )
-            self.global_route_backup = data
-            return
+            self.get_logger().warn("OpenDriveConverter not initialized yet.")
+            return False
 
-        if self.agent_pos is None or self.agent_ori is None or data.poses is None:
+        if self.agent_pos is None or self.agent_ori is None:
+            self.get_logger().warn("Agent pose not available yet.")
+            return False
+
+        req = GetCarlaRoute.Request()
+        response: Optional[GetCarlaRoute.Response] = (
+            await self.global_plan_client.call_async(req)
+        )
+        if response is None:
             self.get_logger().warn(
-                "PrePlanner: global route got updated before current "
-                "pose... therefore there is no pose to start with"
+                f"{self.global_plan_client.service_name} service returned None."
             )
-            self.global_route_backup = data
-            return
+            return False
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.global_plan_client.service_name} service failed: "
+                f"{response.msg}."
+            )
+            return False
+        data: CarlaRoute = response.data
+        self.get_logger().info("Processing global plan...")
 
         x_start = self.agent_pos.x  # 983.5
         y_start = self.agent_pos.y  # -5433.2
@@ -142,10 +241,9 @@ class PrePlanner(Node):
             or abs(y_start - y_target) > self.distance_spawn_to_first_wp
         ):
             self.get_logger().warn(
-                "PrePlanner: current agent-pose does not match the given global route"
+                "Current agent-pose does not match the given global route"
             )
-            self.global_route_backup = data
-            return
+            return False
 
         # get the first turn command (1, 2, or 3)
         x_turn = None
@@ -158,9 +256,8 @@ class PrePlanner(Node):
                 ind = i
                 break
         if x_turn is None or y_turn is None:
-            self.get_logger().warn("PrePlanner: Did not find first turn command")
-            self.global_route_backup = data
-            return
+            self.get_logger().warn("Did not find first turn command")
+            return False
         # if first target point is turning point
         if x_target == x_turn and y_target == y_turn:
             x_target = None
@@ -212,7 +309,7 @@ class PrePlanner(Node):
         way_y = waypoints[1]
         way_yaw = waypoints[2]
         speed_limits = Float32MultiArray(data=waypoints[3])
-        self.speed_limit_pub.publish(speed_limits)
+        self.update_speed_limits(speed_limits)
 
         # Transforming the calculated waypoints into a Path msg
         stamped_poses = []
@@ -229,26 +326,39 @@ class PrePlanner(Node):
             pos.pose = pose
             stamped_poses.append(pos)
 
-        self.path_backup.header.stamp = self.get_clock().now().to_msg()
-        self.path_backup.header.frame_id = "global"
-        self.path_backup.poses = stamped_poses
-        self.path_pub.publish(self.path_backup)
+        global_trajectory = Path()
+        global_trajectory.header.stamp = self.get_clock().now().to_msg()
+        global_trajectory.header.frame_id = "global"
+        global_trajectory.poses = stamped_poses
+        self.update_global_trajectory(global_trajectory)
 
-        self.global_route_backup = None
-        self.get_logger().info("PrePlanner: published trajectory")
+        self.get_logger().info("Successfully processed global plan.")
+        return True
 
-    def world_info_callback(self, opendrive: String) -> None:
+    async def process_open_drive_data(self) -> bool:
         """
         when the map gets updated a new OpenDriveConverter instance is created
         (needed for the trajectory preplanning)
         :param opendrive: updated CarlaWorldInformation
         """
-        self.get_logger().info("PrePlanner: MapUpdate called")
+        req = GetOpenDriveString.Request()
+        response: Optional[GetOpenDriveString.Response] = (
+            await self.open_drive_client.call_async(req)
+        )
+        if response is None:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service returned None."
+            )
+            return False
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service failed: {response.msg}."
+            )
+            return False
+        opendrive: str = response.data
+        self.get_logger().info("Processing open drive data...")
 
-        if type(opendrive) is str:
-            root = eTree.fromstring(opendrive)
-        else:
-            root = eTree.fromstring(opendrive.data)
+        root = eTree.fromstring(opendrive)
 
         roads = root.findall("road")
         road_ids = [int(road.get("id")) for road in roads]
@@ -268,13 +378,10 @@ class PrePlanner(Node):
 
         self.odc = odc
 
-        if self.global_route_backup is not None:
-            self.get_logger().info(
-                "PrePlanner: Received a map update -> retrying route preplanning"
-            )
-            self.update_global_route(self.global_route_backup)
+        self.get_logger().info("Successfully processed open drive data.")
+        return True
 
-    def position_callback(self, data: PoseStamped):
+    async def position_callback(self, data: PoseStamped):
         """
         when the position gets updated it gets stored into self.agent_pos and
         self.agent_ori
@@ -283,7 +390,7 @@ class PrePlanner(Node):
         """
         if len(self.last_agent_positions) < self.last_agent_positions_count_target:
             self.get_logger().info(
-                "PrePlanner: Waiting for agent positions", throttle_duration_sec=2
+                "Waiting for agent positions", throttle_duration_sec=2
             )
             self.last_agent_positions.append(data.pose.position)
             self.agent_pos = None
@@ -306,7 +413,7 @@ class PrePlanner(Node):
 
         if not self.position_stabilized:
             self.get_logger().info(
-                "PrePlanner: Waiting for agent position to stabilize",
+                "Waiting for agent position to stabilize",
                 throttle_duration_sec=2,
             )
             self.agent_pos = None
@@ -315,22 +422,22 @@ class PrePlanner(Node):
 
         self.agent_pos = agent_pos
         self.agent_ori = data.pose.orientation
-        if self.global_route_backup is not None:
+
+        if self.route_recalculation_required:
             self.get_logger().info(
-                "PrePlanner: Received a pose update -> retrying route preplanning",
+                "Received a pose update -> recalculating route...",
                 throttle_duration_sec=2,
             )
             try:
-                self.update_global_route(self.global_route_backup)
+                if not await self.process_open_drive_data():
+                    self.get_logger().error("Failed to process open drive data.")
+                    return
+                if not await self.process_global_plan():
+                    self.get_logger().error("Failed to process the global plan.")
+                    return
+                self.route_recalculation_required = False
             except Exception as e:
                 self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
-
-    def dev_load_world_info(self):
-        file_path = "/workspace/code/planning/src/global_planner/string_world_info.txt"
-        with open(file_path, "r") as file:
-            file_content = file.read()
-        self.get_logger().warn("DATA READ")
-        self.world_info_callback(file_content)
 
 
 def main(args=None):

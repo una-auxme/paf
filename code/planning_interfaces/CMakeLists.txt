@@ -26,6 +26,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # Add all your interface files here:
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -38,8 +39,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetCarlaRoute.srv"
   "srv/GetOpenDriveString.srv"
   "srv/GetPath.srv"
+  "srv/GetSpeedLimits.srv"
 
   DEPENDENCIES # Add packages that above messages depend on
+  std_msgs
   geometry_msgs
   carla_msgs
   nav_msgs

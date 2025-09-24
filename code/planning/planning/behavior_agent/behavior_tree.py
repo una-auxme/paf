@@ -235,7 +235,9 @@ class BehaviorTree(Node):
         behaviors.set_logger(self.get_logger())
 
         self.blackboard = Blackboard()
-        self.client_callback_group = rclpy.callback_groups.ReentrantCallbackGroup()
+        self.client_callback_group = (
+            rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        )
 
         # Parameters
         self.control_loop_rate = (
