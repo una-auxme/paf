@@ -91,7 +91,6 @@ class PrePlanner(Node):
             callback=self.trigger_route_recalculation,
             qos_profile=10,
         )
-
         self.create_subscription(
             msg_type=Bool,
             topic=f"/paf/{self.role_name}/data/planning/global_plan_updated",
