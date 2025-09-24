@@ -1,5 +1,5 @@
 # General imports
-from typing import List
+from typing import List, Dict
 
 # ROS imports
 import rclpy
@@ -500,7 +500,7 @@ class lane_position(Node):
         )
         self.dist_arrays = dist_array
 
-    def get_lanemarking_position_and_angle(self, clusters):
+    def get_lanemarking_position_and_angle(self, clusters: Dict):
         """Processes clusters and calculates line fitting for each cluster
         to extract lane markings."""
         center_coordinates = []
@@ -557,7 +557,7 @@ class lane_position(Node):
 
         return center_coordinates, angles, deviations
 
-    def cluster_points(self, points):
+    def cluster_points(self, points) -> Dict:
         """clusters the lidar points with the DBSCAN algorithm
         to separate the points according to lanemarkings
 
@@ -571,7 +571,7 @@ class lane_position(Node):
         try:
             if points.shape[0] < 1:
                 # No samples available
-                return
+                return {}
             clustering = DBSCAN(
                 eps=self.epsilon, min_samples=self.min_samples, algorithm="ball_tree"
             ).fit(

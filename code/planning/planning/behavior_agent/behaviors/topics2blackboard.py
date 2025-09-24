@@ -107,7 +107,8 @@ def create_node(role_name: str, callback_group: Optional[CallbackGroup] = None):
 
     qos_profile = QoSProfile(depth=1)
     topics2blackboard = py_trees.composites.Parallel(
-        "Topics to Blackboard", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+        "Topics to Blackboard",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False),
     )
     for topic in topics:
         new_child = py_trees_ros.subscribers.ToBlackboard(

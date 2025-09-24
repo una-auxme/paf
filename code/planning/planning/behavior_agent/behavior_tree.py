@@ -55,7 +55,7 @@ def grow_a_tree(
 
     rules = Parallel(
         "Rules",
-        policy=ParallelPolicy.SuccessOnOne(),
+        policy=ParallelPolicy.SuccessOnAll(synchronise=False),
         children=[
             Selector(
                 "Priorities",
@@ -207,7 +207,7 @@ def grow_a_tree(
 
     root = Parallel(
         "Root",
-        policy=ParallelPolicy.SuccessOnOne(),
+        policy=ParallelPolicy.SuccessOnAll(synchronise=False),
         children=[
             debug_markers.DebugMarkerBlackboardSetupBehavior(),
             speed_alteration.SpeedAlterationSetupBehavior(),
