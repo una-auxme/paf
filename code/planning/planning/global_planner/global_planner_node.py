@@ -235,14 +235,16 @@ class PrePlanner(Node):
         y_start = self.agent_pos.y  # -5433.2
         x_target = data.poses[0].position.x
         y_target = data.poses[0].position.y
-        if (
-            abs(x_start - x_target) > self.distance_spawn_to_first_wp
-            or abs(y_start - y_target) > self.distance_spawn_to_first_wp
-        ):
-            self.get_logger().warn(
-                "Current agent-pose does not match the given global route"
-            )
-            return False
+        # Currently commented out because restarting the agent on-the-fly
+        # is not possible with this check
+        # if (
+        #     abs(x_start - x_target) > self.distance_spawn_to_first_wp
+        #     or abs(y_start - y_target) > self.distance_spawn_to_first_wp
+        # ):
+        #     self.get_logger().warn(
+        #         "Current agent-pose does not match the given global route"
+        #     )
+        #     return False
 
         # get the first turn command (1, 2, or 3)
         x_turn = None

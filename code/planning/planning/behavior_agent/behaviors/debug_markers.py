@@ -208,7 +208,7 @@ class DebugMarkerBlackboardPublishBehavior(py_trees.behaviour.Behaviour):
                 info_text += f"\n{info.to_string(name)}"
         info_marker = debug_marker(
             info_text,
-            position_z=-2.0,
+            position_z=-4.0,
             offset=Vector2.new(-2.0, 0.0),
             color=(1.0, 1.0, 1.0, 1.0),
         )

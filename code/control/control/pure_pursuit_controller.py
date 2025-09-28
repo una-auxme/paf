@@ -143,7 +143,7 @@ class PurePursuitController(Node):
             self.get_logger().warn(
                 "PurePursuitController hasn't received a path "
                 "yet and can therefore not publish steering",
-                throttle_duration_sec=1,
+                throttle_duration_sec=2.0,
             )
             return
 
@@ -152,7 +152,7 @@ class PurePursuitController(Node):
                 "PurePursuitController hasn't received the "
                 "velocity of the vehicle yet "
                 "and can therefore not publish steering",
-                throttle_duration_sec=1,
+                throttle_duration_sec=2.0,
             )
             return
 

@@ -371,7 +371,7 @@ class ACC(Node):
             self.trajectory_local,
             front_mask_size=front_mask_size,
             max_trajectory_check_length=100.0,
-            rotate_front_mask=0.0 if self.steer is None else -self.steer,
+            rotate_front_mask=0.0 if self.steer is None else self.steer,
         )
 
         collision_mask = shapely.union_all(collision_masks)

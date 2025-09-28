@@ -193,9 +193,9 @@ class VehicleController(Node):
             self.__emergency_brake(True)
         else:
             steer = (
-                self._p_steer * (-1)
+                self._p_steer
                 if self.__curr_behavior == "us_unstuck"
-                else self._p_steer
+                else -self._p_steer
             )
 
             self.message.reverse = self.__reverse
