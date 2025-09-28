@@ -21,7 +21,6 @@ from planning_interfaces.srv import (
     OvertakeStatus,
 )
 
-import py_trees
 from py_trees.common import ParallelPolicy
 from py_trees.composites import Parallel, Selector, Sequence
 from py_trees.behaviours import Running

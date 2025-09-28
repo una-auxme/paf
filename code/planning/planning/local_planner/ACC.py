@@ -163,7 +163,8 @@ class ACC(Node):
                 "curve_line_angle",
                 15.0,
                 descriptor=ParameterDescriptor(
-                    description="Angle (deg!) of the line used to calculate the curve distance",
+                    description="Angle (deg!) of the line "
+                    "used to calculate the curve distance",
                     floating_point_range=[
                         FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
                     ],

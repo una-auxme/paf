@@ -1,5 +1,4 @@
 from typing import Optional
-from py_trees.blackboard import Blackboard
 
 from nav_msgs.msg import Path
 from perception_interfaces.msg import Waypoint
