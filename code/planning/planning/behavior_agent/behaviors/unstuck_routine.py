@@ -172,7 +172,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
 
         # when no curr_behavior (before unparking lane free) or
         # a wait behavior occurs, increase the wait stuck duration
-        wait_behaviors = [bs.lc_wait.name, bs.ot_wait.name]
+        wait_behaviors = [bs.lc_wait.name, bs.ot_wait.name, bs.parking.name]
         wait_long_behaviors = [bs.int_wait.name, bs.int_app_to_stop.name]
 
         last_duration: float = TRIGGER_WAIT_STUCK_DURATION

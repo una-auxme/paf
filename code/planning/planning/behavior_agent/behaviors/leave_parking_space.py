@@ -88,6 +88,7 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
         """
 
         if not self.finished:
+            self.curr_behavior_pub.publish(String(data=bs.parking.name))
             acc_speed: Optional[Float32] = self.blackboard.try_get(
                 "/paf/hero/acc_velocity"
             )
@@ -128,7 +129,6 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
                 ):
                     # Either the lane is free or
                     # we started moving away from out start point
-                    self.curr_behavior_pub.publish(String(data=bs.parking.name))
                     update_stop_marks(
                         self.stop_client,
                         id=self.name,
