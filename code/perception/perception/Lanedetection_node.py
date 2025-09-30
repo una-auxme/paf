@@ -39,6 +39,9 @@ class Lanedetection_node(Node):
         self.bridge = CvBridge()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
+        # Initialize dist_arrays to None
+        self.dist_arrays = None
+
         # setup subscriptions
         self.setup_camera_subscriptions("Center")
         self.setup_dist_array_subscription()
@@ -72,7 +75,7 @@ class Lanedetection_node(Node):
         self.create_subscription(
             msg_type=ImageMsg,
             callback=self.handle_dist_array,
-            topic="/paf/hero/Center/dist_array",
+            topic=f"/paf/{self.role_name}/Center/dist_array",
             qos_profile=1,
         )
 
@@ -102,7 +105,7 @@ class Lanedetection_node(Node):
         applies lane detection and Driveable area detection to given ImageMsg
         """
         # free up cuda memory
-        if self.device == "cuda":
+        if self.device.type == "cuda":
             torch.cuda.empty_cache()
 
         image, original_image = self.preprocess_image(ImageMsg)
