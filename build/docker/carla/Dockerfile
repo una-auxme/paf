@@ -81,7 +81,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   build-essential libssl-dev zlib1g-dev libbz2-dev \
   libreadline-dev libsqlite3-dev wget curl llvm \
   libncurses5-dev libncursesw5-dev xz-utils tk-dev \
-  libffi-dev liblzma-dev python3-openssl git
+  libffi-dev liblzma-dev python3-openssl git\
+  python3.12 python3.12-venv
 
 ###########################
 # Create internal workdir #
@@ -96,17 +97,7 @@ ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
 ##################################
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
-RUN mkdir python38 && \
-  wget https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz -O python38.tgz && \
-  tar -xf python38.tgz -C python38 --strip-components=1 && \
-  rm python38.tgz
-
-WORKDIR ${INTERNAL_WORKSPACE_DIR}/python38
-# CFLAGS=-fPIC is required because the ros build cannot dynamically relink non implemented functions otherwise
-RUN CFLAGS=-fPIC ./configure --enable-optimizations --prefix=/usr && \
-  make -j$(nproc) && \
-  make altinstall
-ENV PYTHON_VERSION=3.8
+ENV PYTHON_VERSION=3.12
 # ENV LEADERBOARD_PYTHON=${INTERNAL_WORKSPACE_DIR}/python38/python
 
 #################################################
@@ -129,18 +120,21 @@ COPY build/docker/carla/setup-scripts ${INTERNAL_WORKSPACE_DIR}/setup-scripts/
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
 ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
-  python3.8 -m venv "${LEADERBOARD_VENV}" && \
+  python${PYTHON_VERSION} -m venv "${LEADERBOARD_VENV}" && \
   echo source "${LEADERBOARD_VENV}/bin/activate" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
-  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt ./requirements_ros_bridge.txt
+  ./requirements_leaderboard.txt ./requirements_ros_build.txt ./requirements_ros_bridge.txt
 
 # Setup carla + leaderboard python dependencies
 ENV CARLA_ROOT=/opt/carla
 COPY --from=carla-api /opt/carla/PythonAPI /opt/carla/PythonAPI
-RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
-  echo "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.14-py3.7-linux-x86_64.egg" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+RUN bash -c "\
+  source "${LEADERBOARD_VENV}/bin/activate" && \
+  pip install "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp312-cp312-manylinux_2_31_x86_64.whl" \
+  "
+RUN \
   echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
   echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 
@@ -204,7 +198,7 @@ WORKDIR ${INTERNAL_WORKSPACE_DIR}/setup-scripts
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   pip freeze | awk -F "==" '{ print $1 }' > ./requirements_ros_build_freeze.txt && \
   bash install_requirements.sh ${LEADERBOARD_VENV} \
-  ${LEADERBOARD_ROOT}/requirements.txt ${SCENARIO_RUNNER_ROOT}/requirements.txt ./requirements_ros_build.txt ./requirements_ros_build_freeze.txt
+  ./requirements_leaderboard.txt ./requirements_ros_build.txt ./requirements_ros_build_freeze.txt
 WORKDIR ${ROS_ROOT}
 
 # Remove some conflicting libraries because ros ships its own version
@@ -275,6 +269,8 @@ RUN bash -c " \
   cd ros2_ws && \
   colcon build" && \
   echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
+
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth
 
 # The agent launches the paf_leaderboard_ros_bridge package
 COPY build/docker/carla/agent_ros2_bridge.py ./
