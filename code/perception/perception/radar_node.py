@@ -216,8 +216,8 @@ class RadarNode(Node):
         if not self.data_buffered:
             return
 
-        sec = time.clock.secs
-        nsec = time.clock.nsecs / 1e9
+        sec = time.clock.sec
+        nsec = time.clock.nanosec / 1e9
 
         self.now = sec + nsec
 
