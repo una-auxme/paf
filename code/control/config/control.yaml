@@ -13,3 +13,10 @@ velocity_controller:
     pid_d: 0.63
     fixed_speed: 0.0
     fixed_speed_active: False
+
+pure_pursuit_controller:
+  ros__parameters:
+    k_lad: 0.85
+    min_la_distance: 3.0
+    max_la_distance: 25.0
+    k_pub: 1.0
