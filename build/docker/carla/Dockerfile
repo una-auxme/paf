@@ -41,13 +41,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y \
-  xz-utils
+  xz-utils pigz
 
 ENV CARLA_ROOT=/opt/carla
-RUN --mount=type=bind,target=/opt/carla.tar.xz,source=build/docker/carla/CARLA_Leaderboard_2.0.tar.xz \
+RUN --mount=type=bind,target=/opt/carla.tar.gz,source=build/docker/carla/carla.tar.gz \
   mkdir -p ${CARLA_ROOT} && \
-  tar --no-same-owner -xf /opt/carla.tar.xz -C ${CARLA_ROOT} --strip-components=1
+  tar --use-compress-program=pigz --no-same-owner -xf /opt/carla.tar.gz -C ${CARLA_ROOT}
 WORKDIR ${CARLA_ROOT}
+RUN --mount=type=bind,target=${CARLA_ROOT}/Import/carla-additional-maps.tar.gz,source=build/docker/carla/carla-additional-maps.tar.gz \
+  tar --use-compress-program=pigz --no-same-owner --skip-old-files -xf ./Import/carla-additional-maps.tar.gz -C ${CARLA_ROOT}
+# Tar with --keep-newer-files in ImportAssets.sh leads to errors: "Unexpected inconsistency when making directory"
+# chmod +x ImportAssets.sh && ./ImportAssets.sh
 RUN chmod +x CarlaUE4.sh && chmod +x ./CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
