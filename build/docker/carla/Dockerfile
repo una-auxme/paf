@@ -140,10 +140,14 @@ RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYT
   echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
   echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
 
-# "Fix" libtiff.so.5 missing for the carla python API
-RUN wget http://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.10_amd64.deb -O libtiff5.deb && \
-  apt-get install -y ./libtiff5.deb && \
-  rm libtiff5.deb
+# libtiff.so.5 is required for for the carla python API, but it is not shipped anymore in ubuntu 24.04
+# -> build from source and install
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+RUN mkdir libtiff && \
+  wget https://download.osgeo.org/libtiff/tiff-4.3.0.tar.gz -O tiff.tar.gz && \
+  tar -xf tiff.tar.gz -C libtiff --strip-components=1 && \
+  rm tiff.tar.gz
+RUN cd libtiff && ./configure && make && make install
 
 ##################################
 # Install ROS build dependencies #
@@ -258,7 +262,7 @@ RUN echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPA
 # Setup ros2 agent #
 ####################
 
-# Use dummy package because the leaderboards wants to launch something
+# Add paf_leaderboard_ros_bridge package because the leaderboards wants to launch something
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 RUN mkdir -p ros2_ws/src
 COPY build/docker/carla/paf_leaderboard_ros_bridge ros2_ws/src/
@@ -268,7 +272,7 @@ RUN bash -c " \
   colcon build" && \
   echo source "${INTERNAL_WORKSPACE_DIR}/ros2_ws/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
-# The agent launches the dummy package
+# The agent launches the paf_leaderboard_ros_bridge package
 COPY build/docker/carla/agent_ros2_bridge.py ./
 CMD [ "bash", "-c", "sleep infinity"  ]
 
