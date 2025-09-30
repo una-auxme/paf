@@ -25,6 +25,7 @@ setup(
         "console_scripts": [
             "vehicle_controller = control.vehicle_controller:main",
             "velocity_controller = control.velocity_controller:main",
+            "pure_pursuit_controller = control.pure_pursuit_controller:main",
         ],
     },
 )
