@@ -33,7 +33,7 @@ if [ -n "$BASE_FLAVOUR" ]; then
 fi
 
 if [ ${#REQUIREMENTS[@]} -gt 0 ]; then
-  pip install "${REQUIREMENTS[@]}"
+  pip install --user "${REQUIREMENTS[@]}"
 else
   echo No python requirements found.
 fi

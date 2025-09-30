@@ -14,7 +14,7 @@ from .transforms import (
     ResizeAndPadToSquare,
     load_image,
 )
-from data_generation.weights_organizer import WeightsOrganizer
+from .data_generation.weights_organizer import WeightsOrganizer
 from .classification_model import (
     ClassificationModel,
 )
