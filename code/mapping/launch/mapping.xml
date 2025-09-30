@@ -1,11 +1,11 @@
 <launch>
   <arg name="map_publish_rate" default="0.05" />
 
-  <arg name="enable_radar_cluster" default="False" />
-  <arg name="enable_lidar_cluster" default="False" />
-  <arg name="enable_vision_cluster" default="False" />
+  <arg name="enable_radar_cluster" default="True" />
+  <arg name="enable_lidar_cluster" default="True" />
+  <arg name="enable_vision_cluster" default="True" />
   <arg name="enable_raw_lidar_points" default="False" />
-  <arg name="enable_lane_marker" default="False" />
+  <arg name="enable_lane_marker" default="True" />
   <arg name="enable_stop_marks" default="True" />
 
   <arg name="lidar_z_min" default="-1.5" />

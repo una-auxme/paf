@@ -8,6 +8,11 @@ if [ -d /usr/lib/wsl/lib ]; then
   export LD_LIBRARY_PATH=/usr/lib/wsl/lib:${LD_LIBRARY_PATH}
 fi
 
+# Add the pip user bin directory to PATH
+if [ -n "${PYTHONUSERBASE}" ]; then
+  export PATH="${PYTHONUSERBASE}/bin":${PATH}
+fi
+
 source "${INTERNAL_WORKSPACE_DIR}/scripts/devfunctions.bash"
 
 devsource

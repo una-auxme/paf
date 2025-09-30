@@ -474,7 +474,7 @@ class MappingDataIntegrationNode(Node):
             # Add entity to the list
             flags = Flags(is_collider=True)
             e = Entity(
-                confidence=1,
+                confidence=1.0,
                 priority=0.25,
                 shape=shape,
                 transform=transform,
@@ -513,7 +513,7 @@ class MappingDataIntegrationNode(Node):
             # Add entity to the list
             flags = Flags(is_collider=True)
             e = Entity(
-                confidence=1,
+                confidence=1.0,
                 priority=0.25,
                 shape=shape,
                 transform=transform,
@@ -663,7 +663,7 @@ class MappingDataIntegrationNode(Node):
             timestamp = self.get_clock().now().to_msg()
             if object_class == 4:
                 entity = Pedestrian(
-                    confidence=1,
+                    confidence=1.0,
                     priority=0.9,
                     shape=shape,
                     transform=transform,
@@ -673,7 +673,7 @@ class MappingDataIntegrationNode(Node):
                 )
             elif object_class == 10:
                 entity = Car(
-                    confidence=1,
+                    confidence=1.0,
                     priority=0.75,
                     shape=shape,
                     transform=transform,
@@ -683,7 +683,7 @@ class MappingDataIntegrationNode(Node):
                 )
             else:
                 entity = Entity(
-                    confidence=1,
+                    confidence=1.0,
                     priority=0.25,
                     shape=shape,
                     transform=transform,

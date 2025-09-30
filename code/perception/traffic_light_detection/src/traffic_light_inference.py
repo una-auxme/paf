@@ -1,17 +1,17 @@
 import argparse
 
-import torch.cuda
+import torch
 import torchvision.transforms as t
-from traffic_light_detection.src.traffic_light_detection.transforms import (
+from .transforms import (
     Normalize,
     ResizeAndPadToSquare,
     load_image,
 )
-from traffic_light_detection.src.traffic_light_detection.classification_model import (
+from .classification_model import (
     ClassificationModel,
 )
 from torchvision.transforms import ToTensor
-from traffic_light_detection.src.traffic_light_config import TrafficLightConfig
+from .traffic_light_config import TrafficLightConfig
 
 
 def parse_args():

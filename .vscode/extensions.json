@@ -17,6 +17,7 @@
         "ranch-hand-robotics.rde-pack",
         "timonwong.shellcheck",
         "editorconfig.editorconfig",
-        "phil294.git-log--graph"
+        "phil294.git-log--graph",
+        "ms-vscode.cmake-tools"
     ]
 }

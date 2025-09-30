@@ -9,3 +9,14 @@ simple-pid==2.0.1
 # Mapping
 cython==3.0.11
 shapely==2.0.6
+
+# Perception
+dvclive==3.48.5
+ruamel.yaml==0.18.15
+tqdm==4.67.1
+joblib==1.5.2
+scikit-learn==1.7.1
+ultralytics==8.3.191
+  # Lanedetection_node yolop
+prefetch_generator==1.0.3
+yacs==0.1.8

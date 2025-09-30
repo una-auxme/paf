@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-
-from ros_compatibility.node import CompatibleNode
-from rospy.numpy_msg import numpy_msg
-import ros_compatibility as roscomp
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header
 from cv_bridge import CvBridge
 import numpy as np
+
+import rclpy
+from rclpy.node import Node
 
 # for the lane detection model
 import torch
@@ -15,7 +13,7 @@ from PIL import Image
 import torchvision.transforms as t
 
 
-class Lanedetection_node(CompatibleNode):
+class Lanedetection_node(Node):
     """YOLOP:
     Model for Lanedetection and Driveable Area Detection
 
@@ -23,8 +21,15 @@ class Lanedetection_node(CompatibleNode):
     planning
     """
 
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self):
+        super().__init__(type(self).__name__)
+        self.get_logger().info(f"{type(self).__name__} node initializing...")
+
+        self.role_name = (
+            self.declare_parameter("role_name", "hero")
+            .get_parameter_value()
+            .string_value
+        )
 
         # load model
         self.model = torch.hub.load("hustvl/yolop", "yolop", pretrained=True)
@@ -34,7 +39,9 @@ class Lanedetection_node(CompatibleNode):
         self.bridge = CvBridge()
         self.image_msg_header = Header()
         self.image_msg_header.frame_id = "segmented_image_frame"
-        self.role_name = self.get_param("role_name", "hero")
+        # Initialize dist_arrays to None
+        self.dist_arrays = None
+
         # setup subscriptions
         self.setup_camera_subscriptions("Center")
         self.setup_dist_array_subscription()
@@ -42,9 +49,7 @@ class Lanedetection_node(CompatibleNode):
         self.setup_lane_publisher()
         self.setup_driveable_area_publisher()
 
-    def run(self):
-        self.spin()
-        pass
+        self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def setup_camera_subscriptions(self, side):
         """
@@ -54,8 +59,8 @@ class Lanedetection_node(CompatibleNode):
             side (String): Camera angle specified in launch file
         """
 
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.image_handler,
             topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1,
@@ -67,10 +72,10 @@ class Lanedetection_node(CompatibleNode):
         depth image of the selected camera angle
         """
 
-        self.new_subscription(
-            msg_type=numpy_msg(ImageMsg),
+        self.create_subscription(
+            msg_type=ImageMsg,
             callback=self.handle_dist_array,
-            topic="/paf/hero/Center/dist_array",
+            topic=f"/paf/{self.role_name}/Center/dist_array",
             qos_profile=1,
         )
 
@@ -78,8 +83,8 @@ class Lanedetection_node(CompatibleNode):
         """sets up a publisher for the lane mask
         topic: /Center/lane_mask
         """
-        self.lane_mask_publisher = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
+        self.lane_mask_publisher = self.create_publisher(
+            msg_type=ImageMsg,
             topic=f"/paf/{self.role_name}/Center/lane_mask",
             qos_profile=1,
         )
@@ -88,8 +93,8 @@ class Lanedetection_node(CompatibleNode):
         """sets up a publisher for the driveable area mask
         topic: /Center/lane_mask
         """
-        self.driveable_area_publisher = self.new_publisher(
-            msg_type=numpy_msg(ImageMsg),
+        self.driveable_area_publisher = self.create_publisher(
+            msg_type=ImageMsg,
             topic=f"/paf/{self.role_name}/Center/driveable_area",
             qos_profile=1,
         )
@@ -100,7 +105,7 @@ class Lanedetection_node(CompatibleNode):
         applies lane detection and Driveable area detection to given ImageMsg
         """
         # free up cuda memory
-        if self.device == "cuda":
+        if self.device.type == "cuda":
             torch.cuda.empty_cache()
 
         image, original_image = self.preprocess_image(ImageMsg)
@@ -217,8 +222,15 @@ class Lanedetection_node(CompatibleNode):
         return ll_seg_scaled, da_seg_scaled
 
 
+def main(args=None):
+    rclpy.init(args=args)
+
+    try:
+        node = Lanedetection_node()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    roscomp.init("Lanedetection_node")
-    node = Lanedetection_node("Lanedetection_node")
-    print("Lanedetection_node started")
-    node.run()
+    main()
