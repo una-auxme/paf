@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "control"
+package_name = "perception"
 
 setup(
     name=package_name,
@@ -23,9 +23,12 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "vehicle_controller = control.vehicle_controller:main",
-            "velocity_controller = control.velocity_controller:main",
-            "pure_pursuit_controller = control.pure_pursuit_controller:main",
+            "lane_position = perception.lane_position:main",
+            "Lanedetection_node = perception.Lanedetection_node:main",
+            "lidar_distance = perception.lidar_distance:main",
+            "radar_node = perception.radar_node:main",
+            "traffic_light_node = perception.traffic_light_node:main",
+            "vision_node = perception.vision_node:main",
         ],
     },
 )
