@@ -59,7 +59,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt-get install -y \
   xdg-user-dirs xdg-utils
 
-COPY build/docker/carla/carla_entrypoint.sh /entrypoint.sh
+COPY --chmod=755 build/docker/carla/carla_entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 
 FROM ${BASE_IMAGE} AS carla-api

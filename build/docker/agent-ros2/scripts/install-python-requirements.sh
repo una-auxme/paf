@@ -33,7 +33,11 @@ if [ -n "$BASE_FLAVOUR" ]; then
 fi
 
 if [ ${#REQUIREMENTS[@]} -gt 0 ]; then
-  pip install --user "${REQUIREMENTS[@]}"
+  pip_tmpdir=~/.pip-tmpdir-docker
+  mkdir -p ${pip_tmpdir}
+
+  TMPDIR=${pip_tmpdir} pip install --user "${REQUIREMENTS[@]}"
+  rm -rf ${pip_tmpdir}
 else
   echo No python requirements found.
 fi

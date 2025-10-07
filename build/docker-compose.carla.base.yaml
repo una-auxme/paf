@@ -9,6 +9,7 @@ services:
     image: carla-leaderboard-gpu:2.1
     user: ${PAF_UID}:${PAF_GID}
     environment:
+      - CARLA_SIM_HOST=carla-simulator
       - DESKTOP_SESSION
       - DISPLAY
       - XDG_SESSION_DESKTOP
@@ -23,18 +24,6 @@ services:
       - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./CustomCarlaSettings.ini:/CustomCarlaSettings.ini
-
-  carla-ros-bridge:
-    command: |
-      bash -c "\
-      python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --timeout=36000 --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP \
-      "
-    image: carla-leaderboard-ros-bridge:2.1
-    environment:
-      - CARLA_SIM_HOST=carla-simulator
-      - ROUTE=/opt/leaderboard/data/routes_devtest.xml
-    networks:
-      - carla
 
 networks:
   carla:

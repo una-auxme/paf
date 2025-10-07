@@ -180,23 +180,66 @@ RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ##########################################
-# Finish building the internal workspace #
+# Internal workspace: basic python setup #
 ##########################################
 
-USER ${PAF_USERNAME}
+USER root
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y python${PYTHON_VERSION}-venv
 
+USER ${PAF_USERNAME}
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 ENV PIP_CACHE_DIR=${INTERNAL_WORKSPACE_DIR}/pip-cache
 ENV PYTHONUSERBASE=${INTERNAL_WORKSPACE_DIR}/python-user-base
 RUN mkdir -p ./scripts/
-COPY ${DOCKER_RESOURCE_BASE}/scripts/install-python-requirements.sh ./scripts/
+COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/install-python-requirements.sh ./scripts/
+
+# Enable the python fault handler for printing stack traces on segfaults/c-assertions
+ENV PYTHONFAULTHANDLER=1
+
+#################################################
+# Install carla leaderboard and scenario runner #
+#################################################
+
+USER ${PAF_USERNAME}
+# Scenario runner
+ENV SCENARIO_RUNNER_ROOT=${INTERNAL_WORKSPACE_DIR}/scenario_runner
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/scenario_runner.git $SCENARIO_RUNNER_ROOT
+
+# Carla leaderboard
+ENV LEADERBOARD_ROOT=${INTERNAL_WORKSPACE_DIR}/leaderboard
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
+
+WORKDIR ${INTERNAL_WORKSPACE_DIR}/scripts
+COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/venv_install_requirements.sh \
+  ${DOCKER_RESOURCE_BASE}/scripts/requirements_leaderboard.txt \
+  ./
+ENV LEADERBOARD_VENV=${INTERNAL_WORKSPACE_DIR}/leaderboard_venv
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  python${PYTHON_VERSION} -m venv "${LEADERBOARD_VENV}" --system-site-packages
+
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
+  bash venv_install_requirements.sh ${LEADERBOARD_VENV} ./requirements_leaderboard.txt
+
+# Setup carla + leaderboard python dependencies
+ENV CARLA_ROOT=/opt/carla
+COPY --from=carla-leaderboard-api:2.1 /opt/carla/PythonAPI ${CARLA_ROOT}/PythonAPI
+RUN bash -c "\
+  source "${LEADERBOARD_VENV}/bin/activate" && \
+  pip install "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp312-cp312-manylinux_2_31_x86_64.whl" \
+  "
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
+  echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
+  echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
+
+##########################################
+# Finish building the internal workspace #
+##########################################
 
 # Create the main agent workspace
 ENV PAF_ROS_WS=${INTERNAL_WORKSPACE_DIR}/paf_ros2_ws
 RUN mkdir ${PAF_ROS_WS}
-
-# Enable the python fault handler for printing stack traces on segfaults/c-assertions
-ENV PYTHONFAULTHANDLER=1
 
 ##############################################
 ##### The agent-deploy image starts here #####
@@ -235,14 +278,10 @@ ENV VSCODE_APPDATA=/home/${PAF_USERNAME}/.config/code_docker
 USER ${PAF_USERNAME}
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
-COPY ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
+COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
   ${DOCKER_RESOURCE_BASE}/scripts/leaderboard.sh \
   ./scripts/
-
-VOLUME [ "/workspace" ]
-# Link the workspace into the PAF_ROS_WS
-RUN ln -s -T /workspace/code ${PAF_ROS_WS}/src
 
 ENTRYPOINT [ "/internal_workspace/scripts/entrypoint-dev.sh" ]
 
@@ -269,6 +308,10 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid="${PAF_UID}",g
   "
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc
+
+VOLUME [ "/workspace" ]
+# Link the workspace into the PAF_ROS_WS
+RUN ln -s -T /workspace/code ${PAF_ROS_WS}/src
 
 USER root
 # Make a backup of the home directories, because they get mounted as a volume
