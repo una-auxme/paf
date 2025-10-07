@@ -209,7 +209,7 @@ RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/ca
 
 # Carla leaderboard
 ENV LEADERBOARD_ROOT=${INTERNAL_WORKSPACE_DIR}/leaderboard
-RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/una-auxme/leaderboard $LEADERBOARD_ROOT
+RUN git clone -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/Zelberor/leaderboard.git $LEADERBOARD_ROOT
 
 WORKDIR ${INTERNAL_WORKSPACE_DIR}/scripts
 COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/venv_install_requirements.sh \
@@ -222,7 +222,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
   bash venv_install_requirements.sh ${LEADERBOARD_VENV} ./requirements_leaderboard.txt
 
-# Setup carla + leaderboard python dependencies
+# Add carla + leaderboard libraries into leaderboard_venv
 ENV CARLA_ROOT=/opt/carla
 COPY --from=carla-leaderboard-api:2.1 /opt/carla/PythonAPI ${CARLA_ROOT}/PythonAPI
 RUN bash -c "\
@@ -232,6 +232,9 @@ RUN bash -c "\
 RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth && \
   echo "${SCENARIO_RUNNER_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth && \
   echo "${LEADERBOARD_ROOT}" >>"${LEADERBOARD_VENV}"/lib/python${PYTHON_VERSION}/site-packages/leaderboard.pth
+# Add carla + leaderboard libraries into PYTHONUSERBASE
+RUN pip install "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp312-cp312-manylinux_2_31_x86_64.whl"
+RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${PYTHONUSERBASE}"/lib/python${PYTHON_VERSION}/site-packages/carla.pth
 
 ##########################################
 # Finish building the internal workspace #
@@ -280,6 +283,7 @@ WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
 COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
+  ${DOCKER_RESOURCE_BASE}/scripts/reset_env.bash \
   ${DOCKER_RESOURCE_BASE}/scripts/leaderboard.sh \
   ./scripts/
 

@@ -10,6 +10,8 @@ _term() {
 }
 trap _term SIGTERM SIGINT
 
+echo "${PATH}" > "${INTERNAL_WORKSPACE_DIR}/default_PATH"
+
 # Delete local python packages if they exist
 if [ -d ~/.local ]; then
   rm -r ~/.local

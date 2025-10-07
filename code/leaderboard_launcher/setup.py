@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "agent"
+package_name = "leaderboard_launcher"
 
 setup(
     name=package_name,
@@ -20,10 +20,8 @@ setup(
     description="TODO: Package description",
     license="MIT",
     tests_require=["pytest"],
-    scripts=["scripts/launch_agent.sh"],
+    scripts=["scripts/launch_leaderboard.sh"],
     entry_points={
-        "console_scripts": [
-            "data_management_node = agent.data_management_node:main",
-        ],
+        "console_scripts": [],
     },
 )
