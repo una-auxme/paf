@@ -34,5 +34,6 @@
 	],
 	"black-formatter.importStrategy": "fromEnvironment",
 	"containers.composeBuild": true,
-	"containers.composeDetached": false
+	"containers.composeDetached": false,
+	"task.allowAutomaticTasks": "on"
 }
