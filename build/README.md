@@ -23,6 +23,7 @@ PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
 ```
 
 Notes:
+
 - `PAF_USERNAME`, `PAF_UID`, `PAF_GID` are used by the build to create a matching user inside containers.
 - If you have an NVIDIA GPU, make sure your host driver meets the project requirement (see below). If your driver does not meet the minimum, the nvidia container runtime may refuse to start GPU containers.
 - For convenience the repo includes a small checker: `scripts/check-nvidia.sh` and a VS Code automatic task that runs it on folder open.
@@ -73,21 +74,24 @@ If you're unsure, start with `docker-compose.dev.cuda.yml` on an NVIDIA desktop,
 
 ## Build process (step-by-step)
 
-1. Prepare host
-  - Ensure Docker and docker-compose (v2) are installed.
-  - If using NVIDIA GPU: install NVIDIA drivers and the NVIDIA Container Toolkit.
-  - (Optional) Run `scripts/check-nvidia.sh` to confirm driver >= 550.
-  - Run `scripts/update-dotenv.sh` to create/update `build/.env` with current user info (used by the build).
+### Prepare host
 
-2. Build CARLA (if using CARLA simulator)
-  - The CARLA build helper is `build/docker/carla/build_carla.sh` and produces local images named like `carla-leaderboard` & `carla-leaderboard-ros-bridge`.
-  - This step downloads the CARLA runtime (~7–8 GB) and can take a while.
+- Ensure Docker and docker-compose (v2) are installed.
+- If using NVIDIA GPU: install NVIDIA drivers and the NVIDIA Container Toolkit.
+- (Optional) Run `scripts/check-nvidia.sh` to confirm driver >= 550.
+- Run `scripts/update-dotenv.sh` to create/update `build/.env` with current user info (used by the build).
+
+### Build CARLA (if using CARLA simulator)
+
+- The CARLA build helper is `build/docker/carla/build_carla.sh` and produces local images named like `carla-leaderboard` & `carla-leaderboard-ros-bridge`.
+- This step downloads the CARLA runtime (~7–8 GB) and can take a while.
 
 > [!WARNING] In the future, we plan to provide prebuilt CARLA images to avoid this lengthy local build step.
 
-3. Build agent images
-  - The agent images are built by the compose files when you run `docker compose up --build`.
-  - **Alternatively**, build a single image manually (example):
+### Build agent images
+
+- The agent images are built by the compose files when you run `docker compose up --build`.
+- **Alternatively**, build a single image manually (example):
 
 ```bash
 # Build agent-dev (CUDA flavour)
@@ -99,17 +103,19 @@ docker build \
   -t paf/agent-dev:local -f build/docker/agent-ros2/Dockerfile build/docker
 ```
 
-4. Start the dev stack
-  - Example (detached):
+### Start the dev stack
+
+- Example (detached):
 
 ```bash
 PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
   docker compose -f build/docker-compose.dev.cuda.yml up --build -d
 ```
 
-5. Attach IDE / developer workflow
-  - Attach your editor (VS Code Remote - Containers or simply attach to running `agent-dev` container).
-  - The agent-dev container exposes a persistent dev environment and links `/workspace` to your repo.
+### Attach IDE / developer workflow
+
+- Attach your editor (VS Code Remote - Containers or simply attach to running `agent-dev` container).
+- The agent-dev container exposes a persistent dev environment and links `/workspace` to your repo.
 
 ## Troubleshooting
 
