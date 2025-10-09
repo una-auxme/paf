@@ -1,10 +1,11 @@
 # Build / Docker compose overview
 
-This is currently **work-in-progess**.
+This is currently **work-in-progress**.
 
-This document explains the standard build/run entrypoint for local development and describes the other docker-compose files under `build/`. The normal development entrypoint is `build/docker-compose.dev.cuda.yml` (use this when you have an NVIDIA GPU and want CUDA-enabled containers on a Ubuntu Desktop). A mermaid process flow for the CUDA dev entrypoint is included below.
+This document explains the standard build/run entrypoint for local development and describes the other docker-compose files under `build/`.
+The normal development entrypoint is `build/docker-compose.dev.cuda.yml` (use this when you have an NVIDIA GPU and want CUDA-enabled containers on a Ubuntu Desktop). A mermaid process flow for the CUDA dev entrypoint is included below.
 
-### Requirements
+## Requirements
 
 - Docker (engine + compose v2)
 - If using NVIDIA GPU: NVIDIA drivers + NVIDIA Container Toolkit
@@ -29,13 +30,12 @@ Notes:
 ## NVIDIA driver / CUDA notes
 
 - This project uses images targeting CUDA 12.x. Those images require an NVIDIA driver with a matching ABI. By default the build sets a constraint in the agent images:
-
   - `NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=550"`
 
 - In short: NVIDIA driver >= 550 is recommended for the CUDA images used here. If you can't upgrade the host driver you have three options:
   1. Use the non-CUDA compose files (see table below) that target CPU or non-CUDA GPU stacks.
- 2. Rebuild images based on an older CUDA base (advanced).
- 3. Temporarily disable the runtime check (not recommended for production) by setting `NVIDIA_DISABLE_REQUIRE=1` in the compose override for the affected service — this may still fail at runtime if ABI/features are missing.
+  2. Rebuild images based on an older CUDA base (advanced).
+  3. Temporarily disable the runtime check (not recommended for production) by setting `NVIDIA_DISABLE_REQUIRE=1` in the compose override for the affected service — this may still fail at runtime if ABI/features are missing.
 
 ## Dockerfile notes (agent image)
 
@@ -74,20 +74,20 @@ If you're unsure, start with `docker-compose.dev.cuda.yml` on an NVIDIA desktop,
 ## Build process (step-by-step)
 
 1. Prepare host
-   - Ensure Docker and docker-compose (v2) are installed.
-   - If using NVIDIA GPU: install NVIDIA drivers and the NVIDIA Container Toolkit.
-   - (Optional) Run `scripts/check-nvidia.sh` to confirm driver >= 550.
+  - Ensure Docker and docker-compose (v2) are installed.
+  - If using NVIDIA GPU: install NVIDIA drivers and the NVIDIA Container Toolkit.
+  - (Optional) Run `scripts/check-nvidia.sh` to confirm driver >= 550.
   - Run `scripts/update-dotenv.sh` to create/update `build/.env` with current user info (used by the build).
 
 2. Build CARLA (if using CARLA simulator)
-   - The CARLA build helper is `build/docker/carla/build_carla.sh` and produces local images named like `carla-leaderboard` & `carla-leaderboard-ros-bridge`.
-   - This step downloads the CARLA runtime (~7–8 GB) and can take a while.
+  - The CARLA build helper is `build/docker/carla/build_carla.sh` and produces local images named like `carla-leaderboard` & `carla-leaderboard-ros-bridge`.
+  - This step downloads the CARLA runtime (~7–8 GB) and can take a while.
 
 > [!WARNING] In the future, we plan to provide prebuilt CARLA images to avoid this lengthy local build step.
 
 3. Build agent images
-   - The agent images are built by the compose files when you run `docker compose up --build`.
-   - **Alternatively**, build a single image manually (example):
+  - The agent images are built by the compose files when you run `docker compose up --build`.
+  - **Alternatively**, build a single image manually (example):
 
 ```bash
 # Build agent-dev (CUDA flavour)
@@ -100,7 +100,7 @@ docker build \
 ```
 
 4. Start the dev stack
-   - Example (detached):
+  - Example (detached):
 
 ```bash
 PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
@@ -108,8 +108,8 @@ PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
 ```
 
 5. Attach IDE / developer workflow
-   - Attach your editor (VS Code Remote - Containers or simply attach to running `agent-dev` container).
-   - The agent-dev container exposes a persistent dev environment and links `/workspace` to your repo.
+  - Attach your editor (VS Code Remote - Containers or simply attach to running `agent-dev` container).
+  - The agent-dev container exposes a persistent dev environment and links `/workspace` to your repo.
 
 ## Troubleshooting
 
@@ -124,7 +124,7 @@ PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
 ```mermaid
 flowchart TD
   Start[Start development on CUDA Ubuntu desktop]
-  Req[Check host preprerequisites -  Docker, nvidia driver, vscode + docker-extension, .env variables]
+  Req[Check host prerequisites -  Docker, nvidia driver, vscode + docker-extension, .env variables]
   A[run docker compose -f build/docker-compose.dev.cuda.yml up --build]
   B[Check host prerequisites: Docker, nvidia driver >= 550?]
   C{NVIDIA present?}
