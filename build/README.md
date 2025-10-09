@@ -1,13 +1,22 @@
 # Build / Docker compose overview
 
-This document explains the standard build/run entrypoint for local development and describes the other docker-compose files under `build/`. The normal development entrypoint is `build/docker-compose.dev.cuda.yml` (use this when you have an NVIDIA GPU and want CUDA-enabled containers). A mermaid process flow for the CUDA dev entrypoint is included below.
+This is currently **work-in-progess**.
+
+This document explains the standard build/run entrypoint for local development and describes the other docker-compose files under `build/`. The normal development entrypoint is `build/docker-compose.dev.cuda.yml` (use this when you have an NVIDIA GPU and want CUDA-enabled containers on a Ubuntu Desktop). A mermaid process flow for the CUDA dev entrypoint is included below.
+
+### Requirements
+
+- Docker (engine + compose v2)
+- If using NVIDIA GPU: NVIDIA drivers + NVIDIA Container Toolkit
+- VS Code + Remote - Containers extension for IDE integration
+- `build/.env` file created with current user info (see `scripts/update-dotenv.sh`)
 
 ## Quick start (recommended: CUDA desktop)
 
 From the repository root:
 
 ```bash
-# Export user mappings (recommended) and bring up the dev stack (CUDA flavor)
+# Export user mappings (only necessary, if build/.env is not used) and bring up the dev stack (CUDA flavor)
 PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
   docker compose -f build/docker-compose.dev.cuda.yml up --build
 ```
@@ -68,14 +77,17 @@ If you're unsure, start with `docker-compose.dev.cuda.yml` on an NVIDIA desktop,
    - Ensure Docker and docker-compose (v2) are installed.
    - If using NVIDIA GPU: install NVIDIA drivers and the NVIDIA Container Toolkit.
    - (Optional) Run `scripts/check-nvidia.sh` to confirm driver >= 550.
+  - Run `scripts/update-dotenv.sh` to create/update `build/.env` with current user info (used by the build).
 
 2. Build CARLA (if using CARLA simulator)
    - The CARLA build helper is `build/docker/carla/build_carla.sh` and produces local images named like `carla-leaderboard` & `carla-leaderboard-ros-bridge`.
    - This step downloads the CARLA runtime (~7–8 GB) and can take a while.
 
+> [!WARNING] In the future, we plan to provide prebuilt CARLA images to avoid this lengthy local build step.
+
 3. Build agent images
    - The agent images are built by the compose files when you run `docker compose up --build`.
-   - Alternatively, build a single image manually (example):
+   - **Alternatively**, build a single image manually (example):
 
 ```bash
 # Build agent-dev (CUDA flavour)
@@ -107,23 +119,28 @@ PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) \
 
 ## Process flow (CUDA dev entrypoint)
 
+> [!NOTE] This diagram is not up-to-date and may contain inaccuracies.
+
 ```mermaid
 flowchart TD
-  A[Start: run docker compose -f build/docker-compose.dev.cuda.yml up --build]
+  Start[Start development on CUDA Ubuntu desktop]
+  Req[Check host preprerequisites -  Docker, nvidia driver, vscode + docker-extension, .env variables]
+  A[run docker compose -f build/docker-compose.dev.cuda.yml up --build]
   B[Check host prerequisites: Docker, nvidia driver >= 550?]
   C{NVIDIA present?}
-  D[Run build scripts: build CARLA images (build/docker/carla/build_carla.sh)]
-  E[Build agent images (docker/agent-ros2/Dockerfile) with BASE_FLAVOUR=cuda]
+  D[Run build scripts: build CARLA images build/docker/carla/build_carla.sh]
+  E[Build agent images docker/agent-ros2/Dockerfile with BASE_FLAVOUR=cuda]
   F[Compose creates networks & volumes]
   G[Start services: carla-simulator, carla-ros-bridge, agent-dev, ...]
   H[Attach dev tools: VS Code, shells, tests]
   I[Run experiments / development loop]
 
+  Start --> Req --> A
   A --> B --> C
   C -- yes --> D --> E --> F --> G --> H --> I
   C -- no --> E --> F --> G --> H --> I
   %% If driver check fails there is an optional manual override
-  G -.-> |driver too old| J[Set NVIDIA_DISABLE_REQUIRE=1 (workaround)] -.-> G
+  %% G -.-> |driver too old| J[Set NVIDIA_DISABLE_REQUIRE=1 (workaround)] -.-> G
 ```
 
 ## Contact / notes
