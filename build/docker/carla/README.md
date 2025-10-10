@@ -32,3 +32,15 @@ Tips / optimizations
 - Keep the CARLA tarball `CARLA_Leaderboard_2.0.tar.xz` next to the Dockerfile to reuse it across builds.
 
 If you want, I can add a `buildx` version of `build_carla.sh` that performs a single multi-target build and pushes/cache-export images for faster CI runs.
+
+## Publishing prebuilt images
+
+If you prefer not to build CARLA locally, publish the built images to a container registry (Docker Hub, GHCR). Developers can then pull the prebuilt images.
+
+Example: pull a prebuilt CUDA image from GHCR
+
+```bash
+docker pull ghcr.io/<org-or-user>/carla-leaderboard-cuda:2.1
+```
+
+CI note: Use `docker/build-push-action` (buildx) to build and push multiple targets from the multi-stage Dockerfile and enable cache export to speed up the build.
