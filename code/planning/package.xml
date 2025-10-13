@@ -7,8 +7,9 @@
   <maintainer email="peter.viechter@student.uni-augsburg.de">peter</maintainer>
   <license>MIT</license>
 
-  <!--These packages cannot be installed since they force all python installations to use py_trees 2.3.0
- In the leaderboard_venv, py_trees 0.8.3 has to be used. The agent uses 2.3.0-->
+  <!--These packages are manually installed into the AGENT_DEPS_ROS_WS (not via rosdep)
+  They force all python installations to use py_trees 2.3.0. -> Separate ros workspace to not conflict with the leaderboard.
+  In the leaderboard_venv, py_trees 0.8.3 has to be used. The agent uses 2.3.0-->
   <!--<depend>py_trees</depend>
   <depend>py_trees_ros</depend>
   <depend>py_trees_ros_interfaces</depend>

@@ -27,6 +27,7 @@ source "${INTERNAL_WORKSPACE_DIR}/dev.bashrc"
 devbuild || echo "WARNING: Build failed, proceeding anyway..."
 
 echo "source ${PAF_ROS_WS}/install/local_setup.bash" >>"${INTERNAL_WORKSPACE_DIR}/env.bash"
+echo "source ${PAF_ROS_WS}/install/local_setup.bash" >>"${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash"
 devsource || echo "WARNING: ROS workspace could not be sourced"
 
 ros_gui_params=(--ros-args --param use_sim_time:=true)

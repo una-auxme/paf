@@ -233,18 +233,25 @@ class PrePlanner(Node):
 
         x_start = self.agent_pos.x  # 983.5
         y_start = self.agent_pos.y  # -5433.2
+        # Hack
+        start_pose = Pose()
+        start_pose.position = self.agent_pos
+        start_pose.orientation = self.agent_ori
+        data.poses.insert(0, start_pose)
+        data.road_options.insert(0, CarlaRoute.LANEFOLLOW)
+
         x_target = data.poses[0].position.x
         y_target = data.poses[0].position.y
         # Currently commented out because restarting the agent on-the-fly
         # is not possible with this check
-        # if (
-        #     abs(x_start - x_target) > self.distance_spawn_to_first_wp
-        #     or abs(y_start - y_target) > self.distance_spawn_to_first_wp
-        # ):
-        #     self.get_logger().warn(
-        #         "Current agent-pose does not match the given global route"
-        #     )
-        #     return False
+        if (
+            abs(x_start - x_target) > self.distance_spawn_to_first_wp
+            or abs(y_start - y_target) > self.distance_spawn_to_first_wp
+        ):
+            self.get_logger().warn(
+                "Current agent-pose does not match the given global route"
+            )
+            return False
 
         # get the first turn command (1, 2, or 3)
         x_turn = None
@@ -284,7 +291,7 @@ class PrePlanner(Node):
         n = len(data.poses)
         # iterating through global route to create trajectory
         for i in range(1, n - 1):
-            # self.loginfo(f"Preplanner going throug global plan {i+1}/{n}")
+            self.get_logger().info(f"Preplanner going throug global plan {i+1}/{n}")
 
             x_target = data.poses[i].position.x
             y_target = data.poses[i].position.y
@@ -442,6 +449,10 @@ class PrePlanner(Node):
 
 
 def main(args=None):
+    from paf_common.debugging import start_debugger
+
+    start_debugger(wait_for_client=True)
+
     rclpy.init(args=args)
 
     try:

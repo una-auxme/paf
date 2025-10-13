@@ -9,6 +9,7 @@ services:
     # The image has to be built locally with ./docker/carla/build_carla.sh
     image: carla-leaderboard-gpu:2.1
     user: ${PAF_UID}:${PAF_GID}
+    shm_size: 2gb
     environment:
       - DESKTOP_SESSION
       - DISPLAY

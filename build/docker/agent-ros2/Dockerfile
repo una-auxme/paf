@@ -123,7 +123,39 @@ ENV INTERNAL_WORKSPACE_DIR=/internal_workspace
 RUN mkdir -p ${INTERNAL_WORKSPACE_DIR} && \
   chown ${PAF_UID}:${PAF_GID} ${INTERNAL_WORKSPACE_DIR}
 USER ${PAF_USERNAME}
-RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
+RUN echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  echo source "/opt/ros/${ROS_DISTRO}/setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash
+
+#######################################
+# Create agent dependencies workspace #
+#######################################
+# This workspace is NOT sourced for running the leaderboard (contains the conflicting ros py-trees packages)
+
+USER ${PAF_USERNAME}
+
+ENV AGENT_DEPS_ROS_WS=${INTERNAL_WORKSPACE_DIR}/agent_deps_ros2_ws
+RUN mkdir -p ${AGENT_DEPS_ROS_WS}/src
+WORKDIR ${AGENT_DEPS_ROS_WS}
+RUN git clone --recurse-submodules -b ${ROS_DISTRO} --single-branch https://github.com/Box-Robotics/ros2_numpy.git ./src/ros2_numpy
+
+# Install dependencies for pacakges above
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash && \
+  sudo apt-get update && \
+  rosdep update --rosdistro ${ROS_DISTRO} && \
+  rosdep install -r --ignore-src --from-paths src --rosdistro ${ROS_DISTRO} -y \
+  "
+
+# Do not install dependencies for py_trees_ros
+RUN git clone --recurse-submodules -b 2.3.0 --single-branch https://github.com/splintered-reality/py_trees_ros.git ./src/py_trees_ros
+RUN git clone --recurse-submodules -b 2.1.1 --single-branch https://github.com/splintered-reality/py_trees_ros_interfaces.git ./src/py_trees_ros_interfaces
+RUN git clone --recurse-submodules -b 0.2.5 --single-branch https://github.com/splintered-reality/py_trees_ros_viewer.git ./src/py_trees_ros_viewer
+
+RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \
+  echo source "${AGENT_DEPS_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
 
 ############################
 # Install carla ros bridge #
@@ -137,8 +169,6 @@ USER ${PAF_USERNAME}
 ENV CARLA_ROS_WS=${INTERNAL_WORKSPACE_DIR}/carla_ros2_ws
 RUN mkdir -p ${CARLA_ROS_WS}/src
 WORKDIR ${CARLA_ROS_WS}
-# ros2_numpy is not a dependency of the ros-bridge but currently does not have a rosdep key -> Also installed in the CARLA_ROS_WS
-RUN git clone --recurse-submodules -b ${ROS_DISTRO} --single-branch https://github.com/Box-Robotics/ros2_numpy.git ./src/ros2_numpy
 RUN git clone --recurse-submodules -b ${LEADERBOARD_GIT_BRANCH} --single-branch https://github.com/carla-simulator/ros-bridge ./src/ros-bridge
 # Fix compilation dependency: https://github.com/carla-simulator/ros-bridge/issues/737
 RUN sed -i '/include_directories(include ${PCL_INCLUDE_DIRS})/a include_directories(${tf2_eigen_INCLUDE_DIRS})' ./src/ros-bridge/pcl_recorder/CMakeLists.txt
@@ -169,15 +199,16 @@ USER ${PAF_USERNAME}
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   bash -c " \
-  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  source ${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash && \
   sudo apt-get update && \
   rosdep update --rosdistro ${ROS_DISTRO} && \
   rosdep install -r --ignore-src --from-paths src --rosdistro ${ROS_DISTRO} -y \
   "
 
-RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash && \
   colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \
-  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash
+  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  echo source "${CARLA_ROS_WS}/install/local_setup.bash" >> ${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash
 
 ##########################################
 # Internal workspace: basic python setup #

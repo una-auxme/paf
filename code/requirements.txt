@@ -23,3 +23,6 @@ yacs==0.1.8
 
 # Planning
 py_trees==2.3.0
+
+# Debugger
+debugpy==1.8.17

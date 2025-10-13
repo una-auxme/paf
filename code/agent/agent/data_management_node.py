@@ -77,6 +77,8 @@ class DataManagement(Node):
     def open_drive_callback(self, data: String):
         self.get_logger().info("Received open drive data.")
         self.open_drive_string = data.data
+        with open("/workspace/OpenDriveString.xml", "w") as text_file:
+            text_file.write(self.open_drive_string)
         if self.open_drive_service is None:
             self.open_drive_service = self.create_service(
                 GetOpenDriveString,
