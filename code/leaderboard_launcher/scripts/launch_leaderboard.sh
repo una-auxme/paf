@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-_term() {
-  echo "Caught SIGTERM signal!"
-  # shellcheck disable=SC2046
-  kill -TERM $(jobs -p) 2>/dev/null
-}
-trap _term SIGTERM SIGINT
-
 cd "${INTERNAL_WORKSPACE_DIR}"
 
 # Reset full ROS/Python environment
@@ -23,9 +16,7 @@ source leaderboard_venv/bin/activate
 python3 "/workspace/code/leaderboard_launcher/agent/wait_for_carla.py"
 
 # Start leaderboard with arguments
-python3 "${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator.py" \
+exec python3 "${LEADERBOARD_ROOT}/leaderboard/leaderboard_evaluator.py" \
   --host="${CARLA_SIM_HOST}" \
   --agent="/workspace/code/leaderboard_launcher/agent/agent.py" \
-  "${@}" &
-
-wait "$!"
+  "${@}"

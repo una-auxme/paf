@@ -719,6 +719,9 @@ class MappingDataIntegrationNode(Node):
         """
         hero_car = self.create_hero_entity()
         if hero_car is None or self.current_pos is None or self.current_heading is None:
+            self.get_logger().warn(
+                f"Available: hero_car: {hero_car is not None}, current_pos: {self.current_pos is not None}, current_heading: {self.current_heading is not None}"
+            )
             return
 
         entities: List[Entity] = []

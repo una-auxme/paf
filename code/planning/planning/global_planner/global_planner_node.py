@@ -233,17 +233,8 @@ class PrePlanner(Node):
 
         x_start = self.agent_pos.x  # 983.5
         y_start = self.agent_pos.y  # -5433.2
-        # Hack
-        start_pose = Pose()
-        start_pose.position = self.agent_pos
-        start_pose.orientation = self.agent_ori
-        data.poses.insert(0, start_pose)
-        data.road_options.insert(0, CarlaRoute.LANEFOLLOW)
-
         x_target = data.poses[0].position.x
         y_target = data.poses[0].position.y
-        # Currently commented out because restarting the agent on-the-fly
-        # is not possible with this check
         if (
             abs(x_start - x_target) > self.distance_spawn_to_first_wp
             or abs(y_start - y_target) > self.distance_spawn_to_first_wp
@@ -449,9 +440,9 @@ class PrePlanner(Node):
 
 
 def main(args=None):
-    from paf_common.debugging import start_debugger
+    # from paf_common.debugging import start_debugger
 
-    start_debugger(wait_for_client=True)
+    # start_debugger(wait_for_client=False)
 
     rclpy.init(args=args)
 

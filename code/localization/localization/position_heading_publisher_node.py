@@ -25,15 +25,16 @@ must be added in the constructor for clean modular programming.
 
 """
 
-from typing import List
+from typing import List, Optional
 import rclpy
+import rclpy.callback_groups
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 import numpy as np
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32, Bool
 from localization.coordinate_transformation import CoordinateTransformer
 from localization.coordinate_transformation import quat_to_heading
 from xml.etree import ElementTree as eTree
@@ -41,6 +42,7 @@ from paf_common.parameters import update_attributes
 from rcl_interfaces.msg import (
     ParameterDescriptor,
 )
+from planning_interfaces.srv import GetOpenDriveString
 
 GPS_RUNNING_AVG_ARGS: int = 10
 
@@ -100,7 +102,7 @@ class PositionHeadingPublisherNode(Node):
         )
 
         # todo: automatically detect town
-        self.transformer = None
+        self.transformer = CoordinateTransformer()
 
         # 3D Odometry (GPS)
         self.avg_xyz = np.zeros((GPS_RUNNING_AVG_ARGS, 3))
@@ -108,11 +110,11 @@ class PositionHeadingPublisherNode(Node):
 
         # region Subscriber START
 
-        self.map_sub = self.create_subscription(
-            String,
-            "/carla/" + self.role_name + "/OpenDRIVE",
-            self.get_geoRef,
-            qos_profile=1,
+        self.create_subscription(
+            msg_type=Bool,
+            topic=f"/paf/{self.role_name}/data/planning/open_drive_updated",
+            callback=self.get_geoRef,
+            qos_profile=10,
         )
 
         self.imu_subscriber = self.create_subscription(
@@ -207,6 +209,22 @@ class PositionHeadingPublisherNode(Node):
             Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
         )
 
+        # Service clients
+        self.client_callback_group = (
+            rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        )
+        self.open_drive_client = self.create_client(
+            GetOpenDriveString,
+            f"/paf/{self.role_name}/data/planning/get_open_drive",
+            callback_group=self.client_callback_group,
+        )
+        for client in self.clients:
+            while not client.wait_for_service(timeout_sec=2.0):
+                self.get_logger().warn(
+                    f"Waiting for the {client.service_name} service "
+                    "to become available..."
+                )
+
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
@@ -259,7 +277,7 @@ class PositionHeadingPublisherNode(Node):
 
     # region POSITION FUNCTIONS
 
-    def publish_running_avg_pos_as_current_pos(self, data: NavSatFix):
+    async def publish_running_avg_pos_as_current_pos(self, data: NavSatFix):
         """
         This method is called when new GNSS data is received.
         The function calculates the average position and then publishes it.
@@ -269,10 +287,9 @@ class PositionHeadingPublisherNode(Node):
         """
         # Make sure position is only published when reference values have been
         # read from the Map
-        if CoordinateTransformer.ref_set is False:
-            self.transformer = CoordinateTransformer()
-            CoordinateTransformer.ref_set = True
-        if CoordinateTransformer.ref_set is True:
+        if self.transformer.ref_set is False:
+            await self.get_geoRef()
+        if self.transformer.ref_set is True:
             lat = data.latitude
             lon = data.longitude
             alt = data.altitude
@@ -309,7 +326,7 @@ class PositionHeadingPublisherNode(Node):
         """
         self.cur_pos_publisher.publish(data)
 
-    def publish_unfiltered_gps(self, data: NavSatFix):
+    async def publish_unfiltered_gps(self, data: NavSatFix):
         """
         This method is called when new GNSS data is received.
         It publishes the unfiltered GPS data as x/y/z coordinates (PoseStamped).
@@ -318,10 +335,9 @@ class PositionHeadingPublisherNode(Node):
         """
         # Make sure position is only published when reference values have been
         # read from the Map
-        if CoordinateTransformer.ref_set is False:
-            self.transformer = CoordinateTransformer()
-            CoordinateTransformer.ref_set = True
-        if CoordinateTransformer.ref_set is True:
+        if self.transformer.ref_set is False:
+            await self.get_geoRef()
+        if self.transformer.ref_set is True:
             lat = data.latitude
             lon = data.longitude
             alt = data.altitude
@@ -355,14 +371,27 @@ class PositionHeadingPublisherNode(Node):
 
     # endregion POSITION FUNCTIONS END
 
-    def get_geoRef(self, opendrive: String):
-        """_summary_
-        Reads the reference values for lat and lon from the carla OpenDriveMap
+    async def get_geoRef(self, b: Bool = Bool(data=True)):
+        """Reads the reference values for lat and lon from the carla OpenDriveMap
         This is necessary for the coordinate transformation from GNSS to x/y/z
-        Args:
-            opendrive (String): OpenDrive Map from carla
         """
-        root = eTree.fromstring(opendrive.data)
+        req = GetOpenDriveString.Request()
+        response: Optional[GetOpenDriveString.Response] = (
+            await self.open_drive_client.call_async(req)
+        )
+        if response is None:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service returned None."
+            )
+            return False
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service failed: {response.msg}."
+            )
+            return False
+        opendrive: str = response.data
+
+        root = eTree.fromstring(opendrive)
         header = root.find("header")
         geoRefText = header.find("geoReference").text
 
@@ -378,10 +407,10 @@ class PositionHeadingPublisherNode(Node):
         latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
         lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
 
-        CoordinateTransformer.la_ref = latValue
-        CoordinateTransformer.ln_ref = lonValue
-        CoordinateTransformer.ref_set = True
-        self.transformer = CoordinateTransformer()
+        self.transformer.la_ref = latValue
+        self.transformer.ln_ref = lonValue
+        self.transformer.ref_set = True
+        self.get_logger().info("Geo ref updated.")
 
 
 def main(args=None):

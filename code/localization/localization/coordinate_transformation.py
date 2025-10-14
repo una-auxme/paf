@@ -36,39 +36,34 @@ class CoordinateTransformer:
         pass
 
     def gnss_to_xyz(self, lat, lon, h):
-        return geodetic_to_enu(lat, lon, h)
+        return self.geodetic_to_enu(lat, lon, h)
 
+    def geodetic_to_enu(self, lat, lon, alt):
+        """
+        Method from pylot project to calculate coordinates
+        https://github.com/erdos-project/pylot/blob/master/pylot/utils.py#L470
 
-def geodetic_to_enu(lat, lon, alt):
-    """
-    Method from pylot project to calculate coordinates
-    https://github.com/erdos-project/pylot/blob/master/pylot/utils.py#L470
+        Args:
+            lat (float): latitude
+            lon (float): longitude
+            alt (float: altitude
 
-    Args:
-        lat (float): latitude
-        lon (float): longitude
-        alt (float: altitude
+        Returns:
+            x, y, z: coordinates
+        """
 
-    Returns:
-        x, y, z: coordinates
-    """
+        scale = math.cos(self.la_ref * math.pi / 180.0)
+        basex = scale * math.pi * a / 180.0 * self.ln_ref
+        basey = scale * a * math.log(math.tan((90.0 + self.la_ref) * math.pi / 360.0))
 
-    scale = math.cos(CoordinateTransformer.la_ref * math.pi / 180.0)
-    basex = scale * math.pi * a / 180.0 * CoordinateTransformer.ln_ref
-    basey = (
-        scale
-        * a
-        * math.log(math.tan((90.0 + CoordinateTransformer.la_ref) * math.pi / 360.0))
-    )
+        x = scale * math.pi * a / 180.0 * lon - basex
+        y = scale * a * math.log(math.tan((90.0 + lat) * math.pi / 360.0)) - basey
 
-    x = scale * math.pi * a / 180.0 * lon - basex
-    y = scale * a * math.log(math.tan((90.0 + lat) * math.pi / 360.0)) - basey
-
-    # Is not necessary in new version
-    # y *= -1
-    # alt_offset is needed to keep the hight of the map in mind
-    # right now we don't really use the altitude anyways
-    return x, y, alt + alt_offset
+        # Is not necessary in new version
+        y *= -1
+        # alt_offset is needed to keep the hight of the map in mind
+        # right now we don't really use the altitude anyways
+        return x, y, alt + alt_offset
 
 
 def geodetic_to_ecef(lat, lon, h):
