@@ -10,28 +10,62 @@ Short summary of targets produced by `build_carla.sh`:
   - Full CARLA runtime tuned for NVIDIA/CUDA hosts; enforces driver requirements.
 - `carla-leaderboard-api:2.1` (target `carla-api`)
   - Lightweight image containing only the CARLA Python API (no heavy simulator binary).
-- `carla-leaderboard-ros-bridge:2.1` (target `carla-ros-bridge`)
-  - Image with ROS/leaderboard/scenario-runner and the ROS bridge; used for scoring, bridges and runner processes.
+
 
 Why there are multiple images
 - Separation of concerns: simulator binary is large — separate images let you run the simulator on one host and the API/bridge on others without shipping the binary everywhere.
-- Faster iteration: rebuild only the target that changed (the ros-bridge rebuilds faster than re-packing the simulator tarball).
+- Faster iteration: rebuild only the target that changed
 
-How to build locally
+## How to build locally
 
 From `build/docker/carla`:
+
+### Standard build (sequential)
 
 ```bash
 ./build_carla.sh
 ```
 
-This script will download the CARLA runtime (if missing) and build the four images. Expect the operation to take a long time and download several GB.
+This script will download the CARLA runtime (if missing) and build the three images sequentially. Expect the operation to take a long time and download several GB.
+
+### Buildx build (faster, parallel, with push/cache support)
+
+For faster builds with better layer reuse and the ability to push to ghcr, use the buildx version:
+
+```bash
+./build_carla_buildx.sh
+```
+
+**Advanced usage for CI/CD:**
+
+```bash
+# Push to a container registry (e.g., GHCR)
+REGISTRY=ghcr.io/una-auxme/paf PUSH=1 ./build_carla_buildx.sh
+
+# With cache export for faster subsequent builds
+REGISTRY=ghcr.io/una-auxme/paf \
+  PUSH=1 \
+  CACHE_TO=type=registry,ref=ghcr.io/una-auxme/carla-cache \
+  ./build_carla_buildx.sh
+
+# With cache import and export
+REGISTRY=ghcr.io/una-auxme/paf \
+  PUSH=1 \
+  CACHE_FROM=type=registry,ref=ghcr.io/una-auxme/carla-cache \
+  CACHE_TO=type=registry,ref=ghcr.io/una-auxme/carla-cache \
+  ./build_carla_buildx.sh
+```
+
+**Benefits of the buildx version:**
+- Single build invocation builds all three targets with maximum layer reuse
+- Supports pushing directly to container registries
+- Supports cache import/export for dramatically faster CI builds
+- Can build for multiple platforms (though CARLA is currently amd64-only)
+- Uses Docker Bake for declarative multi-target builds
 
 Tips / optimizations
-- Use Docker Buildx to export multiple images in a single build invocation to reduce duplicated downloads and layer churn in CI.
-- Keep the CARLA tarball `CARLA_Leaderboard_2.0.tar.xz` next to the Dockerfile to reuse it across builds.
-
-If you want, I can add a `buildx` version of `build_carla.sh` that performs a single multi-target build and pushes/cache-export images for faster CI runs.
+- Keep the CARLA tarball `carla.tar.gz` next to the Dockerfile to reuse it across builds.
+- In CI, use cache export to a registry to speed up subsequent builds significantly.
 
 ## Publishing prebuilt images
 
