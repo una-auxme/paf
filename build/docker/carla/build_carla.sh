@@ -1,5 +1,11 @@
 #!/bin/bash
+
 set -e
+
+echo "Building CARLA images locally. Only for development and testing."
+echo "For building and pushing to GHCR, use build_carla_buildx.sh instead."
+echo "Otherwise, pull images from <https://github.com/orgs/una-auxme/packages>"
+
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "${SCRIPT_DIR}"
 
