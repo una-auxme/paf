@@ -241,9 +241,7 @@ class VisionNode(Node):
             (cv image): visualization output for rvizw
         """
         if lidar_array is None or lidar_array.size == 0:
-            self.get_logger().error(
-                "No valid lidar data found", throttle_duration_sec=2
-            )
+            self.get_logger().warn("No valid lidar data found", throttle_duration_sec=2)
             return None
         scaled_masks = None
         cv_image = self.bridge.imgmsg_to_cv2(

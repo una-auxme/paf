@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="role_name" default="hero" />
+
+    <set_parameter name="use_sim_time" value="true" />
+
+    <node pkg="agent" exec="data_management_node" name="data_management_node">
+        <param name="role_name" value="$(var role_name)" />
+    </node>
+</launch>

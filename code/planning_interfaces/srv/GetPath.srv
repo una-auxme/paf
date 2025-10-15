@@ -1,0 +1,6 @@
+
+---
+
+nav_msgs/Path data
+string msg
+bool success

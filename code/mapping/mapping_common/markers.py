@@ -76,6 +76,9 @@ def debug_marker(
         marker = base
     elif isinstance(base, str):
         marker = Marker(type=Marker.TEXT_VIEW_FACING, text=base)
+        # https://github.com/ros2/rviz/pull/1261
+        # Scale x controls the width of spaces
+        marker.scale.x = 0.2
     elif isinstance(base, Point2):
         transform = Transform2D.new_translation(base.vector())
         shape = Circle(radius=0.1)
@@ -161,11 +164,13 @@ def debug_marker_array(
     if lifetime is None:
         lifetime = Duration(seconds=0.5).to_msg()
 
-    marker_array = MarkerArray(markers=[Marker(ns=namespace, action=Marker.DELETEALL)])
+    marker_array = MarkerArray(
+        markers=[Marker(id=0, ns=namespace, action=Marker.DELETEALL)]
+    )
     for id, marker in enumerate(markers):
         marker.header.stamp = timestamp
         marker.ns = namespace
-        marker.id = id
+        marker.id = id + 1
         marker.lifetime = lifetime
         marker_array.markers.append(marker)
 

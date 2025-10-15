@@ -1,0 +1,6 @@
+
+---
+
+std_msgs/Float32MultiArray data
+string msg
+bool success

@@ -18,6 +18,7 @@ services:
       target: agent-dev
     shm_size: 2gb
     environment:
+      - CARLA_SIM_HOST=carla-simulator
       - DESKTOP_SESSION
       - DISPLAY
       - XDG_SESSION_DESKTOP

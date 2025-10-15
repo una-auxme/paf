@@ -631,11 +631,11 @@ class MappingDataIntegrationNode(Node):
                 cluster_polygon = MultiPoint(cluster_points_xy)
                 cluster_polygon_hull = cluster_polygon.convex_hull
                 if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
-                    self.get_logger().info("Empty hull", throttle_duration_sec=0.5)
+                    self.get_logger().debug("Empty hull", throttle_duration_sec=2.0)
                     continue
                 if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                    self.get_logger().info(
-                        "Cluster is not polygon, continue", throttle_duration_sec=0.5
+                    self.get_logger().debug(
+                        "Cluster is not polygon, continue", throttle_duration_sec=2.0
                     )
                     continue
 
@@ -719,6 +719,9 @@ class MappingDataIntegrationNode(Node):
         """
         hero_car = self.create_hero_entity()
         if hero_car is None or self.current_pos is None or self.current_heading is None:
+            self.get_logger().warn(
+                f"Available: hero_car: {hero_car is not None}, current_pos: {self.current_pos is not None}, current_heading: {self.current_heading is not None}"
+            )
             return
 
         entities: List[Entity] = []
