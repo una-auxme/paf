@@ -1,5 +1,7 @@
 # Publishing CARLA images to GHCR (GitHub Container Registry)
 
+> [!NOTE] Pushing to GHCR is implemented in `.build_carla_buildx.sh`
+
 Purpose
 - This guide shows where to publish prebuilt CARLA images for the `paf` repository and how to automate builds/pushes to GHCR so developers can pull images instead of building the large CARLA runtime locally.
 
@@ -9,14 +11,30 @@ Recommended location for images
   - `ghcr.io/una-auxme/carla-leaderboard-cuda:2.1`
   - `ghcr.io/una-auxme/carla-leaderboard-gpu:2.1`
   - `ghcr.io/una-auxme/carla-leaderboard-api:2.1`
-  - `ghcr.io/una-auxme/carla-leaderboard-ros-bridge:2.1`
 
 Why GHCR?
 - GHCR integrates nicely with GitHub Actions and allows fine-grained package permissions. Using GHCR keeps images close to the source and simplifies CI credentials.
 
-Authentication and permissions
+## Authentication and permissions
+
 - For pushing from GitHub Actions you can use the automatically provided `GITHUB_TOKEN`. Grant the workflow the `packages: write` permission (example below). The `GITHUB_TOKEN` is scoped to the repository; for org-wide pushes you may need a PAT with `write:packages`.
 - For manual pushes from a developer machine, create a personal access token (PAT) with at least `write:packages` and `read:packages`, then login locally:
+
+### Using `gh` as a token provider
+
+#### `gh` login
+
+```bash
+gh auth login
+```
+
+#### docker login
+
+```bash
+gh auth token | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+## Push
 
 ```bash
 echo "${GHCR_PAT}" | docker login ghcr.io -u <github-username> --password-stdin
@@ -64,7 +82,6 @@ jobs:
             ghcr.io/una-auxme/carla-leaderboard-gpu:2.1
             ghcr.io/una-auxme/carla-leaderboard-cuda:2.1
             ghcr.io/una-auxme/carla-leaderboard-api:2.1
-            ghcr.io/una-auxme/carla-leaderboard-ros-bridge:2.1
           # build-args can be used to set BASE_FLAVOUR for the cuda image if needed
           build-args: |
             BASE_FLAVOUR=cuda
