@@ -11,6 +11,8 @@ http://dirsig.cis.rit.edu/docs/new/coordinates.html
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation
+import pymap3d
+import pymap3d.ellipsoid
 
 
 a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
@@ -64,6 +66,20 @@ class CoordinateTransformer:
         # alt_offset is needed to keep the hight of the map in mind
         # right now we don't really use the altitude anyways
         return x, y, alt + alt_offset
+
+    def new_geodetic_to_enu(self, lat: float, lon: float, alt: float):
+        # https://stackoverflow.com/a/62521868
+        x, y, z = pymap3d.geodetic2enu(
+            lat,
+            lon,
+            alt,
+            self.la_ref,
+            self.ln_ref,
+            self.h_ref,
+            deg=True,
+            ell=pymap3d.ellipsoid.Ellipsoid.from_name("wgs84_mean"),
+        )
+        return x, -y, z
 
 
 def geodetic_to_ecef(lat, lon, h):
