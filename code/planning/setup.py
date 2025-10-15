@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "agent"
+package_name = "planning"
 
 setup(
     name=package_name,
@@ -12,6 +12,7 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name, "launch"), glob("launch/*")),
+        (os.path.join("share", package_name, "config"), glob("config/*")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -22,7 +23,12 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "data_management_node = agent.data_management_node:main",
+            "global_planner_node = planning.global_planner.global_planner_node:main",
+            "global_plan_distance_publisher = "
+            "planning.global_planner.global_plan_distance_publisher:main",
+            "ACC = planning.local_planner.ACC:main",
+            "motion_planning = planning.local_planner.motion_planning:main",
+            "behavior_tree = planning.behavior_agent.behavior_tree:main",
         ],
     },
 )

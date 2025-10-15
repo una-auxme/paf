@@ -204,7 +204,7 @@ def line_to_ros_path(line: shapely.LineString) -> NavPath:
     """
     path = NavPath()
     for coord in line.coords:
-        pose = Pose(position=Point(coord[0], coord[1], 0))
+        pose = Pose(position=Point(x=coord[0], y=coord[1], z=0.0))
         pose_stamped = PoseStamped(pose=pose)
         path.poses.append(pose_stamped)
     return path

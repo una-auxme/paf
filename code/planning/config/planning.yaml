@@ -1,0 +1,25 @@
+ACC:
+  ros__parameters:
+    k_p: 0.5
+    k_i: 1.2
+    t_gap: 1.9
+    d_min: 0.7
+
+    hard_approach_distance: 1.5
+    hard_approach_speed: 1.0
+
+    acceleration_factor: 1.0
+
+    curve_line_angle: 15.0
+    min_curve_distance: 2.0
+    min_curve_speed: 4.0
+    max_curve_distance: 50.0
+    max_curve_speed: 30.0
+
+behavior_agent:
+  ros__parameters:
+    # Intersection
+    left_check_debug: False
+    left_check_length: 45.0
+    left_check_x_transform: 12.0
+

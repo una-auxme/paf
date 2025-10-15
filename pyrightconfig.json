@@ -9,7 +9,7 @@
   "strictListInference": true,
   "strictDictionaryInference": true,
   "strictSetInference": true,
-  "pythonVersion": "3.8",
+  "pythonVersion": "3.12",
   "pythonPlatform": "Linux",
   "executionEnvironments": [
     {
