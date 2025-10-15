@@ -8,7 +8,7 @@
     </node>
 
     <node pkg="planning" exec="motion_planning" name="MotionPlanning">
-      <param name="role_name" value="hero" />
+      <param name="role_name" value="$(var role_name)" />
     </node>
 
     <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
@@ -20,7 +20,7 @@
     </node> -->
 
     <node pkg="planning" exec="global_planner_node" name="PrePlanner">
-      <param name="role_name" value="hero" />
+      <param name="role_name" value="$(var role_name)" />
       <param name="distance_spawn_to_first_wp" value="100.0" />
     </node>
 
