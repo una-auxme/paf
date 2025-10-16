@@ -7,7 +7,7 @@ echo "with push and cache export capabilities for faster CI runs."
 
 # Usage:
 #   Local build (load to docker):
-#     ./build_carla_buildx.sh
+#     ./build_carla_buildx.sh PUSH=0
 #
 #   CI build with push to registry:
 #     REGISTRY=ghcr.io/una-auxme PUSH=1 ./build_carla_buildx.sh
