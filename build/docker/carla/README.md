@@ -11,8 +11,8 @@ Short summary of targets produced by `build_carla.sh`:
 - `carla-leaderboard-api:2.1` (target `carla-api`)
   - Lightweight image containing only the CARLA Python API (no heavy simulator binary).
 
-
 Why there are multiple images
+
 - Separation of concerns: simulator binary is large — separate images let you run the simulator on one host and the API/bridge on others without shipping the binary everywhere.
 - Faster iteration: rebuild only the target that changed
 
@@ -57,6 +57,7 @@ REGISTRY=ghcr.io/una-auxme/paf \
 ```
 
 **Benefits of the buildx version:**
+
 - Single build invocation builds all three targets with maximum layer reuse
 - Supports pushing directly to container registries
 - Supports cache import/export for dramatically faster CI builds
@@ -64,6 +65,7 @@ REGISTRY=ghcr.io/una-auxme/paf \
 - Uses Docker Bake for declarative multi-target builds
 
 Tips / optimizations
+
 - Keep the CARLA tarball `carla.tar.gz` next to the Dockerfile to reuse it across builds.
 - In CI, use cache export to a registry to speed up subsequent builds significantly.
 

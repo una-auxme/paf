@@ -100,7 +100,7 @@ Notes on the workflow
 
 Make the package public
 
-- By default GHCR packages are private. After pushing the image, go to the package page in GitHub (Repository > Packages or https://github.com/orgs/una-auxme/packages) and set visibility to **Public** if you want everyone to be able to pull without authentication.
+- By default GHCR packages are private. After pushing the image, go to the package page in GitHub (Repository > Packages or <https://github.com/orgs/una-auxme/packages>) and set visibility to **Public** if you want everyone to be able to pull without authentication.
 
 Using the images in `docker-compose`
 

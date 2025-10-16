@@ -7,4 +7,3 @@ This file is a short pointer to the per-component documentation. The detailed CA
 - Helpful scripts: `scripts/check-nvidia.sh` and `scripts/update-dotenv.sh`
 
 If you need the full developer guide, see the `doc/development` and `doc/general` folders.
-
