@@ -255,7 +255,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked \
 
 # Add carla + leaderboard libraries into leaderboard_venv
 ENV CARLA_ROOT=/opt/carla
-COPY --from=carla-leaderboard-api:2.1 /opt/carla/PythonAPI ${CARLA_ROOT}/PythonAPI
+COPY --from=ghcr.io/una-auxme/carla-leaderboard-api:2.1 /opt/carla/PythonAPI ${CARLA_ROOT}/PythonAPI
 RUN bash -c "\
   source "${LEADERBOARD_VENV}/bin/activate" && \
   pip install "${CARLA_ROOT}/PythonAPI/carla/dist/carla-0.9.16-cp312-cp312-manylinux_2_31_x86_64.whl" \

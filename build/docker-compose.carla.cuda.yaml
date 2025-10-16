@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose.carla.base.yaml
       service: carla-simulator
-    image: carla-leaderboard-cuda:2.1
+    image: ghcr.io/una-auxme/carla-leaderboard-cuda:2.1
     deploy:
       resources:
         reservations:

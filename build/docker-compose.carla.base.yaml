@@ -7,7 +7,7 @@ services:
       /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN} \
       "
     # The image has to be built locally with ./docker/carla/build_carla.sh
-    image: carla-leaderboard-gpu:2.1
+    image: ghcr.io/una-auxme/carla-leaderboard-gpu:2.1
     user: ${PAF_UID}:${PAF_GID}
     shm_size: 2gb
     environment:
