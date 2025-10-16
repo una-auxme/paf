@@ -89,14 +89,24 @@ fi
 
 # Create or use existing buildx builder
 BUILDER_NAME="carla-builder"
+BUILDER_CREATED=0
 if ! docker buildx inspect "$BUILDER_NAME" &>/dev/null; then
   echo "Creating buildx builder: $BUILDER_NAME"
   docker buildx create --name "$BUILDER_NAME" --driver docker-container --use
+  BUILDER_CREATED=1
 else
   echo "Using existing buildx builder: $BUILDER_NAME"
   docker buildx use "$BUILDER_NAME"
 fi
 
+# Cleanup function to remove builder if created by this script
+cleanup_builder() {
+  if [ "$BUILDER_CREATED" = "1" ]; then
+    echo "Cleaning up buildx builder: $BUILDER_NAME"
+    docker buildx rm "$BUILDER_NAME" || echo "Warning: Failed to remove buildx builder $BUILDER_NAME"
+  fi
+}
+trap cleanup_builder EXIT
 # Determine output mode
 if [ "$PUSH" = "1" ]; then
   if [ -z "$REGISTRY" ]; then
