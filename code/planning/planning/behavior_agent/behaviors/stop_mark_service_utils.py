@@ -84,7 +84,7 @@ def update_stop_marks(
                 transform=transform,
             )
         else:
-            get_logger().error(f"Unsupported stop mark type: ${type(mark)}")
+            get_logger().error(f"Unsupported stop mark type: {type(mark)}")
             continue
 
         if not is_global:

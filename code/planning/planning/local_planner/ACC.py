@@ -220,7 +220,7 @@ class ACC(Node):
                 "max_curve_distance",
                 50.0,
                 descriptor=ParameterDescriptor(
-                    description="Adjusts the acceleration",
+                    description="Distance to the intersection with the trajectory",
                     floating_point_range=[
                         FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
                     ],

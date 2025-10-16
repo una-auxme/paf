@@ -9,7 +9,7 @@
     </node>
 
     <node pkg="planning" exec="motion_planning" name="MotionPlanning">
-      <param name="role_name" value="hero" />
+      <param name="role_name" value="$(var role_name)" />
     </node>
 
     <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
