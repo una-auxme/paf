@@ -7,6 +7,8 @@ from geometry_msgs.msg import PoseStamped, Pose
 
 import carla
 
+from localization.coordinate_transformation import CoordinateTransformer
+
 
 class GpsDebug(Node):
 
@@ -41,6 +43,16 @@ class GpsDebug(Node):
         self.client = carla.Client(carla_host, carla_port)
         self.world = self.client.get_world()
         self.map = self.world.get_map()
+        self.carla_car = None
+        for actor in self.world.get_actors():
+            if actor.attributes.get("role_name") == "hero":
+                self.carla_car = actor
+                break
+        if self.carla_car is None:
+            self.get_logger().fatal("Actor with role name hero not found!")
+            exit(1)
+
+        self.transformer = CoordinateTransformer()
 
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
@@ -48,15 +60,9 @@ class GpsDebug(Node):
         if self.pose is None:
             return
 
-        carla_car = None
-        carla_gt_pos = None
-        carla_gt_gnss = None
-        for actor in self.world.get_actors():
-            if actor.attributes.get("role_name") == "hero":
-                carla_car = actor
-                carla_gt_pos = carla_car.get_location()
-                carla_gt_gnss = self.map.transform_to_geolocation(location=carla_gt_pos)
-                break
+        carla_gt_pos = self.carla_car.get_location()
+        carla_gt_gnss = self.map.transform_to_geolocation(location=carla_gt_pos)
+
         # check_gnss is gnss lat/long calculated with the carla-intern function based
         # on our calculated x/y/z coordinates
         # -> If it matches the gps lat/long, our gnss_to_xyz function is correct
@@ -67,6 +73,9 @@ class GpsDebug(Node):
                 self.pose.position.z,
             )
         )
+        calculated_gt_pos = self.transformer.gnss_to_xyz(
+            carla_gt_gnss.latitude, carla_gt_gnss.longitude, carla_gt_gnss.altitude
+        )
         self.get_logger().info(
             f"Map geolocation: "
             f"{self.map.transform_to_geolocation(location=carla.Location(0, 0, 0))} \n"
@@ -75,7 +84,8 @@ class GpsDebug(Node):
             f"Carla calculated pos: {self.pose.position} \n"
             f"Check gnss: {check_gnss} \n"
             f"Carla gt pos: {carla_gt_pos} \n"
-            f"Carla gt gnss: {carla_gt_gnss}"
+            f"Carla gt gnss: {carla_gt_gnss} \n"
+            f"Calculated gt pos: {calculated_gt_pos}"
         )
 
     def current_pos_callback(self, pose: PoseStamped):

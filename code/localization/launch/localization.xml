@@ -25,6 +25,8 @@
     </node>
 
     <node pkg="localization" exec="gps_transform" name="gps_transformation">
+      <param name="role_name" value="$(var role_name)" />
+      <param name="position_use_ground_truth" value="True" />
     </node>
 
     <node pkg="robot_localization" exec="ekf_node" name="ekf_local">
