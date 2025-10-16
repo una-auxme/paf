@@ -31,10 +31,4 @@
     <!-- mapping -->
     <include file="$(find-pkg-share mapping)/launch/mapping.xml">
     </include>
-
-    <!-- kalman localization with robot localization package -->
-    <include file="$(find-pkg-share localization)/launch/localization.xml">
-      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
-      <arg name="role_name" value="$(var role_name)" />
-    </include>
 </launch>
