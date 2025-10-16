@@ -4,7 +4,7 @@ import rclpy
 import rclpy.clock
 from rclpy.node import Node
 from rclpy.service import Service
-from rclpy.qos import QoSProfile, DurabilityPolicy
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 
 from std_msgs.msg import Bool, String
 from carla_msgs.msg import CarlaRoute
@@ -38,13 +38,21 @@ class DataManagement(Node):
             msg_type=String,
             topic=f"/carla/{self.role_name}/OpenDRIVE",
             callback=self.open_drive_callback,
-            qos_profile=10,
+            qos_profile=QoSProfile(
+                depth=1,
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
         )
         self.create_subscription(
             msg_type=CarlaRoute,
             topic="/carla/" + self.role_name + "/global_plan",
             callback=self.global_plan_callback,
-            qos_profile=10,
+            qos_profile=QoSProfile(
+                depth=1,
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
         )
         # Publisher
         self.open_drive_updated_pub = self.create_publisher(
