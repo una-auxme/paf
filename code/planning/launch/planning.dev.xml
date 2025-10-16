@@ -1,3 +1,4 @@
+<!--This launch file starts all planning nodes that can be restarted on-thy-fly while the leaderboard is running-->
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
@@ -19,18 +20,8 @@
            <param name="role_name" value="hero" />
     </node> -->
 
-    <node pkg="planning" exec="global_planner_node" name="PrePlanner">
-      <param name="role_name" value="hero" />
-      <param name="distance_spawn_to_first_wp" value="100.0" />
-    </node>
-
-    <node pkg="planning" exec="global_plan_distance_publisher" name="GlobalPlanDistance">
-      <param name="role_name" value="$(var role_name)" />
-    </node>
-
     <node pkg="planning" exec="behavior_tree" name="behavior_agent">
       <param name="role_name" value="$(var role_name)" />
       <param from="$(find-pkg-share planning)/config/planning.yaml"/>
     </node>
-
 </launch>

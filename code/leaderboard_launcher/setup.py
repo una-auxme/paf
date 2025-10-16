@@ -20,7 +20,7 @@ setup(
     description="TODO: Package description",
     license="MIT",
     tests_require=["pytest"],
-    scripts=["scripts/launch_leaderboard.sh"],
+    scripts=["scripts/launch_leaderboard.sh", "scripts/launch_leaderboard.dev.sh"],
     entry_points={
         "console_scripts": [],
     },

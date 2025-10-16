@@ -11,6 +11,8 @@ http://dirsig.cis.rit.edu/docs/new/coordinates.html
 import math
 import numpy as np
 from scipy.spatial.transform import Rotation
+import pymap3d
+import pymap3d.ellipsoid
 
 
 a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
@@ -43,6 +45,13 @@ class CoordinateTransformer:
         Method from pylot project to calculate coordinates
         https://github.com/erdos-project/pylot/blob/master/pylot/utils.py#L470
 
+        Also seems to match the internal carla api implementation
+        https://github.com/carla-simulator/carla/blob/4a6622d15dc4f1c5247e470882dc639743e17e14/LibCarla/source/carla/geom/GeoLocation.cpp#L38
+
+        With the special carla 0.9.14(leaderboard) version,
+        this function provides an accurate conversion.
+        With carla 0.9.16, the results are off by up to 2m in y...?
+
         Args:
             lat (float): latitude
             lon (float): longitude
@@ -64,6 +73,39 @@ class CoordinateTransformer:
         # alt_offset is needed to keep the hight of the map in mind
         # right now we don't really use the altitude anyways
         return x, y, alt + alt_offset
+
+    def pymap3d_geodetic_to_enu(self, lat: float, lon: float, alt: float):
+        """Converts geodetic coordinates to enu (carla) coordinates
+
+        Compared to the other implementations it uses
+        pymap3d's functions for the conversion
+
+        In theory this should be the most correct conversion,
+        but in practive it seems to be even more off
+        than the other geodetic_to_enu function. (up to 4m in y!)
+
+        To use it across the project, just replace the call in gnss_to_xyz with this fn.
+
+        Args:
+            lat (float): latitude
+            lon (float): longitude
+            alt (float): altitude
+
+        Returns:
+            x, y, z: coordinates
+        """
+        # https://stackoverflow.com/a/62521868
+        x, y, z = pymap3d.geodetic2enu(
+            lat,
+            lon,
+            alt,
+            self.la_ref,
+            self.ln_ref,
+            self.h_ref,
+            deg=True,
+            ell=pymap3d.ellipsoid.Ellipsoid.from_name("wgs84"),
+        )
+        return x, -y, z
 
 
 def geodetic_to_ecef(lat, lon, h):

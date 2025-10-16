@@ -24,6 +24,7 @@ setup(
     entry_points={
         "console_scripts": [
             "ekf_state_publisher = localization.ekf_state_publisher:main",
+            "gps_debug_node = localization.gps_debug_node:main",
             "gps_transform = localization.gps_transform:main",
             "kalman_filter = localization.kalman_filter:main",
             "odometry_fusion = localization.odometry_fusion:main",

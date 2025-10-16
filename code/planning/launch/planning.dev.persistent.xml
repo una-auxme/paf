@@ -1,0 +1,22 @@
+<!--This launch file starts all planning nodes that cannot be restarted while the leaderboard is running-->
+<!--It is automatically started when launching the leaderboard with launch_leaderboard.dev.sh-->
+<launch>
+  <arg name="role_name" default="hero" />
+  <arg name="control_loop_rate" default="0.05" />
+
+  <!--This node is only ably to restart properly if the car is near the starting position-->
+  <!--This limitation could be removed by adjusting the global_planner_node!-->
+  <!--For development purposes:
+  1. Comment out this node here
+  2. Set manual_override_active to True in code/control/config/control.yaml (stops driving)
+  3. Start leaderboard.dev + agent
+  4. Manually (re)start this node with *ros2 run planning global_planner_node*-->
+  <node pkg="planning" exec="global_planner_node" name="PrePlanner">
+    <param name="role_name" value="hero" />
+    <param name="distance_spawn_to_first_wp" value="100.0" />
+  </node>
+
+  <node pkg="planning" exec="global_plan_distance_publisher" name="GlobalPlanDistance">
+    <param name="role_name" value="$(var role_name)" />
+  </node>
+</launch>
