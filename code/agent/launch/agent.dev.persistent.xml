@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--This launch file starts all nodes that cannot be restarted while the leaderboard is running-->
+<!--It is automatically started when launching the leaderboard with launch_leaderboard.dev.sh-->
 <launch>
     <arg name="role_name" default="hero" />
 
@@ -7,4 +9,8 @@
     <node pkg="agent" exec="data_management_node" name="data_management_node">
         <param name="role_name" value="$(var role_name)" />
     </node>
+
+    <!-- planning -->
+    <include file="$(find-pkg-share planning)/launch/planning.dev.persistent.xml">
+    </include>
 </launch>
