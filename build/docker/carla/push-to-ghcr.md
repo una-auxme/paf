@@ -1,6 +1,6 @@
 # Publishing CARLA images to GHCR (GitHub Container Registry)
 
-> [!NOTE] Pushing to GHCR is implemented in `.build_carla_buildx.sh`
+> [!NOTE] Pushing to GHCR is implemented in `build/docker/carla/build_carla_buildx.sh`
 
 Purpose
 - This guide shows where to publish prebuilt CARLA images for the `paf` repository and how to automate builds/pushes to GHCR so developers can pull images instead of building the large CARLA runtime locally.
