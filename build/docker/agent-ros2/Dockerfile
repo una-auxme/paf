@@ -76,6 +76,7 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
   ros-${ROS_DISTRO}-desktop \
+  ros-${ROS_DISTRO}-py-trees-js \
   ros-dev-tools \
   python3-colcon-common-extensions
 
@@ -152,6 +153,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN git clone --recurse-submodules -b 2.3.0 --single-branch https://github.com/splintered-reality/py_trees_ros.git ./src/py_trees_ros
 RUN git clone --recurse-submodules -b 2.1.1 --single-branch https://github.com/splintered-reality/py_trees_ros_interfaces.git ./src/py_trees_ros_interfaces
 RUN git clone --recurse-submodules -b 0.2.5 --single-branch https://github.com/splintered-reality/py_trees_ros_viewer.git ./src/py_trees_ros_viewer
+# RUN git clone --recurse-submodules -b 0.6.6 --single-branch https://github.com/splintered-reality/py_trees_js.git ./src/py_trees_js
 
 RUN bash -c "source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \

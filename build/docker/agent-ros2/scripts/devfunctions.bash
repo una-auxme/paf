@@ -6,6 +6,8 @@ cat <<EOF
 Development utility functions:
 - devsource: sources the ${INTERNAL_WORKSPACE_DIR}/env.bash (includes the ${PAF_ROS_WS}/install/local_setup.bash)
 - devbuild: colcon builds the ${PAF_ROS_WS} (colcon build --symlink-install)
+- pytrees.viewer: Launches the py-trees tree viewer for behavior trees
+                   Note: You need to have a behavior tree running (like the agent) for this to show anything
 - leaderboard.dev: Starts code/leaderboard_launcher/scripts/launch_leaderboard.dev.sh
                    You can adjust leaderboard parameters (like which route to run) there.
                    The leaderboard then automatically launches code/agent/launch/agent.dev.persistent.xml
@@ -52,3 +54,10 @@ agent.dev() {
   )
 }
 export -f agent.dev
+
+pytrees.viewer() {
+  (
+  py-trees-tree-viewer --tree /behavior_agent/tree
+  )
+}
+export -f pytrees.viewer
