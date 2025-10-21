@@ -1,4 +1,4 @@
-<!--This launch file starts all planning nodes that can be restarted on-thy-fly while the leaderboard is running-->
+<!--This launch file starts all planning nodes that can be restarted on-the-fly while the leaderboard is running-->
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
