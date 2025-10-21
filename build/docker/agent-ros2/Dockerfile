@@ -72,10 +72,13 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb" && \
   dpkg -i /tmp/ros2-apt-source.deb
 
+# Install ROS 2 packages
+# Install py-trees-js for visualization dependencies
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
   ros-${ROS_DISTRO}-desktop \
+  ros-${ROS_DISTRO}-py-trees-js \
   ros-dev-tools \
   python3-colcon-common-extensions
 
@@ -308,6 +311,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt-get install -y code
 # Use different data dir to avoid dbus conflicts with the host installation
 ENV VSCODE_APPDATA=/home/${PAF_USERNAME}/.config/code_docker
+
+# refresh apt list
+RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt update
 
 USER ${PAF_USERNAME}
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
