@@ -146,7 +146,7 @@ class GlobalPlanDistance(Node):
         current_waypoint = Waypoint(
             waypoint_type=waypoint_type,
             distance=current_distance,
-            roadOption=self.road_options[0],
+            road_option=self.road_options[0],
             position=self.global_route[0].position,
         )
         self.waypoint_publisher.publish(current_waypoint)
