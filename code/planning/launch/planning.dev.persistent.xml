@@ -12,7 +12,7 @@
   3. Start leaderboard.dev + agent
   4. Manually (re)start this node with *ros2 run planning global_planner_node*-->
   <node pkg="planning" exec="global_planner_node" name="PrePlanner">
-    <param name="role_name" value="hero" />
+    <param name="role_name" value="$(var role_name)" />
     <param name="distance_spawn_to_first_wp" value="100.0" />
   </node>
 

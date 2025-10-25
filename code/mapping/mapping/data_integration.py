@@ -722,7 +722,8 @@ class MappingDataIntegrationNode(Node):
             self.get_logger().warn(
                 f"Available: hero_car: {hero_car is not None}, "
                 f"current_pos: {self.current_pos is not None}, "
-                f"current_heading: {self.current_heading is not None}"
+                f"current_heading: {self.current_heading is not None}",
+                throttle_duration_sec=2.0,
             )
             return
 

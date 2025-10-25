@@ -37,8 +37,9 @@ class GpsDebug(Node):
 
         carla_host = os.environ.get("CARLA_SIM_HOST")
         if carla_host is None:
-            self.get_logger().fatal("Environment variable CARLA_SIM_HOST not set!")
-            exit(1)
+            msg = "Environment variable CARLA_SIM_HOST not set!"
+            self.get_logger().fatal(msg)
+            raise RuntimeError(msg)
         carla_port = int(os.environ.get("CARLA_PORT", "2000"))
         self.client = carla.Client(carla_host, carla_port)
         self.world = self.client.get_world()
@@ -49,8 +50,9 @@ class GpsDebug(Node):
                 self.carla_car = actor
                 break
         if self.carla_car is None:
-            self.get_logger().fatal("Actor with role name hero not found!")
-            exit(1)
+            msg = "Actor with role name hero not found!"
+            self.get_logger().fatal(msg)
+            raise RuntimeError(msg)
 
         self.transformer = CoordinateTransformer()
 
@@ -93,9 +95,9 @@ class GpsDebug(Node):
 
 
 def main(args=None):
-    from paf_common.debugging import start_debugger
+    # from paf_common.debugging import start_debugger
 
-    start_debugger(wait_for_client=False)
+    # start_debugger(wait_for_client=False)
 
     rclpy.init(args=args)
 

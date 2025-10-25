@@ -12,10 +12,16 @@ cd "${SCRIPT_DIR}"
 if [ ! -f ./carla.tar.gz ]; then
   wget --progress=bar https://tiny.carla.org/carla-0-9-16-linux -O ./carla.tar.gz
 fi
+# Verify checksum
+# Run "sha256sum carla.tar.gz > carla.tar.gz.sha256sum" to create new checksum
+cat ./carla.tar.gz.sha256sum | sha256sum -c -
 
 if [ ! -f ./carla-additional-maps.tar.gz ]; then
   wget --progress=bar https://tiny.carla.org/additional-maps-0-9-16-linux -O ./carla-additional-maps.tar.gz
 fi
+# Verify checksum
+# Run "sha256sum carla.tar.gz > carla.tar.gz.sha256sum" to create new checksum
+cat ./carla-additional-maps.tar.gz.sha256sum | sha256sum -c -
 
 docker build --pull -t carla-leaderboard-gpu:2.1 --target carla -f ./Dockerfile ../../../
 docker build --pull -t carla-leaderboard-cuda:2.1 --target carla --build-arg BASE_FLAVOUR=cuda -f ./Dockerfile ../../../
