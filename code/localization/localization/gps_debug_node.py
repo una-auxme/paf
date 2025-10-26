@@ -11,6 +11,7 @@ from localization.coordinate_transformation import CoordinateTransformer
 
 
 class GpsDebug(Node):
+    """Node for analyizing coordinate transformations and accuracy"""
 
     def __init__(self):
         super().__init__(type(self).__name__)
@@ -67,7 +68,7 @@ class GpsDebug(Node):
 
         # check_gnss is gnss lat/long calculated with the carla-intern function based
         # on our calculated x/y/z coordinates
-        # -> If it matches the gps lat/long, our gnss_to_xyz function is correct
+        # -> Should roughly match the "Carla gnss"
         check_gnss = self.map.transform_to_geolocation(
             location=carla.Location(
                 self.pose.position.x,
@@ -75,6 +76,8 @@ class GpsDebug(Node):
                 self.pose.position.z,
             )
         )
+        # calculated_gt_pos is xyz calculated based on carla_gt_gnss
+        # -> If it matches the carla_gt_pos, our gnss_to_xyz function is correct
         calculated_gt_pos = self.transformer.gnss_to_xyz(
             carla_gt_gnss.latitude, carla_gt_gnss.longitude, carla_gt_gnss.altitude
         )
@@ -83,7 +86,7 @@ class GpsDebug(Node):
             f"{self.map.transform_to_geolocation(location=carla.Location(0, 0, 0))} \n"
             f"Carla gnss: lat: {gps.latitude}, long: {gps.longitude}, "
             f"alt: {gps.altitude} \n"
-            f"Carla calculated pos: {self.pose.position} \n"
+            f"Current_pos topic: {self.pose.position} \n"
             f"Check gnss: {check_gnss} \n"
             f"Carla gt pos: {carla_gt_pos} \n"
             f"Carla gt gnss: {carla_gt_gnss} \n"
