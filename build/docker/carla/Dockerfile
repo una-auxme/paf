@@ -29,7 +29,7 @@ ENV NVIDIA_REQUIRE_DRIVER="driver>=${NVIDIA_DRIVER_VERSION}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y libnvidia-gl-${NVIDIA_DRIVER_VERSION}
+  apt-get install -y nvidia-cuda-toolkit libxext6
 
 ############################################
 ##### The main carla image starts here #####
