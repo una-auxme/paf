@@ -18,5 +18,6 @@ echo Added requirements: "${ADDED_REQUIREMENTS[@]}"
 pip_tmpdir=~/.pip-tmpdir-docker
 mkdir -p ${pip_tmpdir}
 
+# TMPDIR=${pip_tmpdir} pip install -U pip setuptools
 TMPDIR=${pip_tmpdir} pip install -U "${ADDED_REQUIREMENTS[@]}"
 rm -rf ${pip_tmpdir}

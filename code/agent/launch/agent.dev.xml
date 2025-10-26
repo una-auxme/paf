@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--This launch file starts all nodes that can be restarted on-thy-fly while the leaderboard is running-->
+<!--It has to be manually launched AFTER launching the leaderboard with launch_leaderboard.dev.sh-->
+<!--Use *ros2 launch agent agent.dev.xml* to launch the agent (and stop it with ctrl+c)-->
 <launch>
     <arg name="role_name" default="hero" />
     <arg name="control_loop_rate" default="0.05" />
@@ -11,7 +14,7 @@
     </include>
 
     <!-- planning -->
-    <include file="$(find-pkg-share planning)/launch/planning.xml">
+    <include file="$(find-pkg-share planning)/launch/planning.dev.xml">
     </include>
 
     <!-- acting -->
@@ -27,11 +30,5 @@
 
     <!-- mapping -->
     <include file="$(find-pkg-share mapping)/launch/mapping.xml">
-    </include>
-
-    <!-- kalman localization with robot localization package -->
-    <include file="$(find-pkg-share localization)/launch/localization.xml">
-      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
-      <arg name="role_name" value="$(var role_name)" />
     </include>
 </launch>

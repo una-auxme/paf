@@ -8,10 +8,5 @@ services:
     volumes:
       - /usr/lib/wsl:/usr/lib/wsl
 
-  carla-ros-bridge:
-    extends:
-      file: docker-compose.carla.base.yaml
-      service: carla-ros-bridge
-
 networks:
   carla:

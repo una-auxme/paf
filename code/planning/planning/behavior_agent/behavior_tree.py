@@ -252,7 +252,7 @@ class BehaviorTree(Node):
             .get_parameter_value()
             .string_value
         )
-        register_parameters(self)
+        register_parameters(self, self.blackboard)
 
         # Publishers
         self.curr_behavior_pub = self.create_publisher(
@@ -371,6 +371,10 @@ class BehaviorTree(Node):
 
 
 def main(args=None):
+    # from paf_common.debugging import start_debugger
+
+    # start_debugger(wait_for_client=False)
+
     rclpy.init(args=args)
 
     # Executor with exactly two threads

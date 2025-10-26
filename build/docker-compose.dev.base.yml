@@ -16,8 +16,9 @@ services:
         PAF_UID: ${PAF_UID}
         PAF_GID: ${PAF_GID}
       target: agent-dev
-    shm_size: 2gb
+    shm_size: 8gb
     environment:
+      - CARLA_SIM_HOST=carla-simulator
       - DESKTOP_SESSION
       - DISPLAY
       - XDG_SESSION_DESKTOP

@@ -1,0 +1,23 @@
+# Leaderboard
+
+dictor
+requests
+opencv-python
+pygame
+tabulate
+pexpect
+transforms3d
+
+# Scenario runner
+
+py-trees==0.8.3
+numpy
+networkx==2.2
+Shapely==2.1.2
+psutil
+xmlschema==1.0.18
+ephem
+tabulate
+matplotlib
+six
+simple-watchdog-timer

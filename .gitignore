@@ -5,6 +5,7 @@
 /volumes
 
 build/config.local.yml
+build/.env
 
 
 code/bags

@@ -1,13 +1,15 @@
 services:
   # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
   carla-simulator:
+    hostname: "carla-simulator"
     command: |
       bash -c "\
       /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN} \
       "
-    # The image has to be built locally with ./docker/carla/build_carla.sh
-    image: carla-leaderboard-gpu:2.1
+    # The image can be built locally with ./docker/carla/build_carla.sh
+    image: ghcr.io/una-auxme/carla-leaderboard-gpu:2.1
     user: ${PAF_UID}:${PAF_GID}
+    shm_size: 8gb
     environment:
       - DESKTOP_SESSION
       - DISPLAY
@@ -23,18 +25,6 @@ services:
       - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./CustomCarlaSettings.ini:/CustomCarlaSettings.ini
-
-  carla-ros-bridge:
-    command: |
-      bash -c "\
-      python3 /opt/leaderboard/leaderboard/leaderboard_evaluator.py --timeout=36000 --debug=0 --routes=$${ROUTE} --agent=/internal_workspace/agent_ros2_bridge.py --host=$${CARLA_SIM_HOST} --track=MAP \
-      "
-    image: carla-leaderboard-ros-bridge:2.1
-    environment:
-      - CARLA_SIM_HOST=carla-simulator
-      - ROUTE=/opt/leaderboard/data/routes_devtest.xml
-    networks:
-      - carla
 
 networks:
   carla:

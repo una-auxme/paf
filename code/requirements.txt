@@ -10,6 +10,9 @@ simple-pid==2.0.1
 cython==3.0.11
 shapely==2.0.6
 
+# Localization
+pymap3d==3.2.0
+
 # Perception
 dvclive==3.48.5
 ruamel.yaml==0.18.15
@@ -23,3 +26,6 @@ yacs==0.1.8
 
 # Planning
 py_trees==2.3.0
+
+# Debugger
+debugpy==1.8.17
