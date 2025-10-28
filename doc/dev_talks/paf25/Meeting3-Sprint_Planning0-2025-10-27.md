@@ -18,6 +18,7 @@
 #### Introduction to Debugging
 
 Learn how to effectively debug the PAF agent using:
+
 - VS Code's built-in debugger
 - Attaching to running ROS 2 nodes
 - Setting breakpoints in Python nodes
@@ -28,6 +29,7 @@ Learn how to effectively debug the PAF agent using:
 #### Introduction to PyTrees Visualization
 
 Understanding behavior trees with visualization tools:
+
 - `py_trees_ros_viewer` for live behavior tree monitoring
 - Understanding the behavior tree structure
 - Debugging decision-making logic
@@ -70,7 +72,7 @@ Understanding behavior trees with visualization tools:
 - Use the **Sprint Summary template** for documentation
 - Follow **Sprint Review Presentation guidelines**
 
-**Documentation:** 
+**Documentation:**
 
 - [Git Workflow](../../development/git_workflow.md)
 - [Review Guidelines](../../development/review_guideline.md)
@@ -131,6 +133,7 @@ Understanding behavior trees with visualization tools:
 ### Research Documentation
 
 All research results must be documented as **Markdown files** in the repository:
+
 - Place research documents in the appropriate `doc/research/` subfolder
 - Follow the documentation structure of previous semesters
 - Include references, diagrams, and code examples where applicable
@@ -188,4 +191,3 @@ If you have any questions or need clarification:
 - Check the documentation links above
 - Ask during the next meeting
 - Contact the maintainers: @JulianTrommer and @ll7
-
