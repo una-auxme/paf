@@ -14,7 +14,7 @@ def get_caller_file() -> str:
     stack = inspect.stack()
     if len(stack) < 1:
         return "unknown"
-    caller = stack[0]
+    caller = stack[-1]
     return caller.filename
 
 

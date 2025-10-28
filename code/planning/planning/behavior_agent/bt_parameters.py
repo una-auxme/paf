@@ -1,10 +1,12 @@
 from typing import Optional
 from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange, IntegerRange
+from py_trees.blackboard import Blackboard
 
 
 def _register_parameter(
     node: Node,
+    blackboard: Blackboard,
     name: str,
     default_value: str | bool | int | float,
     description: Optional[str] = None,
@@ -55,21 +57,23 @@ def _register_parameter(
     elif isinstance(default_value, float):
         return_value = parameter.get_parameter_value().double_value
     else:
-        return_value = "type error"
+        raise RuntimeError(f"Parameter type error on parameter {name}")
+    blackboard.set(f"/params/{name}", return_value)
     return return_value
 
 
-def register_parameters(node: Node):
+def register_parameters(node: Node, blackboard: Blackboard):
     """Registers all blackboard ros parameters for the behavior tree node
 
     Args:
         node (Node): behavior tree node
     """
     _register_parameter(
-        node, "left_check_debug", False, "Stay in left check indefinitely"
+        node, blackboard, "left_check_debug", False, "Stay in left check indefinitely"
     )
     _register_parameter(
         node,
+        blackboard,
         "left_check_length",
         45.0,
         "Left check mask length",
@@ -79,6 +83,7 @@ def register_parameters(node: Node):
     )
     _register_parameter(
         node,
+        blackboard,
         "left_check_x_transform",
         12.0,
         "Left check mask length",

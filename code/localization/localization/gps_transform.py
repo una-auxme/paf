@@ -72,8 +72,9 @@ class GpsTransform(Node):
 
             carla_host = os.environ.get("CARLA_SIM_HOST")
             if carla_host is None:
-                self.get_logger().fatal("Environment variable CARLA_SIM_HOST not set!")
-                exit(1)
+                msg = "Environment variable CARLA_SIM_HOST not set!"
+                self.get_logger().fatal(msg)
+                raise RuntimeError(msg)
             carla_port = int(os.environ.get("CARLA_PORT", "2000"))
             self.client = carla.Client(carla_host, carla_port)
             self.world = self.client.get_world()
@@ -84,8 +85,9 @@ class GpsTransform(Node):
                     self.carla_car = actor
                     break
             if self.carla_car is None:
-                self.get_logger().fatal("Actor with role name hero not found!")
-                exit(1)
+                msg = "Actor with role name hero not found!"
+                self.get_logger().fatal(msg)
+                raise RuntimeError(msg)
 
         out = Odometry()
         out.header = gps.header

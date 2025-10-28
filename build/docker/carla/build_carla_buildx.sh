@@ -81,11 +81,17 @@ if [ ! -f ./carla.tar.gz ]; then
   echo "Downloading CARLA runtime..."
   wget --progress=bar https://tiny.carla.org/carla-0-9-16-linux -O ./carla.tar.gz
 fi
+# Verify checksum
+# Run "sha256sum carla.tar.gz > carla.tar.gz.sha256sum" to create new checksum
+cat ./carla.tar.gz.sha256sum | sha256sum -c -
 
 if [ ! -f ./carla-additional-maps.tar.gz ]; then
   echo "Downloading CARLA additional maps..."
   wget --progress=bar https://tiny.carla.org/additional-maps-0-9-16-linux -O ./carla-additional-maps.tar.gz
 fi
+# Verify checksum
+# Run "sha256sum carla.tar.gz > carla.tar.gz.sha256sum" to create new checksum
+cat ./carla-additional-maps.tar.gz.sha256sum | sha256sum -c -
 
 # Create or use existing buildx builder
 BUILDER_NAME="carla-builder"
