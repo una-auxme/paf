@@ -1,6 +1,6 @@
-# Joker Rules PAF24
+# Joker Rules PAF
 
-**Purpose**: This document outlines the rules for using the Joker card in the PAF24 project.
+**Purpose**: This document outlines the rules for using the Joker card in the PAF project.
 
 - [1. Overview](#1-overview)
 - [2. Using the Joker Card](#2-using-the-joker-card)
@@ -10,12 +10,11 @@
 
 ## 1. Overview
 
-- **Project Duration**: October 2024 – March 2025
-- The Joker card allows you to be excused from duties during specific periods, especially during the exam phase in February 2025.
+- The Joker card allows you to be excused from duties during specific periods. The intended use is especially during the exam phase in February.
 - **Total Joker Allocation**:
   - **Joker Card** Up to 4 weeks throughout the project.
   - **Presentation Only Joker Card** Maximum of 2 uses.
-- **When to Use**: The Joker card should be played if you are unable to present your work during a sprint review or if the amount of work completed is insufficient.
+- **When to Use**: The Joker cards should be played if you plan to be unavailable during a sprint review or need additional time for exam preparation.
 - The intention of the Joker card is to ensure you have the appropriate time to prepare your exam phase.
 
 ## 2. Using the Joker Card
@@ -42,14 +41,8 @@ To play the Joker card:
   - **Maximum Use**: Limited to two times throughout the project.
   - **Requirements**:
     - Notify the team and chair at least **7 days** before the sprint review.
-    - Submit a written summary of your work in the `#joker` Discord channel at least **1 day** before the review.
+    - Submit a written summary of your work to the Digicampus according to the [Sprint Summary Template](./templates/sprint_summary_template.md).
     - Find a teammate who presents your work.
-
-- **Written Summary Contents**:
-  - Overview of completed work.
-  - Key achievements.
-  - Lessons learned.
-  - Goals for the next sprint.
 
 > [!CAUTION] Presentation Only Joker Card
 > We encourage all team members to only present your teammates work if absolutely necessary.
