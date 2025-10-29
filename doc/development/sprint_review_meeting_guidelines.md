@@ -16,7 +16,7 @@
 
 ### 1.1. Pre-Meeting Agenda
 
-- **Summary Submission**: By **Monday at 11:30 AM** (before the meeting), submit a summary of your work on Digicampus.
+- **Summary Submission**: By **Monday at 12:00 AM** (before the meeting), submit a summary of your work on Digicampus.
   - A template can be found here: [Summary of Work Template](./sprint_summary_template.md).
   - Upload your document to DigiCampus at [this link](https://digicampus.uni-augsburg.de/dispatch.php/course/files?cid=5b0c38206c78cc03880bc2e71997220f).
   - Inform us of your group composition and presentation order for our note-taking.
@@ -39,8 +39,8 @@
 
 - The general overview presentation is now removed or partially integrated into the Systems Engineers’ presentation.
 - Grades are assigned based on the group presentation; however, individuals who undergo a sample review may receive a different grade.
-- Presentation time is allocated at **5 minutes per student**:
-  - Example: A team of three has a total of 15 minutes and may allocate time as they see fit.
+- Presentation time is allocated at **10 minutes per student**:
+  - Example: A team of three has a total of 30 minutes and may allocate time as they see fit.
   - A unified grade will be given unless individual assessment is warranted.
 - Timeboxing will be strictly enforced: only content shared within the allotted time will be evaluated. Presentations will be stopped at the time limit.
 - The sprint review presentation guideline was updated in [#452](https://github.com/una-auxme/paf/issues/452).
@@ -56,9 +56,9 @@ axisFormat %H:%M
 tickInterval 15minute
 
 section Before the Meeting
-Text Submission and Group Info: milestone, at, 11-30, 0H
-Sample Review: sr, 12-00, 13-00
-Sample Review Feedback: fb1, 13-00, 30m
+Text Submission and Group Info: milestone, at, 12-00, 0H
+Sample Review: sr, 12-00, 13-30
+Sample Review Feedback: fb1, 13-30, 30m
 
 section During the Meeting
 Meeting Start: milestone, beginn, 14-00, 0m

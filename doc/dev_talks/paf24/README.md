@@ -9,9 +9,9 @@
 
 - [Mermaid Gantt Chart](./mermaid_paf24.md)
 - [Student Roles](./student_roles.md)
-- [Joker Rules](./joker_rules_paf24.md)
-- [Sprint Review Meeting Guidelines](./sprint_review_meeting_guidelines.md)
-  - [Sprint Summary Template](./sprint_summary_template.md)
+- [Joker Rules](../../development/joker_rules_paf.md) Moved to development folder.
+- [Sprint Review Meeting Guidelines](../../development/sprint_review_meeting_guidelines.md) Moved to development folder.
+  - [Sprint Summary Template](../../development/templates/sprint_summary_template.md) Moved to development/templates folder.
 - [Final Presentation Guidelines](./final_presentation_paf24_information.md)
 - [Documentation Deadline](./documentation_deadline.md)
 
