@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+# This script is launched by the leaderboard_launcher and adjusts the ros/python environment before launching the actual agent launch files.
+# The arguments of this script are directly passed onto ros2 launch.
 
 # Remove some arguments ros2 launch automatically adds
 args=("$@")
