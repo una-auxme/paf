@@ -1,0 +1,140 @@
+# Research: Perception Systems in Autonomous Vehicles
+
+## Summary of Current Perception Methods
+
+- [Summary of Current Perception Methods](#summary-of-current-perception-methods)
+- [Sensors](#sensors)
+- [Sensor-Fusion](#sensor-fusion)
+- [Object-Detection](#object-detection)
+  - [LiDAR-Based](#lidar-based)
+  - [Camera-Based](#camera-based)
+  - [Multi-Modal](#multi-modal)
+- [Environment-Understanding](#environment-understanding)
+- [Robustness-and-Failures](#robustness-and-failures)
+- [Simulation-and-Testing](#simulation-and-testing)
+- [Open-Challenges](#open-challenges)
+- [References](#references)
+
+---
+
+## Sensors
+
+Active sensors:
+
+- *LiDAR*: Primary source for 3D environment reconstruction; accurate depth but limited range in rain/fog.
+- *Radar*: Useful for velocity and distance measurement; robust against weather but lower spatial resolution.
+- *Ultrasound*: Used for near-field obstacle detection (e.g., parking maneuvers).
+
+Passive sensors:
+
+- *Cameras* (mono, stereo, fisheye): Capture visual data for object recognition, lane detection, and semantic segmentation.
+- *GNSS/IMU*: Used for localization and motion estimation, often fused with LiDAR or vision data.
+
+Sensor considerations:
+
+- Redundancy improves reliability.
+- Calibration (extrinsic/intrinsic) between sensors is critical for spatial alignment.
+- Synchronization latency can lead to perception errors.
+
+---
+
+## Sensor-Fusion
+
+Approaches:
+
+- *Early Fusion*: Raw data (e.g., LiDAR point clouds + RGB images) are combined before feature extraction.
+  → Pros: Retains detailed information.
+  → Cons: Computationally expensive.
+- *Mid-Level Fusion*: Combines extracted features (e.g., embeddings from CNNs or point-based networks).
+  → Most common in real-time systems.
+- *Late Fusion*: Combines independent detection outputs from each sensor.
+  → High modularity, easier debugging.
+
+Fusion frameworks:
+
+- *Kalman / Extended Kalman Filters (EKF)* and *Particle Filters* for probabilistic tracking.
+- *Deep Learning-based fusion* (attention networks, transformers) improving cross-sensor alignment.
+- Example architectures: PointFusion, MVX-Net, TransFusion.
+
+---
+
+## Object-Detection
+
+### LiDAR-Based
+
+- Point-based networks: PointNet, PointPillars, SECOND, PV-RCNN.
+- Voxel-based representations for computational efficiency.
+- Outputs: 3D bounding boxes (x, y, z, yaw, class_id).
+
+### Camera-Based
+
+- 2D detectors: YOLOv5/8, Faster R-CNN, CenterNet, DETR.
+- Multi-task perception: combines detection + lane + traffic-light recognition.
+- Limitation: No depth information → mitigated by stereo vision or depth estimation networks.
+
+### Multi-Modal
+
+- Camera + LiDAR fusion increases accuracy under partial occlusions.
+- Radar integration adds velocity vectors and motion cues.
+
+---
+
+## Environment-Understanding
+
+- *Segmentation: Pixel-level understanding of drivable areas and obstacles (e.g., *DeepLab, SegNet).
+- *Tracking: Multi-object tracking (MOT) via *SORT, DeepSORT, or AB3DMOT.
+- *Scene prediction: Temporal models (*LSTM, GRU, Transformer-based) for predicting motion trajectories.
+- *Map alignment*: Comparing perceived data with HD maps for global localization.
+
+---
+
+## Robustness-and-Failures
+
+Common issues identified:
+
+- Sensor degradation due to weather (rain, snow, fog) or lighting (glare, night).
+- LiDAR reflections on shiny or transparent surfaces → depth dropouts.
+- False negatives for small or partially occluded objects (e.g., pedestrians, cones).
+- "Infinity" distance values in fused depth maps before impact (critical safety issue).
+
+Mitigation strategies:
+
+- *Adversarial training* and *domain adaptation* for robust perception under domain shifts.
+- *Temporal smoothing* using multi-frame fusion.
+- *Uncertainty estimation* to detect unreliable predictions.
+
+---
+
+## Simulation-and-Testing
+
+- Common tools: *CARLA, **LGSVL, **AirSim, **Gazebo, **Apollo Dreamview*.
+- Simulations allow:
+  - Synthetic data generation (different weather, lighting, and sensor configurations).
+  - Validation of perception stacks with ground-truth labels.
+  - Training deep models with photorealistic environments (e.g., NVIDIA DRIVE Sim).
+
+Limitations:
+
+- Simulated sensors rarely capture full real-world noise models.
+- Domain gap between synthetic and real data still limits direct model transfer.
+
+---
+
+## Open-Challenges
+
+- Real-time processing on embedded hardware (NVIDIA Jetson, DrivePX) with low latency.
+- Sensor synchronization under dynamic motion.
+- Robust perception in adverse weather and corner cases.
+- Large-scale labeled datasets for sensor fusion (KITTI, nuScenes, Waymo Open).
+- Continual learning for perception modules under long-term deployment.
+
+---
+
+## References
+
+1. Rosique, F., et al. (2019). A Systematic Review of Perception System and Simulators for Autonomous Vehicles Research. MDPI Sensors.
+2. Huang, X., et al. (2022). Multi-modal Sensor Fusion for Auto Driving Perception: A Survey.
+3. Alaba, O. & Ball, E. (2022). A Survey on Deep Learning-Based LiDAR 3D Object Detection. MDPI Sensors.
+4. MDPI Sensors (2021). Pedestrian and Vehicle Detection in Autonomous Vehicle Perception Systems—A Review.
+5. PubMed (2023). Vision-Based Multi-Task Perception Methods for Autonomous Vehicles.
+6. Song, Y. et al. (2024). Robustness-Aware 3D Object Detection in Autonomous Driving: A Review and Outlook.
