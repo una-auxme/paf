@@ -5,7 +5,7 @@ include:
   - docker-compose.carla.gpu.yaml
 
 services:
-  agent-dev:
+  agent-deploy:
     extends:
       file: docker-compose.deploy.base.yml
       service: agent-deploy

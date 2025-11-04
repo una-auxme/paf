@@ -18,6 +18,7 @@ services:
       target: agent-deploy
     shm_size: 8gb
     environment:
+      - CHECKPOINT_ENDPOINT=/tmp/simulation_results.json
       - CARLA_SIM_HOST=carla-simulator
       - DESKTOP_SESSION
       - DISPLAY
