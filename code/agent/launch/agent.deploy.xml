@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This launch file starts all nodes of the agent-->
+<!--It is automatically started when launching the leaderboard with launch_leaderboard.deploy.sh-->
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+
+    <set_parameter name="use_sim_time" value="true" />
+
+    <include file="$(find-pkg-share agent)/launch/agent.dev.persistent.xml">
+      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+      <arg name="role_name" value="$(var role_name)" />
+    </include>
+
+    <include file="$(find-pkg-share agent)/launch/agent.dev.xml">
+      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+      <arg name="role_name" value="$(var role_name)" />
+    </include>
+</launch>

@@ -1,0 +1,16 @@
+#!/bin/bash
+# Sourced at the end of ~/.bashrc in the container
+# Sources the ros workspace
+
+# Activate WSL gpu drivers if available
+# https://github.com/microsoft/wslg/blob/main/samples/container/Containers.md#containerizing-gui-applications-with-wslg
+if [ -d /usr/lib/wsl/lib ]; then
+  export LD_LIBRARY_PATH=/usr/lib/wsl/lib:${LD_LIBRARY_PATH}
+fi
+
+# Add the pip user bin directory to PATH
+if [ -n "${PYTHONUSERBASE}" ]; then
+  export PATH="${PYTHONUSERBASE}/bin":${PATH}
+fi
+
+source "${INTERNAL_WORKSPACE_DIR}/env.bash"

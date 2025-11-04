@@ -28,7 +28,7 @@ devbuild() {
   cd "${PAF_ROS_WS}" || return $?
 
   # Build the ros workspace
-  colcon build --symlink-install || return $?
+  colcon build --symlink-install --continue-on-error || return $?
   )
 
   cat <<EOF

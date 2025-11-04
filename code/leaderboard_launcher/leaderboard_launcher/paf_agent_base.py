@@ -12,10 +12,7 @@ class PAFAgent(ROS2Agent):
         self.track = Track.MAP
 
     def get_ros_entrypoint(self):
-        return {
-            "package": "leaderboard_launcher",
-            "launch_file": "leaderboard.dev.xml",
-        }
+        raise NotImplementedError()
 
     def sensors(self):
         sensors = [
@@ -92,4 +89,4 @@ class PAFAgent(ROS2Agent):
         return sensors
 
     def destroy(self):
-        super(PAFAgent, self).destroy()
+        super().destroy()
