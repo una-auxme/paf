@@ -1,0 +1,27 @@
+# Docker compose configuration with desktop gpu support for ROS development
+# Nvidia only, WSL + Linux
+
+include:
+  - docker-compose.carla.cuda.yaml
+
+services:
+  agent-deploy:
+    extends:
+      file: docker-compose.deploy.base.yml
+      service: agent-deploy
+    build:
+      args:
+        PAF_USERNAME: ${PAF_USERNAME}
+        PAF_UID: ${PAF_UID}
+        PAF_GID: ${PAF_GID}
+        BASE_FLAVOUR: cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all"
+              capabilities: [ gpu ]
+    # Uncomment below if you also have intel/amd integrated graphics (Laptop)
+    # devices:
+    #   - /dev/dri
