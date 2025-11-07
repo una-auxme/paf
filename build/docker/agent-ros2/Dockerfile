@@ -36,8 +36,7 @@ ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y libnvidia-gl-${NVIDIA_DRIVER_VERSION} \
-  nvidia-cuda-toolkit
+  apt-get install -y nvidia-cuda-toolkit libxext6
 
 ############################################
 ##### The main agent image starts here #####
