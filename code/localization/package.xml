@@ -1,22 +1,17 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>localization</name>
   <version>0.0.0</version>
   <description>PAF Localization package</description>
-
   <maintainer email="vinzenz.malke@uni-a.de">Vinzenz Malke</maintainer>
+  <license>MIT</license>
 
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <depend>robot_localization</depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <test_depend>python3-pytest</test_depend>
 
-
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <build_type>ament_python</build_type>
   </export>
 </package>

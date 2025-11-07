@@ -1,0 +1,21 @@
+services:
+  # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
+  carla-simulator:
+    extends:
+      file: docker-compose.carla.base.yaml
+      service: carla-simulator
+    image: ghcr.io/una-auxme/carla-leaderboard-cuda:2.1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all"
+              capabilities: [gpu]
+              # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
+    # Uncomment below if you also have intel/amd integrated graphics (Laptop)
+    # devices:
+    #   - /dev/dri
+
+networks:
+  carla:

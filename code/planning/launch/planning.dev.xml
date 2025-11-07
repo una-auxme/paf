@@ -1,0 +1,27 @@
+<!--This launch file starts all planning nodes that can be restarted on-the-fly while the leaderboard is running-->
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+
+    <node pkg="planning" exec="ACC" name="ACC">
+      <param name="role_name" value="$(var role_name)" />
+      <param from="$(find-pkg-share planning)/config/planning.yaml"/>
+    </node>
+
+    <node pkg="planning" exec="motion_planning" name="MotionPlanning">
+      <param name="role_name" value="$(var role_name)" />
+    </node>
+
+    <!-- <node pkg="planning" type="dev_global_route.py" name="DevGlobalRoute" output="screen">
+           <param name="from_txt" value="True" />
+           <param name="sampling_resolution" value="75.0" />
+           <param name="routes" value="/opt/leaderboard/data/routes_devtest.xml" />
+           <param name="global_route_txt" value="/code/planning/src/global_planner/global_route.txt" />
+           <param name="role_name" value="hero" />
+    </node> -->
+
+    <node pkg="planning" exec="behavior_tree" name="behavior_agent">
+      <param name="role_name" value="$(var role_name)" />
+      <param from="$(find-pkg-share planning)/config/planning.yaml"/>
+    </node>
+</launch>

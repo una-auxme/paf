@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This launch file starts all nodes that can be restarted on-thy-fly while the leaderboard is running-->
+<!--It has to be manually launched AFTER launching the leaderboard with launch_leaderboard.dev.sh-->
+<!--Use *ros2 launch agent agent.dev.xml* to launch the agent (and stop it with ctrl+c)-->
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+
+    <set_parameter name="use_sim_time" value="true" />
+
+    <!-- perception -->
+    <include
+        file="$(find-pkg-share perception)/launch/perception.xml">
+    </include>
+
+    <!-- planning -->
+    <include file="$(find-pkg-share planning)/launch/planning.dev.xml">
+    </include>
+
+    <!-- acting -->
+    <include file="$(find-pkg-share acting)/launch/acting.xml">
+      <arg name="control_loop_rate" value="$(var control_loop_rate)" />
+      <arg name="role_name" value="$(var role_name)" />
+    </include>
+
+    <!-- debugging -->
+    <!-- <include
+        file="$(find debugging)/launch/debugging.launch">
+    </include> -->
+
+    <!-- mapping -->
+    <include file="$(find-pkg-share mapping)/launch/mapping.xml">
+    </include>
+</launch>

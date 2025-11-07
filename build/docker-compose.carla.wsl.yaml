@@ -1,0 +1,12 @@
+services:
+  carla-simulator:
+    extends:
+      file: docker-compose.carla.base.yaml
+      service: carla-simulator
+    devices:
+      - /dev/dxg
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl
+
+networks:
+  carla:

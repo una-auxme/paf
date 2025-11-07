@@ -13,6 +13,7 @@ services:
       - "53000-53100:53000-53100"
     command: |-
       bash -c "\
+      (python /workspace/code/benchmark/time_until_status.py $$(date +%s%N) &)
       bash -c \"set -e && cd /catkin_ws && catkin_make\" && \
       sleep 10 && sudo chown -R ${USER_UID}:${USER_GID} ../ && \
       sudo chmod -R a+w ../ && sudo mkdir -p $${XDG_RUNTIME_DIR} && sudo chmod 0700 $${XDG_RUNTIME_DIR} && sudo chown -R ${USER_UID}:${USER_GID} $${XDG_RUNTIME_DIR} && \

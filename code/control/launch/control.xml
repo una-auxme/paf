@@ -1,0 +1,35 @@
+<launch>
+    <arg name="role_name" default="hero" />
+    <arg name="control_loop_rate" default="0.05" />
+    <!--
+    HOTFIX:
+    This sleep time is used for hotfix the carla timing problem
+    The vehicle controller triggers the carla simulator and the carla simulator triggers the vehicle controller which results in the carla simulator
+    running as fast as possible on the system. This sleep time is used to slow down the vehicle controller to a reasonable speed.
+    This is a hotfix and should be removed as soon as possible. The correct way would either be to set a fixed time for the carla simulator to run
+    or to implement a proper timing mechanism in the vehicle controller. This would for example be a boolean which is set to true when all
+    necessary calculations are done and the vehicle controller is ready to send the next command to the carla simulator.
+    Further information for a correct fix would be: https://carla.readthedocs.io/en/stable/configuring_the_simulation/
+    -->
+    <arg name="loop_sleep_time" default="0.2" />
+
+    <node pkg="control" exec="velocity_controller" name="velocity_controller">
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
+        <param name="role_name" value="$(var role_name)" />
+        <param from="$(find-pkg-share control)/config/control.yaml"/>
+    </node>
+
+    <node pkg="control" exec="pure_pursuit_controller" name="pure_pursuit_controller">
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
+        <param name="role_name" value="$(var role_name)" />
+        <param from="$(find-pkg-share control)/config/control.yaml"/>
+    </node>
+
+    <node pkg="control" exec="vehicle_controller" name="vehicle_controller">
+        <param name="control_loop_rate" value="$(var control_loop_rate)" />
+        <param name="loop_sleep_time" value="$(var loop_sleep_time)" />
+        <param name="role_name" value="$(var role_name)" />
+        <param from="$(find-pkg-share control)/config/control.yaml"/>
+    </node>
+
+</launch>

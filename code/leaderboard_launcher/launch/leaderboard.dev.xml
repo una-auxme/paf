@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!--The args="agent agent.dev.persistent.xml" says to launch the agent.dev.persistent.xml launch file from package agent -->
+  <node pkg="agent" exec="launch_agent.sh" name="leaderboard_launcher" args="agent agent.dev.persistent.xml" output="screen">
+  </node>
+</launch>

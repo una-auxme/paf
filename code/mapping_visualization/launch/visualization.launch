@@ -1,6 +1,0 @@
-<launch>
-
-  <node pkg="mapping_visualization" type="visualization.py" name="mapping_visualization" output="screen">
-  </node>
-
-</launch>

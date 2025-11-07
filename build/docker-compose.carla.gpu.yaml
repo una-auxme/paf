@@ -1,0 +1,10 @@
+services:
+  carla-simulator:
+    extends:
+      file: docker-compose.carla.base.yaml
+      service: carla-simulator
+    devices:
+      - /dev/dri
+
+networks:
+  carla:

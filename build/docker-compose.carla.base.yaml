@@ -1,0 +1,30 @@
+services:
+  # based on https://github.com/ll7/paf21-1/blob/master/scenarios/docker-carla-sim-compose.yml
+  carla-simulator:
+    hostname: "carla-simulator"
+    command: |
+      bash -c "\
+      /bin/bash CarlaUE4.sh -quality-level=Epic -world-port=2000 -resx=800 -resy=600 -nosound -carla-settings="/CustomCarlaSettings.ini" ${RENDER_OFFSCREEN} \
+      "
+    # The image can be built locally with ./docker/carla/build_carla.sh
+    image: ghcr.io/una-auxme/carla-leaderboard-gpu:2.1
+    user: ${PAF_UID}:${PAF_GID}
+    shm_size: 8gb
+    environment:
+      - DESKTOP_SESSION
+      - DISPLAY
+      - XDG_SESSION_DESKTOP
+      - XDG_SESSION_TYPE
+      - XAUTHORITY
+      - XDG_CURRENT_DESKTOP
+      - XDG_SESSION_CLASS
+      - XDG_RUNTIME_DIR
+    networks:
+      - carla
+    volumes:
+      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./CustomCarlaSettings.ini:/CustomCarlaSettings.ini
+
+networks:
+  carla:

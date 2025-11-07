@@ -1,0 +1,15 @@
+std_msgs/Header header
+float64 confidence
+float64 priority
+Flags flags
+Shape2D shape
+Transform2D transform
+unique_identifier_msgs/UUID uuid
+string[] sensor_id
+Motion2D motion
+TrackingInfo tracking_info
+string type_name
+TypeCar type_car
+TypeLanemarking type_lanemarking
+TypeTrafficLight type_traffic_light
+TypeStopMark type_stop_mark

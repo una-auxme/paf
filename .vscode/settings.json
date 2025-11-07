@@ -1,35 +1,39 @@
 {
-    "githubIssues.issueBranchTitle": "${issueNumber}-${sanitizedIssueTitle}",
-    "githubIssues.queries": [
-        {
-            "label": "My Issues",
-            "query": "default"
-        },
-        {
-            "label": "Created Issues",
-            "query": "author:${user} state:open repo:${owner}/${repository} sort:created-desc"
-        },
-        {
-            "label": "Assigned Issues",
-            "query": "assignee:${user} state:open repo:${owner}/${repository} sort:created-desc"
-        },
-        {
-            "label": "All Issues",
-            "query": "state:open repo:${owner}/${repository} sort:created-desc"
-        }
-    ],
-    "ltex.language": "en-US",
-    "docker.commands.composeUp": [
-        {
-            "label": "Compose Up",
-            "template": "xhost +local: && USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) RENDER_OFFSCREEN= ${composeCommand} ${configurationFile} up"
-        }
-    ],
-    "workbench.iconTheme": "vscode-icons",
-    "editor.formatOnSave": true,
-    "markdown.extension.toc.levels": "2..6",
-    "markdown.extension.toc.updateOnSave": true,
-    "markdown.extension.toc.unorderedList.marker": "-",
-    "markdown.extension.theming.decoration.renderTrailingSpace": true,
-    "cmake.ignoreCMakeListsMissing": true
+	"githubIssues.issueBranchTitle": "${issueNumber}-${sanitizedIssueTitle}",
+	"githubIssues.queries": [
+		{
+			"label": "My Issues",
+			"query": "default"
+		},
+		{
+			"label": "Created Issues",
+			"query": "author:${user} state:open repo:${owner}/${repository} sort:created-desc"
+		},
+		{
+			"label": "Assigned Issues",
+			"query": "assignee:${user} state:open repo:${owner}/${repository} sort:created-desc"
+		},
+		{
+			"label": "All Issues",
+			"query": "state:open repo:${owner}/${repository} sort:created-desc"
+		}
+	],
+	"ltex.language": "en-US",
+	"workbench.iconTheme": "vscode-icons",
+	"editor.formatOnSave": true,
+	"markdown.extension.toc.levels": "2..6",
+	"markdown.extension.toc.updateOnSave": true,
+	"markdown.extension.toc.unorderedList.marker": "-",
+	"markdown.extension.theming.decoration.renderTrailingSpace": true,
+	"cmake.ignoreCMakeListsMissing": true,
+	"containers.commands.composeUp": [
+		{
+			"label": "PAF Compose Up",
+			"template": "PAF_USERNAME=$(id -u -n) PAF_UID=$(id -u) PAF_GID=$(id -g) ${composeCommand} ${configurationFile} up ${detached} ${build}"
+		}
+	],
+	"black-formatter.importStrategy": "fromEnvironment",
+	"containers.composeBuild": true,
+	"containers.composeDetached": false,
+	"task.allowAutomaticTasks": "on"
 }
