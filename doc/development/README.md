@@ -1,19 +1,16 @@
 # Development in PAF
 
 - [First steps](#first-steps)
-- [Development guidelines](#development-guidelines)
-- [Guidelines](#guidelines)
+- [Development Guidelines](#development-guidelines)
+- [Administrative Guidelines](#administrative-guidelines)
 - [Templates](#templates)
-  - [`template_class.py`](#template_classpy)
-  - [`template_class_no_comments.py`](#template_class_no_commentspy)
-  - [`template_wiki_page.md`](#template_wiki_pagemd)
 - [Discord Webhook](#discord-webhook)
 
 ## First steps
 
 If this is your first time working with the project you can follow the first steps in [/doc/development/first_steps.md](/doc/development/first_steps.md).
 
-## Development guidelines
+## Development Guidelines
 
 If you contribute to this project please read the following guidelines first:
 
@@ -29,30 +26,23 @@ If you contribute to this project please read the following guidelines first:
 7. [Install python packages](./installing_python_packages.md)
 8. [Discord Webhook Documentation](./discord_webhook.md)
 
-## Guidelines
+## Administrative Guidelines
 
 1. [Project Management](./project_management.md)
 2. [Sprint Planning Guidelines](./sprint_planning_guidelines.md)
 3. [Sprint Review Presentation Guidelines](./sprint_review_presentation.md)
-4. [Review Guidelines](./review_guideline.md)
-5. [Final Presentation Guidelines](./final_presentation_guidelines.md)
-6. [Documentation Requirements](./documentation_requirements.md)
+4. [Sprint Review Meeting Guidelines](./sprint_review_meeting_guidelines.md)
+5. [Review Guidelines](./review_guideline.md)
+6. [Final Presentation Guidelines](./final_presentation_guidelines.md)
+7. [Documentation Requirements](./documentation_requirements.md)
+8. [Joker Rules](./joker_rules_paf.md)
 
 ## Templates
 
-Templates for documentation and code are provided in [`doc/development/templates`](./templates). These templates are to be used for new files that are added to the project.
+1. [Sprint Summary Template](./templates/sprint_summary_template.md)  
+2. [Wiki Page Template](./templates/template_wiki_page.md)
 
-### [`template_class.py`](./templates/template_class.py)
-
-Use this class if you don't have much experience with python. If you just want to copy an empty class use `template_class_no_comments.py`.
-
-### [`template_class_no_comments.py`](./templates/template_class_no_comments.py)
-
-If you just want to copy an empty class use this class.
-
-### [`template_wiki_page.md`](./templates/template_wiki_page.md)
-
-This template functions a template for who to build knowledge articles for everyone to understand. The basic structure should be kept for all articles. This template is empty and can be used straight forward.
+> *.py files have been deleted due to ros1 to ros2 migration.*
 
 ## Discord Webhook
 

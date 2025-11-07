@@ -32,4 +32,4 @@
 
 ---
 
-Submit your summary to our DigiCampus course page by Monday at 11:30 AM.
+Submit your summary to our DigiCampus course page by Monday at 12:00 AM.

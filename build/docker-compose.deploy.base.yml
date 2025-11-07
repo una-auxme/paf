@@ -1,0 +1,40 @@
+# Docker compose configuration with desktop gpu support for ROS development
+# Base image. Use docker-compose.deploy.<your-gpu-type>.yml for AMD/Intel/Nvidia.
+
+include:
+  - docker-compose.carla.base.yaml
+
+services:
+  agent-deploy:
+    # Set the image name so different users don't collide
+    image: agent-deploy-${PAF_USERNAME}
+    build:
+      dockerfile: build/docker/agent-ros2/Dockerfile
+      context: ../
+      args:
+        PAF_USERNAME: ${PAF_USERNAME}
+        PAF_UID: ${PAF_UID}
+        PAF_GID: ${PAF_GID}
+      target: agent-deploy
+    shm_size: 8gb
+    environment:
+      - CHECKPOINT_ENDPOINT=/tmp/simulation_results.json
+      - CARLA_SIM_HOST=carla-simulator
+      - DESKTOP_SESSION
+      - DISPLAY
+      - XDG_SESSION_DESKTOP
+      - XDG_SESSION_TYPE
+      - XAUTHORITY
+      - XDG_CURRENT_DESKTOP
+      - XDG_SESSION_CLASS
+      - XDG_RUNTIME_DIR
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${XDG_RUNTIME_DIR}:${XDG_RUNTIME_DIR}
+    networks:
+      - carla
+    cap_add:
+      - SYS_ADMIN
+
+networks:
+  carla:

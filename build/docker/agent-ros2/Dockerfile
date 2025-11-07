@@ -72,7 +72,6 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   dpkg -i /tmp/ros2-apt-source.deb
 
 # Install ROS 2 packages
-# Install py-trees-js for visualization dependencies
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && apt-get install -y \
@@ -272,6 +271,9 @@ RUN echo "${CARLA_ROOT}/PythonAPI/carla" >>"${PYTHONUSERBASE}"/lib/python${PYTHO
 # Finish building the internal workspace #
 ##########################################
 
+# Required otherwise the leaderboard does not reliably print to the console when started from a shell script
+ENV PYTHONUNBUFFERED=true
+
 # Create the main agent workspace
 ENV PAF_ROS_WS=${INTERNAL_WORKSPACE_DIR}/paf_ros2_ws
 RUN mkdir ${PAF_ROS_WS}
@@ -279,10 +281,52 @@ RUN mkdir ${PAF_ROS_WS}
 ##############################################
 ##### The agent-deploy image starts here #####
 ##############################################
-# The deploy image is just an experiment for now / reference for discussion
 FROM agent AS agent-deploy
-# TODO
-RUN echo source ${INTERNAL_WORKSPACE_DIR}/env.bash >> ~/.bashrc
+
+USER ${PAF_USERNAME}
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/deploy.bashrc ./
+COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-deploy.sh \
+  ${DOCKER_RESOURCE_BASE}/scripts/reset_env.bash \
+  ./scripts/
+
+ENTRYPOINT [ "/internal_workspace/scripts/entrypoint-deploy.sh" ]
+
+# Copy agent into image
+COPY --chown=${PAF_UID}:${PAF_GID} code /workspace/code
+# Link the workspace into the PAF_ROS_WS
+RUN ln -s -T /workspace/code ${PAF_ROS_WS}/src
+
+WORKDIR ${PAF_ROS_WS}
+
+# Install package.xml dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
+  sudo apt-get update && \
+  rosdep update --rosdistro ${ROS_DISTRO} && \
+  rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y \
+  "
+
+# Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
+RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid="${PAF_UID}",gid="${PAF_GID}" \
+  bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/deploy.bashrc && \
+  ${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh \
+  "
+
+# Build the agent
+RUN bash -c " \
+  source ${INTERNAL_WORKSPACE_DIR}/deploy.bashrc && \
+  colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release" && \
+  echo "source ${PAF_ROS_WS}/install/local_setup.bash" >> "${INTERNAL_WORKSPACE_DIR}/env.bash" && \
+  echo "source ${PAF_ROS_WS}/install/local_setup.bash" >> "${INTERNAL_WORKSPACE_DIR}/env.leaderboard.bash"
+
+RUN echo source ${INTERNAL_WORKSPACE_DIR}/deploy.bashrc >> ~/.bashrc
+
+WORKDIR ${INTERNAL_WORKSPACE_DIR}
+CMD [ "ros2", "run", "leaderboard_launcher", "launch_leaderboard.deploy.sh" ]
 
 ###########################################
 ##### The agent-dev image starts here #####
@@ -310,18 +354,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # Use different data dir to avoid dbus conflicts with the host installation
 ENV VSCODE_APPDATA=/home/${PAF_USERNAME}/.config/code_docker
 
-# refresh apt list
-RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt update
-
 USER ${PAF_USERNAME}
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
 COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
   ${DOCKER_RESOURCE_BASE}/scripts/reset_env.bash \
-  ${DOCKER_RESOURCE_BASE}/scripts/leaderboard.sh \
   ./scripts/
 
 ENTRYPOINT [ "/internal_workspace/scripts/entrypoint-dev.sh" ]
@@ -335,7 +373,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   sudo apt-get update && \
   rosdep update --rosdistro ${ROS_DISTRO} && \
-  ((rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y |& tee ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log; exit \${PIPESTATUS[0]}) \
+  ((rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y -r |& tee ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log; exit \${PIPESTATUS[0]}) \
   || echo \"echo -e \\\"\\\\e[31mERROR: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
   "
 
@@ -357,6 +395,9 @@ RUN ln -s -T /workspace/code ${PAF_ROS_WS}/src
 USER root
 # Make a backup of the home directories, because they get mounted as a volume
 RUN mkdir -p /opt/home-bk && cp -ar /home/. -t /opt/home-bk/
+# Populate apt
+RUN apt-get update
+
 USER ${PAF_USERNAME}
 
 # Just keep this container open because it is used as a dev environment
