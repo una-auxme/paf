@@ -35,6 +35,7 @@ class VisionNode(Node):
     def __init__(self):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")
+        self.create_timer(1.0, self.publish_dummy_cluster)
 
         # dictionary of pretrained models
         self.model_dict = {
@@ -60,7 +61,7 @@ class VisionNode(Node):
             .bool_value
         )
         self.camera_resolution = (
-            self.declare_parameter("camera_resolution", 1280)
+            self.declare_parameter("camera_resolution", 480)
             .get_parameter_value()
             .integer_value
         )
@@ -118,6 +119,8 @@ class VisionNode(Node):
 
         self.depth_images = []
         self.lidar_array = None
+        self.lidar_left_array = None
+        self.lidar_right_array = None
 
         self.setup_subscriber()
         self.setup_publisher()
@@ -130,41 +133,67 @@ class VisionNode(Node):
         """Callback for parameter updates."""
         return update_attributes(self, params)
 
+    def handle_camera_left_image(self, image):
+        self.handle_camera_image(image, "Camera_left")
+
+    def handle_camera_right_image(self, image):
+        self.handle_camera_image(image, "Camera_right")
+
     def setup_subscriber(self):
         self.create_subscription(
             msg_type=ImageMsg,
-            callback=self.handle_camera_image,
-            topic=f"/carla/{self.role_name}/Center/image",
+            callback=self.handle_camera_right_image,
+            topic=f"/carla/{self.role_name}/Camera_right/image",
             qos_profile=1,
         )
 
         self.create_subscription(
             msg_type=ImageMsg,
-            callback=self.handle_lidar_array,
-            topic="/paf/hero/Center/dist_array",
+            callback=self.handle_camera_left_image,
+            topic=f"/carla/{self.role_name}/Camera_left/image",
+            qos_profile=1,
+        )
+
+        self.create_subscription(
+            msg_type=ImageMsg,
+            callback=self.handle_lidar_left_array,
+            topic="/paf/hero/Left/dist_array",
+            qos_profile=1,
+        )
+
+        self.create_subscription(
+            msg_type=ImageMsg,
+            callback=self.handle_lidar_right_array,
+            topic="/paf/hero/Right/dist_array",
             qos_profile=1,
         )
 
     def setup_publisher(self):
-        """
-        sets up all publishers for the Vision-Node
-        """
+        """Sets up all publishers for the VisionNode."""
 
+        # Gemeinsamer Punktwolken-Output (für Mapping)
         self.pointcloud_publisher = self.create_publisher(
             msg_type=ClusteredPointsArray,
             topic=f"/paf/{self.role_name}/visualization_pointcloud",
             qos_profile=1,
         )
 
-        self.publisher_center = self.create_publisher(
+        # Segmentation für beide Kameras
+        self.publisher_left = self.create_publisher(
             msg_type=ImageMsg,
-            topic=f"/paf/{self.role_name}/Center/segmented_image",
+            topic=f"/paf/{self.role_name}/Camera_left/segmented_image",
+            qos_profile=1,
+        )
+        self.publisher_right = self.create_publisher(
+            msg_type=ImageMsg,
+            topic=f"/paf/{self.role_name}/Camera_right/segmented_image",
             qos_profile=1,
         )
 
+        # Optional: Traffic Light (nur falls du das brauchst)
         self.traffic_light_publisher = self.create_publisher(
             msg_type=ImageMsg,
-            topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
+            topic=f"/paf/{self.role_name}/traffic_light",
             qos_profile=1,
         )
 
@@ -187,25 +216,31 @@ class VisionNode(Node):
         else:
             self.get_logger().error("Framework not supported")
 
-    def handle_camera_image(self, image):
+    def handle_camera_image(self, image, camera_id):
         """
-        This function handles a new camera image and publishes the
-        calculated visualization according to the correct camera angle
+        Handles incoming images from Camera_left or Camera_right,
+        performs segmentation, publishes visualization and pointcloud.
+        """
 
-        Args:
-            image (image msg): Image from camera scubscription
-        """
+        if camera_id == "Camera_left":
+            lidar_array = copy.deepcopy(self.lidar_left_array)
+        else:
+            lidar_array = copy.deepcopy(self.lidar_right_array)
+
         prediction = self.predict_ultralytics(
             image=image,
             image_size=self.camera_resolution,
-            lidar_array=copy.deepcopy(self.lidar_array),
+            lidar_array=lidar_array,
         )
 
-        if self.view_camera and prediction is not None:
-            (cv_image, scaled_masks, carla_classes) = prediction
-            self.publish_image(cv_image, image.header, scaled_masks, carla_classes)
+        if prediction is not None:
+            cv_image, scaled_masks, carla_classes = prediction
+            if self.view_camera:
+                self.publish_image(
+                    cv_image, image.header, scaled_masks, carla_classes, camera_id
+                )
 
-    def handle_lidar_array(self, lidar_array):
+    def handle_lidar_left_array(self, lidar_array):
         """
         This function overwrites the current lidar depth image from
         the lidar distance node with the latest depth image.
@@ -214,16 +249,22 @@ class VisionNode(Node):
         Args:
             lidar_array (image msg): Depth image frim Lidar Distance Node
         """
-        # callback function for lidar depth image
-        # since frequency is lower than image frequency
-        # the latest lidar image is saved
-        lidar_array = self.bridge.imgmsg_to_cv2(
-            img_msg=lidar_array, desired_encoding="passthrough"
+        lidar_array_cv = self.bridge.imgmsg_to_cv2(
+            lidar_array, desired_encoding="passthrough"
         )
-        lidar_array_copy = copy.deepcopy(lidar_array)
-        # add camera height to the z-axis
+        lidar_array_copy = copy.deepcopy(lidar_array_cv)
         lidar_array_copy[..., 2] += 1.7
-        self.lidar_array = lidar_array_copy
+        self.lidar_left_array = lidar_array_copy
+        self.get_logger().info("Received Lidar data from Camera_left")
+
+    def handle_lidar_right_array(self, lidar_array):
+        lidar_array_cv = self.bridge.imgmsg_to_cv2(
+            lidar_array, desired_encoding="passthrough"
+        )
+        lidar_array_copy = copy.deepcopy(lidar_array_cv)
+        lidar_array_copy[..., 2] += 1.7
+        self.lidar_right_array = lidar_array_copy
+        self.get_logger().info("Received Lidar data from Camera_right")
 
     def predict_ultralytics(self, image, lidar_array, image_size=640):
         """
@@ -340,7 +381,10 @@ class VisionNode(Node):
         # Publish vision result to RViz
         img_msg = self.bridge.cv2_to_imgmsg(bgr_image, encoding="bgr8")
         img_msg.header = image_header
-        self.publisher_center.publish(img_msg)
+        if camera_id == "Camera_left":
+            self.publisher_left.publish(img_msg)
+        elif camera_id == "Camera_right":
+            self.publisher_right.publish(img_msg)
 
     def process_segmentation_mask(self, segmentation_array, lidar_array):
         # Only process the segmentation mask if the distance array is not None
@@ -481,6 +525,11 @@ class VisionNode(Node):
             traffic_light_image.header = image_header
             # publish cropped traffic light image to the topic
             self.traffic_light_publisher.publish(traffic_light_image)
+
+    def publish_dummy_cluster(self):
+        msg = ClusteredPointsArray()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        self.pointcloud_publisher.publish(msg)
 
 
 def main(args=None):

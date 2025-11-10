@@ -2,12 +2,13 @@
   <arg name="role_name" default="hero" />
   <arg name="control_loop_rate" default="0.05" />
   <arg name="view_camera" default="False" />
-  <arg name="camera_resolution" default="1280" />
+  <arg name="camera_resolution" default="480" />
 
   <node pkg="perception" exec="vision_node" name="VisionNode">
     <param name="role_name" value="$(var role_name)" />
     <param name="view_camera" value="$(var view_camera)" />
     <param name="camera_resolution" value="$(var camera_resolution)"/>
+
     <param from="$(find-pkg-share perception)/config/perception.yaml"/>
 
     <!--

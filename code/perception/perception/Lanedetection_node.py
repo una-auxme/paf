@@ -43,7 +43,8 @@ class Lanedetection_node(Node):
         self.dist_arrays = None
 
         # setup subscriptions
-        self.setup_camera_subscriptions("Center")
+        self.setup_camera_subscriptions("Camera_right")
+        self.setup_camera_subscriptions("Camera_left")
         self.setup_dist_array_subscription()
         # setup publishers
         self.setup_lane_publisher()
