@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 cd
 mkdir git
 cd git
