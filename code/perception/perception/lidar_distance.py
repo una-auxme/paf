@@ -2,21 +2,26 @@ from typing import List
 
 from joblib import Parallel, delayed
 import numpy as np
+import os, json
 from sensor_msgs.msg import PointCloud2, Image as ImageMsg
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from transforms3d.quaternions import mat2quat
 
+
+import tf2_ros
 import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 from rclpy.time import Time
 import rclpy.logging
 import ros2_numpy
+from tf_transformations import quaternion_matrix
 
 from paf_common.parameters import update_attributes
 from rclpy.parameter import Parameter
 
+from geometry_msgs.msg import PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 from mapping_interfaces.msg import ClusteredPointsArray
 
@@ -59,9 +64,23 @@ class LidarDistance(Node):
             .integer_value
         )
 
-        self.prev_raw_pointcloud = None
-        self.cluster_buffer = []
+        self.ego_motion_compensation = (
+            self.declare_parameter(
+                "ego_motion_compensation",
+                False
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.prev_lidar_data = None
+        self.cur_lidar_data = None
+
+        self.prev_ekf_pose = None
+        self.cur_ekf_pose = None
+
         self.bridge = CvBridge()  # OpenCV bridge for image conversions
+
 
         # Publisher for filtered point clouds
         self.pub_pointcloud = self.create_publisher(
@@ -97,18 +116,108 @@ class LidarDistance(Node):
         self.create_subscription(
             msg_type=PointCloud2,
             topic="/carla/hero/LIDAR",
-            callback=self.callback,
+            callback=self.lidar_callback,
             qos_profile=10,
         )
+
+        if self.ego_motion_compensation:
+            self.create_subscription(
+                msg_type=PoseStamped,
+                topic="/paf/hero/current_pos",
+                callback=self.ekf_postion_callback,
+                qos_profile=1,
+            )
 
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
+
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""
         return update_attributes(self, params)
+    
+   
 
-    def callback(self, data):
+    def is_synchronous(self) -> bool:
+        """
+        Checks if the current LiDAR and EKF messages are approximately synchronized 
+        based on the defined SYNC_SLOP.
+        """
+        sync_threshold = Duration(seconds=0.01)
+
+        if self.cur_lidar_data is None or self.cur_ekf_pose is None:
+            return False
+        
+        # Convert message stamps to rclpy.time.Time objects
+        lidar_time = Time.from_msg(self.cur_lidar_data.header.stamp)
+        ekf_time = Time.from_msg(self.cur_ekf_pose.header.stamp)
+        
+        # Calculate the absolute time difference (Duration object)
+        if lidar_time > ekf_time:
+            time_diff = lidar_time - ekf_time
+        else:
+            time_diff = ekf_time - lidar_time
+        
+        is_synced = time_diff <= sync_threshold
+        
+        # if is_synced:
+        #     self.get_logger().info(f"{type(self).__name__} Synchronized pair found. Lidar: {lidar_time} Delta: {time_diff.nanoseconds / 1e6:.2f} ms")
+
+        # else:
+        #     self.get_logger().info(f"{type(self).__name__} No Synchronized pair found. Lidar: {lidar_time}. EKF: {ekf_time}. Delta: {time_diff.nanoseconds / 1e6:.2f} ms")
+             
+        return is_synced
+
+
+    def lidar_callback(self, data: PointCloud2):
+        self.cur_lidar_data = data
+
+        if not self.ego_motion_compensation:
+            self.buffer_compute()
+            return
+
+        if not self.is_synchronous():
+            return
+        
+        self.ego_motion_compute()
+
+    
+    def ekf_postion_callback(self, position: PoseStamped):
+        self.cur_ekf_pose = position
+
+        if not self.is_synchronous():
+            return
+        
+        self.ego_motion_compute()
+
+    def ego_motion_compute(self):
+        if self.prev_lidar_data is None or self.prev_ekf_pose is None:
+            self.buffer_compute()
+            self.prev_ekf_pose = self.cur_ekf_pose
+            return
+        
+        cur_lidar_data = ros2_numpy.point_cloud2.pointcloud2_to_array(
+            self.cur_lidar_data
+        )
+        prev_lidar_data = ros2_numpy.point_cloud2.pointcloud2_to_array(
+            self.prev_lidar_data
+        )
+
+        dT = create_delta_matrix(self.cur_ekf_pose, self.prev_ekf_pose)
+        compensated_lidar_data = ego_motion_compensation(prev_lidar_data, dT)
+
+        merged_lidar_data = np.concatenate([compensated_lidar_data, cur_lidar_data])
+
+        data_to_process = ros2_numpy.point_cloud2.array_to_pointcloud2(merged_lidar_data)
+        data_to_process.header = self.cur_lidar_data.header
+
+        self.start_clustering(data_to_process)
+        self.start_image_calculation(data_to_process)
+        
+        self.prev_lidar_data = self.cur_lidar_data
+        self.prev_ekf_pose = self.cur_ekf_pose
+
+    def buffer_compute(self):
         """
         Callback function that processes LIDAR point cloud data.
 
@@ -116,24 +225,27 @@ class LidarDistance(Node):
 
         :param data: LIDAR point cloud as a ROS PointCloud2 message.
         """
-        if self.prev_raw_pointcloud is not None:
-            curr_array = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
-            prev_array = ros2_numpy.point_cloud2.pointcloud2_to_array(
-                self.prev_raw_pointcloud
+
+        data_to_process = self.cur_lidar_data
+
+        if self.prev_lidar_data is not None:
+            cur_lidar_data = ros2_numpy.point_cloud2.pointcloud2_to_array(
+                self.cur_lidar_data
+            )
+            prev_lidar_data = ros2_numpy.point_cloud2.pointcloud2_to_array(
+                self.prev_lidar_data
             )
 
-            merged_array = np.concatenate([curr_array, prev_array])
+            merged_array = np.concatenate([cur_lidar_data, prev_lidar_data])
 
-            merged_data = ros2_numpy.point_cloud2.array_to_pointcloud2(merged_array)
-            merged_data.header = data.header
+            data_to_process = ros2_numpy.point_cloud2.array_to_pointcloud2(merged_array)
+            data_to_process.header = self.cur_lidar_data.header
+            
+        self.start_clustering(data_to_process)
+        self.start_image_calculation(data_to_process)
 
-            self.start_clustering(merged_data)
-            self.start_image_calculation(merged_data)
-        else:
-            self.start_clustering(data)
-            self.start_image_calculation(data)
-
-        self.prev_raw_pointcloud = data
+        self.prev_lidar_data = self.cur_lidar_data
+    
 
     def start_clustering(self, data):
         """
@@ -619,6 +731,46 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
     clusters = dict(clusters)
 
     return clusters, labels
+
+
+def ego_motion_compensation(points: np.ndarray, dT: np.ndarray):
+    points_xyz = np.stack([points["x"], points["y"], points["z"]], axis=1)
+    N = points_xyz.shape[0]
+
+    homogeneous_points = np.hstack([points_xyz, np.ones((N, 1))])
+    P = homogeneous_points.T
+
+    transformed_points = dT @ P
+    transformed_points_xyz = transformed_points[:3, :]
+
+    compensated_points = np.copy(points)
+    compensated_points["x"] = transformed_points_xyz[0, :]
+    compensated_points["y"] = transformed_points_xyz[1, :]
+    compensated_points["z"] = transformed_points_xyz[2, :]
+
+    return compensated_points
+
+
+def create_delta_matrix(cur_pos, prev_pos):
+    T_cur = create_transform_matrix(cur_pos)
+    T_prev = create_transform_matrix(prev_pos)
+
+    return T_prev @ np.linalg.inv(T_cur)
+
+
+def create_transform_matrix(pos: PoseStamped):
+    t = pos.pose.position
+    q = pos.pose.orientation
+
+    translation = (t.x, t.y, t.z)
+    quaternion = (q.x, q.y, q.z, q.w)
+
+    R = quaternion_matrix(quaternion)
+
+    T = np.copy(R)
+    T[:3, 3] = translation
+
+    return T
 
 
 def main(args=None):
