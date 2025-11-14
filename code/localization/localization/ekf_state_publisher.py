@@ -83,6 +83,7 @@ class EKFStatePublisher(Node):
         )  # Timeout duration
         position = PoseStamped()
         position.header.frame_id = "global"
+        position.header.stamp = self.get_clock().now().to_msg()
         position.pose.orientation = transform.transform.rotation
 
         translation = transform.transform.translation
