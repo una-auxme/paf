@@ -1,3 +1,4 @@
+from typing import Optional
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
 from std_msgs.msg import Header
@@ -11,6 +12,8 @@ from rclpy.node import Node
 import torch
 from PIL import Image
 import torchvision.transforms as t
+from functools import partial
+from typing import Any, cast
 
 
 class Lanedetection_node(Node):
@@ -42,6 +45,16 @@ class Lanedetection_node(Node):
         # Initialize dist_arrays to None
         self.dist_arrays = None
 
+        # Latest lane and driveable area masks per camera
+        self.lane_mask_left = None
+        self.lane_mask_right = None
+        self.driveable_area_left = None
+        self.driveable_area_right = None
+        self.left_yaw_correction_deg = 5.0
+        self.right_yaw_correction_deg = -5.0
+        self.left_x_shift_px = 40.0
+        self.right_x_shift_px = -40.0
+
         # setup subscriptions
         self.setup_camera_subscriptions("Camera_right")
         self.setup_camera_subscriptions("Camera_left")
@@ -62,7 +75,7 @@ class Lanedetection_node(Node):
 
         self.create_subscription(
             msg_type=ImageMsg,
-            callback=self.image_handler,
+            callback=partial(self.image_handler, side=side),
             topic=f"/carla/{self.role_name}/{side}/image",
             qos_profile=1,
         )
@@ -100,10 +113,16 @@ class Lanedetection_node(Node):
             qos_profile=1,
         )
 
-    def image_handler(self, ImageMsg):
-        """
-        Callback function for image subscriber
-        applies lane detection and Driveable area detection to given ImageMsg
+    def image_handler(self, ImageMsg, side: str):
+        """Callback function for image subscribers.
+
+        Applies lane detection and driveable area detection to the given
+        ImageMsg from one of the forward-facing cameras.
+
+        Args:
+            ImageMsg: ROS Image message from the camera.
+            side (str): Which camera this image came from
+                (e.g. "Camera_left" or "Camera_right").
         """
         # free up cuda memory
         if self.device.type == "cuda":
@@ -117,10 +136,144 @@ class Lanedetection_node(Node):
 
         ll_seg_scaled, da_seg_scaled = self.postprocess_image(da_seg_out, ll_seg_out)
 
-        ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
-        ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
+        ll_aligned = self.warp_mask_to_center(ll_seg_scaled, side)
+        da_aligned = self.warp_mask_to_center(da_seg_scaled, side)
 
-        # publish
+        # Store the latest masks for the corresponding camera
+        if side == "Camera_left":
+            self.lane_mask_left = ll_aligned
+            self.driveable_area_left = da_aligned
+        elif side == "Camera_right":
+            self.lane_mask_right = ll_aligned
+            self.driveable_area_right = da_aligned
+        else:
+            # Fallback for unexpected camera names: publish the single mask directly
+            ros_driveable_area = self.bridge.cv2_to_imgmsg(da_seg_scaled)
+            ros_lane_mask = self.bridge.cv2_to_imgmsg(ll_seg_scaled)
+            self.lane_mask_publisher.publish(ros_lane_mask)
+            self.driveable_area_publisher.publish(ros_driveable_area)
+            return
+
+        # Publish a fused lane/drivable-area mask using all available cameras
+        self.publish_fused_masks()
+
+    def warp_mask_to_center(self, mask: np.ndarray, side: str) -> Optional[np.ndarray]:
+        if mask is None:
+            return None
+
+        h, w = mask.shape[:2]
+
+        # ROTATION + SHIFT
+
+        if side == "Camera_left":
+            angle = -8.0  # turn to the right
+            tx = 80  # move to the right
+        else:  # Camera_right
+            angle = 8.0  # turn to the left
+            tx = -80  # move to the left
+
+        M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
+        M[0, 2] += tx
+
+        mask = cv2.warpAffine(
+            mask,
+            M,
+            (w, h),
+            flags=cv2.INTER_NEAREST,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0,
+            # type: ignore
+        )
+
+        # PERSPECTIVE CORRECTION
+        # starting points
+        pts1 = np.array(
+            [[0.0, 0.0], [float(w), 0.0], [0.0, float(h)], [float(w), float(h)]],
+            dtype=np.float32,
+        )
+
+        if side == "Camera_left":
+            # Drag the upper left corner to the RIGHT
+            pts2_list: list[list[float]] = [
+                [float(w * 0.025), 0.0],
+                [float(w * 0.95), 0.0],
+                [float(w * 0.7), float(h)],
+                [float(w), float(h)],
+            ]
+        else:  # Camera_right
+            # Drag the upper right corner to the LEFT
+            pts2_list: list[list[float]] = [
+                [float(w * 0.05), 0.0],
+                [float(w * 0.75), 0.0],
+                [float(w * 0.3), float(h)],
+                [float(w), float(h)],
+            ]
+
+            pts2 = cast(np.ndarray, np.array(pts2_list, dtype=np.float32))
+
+        H = cv2.getPerspectiveTransform(pts1, pts2)  # type: ignore
+
+        mask = cv2.warpPerspective(
+            mask,
+            H,
+            (w, h),
+            flags=cv2.INTER_NEAREST,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0,
+            # type: ignore
+        )
+
+        return mask
+
+    def publish_fused_masks(self):
+        """Fuse lane and driveable-area masks from left and right cameras.
+
+        This implements option C (overlap fusion without an explicit geometric
+        transformation). The fusion is done by taking the pixel-wise maximum
+        of the masks from the left and right camera. If only one camera
+        has produced a mask so far, that mask is published as-is.
+        """
+        lane_left = self.lane_mask_left
+        lane_right = self.lane_mask_right
+        da_left = self.driveable_area_left
+        da_right = self.driveable_area_right
+
+        # Nothing to publish yet
+        if lane_left is None and lane_right is None:
+            return
+
+        if (
+            lane_left is not None
+            and lane_right is not None
+            and da_left is not None
+            and da_right is not None
+        ):
+            # Ensure both masks have the same resolution
+            if lane_left.shape != lane_right.shape:
+                h, w = lane_left.shape[:2]
+                lane_right_resized = cv2.resize(
+                    lane_right, (w, h), interpolation=cv2.INTER_NEAREST
+                )
+                da_right_resized = cv2.resize(
+                    da_right, (w, h), interpolation=cv2.INTER_NEAREST
+                )
+            else:
+                lane_right_resized = lane_right
+                da_right_resized = da_right
+
+            fused_lane = np.maximum(lane_left, lane_right_resized)
+            fused_da = np.maximum(da_left, da_right_resized)
+        elif lane_left is not None:
+            fused_lane = lane_left
+            fused_da = da_left
+        else:
+            fused_lane = lane_right
+            fused_da = da_right
+
+        ros_driveable_area = self.bridge.cv2_to_imgmsg(fused_da)
+        ros_lane_mask = self.bridge.cv2_to_imgmsg(fused_lane)
+
+        # publish fused masks on the existing Center topics
         self.lane_mask_publisher.publish(ros_lane_mask)
         self.driveable_area_publisher.publish(ros_driveable_area)
 

@@ -59,6 +59,7 @@ class LidarDistance(Node):
             .integer_value
         )
 
+        self.prev_raw_pointcloud = None
         self.cluster_buffer = []
         self.bridge = CvBridge()  # OpenCV bridge for image conversions
 
@@ -115,8 +116,24 @@ class LidarDistance(Node):
 
         :param data: LIDAR point cloud as a ROS PointCloud2 message.
         """
-        self.start_clustering(data)
-        self.start_image_calculation(data)
+        if self.prev_raw_pointcloud is not None:
+            curr_array = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
+            prev_array = ros2_numpy.point_cloud2.pointcloud2_to_array(
+                self.prev_raw_pointcloud
+            )
+
+            merged_array = np.concatenate([curr_array, prev_array])
+
+            merged_data = ros2_numpy.point_cloud2.array_to_pointcloud2(merged_array)
+            merged_data.header = data.header
+
+            self.start_clustering(merged_data)
+            self.start_image_calculation(merged_data)
+        else:
+            self.start_clustering(data)
+            self.start_image_calculation(data)
+
+        self.prev_raw_pointcloud = data
 
     def start_clustering(self, data):
         """

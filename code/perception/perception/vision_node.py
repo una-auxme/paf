@@ -255,7 +255,6 @@ class VisionNode(Node):
         lidar_array_copy = copy.deepcopy(lidar_array_cv)
         lidar_array_copy[..., 2] += 1.7
         self.lidar_left_array = lidar_array_copy
-        self.get_logger().info("Received Lidar data from Camera_left")
 
     def handle_lidar_right_array(self, lidar_array):
         lidar_array_cv = self.bridge.imgmsg_to_cv2(
@@ -264,7 +263,6 @@ class VisionNode(Node):
         lidar_array_copy = copy.deepcopy(lidar_array_cv)
         lidar_array_copy[..., 2] += 1.7
         self.lidar_right_array = lidar_array_copy
-        self.get_logger().info("Received Lidar data from Camera_right")
 
     def predict_ultralytics(self, image, lidar_array, image_size=640):
         """
