@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 cd "${SCRIPT_DIR}/build"
 
-if ! grep -q PAF_USERNAME ./.env; then
+if ! grep -q PAF_USERNAME ./.env 2>/dev/null; then
   cat <<EOF >./.env
 # PAF docker variables
 PAF_UID=$(id -u)
