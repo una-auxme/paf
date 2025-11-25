@@ -14,7 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y software-properties-common
+  apt-get update && apt-get install -y software-properties-common wget curl
 
 # GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -32,11 +32,16 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
 
-# GPU vulkan driver install
+# Cuda toolkit install
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
+  dpkg -i cuda-keyring_1.1-1_all.deb && \
+  rm cuda-keyring_1.1-1_all.deb
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y nvidia-cuda-toolkit libxext6
+  apt-get install -y cuda-toolkit libxext6
 
 ############################################
 ##### The main agent image starts here #####
