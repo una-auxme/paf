@@ -33,6 +33,9 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all
 ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
 
 # Cuda toolkit install
+# Using the cuda-toolkit instead of the ubuntu-packaged nvidia-cuda-toolkit avoids pulling in the libnvidia-compute-535 driver package.
+# (It is a dependency of nvidia-cuda-toolkit, but not of cuda-toolkit)
+# The libnvidia-compute-535 driver can conflict with the host's driver
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
