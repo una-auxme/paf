@@ -1,6 +1,6 @@
 # Local Automatic Test
 
-**Summary:** The page explains how to start the local automated test and what the output looks like. Additionally, it describes how to add a new scenario to the automated test. In an optimal case the test should not need longer than 30 min with 11 routes.
+**Summary:** The page explains how to start the local automated test and what the output looks like. Additionally, it describes how to add a new scenario to the automated test.
 
 - [Time](#time)
 - [Required files](#required-files)
