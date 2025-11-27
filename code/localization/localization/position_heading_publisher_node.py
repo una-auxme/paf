@@ -12,8 +12,8 @@ Both signals can be filtered with the available filters:
   - "RunningAvg" -> "None" is used for heading filter
   - "None"
 The chosen filter is used to pass its outputs onto the topics:
-  - /paf/hero/current_pos
-  - /paf/hero/current_heading
+  - /paf/hero/global_current_pos
+  - /paf/hero/global_current_heading
 
 The filter is chosen in the localization.launch file.
 
@@ -134,17 +134,25 @@ class PositionHeadingPublisherNode(Node):
         # Create subscribers depending on the filter used
         # Position Filter:
         if self.pos_filter == "EKF":
-            self.ekf_pos_subscriber = self.create_subscription(
+            self.global_ekf_pos_subscriber = self.create_subscription(
                 PoseStamped,
-                "/paf/" + self.role_name + "/ekf_pos",
-                self.publish_filter_pos_as_current_pos,
+                "/paf/" + self.role_name + "/global_ekf_pos",
+                self.publish_filter_pos_as_global_current_pos,
                 qos_profile=1,
             )
+
+            self.local_ekf_pos_subscriber = self.create_subscription(
+                PoseStamped,
+                "/paf/" + self.role_name + "/local_ekf_pos",
+                self.publish_filter_pos_as_local_current_pos,
+                qos_profile=1,
+            )
+
         elif self.pos_filter == "Kalman":
             self.kalman_pos_subscriber = self.create_subscription(
                 PoseStamped,
                 "/paf/" + self.role_name + "/kalman_pos",
-                self.publish_filter_pos_as_current_pos,
+                self.publish_filter_pos_as_global_current_pos,
                 qos_profile=1,
             )
         elif self.pos_filter == "RunningAvg":
@@ -165,19 +173,27 @@ class PositionHeadingPublisherNode(Node):
 
         # Heading Filter:
         if self.heading_filter == "EKF":
-            self.ekf_heading_subscriber = self.create_subscription(
+            self.global_ekf_heading_subscriber = self.create_subscription(
                 Float32,
-                "/paf/" + self.role_name + "/ekf_heading",
-                self.publish_current_heading,
+                "/paf/" + self.role_name + "/global_ekf_heading",
+                self.publish_global_current_heading,
+                qos_profile=1,
+            )
+
+            self.local_ekf_heading_subscriber = self.create_subscription(
+                Float32,
+                "/paf/" + self.role_name + "/local_ekf_heading",
+                self.publish_local_current_heading,
                 qos_profile=1,
             )
         elif self.heading_filter == "Kalman":
-            self.kalman_heading_subscriber = self.create_subscription(
+            self.global_kalman_heading_subscriber = self.create_subscription(
                 Float32,
                 "/paf/" + self.role_name + "/kalman_heading",
-                self.publish_current_heading,
+                self.publish_global_current_heading,
                 qos_profile=1,
             )
+
         elif self.heading_filter == "None":
             # No additional subscriber needed
             # -> handled by imu_subscriber
@@ -200,13 +216,25 @@ class PositionHeadingPublisherNode(Node):
             PoseStamped, f"/paf/{self.role_name}/unfiltered_pos", qos_profile=1
         )
         # Publishes current_pos depending on the filter used
-        self.cur_pos_publisher = self.create_publisher(
-            PoseStamped, f"/paf/{self.role_name}/current_pos", qos_profile=1
+        self.global_cur_pos_publisher = self.create_publisher(
+            PoseStamped, f"/paf/{self.role_name}/global_current_pos", qos_profile=1
         )
-        # Publishes current_heading depending on the filter used
-        self.__heading: float = 0.0
-        self.__heading_publisher = self.create_publisher(
-            Float32, f"/paf/{self.role_name}/current_heading", qos_profile=1
+
+        # Publishes local current_pos depending on the filter used
+        self.local_cur_pos_publisher = self.create_publisher(
+            PoseStamped, f"/paf/{self.role_name}/local_current_pos", qos_profile=1
+        )
+
+        # Publishes global current_heading depending on the filter used
+        self.__global_heading: float = 0.0
+        self.__global_heading_publisher = self.create_publisher(
+            Float32, f"/paf/{self.role_name}/global_current_heading", qos_profile=1
+        )
+
+        # Publishes local current_heading depending on the filter used
+        self.__local_heading: float = 0.0
+        self.__local_heading_publisher = self.create_publisher(
+            Float32, f"/paf/{self.role_name}/local_current_heading", qos_profile=1
         )
 
         # Service clients
@@ -254,22 +282,32 @@ class PositionHeadingPublisherNode(Node):
         # In the case of using "None" filter, the heading is
         # published as current heading, since it is not filtered
         if self.heading_filter == "None":
-            self.__heading = heading
-            self.__heading_publisher.publish(Float32(data=self.__heading))
+            self.__global_heading = heading
+            self.__global_heading_publisher.publish(Float32(data=self.__global_heading))
         else:
             # in each other case the heading is published as unfiltered heading
             # for further filtering in other nodes such as the EKF
             self.unfiltered_heading_publisher.publish(Float32(data=heading))
 
-    def publish_current_heading(self, data: Float32):
+    def publish_global_current_heading(self, data: Float32):
         """
         This method is called when new heading data is received.
-        It handles all necessary updates and publishes the heading.
+        It handles all necessary updates and publishes the global heading.
         :param data: new heading measurement
         :return:
         """
-        self.__heading = data.data
-        self.__heading_publisher.publish(Float32(data=self.__heading))
+        self.__global_heading = data.data
+        self.__global_heading_publisher.publish(Float32(data=self.__global_heading))
+
+    def publish_local_current_heading(self, data: Float32):
+        """
+        This method is called when new heading data is received.
+        It handles all necessary updates and publishes the local heading.
+        :param data: new heading measurement
+        :return:
+        """
+        self.__local_heading = data.data
+        self.__local_heading_publisher.publish(Float32(data=self.__local_heading))
 
     # insert new heading functions here...
 
@@ -315,16 +353,25 @@ class PositionHeadingPublisherNode(Node):
             cur_pos.pose.orientation.z = 1.0
             cur_pos.pose.orientation.w = 0.0
 
-            self.cur_pos_publisher.publish(cur_pos)
+            self.global_cur_pos_publisher.publish(cur_pos)
 
-    def publish_filter_pos_as_current_pos(self, data: PoseStamped):
+    def publish_filter_pos_as_global_current_pos(self, data: PoseStamped):
         """
         This method is called when new filter data is received.
-        The function publishes the filtered position as current position
+        The function publishes the filtered position as global current position
         :param data: PoseStamped
         :return:
         """
-        self.cur_pos_publisher.publish(data)
+        self.global_cur_pos_publisher.publish(data)
+
+    def publish_filter_pos_as_local_current_pos(self, data: PoseStamped):
+        """
+        This method is called when new filter data is received.
+        The function publishes the filtered position as local current position
+        :param data: PoseStamped
+        :return:
+        """
+        self.local_cur_pos_publisher.publish(data)
 
     async def publish_unfiltered_gps(self, data: NavSatFix):
         """
@@ -361,7 +408,7 @@ class PositionHeadingPublisherNode(Node):
             # In the case of using "None" filter, the pos is
             # published as current pos, since it is not filtered
             if self.pos_filter == "None":
-                self.cur_pos_publisher.publish(unfiltered_pos)
+                self.global_cur_pos_publisher.publish(unfiltered_pos)
             else:
                 # in each other case the pos is published as unfiltered pos
                 # for further filtering in other nodes such as the EKF

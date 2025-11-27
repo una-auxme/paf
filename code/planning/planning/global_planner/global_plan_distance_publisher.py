@@ -42,7 +42,7 @@ class GlobalPlanDistance(Node):
         # Subscriptions
         self.pos_subscriber = self.create_subscription(
             PoseStamped,
-            "/paf/" + self.role_name + "/current_pos",
+            "/paf/" + self.role_name + "/global_current_pos",
             self.update_position,
             qos_profile=1,
         )

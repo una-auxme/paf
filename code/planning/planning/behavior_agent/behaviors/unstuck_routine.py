@@ -127,7 +127,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
     def initialise(self):
         global TRIGGER_WAIT_STUCK_DURATION
         self.STUCK_DETECTED = False
-        current_pos = self.blackboard.try_get("/paf/hero/current_pos")
+        current_pos = self.blackboard.try_get("/paf/hero/global_current_pos")
         current_speed = self.blackboard.try_get("/carla/hero/Speed")
         target_speed = self.blackboard.try_get("/paf/hero/target_velocity")
         curr_behavior = self.blackboard.try_get("/paf/hero/curr_behavior")
@@ -138,7 +138,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             get_logger().info(
                 f"Available: current_speed: {current_speed is not None}, "
                 f"target_speed: {target_speed is not None}, "
-                f"current_pos: {current_pos is not None}",
+                f"global_current_pos: {current_pos is not None}",
                 throttle_duration_sec=2,
             )
             return
@@ -222,7 +222,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
         :return: py_trees.common.Status.FAILURE, unstuck routine finished or
         not need to be triggered
         """
-        current_pos = self.blackboard.try_get("/paf/hero/current_pos")
+        current_pos = self.blackboard.try_get("/paf/hero/global_current_pos")
         current_speed = self.blackboard.try_get("/carla/hero/Speed")
         map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         clock_now: float = to_secs(self.clock.now())
