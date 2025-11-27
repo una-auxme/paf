@@ -10,7 +10,7 @@
 
 ## Time
 
-The test shouldn't take longer than 2 minutes per route (with 3 waypoints). So the test with 11 routes (as of 06.02.25) shouldn't take longer than 22 minutes. In the event that the agent gets stuck, the test may take longer because Carla needs a certain amount of time until it aborts the simulation
+The test takes an eternity at the current point beacause of the game to system time ratio (as to be seen in output). In the event that the agent gets stuck, the test may take even longer because Carla needs a certain amount of time until it aborts the simulation
 
 ## Required files
 
