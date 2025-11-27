@@ -34,14 +34,14 @@ class PotentialField(CompatibleNode, TrajectoryModifier):
 
         self.new_subscription(
             msg_type=PoseStamped,
-            topic="paf/hero/current_pos",
+            topic="paf/hero/global_current_pos",
             callback=self._position_callback,
             qos_profile=10,
         )
 
         self.new_subscription(
             msg_type=Float32,
-            topic="paf/hero/current_heading",
+            topic="paf/hero/global_current_heading",
             callback=self._heading_callback,
             qos_profile=10,
         )

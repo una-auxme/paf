@@ -42,13 +42,22 @@ class EKFStatePublisher(Node):
             .string_value
         )
 
-        # Publishes ekf_pos and ekf_heading from hero frame out of tf-graph
-        self.position_publisher: Publisher = self.create_publisher(
-            PoseStamped, f"/paf/{self.role_name}/ekf_pos", qos_profile=1
+        # Publishes global ekf_pos and ekf_heading from hero frame out of tf-graph
+        self.global_position_publisher: Publisher = self.create_publisher(
+            PoseStamped, f"/paf/{self.role_name}/global_ekf_pos", qos_profile=1
         )
 
-        self.heading_publisher: Publisher = self.create_publisher(
-            Float32, f"/paf/{self.role_name}/ekf_heading", qos_profile=1
+        self.global_heading_publisher: Publisher = self.create_publisher(
+            Float32, f"/paf/{self.role_name}/global_ekf_heading", qos_profile=1
+        )
+
+        # Publishes local ekf_pos and ekf_heading from hero frame out of tf-graph
+        self.local_position_publisher: Publisher = self.create_publisher(
+            PoseStamped, f"/paf/{self.role_name}/local_ekf_pos", qos_profile=1
+        )
+
+        self.local_heading_publisher: Publisher = self.create_publisher(
+            Float32, f"/paf/{self.role_name}/local_ekf_heading", qos_profile=1
         )
 
         self.tf_buffer = tf2_ros.Buffer()
@@ -64,25 +73,38 @@ class EKFStatePublisher(Node):
 
     def publish_heading_handler(self, timer_event=None):
         try:
-            self.publish_heading(timer_event)
+            self.publish_heading("odom", timer_event)
+            self.publish_heading("global", timer_event)
         except Exception as e:
             self.get_logger().fatal(emsg_with_trace(e), throttle_duration_sec=2)
 
-    def publish_heading(self, timer_event):
-        if not self.tf_buffer.can_transform("global", "hero", Time()):
+    def publish_heading(self, frame_id, timer_event):
+        if not self.tf_buffer.can_transform(frame_id, "hero", Time()):
             self.get_logger().warn(
-                "Transform not available yet. Waiting for transform.",
+                f"Transform not available yet, for {frame_id}. Waiting for transform.",
                 throttle_duration_sec=2,
             )
             return
+
         transform: TransformStamped = self.tf_buffer.lookup_transform(
-            "global",  # Target frame
+            frame_id,  # Target frame
             "hero",  # Source frame
             Time(),  # Get the latest available transform
             Duration(seconds=self.loop_rate),
         )  # Timeout duration
+
+        position, heading = self._prepare_data(transform, frame_id)
+
+        if frame_id == "global":
+            self.global_position_publisher.publish(position)
+            self.global_heading_publisher.publish(Float32(data=heading))
+        elif frame_id == "odom":
+            self.local_position_publisher.publish(position)
+            self.local_heading_publisher.publish(Float32(data=heading))
+
+    def _prepare_data(self, transform: TransformStamped, frame_id: str):
         position = PoseStamped()
-        position.header.frame_id = "global"
+        position.header.frame_id = frame_id
         position.header.stamp = self.get_clock().now().to_msg()
         position.pose.orientation = transform.transform.rotation
 
@@ -99,8 +121,7 @@ class EKFStatePublisher(Node):
         rot = R.from_quat(quaternion)
         heading = rot.as_euler("xyz", degrees=False)[2]
 
-        self.position_publisher.publish(position)
-        self.heading_publisher.publish(Float32(data=heading))
+        return position, heading
 
 
 def main(args=None):
