@@ -13,6 +13,8 @@ Development utility functions:
                    The leaderboard then automatically launches code/agent/launch/agent.dev.persistent.xml
                    Quitting: Ctrl+c does not work on the leaderboard. Use Right-Click->Kill Terminal
 - agent.dev: Launches the agent (ros2 launch agent agent.dev.xml); Ctrl+c to stop the agent
+- leaderboard.test: Launches the Simulation test at /code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+                    Kill Terminal to end
 EOF
 
 # This function sources the ROS /workspace
@@ -61,3 +63,10 @@ pytrees.viewer() {
   )
 }
 export -f pytrees.viewer
+
+leaderboard.test(){
+  (
+    /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+  )
+}
+export -f leaderboard.test
