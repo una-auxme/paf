@@ -1,8 +1,6 @@
 loaders:
 - type: python
-  search_path: [../../code/mapping/ext_modules]
-- type: python
-  search_path: [../../code/mapping/src]
+  search_path: [../../code/mapping]
 renderer:
   type: mkdocs
   output_directory: .build
@@ -18,7 +16,8 @@ renderer:
   - title: Nodes
     name: nodes
     contents:
-      - mapping_data_integration.*
+      - mapping.data_integration.*
+      - mapping.visualization.*
   - title: Mapping Common
     name: mapping_common
     contents:
@@ -70,4 +69,4 @@ processors:
     documented_only: false
   - type: crossref
   - type: smart
-  
+

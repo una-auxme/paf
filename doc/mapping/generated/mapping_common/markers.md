@@ -34,7 +34,7 @@ def debug_marker(base: Any,
                  scale_z: Optional[float] = None) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L25)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/markers.py#L28)
 
 Creates a ROS Marker based on *base*
 
@@ -71,14 +71,13 @@ Creates a ROS Marker based on *base*
 #### debug\_marker\_array
 
 ```python
-def debug_marker_array(
-        namespace: str,
-        markers: List[Marker],
-        timestamp: Optional[rospy.Time] = None,
-        lifetime: Optional[rospy.Duration] = None) -> MarkerArray
+def debug_marker_array(namespace: str,
+                       markers: List[Marker],
+                       timestamp: TimeMsg,
+                       lifetime: Optional[DurationMsg] = None) -> MarkerArray
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/markers.py#L140)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/markers.py#L146)
 
 Builds a ROS MarkerArray based on *markers*
 
@@ -86,9 +85,8 @@ Builds a ROS MarkerArray based on *markers*
 
 - `namespace` _str_ - Namespace of the markers
 - `markers` _List[Marker]_ - markers
-- `timestamp` _Optional[rospy.Time], optional_ - Timestamp of all markers.
-  Defaults to None. If None, the current ros time will be used
-- `lifetime` _Optional[rospy.Duration], optional_ - Marker lifetime.
+- `timestamp` _builtin_interfaces.msg.Time_ - Timestamp of all markers.
+- `lifetime` _Optional[builtin_interfaces.msg.Duration], optional_ - Marker lifetime.
   Defaults to 0.5.
   
 

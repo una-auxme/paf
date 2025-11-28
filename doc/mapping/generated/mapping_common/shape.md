@@ -68,7 +68,7 @@ Precision when converting a Circle into a shapely.Polygon
 class MarkerStyle(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L37)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L37)
 
 <a id="mapping_common.shape.MarkerStyle.CLOSED_OBJECT"></a>
 
@@ -91,7 +91,7 @@ class MarkerStyle(Enum)
 class Shape2D()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L44)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L44)
 
 A 2 dimensional shape
 
@@ -116,7 +116,7 @@ on top of the entity's transformation.
 def from_ros_msg(m: msg.Shape2D) -> "Shape2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L58)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L58)
 
 Creates a shape from m
 
@@ -130,7 +130,7 @@ Note that the returned shape will be a subclass of Shape2D
 def to_ros_msg() -> msg.Shape2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L81)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L81)
 
 <a id="mapping_common.shape.Shape2D.to_marker"></a>
 
@@ -141,7 +141,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L85)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L85)
 
 Creates an ROS marker based on this shape
 
@@ -162,7 +162,7 @@ Creates an ROS marker based on this shape
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L117)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L117)
 
 Creates a shapely.Polygon based on this shape
 
@@ -184,7 +184,7 @@ Creates a shapely.Polygon based on this shape
 class Rectangle(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L130)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L130)
 
 Rectangle with width and height in meters
 
@@ -206,7 +206,7 @@ def __init__(length: float,
              offset: Optional[Transform2D] = None)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L136)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L136)
 
 <a id="mapping_common.shape.Rectangle.to_ros_msg"></a>
 
@@ -216,7 +216,7 @@ def __init__(length: float,
 def to_ros_msg() -> msg.Shape2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L159)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L159)
 
 <a id="mapping_common.shape.Rectangle.to_marker"></a>
 
@@ -227,7 +227,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L164)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L164)
 
 <a id="mapping_common.shape.Rectangle.to_shapely"></a>
 
@@ -237,7 +237,7 @@ def to_marker(transform: Optional[Transform2D] = None,
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L176)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L176)
 
 <a id="mapping_common.shape.Circle"></a>
 
@@ -248,7 +248,7 @@ def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 class Circle(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L194)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L194)
 
 Circle with radius in meters
 
@@ -264,7 +264,7 @@ Circle with radius in meters
 def __init__(radius: float, offset: Optional[Transform2D] = None)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L199)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L199)
 
 <a id="mapping_common.shape.Circle.to_ros_msg"></a>
 
@@ -274,7 +274,7 @@ def __init__(radius: float, offset: Optional[Transform2D] = None)
 def to_ros_msg() -> msg.Shape2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L213)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L213)
 
 <a id="mapping_common.shape.Circle.to_marker"></a>
 
@@ -285,7 +285,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L218)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L218)
 
 <a id="mapping_common.shape.Circle.to_shapely"></a>
 
@@ -295,7 +295,7 @@ def to_marker(transform: Optional[Transform2D] = None,
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L230)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L230)
 
 <a id="mapping_common.shape.Polygon"></a>
 
@@ -306,7 +306,7 @@ def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 class Polygon(Shape2D)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L245)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L245)
 
 Polygon defined by a list of Point2 objects.
 
@@ -326,7 +326,7 @@ The list does NOT have a redundant point for start and end.
 def __init__(points: List[Point2], offset: Optional[Transform2D] = None)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L254)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L254)
 
 <a id="mapping_common.shape.Polygon.to_ros_msg"></a>
 
@@ -336,7 +336,7 @@ def __init__(points: List[Point2], offset: Optional[Transform2D] = None)
 def to_ros_msg() -> msg.Shape2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L273)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L273)
 
 <a id="mapping_common.shape.Polygon.to_marker"></a>
 
@@ -347,7 +347,7 @@ def to_marker(transform: Optional[Transform2D] = None,
               marker_style: MarkerStyle = MarkerStyle.CLOSED_OBJECT) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L282)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L282)
 
 Convert to a visualization Marker for RViz.
 
@@ -359,7 +359,7 @@ Convert to a visualization Marker for RViz.
 def to_shapely(transform: Optional[Transform2D] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L381)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L381)
 
 <a id="mapping_common.shape.Polygon.from_shapely"></a>
 
@@ -371,7 +371,7 @@ def from_shapely(poly: shapely.Polygon,
                  make_centered: bool = False) -> "Polygon"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/shape.py#L390)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/shape.py#L390)
 
 Creates a Polygon from a shapely.Polygon
 

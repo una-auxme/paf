@@ -118,7 +118,7 @@ Overview of the main components:
 class Motion2D()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L32)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L35)
 
 Motion of an entity
 
@@ -154,7 +154,7 @@ Angular velocity in radians/s
 def from_ros_msg(m: msg.Motion2D) -> "Motion2D"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L55)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L58)
 
 <a id="mapping_common.entity.Motion2D.to_ros_msg"></a>
 
@@ -164,7 +164,7 @@ def from_ros_msg(m: msg.Motion2D) -> "Motion2D"
 def to_ros_msg() -> msg.Motion2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L59)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L62)
 
 <a id="mapping_common.entity.Flags"></a>
 
@@ -175,7 +175,7 @@ def to_ros_msg() -> msg.Motion2D
 class Flags()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L67)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L70)
 
 Dedicated flags an entity can have.
 
@@ -196,7 +196,7 @@ def __init__(is_collider: bool = False,
              is_hero: bool = False)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L82)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L85)
 
 <a id="mapping_common.entity.Flags.matches_filter"></a>
 
@@ -206,7 +206,7 @@ def __init__(is_collider: bool = False,
 def matches_filter(f: "FlagFilter") -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L96)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L99)
 
 Returns if these Flags match the filter mask f
 
@@ -228,7 +228,7 @@ Returns if these Flags match the filter mask f
 def from_ros_msg(m: msg.Flags) -> "Flags"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L123)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L126)
 
 <a id="mapping_common.entity.Flags.to_ros_msg"></a>
 
@@ -238,7 +238,7 @@ def from_ros_msg(m: msg.Flags) -> "Flags"
 def to_ros_msg() -> msg.Flags
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L132)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L135)
 
 <a id="mapping_common.entity.FlagFilter"></a>
 
@@ -249,7 +249,7 @@ def to_ros_msg() -> msg.Flags
 class FlagFilter()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L143)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L146)
 
 Filter mask to filter entities by their flags
 
@@ -306,7 +306,7 @@ this entity is the SssssssssssssssssssssuperCar
 class TrackingInfo()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L166)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L169)
 
 Information that might be required to consistently track entities
 
@@ -315,13 +315,13 @@ PAF24 still left it in as a base/guidance for future tracking experiments
 
 <a id="mapping_common.entity.TrackingInfo.visibility_time"></a>
 
-#### visibility\_time: `Duration`
+#### visibility\_time: `DurationMsg`
 
 How long the entity has been visible for. Never gets reset
 
 <a id="mapping_common.entity.TrackingInfo.invisibility_time"></a>
 
-#### invisibility\_time: `Duration`
+#### invisibility\_time: `DurationMsg`
 
 How long the entity has been uninterruptedly not visible.
 Reset when the entity is visible again
@@ -341,7 +341,7 @@ Reset when the entity is visible again
 
 <a id="mapping_common.entity.TrackingInfo.moving_time"></a>
 
-#### moving\_time: `Duration`
+#### moving\_time: `DurationMsg`
 
 How long an entity was moving continuously. Reset when standing
 
@@ -349,7 +349,7 @@ This might be used to decide if we should overtake
 
 <a id="mapping_common.entity.TrackingInfo.standing_time"></a>
 
-#### standing\_time: `Duration`
+#### standing\_time: `DurationMsg`
 
 How long an entity stood still continuously. Reset when moving
 
@@ -357,7 +357,7 @@ This might be used to decide if we should overtake
 
 <a id="mapping_common.entity.TrackingInfo.moving_time_sum"></a>
 
-#### moving\_time\_sum: `Duration`
+#### moving\_time\_sum: `DurationMsg`
 
 Sums of all the time the entity was moving. Never gets reset
 
@@ -365,7 +365,7 @@ This might be used to decide if we should overtake
 
 <a id="mapping_common.entity.TrackingInfo.standing_time_sum"></a>
 
-#### standing\_time\_sum: `Duration`
+#### standing\_time\_sum: `DurationMsg`
 
 Sums of all the time the entity was standing still. Never gets reset
 
@@ -392,7 +392,7 @@ Maximum linear speed of this entity ever recorded
 def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L209)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L212)
 
 <a id="mapping_common.entity.TrackingInfo.to_ros_msg"></a>
 
@@ -402,7 +402,7 @@ def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo"
 def to_ros_msg() -> msg.TrackingInfo
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L223)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L226)
 
 <a id="mapping_common.entity.Entity"></a>
 
@@ -413,7 +413,7 @@ def to_ros_msg() -> msg.TrackingInfo
 class Entity()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L239)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L242)
 
 A thing of interest around the hero car. Mainly used for Obstacles.
 
@@ -445,7 +445,7 @@ Transform2D based on the map origin (hero car)
 
 <a id="mapping_common.entity.Entity.timestamp"></a>
 
-#### timestamp: `Time`
+#### timestamp: `TimeMsg`
 
 When adding the entity its timestamp is the timestamp
 of the associated sensor data
@@ -508,7 +508,7 @@ If this entity is supposed to be tracked, tracking_info must not be None
 def matches_filter(f: FlagFilter) -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L292)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L295)
 
 Returns if this entity matches the filter mask f
 
@@ -530,7 +530,7 @@ Returns if this entity matches the filter mask f
 def from_ros_msg(m: msg.Entity) -> "Entity"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L312)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L315)
 
 Creates an entity from m
 
@@ -544,7 +544,7 @@ Note that the returned entity might be a subclass of Entity
 def to_ros_msg() -> msg.Entity
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L363)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L366)
 
 <a id="mapping_common.entity.Entity.to_marker"></a>
 
@@ -554,7 +554,7 @@ def to_ros_msg() -> msg.Entity
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L388)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L392)
 
 Creates a ROS marker based on the entity
 
@@ -572,7 +572,7 @@ The Marker only visualizes the transform and shape of the Entity.
 def get_meta_markers() -> List[Marker]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L405)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L409)
 
 Creates additional meta markers for the entity
 
@@ -588,7 +588,7 @@ Creates additional meta markers for the entity
 def to_motion_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L420)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L424)
 
 Creates a ROS marker based on the entity's motion
 
@@ -609,7 +609,7 @@ Creates a ROS marker based on the entity's motion
 def get_text_marker(text: str, offset: Optional[Vector2] = None) -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L451)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L455)
 
 Creates a text marker at the entity's position
 
@@ -632,7 +632,7 @@ Creates a text marker at the entity's position
 def to_shapely() -> "ShapelyEntity"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L479)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L483)
 
 Calculates the [`ShapelyEntity`](#mapping_common.entity.ShapelyEntity) for this entity
 
@@ -648,7 +648,7 @@ Calculates the [`ShapelyEntity`](#mapping_common.entity.ShapelyEntity) for this 
 def is_mergeable_with(other: "Entity") -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L487)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L491)
 
 Returns if self should be merged/combined with other at all
 
@@ -671,7 +671,7 @@ Mainly used in the filtering steps of the intermediate layer map
 def get_global_x_velocity() -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L521)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L525)
 
 Returns the global x velocity of the entity in in m/s.
 
@@ -693,7 +693,7 @@ but in the x-direction of the map this entity belongs to.
 def get_delta_forward_velocity_of(other: "Entity") -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L544)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L548)
 
 Calculates the delta velocity compared to other in the heading of self.
 This function is only for objects in front. If the entity is behind this
@@ -720,7 +720,7 @@ case.
 def get_delta_velocity_of(other: "Entity") -> Optional[float]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L569)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L573)
 
 Calculates the delta velocity compared to other in the heading of self
 
@@ -744,7 +744,7 @@ Calculates the delta velocity compared to other in the heading of self
 def get_width() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L592)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L596)
 
 Returns the local width (y-bounds) of the entity
 
@@ -760,7 +760,7 @@ Returns the local width (y-bounds) of the entity
 def get_front_x() -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L602)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L606)
 
 Returns the local x length from the center to the front of the entity
 
@@ -777,7 +777,7 @@ Returns the local x length from the center to the front of the entity
 class Car(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L614)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L618)
 
 <a id="mapping_common.entity.Car.brake_light"></a>
 
@@ -795,7 +795,7 @@ class Car(Entity)
 class BrakeLightState(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L618)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L622)
 
 <a id="mapping_common.entity.Car.BrakeLightState.OFF"></a>
 
@@ -813,7 +813,7 @@ class BrakeLightState(Enum)
 class IndicatorState(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L622)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L626)
 
 <a id="mapping_common.entity.Car.IndicatorState.OFF"></a>
 
@@ -837,7 +837,7 @@ def __init__(brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
              **kwargs)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L627)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L631)
 
 <a id="mapping_common.entity.Car.to_ros_msg"></a>
 
@@ -847,7 +847,7 @@ def __init__(brake_light: "Car.BrakeLightState" = BrakeLightState.OFF,
 def to_ros_msg() -> msg.Entity
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L644)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L648)
 
 <a id="mapping_common.entity.Car.to_marker"></a>
 
@@ -857,7 +857,7 @@ def to_ros_msg() -> msg.Entity
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L651)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L655)
 
 <a id="mapping_common.entity.Lanemarking"></a>
 
@@ -868,7 +868,7 @@ def to_marker() -> Marker
 class Lanemarking(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L661)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L665)
 
 <a id="mapping_common.entity.Lanemarking.style"></a>
 
@@ -893,7 +893,7 @@ but predicted based on other/previous lanemarks
 class Style(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L669)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L673)
 
 <a id="mapping_common.entity.Lanemarking.Style.SOLID"></a>
 
@@ -912,7 +912,7 @@ def __init__(style: "Lanemarking.Style", position_index: int, predicted: bool,
              **kwargs)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L673)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L677)
 
 <a id="mapping_common.entity.Lanemarking.to_ros_msg"></a>
 
@@ -922,7 +922,7 @@ def __init__(style: "Lanemarking.Style", position_index: int, predicted: bool,
 def to_ros_msg() -> msg.Entity
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L689)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L693)
 
 <a id="mapping_common.entity.Lanemarking.to_marker"></a>
 
@@ -932,7 +932,7 @@ def to_ros_msg() -> msg.Entity
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L698)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L702)
 
 Creates an ROS marker based on the entity
 
@@ -948,7 +948,7 @@ Creates an ROS marker based on the entity
 def get_meta_markers() -> List[Marker]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L722)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L726)
 
 <a id="mapping_common.entity.TrafficLight"></a>
 
@@ -959,7 +959,7 @@ def get_meta_markers() -> List[Marker]
 class TrafficLight(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L729)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L733)
 
 Traffic light stop line
 
@@ -980,7 +980,7 @@ It sets the *is_stopmark* flag only if the car has to stop there.
 class State(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L740)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L744)
 
 <a id="mapping_common.entity.TrafficLight.State.RED"></a>
 
@@ -1002,7 +1002,7 @@ class State(Enum)
 def __init__(state: "TrafficLight.State", **kwargs)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L745)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L749)
 
 <a id="mapping_common.entity.TrafficLight.to_ros_msg"></a>
 
@@ -1012,7 +1012,7 @@ def __init__(state: "TrafficLight.State", **kwargs)
 def to_ros_msg() -> msg.Entity
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L755)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L759)
 
 <a id="mapping_common.entity.StopMark"></a>
 
@@ -1023,7 +1023,7 @@ def to_ros_msg() -> msg.Entity
 class StopMark(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L762)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L766)
 
 Stop mark as a virtual obstacle for the ACC
 
@@ -1041,7 +1041,7 @@ Why this StopMark exits. Only for visualization.
 def __init__(reason: str, **kwargs)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L769)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L773)
 
 <a id="mapping_common.entity.StopMark.to_ros_msg"></a>
 
@@ -1051,7 +1051,7 @@ def __init__(reason: str, **kwargs)
 def to_ros_msg() -> msg.Entity
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L779)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L783)
 
 <a id="mapping_common.entity.StopMark.to_marker"></a>
 
@@ -1061,7 +1061,7 @@ def to_ros_msg() -> msg.Entity
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L784)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L788)
 
 <a id="mapping_common.entity.StopMark.get_meta_markers"></a>
 
@@ -1071,7 +1071,7 @@ def to_marker() -> Marker
 def get_meta_markers() -> List[Marker]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L794)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L798)
 
 <a id="mapping_common.entity.Pedestrian"></a>
 
@@ -1082,7 +1082,7 @@ def get_meta_markers() -> List[Marker]
 class Pedestrian(Entity)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L809)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L813)
 
 <a id="mapping_common.entity.Pedestrian.__init__"></a>
 
@@ -1092,7 +1092,7 @@ class Pedestrian(Entity)
 def __init__(**kwargs)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L810)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L814)
 
 <a id="mapping_common.entity.Pedestrian.to_marker"></a>
 
@@ -1102,7 +1102,7 @@ def __init__(**kwargs)
 def to_marker() -> Marker
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L813)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L817)
 
 <a id="mapping_common.entity.ShapelyEntity"></a>
 
@@ -1113,7 +1113,7 @@ def to_marker() -> Marker
 class ShapelyEntity()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L843)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L847)
 
 A Container containing both an entity and a shapely.Polygon
 based on the entity's shape and transform
@@ -1137,7 +1137,7 @@ not automatically update itself and will contain outdated information.
 def get_distance_to(other: "ShapelyEntity") -> float
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/entity.py#L854)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L858)
 
 Returns the distance to other in m.
 
