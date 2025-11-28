@@ -38,7 +38,8 @@ ENV NVIDIA_REQUIRE_DRIVER="cuda>=12.0 driver>=${NVIDIA_DRIVER_VERSION}"
 # The libnvidia-compute-535 driver can conflict with the host's driver
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb && \
+  UBUNTU_VERSION=$(. /etc/os-release && echo $VERSION_ID | tr -d '.') && \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/x86_64/cuda-keyring_1.1-1_all.deb && \
   dpkg -i cuda-keyring_1.1-1_all.deb && \
   rm cuda-keyring_1.1-1_all.deb
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
