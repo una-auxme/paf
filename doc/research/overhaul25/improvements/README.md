@@ -35,7 +35,7 @@ Issue: [Improve the actions and their test coverage #385](https://github.com/una
 Priority: MED
 Effort: MED-HIGH
 
-TODO
+**Status:** Future TODO
 
 ## Add performance benchmarks
 
@@ -142,6 +142,8 @@ Would allow rapid development and does not run into the Carla memory leak
 
 Restart should exclude some nodes like the GlobalPlanner
 
+**Status**: implemented, leaderboard.dev and agent.dev can be (re)started independently in the agent-dev container
+
 ## Implement Correct Synchronization Mechanism for CARLA Simulation Steps
 
 Issue: [[Feature]: Implement Correct Synchronization Mechanism for CARLA Simulation Steps #701](https://github.com/una-auxme/paf/issues/701)
@@ -198,6 +200,8 @@ Priority: Very low, not planned. Because the benefits are low and fixing it migh
 
 Recommendation: Wait/Hope for a new release. An issue including this information will be created.
 
+**Status**: Now using carla 0.9.16 → issue should be gone.
+
 ## Use official leaderboard release
 
-TODO
+Status: Currently not possible due to slight python incompatibilities → fork required

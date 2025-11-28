@@ -17,7 +17,7 @@
   - [Conclusion/Status](#conclusionstatus)
 - [Other porting options](#other-porting-options)
   - [ros1\_bridge](#ros1_bridge)
-  - [Carla ROS Compatiblity Node](#carla-ros-compatiblity-node)
+  - [Carla ROS Compatibility Node](#carla-ros-compatibility-node)
   - [Conclusion](#conclusion)
 
 ## Package changes
@@ -164,11 +164,11 @@ Cons:
 - Limitations like: "support is limited to only the message/service types available at compile time of the bridge"
 - **Only supported until ROS2 Humble -> EOL 2027** -> Only a delay of the porting problem, not a solution.
 
-### Carla ROS Compatiblity Node
+### Carla ROS Compatibility Node
 
 - <https://github.com/carla-simulator/ros-bridge/blob/master/docs/ros_compatibility.md>
 
-The ros_bridge package from Carla provides a ROS Compatiblity Node that works with both ROS1 and ROS2.
+The ros_bridge package from Carla provides a ROS Compatibility Node that works with both ROS1 and ROS2.
 
 This node is already partially used in the project. Wider adoption in the project never happened, because the API is very limited.
 
