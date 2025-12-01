@@ -1,4 +1,5 @@
 import py_trees
+import math
 from py_trees.common import Status
 from typing import Optional
 
@@ -13,7 +14,7 @@ from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
 
 import mapping_common.hero
-from mapping_common.map import Map
+from mapping_common.map import Map, MapTree
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
@@ -97,6 +98,101 @@ INTERSECTION_HAS_TRAFFIC_LIGHT: bool = False
 """True, if the car saw a traffic light in the intersection
 at least once
 """
+
+# Cross traffic parameter
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+CROSS_CHECK_DISTANCE = 15.0
+CROSS_CHECK_LENGTH = 25.0
+CROSS_CHECK_WIDTH = 50.0
+
+# Priority traffic parameter
+PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
+PRIORITY_CHECK_DISTANCE = 15.0  # etwas weiter in Fahrtrichtung schauen
+PRIORITY_CHECK_LENGTH = 25.0  # größerer Bereich vor uns
+PRIORITY_CHECK_WIDTH = 50.0  # breiter, um seitliche Zufahrten zu erfassen
+
+
+def check_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob im Bereich der Kreuzung vor dem Fahrzeug bewegter Quer­verkehr ist.
+
+    Returns:
+        (cross_clear, mask_polygon)
+        cross_clear = True  → kein bewegter Quer­verkehr
+        cross_clear = False → Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    offset = Transform2D.new_translation(
+        Vector2.new(CROSS_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=CROSS_CHECK_LENGTH,
+        width=CROSS_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    # WICHTIG: jetzt den MapTree benutzen, nicht map
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+            # bewegtes Objekt im Kreuzungsbereich → Quer­verkehr
+            return False, mask
+
+    return True, mask
+
+
+def check_priority_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob sich im größeren Kreuzungsbereich schnelle Fahrzeuge (> 25 km/h)
+    von rechts oder links nähern (z.B. Einsatzfahrzeuge mit Sonderrechten).
+
+    Returns:
+        (priority_clear, mask_polygon)
+        priority_clear = True  → kein schneller Quer­verkehr
+        priority_clear = False → schneller Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    # Größeres Rechteck vor dem Fahrzeug, um anfahrende Einsatzfahrzeuge früher zu sehen
+    offset = Transform2D.new_translation(
+        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=PRIORITY_CHECK_LENGTH,
+        width=PRIORITY_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+
+        # Nur "schnelle" Objekte beachten (z.B. Einsatzfahrzeuge)
+        if speed > PRIORITY_SPEED_THRESHOLD:
+            return False, mask
+
+    return True, mask
 
 
 def set_line_stop(client: Client, distance: float):
@@ -472,6 +568,44 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
+        # --- Schnellen Quer­verkehr (z.B. Feuerwehr) prüfen ---
+        priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+        add_debug_entry(self.name, f"Priority cross traffic clear: {priority_clear}")
+        if priority_mask is not None:
+            add_debug_marker(
+                debug_marker(
+                    priority_mask, color=(1.0, 0.0, 0.0, 0.3)
+                )  # rot, z.B. Einsatzfahrzeug-Feld
+            )
+
+        if not priority_clear:
+            # Hier explizit für schnelle Fahrzeuge warten
+            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+            # Optional: an aktueller Position stoppen
+            set_line_stop(self.stop_client, 0.0)
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                "Waiting for fast cross traffic (priority vehicle)",
+            )
+
+        # --- Quer­verkehr prüfen (Radar-Entities rechts/links) ---
+        cross_clear, cross_mask = check_cross_traffic(map, tree)
+        add_debug_entry(self.name, f"Cross traffic clear: {cross_clear}")
+        if cross_mask is not None:
+            add_debug_marker(
+                debug_marker(cross_mask, color=(1.0, 0.5, 0.0, 0.3))  # orange
+            )
+
+        if not cross_clear:
+            # Wir warten, solange Quer­verkehr erkannt wird
+            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                "Waiting for cross traffic",
+            )
+
         dist = calculate_waypoint_distance(
             self.blackboard, self.waypoint, forward_offset=STOP_LINE_OFFSET
         )
@@ -496,7 +630,7 @@ class Wait(py_trees.behaviour.Behaviour):
             global INTERSECTION_HAS_TRAFFIC_LIGHT
             INTERSECTION_HAS_TRAFFIC_LIGHT = True
 
-        apply_emergency_vehicle_speed_fix()
+        # apply_emergency_vehicle_speed_fix()
 
         add_debug_entry(
             self.name, f"Traffic light status: {tr_status_str(traffic_light_status)}"
@@ -654,6 +788,33 @@ class Enter(py_trees.behaviour.Behaviour):
                 "Error: CURRENT_INTERSECTION_WAYPOINT not set",
             )
 
+        # >>> HIER NEU: Priority-Quercheck während des Durchfahrens <<<
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
+        if map is None:
+            return debug_status(self.name, Status.FAILURE, "Map is None (Enter)")
+
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+
+        priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+        add_debug_entry(
+            self.name,
+            f"[Enter] Priority cross traffic clear: {priority_clear}",
+        )
+        if priority_mask is not None:
+            # Rot markieren, damit man sofort sieht, dass das der Priority-Bereich ist
+            add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
+
+        if not priority_clear:
+            # Wir fahren gerade durch, aber schnelles Querverkehrsfahrzeug erkannt → warten/stoppen
+            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+            # Optional: Fahrzeug sofort anhalten / stark abbremsen
+            set_line_stop(self.stop_client, 0.0)
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                "Enter: Waiting for fast cross traffic (priority vehicle)",
+            )
+
         intersection_end_distance = calculate_waypoint_distance(
             self.blackboard, CURRENT_INTERSECTION_WAYPOINT, forward_offset=20
         )
@@ -673,7 +834,7 @@ class Enter(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
 
-        apply_emergency_vehicle_speed_fix()
+        # apply_emergency_vehicle_speed_fix()
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         return debug_status(
             self.name, py_trees.common.Status.RUNNING, "Driving through..."
