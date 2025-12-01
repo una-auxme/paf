@@ -46,7 +46,7 @@ class RadarNode(Node):
         # Sensor-Konfiguration: [X, Y, Z] # , Roll, Pitch, Jaw]
         self.sensor_config = {
             "RADAR0": [2.0, -1.5, 0.5],  # , 0.0, 0.0, 0.0],
-            "RADAR1": [-2.0, -1.5, 0.5],  # , 0.0, 0.0, 0.0],
+            "RADAR1": [2.0, 0.0, 0.5],  # , 0.0, 0.0, 0.0],
         }
 
         self.timer_interval = 0.1  # 0.1 seconds
@@ -577,10 +577,6 @@ class RadarNode(Node):
             return np.array([])
 
         data_array = pointcloud2_to_array(msg)
-
-        # If the sensor is "RADAR1", apply a coordinate transformation (rear-facing)
-        if sensor_name == "RADAR1":
-            data_array[:, [0, 1, 3]] *= -1  # Mirror x, y, and velocity axes
 
         # Retrieve sensor position in the vehicle coordinate system
         sensor_x, sensor_y, sensor_z = self.sensor_config[sensor_name]

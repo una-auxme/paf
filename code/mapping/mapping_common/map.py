@@ -31,6 +31,8 @@ from builtin_interfaces.msg import Time as TimeMsg
 
 from mapping_interfaces import msg
 
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+
 
 class LaneFreeState(Enum):
     TO_BE_CHECKED = 2
@@ -749,7 +751,7 @@ class MapTree:
 
     def is_lane_free_intersection(
         self,
-        lane_length: float = 20.0,
+        lane_length: float = 30.0,
         lane_transform_x: float = 0.0,
     ) -> Tuple[bool, Optional[shapely.Polygon]]:
         """Returns True if the opposing lane of our car is free.
@@ -943,3 +945,47 @@ def lane_free_filter() -> FlagFilter:
     filter.is_lanemark = False
     filter.is_ignored = False
     return filter
+
+
+def has_cross_traffic(
+    self,
+    distance_ahead: float = 8.0,
+    box_length: float = 16.0,
+    box_width: float = 16.0,
+) -> tuple[bool, shapely.Polygon]:
+    """
+    Prüft, ob im Kreuzungsbereich vor dem Fahrzeug bewegter Querverkehr ist.
+
+    Returns:
+        (cross_clear, mask_polygon)
+        cross_clear = True  → kein bewegter Querverkehr
+        cross_clear = False → Querverkehr erkannt
+    """
+    hero = self.hero()
+    if hero is None:
+        return True, None  # zur Sicherheit nicht blockieren
+
+    # Rechteck vor dem Auto, das grob die Kreuzung abdeckt
+    offset = Transform2D.new_translation(
+        Vector2.new(distance_ahead + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(length=box_length, width=box_width, offset=offset)
+    mask = rect.to_shapely(hero.transform)
+
+    entities = self.get_overlapping_entities(mask=mask)
+    if not entities:
+        return True, mask
+
+    # Nur bewegte Objekte berücksichtigen
+    for e in entities:
+        motion = e.entity.motion
+        if motion is None:
+            continue
+        # Betrag der Geschwindigkeit (linear_motion-Vektor)
+        v = motion.linear_motion
+        speed = math.sqrt(v.x() ** 2 + v.y() ** 2)
+        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+            # bewegter Querverkehr innerhalb der Maske
+            return False, mask
+
+    return True, mask
