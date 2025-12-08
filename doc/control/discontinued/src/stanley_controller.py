@@ -34,7 +34,7 @@ class StanleyController(CompatibleNode):
 
         self.path_sub: Subscriber = self.new_subscription(
             PoseStamped,
-            "/paf/acting/current_pos",
+            "/paf/acting/global_current_pos",
             self.__set_position,
             qos_profile=1,
         )
@@ -48,7 +48,7 @@ class StanleyController(CompatibleNode):
 
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
-            "/paf/acting/current_heading",
+            "/paf/acting/global_current_heading",
             self.__set_heading,
             qos_profile=1,
         )

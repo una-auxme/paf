@@ -31,7 +31,7 @@ class GpsDebug(Node):
         self.pose: Optional[Pose] = None
         self.create_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
+            f"/paf/{self.role_name}/global_current_pos",
             self.current_pos_callback,
             qos_profile=10,
         )

@@ -325,13 +325,13 @@ class MappingDataIntegrationNode(Node):
 
         self.current_pos_sub = self.create_subscription(
             PoseStamped,
-            "/paf/hero/current_pos",
+            "/paf/hero/global_current_pos",
             self.current_pos_callback,
             qos_profile=1,
         )
         self.head_sub = self.create_subscription(
             Float32,
-            "/paf/hero/current_heading",
+            "/paf/hero/global_current_heading",
             self.heading_callback,
             qos_profile=1,
         )
