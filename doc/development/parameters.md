@@ -1,12 +1,12 @@
-# Dynamic Reconfigure
+# Parameters
 
-**Summary:** Dynamic Reconfigure is a powerful tool which allows to dynamically adjust parameters of ROS-Nodes during runtime.
+**Summary:** ROS node parameters are a powerful tool that allow to dynamically adjust ROS-Nodes during runtime.
 
 - [How to integrate into your Node](#how-to-integrate-into-your-node)
   - [Parameter Updates](#parameter-updates)
 - [Adjust Parameters in RQT](#adjust-parameters-in-rqt)
 
-Read more about dynamic reconfigure: [DynamicReconfigure](https://wiki.ros.org/dynamic_reconfigure/Tutorials/HowToWriteYourFirstCfgFile/catkin)
+Read more about parameters: <https://docs.ros.org/en/jazzy/Concepts/Basic/About-Parameters.html>
 
 ## How to integrate into your Node
 
