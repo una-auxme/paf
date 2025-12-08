@@ -41,7 +41,7 @@ class PrePlanner(Node):
     - OpenDrive Map:          /carla/{role_name}/OpenDRIVE
                  or:          /carla/world_info
     - global Plan:            /carla/{role_name}/global_plan
-    - current agent position: /paf/{role_name}/current_pos
+    - current agent position: /paf/{role_name}/global_current_pos
     Published topics:
     - preplanned trajectory:  /paf/{role_name}/trajectory_global
     - prevailing speed limits:/paf/{role_name}/speed_limits_OpenDrive
@@ -100,7 +100,7 @@ class PrePlanner(Node):
 
         self.create_subscription(
             msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/current_pos",
+            topic="/paf/" + self.role_name + "/global_current_pos",
             callback=self.position_callback,
             qos_profile=1,
         )

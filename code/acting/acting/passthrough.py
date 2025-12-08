@@ -50,13 +50,13 @@ class Passthrough(Node):
         topic_type=Path,
     )
     position = TopicMapping(
-        pub_name="/paf/acting/current_pos",
-        sub_name=f"/paf/{role_name}/current_pos",
+        pub_name="/paf/acting/global_current_pos",
+        sub_name=f"/paf/{role_name}/global_current_pos",
         topic_type=PoseStamped,
     )
     heading = TopicMapping(
-        pub_name="/paf/acting/current_heading",
-        sub_name=f"/paf/{role_name}/current_heading",
+        pub_name="/paf/acting/global_current_heading",
+        sub_name=f"/paf/{role_name}/global_current_heading",
         topic_type=Float32,
     )
 
