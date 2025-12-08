@@ -21,6 +21,6 @@ jobs:
           - name: Run the python formatter
             uses: addnab/docker-run-action@v3
             with:
-              image: pyfound/black
+              image: pyfound/black:25.11.0
               options: -v ${{ github.workspace}}:/apps
               run: black --check ./apps/
