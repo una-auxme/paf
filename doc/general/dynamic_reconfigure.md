@@ -3,130 +3,98 @@
 **Summary:** Dynamic Reconfigure is a powerful tool which allows to dynamically adjust parameters of ROS-Nodes during runtime.
 
 - [How to integrate into your Node](#how-to-integrate-into-your-node)
-  - [Dynamic Reconfigure Server, Config and Callback](#dynamic-reconfigure-server-config-and-callback)
-    - [The Config File](#the-config-file)
-    - [The CMake List file](#the-cmake-list-file)
-    - [Your Node](#your-node)
-  - [Declaring Parameters from other sources](#declaring-parameters-from-other-sources)
+  - [Parameter Updates](#parameter-updates)
 - [Adjust Parameters in RQT](#adjust-parameters-in-rqt)
 
 Read more about dynamic reconfigure: [DynamicReconfigure](https://wiki.ros.org/dynamic_reconfigure/Tutorials/HowToWriteYourFirstCfgFile/catkin)
 
 ## How to integrate into your Node
 
-In order to integrate dynamic reconfigure with your Node the following steps need to be made.
+In order to use parameters with your Node, you need to declare them inside your node's `__init__`.
 
-### Dynamic Reconfigure Server, Config and Callback
-
-For Dynamic-Reconfigure at least three files have to be adjusted. These are:
-
- 1. A `.cfg` file
- 2. The `CMakeList` file
- 3. Your `Python-Node` file
-
-#### The Config File
-
-At first a `.cfg` file needs to be created in a `config` folder in your ROS package.
-The following shows a minimal version of such file.
+A simple parameter declaration `enable_stop_marks` with default value `True`:
 
 ```python
-#!/usr/bin/env python
-PACKAGE = "mapping_visualization"
-from dynamic_reconfigure.parameter_generator_catkin import *
-gen = ParameterGenerator()
-tab_inputs = gen.add_group("Your Tab", type="tab")
-tab_inputs.add("flag_motion", int_t, 0, "Filter for motion.", 0, -1, 1)
-exit(gen.generate(PACKAGE, "mapping_visualization", "MappingVisualization"))
-```
-
-The first lines stay the same regardless of your project. Only the `PACKAGE` variable needs to be adjusted.
-After this a tab group is generated, which allows for the dynamic reconfigure page to have multiple tabs in order to organize different aspects of your node.
-
-Then the two most important lines:
-
-```python
-tab_inputs.add("flag_motion", int_t, 0, "Filter for motion.", 0, -1, 1)
-```
-
-A parameter is added with the name `flag_motion`. This needs to be conform with the ROS parameter naming conventions. Then the type is specified `int_t`. The `0` after this is not relevant for most purposes. After this a tooltip is added which gets displayed in RQT when hovering over the parameter.
-The last three parameters are `Default value`, `Minimum value`and `Maxmimum value`, which limit the slider.
-
-For the last line naming is very important. Especially the last CamelCase parameter will determine the name in the file to import.
-
-```python
-exit(gen.generate(PACKAGE, "mapping_visualization", "MappingVisualization"))
-```
-
-#### The CMake List file
-
-In the `CmakeList` file of your package the following additions need to be made.
-
-```cmake
-find_package(catkin REQUIRED COMPONENTS
-    dynamic_reconfigure
-)
-
-generate_dynamic_reconfigure_options(
-  config/mapping_visualization.cfg
+self.enable_stop_marks = ( # attribute the initial parameter value is written to
+    self.declare_parameter(
+        "enable_stop_marks", # parameter name. Prefer naming it the same as the attribute
+        True # default value
+    )
+    .get_parameter_value()
+    .bool_value
 )
 ```
 
-1. Add `dynamic_reconfigure` to the find_package section of the file.
-2. Add your `.cfg` file to the `generate_dynamic_reconfigure_options` section. (You might need to create this section by your own.)
-
-> [!NOTE]
-> `catkin_make` needs to be executed in order to generate the config.
-> (For PAF leaderboard-launch this happens automatically)
-
-#### Your Node
-
-Lastly you want to use the config in your python node file. For this the following imports need to be made. The name of your config corresponds to the naming conventions in your `.cfg` file.
+A parameter declaration with a description (The description shows up in RViz when hovering over the parameter):
 
 ```python
-from mapping_visualization.cfg import MappingVisualizationConfig
-from dynamic_reconfigure.server import Server
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+)
+
+self.enable_stop_marks = ( 
+    self.declare_parameter(
+        "enable_stop_marks",
+        True,
+        descriptor=ParameterDescriptor(
+            description="Enable stop marks from the UpdateStopMarks service",
+        ),
+    )
+    .get_parameter_value()
+    .bool_value
+)
 ```
 
-Then in your node constructor (`__init__(...)`) you need to add the following line:
+Parameters can also include bounds:
 
 ```python
-Server(MappingVisualizationConfig, self.dynamic_reconfigure_callback)
+from rcl_interfaces.msg import (
+    ParameterDescriptor,
+    FloatingPointRange,
+)
+
+self.filter_merge_growth_distance = (
+    self.declare_parameter(
+        "filter_merge_growth_distance",
+        0.3,
+        descriptor=ParameterDescriptor(
+            description="Amount shapes grow before merging in meters",
+            floating_point_range=[
+                FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
+            ],
+        ),
+    )
+    .get_parameter_value()
+    .double_value
+)
 ```
 
-The callback method receives the config set in RQT. You also need to return the config.
-This way you could reject certain changes.
+### Parameter Updates
+
+After setting an attribute like `self.enable_stop_marks` at the declaration of the parameter, it will not get updated automatically.
+
+To enable updates to the node's parameter-attributes, add the following to the node:
 
 ```python
-def dynamic_reconfigure_callback(self, config: "MappingVisualizationConfig", level):
-    self.flag_motion = self.value_map.get(config["flag_motion"])
-  return config
+from rclpy.parameter import Parameter
+from paf_common.parameters import update_attributes
+
+#...
+
+# Node
+def __init__(self):
+    # declare parameters
+    #...
+
+    # register callback that is called when a parameter is updated
+    self.add_on_set_parameters_callback(self._set_parameters_callback)
+
+def _set_parameters_callback(self, params: List[Parameter]):
+    """Callback for parameter updates."""
+    # Updates the node's attibutes based on the parameter name
+    # FOR THIS TO WORK, THE PARAMETER NAMES HAVE TO MATCH THE ATTRIBUTES
+    return update_attributes(self, params)
 ```
-
-### Declaring Parameters from other sources
-
-With the method described above the default value of in the config is used are actually used.
-Sometimes however parameter defaults might want to be set in the `.launch` file or by a `.yaml`.
-
-In the `.launch` file parameters can be declared like this (Inside a node tag):
-
-```xml
-<param name="flag_motion" value="0" />
-```
-
-Or a `.yaml` file can be created in the config folder.
-
-```yaml
-flag_motion: 0
-```
-
-Then in the `.launch` file the `.yaml` needs to be loaded (inside a node tag):
-
-```xml
-<rosparam file="$(find mapping_visualization)/config/your_yaml.yaml" command="load" />
-```
-
-> [!WARNING]
-> When parameters are declared this way the default value in the `.cfg` file will not get used.
 
 ## Adjust Parameters in RQT
 
