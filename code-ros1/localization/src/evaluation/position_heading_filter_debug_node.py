@@ -261,7 +261,7 @@ class position_heading_filter_debug_node(CompatibleNode):
                         "Current",
                         "Test Filter",
                         "Unfiltered Error",
-                        "Current Error" "Test Filter Error",
+                        "Current ErrorTest Filter Error",
                     ]
                 )
             writer.writerow(

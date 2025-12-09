@@ -314,8 +314,7 @@ class UnstuckRoutine(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 py_trees.common.Status.FAILURE,
-                f"Unstuck routine ran for "
-                f"{2.0 * UNSTUCK_DRIVE_DURATION:.2f}. Exiting.",
+                f"Unstuck routine ran for {2.0 * UNSTUCK_DRIVE_DURATION:.2f}. Exiting.",
             )
 
     def terminate(self, new_status):
