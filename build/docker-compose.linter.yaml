@@ -1,18 +1,18 @@
 services:
-  flake8:
-    image: alpine/flake8
-    command: .
+  ruff-check:
+    image: ghcr.io/astral-sh/ruff:0.14.8
+    command: check /apps/
     volumes:
       - ../:/apps
 
-  black:
-    image: pyfound/black:25.11.0
-    command: black --check ./apps/
+  ruff-format:
+    image: ghcr.io/astral-sh/ruff:0.14.8
+    command: format /apps/ --check
     volumes:
       - ../:/apps
 
   mdlint:
     image: peterdavehello/markdownlint:0.32.2
-    command: markdownlint .
+    command: markdownlint /md/
     volumes:
       - ../:/md

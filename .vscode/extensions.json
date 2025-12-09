@@ -1,23 +1,24 @@
 {
-    "recommendations": [
-        "davidanson.vscode-markdownlint",
-        "github.vscode-pull-request-github",
-        "vscode-icons-team.vscode-icons",
-        "yzhang.markdown-all-in-one",
-        "njpwerner.autodocstring",
-        "ms-azuretools.vscode-docker",
-        "ms-python.flake8",
-        "bierner.markdown-mermaid",
-        "richardkotze.git-mob",
-        "ms-vscode-remote.remote-containers",
-        "valentjn.vscode-ltex",
-        "ms-python.black-formatter",
-        "augustocdias.tasks-shell-input",
-        "ktnrg45.vscode-cython",
-        "ranch-hand-robotics.rde-pack",
-        "timonwong.shellcheck",
-        "editorconfig.editorconfig",
-        "phil294.git-log--graph",
-        "ms-vscode.cmake-tools"
-    ]
+  "recommendations": [
+    "davidanson.vscode-markdownlint",
+    "github.vscode-pull-request-github",
+    "vscode-icons-team.vscode-icons",
+    "yzhang.markdown-all-in-one",
+    "njpwerner.autodocstring",
+    "ms-azuretools.vscode-docker",
+    "ms-python.flake8",
+    "bierner.markdown-mermaid",
+    "richardkotze.git-mob",
+    "ms-vscode-remote.remote-containers",
+    "valentjn.vscode-ltex",
+    "ms-python.black-formatter",
+    "augustocdias.tasks-shell-input",
+    "ktnrg45.vscode-cython",
+    "ranch-hand-robotics.rde-pack",
+    "timonwong.shellcheck",
+    "editorconfig.editorconfig",
+    "phil294.git-log--graph",
+    "ms-vscode.cmake-tools",
+    "charliermarsh.ruff"
+  ]
 }

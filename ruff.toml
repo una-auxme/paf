@@ -1,0 +1,49 @@
+# Exclude volumes directory (same as .flake8)
+exclude = ["volumes"]
+
+# Line length for warnings (same as Black's 88)
+line-length = 88
+# Indent with 4 spaces (Python default)
+indent-width = 4
+
+[lint]
+# Selected rule sets that match current Flake8 setup:
+# E = pycodestyle errors (PEP 8)
+# W = pycodestyle warnings
+# F = PyFlakes (detects undefined names, unused imports, etc.)
+# I = isort (import sorting)
+# N = pep8-naming (naming conventions)
+select = ["E", "W", "F", "I", "N"]
+
+# Ignore specific rules (maps to current .flake8 settings):
+# E203 = whitespace before ':' - conflicts with formatters
+# E701 = multiple statements on one line (colon) - we ignore this
+# F822 = undefined name in __all__ (custom scenario)
+# D = pydocstyle (we don't enforce docstring presence)
+# Q = flake8-quotes (we don't have strong quote preferences)
+# I001 = Import block is un-sorted or un-formatted
+# N802 Function name should be lowercase
+# N801 = Class name should use CapWords convention
+# N803 = Argument name should be lowercase
+# N806 Variable in function should be lowercase
+# N812 Lowercase imported as non-lowercase
+# N817 = CamelCase imported as acronym {asname}
+# N999 = Invalid module name
+ignore = ["E203", "E701", "F822", "D", "Q", "I001", "N801", "N802", "N803", "N806", "N812", "N817", "N999"]
+
+# Per-file ignores (can add more specific exclusions here)
+# Example: "__init__.py" files often have unused imports by design
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]   # Unused imports in __init__
+"test_*.py" = ["F841"]     # Unused variables in tests
+
+
+[format]
+# Use double quotes (Black's default)
+quote-style = "double"
+
+# Preserve some special formatting rules
+skip-magic-trailing-comma = false
+
+# Line ending style
+line-ending = "auto"
