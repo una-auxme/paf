@@ -6,6 +6,8 @@ line-length = 88
 # Indent with 4 spaces (Python default)
 indent-width = 4
 
+target-version = "py312"
+
 [lint]
 # Selected rule sets that match current Flake8 setup:
 # E = pycodestyle errors (PEP 8)
