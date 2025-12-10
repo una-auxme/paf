@@ -8,9 +8,6 @@
       "problemMatcher": [
         "$gcc"
       ],
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
       "detail": "Verifies that the host NVIDIA driver is >= 550 and surfaces a warning in Problems view if not."
     },
     {
