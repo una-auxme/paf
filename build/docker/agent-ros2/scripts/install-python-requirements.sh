@@ -32,6 +32,13 @@ if [ -n "$BASE_FLAVOUR" ]; then
   done
 fi
 
+# Install infrastructure requirements
+readarray -d '' REQUIREMENT_FILES < <(find . -name requirements_infrastructure.txt -print0)
+for i in "${REQUIREMENT_FILES[@]}"; do
+  REQUIREMENTS+=(-r "$i")
+  echo Found infrastructure python requirements: "$i"
+done
+
 if [ ${#REQUIREMENTS[@]} -gt 0 ]; then
   pip_tmpdir=~/.pip-tmpdir-docker
   mkdir -p ${pip_tmpdir}
