@@ -14,6 +14,18 @@
       "detail": "Verifies that the host NVIDIA driver is >= 550 and surfaces a warning in Problems view if not."
     },
     {
+      "label": "Update build/.env file",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/update-dotenv.sh",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "detail": "Sets the variables in build/.env based on the host system configuration."
+    },
+    {
       "label": "Run 'catkin_make' in docker container. Choose container from list of running containers.",
       "type": "shell",
       "command": "docker exec -it ${input:container_name} bash -c 'cd /catkin_ws && source /opt/ros/noetic/setup.bash && source devel/setup.bash && catkin_make'",
