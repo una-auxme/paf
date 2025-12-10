@@ -71,21 +71,25 @@ ruff.lint() {
     ruff check /workspace/code/
   )
 }
+export -f ruff.lint
 
 ruff.fix-lint() {
   (
     ruff check /workspace/code/ --fix
   )
 }
+export -f ruff.fix-lint
 
 ruff.check-format() {
   (
     ruff format /workspace/code/ --check
   )
 }
+export -f ruff.check-format
 
 ruff.format() {
   (
     ruff format /workspace/code/
   )
 }
+export -f ruff.format
