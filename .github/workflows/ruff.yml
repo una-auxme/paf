@@ -26,4 +26,4 @@ jobs:
       - uses: astral-sh/ruff-action@v3
         with:
           version: ${{ env.RUFF_VERSION }}
-      - run: ruff check .
+      - run: ruff check --statistics .

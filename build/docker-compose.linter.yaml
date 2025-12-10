@@ -6,7 +6,7 @@ services:
     image: *ruff_image
     env_file:
       - ./pins/ruff.env
-    command: check /apps/
+    command: check /apps/ --statistics
     volumes:
       - ../:/apps
 
