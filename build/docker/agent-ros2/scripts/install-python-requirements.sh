@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../../../" && pwd)"
+RUFF_VERSION_FILE="${REPO_ROOT}/build/pins/ruff.env"
+if [ -f "${RUFF_VERSION_FILE}" ]; then
+  # shellcheck source=/dev/null
+  # Share Ruff version pin with CI/Compose via build/pins/ruff.env so every install uses
+  # the same version (avoids mismatched lint results).
+  source "${RUFF_VERSION_FILE}"
+fi
+
 if [ -z "${PAF_ROS_WS}" ]; then
   echo PAF_ROS_WS is not set
   exit 1
@@ -42,6 +52,16 @@ done
 if [ ${#REQUIREMENTS[@]} -gt 0 ]; then
   pip_tmpdir=~/.pip-tmpdir-docker
   mkdir -p ${pip_tmpdir}
+
+  RUFF_CONSTRAINT_FILE="${pip_tmpdir}/ruff-constraint.txt"
+  if [ -n "${RUFF_VERSION}" ]; then
+    # Constrain pip to the pinned Ruff version from build/pins/ruff.env so developers,
+    # CI (docker-compose.linter), and container builds all see identical Ruff behavior.
+    printf "ruff==%s\n" "${RUFF_VERSION}" > "${RUFF_CONSTRAINT_FILE}"
+    REQUIREMENTS+=(--constraint "${RUFF_CONSTRAINT_FILE}")
+  else
+    echo "Warning: RUFF_VERSION is not set; Ruff will not be pinned."
+  fi
 
   TMPDIR=${pip_tmpdir} pip install --user "${REQUIREMENTS[@]}"
   rm -rf ${pip_tmpdir}

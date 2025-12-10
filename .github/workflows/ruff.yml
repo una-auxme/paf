@@ -14,8 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Load Ruff version
+        run: |
+          VERSION_LINE=$(grep -E '^RUFF_VERSION=' build/pins/ruff.env || true)
+          VERSION=${VERSION_LINE#RUFF_VERSION=}
+          if [ -z "${VERSION}" ]; then
+            echo "Ruff version missing in build/pins/ruff.env" >&2
+            exit 1
+          fi
+          echo "RUFF_VERSION=${VERSION}" >> "$GITHUB_ENV"
       - uses: astral-sh/ruff-action@v3
         with:
-          version: "0.14.8"
-      - run: ruff check --fix .
-      - run: ruff format .
+          version: ${{ env.RUFF_VERSION }}
+      - run: ruff check .

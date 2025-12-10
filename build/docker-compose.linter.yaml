@@ -1,12 +1,19 @@
+x-ruff-image: &ruff_image ghcr.io/astral-sh/ruff:${RUFF_VERSION?Set RUFF_VERSION via build/pins/ruff.env}
+# Run with: docker compose --env-file build/pins/ruff.env -f build/docker-compose.linter.yaml <command>
+
 services:
   ruff-check:
-    image: ghcr.io/astral-sh/ruff:0.14.8
+    image: *ruff_image
+    env_file:
+      - ./pins/ruff.env
     command: check /apps/
     volumes:
       - ../:/apps
 
   ruff-format:
-    image: ghcr.io/astral-sh/ruff:0.14.8
+    image: *ruff_image
+    env_file:
+      - ./pins/ruff.env
     command: format /apps/ --check
     volumes:
       - ../:/apps
