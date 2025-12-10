@@ -1,4 +1,4 @@
-name: Linter and format python code
+name: Lint python code with ruff
 
 on:
   pull_request:
@@ -10,22 +10,11 @@ on:
 
 jobs:
     ruff:
-        name: Linter and format python code
+        name: Lint python code with ruff
         runs-on: ubuntu-latest
         steps:
-          - name: Check out the repo
-            uses: actions/checkout@v2
-          # Execute the ruff linter
-          - name: Run the ruff linter
-            uses: addnab/docker-run-action@v3
+          - uses: astral-sh/ruff-action@v3
             with:
-              image: ghcr.io/astral-sh/ruff:0.14.8
-              options: -v ${{ github.workspace }}:/apps
-              run: check /apps/
-           # Execute the ruff formatter (executes even if the previous step failed)
-          - name: Run the ruff formatter
-            uses: addnab/docker-run-action@v3
-            with:
-              image: ghcr.io/astral-sh/ruff:0.14.8
-              options: -v ${{ github.workspace }}:/apps
-              run: format /apps/ --check
+              version: "0.14.8"
+          - run: ruff check --fix
+          - run: ruff format
