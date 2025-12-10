@@ -9,12 +9,13 @@ on:
       - main
 
 jobs:
-    ruff:
-        name: Lint python code with ruff
-        runs-on: ubuntu-latest
-        steps:
-          - uses: astral-sh/ruff-action@v3
-            with:
-              version: "0.14.8"
-          - run: ruff check --fix
-          - run: ruff format
+  ruff:
+    name: Lint python code with ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.14.8"
+      - run: ruff check --fix .
+      - run: ruff format .
