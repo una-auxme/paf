@@ -9,7 +9,6 @@ NAME = "lanechange"
 
 
 class LanechangeGenerator(TrajectoryGenerator):
-
     def __init__(self):
         super().__init__(NAME)
 

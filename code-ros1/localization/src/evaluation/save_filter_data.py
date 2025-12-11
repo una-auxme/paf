@@ -36,7 +36,6 @@ class SaveFilterData(CompatibleNode):
     """
 
     def __init__(self):
-
         super(SaveFilterData, self).__init__("save_filter_data")
 
         # basic info

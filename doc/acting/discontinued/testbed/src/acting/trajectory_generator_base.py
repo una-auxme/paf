@@ -11,7 +11,6 @@ from numpy.typing import NDArray
 
 
 class TrajectoryGenerator(ABC):
-
     def __init__(self, name: str):
         self.name = name
 

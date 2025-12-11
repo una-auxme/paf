@@ -1,18 +1,25 @@
+x-ruff-image: &ruff_image ghcr.io/astral-sh/ruff:${RUFF_VERSION?Set RUFF_VERSION via build/pins/ruff.env}
+# Run with: docker compose --env-file build/pins/ruff.env -f build/docker-compose.linter.yaml <command>
+
 services:
-  flake8:
-    image: alpine/flake8
-    command: .
+  ruff-check:
+    image: *ruff_image
+    env_file:
+      - ./pins/ruff.env
+    command: check /apps/ --statistics
     volumes:
       - ../:/apps
 
-  black:
-    image: pyfound/black:25.11.0
-    command: black --check ./apps/
+  ruff-format:
+    image: *ruff_image
+    env_file:
+      - ./pins/ruff.env
+    command: format /apps/ --check
     volumes:
       - ../:/apps
 
   mdlint:
     image: peterdavehello/markdownlint:0.32.2
-    command: markdownlint .
+    command: markdownlint /md/
     volumes:
       - ../:/md

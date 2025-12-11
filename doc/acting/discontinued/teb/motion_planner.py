@@ -529,8 +529,7 @@ class MotionPlanning(CompatibleNode):
             ]
         else:
             selection = pose_list[
-                int(currentwp)
-                + int(distance / 2) : int(currentwp)
+                int(currentwp) + int(distance / 2) : int(currentwp)
                 + int(distance)
                 + NUM_WAYPOINTS
             ]

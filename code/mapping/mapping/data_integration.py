@@ -640,7 +640,8 @@ class MappingDataIntegrationNode(Node):
                     continue
 
                 shape = Polygon.from_shapely(
-                    cluster_polygon_hull, make_centered=True  # type: ignore
+                    cluster_polygon_hull,
+                    make_centered=True,  # type: ignore
                 )
                 transform = shape.offset
                 shape.offset = Transform2D.identity()

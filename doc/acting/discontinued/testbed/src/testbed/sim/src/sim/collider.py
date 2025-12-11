@@ -37,7 +37,6 @@ class Collider:
 
 
 class ScreenCollider(Collider, ScreenEntity):
-
     def __init__(
         self, x: float, y: float, screen_factor: float, color: Tuple[int, int, int]
     ):
