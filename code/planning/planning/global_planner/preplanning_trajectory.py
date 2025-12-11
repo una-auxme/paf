@@ -41,7 +41,6 @@ class OpenDriveConverter:
     def __init__(
         self, path=None, roads=None, road_ids=None, junctions=None, junction_ids=None
     ):
-
         if roads is None or road_ids is None:
             self.roads, self.road_ids = self.list_xodr_properties(path, name="road")
         else:

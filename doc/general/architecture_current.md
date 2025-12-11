@@ -334,8 +334,8 @@ Subscriptions:
 
 Publishes:
 
-- ```/paf/hero/current_heading``` \(/MotionPlanning, /mapping_data_integration, /behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_pos``` \(/PrePlanner, /MotionPlanning, /mapping_data_integration, /GlobalPlanDistance, /behavior_agent\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_heading``` \(/MotionPlanning, /mapping_data_integration, /behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/global_current_pos``` \(/PrePlanner, /MotionPlanning, /mapping_data_integration, /GlobalPlanDistance, /behavior_agent\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/unfiltered_heading``` \(/no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/unfiltered_pos``` \(/no subscriber at the moment\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 
@@ -358,8 +358,8 @@ Subscriptions:
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/Lidar/clustered_points``` \(/lidar_distance\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
 - ```/paf/hero/Radar/clustered_points``` \(/radar_node\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/mapping/init_lanemarkings``` \(/lane_position\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 - ```/paf/hero/visualization_pointcloud``` \(/VisionNode\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
 
@@ -435,8 +435,8 @@ More about it can be found [here](../planning/motion_planning.md).
 
 Subscriptions:
 
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/speed_limits_OpenDrive``` \(/PrePlanner\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 
@@ -464,7 +464,7 @@ Subscriptions:
 
 - ```/carla/hero/OpenDrive``` \(/carla_ros_bridge\) ([std_msgs/String](https://docs.ros.org/en/melodic/api/std_msgs/html/msg/String.html))
 - ```/carla/hero/global_plan``` \(/ros_websocket\) ([carla_msgs/CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 
 Publishes:
 
@@ -481,7 +481,7 @@ Services:
 Subscriptions:
 
 - ```/carla/hero/global_plan``` \(/ros_websocket\) ([carla_msgs/CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/trajectory_local``` \(/MotionPlanning\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 
 Publishes:
@@ -507,8 +507,8 @@ Subscriptions:
 - ```/paf/hero/Center/traffic_light_state``` \(/TrafficLightNode\) ([perception/TrafficLightState](/../paf/code/perception/msg/TrafficLightState.msg))
 - ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/curr_behavior``` \(/behavior_agent\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+- ```/paf/hero/global_current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 - ```/paf/hero/current_waypoint``` \(/GlobalPlanDistance\) ([geographic_msgs/WayPoint](https://docs.ros.org/en/melodic/api/geographic_msgs/html/msg/WayPoint.html))
 - ```/paf/hero/mapping/init_data``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 - ```/paf/hero/target_velocity``` \(/no subscriptions at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
@@ -555,14 +555,14 @@ More information under [passthrouhg.md](/doc/acting/passthrough.md).
 Subscriptions:
 
 - ```/paf/hero/acc_velocity``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/hero/current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/hero/global_current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/trajectory_local``` \(/MotionPlanning\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 
 Publishes:
 
-- ```/paf/acting/current_heading``` \(no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
-- ```/paf/acting/current_pos``` \(no subscriber at the moment\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
+- ```/paf/acting/global_current_heading``` \(no subscriber at the moment\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
+- ```/paf/acting/global_current_pos``` \(no subscriber at the moment\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/acting/target_velocity``` \(/velocity_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/acting/trajectory_local``` \(/pure_pursuit_controller\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - ```/paf/hero/target_velocity``` \(/behavior_agent\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))

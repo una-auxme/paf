@@ -11,6 +11,7 @@ CARLA Challenge Evaluator Routes
 Provisional code to evaluate Autonomous Agents for the CARLA
 Autonomous Driving challenge
 """
+
 from __future__ import print_function
 
 import traceback
@@ -93,9 +94,7 @@ class TestScenario(object):
             if LooseVersion(dist.version) < LooseVersion("0.9.10"):
                 raise ImportError(
                     "CARLA version 0.9.10.1 or newer required.\
-                          CARLA version found: {}".format(
-                        dist
-                    )
+                          CARLA version found: {}".format(dist)
                 )
 
         # Load agent
@@ -451,7 +450,6 @@ class TestScenario(object):
 
         crashed = False
         while route_indexer.peek() and not crashed:
-
             # Run the scenario
             config = route_indexer.get_next_config()
             crashed = self._load_and_run_scenario(args, config)

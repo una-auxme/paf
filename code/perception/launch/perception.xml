@@ -34,6 +34,7 @@
     <param name="clustering_lidar_z_min" value="-1.4" />
     <param name="dbscan_eps" value="0.4" />
     <param name="dbscan_min_samples" value="10" />
+    <param name="compensation_strategy" value="LocalCompensation" />
   </node>
 
   <node pkg="perception" exec="Lanedetection_node" name="Lanedetection">

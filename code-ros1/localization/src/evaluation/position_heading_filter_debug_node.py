@@ -75,7 +75,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         # current_pos subscriber:
         self.current_pos_subscriber = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
+            f"/paf/{self.role_name}/global_current_pos",
             self.set_current_pos,
             qos_profile=1,
         )
@@ -83,7 +83,7 @@ class position_heading_filter_debug_node(CompatibleNode):
         # current_heading subscriber:
         self.current_heading_subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
+            f"/paf/{self.role_name}/global_current_heading",
             self.set_current_heading,
             qos_profile=1,
         )
@@ -91,14 +91,14 @@ class position_heading_filter_debug_node(CompatibleNode):
         # test_filter_pos subscriber:
         self.test_filter_pos_subscriber = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/ekf_pos",
+            f"/paf/{self.role_name}/global_ekf_pos",
             self.set_test_filter_pos,
             qos_profile=1,
         )
         # test_filter_heading subscriber:
         self.test_filter_heading_subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/ekf_heading",
+            f"/paf/{self.role_name}/global_ekf_heading",
             self.set_test_filter_heading,
             qos_profile=1,
         )
@@ -261,7 +261,8 @@ class position_heading_filter_debug_node(CompatibleNode):
                         "Current",
                         "Test Filter",
                         "Unfiltered Error",
-                        "Current Error" "Test Filter Error",
+                        "Current Error",
+                        "Test Filter Error",
                     ]
                 )
             writer.writerow(

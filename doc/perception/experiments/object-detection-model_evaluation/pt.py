@@ -91,7 +91,7 @@ for m in ALL_MODELS:
         file_name = Path(image_path).stem
 
         plt.figure(figsize=(32, 18))
-        plt.title(f"PyTorch - {m} - {p} - {elapsed_time*1000:.0f}ms", fontsize=30)
+        plt.title(f"PyTorch - {m} - {p} - {elapsed_time * 1000:.0f}ms", fontsize=30)
         plt.imshow(box_img)
         plt.savefig(f"{IMAGE_BASE_FOLDER}/result/{file_name}_PT_{m}.jpg")
         plt.close()

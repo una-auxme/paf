@@ -119,7 +119,7 @@ for m in ALL_MODELS:
         file_name = Path(image_path).stem
 
         plt.figure(figsize=(32, 18))
-        plt.title(f"Pylot (TF) - {m} - {p} - {elapsed_time*1000:.0f}ms", fontsize=30)
+        plt.title(f"Pylot (TF) - {m} - {p} - {elapsed_time * 1000:.0f}ms", fontsize=30)
         plt.imshow(image_np_with_detections[0])
         plt.savefig(f"{IMAGE_BASE_FOLDER}/result/{file_name}_TF_{m}.jpg")
         plt.close()

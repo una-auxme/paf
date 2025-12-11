@@ -36,7 +36,6 @@ class SaveFilterData(CompatibleNode):
     """
 
     def __init__(self):
-
         super(SaveFilterData, self).__init__("save_filter_data")
 
         # basic info
@@ -94,7 +93,7 @@ class SaveFilterData(CompatibleNode):
         # Subscriber to the position estimate of the new filter
         self.nf_position_subscriber = self.new_subscription(
             PoseStamped,
-            "/paf/" + self.role_name + "/current_pos",
+            "/paf/" + self.role_name + "/global_current_pos",
             self.save_nf_position,
             qos_profile=1,
         )
@@ -102,7 +101,7 @@ class SaveFilterData(CompatibleNode):
         # Subscriber to the heading estimate of the new filter
         self.nf_heading_subscriber = self.new_subscription(
             Float32,
-            "/paf/" + self.role_name + "/current_heading",
+            "/paf/" + self.role_name + "/global_current_heading",
             self.save_nf_heading,
             qos_profile=1,
         )

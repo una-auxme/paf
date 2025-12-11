@@ -22,7 +22,6 @@ from .traffic_light_config import TrafficLightConfig
 
 
 class TrafficLightTraining:
-
     def __init__(self, cfg):
         """
         Initializes an instance to train a traffic light classification model.
