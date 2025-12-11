@@ -23,7 +23,11 @@ jobs:
             exit 1
           fi
           echo "RUFF_VERSION=${VERSION}" >> "$GITHUB_ENV"
-      - uses: astral-sh/ruff-action@v3
+      - name:
+        uses: astral-sh/ruff-action@v3
         with:
           version: ${{ env.RUFF_VERSION }}
-      - run: ruff check --statistics .
+      - name: Ruff lint check statistics
+        run: ruff check --statistics .
+      - name: Check formatting with Ruff
+        run: ruff format --check .
