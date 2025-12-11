@@ -53,7 +53,7 @@
     {
       "label": "Format python code with ruff",
       "type": "shell",
-      "command": "ruff format /workspace/code",
+      "command": "ruff format /workspace/code/",
       "problemMatcher": [],
       "detail": "Manually trigger the ruff formatter to format the python files.",
     },
