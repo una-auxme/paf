@@ -44,11 +44,13 @@ You can lint your files locally with:
 ```bash
 docker compose -f build/docker-compose.linter.yaml up
 ```
+
 Use the same Compose file with `ruff-format` for formatting or `mdlint` for Markdown files.
 
 #### 1.2.1. Python Linting
 
-Python linting and formatting are handled by Ruff. The pinned version in `build/pins/ruff.env` is consumed by `build/docker-compose.linter.yaml` and the CI workflow so the same checks run locally and in automation. Regular linting ensures that the code adheres to the project's style guide, enhancing readability and maintainability.
+Python linting and formatting are handled by Ruff. The pinned version in `build/pins/ruff.env` is consumed by `build/docker-compose.linter.yaml` and the CI workflow so the same checks run locally and in automation.
+Regular linting ensures that the code adheres to the project's style guide, enhancing readability and maintainability.
 
 To lint all Python files with Ruff, use the following command:
 
