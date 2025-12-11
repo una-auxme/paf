@@ -389,7 +389,7 @@ class Entity:
             type_name=type_name,
         )
 
-    def to_marker(self) -> Marker:
+    def to_marker(self, show_tracking_info: bool) -> Marker:
         """Creates a ROS marker based on the entity
 
         The Marker only visualizes the transform and shape of the Entity.
@@ -398,27 +398,47 @@ class Entity:
             Marker: ROS marker message
         """
         m = self.shape.to_marker(self.transform)
+        m.lifetime = Duration(seconds=2 / 20.0).to_msg() # Set lifetime based on map rate
 
-        m.color.r = 1.0
-        m.color.g = 1.0
-        m.color.b = 1.0
-        m.color.a = 0.5
+        # Set color based on tracking status
+        if show_tracking_info and not self.flags._is_hero:
+            # Tracked: Use a unique, stable color based on the uuid
+            r, g, b = _get_stable_color_from_uuid(self.uuid)
+            m.color.r = r
+            m.color.g = g
+            m.color.b = b
+            m.color.a = 0.8  # Solid for easy tracking
+        else:
+            # Not Tracked: Use the default neutral gray
+            m.color.r = 0.5
+            m.color.g = 0.5
+            m.color.b = 0.5
+            m.color.a = 0.5  # Semi-transparent gray
+
+        # Base z position of the marker
         m.pose.position.z = m.scale.z / 2.0
+        
         return m
 
-    def get_meta_markers(self) -> List[Marker]:
+    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
         """Creates additional meta markers for the entity
 
         Returns:
             List[Marker]: List of ROS marker messages
         """
         meta_markers = []
+
+        if show_tracking_info:
+            track_id_str = f"UUID: {str(self.uuid)}"
+            meta_markers.append(self.get_text_marker(track_id_str))
+        
         if self.motion is not None:
             meta_markers.append(self.to_motion_marker())
             speed_in_ms = self.motion.linear_motion.length()
             speed_in_kmh = speed_in_ms * 3.6
             motion_text = f"{speed_in_kmh:.2f} km/h"
             meta_markers.append(self.get_text_marker(motion_text))
+        
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
@@ -652,12 +672,14 @@ class Car(Entity):
         )
         return m
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
         # [0, 0, 255],  # 10: Vehicles
-        m.color.r = 0.0
-        m.color.g = 0.0
-        m.color.b = 1.0
+
+        if not show_tracking_info or self.flags._is_hero:
+            m.color.r = 0.0
+            m.color.g = 0.0
+            m.color.b = 1.0
         return m
 
 
@@ -699,7 +721,7 @@ class Lanemarking(Entity):
         )
         return m
 
-    def to_marker(self) -> Marker:
+    def to_marker(self, show_tracking_info: bool) -> Marker:
         """Creates an ROS marker based on the entity
 
         Returns:
@@ -723,8 +745,8 @@ class Lanemarking(Entity):
 
         return m
 
-    def get_meta_markers(self) -> List[Marker]:
-        common_meta_markers = super().get_meta_markers()
+    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
+        common_meta_markers = super().get_meta_markers(show_tracking_info)
         common_meta_markers.append(self.get_text_marker(f"{self.position_index}"))
         return common_meta_markers
 
@@ -785,20 +807,21 @@ class StopMark(Entity):
         m.type_stop_mark = msg.TypeStopMark(reason=self.reason)
         return m
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
-        m.color.r = 1.0
-        m.color.g = 0.5
-        m.color.b = 0.0
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
+        if not show_tracking_info:
+            m.color.r = 1.0
+            m.color.g = 0.5
+            m.color.b = 0.0
 
         m.scale.z = 0.2
         m.pose.position.z = 0.1
         return m
 
-    def get_meta_markers(self) -> List[Marker]:
+    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
         from mapping_common.markers import debug_marker
 
-        ms = super().get_meta_markers()
+        ms = super().get_meta_markers(show_tracking_info)
         ms.append(
             debug_marker(
                 self.reason,
@@ -814,12 +837,13 @@ class Pedestrian(Entity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
         # [220, 20, 60],  # 4: Pedestrians
-        m.color.r = 220 / 255
-        m.color.g = 20 / 255
-        m.color.b = 60 / 255
+        if not show_tracking_info:
+            m.color.r = 220 / 255
+            m.color.g = 20 / 255
+            m.color.b = 60 / 255
         return m
 
 
@@ -866,3 +890,24 @@ class ShapelyEntity:
         """
 
         return float(shapely.distance(self.poly, other.poly))
+
+def _get_stable_color_from_uuid(uid: UUID) -> Tuple[float, float, float]:
+    """
+    Generates a stable, distinct color (R, G, B) from a UUID.
+    This ensures the same tracked object keeps the same color across frames.
+    """
+    # Use the first 3 bytes of the UUID as seeds for R, G, B components
+    uuid_int = uid.int
+    r_val = (uuid_int >> 16) & 0xFF
+    g_val = (uuid_int >> 8) & 0xFF
+    b_val = uuid_int & 0xFF
+
+    # Simple normalization and mixing to ensure contrast and brightness
+    r = (r_val % 192 + 64) / 255.0
+    g = (g_val % 192 + 64) / 255.0
+    b = (b_val % 192 + 64) / 255.0
+    
+    # Simple color shift to add variation
+    r, g, b = b, r, g 
+
+    return (r, g, b)

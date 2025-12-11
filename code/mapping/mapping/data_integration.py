@@ -21,6 +21,7 @@ from mapping_common.filter import (
     GrowthMergingFilter,
     LaneIndexFilter,
     GrowPedestriansFilter,
+    TrackingFilter,
 )
 
 from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
@@ -245,6 +246,21 @@ class MappingDataIntegrationNode(Node):
             .get_parameter_value()
             .double_value
         )
+
+        self.filter_tracking_entities = (
+            self.declare_parameter(
+                "filter_tracking_entities",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable the tracking filter",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        if self.filter_tracking_entities:
+            self.tracking_filter = TrackingFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -814,6 +830,8 @@ class MappingDataIntegrationNode(Node):
             map_filters.append(LaneIndexFilter())
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
+        if self.filter_tracking_entities:
+            map_filters.append(self.tracking_filter)
 
         return map_filters
 

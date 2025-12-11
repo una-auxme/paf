@@ -48,6 +48,18 @@ class Visualization(Node):
             .bool_value
         )
 
+        self.show_tracking_info = (
+            self.declare_parameter(
+                "show_tracking_info",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Show tracking information for entities",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
         self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray, "/paf/hero/mapping/marker_array", qos_profile=1
         )
@@ -116,10 +128,10 @@ class Visualization(Node):
         for entity in map.entities:
             if not entity.matches_filter(filter):
                 continue
-            markers.append(entity.to_marker())
+            markers.append(entity.to_marker(self.show_tracking_info))
             if not self.show_meta_markers:
                 continue
-            markers.extend(entity.get_meta_markers())
+            markers.extend(entity.get_meta_markers(self.show_tracking_info))
 
         for id, marker in enumerate(markers):
             marker.header.stamp = marker_timestamp
