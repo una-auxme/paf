@@ -23,7 +23,7 @@ jobs:
             exit 1
           fi
           echo "RUFF_VERSION=${VERSION}" >> "$GITHUB_ENV"
-      - name:
+      - name: install ruff
         uses: astral-sh/ruff-action@v3
         with:
           version: ${{ env.RUFF_VERSION }}
