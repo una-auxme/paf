@@ -6,7 +6,6 @@ def get_entry_point():
 
 
 class PAFAgentDeploy(agent.PAFAgent):
-
     def get_ros_entrypoint(self):
         return {
             "package": "leaderboard_launcher",

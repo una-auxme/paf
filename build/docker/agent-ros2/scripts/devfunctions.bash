@@ -15,6 +15,10 @@ Development utility functions:
 - agent.dev: Launches the agent (ros2 launch agent agent.dev.xml); Ctrl+c to stop the agent
 - leaderboard.test: Launches the Simulation test at /code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
                     Kill Terminal to end
+- ruff.lint: Manually trigger the ruff linter to check the python files
+- ruff.fix-lint: Apply the safe fixes that the ruff linter encounters during linting
+- ruff.check-format: Manually trigger the ruff formatter to check if the formatting of the python files is correct
+- ruff.format: Apply the ruff formatting to the python files
 EOF
 
 # This function sources the ROS /workspace
@@ -70,3 +74,30 @@ leaderboard.test(){
   )
 }
 export -f leaderboard.test
+ruff.lint() {
+  (
+    ruff check /workspace/code/
+  )
+}
+export -f ruff.lint
+
+ruff.fix-lint() {
+  (
+    ruff check /workspace/code/ --fix
+  )
+}
+export -f ruff.fix-lint
+
+ruff.check-format() {
+  (
+    ruff format /workspace/code/ --check
+  )
+}
+export -f ruff.check-format
+
+ruff.format() {
+  (
+    ruff format /workspace/code/
+  )
+}
+export -f ruff.format

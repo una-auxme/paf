@@ -279,7 +279,6 @@ def plot_x_position():
     gt_x_small = []
     index = 0
     for j in range(len(nf_x_positions)):
-
         for i in range(0, len(gt_time_stamps)):
             if gt_time_stamps[i] == nf_pos_time_stamps[j]:
                 index = i
@@ -417,7 +416,6 @@ def plot_y_position():
     gt_y_small = []
     index = 0
     for j in range(len(nf_y_positions)):
-
         for i in range(0, len(gt_time_stamps)):
             if gt_time_stamps[i] == nf_pos_time_stamps[j]:
                 index = i

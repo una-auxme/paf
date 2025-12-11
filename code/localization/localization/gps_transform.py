@@ -23,7 +23,6 @@ from localization.coordinate_transformation import CoordinateTransformer
 
 
 class GpsTransform(Node):
-
     def __init__(self):
         super().__init__("gps_transform")
         self.get_logger().info(f"{type(self).__name__} node initializing...")

@@ -147,9 +147,9 @@ class Rectangle(Shape2D):
 
     @staticmethod
     def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
-        assert (
-            len(m.dimensions) == 2
-        ), "Rectangle expects 2 dimensions: length and width"
+        assert len(m.dimensions) == 2, (
+            "Rectangle expects 2 dimensions: length and width"
+        )
         return Rectangle(
             length=m.dimensions[0],
             width=m.dimensions[1],
@@ -260,9 +260,9 @@ class Polygon(Shape2D):
 
     @staticmethod
     def _from_ros_msg(m: msg.Shape2D) -> "Shape2D":
-        assert len(m.dimensions) >= 6 and (
-            len(m.dimensions) % 2 == 0
-        ), "Polygon requires at least 3 points."
+        assert len(m.dimensions) >= 6 and (len(m.dimensions) % 2 == 0), (
+            "Polygon requires at least 3 points."
+        )
         # Convert the flat list into Point2 objects
         points = [
             Point2.new(m.dimensions[i], m.dimensions[i + 1])

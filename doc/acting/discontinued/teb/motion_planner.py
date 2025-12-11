@@ -105,7 +105,7 @@ class MotionPlanning(CompatibleNode):
         )
         self.head_sub = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
+            f"/paf/{self.role_name}/global_current_heading",
             self.__set_heading,
             qos_profile=1,
         )
@@ -126,7 +126,7 @@ class MotionPlanning(CompatibleNode):
 
         self.current_pos_sub = self.new_subscription(
             PoseStamped,
-            f"/paf/{self.role_name}/current_pos",
+            f"/paf/{self.role_name}/global_current_pos",
             self.__set_current_pos,
             qos_profile=1,
         )
@@ -529,8 +529,7 @@ class MotionPlanning(CompatibleNode):
             ]
         else:
             selection = pose_list[
-                int(currentwp)
-                + int(distance / 2) : int(currentwp)
+                int(currentwp) + int(distance / 2) : int(currentwp)
                 + int(distance)
                 + NUM_WAYPOINTS
             ]
