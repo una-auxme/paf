@@ -107,9 +107,9 @@ CROSS_CHECK_WIDTH = 50.0
 
 # Priority traffic parameter
 PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
-PRIORITY_CHECK_DISTANCE = 15.0  # further ahead in the direction of travel
+PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
 PRIORITY_CHECK_LENGTH = 25.0
-PRIORITY_CHECK_WIDTH = 50.0
+PRIORITY_CHECK_WIDTH = 40.0
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
 
 
@@ -570,18 +570,12 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        if not (self.intersection_type == CarlaRoute.LEFT):
-            # priority cross traffic check
-            map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
-            if map is None:
-                return debug_status(self.name, Status.FAILURE, "Map is None (Enter)")
-
-            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-
+        if self.intersection_type != CarlaRoute.LEFT:
+            # Priority cross traffic check
             priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
             add_debug_entry(
                 self.name,
-                f"[Enter] Priority cross traffic clear: {priority_clear}",
+                f"[Wait] Priority cross traffic clear: {priority_clear}",
             )
             if priority_mask is not None:
                 add_debug_marker(
@@ -590,14 +584,17 @@ class Wait(py_trees.behaviour.Behaviour):
 
             if not priority_clear:
                 # priority cross traffic detected
-                self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
                 set_line_stop(self.stop_client, 0.0)
+
                 speedometer = self.blackboard.try_get("/carla/hero/Speed")
                 ego_speed = speedometer.speed if speedometer is not None else 0.0
 
                 if ego_speed > SELF_EMERGENCY_THRESHOLD:
                     self.emergency_pub.publish(Bool(data=True))
-                    reason = f"WAIT: EMERGENCY - fast cross traffic, ego_speed={ego_speed:.2f} m/s"
+                    reason = (
+                        f"WAIT: EMERGENCY - fast cross traffic, "
+                        f"ego_speed={ego_speed:.2f} m/s"
+                    )
                 else:
                     reason = (
                         f"WAIT: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
@@ -607,10 +604,9 @@ class Wait(py_trees.behaviour.Behaviour):
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
-                    "Enter: Waiting for fast cross traffic (priority vehicle)",
+                    reason,
                 )
 
-            # check cross traffic
             cross_clear, cross_mask = check_cross_traffic(map, tree)
             add_debug_entry(self.name, f"Cross traffic clear: {cross_clear}")
             if cross_mask is not None:
@@ -619,14 +615,12 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
 
             if not cross_clear:
-                # wait as long as cross traffic is detected
-                self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
                 return debug_status(
                     self.name,
                     py_trees.common.Status.RUNNING,
                     "Waiting for cross traffic",
                 )
-        self.emergency_pub.publish(Bool(data=False))
+            self.emergency_pub.publish(Bool(data=False))
 
         dist = calculate_waypoint_distance(
             self.blackboard, self.waypoint, forward_offset=STOP_LINE_OFFSET
