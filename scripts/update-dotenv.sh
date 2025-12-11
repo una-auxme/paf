@@ -32,5 +32,5 @@ if [ -n "${RUFF_VERSION}" ]; then
   echo "RUFF_VERSION=${RUFF_VERSION}" >>"$DOTENV_FILE"
   echo "RUFF_VERSION=${RUFF_VERSION}"
 else
-  echo "Warning: RUFF_VERSION not found in ${RUFF_VERSION_FILE}; run scripts/update-dotenv.sh after adding build/pins/ruff.env to keep Compose and tooling in sync."
+  echo "Warning: RUFF_VERSION not found in ${RUFF_VERSION_FILE}; create/populate this file with RUFF_VERSION= and re-run this script."
 fi
