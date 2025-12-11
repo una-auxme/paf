@@ -42,14 +42,26 @@ In-code documentation is essential for maintaining code quality, readability, an
 You can lint your files locally with:
 
 ```bash
-docker compose -f build/docker-compose.linting.yaml up
+docker compose -f build/docker-compose.linter.yaml up
 ```
+Use the same Compose file with `ruff-format` for formatting or `mdlint` for Markdown files.
 
 #### 1.2.1. Python Linting
 
-Ensure that all Python files pass linting checks without issues.
-Tools such as `black` are already present in this project.
-Regular linting ensures that the code adheres to the project's style guide, enhancing readability and maintainability.
+Python linting and formatting are handled by Ruff. The pinned version in `build/pins/ruff.env` is consumed by `build/docker-compose.linter.yaml` and the CI workflow so the same checks run locally and in automation. Regular linting ensures that the code adheres to the project's style guide, enhancing readability and maintainability.
+
+To lint all Python files with Ruff, use the following command:
+
+```bash
+- ruff.lint: Manually trigger the ruff linter to check the python files
+- ruff.fix-lint: Apply the safe fixes that the ruff linter encounters during linting
+- ruff.check-format: Manually trigger the ruff formatter to check if the formatting of the python files is correct
+- ruff.format: Apply the ruff formatting to the python files
+```
+
+These commands are defined in `build/docker/agent-ros2/scripts/devfunctions.bash` and are available in interactive shells inside the agent container.
+
+You can also use the `.vscode/tasks.json` tasks to run these commands directly from VS Code with the `Run Task` command.
 
 #### 1.2.2. Markdown Linting
 
@@ -153,7 +165,7 @@ Below are the requirements for creating such documentation:
 An example that also includes a command to lint the code and markdown files:
 
 ```bash
-docker compose -f build/docker-compose.linting.yaml up
+docker compose --env-file build/pins/ruff.env -f build/docker-compose.linter.yaml run --rm ruff-check
 ```
 
 ### 2.4. Visual Aids
