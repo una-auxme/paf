@@ -167,7 +167,7 @@ Below are the requirements for creating such documentation:
 An example that also includes a command to lint the code and markdown files:
 
 ```bash
-docker compose --env-file build/pins/ruff.env -f build/docker-compose.linter.yaml run --rm ruff-check
+docker compose -f build/docker-compose.linting.yaml up
 ```
 
 ### 2.4. Visual Aids
