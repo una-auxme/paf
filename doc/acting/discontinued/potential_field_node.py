@@ -170,7 +170,7 @@ class Potential_field_node(CompatibleNode):
         # subscriber for the current position of the vehicle
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
-            topic="/paf/hero/current_pos",
+            topic="/paf/hero/global_current_pos",
             callback=self.__get_hero_pos,
             qos_profile=1,
         )
@@ -178,7 +178,7 @@ class Potential_field_node(CompatibleNode):
         # subscriber for the current heading of the vehicle
         self.current_heading_sub: Subscriber = self.new_subscription(
             msg_type=Float32,
-            topic="/paf/hero/current_heading",
+            topic="/paf/hero/global_current_heading",
             callback=self.__get_hero_heading,
             qos_profile=1,
         )

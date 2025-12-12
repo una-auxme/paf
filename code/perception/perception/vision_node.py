@@ -251,7 +251,10 @@ class VisionNode(Node):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
 
         output = self.model(
-            cv_image, half=True, verbose=False, imgsz=image_size  # type: ignore
+            cv_image,
+            half=True,
+            verbose=False,
+            imgsz=image_size,  # type: ignore
         )
         if (
             not hasattr(output[0], "masks")

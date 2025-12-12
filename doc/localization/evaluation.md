@@ -118,8 +118,8 @@ Please note, that in this case the [viz.py](#vizpy) file can no longer be used f
 The node gets input from various sources:
 
 - The current filter (EKF):
-  - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-  - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/global_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/global_current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The test filter (also EKF):
   - `/paf/hero/ekf_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
   - `/paf/hero/ekf_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
@@ -235,8 +235,8 @@ you can set for how many seconds in the simulation data is recorded.
 The node gets input from various sources:
 
 - The new filter (EKF):
-  - `/paf/hero/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-  - `/paf/hero/current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
+  - `/paf/hero/global_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/hero/global_current_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))
 - The old filter (Kalman Filter):
   - `/paf/hero/kalman_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
   - `/paf/hero/kalman_heading` ([Float32](https://docs.ros.org/en/api/std_msgs/html/msg/Float32.html))

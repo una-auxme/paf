@@ -79,7 +79,7 @@ This node subscribes to the following needed topics:
 - global Plan:
   - `/carla/{role_name}/global_plan` ([CarlaRoute](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaRoute.msg))
 - current agent position:
-  - `/paf/{role_name}/current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+  - `/paf/{role_name}/global_current_pos` ([PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
 
 ### Outputs
 

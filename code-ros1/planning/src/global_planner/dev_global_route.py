@@ -24,7 +24,6 @@ For this you need to follow 3 steps:
 
 
 class DevGlobalRoute(CompatibleNode):
-
     def __init__(self):
         super(DevGlobalRoute, self).__init__("DevGlobalRoute")
         self.role_name = self.get_param("role_name", "hero")
@@ -113,7 +112,6 @@ class DevGlobalRoute(CompatibleNode):
                 header_list[0], road_options_list[0], poses_list[0]
             )
         else:
-
             with open(self.routes, "r", encoding="utf-8") as file:
                 my_xml = file.read()
 
@@ -123,7 +121,7 @@ class DevGlobalRoute(CompatibleNode):
             town = route["@town"]
 
             if town not in data.map_name:
-                self.logerr(f"Map '{data.map_name}' doesnt match routes " f"'{town}'")
+                self.logerr(f"Map '{data.map_name}' doesnt match routes '{town}'")
                 return
 
             # Convert data into a carla.Map

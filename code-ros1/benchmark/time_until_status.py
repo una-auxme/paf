@@ -9,7 +9,6 @@ import sys
 
 
 class TimeUntilStatusNode(CompatibleNode):
-
     def __init__(self, start_time: int):
         super().__init__(type(self).__name__)
         self.start_time = start_time
@@ -31,9 +30,9 @@ class TimeUntilStatusNode(CompatibleNode):
         delta_time = end_time - self.start_time
 
         self.loginfo(
-            f"Time until first status: {delta_time}ns, {delta_time/1000:.2f}us, "
-            f"{delta_time/1000000:.2f}ms, "
-            f"{delta_time/1000000000:.2f}s"
+            f"Time until first status: {delta_time}ns, {delta_time / 1000:.2f}us, "
+            f"{delta_time / 1000000:.2f}ms, "
+            f"{delta_time / 1000000000:.2f}s"
         )
         exit(0)
 

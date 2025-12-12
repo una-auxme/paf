@@ -4,7 +4,6 @@ import torch
 
 
 class TrafficLightConfig:
-
     def __init__(self):
         # General settings
         self.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

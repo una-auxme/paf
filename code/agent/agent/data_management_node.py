@@ -12,7 +12,6 @@ from planning_interfaces.srv import GetOpenDriveString, GetCarlaRoute
 
 
 class DataManagement(Node):
-
     def __init__(self):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")

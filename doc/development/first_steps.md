@@ -2,14 +2,13 @@
 
 **Summary**: These first steps should help you get familiar with the project and how to work with it.
 
-- [First steps](#first-steps)
-  - [Prepare your environment](#prepare-your-environment)
-  - [Start the development container](#start-the-development-container)
-  - [Linting and formatting](#linting-and-formatting)
-    - [Python and Markdown linters](#python-and-markdown-linters)
-    - [Python formatter](#python-formatter)
-    - [Trigger linting and formatting manually](#trigger-linting-and-formatting-manually)
-  - [Further information](#further-information)
+- [Prepare your environment](#prepare-your-environment)
+- [Start the development container](#start-the-development-container)
+- [Linting and formatting](#linting-and-formatting)
+  - [Python and Markdown linters](#python-and-markdown-linters)
+  - [Python formatter](#python-formatter)
+  - [Trigger linting and formatting manually](#trigger-linting-and-formatting-manually)
+- [Further information](#further-information)
 
 ## Prepare your environment
 
@@ -36,20 +35,27 @@ The linters and formatter are automatically running in the background as VS Code
 
 ### Python and Markdown linters
 
-For Python and Markdown files the suggested changes are shown as warnings and are displayed in the file directly. These have to be resolved in order for the GitHub actions to complete on your pull request.
+For Python and Markdown files the suggested changes are shown as warnings and are displayed in the file directly. Ruff runs both linting and formatting for Python; markdownlint handles Markdown. These have to be resolved in order for the GitHub actions to complete on your pull request.
 
 ### Python formatter
 
-The Python formatter automatically executes each time you save your file.
+Ruff formatting automatically executes each time you save your file.
 
 ### Trigger linting and formatting manually
 
-If you want to manually check the linting and formatting you can execute the `docker-compose.linter.yaml` file the same way you execute the dev file mentioned in [Start the development container](#start-the-development-container).
+If you want to manually check the linting and formatting you can execute the `docker-compose.linter.yaml` file the same way you execute the dev file mentioned in [Start the development container](#start-the-development-container). Example commands:
 
-If you want to trigger the code formatting manually you can type the following command in a shell of the container:
+```bash
+docker compose -f build/docker-compose.linter.yaml up
+```
 
-```sh
-black <file-or-folder>
+Inside the agent container you can also use the helper functions defined in `build/docker/agent-ros2/scripts/devfunctions.bash`:
+
+```bash
+ruff.lint           # ruff check
+ruff.fix-lint       # ruff check --fix
+ruff.check-format   # ruff format --check
+ruff.format         # ruff format
 ```
 
 To get a shell of the container you can either use the Terminal on the bottom of VS Code in the attached VS Code window (see [Start the development container](#start-the-development-container), Shortcut `` Ctrl+Shift+` ``) or attach a shell in the same right-click menu as attaching a VS Code window.

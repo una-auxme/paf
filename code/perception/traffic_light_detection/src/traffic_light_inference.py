@@ -19,7 +19,7 @@ def parse_args():
     Parses arguments for execution given by the command line.
     @return: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Inference traffic light " "detection")
+    parser = argparse.ArgumentParser(description="Inference traffic light detection")
     parser.add_argument(
         "--model",
         default="/opt/project/code/perception/src/"
@@ -36,7 +36,6 @@ def parse_args():
 
 
 class TrafficLightInference:
-
     def __init__(self, model_path):
         """
         Initializes an instance to inference a TLD net.

@@ -36,9 +36,9 @@ class _Coord2:
     _matrix: npt.NDArray[np.float64]
 
     def __init__(self, matrix: npt.NDArray[np.float64]) -> None:
-        assert matrix.shape == (
-            3,
-        ), f"{type(self).__name__} matrix must have shape (3,)"
+        assert matrix.shape == (3,), (
+            f"{type(self).__name__} matrix must have shape (3,)"
+        )
         self._matrix = matrix
 
     def x(self) -> float:
@@ -405,9 +405,9 @@ class Transform2D:
             def transform_shapely_point(
                 points: npt.NDArray[np.float64],
             ) -> npt.NDArray[np.float64]:
-                assert (
-                    len(points.shape) == 2 and points.shape[1] == 2
-                ), "Coords must be 2 dimensional"
+                assert len(points.shape) == 2 and points.shape[1] == 2, (
+                    "Coords must be 2 dimensional"
+                )
                 num_points = points.shape[0]
                 ones = np.ones(shape=(num_points, 1), dtype=np.float64)
                 points_homo = np.concatenate(
