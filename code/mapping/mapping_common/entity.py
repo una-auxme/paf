@@ -9,7 +9,7 @@ Overview of the main components:
 
 """
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 import numpy as np
@@ -398,7 +398,9 @@ class Entity:
             Marker: ROS marker message
         """
         m = self.shape.to_marker(self.transform)
-        m.lifetime = Duration(seconds=2 / 20.0).to_msg() # Set lifetime based on map rate
+        m.lifetime = Duration(
+            seconds=2 / 20.0
+        ).to_msg()  # Set lifetime based on map rate
 
         # Set color based on tracking status
         if show_tracking_info and not self.flags._is_hero:
@@ -417,7 +419,7 @@ class Entity:
 
         # Base z position of the marker
         m.pose.position.z = m.scale.z / 2.0
-        
+
         return m
 
     def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
@@ -431,14 +433,14 @@ class Entity:
         if show_tracking_info:
             track_id_str = f"UUID: {str(self.uuid)}"
             meta_markers.append(self.get_text_marker(track_id_str))
-        
+
         if self.motion is not None:
             meta_markers.append(self.to_motion_marker())
             speed_in_ms = self.motion.linear_motion.length()
             speed_in_kmh = speed_in_ms * 3.6
             motion_text = f"{speed_in_kmh:.2f} km/h"
             meta_markers.append(self.get_text_marker(motion_text))
-        
+
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
@@ -891,6 +893,7 @@ class ShapelyEntity:
 
         return float(shapely.distance(self.poly, other.poly))
 
+
 def _get_stable_color_from_uuid(uid: UUID) -> Tuple[float, float, float]:
     """
     Generates a stable, distinct color (R, G, B) from a UUID.
@@ -906,8 +909,8 @@ def _get_stable_color_from_uuid(uid: UUID) -> Tuple[float, float, float]:
     r = (r_val % 192 + 64) / 255.0
     g = (g_val % 192 + 64) / 255.0
     b = (b_val % 192 + 64) / 255.0
-    
+
     # Simple color shift to add variation
-    r, g, b = b, r, g 
+    r, g, b = b, r, g
 
     return (r, g, b)
