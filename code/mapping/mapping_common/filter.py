@@ -20,7 +20,16 @@ from scipy.optimize import linear_sum_assignment
 
 from mapping_common import get_logger
 from .map import Map
-from .entity import ShapelyEntity, Entity, FlagFilter, Pedestrian, TrackingInfo, Car, TrafficLight, StopMark
+from .entity import (
+    ShapelyEntity,
+    Entity,
+    FlagFilter,
+    Pedestrian,
+    TrackingInfo,
+    Car,
+    TrafficLight,
+    StopMark,
+)
 from .shape import Polygon, Shape2D
 from .transform import Transform2D, Vector2
 
@@ -235,7 +244,7 @@ class TrackingFilter(MapFilter):
        (e.g., when moving out of the camera's field of view).
     3. Lanemarking Exclusion: Excludes static Lanemarking entities from the tracking
        overhead and safely recombines them in the final map.
-    
+
     """
 
     max_distance_threshold = 3.0
@@ -302,15 +311,16 @@ class TrackingFilter(MapFilter):
             if isinstance(prev_entity, StopMark):
                 cur_entity.reason = prev_entity.reason
 
-    
     def _track_entities(
         self, prev_entities: List[Entity], cur_entities: List[Entity]
     ) -> Set[int]:
         """
-        Matches current entities against a list of previous candidates using the Hungarian algorithm.
+        Matches current entities against a list of previous candidates
+        using the Hungarian algorithm.
 
         Args:
-            prev_candidates (List[Entity]): Entities from a previous frame (prev1 or prev2).
+            prev_candidates (List[Entity]): Entities from a previous frame
+            (prev1 or prev2).
             cur_entities (List[Entity]): Current entities to match (modified in-place).
 
         Returns:
@@ -350,12 +360,15 @@ class TrackingFilter(MapFilter):
         return matched_cur_indices
 
     def check_valid_entities_data(self):
-        """Checks if there is enough history (at least one previous frame) to start tracking."""
+        """
+        Checks if there is enough history (at least one previous frame)
+        to start tracking.
+        """
 
         if self.cur_entities is None:
             get_logger().error("Cur enities data must be set before access!")
             return False
-        
+
         # Tracking needs at least one previous frame
         if self.prev1_entities is None:
             return False
@@ -370,13 +383,14 @@ class TrackingFilter(MapFilter):
 
     def filter(self, map: Map) -> Map:
         """
-        Filters the map by performing two-stage tracking and re-assigning persistent IDs.
+        Filters the map by performing two-stage tracking
+        and re-assigning persistent IDs.
         """
-        
+
         # 1. Separate Lanemarkings (Static) and Entities to Track
         lanemark_filter = FlagFilter(is_lanemark=True)
         non_lanemark_filter = FlagFilter(is_lanemark=False)
-        
+
         cur_lanemarks = map.filtered(lanemark_filter)
         cur_to_track = map.filtered(non_lanemark_filter)
 
@@ -386,52 +400,53 @@ class TrackingFilter(MapFilter):
         if not self.check_valid_entities_data():
             for entity in cur_to_track:
                 self._assign_new_track_id(entity)
-            
+
             map.entities = cur_to_track + cur_lanemarks
             return map
-        
+
         # --- STAGE 1: Current vs Previous Frame (prev1) ---
-        stage1_matched_indices = self._track_entities(self.prev1_entities, self.cur_entities)
+        stage1_matched_indices = self._track_entities(
+            self.prev1_entities, self.cur_entities
+        )
         stage1_unmatched_indices = [
             i for i in range(len(cur_to_track)) if i not in stage1_matched_indices
         ]
 
-
         # Get UUIDs matched in Stage 1 to exclude them from the Stage 2 candidate pool
         stage1_matched_uuids: Set[UUID] = {
-            self.cur_entities[i].uuid for i in range(len(cur_to_track))
+            self.cur_entities[i].uuid
+            for i in range(len(cur_to_track))
             if i in stage1_matched_indices
         }
-        
 
         # --- STAGE 2: Remaining Current vs Previous-Previous Frame (prev2) ---
         stage2_matched_indices = set()
         if self.prev2_entities is not None and len(stage1_unmatched_indices) > 0:
-            cur_unmatched_entities = [
-                cur_to_track[i] for i in stage1_unmatched_indices
-            ]
+            cur_unmatched_entities = [cur_to_track[i] for i in stage1_unmatched_indices]
 
             prev2_to_search = [
                 e for e in self.prev2_entities if e.uuid not in stage1_matched_uuids
             ]
 
-            stage2_matched_indices_rel = self._track_entities(prev2_to_search, cur_unmatched_entities)
+            stage2_matched_indices_rel = self._track_entities(
+                prev2_to_search, cur_unmatched_entities
+            )
             stage2_matched_indices = {
-                stage1_unmatched_indices[i]
-                for i in stage2_matched_indices_rel
+                stage1_unmatched_indices[i] for i in stage2_matched_indices_rel
             }
 
-        # --- FINAL TRACKING ASSIGNMENT: Assign new TrackingInfo only to unmatched entities ---
+        # --- Assign new TrackingInfo only to unmatched entities ---
         for i, entity in enumerate(cur_to_track):
             is_matched_s1 = i in stage1_matched_indices
             is_matched_s2 = i in stage2_matched_indices
 
             if not is_matched_s1 and not is_matched_s2:
                 self._assign_new_track_id(entity)
-        
+
         # Recombine tracked entities (with persistent IDs) and preserved lanemarks
         map.entities = cur_to_track + cur_lanemarks
         return map
+
 
 def _try_merge_pair(
     pair: Tuple[ShapelyEntity, ShapelyEntity],
