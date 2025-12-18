@@ -751,7 +751,7 @@ class MapTree:
 
     def is_lane_free_intersection(
         self,
-        lane_length: float = 30.0,
+        lane_length: float = 20.0,
         lane_transform_x: float = 0.0,
     ) -> Tuple[bool, Optional[shapely.Polygon]]:
         """Returns True if the opposing lane of our car is free.
@@ -954,18 +954,16 @@ def has_cross_traffic(
     box_width: float = 16.0,
 ) -> tuple[bool, shapely.Polygon]:
     """
-    Prüft, ob im Kreuzungsbereich vor dem Fahrzeug bewegter Querverkehr ist.
-
     Returns:
         (cross_clear, mask_polygon)
-        cross_clear = True  → kein bewegter Querverkehr
-        cross_clear = False → Querverkehr erkannt
+        cross_clear = True  → kein moving cross traffic
+        cross_clear = False → cross traffic detected
     """
     hero = self.hero()
     if hero is None:
-        return True, None  # zur Sicherheit nicht blockieren
+        return True, None
 
-    # Rechteck vor dem Auto, das grob die Kreuzung abdeckt
+    # Checkbox in front of the car to check cross traffic
     offset = Transform2D.new_translation(
         Vector2.new(distance_ahead + hero.get_front_x(), 0.0)
     )
@@ -976,16 +974,29 @@ def has_cross_traffic(
     if not entities:
         return True, mask
 
-    # Nur bewegte Objekte berücksichtigen
+    hero_tf_inv = hero.transform.inverse()
+
+    # Only consider moving objects
     for e in entities:
         motion = e.entity.motion
         if motion is None:
             continue
-        # Betrag der Geschwindigkeit (linear_motion-Vektor)
-        v = motion.linear_motion
-        speed = math.sqrt(v.x() ** 2 + v.y() ** 2)
-        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
-            # bewegter Querverkehr innerhalb der Maske
-            return False, mask
+
+        v_world = motion.linear_motion
+        speed = math.sqrt(v_world.x() ** 2 + v_world.y() ** 2)
+        if speed <= CROSS_TRAFFIC_SPEED_THRESHOLD:
+            continue
+
+        other_pos_world = e.entity.transform.translation
+        other_pos_self = hero_tf_inv.transform_point(other_pos_world)
+
+        v_self = hero_tf_inv.rotation.rotate(Vector2.new(v_world.x(), v_world.y()))
+        forward_velocity = v_self.x()
+        if other_pos_self.x() > 1.5 and forward_velocity > 0.5:
+            continue
+        # v = motion.linear_motion
+        # speed = math.sqrt(v.x() ** 2 + v.y() ** 2)
+        # if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+        return False, mask
 
     return True, mask
