@@ -329,6 +329,31 @@ RUN echo source ${INTERNAL_WORKSPACE_DIR}/deploy.bashrc >> ~/.bashrc
 WORKDIR ${INTERNAL_WORKSPACE_DIR}
 CMD [ "ros2", "run", "leaderboard_launcher", "launch_leaderboard.deploy.sh" ]
 
+##########################################################
+##### The dependencies for agent-dev are pulled here #####
+##########################################################
+FROM ubuntu:24.04 AS agent-deps
+# This separate stage only copies the dependency definitions from our src.
+# When these dependency definitions are then used in the agent-dev stage,
+# docker only checks for changes in the dependency definitions and only
+# triggers a rebuild when dependencies changed (instead of any file change inside src).
+# This avoids many unnecessary container rebuilds.
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update && apt-get install -y rsync
+
+RUN --mount=type=bind,target=/workspace/code,source=code \
+  mkdir /arlab-deps && \
+  rsync -r --prune-empty-dirs --include="*/" \
+  --include="requirements.txt" \
+  --include="requirements.*.txt" \
+  --include="package.xml" \
+  --include="setup.cfg" \
+  --include="setup.py" \
+  --include="CMakeLists.txt" \
+  --exclude="*" "/workspace/code" "/agent-deps/"
+
 ###########################################
 ##### The agent-dev image starts here #####
 ###########################################
@@ -365,11 +390,12 @@ COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
 
 ENTRYPOINT [ "/internal_workspace/scripts/entrypoint-dev.sh" ]
 
+COPY --from=agent-deps --chown=${PAF_UID}:${PAF_GID} "/agent-deps/code" "${PAF_ROS_WS}/src"
+
 WORKDIR ${PAF_ROS_WS}
 # Install package.xml dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/env.bash && \
   sudo apt-get update && \
@@ -380,12 +406,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
 RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid="${PAF_UID}",gid="${PAF_GID}" \
-  --mount=type=bind,target=${PAF_ROS_WS}/src,source=code \
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc && \
   ((${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh |& tee ${INTERNAL_WORKSPACE_DIR}/pip_install.log; exit \${PIPESTATUS[0]}) \
   || echo \"echo -e \\\"\\\\e[31mERROR: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
   "
+
+# Clean source so no partial packages persist in the container
+RUN rm -rf "${PAF_ROS_WS}/src"
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc
 
