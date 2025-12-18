@@ -13,6 +13,7 @@ from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 import numpy as np
+import math
 
 import shapely
 
@@ -141,6 +142,13 @@ class Flags:
             is_hero=self._is_hero,
         )
 
+@dataclass
+class TrackedFrame:
+    """Speichert eine Position zusammen mit ihrem Zeitstempel (t) für die Berechnung."""
+    entity_position: Vector2
+    ego_position: Motion2D
+    timestamp: float # Time in seconds
+
 
 @dataclass
 class FlagFilter:
@@ -167,46 +175,141 @@ class FlagFilter:
 
 @dataclass
 class TrackingInfo:
-    """Information that might be required to consistently track entities
+    """Information that might be required to consistently track entities."""
 
-    Note: As of 03.2025, this class and attribute in #Entity is still completely unused.
-    PAF24 still left it in as a base/guidance for future tracking experiments
-    """
-
-    visibility_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long the entity has been visible for. Never gets reset"""
-    invisibility_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long the entity has been uninterruptedly not visible.
-    Reset when the entity is visible again"""
+    # --- ROS Persistence Fields ---
+    visibility_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    invisibility_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
     visibility_frame_count: int = 0
-    """In how many data frames the entity was visible. Never gets reset"""
     invisibility_frame_count: int = 0
-    """In how many consecutive data frames the entity was not visible.
-    Reset when the entity is visible again"""
-    moving_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long an entity was moving continuously. Reset when standing
-
-    This might be used to decide if we should overtake
-    """
-    standing_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long an entity stood still continuously. Reset when moving
-
-    This might be used to decide if we should overtake
-    """
-    moving_time_sum: DurationMsg = field(default_factory=DurationMsg)
-    """Sums of all the time the entity was moving. Never gets reset
-
-    This might be used to decide if we should overtake
-    """
-    standing_time_sum: DurationMsg = field(default_factory=DurationMsg)
-    """Sums of all the time the entity was standing still. Never gets reset
-
-    This might be used to decide if we should overtake
-    """
+    moving_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    standing_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    moving_time_sum: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    standing_time_sum: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
     min_linear_speed: float = 0.0
-    """Minimum linear speed of this entity ever recorded"""
     max_linear_speed: float = 0.0
-    """Maximum linear speed of this entity ever recorded"""
+
+    # --- Local Tracking State (Not typically in ROS Msg) ---
+    history: List['TrackedFrame'] = field(default_factory=list, repr=False)
+    MAX_HISTORY_SIZE: int = 20
+    motion_history: List['Vector2'] = field(default_factory=list, repr=False)
+    MAX_MOTION_HISTORY: int = 10
+    
+    EMA_ALPHA: float = 0.7
+    Z_SCORE_THRESHOLD: float = 2.0
+
+    @property
+    def current_time(self) -> float:
+        return self.history[-1].timestamp if self.history else 0.0
+
+    def append_frame(self, entity_pos: 'Vector2', ego_pos: 'Motion2D', timestamp: float):
+        """Adds a new frame and updates motion estimation."""
+        # 1. Compensate OLD points based on ego movement since the last frame
+        if self.history:
+            self._compensate_positions(ego_pos, timestamp)
+
+        # 2. Add the new point
+        self.history.append(TrackedFrame(entity_pos, ego_pos, timestamp))
+
+        if len(self.history) > self.MAX_HISTORY_SIZE:
+            self.history.pop(0)
+
+        # 3. Velocity Estimation
+        raw_motion = self._calculate_raw_weighted_motion()
+        if raw_motion:
+            smoothed_motion = self._process_motion_smoothing(raw_motion)
+            self.motion_history.append(smoothed_motion)
+            
+            # Update speed stats
+            speed = math.sqrt(smoothed_motion.x()**2 + smoothed_motion.y()**2)
+            self.max_linear_speed = max(self.max_linear_speed, speed)
+            # Only update min speed if it's the first record or actually moving
+            if self.min_linear_speed == 0 or speed < self.min_linear_speed:
+                if speed > 0.01: # threshold to ignore perfect zero
+                    self.min_linear_speed = speed
+
+            if len(self.motion_history) > self.MAX_MOTION_HISTORY:
+                self.motion_history.pop(0)
+
+    def _compensate_positions(self, current_ego_motion: 'Motion2D', current_timestamp: float):
+        """Stabilizes history by removing ego-displacement."""
+        prev_timestamp = self.history[-1].timestamp
+        dt = current_timestamp - prev_timestamp
+        
+        # Guard against zero or negative dt (clock sync issues)
+        if dt <= 0:
+            return
+
+        # Distance the ego traveled: dist = vel * time
+        ego_displacement = current_ego_motion.linear_motion * dt
+        
+        # Subtract ego movement from all historical observations
+        for frame in self.history:
+            frame.entity_position -= ego_displacement
+        
+    def _calculate_raw_weighted_motion(self) -> Optional['Vector2']:
+        """Calculates velocity using weighted average of historical pairs."""
+        h_len = len(self.history)
+        if h_len < 3:
+            return None
+        
+        weighted_velocity_sum = Vector2.zero()
+        total_weight_sum = 0.0
+
+        # Optimization: Pairwise sampling with weight proportional to 'newness'
+        for i in range(h_len - 1):
+            # Check a subset of pairs to avoid O(N^2) if history grows
+            for k in range(i + 1, h_len):
+                p_i, t_i = self.history[i].entity_position, self.history[i].timestamp
+                p_k, t_k = self.history[k].entity_position, self.history[k].timestamp
+
+                dt = t_k - t_i
+                if dt <= 0.001: continue # Avoid noise/div by zero
+
+                velocity_segment = (p_k - p_i) / dt
+                
+                # Weight: prioritize recent k and longer time gaps for stability
+                # Using your formula: (k - i) / (h_len - k)
+                # Note: h_len - k can be 0 if k is the last index. Guard it.
+                weight = (k - i) / max(1, (h_len - k))
+
+                weighted_velocity_sum += velocity_segment * weight
+                total_weight_sum += weight
+
+        return weighted_velocity_sum / total_weight_sum if total_weight_sum > 0 else None
+    
+    def _process_motion_smoothing(self, new_velocity: 'Vector2') -> 'Vector2':
+        """Smoothes velocity and rejects outliers using Z-score."""
+        if len(self.motion_history) < 3:
+            return new_velocity
+        
+        # Calculate magnitudes for Z-score
+        m_history = self.motion_history
+        velocities = [math.sqrt(m.x()**2 + m.y()**2) for m in m_history]
+        
+        mean = np.mean(velocities)
+        std = np.std(velocities)
+
+        # Outlier detection
+        if std > 0.1:
+            new_vlen = math.sqrt(new_velocity.x()**2 + new_velocity.y()**2)
+            z_score = abs(mean - new_vlen) / std
+            if z_score > self.Z_SCORE_THRESHOLD:
+                # Reject outlier, return previous best estimate
+                return self.motion_history[-1]
+                
+        # Exponential Moving Average
+        prev_velocity = self.motion_history[-1]
+        return (new_velocity * self.EMA_ALPHA) + (prev_velocity * (1.0 - self.EMA_ALPHA))
+
+    def get_motion(self) -> Optional['Motion2D']:
+        if not self.motion_history:
+            return None
+        
+        return Motion2D(
+            linear_motion=self.motion_history[-1],
+            angular_velocity=0.0
+        )
 
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":

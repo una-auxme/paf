@@ -277,15 +277,24 @@ class TrackingFilter(MapFilter):
 
         return np.linalg.norm(p1 - p2).item()
 
-    @staticmethod
-    def _assign_new_track_id(entity: Entity):
+
+    def _assign_new_track_id(self, entity: Entity):
         """Initializes tracking info for a new, unmatched entity."""
 
         if entity.tracking_info is None:
             entity.tracking_info = TrackingInfo()
+            
+            new_pos = self._get_entity_position(entity)
+            timestamp = entity.timestamp.sec + entity.timestamp.nanosec / 1e9
+            ego_motion = self.ego_motion if self.ego_motion is not None else Vector2.zero()
 
-    @staticmethod
-    def update_tracked_entity(cur_entity: Entity, prev_entity: Entity):
+            if timestamp == 0.0:
+                get_logger().info(f"Map Time: {self.map_time}s, Entity Time: {timestamp}, ID: {entity.uuid}, Type: {type(entity)}")
+
+            
+            entity.tracking_info.append_frame(new_pos, ego_motion, timestamp)
+
+    def update_tracked_entity(self, cur_entity: Entity, prev_entity: Entity):
         """
         Updates the current entity with persistent tracking information from the
         previous entity, including UUID, history, and entity type.
@@ -296,7 +305,20 @@ class TrackingFilter(MapFilter):
         if prev_entity.tracking_info is None:
             cur_entity.tracking_info = TrackingInfo()
         else:
-            cur_entity.tracking_info = prev_entity.tracking_info
+            tracking_info = prev_entity.tracking_info
+            new_pos = self._get_entity_position(cur_entity)
+            timestamp = cur_entity.timestamp.sec + cur_entity.timestamp.nanosec / 1e9
+            ego_motion = self.ego_motion if self.ego_motion is not None else Vector2.zero()
+
+            if timestamp == 0.0:
+                get_logger().info(f"Map Time: {self.map_time}s, Entity Time: {timestamp}, ID: {cur_entity.uuid}, Type: {type(cur_entity)}")
+
+
+            tracking_info.append_frame(new_pos, ego_motion, timestamp)
+            motion = tracking_info.get_motion()
+
+            cur_entity.tracking_info = tracking_info
+            cur_entity.motion = motion
 
         # --- DYNAMIC CLASS REASSIGNMENT PATTERN ---
         # If the sensor/map detection (cur_entity) is generic but we have specialized
@@ -391,13 +413,23 @@ class TrackingFilter(MapFilter):
         Filters the map by performing two-stage tracking
         and re-assigning persistent IDs.
         """
+        self.map_time = map.timestamp.sec + map.timestamp.nanosec / 1e9
+
+        ego_filter = FlagFilter(is_hero=True)
+        lanemark_filter = FlagFilter(is_lanemark=True)
+        stop_mark_filter = FlagFilter(is_stopmark=True)
+        cur_to_track_filter = FlagFilter(is_lanemark=False, is_stopmark=False, is_hero=False)
+
+
+        cur_ego_vehicle = map.filtered(ego_filter)
+        self.ego_motion = cur_ego_vehicle[0].motion
 
         # 1. Separate Lanemarkings (Static) and Entities to Track
-        lanemark_filter = FlagFilter(is_lanemark=True)
-        non_lanemark_filter = FlagFilter(is_lanemark=False)
 
         cur_lanemarks = map.filtered(lanemark_filter)
-        cur_to_track = map.filtered(non_lanemark_filter)
+        cur_stopmarks = map.filtered(stop_mark_filter)
+
+        cur_to_track = map.filtered(cur_to_track_filter)
 
         self.set_entities_data(cur_to_track)
 
@@ -406,7 +438,7 @@ class TrackingFilter(MapFilter):
             for entity in cur_to_track:
                 self._assign_new_track_id(entity)
 
-            map.entities = cur_to_track + cur_lanemarks
+            map.entities = cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks
             return map
 
         # --- STAGE 1: Current vs Previous Frame (prev1) ---
@@ -449,7 +481,7 @@ class TrackingFilter(MapFilter):
                 self._assign_new_track_id(entity)
 
         # Recombine tracked entities (with persistent IDs) and preserved lanemarks
-        map.entities = cur_to_track + cur_lanemarks
+        map.entities = cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks
         return map
 
 
