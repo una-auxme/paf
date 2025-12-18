@@ -269,8 +269,8 @@ class TrackingFilter(MapFilter):
     @staticmethod
     def _euclidean_distance(pos1: Vector2, pos2: Vector2) -> float:
         """Calculates the Euclidean distance between two Vector2 positions."""
-        x1, y1 = pos1._matrix[0], pos1._matrix[1]
-        x2, y2 = pos2._matrix[0], pos2._matrix[1]
+        x1, y1 = pos1.x(), pos1.y()
+        x2, y2 = pos2.x(), pos2.y()
 
         p1 = np.array([x1, y1])
         p2 = np.array([x2, y2])
@@ -298,6 +298,11 @@ class TrackingFilter(MapFilter):
         else:
             cur_entity.tracking_info = prev_entity.tracking_info
 
+        # --- DYNAMIC CLASS REASSIGNMENT PATTERN ---
+        # If the sensor/map detection (cur_entity) is generic but we have specialized
+        # knowledge from a previous frame (prev_entity),
+        # we "upgrade" the current instance.
+
         if type(cur_entity) is Entity and type(prev_entity) is not Entity:
             cur_entity.__class__ = type(prev_entity)
 
@@ -319,7 +324,7 @@ class TrackingFilter(MapFilter):
         using the Hungarian algorithm.
 
         Args:
-            prev_candidates (List[Entity]): Entities from a previous frame
+            prev_entities (List[Entity]): Entities from a previous frame
             (prev1 or prev2).
             cur_entities (List[Entity]): Current entities to match (modified in-place).
 
@@ -366,7 +371,7 @@ class TrackingFilter(MapFilter):
         """
 
         if self.cur_entities is None:
-            get_logger().error("Cur enities data must be set before access!")
+            get_logger().error("Cur entities data must be set before access!")
             return False
 
         # Tracking needs at least one previous frame

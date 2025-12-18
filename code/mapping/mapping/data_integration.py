@@ -259,8 +259,7 @@ class MappingDataIntegrationNode(Node):
             .bool_value
         )
 
-        if self.filter_tracking_entities:
-            self.tracking_filter = TrackingFilter()
+        self.tracking_filter = TrackingFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
