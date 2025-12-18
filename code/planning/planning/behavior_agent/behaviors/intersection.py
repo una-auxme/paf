@@ -771,38 +771,38 @@ class Enter(py_trees.behaviour.Behaviour):
     def __init__(
         self,
         name: str,
-        curr_behavior_pub,
-        stop_client,
-        emergency_pub,
-        intersection_type: int,
+        curr_behavior_pub: Publisher,
+        stop_client: Client,
+        emergency_pub: Publisher,
     ):
         super().__init__(name)
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
         self.emergency_pub = emergency_pub
-        self.intersection_type = intersection_type
-
-        self._left_priority_check_completed = False
-        self._left_priority_waiting_for_clear = False
 
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Enter Intersection")
+        global CURRENT_INTERSECTION_WAYPOINT
+        if CURRENT_INTERSECTION_WAYPOINT is None:
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
+            return
+        self.waypoint = CURRENT_INTERSECTION_WAYPOINT
         unset_line_stop(self.stop_client)
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
-
-        # reset for every intersection
-        self._left_priority_check_completed = False
-        self._left_priority_waiting_for_clear = False
+        self.intersection_type = self.waypoint.road_option
 
     def update(self):
         """
         Continues driving through the intersection until it is far way enough
         from CURRENT_INTERSECTION_WAYPOINT
-        :return: py_trees.common.Status.RUNNING, while driving / waiting
-                 py_trees.common.Status.FAILURE, once finished (left intersection)
+        :return: py_trees.common.Status.RUNNING, if too far from the end of
+                 the intersection
+                 py_trees.common.Status.FAILURE, once finished.
         """
         global CURRENT_INTERSECTION_WAYPOINT
         if CURRENT_INTERSECTION_WAYPOINT is None:
@@ -815,58 +815,43 @@ class Enter(py_trees.behaviour.Behaviour):
                 "Error: CURRENT_INTERSECTION_WAYPOINT not set",
             )
 
-        # map needed for priority check
+        # priority cross traffic check
         map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
         if map is None:
             return debug_status(self.name, Status.FAILURE, "Map is None (Enter)")
 
-        # Priority cross traffic check (LEFT: only check once)
-        is_left = self.intersection_type == CarlaRoute.LEFT
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        do_priority_check = True
-        if is_left and self._left_priority_check_completed:
-            do_priority_check = False
+        priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+        add_debug_entry(
+            self.name,
+            f"[Enter] Priority cross traffic clear: {priority_clear}",
+        )
+        if priority_mask is not None:
+            add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
 
-        if do_priority_check:
-            tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+        if not priority_clear:
+            # priority cross traffic detected
+            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+            set_line_stop(self.stop_client, 0.0)
 
-            priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
-            add_debug_entry(
-                self.name,
-                f"[Enter] Priority cross traffic clear: {priority_clear}",
-            )
-            if priority_mask is not None:
-                add_debug_marker(
-                    debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3))
+            speedometer = self.blackboard.try_get("/carla/hero/Speed")
+            ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+            if ego_speed > SELF_EMERGENCY_THRESHOLD:
+                self.emergency_pub.publish(Bool(data=True))
+                reason = f"ENTER: EMERGENCY – fast cross traffic, ego_speed={ego_speed:.2f} m/s"
+            else:
+                reason = (
+                    f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
+                    "(no emergency brake)"
                 )
 
-            if not priority_clear:
-                # priority cross traffic detected -> stop and wait
-                self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
-                set_line_stop(self.stop_client, 0.0)
-
-                speedometer = self.blackboard.try_get("/carla/hero/Speed")
-                ego_speed = speedometer.speed if speedometer is not None else 0.0
-
-                if ego_speed > SELF_EMERGENCY_THRESHOLD:
-                    self.emergency_pub.publish(Bool(data=True))
-                    reason = f"ENTER: EMERGENCY – fast cross traffic, ego_speed={ego_speed:.2f} m/s"
-                else:
-                    reason = (
-                        f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
-                        "(no emergency brake)"
-                    )
-
-                if is_left:
-                    self._left_priority_waiting_for_clear = True
-
-                return debug_status(self.name, Status.RUNNING, reason)
-
-            # priority_clear == True
-            if is_left:
-                self._left_priority_check_completed = True
-                self._left_priority_waiting_for_clear = False
-
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                reason,
+            )
         unset_line_stop(self.stop_client)
         self.emergency_pub.publish(Bool(data=False))
 
@@ -879,17 +864,21 @@ class Enter(py_trees.behaviour.Behaviour):
                 Status.FAILURE,
                 "Missing information for intersection_end_distance calculation",
             )
-
         add_debug_entry(
             self.name, f"Intersection end distance: {intersection_end_distance}"
         )
 
         # Distance does usually not reach exacty zero, use some margin
         if intersection_end_distance <= 0.5:
-            return debug_status(self.name, Status.FAILURE, "Left intersection")
+            return debug_status(
+                self.name, py_trees.common.Status.FAILURE, "Left intersection"
+            )
 
+        # apply_emergency_vehicle_speed_fix()
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
-        return debug_status(self.name, Status.RUNNING, "Driving through...")
+        return debug_status(
+            self.name, py_trees.common.Status.RUNNING, "Driving through..."
+        )
 
     def terminate(self, new_status):
         pass
