@@ -13,6 +13,8 @@ Development utility functions:
                    The leaderboard then automatically launches code/agent/launch/agent.dev.persistent.xml
                    Quitting: Ctrl+c does not work on the leaderboard. Use Right-Click->Kill Terminal
 - agent.dev: Launches the agent (ros2 launch agent agent.dev.xml); Ctrl+c to stop the agent
+- leaderboard.test: Launches the Simulation test at /code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+                    Kill Terminal to end
 - ruff.lint: Manually trigger the ruff linter to check the python files
 - ruff.fix-lint: Apply the safe fixes that the ruff linter encounters during linting
 - ruff.check-format: Manually trigger the ruff formatter to check if the formatting of the python files is correct
@@ -66,6 +68,12 @@ pytrees.viewer() {
 }
 export -f pytrees.viewer
 
+leaderboard.test(){
+  (
+    /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+  )
+}
+export -f leaderboard.test
 ruff.lint() {
   (
     ruff check /workspace/code/
