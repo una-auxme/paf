@@ -131,7 +131,7 @@ class Visualization(Node):
             markers.append(entity.to_marker(self.show_tracking_info))
             if not self.show_meta_markers:
                 continue
-            markers.extend(entity.get_meta_markers(self.show_tracking_info))
+            markers.extend(entity.get_meta_markers())
 
         for id, marker in enumerate(markers):
             marker.header.stamp = marker_timestamp

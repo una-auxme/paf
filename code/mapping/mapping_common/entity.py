@@ -422,17 +422,13 @@ class Entity:
 
         return m
 
-    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
+    def get_meta_markers(self) -> List[Marker]:
         """Creates additional meta markers for the entity
 
         Returns:
             List[Marker]: List of ROS marker messages
         """
         meta_markers = []
-
-        if show_tracking_info:
-            track_id_str = f"UUID: {str(self.uuid)}"
-            meta_markers.append(self.get_text_marker(track_id_str))
 
         if self.motion is not None:
             meta_markers.append(self.to_motion_marker())
@@ -747,8 +743,8 @@ class Lanemarking(Entity):
 
         return m
 
-    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
-        common_meta_markers = super().get_meta_markers(show_tracking_info)
+    def get_meta_markers(self) -> List[Marker]:
+        common_meta_markers = super().get_meta_markers()
         common_meta_markers.append(self.get_text_marker(f"{self.position_index}"))
         return common_meta_markers
 
@@ -820,10 +816,10 @@ class StopMark(Entity):
         m.pose.position.z = 0.1
         return m
 
-    def get_meta_markers(self, show_tracking_info: bool) -> List[Marker]:
+    def get_meta_markers(self) -> List[Marker]:
         from mapping_common.markers import debug_marker
 
-        ms = super().get_meta_markers(show_tracking_info)
+        ms = super().get_meta_markers()
         ms.append(
             debug_marker(
                 self.reason,
