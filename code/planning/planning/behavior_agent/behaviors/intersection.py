@@ -109,7 +109,7 @@ CROSS_CHECK_WIDTH = 50.0
 PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
 PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
 PRIORITY_CHECK_LENGTH = 25.0
-PRIORITY_CHECK_WIDTH = 40.0
+PRIORITY_CHECK_WIDTH = 50.0
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
 
 
@@ -607,19 +607,20 @@ class Wait(py_trees.behaviour.Behaviour):
                     reason,
                 )
 
-            cross_clear, cross_mask = check_cross_traffic(map, tree)
-            add_debug_entry(self.name, f"Cross traffic clear: {cross_clear}")
-            if cross_mask is not None:
-                add_debug_marker(
-                    debug_marker(cross_mask, color=(1.0, 0.5, 0.0, 0.3))  # orange
-                )
+            # cross_clear, cross_mask = check_cross_traffic(map, tree)
+            # add_debug_entry(self.name, f"Cross traffic clear: {cross_clear}")
+            # if cross_mask is not None:
+            #     add_debug_marker(
+            #         debug_marker(cross_mask, color=(1.0, 0.5, 0.0, 0.3))  # orange
+            #     )
 
-            if not cross_clear:
-                return debug_status(
-                    self.name,
-                    py_trees.common.Status.RUNNING,
-                    "Waiting for cross traffic",
-                )
+            # if not cross_clear:
+            #     return debug_status(
+            #         self.name,
+            #         py_trees.common.Status.RUNNING,
+            #         "Waiting for cross traffic",
+            #     )
+            unset_line_stop(self.stop_client)
             self.emergency_pub.publish(Bool(data=False))
 
         dist = calculate_waypoint_distance(
@@ -843,6 +844,7 @@ class Enter(py_trees.behaviour.Behaviour):
                 py_trees.common.Status.RUNNING,
                 reason,
             )
+        unset_line_stop(self.stop_client)
         self.emergency_pub.publish(Bool(data=False))
 
         intersection_end_distance = calculate_waypoint_distance(
