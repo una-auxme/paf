@@ -60,7 +60,7 @@ def debug_marker(
         Marker: Marker
     """
     if isinstance(base, Entity):
-        marker = base.to_marker()
+        marker = base.to_marker(False)
     elif isinstance(base, Shape2D):
         marker = base.to_marker(marker_style=MarkerStyle.LINESTRING)
     elif isinstance(base, shapely.Polygon):
