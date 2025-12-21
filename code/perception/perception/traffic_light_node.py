@@ -4,7 +4,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 
 from sensor_msgs.msg import Image as ImageMsg
-from perception_interfaces.msg import TrafficLightState
+from perception_interfaces.msg import TrafficLightState, TrafficLightImages
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -73,7 +73,7 @@ class TrafficLightNode(Node):
     def setup_camera_subscriptions(self):
         """receives images and runs handel_camera_image"""
         self.create_subscription(
-            msg_type=ImageMsg,
+            msg_type=TrafficLightImages,
             callback=self.handle_camera_image,
             topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
             qos_profile=1,
@@ -91,7 +91,9 @@ class TrafficLightNode(Node):
             Marker, "/paf/hero/TrafficLight/state/debug_marker", 10
         )
 
-    def handle_camera_image(self, image):
+    def handle_camera_image(self, msg: TrafficLightImages):
+        
+        """
         # calculates the current state of the traffic light
         cv2_image = self.bridge.imgmsg_to_cv2(image)
         rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
@@ -114,7 +116,11 @@ class TrafficLightNode(Node):
         state = result if result in [1, 2, 4] else 0
         self.traffic_light_msg.state = state
         if state != 0:
-            self.last_info_time = self.get_clock().now()
+            self.last_info_time = self.get_clock().now() """
+
+        self.get_logger().info(
+        f"Received {len(msg.images)} traffic light images"
+        )        
 
     def loop(self):
         # check if the last state was received more than 2 seconds ago
