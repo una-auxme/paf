@@ -488,11 +488,9 @@ class VisionNode(Node):
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
             msg.images.append(traffic_light_image)
-            # publish cropped traffic light image to the topic
-            # self.traffic_light_publisher.publish(traffic_light_image)
-            # Publisher noch umstellen. muss qos angepasst werden? Dann subscriber anpassen und mal testen ob das funktioniert
 
         if msg.images:
+            # publish collected and cropped traffic light image to the topic
             self.traffic_light_publisher.publish(msg)
 
 

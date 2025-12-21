@@ -92,7 +92,6 @@ class TrafficLightNode(Node):
         )
 
     def handle_camera_image(self, msg: TrafficLightImages):
-        
         """
         # calculates the current state of the traffic light
         cv2_image = self.bridge.imgmsg_to_cv2(image)
@@ -116,11 +115,50 @@ class TrafficLightNode(Node):
         state = result if result in [1, 2, 4] else 0
         self.traffic_light_msg.state = state
         if state != 0:
-            self.last_info_time = self.get_clock().now() """
+            self.last_info_time = self.get_clock().now()"""
 
-        self.get_logger().info(
-        f"Received {len(msg.images)} traffic light images"
-        )        
+        self.get_logger().info(f"Received {len(msg.images)} traffic light images")
+        """
+        i = 0
+        for image in msg.images:
+            i += 1
+            # calculates the current state of the traffic light
+            cv2_image = self.bridge.imgmsg_to_cv2(image)
+            rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+
+            window_name = f"Traffic Light {i}"
+            cv2.imshow(window_name, rgb_image)
+
+        cv2.waitKey(1)"""
+
+        images = []
+
+        for image_msg in msg.images:
+            cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
+            images.append(cv_image)
+
+        if not images:
+            return
+
+        # Alle Bilder auf gleiche Höhe bringen
+        min_height = min(img.shape[0] for img in images)
+
+        resized = [
+            cv2.resize(
+                img,
+                (
+                    int(img.shape[1] * min_height / img.shape[0]),
+                    min_height,
+                ),
+            )
+            for img in images
+        ]
+
+        # horizontal zusammensetzen
+        combined = cv2.hconcat(resized)
+
+        cv2.imshow("Traffic Lights (one message)", combined)
+        cv2.waitKey(1)
 
     def loop(self):
         # check if the last state was received more than 2 seconds ago
