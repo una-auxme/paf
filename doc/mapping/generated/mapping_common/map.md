@@ -66,7 +66,7 @@ Overview of the main components:
 class LaneFreeState(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L35)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L35)
 
 <a id="mapping_common.map.LaneFreeState.TO_BE_CHECKED"></a>
 
@@ -100,7 +100,7 @@ class LaneFreeState(Enum)
 def is_error() -> bool
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L43)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L43)
 
 If an error occurred when calculating the lane mask
 
@@ -116,7 +116,7 @@ If an error occurred when calculating the lane mask
 class LaneFreeDirection(Enum)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L52)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L52)
 
 <a id="mapping_common.map.LaneFreeDirection.LEFT"></a>
 
@@ -135,7 +135,7 @@ class LaneFreeDirection(Enum)
 class Map()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L58)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L58)
 
 2 dimensional map for the intermediate layer
 
@@ -154,7 +154,7 @@ General information:
 
 <a id="mapping_common.map.Map.timestamp"></a>
 
-#### timestamp: `Time`
+#### timestamp: `TimeMsg`
 
 The timestamp this map was created at.
 
@@ -180,7 +180,7 @@ Note that this list might also include the hero car (as first element of this li
 def hero() -> Optional[Entity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L90)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L90)
 
 Returns the entity of the hero car if it is the first element of the map
 
@@ -196,7 +196,7 @@ Returns the entity of the hero car if it is the first element of the map
 def entities_without_hero() -> List[Entity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L103)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L103)
 
 Returns the entities without the hero car
 
@@ -214,7 +214,7 @@ Only checks if the first entity is_hero
 def get_lane_y_axis_intersections(direction: str = "left") -> dict
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L115)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L115)
 
 calculates the intersections of the lanemarks in lane_pos direction
 
@@ -239,7 +239,7 @@ def build_tree(
         filter_fn: Optional[Callable[[Entity], bool]] = None) -> "MapTree"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L149)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L149)
 
 Creates a filtered MapTree
 
@@ -273,7 +273,7 @@ def filtered(
         filter_fn: Optional[Callable[[Entity], bool]] = None) -> List[Entity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L175)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L175)
 
 Filters self.entities
 
@@ -299,7 +299,7 @@ def to_multi_poly_array(area_to_incorporate: Tuple[int, int],
                         resolution_scale: int) -> npt.NDArray
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L194)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L194)
 
 Takes the entities without hero of the map and draws the contours onto
 a numpy array
@@ -325,7 +325,7 @@ a numpy array
 def from_ros_msg(m: msg.Map) -> "Map"
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L247)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L247)
 
 <a id="mapping_common.map.Map.to_ros_msg"></a>
 
@@ -335,7 +335,7 @@ def from_ros_msg(m: msg.Map) -> "Map"
 def to_ros_msg() -> msg.Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L251)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L251)
 
 <a id="mapping_common.map.MapTree"></a>
 
@@ -346,7 +346,7 @@ def to_ros_msg() -> msg.Map
 class MapTree()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L258)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L258)
 
 An acceleration structure around the shapely.STRtree
 
@@ -383,7 +383,7 @@ def __init__(map: Map,
              filter_fn: Optional[Callable[[Entity], bool]] = None)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L282)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L282)
 
 Creates a shapely.STRtree based on the given map and filtering
 
@@ -407,7 +407,7 @@ Both filters need to match for the entity to match.
 def nearest(geo: shapely.Geometry) -> Optional[ShapelyEntity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L309)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L309)
 
 Returns the nearest Entity inside the tree based on geo
 
@@ -445,7 +445,7 @@ def query(geo: shapely.Geometry,
           distance: Optional[float] = None) -> List[ShapelyEntity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L327)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L327)
 
 Calculates which entities interact with *geo*
 
@@ -488,7 +488,7 @@ def query_nearest(
         all_matches: bool = True) -> List[Tuple[ShapelyEntity, float]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L377)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L377)
 
 Queries the distance from *geo* to its nearest entities in the tree
 
@@ -534,7 +534,7 @@ def query_self(
 ) -> List[Tuple[ShapelyEntity, ShapelyEntity]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L417)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L417)
 
 Queries interactions between the shapes inside this tree.
 
@@ -566,7 +566,7 @@ Removes any self intersections and duplicate interaction pairs.
 def get_entity_in_front_or_back(in_front=True) -> Optional[ShapelyEntity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L471)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L471)
 
 Returns the first entity in front or back based on in_front
 
@@ -603,7 +603,7 @@ def is_lane_free(
 ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L501)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L501)
 
 Returns if a lane left or right of our car is free.
 There are three check methods available:
@@ -656,7 +656,7 @@ def is_lane_free_rectangle(
 ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L619)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L619)
 
 checks if the lane is free by using a checkbox with size and position
 according to inputs
@@ -690,7 +690,7 @@ def is_lane_free_lanemarking(
 ) -> Tuple[LaneFreeState, Optional[shapely.Geometry]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L666)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L666)
 
 checks if a lane is free by using a checkbox that is placed between two lane
 markings. The lane is considered free if there are no colliding entities with
@@ -724,7 +724,7 @@ def is_lane_free_intersection(
 ) -> Tuple[bool, Optional[shapely.Polygon]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L750)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L750)
 
 Returns True if the opposing lane of our car is free.
 Checks if a Polygon lane box intersects with any
@@ -762,7 +762,7 @@ def get_nearest_entity(
 ) -> Optional[Tuple[ShapelyEntity, float]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L810)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L810)
 
 Returns the nearest entity to *reference* that have
 at least coverage % or area in the mask geometry.
@@ -796,7 +796,7 @@ def get_overlapping_entities(
         min_coverage_area: float = 0.0) -> List[ShapelyEntity]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L852)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L852)
 
 Returns a list of entities that have at least coverage % or area in the
 mask geometry.
@@ -827,7 +827,7 @@ def build_global_hero_transform(x: float, y: float,
                                 heading: float) -> Transform2D
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L918)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L918)
 
 Builds a Transform2D representing the global position of the hero
 based on its coordinates and heading
@@ -851,7 +851,7 @@ based on its coordinates and heading
 def lane_free_filter() -> FlagFilter
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/map.py#L934)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/map.py#L934)
 
 Creates the default flag filter for the lane free check
 
