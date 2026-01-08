@@ -60,7 +60,7 @@ class PAFAgent(ROS2Agent):
                 "roll": 0.0,
                 "pitch": 0.0,
                 "yaw": math.radians(180),
-                "horizontal_fov": 25,
+                "horizontal_fov": 130,
                 "vertical_fov": 0.1,
             },
             {"type": "sensor.other.gnss", "id": "GPS", "x": 0.0, "y": 0.0, "z": 0.0},
