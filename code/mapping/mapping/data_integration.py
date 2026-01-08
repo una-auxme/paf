@@ -259,7 +259,22 @@ class MappingDataIntegrationNode(Node):
             .bool_value
         )
 
+        self.update_tracking_velocity = (
+            self.declare_parameter(
+                "update_tracking_velocity",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable to update tracking motion data ",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
         self.tracking_filter = TrackingFilter()
+        self.tracking_filter.update_tracking_velocity_status(
+            self.update_tracking_velocity
+        )
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -830,6 +845,9 @@ class MappingDataIntegrationNode(Node):
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
         if self.filter_tracking_entities:
+            self.tracking_filter.update_tracking_velocity_status(
+                self.update_tracking_velocity
+            )
             map_filters.append(self.tracking_filter)
 
         return map_filters
