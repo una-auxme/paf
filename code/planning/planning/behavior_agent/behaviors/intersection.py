@@ -166,7 +166,7 @@ def check_priority_cross_traffic(map: Map, tree: MapTree):
     if hero is None:
         return True, None
 
-    # Larger rectangle in front of the vehicle to see approaching emergency vehicles earlier
+    # Larger rectangle for approaching emergency vehicles
     offset = Transform2D.new_translation(
         Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
     )
@@ -840,7 +840,11 @@ class Enter(py_trees.behaviour.Behaviour):
 
             if ego_speed > SELF_EMERGENCY_THRESHOLD:
                 self.emergency_pub.publish(Bool(data=True))
-                reason = f"ENTER: EMERGENCY – fast cross traffic, ego_speed={ego_speed:.2f} m/s"
+                reason = (
+                    "ENTER: EMERGENCY – fast cross traffic, "
+                    f"ego_speed={ego_speed:.2f} m/s"
+                )
+
             else:
                 reason = (
                     f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
