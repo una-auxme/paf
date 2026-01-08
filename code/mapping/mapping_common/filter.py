@@ -261,6 +261,9 @@ class TrackingFilter(MapFilter):
     prev2_entities: Optional[List[Entity]] = None
     """Entities from the frame before the previous one (t-2)."""
 
+    update_tracking_velocity: bool = True
+    """Global toggle for enabling/disabling velocity computation."""
+
     @staticmethod
     def _get_entity_position(entity: Entity) -> Vector2:
         """Extracts the 2D position vector from the entity's transform."""
@@ -277,22 +280,28 @@ class TrackingFilter(MapFilter):
 
         return np.linalg.norm(p1 - p2).item()
 
+    def update_tracking_velocity_status(self, track_velocity: bool):
+        """Updates the configuration to enable/disable velocity calculation."""
+        self.update_tracking_velocity = track_velocity
 
     def _assign_new_track_id(self, entity: Entity):
         """Initializes tracking info for a new, unmatched entity."""
 
         if entity.tracking_info is None:
             entity.tracking_info = TrackingInfo()
-            
+
             new_pos = self._get_entity_position(entity)
             timestamp = entity.timestamp.sec + entity.timestamp.nanosec / 1e9
-            ego_motion = self.ego_motion if self.ego_motion is not None else Vector2.zero()
 
-            if timestamp == 0.0:
-                get_logger().info(f"Map Time: {self.map_time}s, Entity Time: {timestamp}, ID: {entity.uuid}, Type: {type(entity)}")
+            if self.ego_motion is None:
+                get_logger().error(
+                    f"Failed to assign track ID to entity {entity.uuid}:"
+                    "ego_motion is None."
+                )
 
-            
-            entity.tracking_info.append_frame(new_pos, ego_motion, timestamp)
+                return
+
+            entity.tracking_info.append_frame(new_pos, self.ego_motion, timestamp)
 
     def update_tracked_entity(self, cur_entity: Entity, prev_entity: Entity):
         """
@@ -303,22 +312,29 @@ class TrackingFilter(MapFilter):
         cur_entity.uuid = prev_entity.uuid
 
         if prev_entity.tracking_info is None:
-            cur_entity.tracking_info = TrackingInfo()
+            self._assign_new_track_id(cur_entity)
         else:
             tracking_info = prev_entity.tracking_info
             new_pos = self._get_entity_position(cur_entity)
             timestamp = cur_entity.timestamp.sec + cur_entity.timestamp.nanosec / 1e9
-            ego_motion = self.ego_motion if self.ego_motion is not None else Vector2.zero()
 
-            if timestamp == 0.0:
-                get_logger().info(f"Map Time: {self.map_time}s, Entity Time: {timestamp}, ID: {cur_entity.uuid}, Type: {type(cur_entity)}")
+            if self.ego_motion is None:
+                get_logger().error(
+                    f"Failed to assign track ID to entity {cur_entity.uuid}:"
+                    "ego_motion is None."
+                )
 
+                return
 
-            tracking_info.append_frame(new_pos, ego_motion, timestamp)
+            tracking_info.append_frame(new_pos, self.ego_motion, timestamp)
             motion = tracking_info.get_motion()
 
             cur_entity.tracking_info = tracking_info
-            cur_entity.motion = motion
+            if motion and self.update_tracking_velocity:
+                cur_entity.motion = motion
+
+            # if motion and type(cur_entity) == Pedestrian or type(cur_entity) == Car:
+            #     cur_entity.motion = motion
 
         # --- DYNAMIC CLASS REASSIGNMENT PATTERN ---
         # If the sensor/map detection (cur_entity) is generic but we have specialized
@@ -418,14 +434,14 @@ class TrackingFilter(MapFilter):
         ego_filter = FlagFilter(is_hero=True)
         lanemark_filter = FlagFilter(is_lanemark=True)
         stop_mark_filter = FlagFilter(is_stopmark=True)
-        cur_to_track_filter = FlagFilter(is_lanemark=False, is_stopmark=False, is_hero=False)
-
+        cur_to_track_filter = FlagFilter(
+            is_lanemark=False, is_stopmark=False, is_hero=False
+        )
 
         cur_ego_vehicle = map.filtered(ego_filter)
-        self.ego_motion = cur_ego_vehicle[0].motion
+        self.ego_motion = cur_ego_vehicle[0].motion if cur_ego_vehicle else None
 
         # 1. Separate Lanemarkings (Static) and Entities to Track
-
         cur_lanemarks = map.filtered(lanemark_filter)
         cur_stopmarks = map.filtered(stop_mark_filter)
 
@@ -438,7 +454,9 @@ class TrackingFilter(MapFilter):
             for entity in cur_to_track:
                 self._assign_new_track_id(entity)
 
-            map.entities = cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks
+            map.entities = (
+                cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks
+            )
             return map
 
         # --- STAGE 1: Current vs Previous Frame (prev1) ---

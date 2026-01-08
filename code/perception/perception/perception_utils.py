@@ -151,7 +151,7 @@ def create_ego_vehicle_mask(data_array: np.ndarray) -> np.ndarray:
 
 
 def apply_local_motion_compensation(
-    points: np.ndarray, d_x: float, d_heading: float, account_heading: bool = False
+    points: np.ndarray, d_x: float, d_heading: float, account_heading: bool = True
 ) -> np.ndarray:
     """
     Applies a simple 2D motion correction to static points in the vehicle's local frame.
@@ -171,7 +171,7 @@ def apply_local_motion_compensation(
 
     if account_heading:
         points_xyz = np.stack([comp_points["x"], comp_points["y"], comp_points["z"]])
-        R = Rotation.from_euler("z", d_heading).as_matrix()
+        R = Rotation.from_euler("z", d_heading, degrees=True).as_matrix()
         comp_3xN = R @ points_xyz
 
         comp_points["x"] = comp_3xN[0, :]

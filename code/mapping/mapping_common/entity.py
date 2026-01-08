@@ -13,7 +13,6 @@ from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 import numpy as np
-import math
 
 import shapely
 
@@ -142,12 +141,13 @@ class Flags:
             is_hero=self._is_hero,
         )
 
+
 @dataclass
 class TrackedFrame:
-    """Speichert eine Position zusammen mit ihrem Zeitstempel (t) für die Berechnung."""
+    """Stores a position together with its timestamp (t) for calculation"""
+
     entity_position: Vector2
-    ego_position: Motion2D
-    timestamp: float # Time in seconds
+    timestamp: float  # Time in seconds
 
 
 @dataclass
@@ -178,138 +178,136 @@ class TrackingInfo:
     """Information that might be required to consistently track entities."""
 
     # --- ROS Persistence Fields ---
-    visibility_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
-    invisibility_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    visibility_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    invisibility_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
     visibility_frame_count: int = 0
     invisibility_frame_count: int = 0
-    moving_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
-    standing_time: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
-    moving_time_sum: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
-    standing_time_sum: 'DurationMsg' = field(default_factory=lambda: DurationMsg())
+    moving_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    standing_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    moving_time_sum: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    standing_time_sum: "DurationMsg" = field(default_factory=lambda: DurationMsg())
     min_linear_speed: float = 0.0
     max_linear_speed: float = 0.0
 
-    # --- Local Tracking State (Not typically in ROS Msg) ---
-    history: List['TrackedFrame'] = field(default_factory=list, repr=False)
+    # --- Local Tracking State ---
+    history: List["TrackedFrame"] = field(default_factory=list, repr=False)
+    MIN_HISTORY_SIZE: int = 5
     MAX_HISTORY_SIZE: int = 20
-    motion_history: List['Vector2'] = field(default_factory=list, repr=False)
-    MAX_MOTION_HISTORY: int = 10
-    
-    EMA_ALPHA: float = 0.7
-    Z_SCORE_THRESHOLD: float = 2.0
 
-    @property
-    def current_time(self) -> float:
-        return self.history[-1].timestamp if self.history else 0.0
+    last_motion_data: Optional["Vector2"] = field(default=None)
 
-    def append_frame(self, entity_pos: 'Vector2', ego_pos: 'Motion2D', timestamp: float):
+    EMA_ALPHA: float = 0.6
+    Z_SCORE_THRESHOLD: float = 1.5
+
+    def append_frame(self, entity_pos: Vector2, ego_pos: Motion2D, timestamp: float):
         """Adds a new frame and updates motion estimation."""
         # 1. Compensate OLD points based on ego movement since the last frame
         if self.history:
             self._compensate_positions(ego_pos, timestamp)
 
         # 2. Add the new point
-        self.history.append(TrackedFrame(entity_pos, ego_pos, timestamp))
+        self.history.append(TrackedFrame(entity_pos, timestamp))
 
         if len(self.history) > self.MAX_HISTORY_SIZE:
             self.history.pop(0)
 
         # 3. Velocity Estimation
-        raw_motion = self._calculate_raw_weighted_motion()
-        if raw_motion:
-            smoothed_motion = self._process_motion_smoothing(raw_motion)
-            self.motion_history.append(smoothed_motion)
-            
-            # Update speed stats
-            speed = math.sqrt(smoothed_motion.x()**2 + smoothed_motion.y()**2)
-            self.max_linear_speed = max(self.max_linear_speed, speed)
-            # Only update min speed if it's the first record or actually moving
-            if self.min_linear_speed == 0 or speed < self.min_linear_speed:
-                if speed > 0.01: # threshold to ignore perfect zero
-                    self.min_linear_speed = speed
+        robust_motion = self._calculate_robust_weighted_motion()
+        if robust_motion:
+            if self.last_motion_data:
+                prev_velocity = self.last_motion_data
+                smoothed_v = (robust_motion * self.EMA_ALPHA) + (
+                    prev_velocity * (1.0 - self.EMA_ALPHA)
+                )
 
-            if len(self.motion_history) > self.MAX_MOTION_HISTORY:
-                self.motion_history.pop(0)
+            else:
+                smoothed_v = robust_motion
 
-    def _compensate_positions(self, current_ego_motion: 'Motion2D', current_timestamp: float):
+            self.last_motion_data = smoothed_v
+
+    def _compensate_positions(
+        self, current_ego_motion: "Motion2D", current_timestamp: float
+    ):
         """Stabilizes history by removing ego-displacement."""
         prev_timestamp = self.history[-1].timestamp
         dt = current_timestamp - prev_timestamp
-        
+
         # Guard against zero or negative dt (clock sync issues)
         if dt <= 0:
             return
 
         # Distance the ego traveled: dist = vel * time
         ego_displacement = current_ego_motion.linear_motion * dt
-        
+
         # Subtract ego movement from all historical observations
         for frame in self.history:
             frame.entity_position -= ego_displacement
-        
-    def _calculate_raw_weighted_motion(self) -> Optional['Vector2']:
+
+    def _calculate_robust_weighted_motion(self) -> Optional["Vector2"]:
         """Calculates velocity using weighted average of historical pairs."""
+
         h_len = len(self.history)
-        if h_len < 3:
+        if h_len < self.MIN_HISTORY_SIZE:
             return None
-        
+
         weighted_velocity_sum = Vector2.zero()
         total_weight_sum = 0.0
 
-        # Optimization: Pairwise sampling with weight proportional to 'newness'
+        segments: List[Tuple[Vector2, float]] = []
+
         for i in range(h_len - 1):
-            # Check a subset of pairs to avoid O(N^2) if history grows
-            for k in range(i + 1, h_len):
-                p_i, t_i = self.history[i].entity_position, self.history[i].timestamp
-                p_k, t_k = self.history[k].entity_position, self.history[k].timestamp
+            p_i, t_i = self.history[i].entity_position, self.history[i].timestamp
 
-                dt = t_k - t_i
-                if dt <= 0.001: continue # Avoid noise/div by zero
+            # Use two steps to account for pairing between [new, new]
+            # and [old, old] lidar data samples.
+            for j in range(i + 1, h_len, 2):
+                p_j, t_j = self.history[j].entity_position, self.history[j].timestamp
 
-                velocity_segment = (p_k - p_i) / dt
-                
-                # Weight: prioritize recent k and longer time gaps for stability
-                # Using your formula: (k - i) / (h_len - k)
-                # Note: h_len - k can be 0 if k is the last index. Guard it.
-                weight = (k - i) / max(1, (h_len - k))
+                dt = t_j - t_i
+                if dt <= 1e-5:
+                    continue  # Avoid noise/div by zero
 
-                weighted_velocity_sum += velocity_segment * weight
-                total_weight_sum += weight
+                v_seg = (p_j - p_i) / dt
 
-        return weighted_velocity_sum / total_weight_sum if total_weight_sum > 0 else None
-    
-    def _process_motion_smoothing(self, new_velocity: 'Vector2') -> 'Vector2':
-        """Smoothes velocity and rejects outliers using Z-score."""
-        if len(self.motion_history) < 3:
-            return new_velocity
-        
-        # Calculate magnitudes for Z-score
-        m_history = self.motion_history
-        velocities = [math.sqrt(m.x()**2 + m.y()**2) for m in m_history]
-        
-        mean = np.mean(velocities)
-        std = np.std(velocities)
+                # Weighting Strategy:
+                # (j - i): Longer time baselines are less sensitive to noise.
+                # (j / h_len): Recent segments are more relevant for current velocity.
+                weight = (j - i) / (2 ** (h_len - j))
 
-        # Outlier detection
-        if std > 0.1:
-            new_vlen = math.sqrt(new_velocity.x()**2 + new_velocity.y()**2)
-            z_score = abs(mean - new_vlen) / std
-            if z_score > self.Z_SCORE_THRESHOLD:
-                # Reject outlier, return previous best estimate
-                return self.motion_history[-1]
-                
-        # Exponential Moving Average
-        prev_velocity = self.motion_history[-1]
-        return (new_velocity * self.EMA_ALPHA) + (prev_velocity * (1.0 - self.EMA_ALPHA))
+                segments.append((v_seg, weight))
 
-    def get_motion(self) -> Optional['Motion2D']:
-        if not self.motion_history:
+        v_xs = np.array([s[0].x() for s in segments])
+        v_ys = np.array([s[0].y() for s in segments])
+
+        c_x = np.median(v_xs)
+        c_y = np.median(v_ys)
+
+        dists_sqrt = (v_xs - c_x) ** 2 + (v_ys - c_y) ** 2
+        dists = np.sqrt(dists_sqrt)
+
+        mean = np.mean(dists)
+        std = np.std(dists)
+
+        for idx, (v_seg, weight) in enumerate(segments):
+            if std > 0.1:
+                z_score = abs((dists[idx] - mean) / std)
+
+                if z_score > self.Z_SCORE_THRESHOLD:
+                    continue
+
+            weighted_velocity_sum += v_seg * weight
+            total_weight_sum += weight
+
+        if total_weight_sum == 0.0:
             return None
-        
-        return Motion2D(
-            linear_motion=self.motion_history[-1],
-            angular_velocity=0.0
-        )
+
+        return weighted_velocity_sum / total_weight_sum
+
+    def get_motion(self) -> Optional["Motion2D"]:
+        if not self.last_motion_data:
+            return None
+
+        return Motion2D(linear_motion=self.last_motion_data, angular_velocity=0.0)
 
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
