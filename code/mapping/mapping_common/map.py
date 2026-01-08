@@ -31,6 +31,8 @@ from builtin_interfaces.msg import Time as TimeMsg
 
 from mapping_interfaces import msg
 
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+
 
 class LaneFreeState(Enum):
     TO_BE_CHECKED = 2
@@ -943,3 +945,58 @@ def lane_free_filter() -> FlagFilter:
     filter.is_lanemark = False
     filter.is_ignored = False
     return filter
+
+
+def has_cross_traffic(
+    self,
+    distance_ahead: float = 8.0,
+    box_length: float = 16.0,
+    box_width: float = 16.0,
+) -> tuple[bool, shapely.Polygon]:
+    """
+    Returns:
+        (cross_clear, mask_polygon)
+        cross_clear = True  → kein moving cross traffic
+        cross_clear = False → cross traffic detected
+    """
+    hero = self.hero()
+    if hero is None:
+        return True, None
+
+    # Checkbox in front of the car to check cross traffic
+    offset = Transform2D.new_translation(
+        Vector2.new(distance_ahead + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(length=box_length, width=box_width, offset=offset)
+    mask = rect.to_shapely(hero.transform)
+
+    entities = self.get_overlapping_entities(mask=mask)
+    if not entities:
+        return True, mask
+
+    hero_tf_inv = hero.transform.inverse()
+
+    # Only consider moving objects
+    for e in entities:
+        motion = e.entity.motion
+        if motion is None:
+            continue
+
+        v_world = motion.linear_motion
+        speed = math.sqrt(v_world.x() ** 2 + v_world.y() ** 2)
+        if speed <= CROSS_TRAFFIC_SPEED_THRESHOLD:
+            continue
+
+        other_pos_world = e.entity.transform.translation
+        other_pos_self = hero_tf_inv.transform_point(other_pos_world)
+
+        v_self = hero_tf_inv.rotation.rotate(Vector2.new(v_world.x(), v_world.y()))
+        forward_velocity = v_self.x()
+        if other_pos_self.x() > 1.5 and forward_velocity > 0.5:
+            continue
+        # v = motion.linear_motion
+        # speed = math.sqrt(v.x() ** 2 + v.y() ** 2)
+        # if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+        return False, mask
+
+    return True, mask
