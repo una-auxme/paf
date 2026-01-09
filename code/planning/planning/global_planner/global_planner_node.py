@@ -214,9 +214,9 @@ class PrePlanner(Node):
             return False
 
         req = GetCarlaRoute.Request()
-        response: Optional[GetCarlaRoute.Response] = (
-            await self.global_plan_client.call_async(req)
-        )
+        response: Optional[
+            GetCarlaRoute.Response
+        ] = await self.global_plan_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.global_plan_client.service_name} service returned None."
@@ -282,7 +282,7 @@ class PrePlanner(Node):
         n = len(data.poses)
         # iterating through global route to create trajectory
         for i in range(1, n - 1):
-            self.get_logger().info(f"Preplanner going throug global plan {i+1}/{n}")
+            self.get_logger().info(f"Preplanner going throug global plan {i + 1}/{n}")
 
             x_target = data.poses[i].position.x
             y_target = data.poses[i].position.y
@@ -341,9 +341,9 @@ class PrePlanner(Node):
         :param opendrive: updated CarlaWorldInformation
         """
         req = GetOpenDriveString.Request()
-        response: Optional[GetOpenDriveString.Response] = (
-            await self.open_drive_client.call_async(req)
-        )
+        response: Optional[
+            GetOpenDriveString.Response
+        ] = await self.open_drive_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.open_drive_client.service_name} service returned None."
