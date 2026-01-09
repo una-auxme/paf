@@ -27,6 +27,8 @@
   <arg name="polygon_simplify_tolerance" default="0.1" />
 
   <arg name="filter_tracking_entities" default="True" />
+  <arg name="update_tracking_velocity" default="False" />
+
   <arg name="show_tracking_info" default="False" />
 
   <node pkg="mapping" exec="data_integration" name="mapping_data_integration">
@@ -55,6 +57,7 @@
     <param name="filter_enable_pedestrian_grow" value="$(var filter_enable_pedestrian_grow)" />
     <param name="polygon_simplify_tolerance" value="$(var polygon_simplify_tolerance)" />
     <param name="filter_tracking_entities" value="$(var filter_tracking_entities)" />
+    <param name="update_tracking_velocity" value="$(var update_tracking_velocity)" />
   </node>
 
   <node pkg="mapping" exec="visualization" name="mapping_visualization">
