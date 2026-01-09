@@ -190,6 +190,7 @@ def grow_a_tree(
                                                 node.curr_behavior_pub,
                                                 node.overtake_status_client,
                                                 node.end_overtake_client,
+                                                node.stop_marks_client,
                                             ),
                                         ],
                                     ),

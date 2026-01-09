@@ -509,7 +509,7 @@ class MapTree:
             "lanemarking",
             "fallback",
             # "trajectory" not implemented yet
-        ] = "rectangle",
+        ] = "fallback",
         min_coverage_percent: float = 0.0,
         min_coverage_area: float = 0.0,
         lane_angle: float = 5.0,
@@ -590,6 +590,7 @@ class MapTree:
 
                 forward_velocity = hero.get_delta_forward_velocity_of(entity.entity)
                 if forward_velocity is None:
+                    del colliding_entities[i]
                     continue
 
                 into_self_local: Transform2D = (
