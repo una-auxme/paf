@@ -26,7 +26,6 @@
   "markdown.extension.toc.unorderedList.marker": "-",
   "markdown.extension.theming.decoration.renderTrailingSpace": true,
   "cmake.ignoreCMakeListsMissing": true,
-  "black-formatter.importStrategy": "fromEnvironment",
   "containers.composeBuild": true,
   "containers.composeDetached": false,
   "task.allowAutomaticTasks": "on",

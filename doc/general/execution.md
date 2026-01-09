@@ -103,8 +103,9 @@ Defines the configuration for the `carla-simulator` service, which runs the CARL
 
 **Purpose**: Defines services for code linting and static analysis. Includes:
 
-- **flake8**: For Python linting.
-- **mdlint**: For Markdown file linting.
+- **ruff-check**: Python linting with the Ruff version pinned in `build/pins/ruff.env`.
+- **ruff-format**: Python formatting with Ruff.
+- **mdlint**: Markdown file linting.
 - **Volumes**: Mounts the project directory for linting files within the container.
 
 ### `docker-compose.docs.yaml`

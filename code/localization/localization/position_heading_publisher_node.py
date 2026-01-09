@@ -48,7 +48,6 @@ GPS_RUNNING_AVG_ARGS: int = 10
 
 
 class PositionHeadingPublisherNode(Node):
-
     def __init__(self):
         """
         Constructor / Setup
@@ -423,9 +422,9 @@ class PositionHeadingPublisherNode(Node):
         This is necessary for the coordinate transformation from GNSS to x/y/z
         """
         req = GetOpenDriveString.Request()
-        response: Optional[GetOpenDriveString.Response] = (
-            await self.open_drive_client.call_async(req)
-        )
+        response: Optional[
+            GetOpenDriveString.Response
+        ] = await self.open_drive_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.open_drive_client.service_name} service returned None."

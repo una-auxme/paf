@@ -17,7 +17,6 @@ class Button:
         )
 
     def draw(self, screen):
-
         pygame.draw.rect(
             screen,
             (200, 200, 200),

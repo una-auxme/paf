@@ -22,7 +22,6 @@ from rcl_interfaces.msg import ParameterDescriptor, ParameterValue, ParameterTyp
 
 
 class SensorCovarianceFusion(Node):
-
     def __init__(self):
         """
         Constructor / Setup
