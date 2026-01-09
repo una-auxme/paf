@@ -14,7 +14,6 @@ from rospy import Publisher
 
 
 class LidarMock(CompatibleNode):
-
     def __init__(self):
         super().__init__("lidar_mock")
 

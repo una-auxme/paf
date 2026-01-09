@@ -51,7 +51,6 @@ Source: https://github.com/ll7/psaf2
 def grow_a_tree(
     role_name: str, node: "BehaviorTree", callback_group: Optional[CallbackGroup] = None
 ):
-
     rules = Parallel(
         "Rules",
         policy=ParallelPolicy.SuccessOnAll(synchronise=False),
@@ -225,7 +224,6 @@ def grow_a_tree(
 
 
 class BehaviorTree(Node):
-
     def __init__(self):
         super().__init__("BehaviorTree")
         self.get_logger().info(f"{type(self).__name__} node initializing...")

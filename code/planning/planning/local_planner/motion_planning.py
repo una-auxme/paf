@@ -475,9 +475,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting global trajectory...")
         req = GetPath.Request()
-        response: Optional[GetPath.Response] = (
-            await self.global_trajectory_client.call_async(req)
-        )
+        response: Optional[
+            GetPath.Response
+        ] = await self.global_trajectory_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.global_trajectory_client.service_name} service returned None."
@@ -506,9 +506,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting speed_limits...")
         req = GetSpeedLimits.Request()
-        response: Optional[GetSpeedLimits.Response] = (
-            await self.speed_limits_client.call_async(req)
-        )
+        response: Optional[
+            GetSpeedLimits.Response
+        ] = await self.speed_limits_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.speed_limits_client.service_name} service returned None."

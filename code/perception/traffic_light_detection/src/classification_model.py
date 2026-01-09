@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 class ClassificationModel(nn.Module):
-
     def __init__(self, num_classes, in_channels=3):
         """
         Creates a small classification net for traffic light
