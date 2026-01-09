@@ -1,15 +1,16 @@
 # Distributed Simulation
 
+> !! Distributed Execution is currently NOT set up for ROS2 and has to be ported!!
+
 **Summary:** This page documents the distributed execution of the Carla simulator and the agent.
 
-- [Distributed Simulation](#distributed-simulation)
-  - [General](#general)
-  - [Remote Machine Setup](#remote-machine-setup)
-  - [Local Machine Setup](#local-machine-setup)
-    - [Ensure similarity between normal docker-compose and distributed docker-compose files](#ensure-similarity-between-normal-docker-compose-and-distributed-docker-compose-files)
-    - [Set the `<ip-address>` of the carla simulator in docker-compose distributed files](#set-the-ip-address-of-the-carla-simulator-in-docker-compose-distributed-files)
-    - [Start the agent on your local machine](#start-the-agent-on-your-local-machine)
-  - [How do you know that you do not have enough compute resources?](#how-do-you-know-that-you-do-not-have-enough-compute-resources)
+- [General](#general)
+- [Remote Machine Setup](#remote-machine-setup)
+- [Local Machine Setup](#local-machine-setup)
+  - [Ensure similarity between normal docker-compose and distributed docker-compose files](#ensure-similarity-between-normal-docker-compose-and-distributed-docker-compose-files)
+  - [Set the `<ip-address>` of the carla simulator in docker-compose distributed files](#set-the-ip-address-of-the-carla-simulator-in-docker-compose-distributed-files)
+  - [Start the agent on your local machine](#start-the-agent-on-your-local-machine)
+- [How do you know that you do not have enough compute resources?](#how-do-you-know-that-you-do-not-have-enough-compute-resources)
 
 ## General
 

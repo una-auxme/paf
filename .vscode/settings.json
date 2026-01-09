@@ -28,5 +28,8 @@
   "cmake.ignoreCMakeListsMissing": true,
   "containers.composeBuild": true,
   "containers.composeDetached": false,
-  "task.allowAutomaticTasks": "on"
+  "task.allowAutomaticTasks": "on",
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  }
 }

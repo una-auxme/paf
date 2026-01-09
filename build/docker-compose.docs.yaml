@@ -6,10 +6,6 @@ services:
     build:
       dockerfile: build/docker/docs/Dockerfile
       context: ../
-      args:
-        USERNAME: ${USERNAME}
-        USER_UID: ${USER_UID}
-        USER_GID: ${USER_GID}
     volumes:
       - ../:/workspace
     command: /workspace/doc/mapping/generate.sh

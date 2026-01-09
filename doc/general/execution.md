@@ -7,131 +7,112 @@ facilitating both normal and distributed execution modes.
 
 ## Table of Contents
 
-- [Execution](#execution)
-  - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-  - [Directory Structure](#directory-structure)
-  - [Base Service Files](#base-service-files)
-    - [`agent_service.yaml`](#agent_serviceyaml)
-    - [`roscore_service.yaml`](#roscore_serviceyaml)
-  - [Docker Compose Files](#docker-compose-files)
-    - [`docker-compose.carla-simulator.yaml`](#docker-composecarla-simulatoryaml)
-    - [`docker-compose.linter.yaml`](#docker-composelinteryaml)
-    - [`docker-compose.leaderboard.yaml`](#docker-composeleaderboardyaml)
-    - [`docker-compose.devroute.yaml`](#docker-composedevrouteyaml)
-    - [`docker-compose.dev.yaml`](#docker-composedevyaml)
-    - [`docker-compose.cicd.yaml`](#docker-composecicdyaml)
-  - [Execution Modes](#execution-modes)
-    - [Normal Execution](#normal-execution)
-    - [Distributed Execution](#distributed-execution)
-  - [Usage](#usage)
-  - [Notes](#notes)
-  - [Conclusion](#conclusion)
+- [Table of Contents](#table-of-contents)
+- [Quick Start](#quick-start)
+- [Directory Structure](#directory-structure)
+- [Docker Compose Files](#docker-compose-files)
+  - [`docker-compose.carla.base.yaml`](#docker-composecarlabaseyaml)
+  - [`docker-compose.dev.base.yaml`](#docker-composedevbaseyaml)
+  - [`docker-compose.deploy.base.yaml`](#docker-composedeploybaseyaml)
+  - [`docker-compose.linter.yaml`](#docker-composelinteryaml)
+  - [`docker-compose.docs.yaml`](#docker-composedocsyaml)
+- [Execution Modes](#execution-modes)
+  - [Normal Execution](#normal-execution)
+  - [Distributed Execution](#distributed-execution)
+- [Usage](#usage)
+- [Notes](#notes)
+- [Conclusion](#conclusion)
 
 ## Quick Start
 
-In order to start the default leaderboard execution simply navigate to the [build](../../build/) folder and select the `Compose up` option in the right-click menu of the `docker-compose.leaderboard.yaml` file.
+After cloning the paf repository, make sure to execute the `./user_setup.sh` in the project root once.
+This sets up important docker compose environment variables.
+
+In order to start the default leaderboard execution simply navigate to the [build](../../build/) folder and select the `Compose up` option in the right-click menu of the `docker-compose.dev.<your-gpu-type>.yml` file. As `<your-gpu-type>` `cuda` should be used for the lab PCs.
 
 ## Directory Structure
 
 The `build` directory contains the necessary configuration and setup files for building and running the project services. Below is an overview of the key files:
 
-- **Base Service Files**
-  - `agent_service.yaml`
-  - `roscore_service.yaml`
 - **Docker Compose Files**
-  - `docker-compose.carla-simulator.yaml`
+  - `docker-compose.carla.base.yaml`
+  - `docker-compose.carla.<your-gpu-type>.yaml`
+  - `docker-compose.dev.base.yaml`
+  - `docker-compose.dev.<your-gpu-type>.yaml`
   - `docker-compose.linter.yaml`
-  - `docker-compose.leaderboard.yaml`
-  - `docker-compose.devroute.yaml`
-  - `docker-compose.dev.yaml`
-  - `docker-compose.cicd.yaml`
-
-## Base Service Files
-
-The base service files define the configurations for individual services used in the project. These files are included or extended in the Docker Compose files to create different execution setups and are not intended for standalone execution.
-
-### `agent_service.yaml`
-
-Defines the configuration for the `agent` service, which represents the autonomous driving agent. Key configurations include:
-
-- **Build Settings**: Specifies the Dockerfile and build arguments for creating the agent image.
-- **Environment Variables**: Sets up necessary environment variables like `DISPLAY`, `ROS_MASTER_URI`, and `CARLA_SIM_HOST`.
-- **Volumes**: Mounts directories like `/workspace` to share code and data between the host and the container.
-- **Networks**: Connects the agent to the `carla` and `ros` networks.
-
-### `roscore_service.yaml`
-
-Defines the `roscore` service for running the ROS master node. Key configurations include:
-
-- **Image**: Uses the official ROS Noetic image.
-- **Command**: Starts `roscore`.
-- **Environment Variables**: Sets up ROS networking variables.
-- **Networks**: Connects to the `ros` network.
+  - `docker-compose.docs.yaml`
 
 ## Docker Compose Files
 
-The Docker Compose files allow the execution of different components or whole scenarios that include multiple services.
+The base compose files (`docker-compose.*.base.yaml`) define the configurations for individual services used in the project. These files are extended in platform specific configuration files to adapt the development environment to different hosts.
+For the lab, only the `docker-compose.*.cuda.yaml` configurations should be executed, but the base configuration files contain pretty much all relevant parameters for development.
 
-### `docker-compose.carla-simulator.yaml`
+### `docker-compose.carla.base.yaml`
 
 Defines the configuration for the `carla-simulator` service, which runs the CARLA simulator. Key configurations include:
 
-- **Image**: Uses the CARLA simulator image tailored for the project.
+- **Image**: Uses the CARLA simulator image tailored for the project. The image can be built manually with [`build_carla.sh`](../../build/docker/carla/build_carla.sh), but is pulled from the container registry by default.
 - **Command**: Starts the simulator with specific settings such as resolution, quality level, and disabling sound.
-- **Environment Variables**: Sets variables like `DISPLAY` and NVIDIA capabilities.
-- **Volumes**: Shares the X11 UNIX socket and custom CARLA settings.
+- **Environment Variables**: Sets up desktop→docker pass-through
+- **Volumes**:
+  - Desktop: X11 UNIX socket + `${XDG_RUNTIME_DIR}`
+  - Custom CARLA settings
+- **Networks**: Connects to the `carla` network.
+
+`docker-compose.carla.<your-gpu-type>.yaml` configurations inherit their settings from `docker-compose.carla.base.yaml` and properly set up the GPU drivers for a specific vendor.
+
+### `docker-compose.dev.base.yaml`
+
+**Purpose**: Provides a container for development. Starts a VS Code instance inside the container. Leaderboard and agent have to be started manually inside the container with `leaderboard.dev` and `agent.dev` respectively.
+
+- **Image**: Custom [ubuntu24.04+ros2 jazzy Dockerfile](../../build/docker/agent-ros2/Dockerfile) set up for starting the leaderboard and the agent. This configuration uses the **agent-dev** target of the Dockerfile.
+- **Includes**:
+  - `docker-compose.carla.base.yaml`
+- **Environment Variables**:
+  - Sets up desktop→docker pass-through
+  - CARLA_SIM_HOST points to the carla-simulator
+- **Volumes**:
+  - Desktop: X11 UNIX socket + `${XDG_RUNTIME_DIR}`
+  - Paf project root to `/workspace`
+  - `<prj.root>/volumes/home` to `/home`: provides a persistent home directory in the container. -> Configuration files for RViz/Rqt can persist.
+- **Networks**: Connects to the `carla` network.
+- **Notes**:
+  - All important ROS2 files in the container (Like ROS workspaces, leaderboard, logs, etc...) can be found under `/internal_workspace`
+
+### `docker-compose.deploy.base.yaml`
+
+**Purpose**: Provides a container that autonomously executes the leaderboard+agent with a given route. It exits when the leaderboard is finished. Intended for evaluations, CI/CD. NOT intended for live development.
+
+- **Image**: Shares the same custom [ubuntu24.04+ros2 jazzy Dockerfile](../../build/docker/agent-ros2/Dockerfile) with `docker-compose.dev.base.yaml`. But this configuration uses the agent-deploy target of the Dockerfile.
+- **Notable differences to `docker-compose.dev.base.yaml`**:
+  - The image build fails fully when pip or rosdep dependency installation fails
+  - The image automatically starts `leaderboard.deploy` on startup
+  - `leaderboard.deploy` also includes/starts the agent
+  - The project files are copied into the image in the build stage and also built in the build stage
+  - The project directory is not mounted into the container
+- **Includes**:
+  - `docker-compose.carla.base.yaml`
+- **Environment Variables**:
+  - Sets up desktop→docker pass-through
+  - CARLA_SIM_HOST points to the carla-simulator
+- **Volumes**:
+  - Desktop: X11 UNIX socket + `${XDG_RUNTIME_DIR}`
 - **Networks**: Connects to the `carla` network.
 
 ### `docker-compose.linter.yaml`
 
-Defines services for code linting and static analysis. Includes:
+**Purpose**: Defines services for code linting and static analysis. Includes:
 
 - **ruff-check**: Python linting with the Ruff version pinned in `build/pins/ruff.env`.
 - **ruff-format**: Python formatting with Ruff.
 - **mdlint**: Markdown file linting.
 - **Volumes**: Mounts the project directory for linting files within the container.
 
-### `docker-compose.leaderboard.yaml`
+### `docker-compose.docs.yaml`
 
-- **Includes**:
-  - `docker-compose.linter.yaml`
-  - `docker-compose.carla-simulator.yaml`
-  - `roscore_service.yaml`
-- **Services**:
-  - Extends the `agent` service from `agent_service.yaml`.
-- **Purpose**: Runs the agent with special scenarios included. Solving these scenarios is the primary goal of the project.
+**Purpose**: Rebuilds part of the documentation with pydoc-markdown. Currently only used for `mapping`:
 
-### `docker-compose.devroute.yaml`
-
-- **Includes**:
-  - `docker-compose.linter.yaml`
-  - `docker-compose.carla-simulator.yaml`
-  - `roscore_service.yaml`
-- **Services**:
-  - Extends the `agent` service from `agent_service.yaml`.
-- **Environment Overrides**:
-  - Sets `ROUTE` to a simple route file (`routes_simple.xml`) which contains no special scenarios.
-- **Command Override**:
-  - Runs the agent with simplified settings suitable for development and testing.
-- **Purpose**: Provides a minimal setup for development without special scenarios.
-
-### `docker-compose.dev.yaml`
-
-- **Services**:
-  - Defines an `agent-dev` service using the corresponding Dockerfile.
-- **Purpose**: Provides a container for attaching a VS Code instance for development.
-
-### `docker-compose.cicd.yaml`
-
-- **Includes**:
-  - `docker-compose.carla-simulator.yaml`
-  - `roscore_service.yaml`
-- **Services**:
-  - Defines an `agent` service using a prebuilt image from the project's container registry.
-- **Dependencies**:
-  - Depends on `carla-simulator` and `roscore` to ensure they start before the agent.
-- **Purpose**: Runs the leaderboard evaluator as part of Continuous Integration/Continuous Deployment (CI/CD) pipelines.
+- **Volumes**: The project is mounted to `/workspace`
 
 ## Execution Modes
 
@@ -139,12 +120,14 @@ The project supports two primary execution modes, suitable for different develop
 
 ### Normal Execution
 
-In normal execution mode, all services (agent, CARLA simulator, ROS core) run on a single machine. This mode is suitable for:
+In normal execution mode, all services (agent, CARLA simulator) run on a single machine. This mode is suitable for:
 
 - Development and testing with smaller models.
 - Scenarios where the machine's resources (especially VRAM) are sufficient to handle both the agent's computation and the simulator.
 
 ### Distributed Execution
+
+> !! Distributed Execution is currently NOT set up for ROS2 and has to be ported!!
 
 Distributed execution separates the agent and the CARLA simulator onto different machines. This is necessary when:
 
@@ -157,14 +140,10 @@ Distributed execution separates the agent and the CARLA simulator onto different
 
 To run the project using the provided Docker Compose files simply navigate to the files in the VS Code Explorer and select `Compose Up` after right-clicking the file.
 
-- **CI/CD Execution**:
-
-  The `docker-compose.cicd.yaml` is intended to be used within CI/CD pipelines and may be invoked as part of automated scripts.
-
 ## Notes
 
-- Ensure that you have NVIDIA GPU support configured if running models that require GPU acceleration.
-- The `agent_service.yaml` and other base service files are crucial for defining the common configurations and should not be modified unless necessary.
+- Ensure that you have proper GPU support configured if running models that require GPU acceleration.
+- The `docker-compose.dev.base.yaml` and other base service files are crucial for defining the common configurations and should not be modified unless necessary.
 - When running in distributed mode, update the `CARLA_SIM_HOST` environment variable in the appropriate service configurations to point to the simulator's IP address.
 - The linter services defined in `docker-compose.linter.yaml` can be used to maintain code quality and should be run regularly during development.
 

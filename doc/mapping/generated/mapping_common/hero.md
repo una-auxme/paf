@@ -40,7 +40,7 @@ Hero car width in meters
 def create_hero_entity() -> Car
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/hero.py#L24)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/hero.py#L24)
 
 Creates a car-entity with the shape of the hero car
 

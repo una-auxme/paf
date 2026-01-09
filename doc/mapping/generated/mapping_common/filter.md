@@ -39,7 +39,7 @@ This module contains these filters and algorithms.
 class MapFilter()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L26)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L26)
 
 Abstract base class for all mapping filters
 
@@ -51,7 +51,7 @@ Abstract base class for all mapping filters
 def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L29)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L29)
 
 Filters the map.
 
@@ -76,7 +76,7 @@ Look into the class description for what the filter does
 class LaneIndexFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L45)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L45)
 
 Updates the Index of lanemark Entities if duplicates have been removed.
 
@@ -96,10 +96,10 @@ Then returns the updated map with all Entities
 #### filter
 
 ```python
-def filter(map) -> Map
+def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L60)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L60)
 
 <a id="mapping_common.filter.GrowPedestriansFilter"></a>
 
@@ -110,7 +110,7 @@ def filter(map) -> Map
 class GrowPedestriansFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L96)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L96)
 
 Grow Pedestrians by 0.5 meter for a better detection of them (e.g. for the ACC)
 
@@ -126,10 +126,10 @@ Then returns the updated map with all Entities
 #### filter
 
 ```python
-def filter(map) -> Map
+def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L107)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L107)
 
 <a id="mapping_common.filter.GrowthMergingFilter"></a>
 
@@ -140,7 +140,7 @@ def filter(map) -> Map
 class GrowthMergingFilter(MapFilter)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L117)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L117)
 
 Merges entities in the map with growing them
 
@@ -193,5 +193,5 @@ This controls the tolerance of the simplification.
 def filter(map: Map) -> Map
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/filter.py#L152)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/filter.py#L152)
 

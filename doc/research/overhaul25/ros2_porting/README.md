@@ -9,7 +9,7 @@ The project currently uses ROS 1 noetic as its backbone. It is EOL in May 2025.
     - [Steps (Dockerfile)](#steps-dockerfile)
     - [Problems (Dockerfile)](#problems-dockerfile)
     - [**Major issue: Carla API**](#major-issue-carla-api)
-      - [**Carla Solution**](#carla-solution)
+      - [~~Carla Solution: Custom leaderboard image (deprecated)~~](#carla-solution-custom-leaderboard-image-deprecated)
     - [Status (Dockerfile)](#status-dockerfile)
   - [2. ROS package dependencies](#2-ros-package-dependencies)
   - [3. Take measurements with the ROS1 codebase](#3-take-measurements-with-the-ros1-codebase)
@@ -106,19 +106,19 @@ Possible Solutions:
 
 - Use ROS 2 Foxy. Ships with python 3.8 but is **EOL**
 - Try to compile Carla from source. Is a lot of effort and might still not work. Also breaks compatibility with the official leaderboard. Not recommended.
-- Try to use an older python version with ROS 2 humble/jazzy. Might work, but requires building ROS from source. Investigation pending...
+- Try to use an older python version with ROS 2 humble/jazzy. Might work, but requires building ROS from source. *This was used as a temporal solution*
 - Wait for [a new Carla leaderboard release](https://github.com/carla-simulator/carla/tree/ue4/0.9.16)
-- **[Chosen solution](#carla-solution): Use Ubuntu 24.04, but compile ROS2 jazzy together with python 3.8 from source**
+- **[Chosen solution](#carla-solution): Use the new 0.9.16 Carla release**
 
-##### **Carla Solution**
+##### ~~Carla Solution: Custom leaderboard image (deprecated)~~
 
-It is possible compile ROS2 jazzy together with python 3.8 from source. This makes it possible to import both the Carla API and rclpy in the same python environment.
+~~It is possible compile ROS2 jazzy together with python 3.8 from source. This makes it possible to import both the Carla API and rclpy in the same python environment.~~
 
-This setup increases the Dockerfile complexity by a lot. ➡ The following docker setup was chosen to decouple the carla-ros-bridge from the PAF agent:
+~~This setup increases the Dockerfile complexity by a lot. ➡ The following docker setup was chosen to decouple the carla-ros-bridge from the PAF agent:~~
 
-- Container A: *carla-leaderboard:2.1*: Contains the Carla simulator
-- Container B: *carla-leaderboard-ros-bridge:2.1*: Contains the ROS2 jazzy + Python3.8 fusion and the leaderboard, scenario_runner and ros_bridge. It starts the leaderboard, but no part of the PAF agent.
-- Container C: *agent(-dev)*: The image containing the PAF agent. Launches the PAF agent launch files via `ros2 launch`. The container is a normal ROS2 jazzy setup based on Ubuntu 24.04 with apt packages and Python3.12. It also includes the Carla ros_bridge only for the message types.
+- ~~Container A: *carla-leaderboard:2.1*: Contains the Carla simulator~~
+- ~~Container B: *carla-leaderboard-ros-bridge:2.1*: Contains the ROS2 jazzy + Python3.8 fusion and the leaderboard, scenario_runner and ros_bridge. It starts the leaderboard, but no part of the PAF agent.~~
+- ~~Container C: *agent(-dev)*: The image containing the PAF agent. Launches the PAF agent launch files via `ros2 launch`. The container is a normal ROS2 jazzy setup based on Ubuntu 24.04 with apt packages and Python3.12. It also includes the Carla ros_bridge only for the message types.~~
 
 ```mermaid
 flowchart TD
@@ -126,35 +126,35 @@ flowchart TD
     B <-->|ROS2| C[agent]
 ```
 
-Pros:
+~~Pros:~~
 
-- Carla and PAF dependencies are decoupled ➡ way simpler dependency management and more flexibility for choosing python packages
-- The agent Dockerfile is reasonably simple
-- PAF codebase works on a modern ROS version with modern Python
-- The PAF agent runs completely decoupled from the leaderboard: Possibility for rapid development, because the agent can be restarted without restarting the leaderboard
+- ~~Carla and PAF dependencies are decoupled ➡ way simpler dependency management and more flexibility for choosing python packages~~
+- ~~The agent Dockerfile is reasonably simple~~
+- ~~PAF codebase works on a modern ROS version with modern Python~~
+- ~~The PAF agent runs completely decoupled from the leaderboard: Possibility for rapid development, because the agent can be restarted without restarting the leaderboard~~
 
-Cons:
+~~Cons:~~
 
-- The fusion of ROS2 jazzy and Python3.8 is not officially supported.
-  - Some ros2 tools are actually broken in the *carla-leaderboard-ros-bridge* container (e.g. `ros2 topic ...`). But these tools work in the agent container.
-  - The ros_bridge packages and the leaderboard do not seem to be affected by these broken tools
-- The PAF agent runs completely decoupled from the leaderboard: Scenario changes in the pipeline do not restart the agent (TODO: Solution possible!?)
-- This setup is not submittable to the leaderboard, because it uses 2 docker containers
+- ~~The fusion of ROS2 jazzy and Python3.8 is not officially supported.~~
+  - ~~Some ros2 tools are actually broken in the *carla-leaderboard-ros-bridge* container (e.g. `ros2 topic ...`). But these tools work in the agent container.~~
+  - ~~The ros_bridge packages and the leaderboard do not seem to be affected by these broken tools~~
+- ~~The PAF agent runs completely decoupled from the leaderboard: Scenario changes in the pipeline do not restart the agent (TODO: Solution possible!?)~~
+- ~~This setup is not submittable to the leaderboard, because it uses 2 docker containers~~
 
-Merging the *carla-leaderboard-ros-bridge* and *agent* container would be technically possible for submission to the leaderboard, but quite cumbersome.
+~~Merging the *carla-leaderboard-ros-bridge* and *agent* container would be technically possible for submission to the leaderboard, but quite cumbersome.~~
 
 #### Status (Dockerfile)
 
 - *agent(-dev)*:
-  - A basic [Dockerfile](../../../../build/docker/agent-ros2/Dockerfile) exists.
-  - It successfully communicates with the *carla-leaderboard-ros-bridge:2.1*
-  - The [ros_2_publisher.py](../../../../code/ros_2_publisher.py) was used for testing and the simulation ran at \~2X speed (12700KF, Nvidia RTX 3080).
+  - [Dockerfile](../../../../build/docker/agent-ros2/Dockerfile)
+  - Contains the Carla API and leaderboard.
+  - It successfully communicates with the Carla simulator inside the *carla-leaderboard* image.
 - Combined [Dockerfile](../../../../build/docker/carla/Dockerfile) for
   - *carla-leaderboard:2.1*
-  - *carla-leaderboard-ros-bridge:2.1*
+  - *carla-leaderboard-api:2.1*: Just contains the Carla Python API files for inclusion in the agent
   - These images only have to be built once with the [build_carla](../../../../build/docker/carla/build_carla.sh) script.
 
-➡ Basic docker setup is complete
+➡ Docker setup is complete
 
 ### 2. ROS package dependencies
 
@@ -170,7 +170,7 @@ The following explicitly installed ROS1 packages are not available in ROS2:
 - ros-noetic-ros-pytest ➡ replaced with ros-jazzy-ament-cmake-pytest. **The unit test integration for the mapping_common package has to be updated.** The unit tests themselves won't change since both packages use py_test under the hood.
 - ros-noetic-rviz ➡ ros-jazzy-rviz2
 
-Status: All ROS dependencies can be installed or built. API changes might require some minor topic or message adjustments.
+Status: All ROS dependencies can be installed or built. Any necessary changed have been applied.
 
 ### 3. Take measurements with the ROS1 codebase
 
@@ -271,6 +271,7 @@ The planned process for porting individual python packages and nodes is describe
 Current status:
 
 - [DONE] Port the agent, acting and control packages
+- [DONE] Port the full project
 
 ### 5. Compare measurements to identify problems
 
@@ -294,22 +295,22 @@ Required steps:
 
 - Ruff as formatter/linter for python files?
 - Update the build actions to build the new Dockerfiles
-- Push new carla images to the github registry
+- [DONE] Push new carla images to the github registry
 
 ## Risks and Mitigation
 
 ### Risk: Python version conflicts
 
-Python version conflicts between leaderboard, scenario-runner, carla ros_bridge and the newer versions shipped by python 3.12
-proved to be [a major problem](#major-issue-carla-api).
+~~Python version conflicts between leaderboard, scenario-runner, carla ros_bridge and the newer versions shipped by python 3.12
+proved to be [a major problem](#major-issue-carla-api).~~
 
 ### Mitigation
 
-[By splitting up the agent into `carla-leaderboard-ros-bridge` and `agent(-dev)` containers](#carla-solution), the python versions of the leaderboard and the PAF codebase are mostly separated.
-(Excluding the carla-ros-bridge message types).
+~~[By splitting up the agent into `carla-leaderboard-ros-bridge` and `agent(-dev)` containers](#carla-solution), the python versions of the leaderboard and the PAF codebase are mostly separated.
+(Excluding the carla-ros-bridge message types).~~
 
-As long as the `carla-leaderboard-ros-bridge` properly supplies data to our container and receives the vehicle control commands, the PAF codebase works independently.  
-➡ The Risk of further major road-blocks is pretty low since the PAF code base can be adjusted as needed.
+~~As long as the `carla-leaderboard-ros-bridge` properly supplies data to our container and receives the vehicle control commands, the PAF codebase works independently.  
+➡ The Risk of further major road-blocks is pretty low since the PAF code base can be adjusted as needed.~~
 
 ## Sources
 
