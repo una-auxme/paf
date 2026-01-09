@@ -344,7 +344,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && apt-get install -y rsync
 
 RUN --mount=type=bind,target=/workspace/code,source=code \
-  mkdir /arlab-deps && \
+  mkdir /agent-deps && \
   rsync -r --prune-empty-dirs --include="*/" \
   --include="requirements.txt" \
   --include="requirements.*.txt" \
