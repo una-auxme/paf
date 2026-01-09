@@ -11,8 +11,11 @@ services:
           devices:
             - driver: nvidia
               count: "all"
-              capabilities: [gpu]
+              capabilities: [ gpu ]
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
+    volumes:
+      # This should not be necessary: https://github.com/NVIDIA/nvidia-container-toolkit/issues/16
+      - /usr/share/vulkan/icd.d/nvidia_icd.json:/usr/share/vulkan/icd.d/nvidia_icd.json
     # Uncomment below if you also have intel/amd integrated graphics (Laptop)
     # devices:
     #   - /dev/dri
