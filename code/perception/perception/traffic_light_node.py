@@ -92,55 +92,39 @@ class TrafficLightNode(Node):
         )
 
     def handle_camera_image(self, msg: TrafficLightImages):
-        """
-        # calculates the current state of the traffic light
-        cv2_image = self.bridge.imgmsg_to_cv2(image)
-        rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
-        # apply a NN on the image to determine state
-        result, data = self.classifier(cv2_image)
 
-        if (
-            data[0][0] > 1e-15
-            and data[0][3] > 1e-15
-            or data[0][0] > 1e-10
-            or data[0][3] > 1e-10
-        ):
-            return  # too uncertain, may not be a traffic light
-        # checks if the traffic light has correct orientation
-        if not is_front(rgb_image):
-            return  # not a front facing traffic light
+        results = []
+        for image_msg in msg.images:
+            cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
+            result = self.classifier(cv_image)
+            results.append(result)
 
-        # 1: Green, 2: Red, 4: Yellow other values (back or side of traffic light) are
-        # interpreted as unknown
-        state = result if result in [1, 2, 4] else 0
+        if not results:
+            return
+
+        if 2 in results:
+            state = 2
+        elif 1 in results:
+            state = 1
+        elif 4 in results:
+            state = 4
+
+        else:
+            state = 0
+
         self.traffic_light_msg.state = state
         if state != 0:
-            self.last_info_time = self.get_clock().now()"""
+            self.last_info_time = self.get_clock().now()
 
-        self.get_logger().info(f"Received {len(msg.images)} traffic light images")
-        """
-        i = 0
-        for image in msg.images:
-            i += 1
-            # calculates the current state of the traffic light
-            cv2_image = self.bridge.imgmsg_to_cv2(image)
-            rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
-
-            window_name = f"Traffic Light {i}"
-            cv2.imshow(window_name, rgb_image)
-
-        cv2.waitKey(1)"""
-
+        self.get_logger().info(
+            f"Traffic light results -> state: {tuple(results)} -> {state}"
+        )
+        # Ausgabe
         images = []
-
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
             images.append(cv_image)
 
-        if not images:
-            return
-
-        # Alle Bilder auf gleiche Höhe bringen
         min_height = min(img.shape[0] for img in images)
 
         resized = [
