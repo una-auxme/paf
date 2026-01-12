@@ -3,11 +3,9 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-from sensor_msgs.msg import Image as ImageMsg
 from perception_interfaces.msg import TrafficLightState, TrafficLightImages
 from cv_bridge import CvBridge
 import cv2
-import numpy as np
 
 from visualization_msgs.msg import Marker
 
