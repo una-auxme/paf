@@ -14,6 +14,7 @@ from visualization_msgs.msg import Marker
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
+from collections import deque
 
 from traffic_light_detection.src.traffic_light_inference import (
     TrafficLightInference,
@@ -57,6 +58,7 @@ class TrafficLightNode(Node):
         self.last_info_time = self.get_clock().now()
         self.traffic_light_msg = TrafficLightState()
         self.traffic_light_msg.state = 0
+        self.state_buffer = deque(maxlen=5)
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -92,7 +94,8 @@ class TrafficLightNode(Node):
         )
 
     def handle_camera_image(self, msg: TrafficLightImages):
-
+        # Classifies all traffic light images in a topic message
+        # Looks for red, green, and yellow classifications in the results tuple.
         results = []
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
@@ -103,10 +106,22 @@ class TrafficLightNode(Node):
             return
 
         if 2 in results:
-            state = 2
+            interim_state = 2
         elif 1 in results:
-            state = 1
+            interim_state = 1
         elif 4 in results:
+            interim_state = 4
+        else:
+            interim_state = 0
+
+        # Cache values and only change state after a certain number has been reached
+        self.state_buffer.append(interim_state)
+
+        if self.state_buffer.count(2) >= 3:
+            state = 2
+        elif self.state_buffer.count(1) >= 3:
+            state = 1
+        elif self.state_buffer.count(4) >= 2:
             state = 4
 
         else:
@@ -119,7 +134,9 @@ class TrafficLightNode(Node):
         self.get_logger().info(
             f"Traffic light results -> state: {tuple(results)} -> {state}"
         )
-        # Ausgabe
+
+        ############## DEBUG BEGIN ####################
+        # output of traffic light images of a topic message
         images = []
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
@@ -138,11 +155,12 @@ class TrafficLightNode(Node):
             for img in images
         ]
 
-        # horizontal zusammensetzen
+        # assemble horizontally
         combined = cv2.hconcat(resized)
 
         cv2.imshow("Traffic Lights (one message)", combined)
         cv2.waitKey(1)
+        ############## DEBUG END ################
 
     def loop(self):
         # check if the last state was received more than 2 seconds ago
@@ -202,45 +220,6 @@ class TrafficLightNode(Node):
 
         # Publish the marker
         self.marker_pub.publish(text_marker)
-
-
-def get_light_mask(image):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Define lower and upper bounds for the hue, saturation, and value
-    # - Red and Yellow combined since they are so close in the color spectrum
-    lower_red_yellow = np.array([0, 75, 100])
-    upper_red_yellow = np.array([40, 255, 255])
-    lower_green = np.array([40, 200, 200])
-    upper_green = np.array([80, 255, 255])
-
-    # Mask where the pixels within the bounds are white, otherwise black
-    m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
-    m2 = cv2.inRange(hsv, lower_green, upper_green)
-    mask = cv2.bitwise_or(m1, m2)
-
-    return mask
-
-
-def is_front(image):
-    mask = get_light_mask(image)
-
-    # Find contours in the thresholded image, use only the largest one
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-    contour = contours[0] if contours else None
-
-    if contour is None:
-        return False
-
-    _, _, width, height = cv2.boundingRect(contour)
-    aspect_ratio = width / height
-
-    # If aspect ratio is within range of a square (therefore a circle)
-    if 0.75 <= aspect_ratio <= 1.3:
-        return True
-    else:
-        return False
 
 
 def main(args=None):
