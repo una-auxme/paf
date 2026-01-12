@@ -1,6 +1,5 @@
 import argparse
 
-import torch
 import torchvision.transforms as t
 from .transforms import (
     Normalize,
