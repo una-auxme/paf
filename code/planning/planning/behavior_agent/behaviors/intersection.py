@@ -1,4 +1,5 @@
 import py_trees
+import math
 from py_trees.common import Status
 from typing import Optional
 
@@ -7,13 +8,13 @@ from rclpy.publisher import Publisher
 from rclpy.clock import Clock
 from rclpy.duration import Duration
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from perception_interfaces.msg import Waypoint, TrafficLightState
 from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
 
 import mapping_common.hero
-from mapping_common.map import Map
+from mapping_common.map import Map, MapTree
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
@@ -97,6 +98,101 @@ INTERSECTION_HAS_TRAFFIC_LIGHT: bool = False
 """True, if the car saw a traffic light in the intersection
 at least once
 """
+
+# Cross traffic parameter
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+CROSS_CHECK_DISTANCE = 15.0
+CROSS_CHECK_LENGTH = 25.0
+CROSS_CHECK_WIDTH = 50.0
+
+# Priority traffic parameter
+PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
+PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
+PRIORITY_CHECK_LENGTH = 25.0
+PRIORITY_CHECK_WIDTH = 50.0
+SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
+
+
+def check_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob im Bereich der Kreuzung vor dem Fahrzeug bewegter Quer­verkehr ist.
+
+    Returns:
+        (cross_clear, mask_polygon)
+        cross_clear = True  → kein bewegter Quer­verkehr
+        cross_clear = False → Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    offset = Transform2D.new_translation(
+        Vector2.new(CROSS_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=CROSS_CHECK_LENGTH,
+        width=CROSS_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+            # moving object at an intersection → cross traffic
+            return False, mask
+
+    return True, mask
+
+
+def check_priority_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob sich im größeren Kreuzungsbereich schnelle Fahrzeuge (> 25 km/h)
+    von rechts oder links nähern (z.B. Einsatzfahrzeuge mit Sonderrechten).
+
+    Returns:
+        (priority_clear, mask_polygon)
+        priority_clear = True  → kein schneller Quer­verkehr
+        priority_clear = False → schneller Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    # Larger rectangle for approaching emergency vehicles
+    offset = Transform2D.new_translation(
+        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=PRIORITY_CHECK_LENGTH,
+        width=PRIORITY_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+
+        # Only consider fast objects
+        if speed > PRIORITY_SPEED_THRESHOLD:
+            return False, mask
+
+    return True, mask
 
 
 def set_line_stop(client: Client, distance: float):
@@ -426,11 +522,13 @@ class Wait(py_trees.behaviour.Behaviour):
         clock: Clock,
         curr_behavior_pub: Publisher,
         stop_client: Client,
+        emergency_pub: Publisher,
     ):
         super().__init__(name)
         self.clock = clock
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
+        self.emergency_pub = emergency_pub
 
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
@@ -472,6 +570,45 @@ class Wait(py_trees.behaviour.Behaviour):
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
+        if self.intersection_type != CarlaRoute.LEFT:
+            # Priority cross traffic check
+            priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+            add_debug_entry(
+                self.name,
+                f"[Wait] Priority cross traffic clear: {priority_clear}",
+            )
+            if priority_mask is not None:
+                add_debug_marker(
+                    debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3))
+                )
+
+            if not priority_clear:
+                # priority cross traffic detected
+                set_line_stop(self.stop_client, 0.0)
+
+                speedometer = self.blackboard.try_get("/carla/hero/Speed")
+                ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+                if ego_speed > SELF_EMERGENCY_THRESHOLD:
+                    self.emergency_pub.publish(Bool(data=True))
+                    reason = (
+                        f"WAIT: EMERGENCY - fast cross traffic, "
+                        f"ego_speed={ego_speed:.2f} m/s"
+                    )
+                else:
+                    reason = (
+                        f"WAIT: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
+                        "(no emergency brake)"
+                    )
+
+                return debug_status(
+                    self.name,
+                    py_trees.common.Status.RUNNING,
+                    reason,
+                )
+            unset_line_stop(self.stop_client)
+            self.emergency_pub.publish(Bool(data=False))
+
         dist = calculate_waypoint_distance(
             self.blackboard, self.waypoint, forward_offset=STOP_LINE_OFFSET
         )
@@ -495,8 +632,6 @@ class Wait(py_trees.behaviour.Behaviour):
         if traffic_light_detected:
             global INTERSECTION_HAS_TRAFFIC_LIGHT
             INTERSECTION_HAS_TRAFFIC_LIGHT = True
-
-        apply_emergency_vehicle_speed_fix()
 
         add_debug_entry(
             self.name, f"Traffic light status: {tr_status_str(traffic_light_status)}"
@@ -526,8 +661,8 @@ class Wait(py_trees.behaviour.Behaviour):
                     "Waiting for traffic light",
                 )
             elif traffic_light_status.state == TrafficLightState.UNKNOWN:
-                # Wait at least 2 seconds at stopline
-                if self.clock.now() - self.stop_time > Duration(seconds=2.0):
+                # Wait at least 0.5 seconds at stopline (was at 2 sec)
+                if self.clock.now() - self.stop_time > Duration(seconds=0.5):
                     self.over_stop_line = True
                     unset_line_stop(self.stop_client)
                 return debug_status(
@@ -622,18 +757,28 @@ class Enter(py_trees.behaviour.Behaviour):
         name: str,
         curr_behavior_pub: Publisher,
         stop_client: Client,
+        emergency_pub: Publisher,
     ):
         super().__init__(name)
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
+        self.emergency_pub = emergency_pub
 
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Enter Intersection")
+        global CURRENT_INTERSECTION_WAYPOINT
+        if CURRENT_INTERSECTION_WAYPOINT is None:
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
+            return
+        self.waypoint = CURRENT_INTERSECTION_WAYPOINT
         unset_line_stop(self.stop_client)
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
+        self.intersection_type = self.waypoint.road_option
 
     def update(self):
         """
@@ -654,6 +799,50 @@ class Enter(py_trees.behaviour.Behaviour):
                 "Error: CURRENT_INTERSECTION_WAYPOINT not set",
             )
 
+        # priority cross traffic check
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
+        if map is None:
+            return debug_status(self.name, Status.FAILURE, "Map is None (Enter)")
+
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+
+        priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+        add_debug_entry(
+            self.name,
+            f"[Enter] Priority cross traffic clear: {priority_clear}",
+        )
+        if priority_mask is not None:
+            add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
+
+        if not priority_clear:
+            # priority cross traffic detected
+            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+            set_line_stop(self.stop_client, 0.0)
+
+            speedometer = self.blackboard.try_get("/carla/hero/Speed")
+            ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+            if ego_speed > SELF_EMERGENCY_THRESHOLD:
+                self.emergency_pub.publish(Bool(data=True))
+                reason = (
+                    "ENTER: EMERGENCY – fast cross traffic, "
+                    f"ego_speed={ego_speed:.2f} m/s"
+                )
+
+            else:
+                reason = (
+                    f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
+                    "(no emergency brake)"
+                )
+
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                reason,
+            )
+        unset_line_stop(self.stop_client)
+        self.emergency_pub.publish(Bool(data=False))
+
         intersection_end_distance = calculate_waypoint_distance(
             self.blackboard, CURRENT_INTERSECTION_WAYPOINT, forward_offset=20
         )
@@ -673,7 +862,6 @@ class Enter(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
 
-        apply_emergency_vehicle_speed_fix()
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         return debug_status(
             self.name, py_trees.common.Status.RUNNING, "Driving through..."
