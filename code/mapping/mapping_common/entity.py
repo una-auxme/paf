@@ -13,6 +13,7 @@ from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 import numpy as np
+from math import radians, sin, cos
 
 import shapely
 
@@ -199,11 +200,17 @@ class TrackingInfo:
     EMA_ALPHA: float = 0.6
     Z_SCORE_THRESHOLD: float = 1.5
 
-    def append_frame(self, entity_pos: Vector2, ego_pos: Motion2D, timestamp: float):
+    def append_frame(
+        self,
+        entity_pos: Vector2,
+        ego_pos: Motion2D,
+        ego_delta_heading: float,
+        timestamp: float,
+    ):
         """Adds a new frame and updates motion estimation."""
         # 1. Compensate OLD points based on ego movement since the last frame
         if self.history:
-            self._compensate_positions(ego_pos, timestamp)
+            self._compensate_positions(ego_pos, ego_delta_heading, timestamp)
 
         # 2. Add the new point
         self.history.append(TrackedFrame(entity_pos, timestamp))
@@ -226,7 +233,10 @@ class TrackingInfo:
             self.last_motion_data = smoothed_v
 
     def _compensate_positions(
-        self, current_ego_motion: "Motion2D", current_timestamp: float
+        self,
+        current_ego_motion: "Motion2D",
+        ego_delta_heading: float,
+        current_timestamp: float,
     ):
         """Stabilizes history by removing ego-displacement."""
         prev_timestamp = self.history[-1].timestamp
@@ -239,8 +249,21 @@ class TrackingInfo:
         # Distance the ego traveled: dist = vel * time
         ego_displacement = current_ego_motion.linear_motion * dt
 
+        theta = radians(ego_delta_heading)
+        c, s = cos(theta), sin(theta)
+
         # Subtract ego movement from all historical observations
         for frame in self.history:
+            old_x = frame.entity_position.x()
+            old_y = frame.entity_position.y()
+
+            # Standard 2D Rotation Matrix application
+            new_x = old_x * c - old_y * s
+            new_y = old_x * s + old_y * c
+
+            frame.entity_position._matrix[0] = new_x
+            frame.entity_position._matrix[1] = new_y
+
             frame.entity_position -= ego_displacement
 
     def _calculate_robust_weighted_motion(self) -> Optional["Vector2"]:

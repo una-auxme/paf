@@ -264,6 +264,8 @@ class TrackingFilter(MapFilter):
     update_tracking_velocity: bool = True
     """Global toggle for enabling/disabling velocity computation."""
 
+    ego_delta_heading: float = 0.0
+
     @staticmethod
     def _get_entity_position(entity: Entity) -> Vector2:
         """Extracts the 2D position vector from the entity's transform."""
@@ -280,9 +282,12 @@ class TrackingFilter(MapFilter):
 
         return np.linalg.norm(p1 - p2).item()
 
-    def update_tracking_velocity_status(self, track_velocity: bool):
+    def set_tracking_velocity_status(self, track_velocity: bool):
         """Updates the configuration to enable/disable velocity calculation."""
         self.update_tracking_velocity = track_velocity
+
+    def set_delta_heading(self, delta_heading: float):
+        self.ego_delta_heading = delta_heading
 
     def _assign_new_track_id(self, entity: Entity):
         """Initializes tracking info for a new, unmatched entity."""
@@ -301,7 +306,18 @@ class TrackingFilter(MapFilter):
 
                 return
 
-            entity.tracking_info.append_frame(new_pos, self.ego_motion, timestamp)
+            # We only extract velocity for entities that we know are moving.
+            # This is determined by radar data (where motion is not None).
+            if entity.motion is None:
+                return
+
+            # Only track specific dynamic classes to reduce computation overhead.
+            # if type(entity) != Pedestrian and type(entity) != Car:
+            #     return
+
+            entity.tracking_info.append_frame(
+                new_pos, self.ego_motion, self.ego_delta_heading, timestamp
+            )
 
     def update_tracked_entity(self, cur_entity: Entity, prev_entity: Entity):
         """
@@ -326,7 +342,18 @@ class TrackingFilter(MapFilter):
 
                 return
 
-            tracking_info.append_frame(new_pos, self.ego_motion, timestamp)
+            # We only extract velocity for entities that we know are moving.
+            # This is determined by radar data (where motion is not None).
+            if cur_entity.motion is None and prev_entity.motion is None:
+                return
+
+            # Only track specific dynamic classes to reduce computation overhead.
+            # if type(cur_entity) != Pedestrian and type(cur_entity) != Car:
+            #   return
+
+            tracking_info.append_frame(
+                new_pos, self.ego_motion, self.ego_delta_heading, timestamp
+            )
             motion = tracking_info.get_motion()
 
             cur_entity.tracking_info = tracking_info
