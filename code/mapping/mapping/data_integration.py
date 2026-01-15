@@ -259,7 +259,20 @@ class MappingDataIntegrationNode(Node):
             .bool_value
         )
 
+        self.update_tracking_velocity = (
+            self.declare_parameter(
+                "update_tracking_velocity",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable to update tracking motion data ",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
         self.tracking_filter = TrackingFilter()
+        self.tracking_filter.set_tracking_velocity_status(self.update_tracking_velocity)
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -397,6 +410,13 @@ class MappingDataIntegrationNode(Node):
             qos_profile=1,
         )
 
+        self.create_subscription(
+            topic="/paf/hero/delta_heading",
+            msg_type=Float32,
+            callback=self.delta_heading_callback,
+            qos_profile=1,
+        )
+
         # Publishers:
 
         self.map_publisher = self.create_publisher(
@@ -461,6 +481,9 @@ class MappingDataIntegrationNode(Node):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def delta_heading_callback(self, data: Float32):
+        self.tracking_filter.set_delta_heading(data.data)
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -830,6 +853,9 @@ class MappingDataIntegrationNode(Node):
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
         if self.filter_tracking_entities:
+            self.tracking_filter.set_tracking_velocity_status(
+                self.update_tracking_velocity
+            )
             map_filters.append(self.tracking_filter)
 
         return map_filters
