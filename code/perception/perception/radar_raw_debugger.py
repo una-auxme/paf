@@ -17,13 +17,13 @@ class RadarDump(Node):
     def cb(self, msg: PointCloud2):
         field_names = [f.name for f in msg.fields]
         self.get_logger().info(
-        (
-            f"Fields: {field_names} | "
-            f"width={msg.width} "
-            f"height={msg.height} "
-            f"point_step={msg.point_step}"
+            (
+                f"Fields: {field_names} | "
+                f"width={msg.width} "
+                f"height={msg.height} "
+                f"point_step={msg.point_step}"
+            )
         )
-    )
 
         # first 10 points
         i = 0

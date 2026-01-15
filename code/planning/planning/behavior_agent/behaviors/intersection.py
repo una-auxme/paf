@@ -606,20 +606,6 @@ class Wait(py_trees.behaviour.Behaviour):
                     py_trees.common.Status.RUNNING,
                     reason,
                 )
-
-            # cross_clear, cross_mask = check_cross_traffic(map, tree)
-            # add_debug_entry(self.name, f"Cross traffic clear: {cross_clear}")
-            # if cross_mask is not None:
-            #     add_debug_marker(
-            #         debug_marker(cross_mask, color=(1.0, 0.5, 0.0, 0.3))  # orange
-            #     )
-
-            # if not cross_clear:
-            #     return debug_status(
-            #         self.name,
-            #         py_trees.common.Status.RUNNING,
-            #         "Waiting for cross traffic",
-            #     )
             unset_line_stop(self.stop_client)
             self.emergency_pub.publish(Bool(data=False))
 
@@ -646,8 +632,6 @@ class Wait(py_trees.behaviour.Behaviour):
         if traffic_light_detected:
             global INTERSECTION_HAS_TRAFFIC_LIGHT
             INTERSECTION_HAS_TRAFFIC_LIGHT = True
-
-        # apply_emergency_vehicle_speed_fix()
 
         add_debug_entry(
             self.name, f"Traffic light status: {tr_status_str(traffic_light_status)}"
@@ -878,7 +862,6 @@ class Enter(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
 
-        # apply_emergency_vehicle_speed_fix()
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         return debug_status(
             self.name, py_trees.common.Status.RUNNING, "Driving through..."
