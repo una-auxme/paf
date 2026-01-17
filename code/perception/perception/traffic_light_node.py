@@ -6,6 +6,7 @@ from rclpy.duration import Duration
 from perception_interfaces.msg import TrafficLightState, TrafficLightImages
 from cv_bridge import CvBridge
 import cv2
+import numpy as np
 
 from visualization_msgs.msg import Marker
 
@@ -56,7 +57,7 @@ class TrafficLightNode(Node):
         self.last_info_time = self.get_clock().now()
         self.traffic_light_msg = TrafficLightState()
         self.traffic_light_msg.state = 0
-        self.state_buffer = deque(maxlen=5)
+        self.state_buffer = deque(maxlen=10)
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -95,31 +96,33 @@ class TrafficLightNode(Node):
         # Classifies all traffic light images in a topic message
         # Looks for red, green, and yellow classifications in the results tuple.
         results = []
+        fronts = []
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
             result = self.classifier(cv_image)
             results.append(result)
+            if result != 0:
+                fronts.append(self.is_front(cv_image))
 
         if not results:
             return
 
-        if 2 in results:
-            interim_state = 2
-        elif 1 in results:
-            interim_state = 1
-        elif 4 in results:
-            interim_state = 4
-        else:
-            interim_state = 0
+        interim_state = 0
+        if any(fronts):
+            if 2 in results:
+                interim_state = 2
+            elif 1 in results:
+                interim_state = 1
+            elif 4 in results:
+                interim_state = 4
 
         # Cache values and only change state after a certain number has been reached
         self.state_buffer.append(interim_state)
-
-        if self.state_buffer.count(2) >= 3:
+        if self.state_buffer.count(2) >= 4:
             state = 2
-        elif self.state_buffer.count(1) >= 3:
+        elif self.state_buffer.count(1) >= 5:
             state = 1
-        elif self.state_buffer.count(4) >= 2:
+        elif self.state_buffer.count(4) >= 4:
             state = 4
 
         else:
@@ -129,10 +132,12 @@ class TrafficLightNode(Node):
         if state != 0:
             self.last_info_time = self.get_clock().now()
 
-        self.get_logger().info(
-            f"Traffic light results -> state: {tuple(results)} -> {state}"
-        )
+        # self.get_logger().info(f"Fronts: {fronts}")
 
+        # self.get_logger().info(
+        #    f"Traffic light results -> state: {tuple(results)} -> {state}"
+        # )
+        """
         ############## DEBUG BEGIN ####################
         # output of traffic light images of a topic message
         images = []
@@ -159,6 +164,7 @@ class TrafficLightNode(Node):
         cv2.imshow("Traffic Lights (one message)", combined)
         cv2.waitKey(1)
         ############## DEBUG END ################
+        """
 
     def loop(self):
         # check if the last state was received more than 2 seconds ago
@@ -218,6 +224,94 @@ class TrafficLightNode(Node):
 
         # Publish the marker
         self.marker_pub.publish(text_marker)
+
+    def get_light_mask(self, image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+        # Define lower and upper bounds for the hue, saturation, and value
+        # - Red and Yellow combined since they are so close in the color spectrum
+        lower_red_yellow = np.array([0, 75, 100])
+        upper_red_yellow = np.array([40, 255, 255])
+        lower_green = np.array([40, 200, 200])
+        upper_green = np.array([80, 255, 255])
+
+        # Mask where the pixels within the bounds are white, otherwise black
+        m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
+        m2 = cv2.inRange(hsv, lower_green, upper_green)
+        mask = cv2.bitwise_or(m1, m2)
+
+        return mask
+
+    def is_front(self, image):
+        mask = self.get_light_mask(image)
+        
+        ################# DEBUG START ################
+        #Orginalbild 
+        cv2.imshow("is_front / input", image)
+
+        # Bild in Graustufen darstellen
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        cv2.imshow("is_front / input", gray)
+
+        # Maske anzeigen
+        cv2.imshow("is_front / mask", mask)
+        ################# DEBUG END ################
+
+        # Find contours in the thresholded image, use only the largest one
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
+        contour = contours[0] if contours else None
+
+        ################# DEBUG START ################
+        # Debug-Bild zum Zeichnen
+        debug_img = image.copy()
+
+        if contour is None:
+            cv2.putText(
+                debug_img,
+                "NO CONTOUR",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (0, 0, 255),
+                2,
+            )
+            cv2.imshow("is_front / result", debug_img)
+            cv2.waitKey(1)
+            return False
+
+        x, y, width, height = cv2.boundingRect(contour)
+        aspect_ratio = width / height
+
+        # DEBUG: Bounding Box zeichnen
+        cv2.rectangle(
+            debug_img,
+            (x, y),
+            (x + width, y + height),
+            (0, 255, 0),
+            2,
+        )
+
+        cv2.putText(
+            debug_img,
+            f"ratio={aspect_ratio:.2f}",
+            (x, max(0, y - 10)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 0),
+            2,
+        )
+
+        cv2.imshow("is_front / result", debug_img)
+        cv2.waitKey(1)
+        ################# DEBUG END ################
+        self.get_logger().info(f"Ratio: {aspect_ratio}")
+
+        # If aspect ratio is within range of a square (therefore a circle)
+        if 0.75 <= aspect_ratio <= 1.3:
+            return True
+        else:
+            return False
 
 
 def main(args=None):

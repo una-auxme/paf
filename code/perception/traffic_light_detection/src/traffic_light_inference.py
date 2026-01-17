@@ -52,7 +52,7 @@ class TrafficLightInference:
         self.model = ClassificationModel.load_model(self.cfg)
         self.model = self.model.to(self.cfg.DEVICE)
         self.class_dict = {0: "Backside", 1: "Green", 2: "Red", 3: "Side", 4: "Yellow"}
-        self.min_dominance = 0.95
+        self.min_dominance = 0.99
 
     def __call__(self, img):
         """
