@@ -238,20 +238,42 @@ class TrafficLightNode(Node):
         # Mask where the pixels within the bounds are white, otherwise black
         m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
         m2 = cv2.inRange(hsv, lower_green, upper_green)
-        mask = cv2.bitwise_or(m1, m2)
+        mask = cv2.bitwise_or(m1, m2)  # TODO: was macht bitwise?
 
         return mask
 
     def is_front(self, image):
         mask = self.get_light_mask(image)
-        
+
         ################# DEBUG START ################
-        #Orginalbild 
+        # Orginalbild
         cv2.imshow("is_front / input", image)
 
         # Bild in Graustufen darstellen
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        cv2.imshow("is_front / input", gray)
+
+        circles = cv2.HoughCircles(
+            gray,
+            cv2.HOUGH_GRADIENT,
+            dp=1.0,
+            minDist=35,
+            param1=150,
+            param2=7,
+            minRadius=2,
+            maxRadius=7,
+        )
+
+        if circles is not None:
+            for x, y, r in circles[0]:
+                x = int(round(x))
+                y = int(round(y))
+                r = int(round(r))
+
+                cv2.circle(image, (x, y), r, (0, 255, 0), 2)
+                cv2.circle(image, (x, y), 2, (255, 0, 0), 3)
+
+        cv2.imshow("circles", image)
+        cv2.waitKey(1)
 
         # Maske anzeigen
         cv2.imshow("is_front / mask", mask)
