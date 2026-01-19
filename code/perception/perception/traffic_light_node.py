@@ -58,6 +58,7 @@ class TrafficLightNode(Node):
         self.traffic_light_msg = TrafficLightState()
         self.traffic_light_msg.state = 0
         self.state_buffer = deque(maxlen=10)
+        self.last_state = 0
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -97,36 +98,47 @@ class TrafficLightNode(Node):
         # Looks for red, green, and yellow classifications in the results tuple.
         results = []
         fronts = []
+        state_found = False
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
             result = self.classifier(cv_image)
-            results.append(result)
+            if state_found and result != 0:
+                results.clear()
+                results.append(self.last_state)
+            elif self.is_front(cv_image) and not state_found:
+                results.append(result)
+            
             if result != 0:
-                fronts.append(self.is_front(cv_image))
+                state_found = True
+            
+           
 
-        if not results:
+        if not results:  # and len(results) > 1
             return
 
-        interim_state = 0
-        if any(fronts):
-            if 2 in results:
-                interim_state = 2
-            elif 1 in results:
-                interim_state = 1
-            elif 4 in results:
-                interim_state = 4
+        if 2 in results:
+            interim_state = 2
+        elif 1 in results:
+            interim_state = 1
+        elif 4 in results:
+            interim_state = 4
+        else:
+            interim_state = 0
 
         # Cache values and only change state after a certain number has been reached
         self.state_buffer.append(interim_state)
         if self.state_buffer.count(2) >= 4:
             state = 2
+            self.last_state = 2
         elif self.state_buffer.count(1) >= 5:
             state = 1
+            self.last_state = 1
         elif self.state_buffer.count(4) >= 4:
             state = 4
+            self.last_state = 4
 
         else:
-            state = 0
+            state = self.last_state
 
         self.traffic_light_msg.state = state
         if state != 0:
@@ -134,9 +146,9 @@ class TrafficLightNode(Node):
 
         # self.get_logger().info(f"Fronts: {fronts}")
 
-        # self.get_logger().info(
-        #    f"Traffic light results -> state: {tuple(results)} -> {state}"
-        # )
+        self.get_logger().info(
+           f"TL : {tuple(results)} -> {tuple(self.state_buffer)} -> {state}"
+        )
         """
         ############## DEBUG BEGIN ####################
         # output of traffic light images of a topic message
@@ -169,10 +181,12 @@ class TrafficLightNode(Node):
     def loop(self):
         # check if the last state was received more than 2 seconds ago
         if (
-            self.last_info_time + Duration(seconds=2.0) < self.get_clock().now()
+            self.last_info_time + Duration(seconds=1.5) < self.get_clock().now()
             and self.traffic_light_msg.state != 0
         ):
             self.traffic_light_msg.state = 0
+            self.last_state = 0
+            self.state_buffer.clear()
         self.traffic_light_publisher.publish(self.traffic_light_msg)
         if self.tfs_debug:
             self.traffic_light_visualization(self.traffic_light_msg.state)
@@ -225,29 +239,52 @@ class TrafficLightNode(Node):
         # Publish the marker
         self.marker_pub.publish(text_marker)
 
+    def mask_stats(self, mask):
+        total_pixels = mask.size
+        white_pixels = np.count_nonzero(mask)
+        #black_pixels = total_pixels - white_pixels
+
+        #white_percent = (white_pixels / total_pixels) * 100
+        #black_percent = (black_pixels / total_pixels) * 100
+
+        return white_pixels
+
     def get_light_mask(self, image):
         hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
         # Define lower and upper bounds for the hue, saturation, and value
         # - Red and Yellow combined since they are so close in the color spectrum
-        lower_red_yellow = np.array([0, 75, 100])
-        upper_red_yellow = np.array([40, 255, 255])
-        lower_green = np.array([40, 200, 200])
-        upper_green = np.array([80, 255, 255])
+        # Ampelgelb 20, 115, 188 - 18, 125, 160 - 22, 56, 166 - 18, 138, 196 - 12, 124, 105 - 22, 163, 204 - 23, 140, 227 - 
+        # 25, 120, 238 - 27, 51, 245 - 29, 26, 240 - 16, 169, 115 #low 12, 25, 101 # up 30, 175, 255
+        #Himmel 102, 12, 209 - 106, 33, 212 - 106, 53, 119 - 105, 59, 107 #low100, 10, 102 #up108, 60, 220
+        #grau  65, 13, 97
+        #scharzes Ampellicht 22, 15, 61 - 12, 26, 133
+        #Schwarz 1
+        lower_red_yellow = np.array([0, 3, 2])
+        upper_red_yellow = np.array([30, 90, 115])
+        #Schwarz2 170, 58, 69
+        lower_green = np.array([120, 1, 1])
+        upper_green = np.array([179, 60, 70])
 
         # Mask where the pixels within the bounds are white, otherwise black
         m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
         m2 = cv2.inRange(hsv, lower_green, upper_green)
-        mask = cv2.bitwise_or(m1, m2)  # TODO: was macht bitwise?
+        mask = cv2.bitwise_or(m1, m2)
+        #cyan_block = cv2.inRange(hsv, (0, 3, 2), (23, 30, 115))
+        #mask = cv2.bitwise_and(mask, cv2.bitwise_not(cyan_block))
 
         return mask
+        #return cyan_block
 
     def is_front(self, image):
         mask = self.get_light_mask(image)
 
+        white_p = self.mask_stats(mask)
+        # self.get_logger().info(f"Mask stats → white: {white_p:.2f}% | black: {black_p:.2f}%")
+
         ################# DEBUG START ################
         # Orginalbild
-        cv2.imshow("is_front / input", image)
+        cv2.imshow("input", image)
 
         # Bild in Graustufen darstellen
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -327,13 +364,13 @@ class TrafficLightNode(Node):
         cv2.imshow("is_front / result", debug_img)
         cv2.waitKey(1)
         ################# DEBUG END ################
-        self.get_logger().info(f"Ratio: {aspect_ratio}")
+        # self.get_logger().info(f"Ratio: {aspect_ratio}")
 
         # If aspect ratio is within range of a square (therefore a circle)
-        if 0.75 <= aspect_ratio <= 1.3:
-            return True
-        else:
+        if circles is not None and len(circles[0]) >= 2:
             return False
+        else:
+            return True
 
 
 def main(args=None):
