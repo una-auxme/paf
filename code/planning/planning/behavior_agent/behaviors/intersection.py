@@ -1,19 +1,21 @@
 import py_trees
+import math
+import numpy as np
 from py_trees.common import Status
-from typing import Optional
+from typing import Optional, Tuple
 
 from rclpy.client import Client
 from rclpy.publisher import Publisher
 from rclpy.clock import Clock
 from rclpy.duration import Duration
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from perception_interfaces.msg import Waypoint, TrafficLightState
 from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
 
 import mapping_common.hero
-from mapping_common.map import Map
+from mapping_common.map import Map, MapTree
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
@@ -98,6 +100,101 @@ INTERSECTION_HAS_TRAFFIC_LIGHT: bool = False
 at least once
 """
 
+# Cross traffic parameter
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+CROSS_CHECK_DISTANCE = 15.0
+CROSS_CHECK_LENGTH = 25.0
+CROSS_CHECK_WIDTH = 50.0
+
+# Priority traffic parameter
+PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
+PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
+PRIORITY_CHECK_LENGTH = 25.0
+PRIORITY_CHECK_WIDTH = 50.0
+SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
+
+
+def check_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob im Bereich der Kreuzung vor dem Fahrzeug bewegter Quer­verkehr ist.
+
+    Returns:
+        (cross_clear, mask_polygon)
+        cross_clear = True  → kein bewegter Quer­verkehr
+        cross_clear = False → Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    offset = Transform2D.new_translation(
+        Vector2.new(CROSS_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=CROSS_CHECK_LENGTH,
+        width=CROSS_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
+            # moving object at an intersection → cross traffic
+            return False, mask
+
+    return True, mask
+
+
+def check_priority_cross_traffic(map: Map, tree: MapTree):
+    """
+    Prüft, ob sich im größeren Kreuzungsbereich schnelle Fahrzeuge (> 25 km/h)
+    von rechts oder links nähern (z.B. Einsatzfahrzeuge mit Sonderrechten).
+
+    Returns:
+        (priority_clear, mask_polygon)
+        priority_clear = True  → kein schneller Quer­verkehr
+        priority_clear = False → schneller Quer­verkehr erkannt
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None
+
+    # Larger rectangle for approaching emergency vehicles
+    offset = Transform2D.new_translation(
+        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=PRIORITY_CHECK_LENGTH,
+        width=PRIORITY_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+
+        v = motion.linear_motion
+        speed = math.hypot(v.x(), v.y())
+
+        # Only consider fast objects
+        if speed > PRIORITY_SPEED_THRESHOLD:
+            return False, mask
+
+    return True, mask
+
 
 def set_line_stop(client: Client, distance: float):
     """Sets the stop line at distance from the front of the hero
@@ -171,6 +268,217 @@ def apply_emergency_vehicle_speed_fix():
         # We drive slower in straight intersections with traffic light
         # to avoid emergency vehicles
         add_speed_limit(3.0)
+
+
+def _solve_time_to_cover_distance(
+    v0: float, a: float, s: float, v_min: float = 0.1
+) -> float:
+    """Solve s = v0*t + 0.5*a*t^2 for t >= 0. Fallback to s/v if needed."""
+    v0 = max(v0, v_min)
+    if s <= 0.0:
+        return 0.0
+    if abs(a) < 1e-6:
+        return s / v0
+
+    # 0.5*a*t^2 + v0*t - s = 0
+    A = 0.5 * a
+    B = v0
+    C = -s
+    disc = B * B - 4 * A * C
+    if disc < 0.0:
+        return s / v0
+    t1 = (-B + math.sqrt(disc)) / (2 * A)
+    t2 = (-B - math.sqrt(disc)) / (2 * A)
+    ts = [t for t in (t1, t2) if t >= 0.0]
+    return min(ts) if ts else (s / v0)
+
+
+def _interval_in_polygon_sampling(
+    polygon,
+    p0_xy: Tuple[float, float],
+    v_xy: Tuple[float, float],
+    horizon_s: float,
+    dt: float,
+) -> Optional[Tuple[float, float]]:
+    """Returns (t_in, t_out) where moving point is inside polygon, via sampling."""
+    if polygon is None:
+        return None
+
+    px, py = p0_xy
+    vx, vy = v_xy
+
+    t_in = None
+    t_out = None
+
+    t = 0.0
+    while t <= horizon_s + 1e-6:
+        x = px + vx * t
+        y = py + vy * t
+        # shapely: polygon.contains(Point(...)) would require Point; faster: polygon.contains(Point) etc.
+        # We'll do minimal import here to avoid overhead; you already use shapely elsewhere.
+        from shapely.geometry import Point
+
+        pt = Point(x, y).buffer(1.5)  # 1.0–2.0m je nach Objektgröße
+        inside = polygon.intersects(pt)
+
+
+        if inside and t_in is None:
+            t_in = t
+        if (not inside) and (t_in is not None) and (t_out is None):
+            t_out = t
+            break
+        t += dt
+
+    if t_in is None:
+        return None
+    if t_out is None:
+        t_out = horizon_s
+    return (t_in, t_out)
+
+
+def check_priority_cross_traffic_predictive(
+    map: Map,
+    tree: MapTree,
+    *,
+    ego_speed: float,
+    ego_clear_distance: float,
+    mode: str,  # "WAIT" or "ENTER"
+    # tunables:
+    horizon_s: float = 6.0,
+    dt: float = 0.1,
+    ego_accel: float = 1.5,
+    time_margin: float = 0.8,
+    hard_ttc: float = 0.5,
+    min_obj_speed: float = 6.9,  # ~25 km/h
+):
+    """
+    Returns (priority_clear, mask_polygon, debug_dict)
+    priority_clear True  -> no relevant predicted overlap
+    priority_clear False -> predicted overlap (WAIT) or hard collision (ENTER)
+    """
+    hero = map.hero()
+    if hero is None:
+        return True, None, {}
+
+    # same big rectangle you already use
+    offset = Transform2D.new_translation(
+        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=PRIORITY_CHECK_LENGTH,
+        width=PRIORITY_CHECK_WIDTH,
+        offset=offset,
+    )
+    mask = rect.to_shapely(hero.transform)
+
+    # Ego time window in conflict area (simple): [0, t_clear]
+    t_clear = _solve_time_to_cover_distance(
+        ego_speed, ego_accel, ego_clear_distance, v_min=0.5
+    )
+    ego_interval = (0.0, t_clear + time_margin)
+
+    best = {
+        "track_id": None,
+        "t_in": None,
+        "t_out": None,
+        "obj_speed": None,
+        "decision": None,
+        "ego_t_clear": t_clear,
+    }
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        motion = entity.motion
+        if motion is None:
+            continue
+
+        v = motion.linear_motion
+        obj_speed = math.hypot(v.x(), v.y())
+        if obj_speed < min_obj_speed:
+            continue
+
+        tx, ty = _xy_from_translation(entity.transform.translation)
+
+        interval = _interval_in_polygon_sampling(
+            mask,
+            (tx, ty),
+            (v.x(), v.y()),
+            horizon_s=horizon_s,
+            dt=dt,
+        )
+
+        if interval is None:
+            continue
+
+        t_in, t_out = interval
+
+        # overlap check
+        overlap = not (t_out < ego_interval[0] or t_in > ego_interval[1])
+
+        if not overlap:
+            continue
+
+        # WAIT: any overlap => not clear (gap not safe)
+        if mode == "WAIT":
+            best.update(
+                {
+                    "track_id": getattr(entity, "track_id", None),
+                    "t_in": t_in,
+                    "t_out": t_out,
+                    "obj_speed": obj_speed,
+                    "decision": "WAIT_BLOCK",
+                }
+            )
+            return False, mask, best
+
+        # ENTER: only HARD collision (very small t_in)
+        if mode == "ENTER":
+            if t_in <= hard_ttc:
+                best.update(
+                    {
+                        "track_id": getattr(entity, "track_id", None),
+                        "t_in": t_in,
+                        "t_out": t_out,
+                        "obj_speed": obj_speed,
+                        "decision": "ENTER_HARD_BRAKE",
+                    }
+                )
+                return False, mask, best
+            else:
+                # ignore softer overlaps because we're committed
+                continue
+
+    return True, mask, best
+
+def _xy_from_translation(t) -> Tuple[float, float]:
+    """
+    Supports:
+      - t is a callable returning translation
+      - t has x()/y() methods
+      - t has x/y attributes
+      - t is tuple/list (x, y)
+    """
+    # translation might be a method
+    if callable(t):
+        t = t()
+
+    # methods x()/y()
+    if hasattr(t, "x") and callable(getattr(t, "x")):
+        return float(t.x()), float(t.y())
+    if hasattr(t, "y") and callable(getattr(t, "y")):
+        return float(t.x()), float(t.y())
+
+    # attributes x/y
+    if hasattr(t, "x") and hasattr(t, "y"):
+        return float(t.x), float(t.y)
+
+    # tuple/list
+    if isinstance(t, (tuple, list)) and len(t) >= 2:
+        return float(t[0]), float(t[1])
+
+    raise TypeError(f"Unsupported translation type: {type(t)}")
 
 
 class Ahead(py_trees.behaviour.Behaviour):
@@ -426,11 +734,13 @@ class Wait(py_trees.behaviour.Behaviour):
         clock: Clock,
         curr_behavior_pub: Publisher,
         stop_client: Client,
+        emergency_pub: Publisher,
     ):
         super().__init__(name)
         self.clock = clock
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
+        self.emergency_pub = emergency_pub
 
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
@@ -471,7 +781,6 @@ class Wait(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Map is None"
             )
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
-
         dist = calculate_waypoint_distance(
             self.blackboard, self.waypoint, forward_offset=STOP_LINE_OFFSET
         )
@@ -481,6 +790,60 @@ class Wait(py_trees.behaviour.Behaviour):
                 Status.FAILURE,
                 "Missing information for stop_line distance calculation",
             )
+
+
+        if self.intersection_type != CarlaRoute.LEFT:
+            # Priority cross traffic check
+            speedometer = self.blackboard.try_get("/carla/hero/Speed")
+            ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+            # Startwert: 10-14m für "einmal über die Kreuzung"
+            ego_clear_distance = 16.0
+
+            priority_clear, priority_mask, dbg = (
+                check_priority_cross_traffic_predictive(
+                    map,
+                    tree,
+                    ego_speed=ego_speed,
+                    ego_clear_distance=ego_clear_distance,
+                    mode="WAIT",
+                )
+            )
+            add_debug_entry(
+                self.name, f"[Wait] Priority pred clear: {priority_clear} dbg={dbg}"
+            )
+
+            if priority_mask is not None:
+                add_debug_marker(
+                    debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3))
+                )
+
+            if not priority_clear:
+                # priority cross traffic detected
+                set_line_stop(self.stop_client, max(dist, 0.0))
+
+                speedometer = self.blackboard.try_get("/carla/hero/Speed")
+                ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+                if ego_speed > SELF_EMERGENCY_THRESHOLD:
+                    self.emergency_pub.publish(Bool(data=True))
+                    reason = (
+                        f"WAIT: EMERGENCY - fast cross traffic, "
+                        f"ego_speed={ego_speed:.2f} m/s"
+                    )
+                else:
+                    reason = (
+                        f"WAIT: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
+                        "(no emergency brake)"
+                    )
+
+                return debug_status(
+                    self.name,
+                    py_trees.common.Status.RUNNING,
+                    reason,
+                )
+            unset_line_stop(self.stop_client)
+            self.emergency_pub.publish(Bool(data=False))
 
         traffic_light_status = self.blackboard.try_get(
             "/paf/hero/Center/traffic_light_state"
@@ -495,8 +858,6 @@ class Wait(py_trees.behaviour.Behaviour):
         if traffic_light_detected:
             global INTERSECTION_HAS_TRAFFIC_LIGHT
             INTERSECTION_HAS_TRAFFIC_LIGHT = True
-
-        apply_emergency_vehicle_speed_fix()
 
         add_debug_entry(
             self.name, f"Traffic light status: {tr_status_str(traffic_light_status)}"
@@ -526,8 +887,8 @@ class Wait(py_trees.behaviour.Behaviour):
                     "Waiting for traffic light",
                 )
             elif traffic_light_status.state == TrafficLightState.UNKNOWN:
-                # Wait at least 2 seconds at stopline
-                if self.clock.now() - self.stop_time > Duration(seconds=2.0):
+                # Wait at least 0.5 seconds at stopline (was at 2 sec)
+                if self.clock.now() - self.stop_time > Duration(seconds=0.5):
                     self.over_stop_line = True
                     unset_line_stop(self.stop_client)
                 return debug_status(
@@ -622,18 +983,28 @@ class Enter(py_trees.behaviour.Behaviour):
         name: str,
         curr_behavior_pub: Publisher,
         stop_client: Client,
+        emergency_pub: Publisher,
     ):
         super().__init__(name)
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
+        self.emergency_pub = emergency_pub
 
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
 
     def initialise(self):
         get_logger().info("Enter Intersection")
+        global CURRENT_INTERSECTION_WAYPOINT
+        if CURRENT_INTERSECTION_WAYPOINT is None:
+            get_logger().error(
+                "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
+            )
+            return
+        self.waypoint = CURRENT_INTERSECTION_WAYPOINT
         unset_line_stop(self.stop_client)
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
+        self.intersection_type = self.waypoint.road_option
 
     def update(self):
         """
@@ -654,6 +1025,17 @@ class Enter(py_trees.behaviour.Behaviour):
                 "Error: CURRENT_INTERSECTION_WAYPOINT not set",
             )
 
+        # priority cross traffic check
+        map: Optional[Map] = self.blackboard.try_get(BLACKBOARD_MAP_ID)
+        if map is None:
+            return debug_status(self.name, Status.FAILURE, "Map is None (Enter)")
+
+        tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
+
+        speedometer = self.blackboard.try_get("/carla/hero/Speed")
+        ego_speed = speedometer.speed if speedometer is not None else 0.0
+
+        # nutze vorhandene Logik: intersection_end_distance
         intersection_end_distance = calculate_waypoint_distance(
             self.blackboard, CURRENT_INTERSECTION_WAYPOINT, forward_offset=20
         )
@@ -661,8 +1043,39 @@ class Enter(py_trees.behaviour.Behaviour):
             return debug_status(
                 self.name,
                 Status.FAILURE,
-                "Missing information for intersection_end_distance calculation",
+                "Missing information for intersection_end_distance calculation (pre-check)",
             )
+
+        priority_clear, priority_mask, dbg = check_priority_cross_traffic_predictive(
+            map,
+            tree,
+            ego_speed=ego_speed,
+            ego_clear_distance=max(intersection_end_distance, 0.0),
+            mode="ENTER",
+            hard_ttc=0.5,  # nur harte Fälle
+            time_margin=0.3,  # kleiner, weil wir committed sind
+        )
+
+        add_debug_entry(
+            self.name, f"[Enter] Priority pred clear: {priority_clear} dbg={dbg}"
+        )
+        if priority_mask is not None:
+            add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
+
+        if not priority_clear:
+            # nur HARD collision -> emergency brake
+            set_line_stop(self.stop_client, 0.0)
+            self.emergency_pub.publish(Bool(data=True))
+            return debug_status(
+                self.name,
+                py_trees.common.Status.RUNNING,
+                f"ENTER: HARD COLLISION {dbg}",
+            )
+
+        # sonst: NICHT abbremsen
+        unset_line_stop(self.stop_client)
+        self.emergency_pub.publish(Bool(data=False))
+
         add_debug_entry(
             self.name, f"Intersection end distance: {intersection_end_distance}"
         )
@@ -673,7 +1086,6 @@ class Enter(py_trees.behaviour.Behaviour):
                 self.name, py_trees.common.Status.FAILURE, "Left intersection"
             )
 
-        apply_emergency_vehicle_speed_fix()
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         return debug_status(
             self.name, py_trees.common.Status.RUNNING, "Driving through..."
