@@ -356,6 +356,29 @@ class TrackingFilter(MapFilter):
             )
             motion = tracking_info.get_motion()
 
+            if motion and self.update_tracking_velocity:
+                if not _is_allowed_moving(cur_entity):
+                    motion.linear_motion = Vector2.zero()
+                    motion.angular_velocity = 0.0
+                    cur_entity.motion = motion
+                    return
+
+            # cur_entity.tracking_info = tracking_info
+            # if motion and self.update_tracking_velocity:
+
+            # TrackingInfo estimates velocity in the *map/ego frame*.
+            # Motion2D.linear_motion is defined in the entity's local frame.
+            yaw = cur_entity.transform.rotation()
+            v_map = motion.linear_motion
+            v_local = Transform2D.new_rotation(-yaw) * v_map
+
+            # Deadband for numerical noise: keep truly standing objects at 0.
+            if v_local.length() < 0.2:  # ~0.7 km/h
+                v_local = Vector2.zero()
+
+            motion.linear_motion = v_local
+            cur_entity.motion = motion
+
             cur_entity.tracking_info = tracking_info
             if motion and self.update_tracking_velocity:
                 cur_entity.motion = motion
@@ -701,3 +724,26 @@ def _grow_polygon(p: shapely.Polygon, distance: float) -> Optional[shapely.Polyg
     if not poly.is_valid:
         return None
     return poly
+
+
+def _is_allowed_moving(entity) -> bool:
+    """
+    True nur für Pedestrian und Vehicle (Car/Truck).
+    Passe die Enum/Strings an eure actual types an.
+    """
+    t = (
+        getattr(entity, "entity_type", None)
+        or getattr(entity, "type", None)
+        or getattr(entity, "classification", None)
+    )
+
+    if isinstance(t, str):
+        t_up = t.upper()
+        return t_up in {"PEDESTRIAN", "CAR", "TRUCK", "VEHICLE"}
+
+    name = getattr(t, "name", None)
+    if name:
+        name_up = name.upper()
+        return name_up in {"PEDESTRIAN", "CAR", "TRUCK", "VEHICLE"}
+
+    return False
