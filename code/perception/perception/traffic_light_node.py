@@ -94,26 +94,26 @@ class TrafficLightNode(Node):
         )
 
     def handle_camera_image(self, msg: TrafficLightImages):
-        # Classifies all traffic light images in a topic message
-        # Looks for red, green, and yellow classifications in the results tuple.
+        # Classifies all traffic light images that appear per frame
+        # These are passed via the TrafficLightImages message type
         results = []
-        fronts = []
         state_found = False
+
+        # Only one state != 0 may occur, otherwise the last state is taken
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
             result = self.classifier(cv_image)
             if state_found and result != 0:
                 results.clear()
                 results.append(self.last_state)
-            elif self.is_front(cv_image) and not state_found:
+                break
+            elif self.filter_turn_lights(cv_image) and not state_found:
                 results.append(result)
-            
+
             if result != 0:
                 state_found = True
-            
-           
 
-        if not results:  # and len(results) > 1
+        if not results:
             return
 
         if 2 in results:
@@ -144,44 +144,14 @@ class TrafficLightNode(Node):
         if state != 0:
             self.last_info_time = self.get_clock().now()
 
-        # self.get_logger().info(f"Fronts: {fronts}")
-
         self.get_logger().info(
-           f"TL : {tuple(results)} -> {tuple(self.state_buffer)} -> {state}"
+            f"TL : {tuple(results)} -> {tuple(self.state_buffer)} -> {state}"
         )
-        """
-        ############## DEBUG BEGIN ####################
-        # output of traffic light images of a topic message
-        images = []
-        for image_msg in msg.images:
-            cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
-            images.append(cv_image)
-
-        min_height = min(img.shape[0] for img in images)
-
-        resized = [
-            cv2.resize(
-                img,
-                (
-                    int(img.shape[1] * min_height / img.shape[0]),
-                    min_height,
-                ),
-            )
-            for img in images
-        ]
-
-        # assemble horizontally
-        combined = cv2.hconcat(resized)
-
-        cv2.imshow("Traffic Lights (one message)", combined)
-        cv2.waitKey(1)
-        ############## DEBUG END ################
-        """
 
     def loop(self):
         # check if the last state was received more than 2 seconds ago
         if (
-            self.last_info_time + Duration(seconds=1.5) < self.get_clock().now()
+            self.last_info_time + Duration(seconds=2.0) < self.get_clock().now()
             and self.traffic_light_msg.state != 0
         ):
             self.traffic_light_msg.state = 0
@@ -239,50 +209,8 @@ class TrafficLightNode(Node):
         # Publish the marker
         self.marker_pub.publish(text_marker)
 
-    def mask_stats(self, mask):
-        total_pixels = mask.size
-        white_pixels = np.count_nonzero(mask)
-        #black_pixels = total_pixels - white_pixels
-
-        #white_percent = (white_pixels / total_pixels) * 100
-        #black_percent = (black_pixels / total_pixels) * 100
-
-        return white_pixels
-
-    def get_light_mask(self, image):
-        hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-
-        # Define lower and upper bounds for the hue, saturation, and value
-        # - Red and Yellow combined since they are so close in the color spectrum
-        # Ampelgelb 20, 115, 188 - 18, 125, 160 - 22, 56, 166 - 18, 138, 196 - 12, 124, 105 - 22, 163, 204 - 23, 140, 227 - 
-        # 25, 120, 238 - 27, 51, 245 - 29, 26, 240 - 16, 169, 115 #low 12, 25, 101 # up 30, 175, 255
-        #Himmel 102, 12, 209 - 106, 33, 212 - 106, 53, 119 - 105, 59, 107 #low100, 10, 102 #up108, 60, 220
-        #grau  65, 13, 97
-        #scharzes Ampellicht 22, 15, 61 - 12, 26, 133
-        #Schwarz 1
-        lower_red_yellow = np.array([0, 3, 2])
-        upper_red_yellow = np.array([30, 90, 115])
-        #Schwarz2 170, 58, 69
-        lower_green = np.array([120, 1, 1])
-        upper_green = np.array([179, 60, 70])
-
-        # Mask where the pixels within the bounds are white, otherwise black
-        m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
-        m2 = cv2.inRange(hsv, lower_green, upper_green)
-        mask = cv2.bitwise_or(m1, m2)
-        #cyan_block = cv2.inRange(hsv, (0, 3, 2), (23, 30, 115))
-        #mask = cv2.bitwise_and(mask, cv2.bitwise_not(cyan_block))
-
-        return mask
-        #return cyan_block
-
-    def is_front(self, image):
-        mask = self.get_light_mask(image)
-
-        white_p = self.mask_stats(mask)
-        # self.get_logger().info(f"Mask stats → white: {white_p:.2f}% | black: {black_p:.2f}%")
-
-        ################# DEBUG START ################
+    def filter_turn_lights(self, image):
+        # Traffic lights that are detected when turning are ignored
         # Orginalbild
         cv2.imshow("input", image)
 
@@ -312,61 +240,7 @@ class TrafficLightNode(Node):
         cv2.imshow("circles", image)
         cv2.waitKey(1)
 
-        # Maske anzeigen
-        cv2.imshow("is_front / mask", mask)
-        ################# DEBUG END ################
-
-        # Find contours in the thresholded image, use only the largest one
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-        contour = contours[0] if contours else None
-
-        ################# DEBUG START ################
-        # Debug-Bild zum Zeichnen
-        debug_img = image.copy()
-
-        if contour is None:
-            cv2.putText(
-                debug_img,
-                "NO CONTOUR",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.9,
-                (0, 0, 255),
-                2,
-            )
-            cv2.imshow("is_front / result", debug_img)
-            cv2.waitKey(1)
-            return False
-
-        x, y, width, height = cv2.boundingRect(contour)
-        aspect_ratio = width / height
-
-        # DEBUG: Bounding Box zeichnen
-        cv2.rectangle(
-            debug_img,
-            (x, y),
-            (x + width, y + height),
-            (0, 255, 0),
-            2,
-        )
-
-        cv2.putText(
-            debug_img,
-            f"ratio={aspect_ratio:.2f}",
-            (x, max(0, y - 10)),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (255, 255, 0),
-            2,
-        )
-
-        cv2.imshow("is_front / result", debug_img)
-        cv2.waitKey(1)
-        ################# DEBUG END ################
-        # self.get_logger().info(f"Ratio: {aspect_ratio}")
-
-        # If aspect ratio is within range of a square (therefore a circle)
+        # 
         if circles is not None and len(circles[0]) >= 2:
             return False
         else:
