@@ -14,6 +14,7 @@ code/log
 code/simulation_results.json
 code/output
 
+# Temporary files of any sort
 tmp
 
 # Byte-compiled / optimized / DLL files
