@@ -3,8 +3,7 @@ set -e
 
 exec /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.sh \
   --agent="/workspace/code/leaderboard_launcher/leaderboard_launcher/agent_dev.py" \
-  --routes="/workspace/code/routes/routes_traffic_light.xml" 
-  #--routes="${INTERNAL_WORKSPACE_DIR}/leaderboard/data/routes_devtest.xml" \
+  --routes="${INTERNAL_WORKSPACE_DIR}/leaderboard/data/routes_devtest.xml" \
   --routes-subset=0
 
 # --routes="/workspace/code/routes/routes_highway.xml" \

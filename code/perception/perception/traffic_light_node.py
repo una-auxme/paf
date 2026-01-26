@@ -59,6 +59,8 @@ class TrafficLightNode(Node):
         self.traffic_light_msg.state = 0
         self.state_buffer = deque(maxlen=10)
         self.last_state = 0
+        self.last_interim_state = 0
+        self.interim_state = 0
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -95,45 +97,38 @@ class TrafficLightNode(Node):
 
     def handle_camera_image(self, msg: TrafficLightImages):
         # Classifies all traffic light images that appear per frame
-        # These are passed via the TrafficLightImages message type
         results = []
-        state_found = False
-
-        # Only one state != 0 may occur, otherwise the last state is taken
+        i = 0
+        # Classifies the image and checks whether it is a traffic light when turning
+        # Checks whether the classified condition is appropriate
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
             result = self.classifier(cv_image)
-            if state_found and result != 0:
-                results.clear()
-                results.append(self.last_state)
-                break
-            elif self.filter_turn_lights(cv_image) and not state_found:
+            if self.filter_turn_lights(cv_image) and self.meaningful_state(result):
                 results.append(result)
-
             if result != 0:
-                state_found = True
+                i += 1
 
-        if not results:
+        if not results or i > 1:
             return
-
-        if 2 in results:
-            interim_state = 2
-        elif 1 in results:
-            interim_state = 1
-        elif 4 in results:
-            interim_state = 4
+      
+        for interim in (1, 2, 4):
+            if interim in results:
+                self.interim_state = interim
+                self.last_interim_state = interim
+                break
         else:
-            interim_state = 0
+            self.interim_state = 0
 
-        # Cache values and only change state after a certain number has been reached
-        self.state_buffer.append(interim_state)
+        # Final State change only after reaching a certain number of states
+        self.state_buffer.append(self.interim_state)
         if self.state_buffer.count(2) >= 4:
             state = 2
             self.last_state = 2
         elif self.state_buffer.count(1) >= 5:
             state = 1
             self.last_state = 1
-        elif self.state_buffer.count(4) >= 4:
+        elif self.state_buffer.count(4) >= 3:
             state = 4
             self.last_state = 4
 
@@ -143,11 +138,7 @@ class TrafficLightNode(Node):
         self.traffic_light_msg.state = state
         if state != 0:
             self.last_info_time = self.get_clock().now()
-
-        self.get_logger().info(
-            f"TL : {tuple(results)} -> {tuple(self.state_buffer)} -> {state}"
-        )
-
+    
     def loop(self):
         # check if the last state was received more than 2 seconds ago
         if (
@@ -156,6 +147,7 @@ class TrafficLightNode(Node):
         ):
             self.traffic_light_msg.state = 0
             self.last_state = 0
+            self.last_interim_state = 0
             self.state_buffer.clear()
         self.traffic_light_publisher.publish(self.traffic_light_msg)
         if self.tfs_debug:
@@ -208,13 +200,21 @@ class TrafficLightNode(Node):
 
         # Publish the marker
         self.marker_pub.publish(text_marker)
+    
+    def meaningful_state(self, new_state):
+        # Checks whether the potential state makes sense 
+        # e.g., green cannot be followed directly by red.
+        if self.last_interim_state == 1 and new_state == 2:
+            return False
+        elif self.last_interim_state == 2 and new_state == 4:
+            return False
+        elif self.last_interim_state == 4 and new_state == 1:
+            return False
+        else:
+            return True
 
     def filter_turn_lights(self, image):
         # Traffic lights that are detected when turning are ignored
-        # Orginalbild
-        cv2.imshow("input", image)
-
-        # Bild in Graustufen darstellen
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
         circles = cv2.HoughCircles(
@@ -228,19 +228,8 @@ class TrafficLightNode(Node):
             maxRadius=7,
         )
 
-        if circles is not None:
-            for x, y, r in circles[0]:
-                x = int(round(x))
-                y = int(round(y))
-                r = int(round(r))
-
-                cv2.circle(image, (x, y), r, (0, 255, 0), 2)
-                cv2.circle(image, (x, y), 2, (255, 0, 0), 3)
-
-        cv2.imshow("circles", image)
-        cv2.waitKey(1)
-
-        # 
+        # The higher the resolution of the traffic light image, the more circles can be detected.
+        # Traffic lights when turning have higher resolution because they are closer to us. 
         if circles is not None and len(circles[0]) >= 2:
             return False
         else:
