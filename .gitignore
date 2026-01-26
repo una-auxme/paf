@@ -14,6 +14,8 @@ code/log
 code/simulation_results.json
 code/output
 
+tmp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
