@@ -693,6 +693,7 @@ class MappingDataIntegrationNode(Node):
                         motion_vector_hero + motion.linear_motion, angular_velocity=0.0
                     )
 
+            # Optional: Füge die Objektklasse hinzu
             object_class = None
             if objectclassarray is not None:
                 object_class = objectclassarray[indexarray == label][0]

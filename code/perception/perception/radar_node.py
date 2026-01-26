@@ -10,6 +10,7 @@ from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
 from sklearn.cluster import DBSCAN
 
+from sklearn.preprocessing import StandardScaler
 import json
 from visualization_msgs.msg import Marker, MarkerArray
 from transforms3d.quaternions import mat2quat
@@ -488,9 +489,6 @@ class RadarNode(Node):
                 eps=self.dbscan_eps,
                 min_samples=self.dbscan_samples,
             )
-            cluster_labels = split_large_clusters(
-                combined_points, cluster_labels, max_len=7.0, segment_len=4.5
-            )
 
             cloud = create_pointcloud2(
                 self.get_clock().now(), combined_points, cluster_labels, False
@@ -673,91 +671,53 @@ def filter_data(
     return filtered_data
 
 
-def cluster_data(data, eps, min_samples):
+def cluster_data(data, eps, min_samples) -> np.ndarray:
     """
     Clusters the radar data using the DBSCAN algorithm and returns the cluster labels.
+
+    This function applies DBSCAN clustering to radar data,
+    scaling the data first for better clustering performance.
+    It returns the cluster labels assigned by DBSCAN, where each
+    point is assigned a cluster label, and noise points are labeled as -1.
+
+    Args:
+        data (np.ndarray): A 2D array containing radar data. Each row represents a point
+                            with the format [x, y, z, velocity], where:
+                            - x, y, z are the 3D coordinates of the radar point.
+                            - velocity is the velocity associated with that point.
+        eps (float): The maximum distance between two samples for them to be considered
+                     as in the same neighborhood. Default is 0.8.
+        min_samples (int): The number of samples in a neighborhood for a point to be
+                           considered as a core point. Default is 3.
+
+    Returns:
+        np.ndarray: An array containing the cluster labels assigned by DBSCAN.
+                    Points labeled as -1 are considered noise
+                    and don't belong to any cluster.
+
+    Notes:
+        - If the input data is empty, the function returns an empty array.
+        - Data is scaled before clustering for better performance
+            using the `StandardScaler`.
+        - The function assumes that the input `data` has 4 columns (x, y, z, velocity),
+            and the z-values are replaced by 1 for the purpose of clustering.
     """
+
     if len(data) == 0:
         return np.array([])
 
-    data = np.asarray(data)
-    xy = data[:, :2]
-    r = np.linalg.norm(xy, axis=1)
+    # Scaling the data for better clustering performance
+    scaler = StandardScaler()
 
-    labels = -np.ones(len(data), dtype=int)
-    next_label = 0
+    # data_reduced = data[:, [0, 1, 3]]
+    data_reduced = data
+    data_reduced[:, 2] = 1
+    data_scaled = scaler.fit_transform(data_reduced)
 
-    bins = [(0, 20, 1.2), (20, 40, 1.6), (40, 60, 2.2), (60, 200, 3.0)]
-    for r0, r1, eps_bin in bins:
-        idx = np.where((r >= r0) & (r < r1))[0]
-        if len(idx) < min_samples:
-            continue
+    # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
+    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
 
-        features = xy[idx]
-        l = DBSCAN(eps=eps_bin, min_samples=min_samples).fit(features).labels_
-
-        # remap labels in this bin to global ids
-        for lab in np.unique(l):
-            if lab == -1:
-                continue
-            labels[idx[l == lab]] = next_label
-            next_label += 1
-
-    return labels
-
-
-def split_large_clusters(points, labels, max_len=7.0, segment_len=4.5):
-    """
-    Splittet zu lange Cluster entlang ihrer Hauptachse (PCA), damit
-    'Parkreihe' nicht als ein Objekt durchgeht.
-    points: Nx4 [x,y,z,v]
-    labels: Nx1
-    """
-    new_labels = labels.copy()
-    next_label = (
-        (new_labels[new_labels != -1].max() + 1) if np.any(new_labels != -1) else 0
-    )
-
-    for lab in np.unique(labels):
-        if lab == -1:
-            continue
-
-        idx = np.where(labels == lab)[0]
-        if len(idx) < 5:
-            continue
-
-        xy = points[idx, :2]
-        min_xy = xy.min(axis=0)
-        max_xy = xy.max(axis=0)
-        extent = max_xy - min_xy
-        length = float(np.max(extent))
-        if length <= max_len:
-            continue
-
-        centered = xy - xy.mean(axis=0)
-        cov = centered.T @ centered / max(len(xy) - 1, 1)
-        vals, vecs = np.linalg.eigh(cov)
-        axis = vecs[:, np.argmax(vals)]
-
-        proj = centered @ axis
-        pmin, pmax = proj.min(), proj.max()
-        num_segments = int(np.ceil((pmax - pmin) / segment_len))
-        if num_segments <= 1:
-            continue
-
-        # segment labels
-        edges = np.linspace(pmin, pmax, num_segments + 1)
-        seg_id = np.digitize(proj, edges) - 1
-        seg_id = np.clip(seg_id, 0, num_segments - 1)
-
-        for s in range(1, num_segments):
-            s_idx = idx[seg_id == s]
-            if len(s_idx) == 0:
-                continue
-            new_labels[s_idx] = next_label
-            next_label += 1
-
-    return new_labels
+    return clustered_points.labels_
 
 
 def generate_color_map(num_clusters):
@@ -1003,20 +963,16 @@ def calculate_cluster_velocity(points_with_labels):
 
     unique_labels = np.unique(valid_points[:, -1])
 
-    STATIC_DEADBAND = 0.5  # m/s
-
-    cluster_vel = {}
-    for label in unique_labels:
-        v = valid_points[valid_points[:, -1] == label, 3]
-        med = float(np.median(v))
-        if abs(med) < STATIC_DEADBAND:
-            med = 0.0
-        cluster_vel[label] = med
+    # calculate average velocity for each cluster
+    avg_velocities = {
+        label: np.mean(valid_points[valid_points[:, -1] == label, 3])
+        for label in unique_labels
+    }
 
     # Initialize the output array with None and assign velocities for valid points
     motion_array = np.full(len(points_with_labels), None, dtype=object)
     motion_array[valid_mask] = [
-        Motion2D(Vector2.new(cluster_vel[label], 0.0), 0.0)
+        Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
         for label in labels[valid_mask]
     ]
 
