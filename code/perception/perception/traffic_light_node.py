@@ -6,8 +6,6 @@ from rclpy.duration import Duration
 from perception_interfaces.msg import TrafficLightState, TrafficLightImages
 from cv_bridge import CvBridge
 import cv2
-import numpy as np
-
 from visualization_msgs.msg import Marker
 
 from paf_common.parameters import update_attributes
@@ -99,7 +97,7 @@ class TrafficLightNode(Node):
         # Classifies all traffic light images that appear per frame
         results = []
         i = 0
-        # Classifies the image and checks whether it is a traffic light when turning
+        # Classifies and checks whether it is a traffic light when turning
         # Checks whether the classified condition is appropriate
         for image_msg in msg.images:
             cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
@@ -111,7 +109,7 @@ class TrafficLightNode(Node):
 
         if not results or i > 1:
             return
-      
+
         for interim in (1, 2, 4):
             if interim in results:
                 self.interim_state = interim
@@ -138,7 +136,7 @@ class TrafficLightNode(Node):
         self.traffic_light_msg.state = state
         if state != 0:
             self.last_info_time = self.get_clock().now()
-    
+
     def loop(self):
         # check if the last state was received more than 2 seconds ago
         if (
@@ -200,9 +198,9 @@ class TrafficLightNode(Node):
 
         # Publish the marker
         self.marker_pub.publish(text_marker)
-    
+
     def meaningful_state(self, new_state):
-        # Checks whether the potential state makes sense 
+        # Checks whether the potential state makes sense
         # e.g., green cannot be followed directly by red.
         if self.last_interim_state == 1 and new_state == 2:
             return False
@@ -228,8 +226,8 @@ class TrafficLightNode(Node):
             maxRadius=7,
         )
 
-        # The higher the resolution of the traffic light image, the more circles can be detected.
-        # Traffic lights when turning have higher resolution because they are closer to us. 
+        # Higher resolution of the traffic light image -> more circles
+        # Turning traffic lights closer to us -> higher resolution
         if circles is not None and len(circles[0]) >= 2:
             return False
         else:
