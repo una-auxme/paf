@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y software-properties-common
+  apt-get update && apt-get install -y software-properties-common wget curl
 
 # GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -25,11 +25,20 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 ENV NVIDIA_REQUIRE_DRIVER="driver>=${NVIDIA_DRIVER_VERSION}"
 
-# GPU vulkan driver install
+# Cuda toolkit install
+# Using the cuda-toolkit instead of the ubuntu-packaged nvidia-cuda-toolkit avoids pulling in the libnvidia-compute-535 driver package.
+# (It is a dependency of nvidia-cuda-toolkit, but not of cuda-toolkit)
+# The libnvidia-compute-535 driver can conflict with the host's driver
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  UBUNTU_VERSION=$(. /etc/os-release && echo $VERSION_ID | tr -d '.') && \
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/x86_64/cuda-keyring_1.1-1_all.deb && \
+  dpkg -i cuda-keyring_1.1-1_all.deb && \
+  rm cuda-keyring_1.1-1_all.deb
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get upgrade -y && \
-  apt-get install -y libnvidia-gl-${NVIDIA_DRIVER_VERSION}
+  apt-get install -y cuda-toolkit libxext6
 
 ############################################
 ##### The main carla image starts here #####
