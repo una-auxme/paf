@@ -18,6 +18,7 @@ from typing import Optional
 from paf_common.parameters import update_attributes
 from rclpy.parameter import Parameter
 
+from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 from mapping_interfaces.msg import ClusteredPointsArray
@@ -119,6 +120,12 @@ class LidarDistance(Node):
             qos_profile=10,
         )
 
+        self.delta_heading_publisher = self.create_publisher(
+            msg_type=Float32,
+            topic="/paf/hero/delta_heading",
+            qos_profile=1,
+        )
+
         # Subscriber for LIDAR data (point clouds)
         self.create_subscription(
             msg_type=PointCloud2,
@@ -171,6 +178,14 @@ class LidarDistance(Node):
         point_cloud = self.Compensation.compensate()
         if point_cloud is None:
             return
+
+        if (
+            isinstance(self.Compensation, LocalCompensation)
+            and self.Compensation.delta_heading is not None
+        ):
+            msg = Float32()
+            msg.data = float(self.Compensation.delta_heading)
+            self.delta_heading_publisher.publish(msg)
 
         self.start_clustering(point_cloud)
         self.start_image_calculation(point_cloud)
@@ -924,6 +939,7 @@ class LocalCompensation(CompensationStrategy):
 
         self._prev_heading: Optional[float] = None
         self._cur_heading: Optional[float] = None
+        self.delta_heading: Optional[float] = None
         self._velocity: Optional[float] = None
 
     def valid_heading_data(self) -> bool:
@@ -996,10 +1012,10 @@ class LocalCompensation(CompensationStrategy):
 
         d_t = t_cur - t_prev
         d_x = self._velocity * d_t
-        d_heading = self._prev_heading - self._cur_heading
+        self.delta_heading = self._prev_heading - self._cur_heading
 
         comp_env_points = apply_local_motion_compensation(
-            self.prev_env_points, d_x, d_heading
+            self.prev_env_points, d_x, self.delta_heading
         )
 
         lidar_points = np.concatenate(
