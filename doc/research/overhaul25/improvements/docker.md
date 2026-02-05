@@ -4,7 +4,7 @@
 
 - [Use a venv for python dependencies](#use-a-venv-for-python-dependencies)
 - [Move explicitly installed ROS dependencies into the package.xml and install them with rosdep](#move-explicitly-installed-ros-dependencies-into-the-packagexml-and-install-them-with-rosdep)
-- [Use a singular Dockerfile with multiple build stages instead of the include](#use-a-singular-dockerfile-with-multiple-build-stages-instead-of-the-include)
+- [Use a singular Dockerfile with multiple build stages instead of using include](#use-a-singular-dockerfile-with-multiple-build-stages-instead-of-using-include)
 - [User permission handling in the Dockerfile](#user-permission-handling-in-the-dockerfile)
   - [Options](#options)
     - [Remove user-specific instructions from the Dockerfile](#remove-user-specific-instructions-from-the-dockerfile)
@@ -61,7 +61,9 @@ Required effort: Low
 
 Recommendation: Might be implemented when the package.xml files are migrated.
 
-## Use a singular Dockerfile with multiple build stages instead of the include
+**Status**: implemented, deps are pulled from package.xml files
+
+## Use a singular Dockerfile with multiple build stages instead of using include
 
 Pros:
 
@@ -77,14 +79,14 @@ Priority: HIGH, since it's an integral part of the build process
 
 Required effort: LOW
 
-Status: Implemented as part of the new ROS2 docker image.
+**Status**: Implemented as part of the new ROS2 docker image.
 
 ## User permission handling in the Dockerfile
 
 Priority: HIGH
 Effort: MED
 
-TODO: Optimal solution still needs to be figured out + documented
+**Status**: The current solution (Create non-root user at build time) is still used
 
 ### Options
 
@@ -104,14 +106,18 @@ This is the current setup
 
 ## Retain user configurations across container recreations
 
-TODO Mainly keep the rqt config
+Pros:
+
+- Keeps tool config files likethe rqt config
+
+**Status**: implemented
 
 ## Make it possible to keep Vs Code attached to the leaderboard container
 
 Priority: MED
 Effort: MED
 
-TODO
+**Status**: implemented, leaderboard can be dynamically restarted in the container
 
 ## Make it possible to restart the leaderboard independently of Carla
 
@@ -120,7 +126,7 @@ Will reduce simulation startup time
 Priority: Very LOW
 Effort: MED
 
-TODO
+**Status**: implemented, leaderboard can be dynamically restarted in the container
 
 ## Properly wait for container startup (Carla)
 
@@ -129,7 +135,7 @@ Will reduce simulation startup time by not waiting an arbitrary amount of time
 Priority: LOW
 Effort: LOW
 
-TODO
+**Status**: implemented, look at wait_for_carly.py
 
 ## Enable caching for pip and apt in the Dockerfile
 
@@ -140,7 +146,7 @@ Effort: LOW
 
 - The `--mount=type=cache` flag needs to be added to each RUN instruction that uses apt or pip.
 
-Status: Implemented as part of the new ROS2 docker image.
+**Status**: Implemented as part of the new ROS2 docker image.
 
 ## Add support for AMD GPUs
 
@@ -161,4 +167,4 @@ Required effort: LOW
 - The base image in the Dockerfile needs to be switchable between `nvidia/cuda` and `amd/rocm`
 - The torch flavor needs to be adjustable
 
-Status: Implemented as part of the new ROS2 docker image.
+**Status**: Implemented as part of the new ROS2 docker image.

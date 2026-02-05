@@ -45,7 +45,7 @@ def curve_to_polygon(line: shapely.LineString,
                      width: float) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L33)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L32)
 
 Creates a polygon with a specified width around a given line.
 
@@ -69,7 +69,7 @@ def split_line_at(
         distance: float) -> Tuple[Optional[LineString], Optional[LineString]]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L60)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L59)
 
 Splits line at the given distance from the line start
 
@@ -96,7 +96,7 @@ def clamp_line(
         end_distance: Optional[float] = None) -> Optional[shapely.LineString]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L141)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L140)
 
 Clamps line based on the two distances from the line start
 
@@ -124,7 +124,7 @@ def ros_path_to_line(path: NavPath,
                      end_idx: Optional[int] = None) -> shapely.LineString
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L172)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L171)
 
 Converts a ROS path into a shapely line
 
@@ -149,7 +149,7 @@ Converts a ROS path into a shapely line
 def line_to_ros_path(line: shapely.LineString) -> NavPath
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L197)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L196)
 
 Converts a shapely line into a ROS path
 
@@ -175,7 +175,7 @@ def build_trajectory(global_trajectory: Union[NavPath, shapely.LineString],
                      centered: bool = False) -> Optional[shapely.LineString]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L214)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L213)
 
 Builds a local trajectory line based on the global trajectory
 the and global_hero_transform and returns it as line
@@ -223,7 +223,7 @@ def build_trajectory_shape(
         centered: bool = False) -> Optional[shapely.Polygon]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L280)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L279)
 
 Builds a local trajectory shape based on the global trajectory
 the and global_hero_transform
@@ -261,7 +261,7 @@ def project_plane(size_x: float,
                   start_point: Optional[Point2] = None) -> shapely.Polygon
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L333)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L332)
 
 Projects a rectangular plane starting from (0, 0) forward in the x-direction.
 
@@ -293,7 +293,7 @@ def build_lead_vehicle_collision_masks(
         max_centering_dist: Optional[float] = 0.5) -> List[shapely.Polygon]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L365)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L364)
 
 Builds a list of collision masks for determining the lead vehicle
 in front of the hero.
@@ -330,7 +330,7 @@ def build_trajectory_from_start(
 ) -> Optional[shapely.LineString]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L433)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L432)
 
 Build a trajectory based on *trajectory_local* that starts at *start_point*
 
@@ -356,7 +356,7 @@ def point_along_line_angle(x: float, y: float, angle: float,
                            distance: float) -> Point2
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L481)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L480)
 
 Calculates a point along a straight line with a given angle and distance.
 
@@ -382,7 +382,7 @@ def create_lane_box(y_axis_line: LineString, lane_close_hero: Entity,
                     reduce_lane: float) -> shapely.Geometry
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/ext_modules/mapping_common/mask.py#L499)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/mask.py#L498)
 
 helper function to create a lane box entity
 
