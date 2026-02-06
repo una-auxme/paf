@@ -634,6 +634,8 @@ class MappingDataIntegrationNode(Node):
             if data.motion_array
             else None
         )
+        
+        azimutharray = np.array(data.azimuth_angle) if data.azimuth_angle else None
 
         objectclassarray = np.array(data.object_class) if data.object_class else None
 
@@ -685,13 +687,29 @@ class MappingDataIntegrationNode(Node):
                 shape.offset = Transform2D.identity()
 
             motion = None
-            if motion_array_converted is not None:
-                motion = motion_array_converted[cluster_mask][0]
-                if self.hero_speed is not None:
-                    motion_vector_hero = Vector2.forward() * self.hero_speed.speed
-                    motion = Motion2D(
-                        motion_vector_hero + motion.linear_motion, angular_velocity=0.0
-                    )
+            azimuth = None
+            if azimutharray is not None:
+                if motion_array_converted is not None:
+                    motion = motion_array_converted[cluster_mask][0]
+                    azimuth = azimutharray[cluster_mask][0]
+                    azimuth = np.cos(azimuth)
+                    if self.hero_speed is not None:
+                        motion_vector_hero = Vector2.forward() * self.hero_speed.speed
+
+                        motion = Motion2D(
+                            (motion_vector_hero * azimuth) + motion.linear_motion, angular_velocity=0.0
+                        )
+            else:
+                if motion_array_converted is not None:
+                    motion = motion_array_converted[cluster_mask][0]
+                    if self.hero_speed is not None:
+                        motion_vector_hero = Vector2.forward() * self.hero_speed.speed
+
+                        motion = Motion2D(
+                            motion_vector_hero + motion.linear_motion, angular_velocity=0.0
+                        )
+                   # if motion.linear_motion._matrix[0] < -0.1:
+                    #    self.get_logger().info(f"entity speed is {motion.linear_motion._matrix[0]}")
 
             # Optional: Füge die Objektklasse hinzu
             object_class = None

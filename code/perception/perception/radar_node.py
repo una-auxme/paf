@@ -523,12 +523,19 @@ class RadarNode(Node):
 
             motionArray = [m.to_ros_msg() for m in motionArray]
 
+
+            azimuthArray = calculate_azimuth(points_with_labels)
+            azimuthArray = azimuthArray[valid_indices]
+
+#            azimuthArray = [m.to_ros_msg() for m in azimuthArray]
+
             clusteredpoints = array_to_clustered_points(
                 self.get_clock().now(),
                 clusterPointsNpArray,
                 indexArray,
                 motionArray,
                 header_id="hero/RADAR",
+                object_azimuth_array=azimuthArray,
             )
             self.entity_radar_publisher.publish(clusteredpoints)
 
@@ -614,7 +621,7 @@ def pointcloud2_to_array(pointcloud_msg):
 
     # Convert PointCloud2 message to a numpy structured array
     cloud_array = ros2_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
-
+    
     # Stack the x, y, z coordinates with velocity to form a 2D array
     return np.column_stack(
         (cloud_array["x"], cloud_array["y"], cloud_array["z"], cloud_array["Velocity"])
@@ -969,6 +976,8 @@ def calculate_cluster_velocity(points_with_labels):
         for label in unique_labels
     }
 
+    
+
     # Initialize the output array with None and assign velocities for valid points
     motion_array = np.full(len(points_with_labels), None, dtype=object)
     motion_array[valid_mask] = [
@@ -977,6 +986,28 @@ def calculate_cluster_velocity(points_with_labels):
     ]
 
     return motion_array
+
+
+def calculate_azimuth(points_with_labels):
+    labels = points_with_labels[:, -1]
+    valid_mask = labels != -1
+    valid_points = points_with_labels[valid_mask]
+
+    unique_labels = np.unique(valid_points[:, -1])
+
+    # calculate azimuth angle for each cluster -> arctan(x,y)
+    azimuths = { label: np.mean(np.arctan(valid_points[:,0], valid_points[:,1]))
+                for label in unique_labels
+    }
+
+    azimuth_array = np.full(len(points_with_labels), None, dtype=object)
+    azimuth_array[valid_mask] = [
+        azimuths[label]
+        for label in labels[valid_mask]
+    ] 
+
+    return azimuth_array
+
 
 
 def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
