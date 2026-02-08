@@ -31,6 +31,10 @@ from mapping_common.transform import Vector2, Transform2D, Point2
 
 from mapping_interfaces import msg
 
+import shapely.geometry as geom
+
+from geometry_msgs.msg import Point
+
 
 @dataclass
 class Motion2D:
@@ -561,6 +565,10 @@ class Entity:
             motion_text = f"{speed_in_kmh:.2f} km/h"
             meta_markers.append(self.get_text_marker(motion_text))
 
+            prediction_marker = self.to_motion_prediction_marker()
+            if prediction_marker is not None:
+                meta_markers.append(prediction_marker)
+
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
@@ -593,6 +601,44 @@ class Entity:
             .to_ros_msg()
         )
         return m
+
+    def to_motion_prediction_marker(self) -> Marker | None:
+        from mapping_common.markers import debug_marker
+        from shapely.geometry import LineString
+
+        """Visualizes a simple forward motion prediction as a green line."""
+
+        if self.matches_filter(FlagFilter(is_hero=True)):
+            return None
+
+        if self.motion is None:
+            return None
+
+        motion_vec = self.motion.linear_motion
+        if motion_vec.length() < 0.01:
+            return None
+
+        # Startpunkt: aktuelle Position
+        start = Point2.from_vector(self.transform.translation())
+
+        # 5–10 Sekunden Vorhersage (sehr einfach!)
+        prediction_time = 4.0  # Sekunden
+        end = start + motion_vec * prediction_time
+
+        # Shapely-Geometrie (für spätere Kollisionschecks!)
+        line = LineString(
+            [
+                (start.x(), start.y()),
+                (end.x(), end.y()),
+            ]
+        )
+
+        # Marker für RViz
+        return debug_marker(
+            line,
+            frame_id="hero",
+            color=(0.0, 1.0, 0.0, 1.0),
+        )
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
         """Creates a text marker at the entity's position
