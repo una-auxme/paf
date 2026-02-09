@@ -24,7 +24,7 @@ from planning_interfaces.srv import (
 import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
-from mapping_common.transform import Point2, Transform2D
+from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.entity import FlagFilter
 from mapping_interfaces.msg import Map as MapMsg
 
@@ -178,6 +178,7 @@ class MotionPlanning(Node):
 
         self.counter = 0
         self.current_map = None
+        self.hero_transform: Transform2D | None = None
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _map_callback(self, msg: MapMsg):
@@ -275,7 +276,7 @@ class MotionPlanning(Node):
         ):
             return
 
-        hero_transform = mapping_common.map.build_global_hero_transform(
+        self.hero_transform = mapping_common.map.build_global_hero_transform(
             self.current_pos.x(),
             self.current_pos.y(),
             self.current_heading,
@@ -298,12 +299,12 @@ class MotionPlanning(Node):
             self.global_trajectory, start_idx=min_idx, end_idx=max_idx
         )
         global_traj_line = self._apply_overtake(
-            global_traj_line, hero_transform=hero_transform
+            global_traj_line, hero_transform=self.hero_transform
         )
 
         local_trajectory = mapping_common.mask.build_trajectory(
             global_traj_line,
-            hero_transform,
+            self.hero_transform,
             max_length=max_length,
             centered=False,
         )
@@ -372,20 +373,58 @@ class MotionPlanning(Node):
         if self.current_map is None:
             return []
 
-        lines = []
+        lines: list[LineString] = []
+
         for e in self.current_map.entities:
+
             if e.motion is None:
-                continue
-            if not e.matches_filter(FlagFilter(is_collider=True)):
                 continue
             if e.matches_filter(FlagFilter(is_hero=True)):
                 continue
+            if not e.matches_filter(FlagFilter(is_collider=True)):
+                continue
 
+            # linear position prediction based on speed and time
             line = e.get_motion_prediction_line(time_horizon=4.0)
-            if line is not None:
-                lines.append(line)
+
+            if line is None:
+                continue
+
+            entity_pos = e.transform.translation().point()
+
+            if not self.is_entity_in_front(self.hero_transform, entity_pos):
+                continue
+
+            lines.append(line)
 
         return lines
+
+    def is_entity_in_front(
+        self,
+        hero_transform: Transform2D,
+        entity_pos: Point2,
+        min_distance: float = 0.5,
+    ) -> bool:
+        """
+        Returns True if entity is in front of hero (dot product test)
+        """
+
+        hero_pos = hero_transform.translation()
+        hero_heading = hero_transform.rotation()
+
+        # Direction of travel of the Hero
+        forward = Vector2.new(math.cos(hero_heading), math.sin(hero_heading))
+
+        # Vector from hero to entity
+        to_entity = entity_pos.vector() - hero_pos
+
+        # Projection in the direction of travel
+        dot = (
+            forward.x() * to_entity.x()
+            + forward.y() * to_entity.y()
+        )
+
+        return dot > min_distance
 
     def _update_current_global_waypoint_idx(self):
         """The next_global_waypoint_idx is used to limit the build_trajectory
