@@ -25,6 +25,8 @@ import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
 from mapping_common.transform import Point2, Transform2D
+from mapping_common.entity import FlagFilter
+from mapping_interfaces.msg import Map as MapMsg
 
 TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
 """threshold under which the planner decides it is on a trajectory
@@ -113,6 +115,13 @@ class MotionPlanning(Node):
             qos_profile=1,
         )
 
+        self.create_subscription(
+            msg_type=MapMsg,
+            callback=self._map_callback,
+            topic=f"/paf/{self.role_name}/mapping/init_data",
+            qos_profile=1,
+        )
+
         # Services
         self.start_overtake_service = self.create_service(
             StartOvertake,
@@ -168,7 +177,11 @@ class MotionPlanning(Node):
                 )
 
         self.counter = 0
+        self.current_map = None
         self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def _map_callback(self, msg: MapMsg):
+        self.current_map = mapping_common.map.Map.from_ros_msg(msg)
 
     def __start_overtake_callback(
         self, req: StartOvertake.Request, res: StartOvertake.Response
@@ -302,6 +315,19 @@ class MotionPlanning(Node):
             )
             return
 
+        predicted_entity_lines = self.get_predicted_entity_lines()
+
+        collision = self.check_trajectory_collisions(
+            local_trajectory,
+            predicted_entity_lines,
+        )
+
+        if collision:
+            self.get_logger().warn(
+                "MotionPlanning: potential collision detected!",
+                throttle_duration_sec=0.5,
+            )
+
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
 
@@ -326,6 +352,40 @@ class MotionPlanning(Node):
                 "Motion planning: No speed limit available for current waypoint",
                 throttle_duration_sec=1.0,
             )
+
+    def check_trajectory_collisions(
+        self,
+        trajectory: LineString,
+        predicted_entities: list[LineString],
+        distance_threshold: float = 0.5,
+    ) -> bool:
+        """
+        Returns True if a collision is likely.
+        """
+
+        for ent_line in predicted_entities:
+            if trajectory.distance(ent_line) < distance_threshold:
+                return True
+        return False
+
+    def get_predicted_entity_lines(self) -> list[LineString]:
+        if self.current_map is None:
+            return []
+
+        lines = []
+        for e in self.current_map.entities:
+            if e.motion is None:
+                continue
+            if not e.matches_filter(FlagFilter(is_collider=True)):
+                continue
+            if e.matches_filter(FlagFilter(is_hero=True)):
+                continue
+
+            line = e.get_motion_prediction_line(time_horizon=4.0)
+            if line is not None:
+                lines.append(line)
+
+        return lines
 
     def _update_current_global_waypoint_idx(self):
         """The next_global_waypoint_idx is used to limit the build_trajectory
@@ -475,9 +535,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting global trajectory...")
         req = GetPath.Request()
-        response: Optional[
-            GetPath.Response
-        ] = await self.global_trajectory_client.call_async(req)
+        response: Optional[GetPath.Response] = (
+            await self.global_trajectory_client.call_async(req)
+        )
         if response is None:
             self.get_logger().warn(
                 f"{self.global_trajectory_client.service_name} service returned None."
@@ -506,9 +566,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting speed_limits...")
         req = GetSpeedLimits.Request()
-        response: Optional[
-            GetSpeedLimits.Response
-        ] = await self.speed_limits_client.call_async(req)
+        response: Optional[GetSpeedLimits.Response] = (
+            await self.speed_limits_client.call_async(req)
+        )
         if response is None:
             self.get_logger().warn(
                 f"{self.speed_limits_client.service_name} service returned None."

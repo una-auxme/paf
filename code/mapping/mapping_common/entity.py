@@ -607,7 +607,26 @@ class Entity:
         from shapely.geometry import LineString
 
         """Visualizes a simple forward motion prediction as a green line."""
+        line = self.get_motion_prediction_line()
+        if line is None:
+            return None
 
+        return debug_marker(
+            line,
+            frame_id="hero",
+            color=(0.0, 1.0, 0.0, 1.0),
+        )
+
+    def get_motion_prediction_line(
+        self,
+        time_horizon: float = 4.0,
+    ) -> LineString | None:
+        from shapely.geometry import LineString
+
+        """
+        Returns a shapely LineString predicting the entity's forward motion.
+        Also used for collision checking.
+        """
         if self.matches_filter(FlagFilter(is_hero=True)):
             return None
 
@@ -618,26 +637,14 @@ class Entity:
         if motion_vec.length() < 0.01:
             return None
 
-        # Startpunkt: aktuelle Position
         start = Point2.from_vector(self.transform.translation())
+        end = start + motion_vec * time_horizon
 
-        # 5–10 Sekunden Vorhersage (sehr einfach!)
-        prediction_time = 4.0  # Sekunden
-        end = start + motion_vec * prediction_time
-
-        # Shapely-Geometrie (für spätere Kollisionschecks!)
-        line = LineString(
+        return LineString(
             [
                 (start.x(), start.y()),
                 (end.x(), end.y()),
             ]
-        )
-
-        # Marker für RViz
-        return debug_marker(
-            line,
-            frame_id="hero",
-            color=(0.0, 1.0, 0.0, 1.0),
         )
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
