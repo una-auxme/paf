@@ -976,12 +976,28 @@ def calculate_cluster_velocity(points_with_labels):
         for label in unique_labels
     }
 
-    
+    azimuth = calculate_azimuth(valid_points)
+
+    azimuths_per_label = {
+    label: np.mean(azimuth[(labels == label)])
+    for label in unique_labels
+}
+
+    avg_x_velocities = {
+        label: avg_velocities[label] * np.cos(azimuths_per_label[label])
+        for label in unique_labels
+    }
+
+    avg_y_velocities = {
+        label: avg_velocities[label] * np.sin(azimuths_per_label[label])
+        for label in unique_labels
+    }
+
 
     # Initialize the output array with None and assign velocities for valid points
     motion_array = np.full(len(points_with_labels), None, dtype=object)
     motion_array[valid_mask] = [
-        Motion2D(Vector2.new(avg_velocities[label], 0.0), 0.0)
+        Motion2D(Vector2.new(avg_x_velocities[label], avg_y_velocities[label]), 0.0)
         for label in labels[valid_mask]
     ]
 
@@ -995,11 +1011,14 @@ def calculate_azimuth(points_with_labels):
 
     unique_labels = np.unique(valid_points[:, -1])
 
-    # calculate azimuth angle for each cluster -> arctan(x,y)
-    azimuths = { label: np.mean(np.arctan(valid_points[:,0], valid_points[:,1]))
+    
+
+
+    # calculate azimuth angle for each cluster -> arctan(x,y) -> y it north per definition so we have to put x in y
+    azimuths = { label: np.mean(np.arctan2(valid_points[valid_points[:, -1] == label, 1], valid_points[valid_points[:, -1] == label, 0]))
                 for label in unique_labels
     }
-
+    
     azimuth_array = np.full(len(points_with_labels), None, dtype=object)
     azimuth_array[valid_mask] = [
         azimuths[label]

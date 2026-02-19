@@ -692,13 +692,46 @@ class MappingDataIntegrationNode(Node):
                 if motion_array_converted is not None:
                     motion = motion_array_converted[cluster_mask][0]
                     azimuth = azimutharray[cluster_mask][0]
-                    azimuth = np.cos(azimuth)
+                    cos_azimuth = np.cos(azimuth)
                     if self.hero_speed is not None:
                         motion_vector_hero = Vector2.forward() * self.hero_speed.speed
+                       # self.get_logger().info(f"entity speed is {motion.linear_motion._matrix[0]} and self speed is {motion_vector_hero}")
+                        ego_motion = motion_vector_hero * cos_azimuth
 
+                        hypspeed = self.hero_speed.speed * np.abs(cos_azimuth) 
+                        xspeed = hypspeed * cos_azimuth
+                        yspeed = hypspeed * np.sin(azimuth)
+
+                        speed_vector = Vector2.new(xspeed, yspeed)
+                        
+                        if motion_vector_hero.length() > 3:
+                            self.get_logger().info(f"""
+                            === RADAR DEBUG ===
+                            Raw motion x/y: {motion.linear_motion._matrix[0], motion.linear_motion._matrix[1] } m/s
+                            Azimuth:      {azimuth}  
+                            Hero speed:   {self.hero_speed.speed if self.hero_speed else 0} m/s
+                            Cos(azimuth): {np.cos(azimuth)}
+                            Cluster size: {sum(cluster_mask)}
+                            Ego Motion *:   {motion_vector_hero * cos_azimuth}
+                            SpeedVektor: { speed_vector}
+                            """)
+
+
+        
                         motion = Motion2D(
-                            (motion_vector_hero * azimuth) + motion.linear_motion, angular_velocity=0.0
+                            motion.linear_motion + speed_vector, angular_velocity=0.0
                         )
+
+                        if np.abs(motion.linear_motion._matrix[0]) < 1.5:
+                            motion = None
+
+
+                        if motion_vector_hero.length() > 3 and motion is not None:
+                            self.get_logger().info(f"""
+                            converted motion x: {motion.linear_motion._matrix[0] if motion is not None else 0.0 } m/s
+                            """)
+                        #if motion.linear_motion._matrix[0] < 0.5:
+                        #self.get_logger().info(f"entity azimuth is {azimuth}")
             else:
                 if motion_array_converted is not None:
                     motion = motion_array_converted[cluster_mask][0]
@@ -706,7 +739,7 @@ class MappingDataIntegrationNode(Node):
                         motion_vector_hero = Vector2.forward() * self.hero_speed.speed
 
                         motion = Motion2D(
-                            motion_vector_hero + motion.linear_motion, angular_velocity=0.0
+                             motion_vector_hero + motion.linear_motion, angular_velocity=0.0
                         )
                    # if motion.linear_motion._matrix[0] < -0.1:
                     #    self.get_logger().info(f"entity speed is {motion.linear_motion._matrix[0]}")
