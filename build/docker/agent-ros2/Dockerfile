@@ -383,7 +383,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   sudo apt-get update && \
   rosdep update --rosdistro ${ROS_DISTRO} && \
   ((rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y -r |& tee ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log; exit \${PIPESTATUS[0]}) \
-  || echo \"echo -e \\\"\\\\e[31mERROR: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  || echo -e \"\\e[33mWARNING: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\e[0m\") \
   "
 
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
@@ -392,7 +392,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid="${PAF_UID}",g
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc && \
   ((${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh |& tee ${INTERNAL_WORKSPACE_DIR}/pip_install.log; exit \${PIPESTATUS[0]}) \
-  || echo \"echo -e \\\"\\\\e[31mERROR: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  || echo -e \"\\e[33mWARNING: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\e[0m\") \
   "
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc

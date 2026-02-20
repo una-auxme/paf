@@ -8,6 +8,9 @@
     "agent-dev"
   ],
   "workspaceFolder": "/workspace",
+  "containerEnv": {
+    "PAF_LAUNCH_CONTAINER_VSCODE": "0"
+  },
   "initializeCommand": "bash ${localWorkspaceFolder}/scripts/update-dotenv.sh",
   "shutdownAction": "stopCompose",
   "overrideCommand": false,

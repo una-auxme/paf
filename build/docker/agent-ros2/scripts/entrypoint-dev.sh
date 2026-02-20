@@ -34,7 +34,10 @@ ros_gui_params=(--ros-args --param use_sim_time:=true)
 ros2 run rqt_console rqt_console "${ros_gui_params[@]}" &
 ros2 run rqt_gui rqt_gui "${ros_gui_params[@]}" &
 ros2 run rviz2 rviz2 -d /workspace/rviz2.rviz "${ros_gui_params[@]}" &
-code /workspace &
+
+if [ "${PAF_LAUNCH_CONTAINER_VSCODE:-1}" = "1" ]; then
+  code /workspace &
+fi
 
 "$@" &
 wait "$!"
