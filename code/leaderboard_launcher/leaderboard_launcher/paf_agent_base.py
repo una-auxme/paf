@@ -48,7 +48,7 @@ class PAFAgent(ROS2Agent):
                 "roll": 0.0,
                 "pitch": 0.0,
                 "yaw": 0.0,
-                "horizontal_fov": 170,
+                "horizontal_fov": 130,
                 "vertical_fov": 0.1,
             },
             {
