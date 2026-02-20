@@ -1,0 +1,13 @@
+extend = "ruff.toml"
+
+[lint]
+extend-select = ["B", "C4", "SIM", "UP", "RUF", "D", "PLR"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "D104"]
+"test_*.py" = ["F841", "D", "S101", "PLR2004"]
+"**/tests/*.py" = ["D", "S101", "PLR2004"]
+"**/test/**/*.py" = ["D", "S101", "PLR2004"]

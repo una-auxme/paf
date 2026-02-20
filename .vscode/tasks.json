@@ -44,6 +44,13 @@
       "detail": "Manually trigger the ruff linter to check the python files and apply the safe fixes that it encounters during linting.",
     },
     {
+      "label": "Lint python code with ruff (strict profile)",
+      "type": "shell",
+      "command": "ruff check /workspace/code/ --config /workspace/ruff-strict.toml",
+      "problemMatcher": [],
+      "detail": "Runs stricter lint rules including docstring checks for incremental quality hardening."
+    },
+    {
       "label": "Check python code formatting with ruff",
       "type": "shell",
       "command": "ruff format /workspace/code/ --check",
@@ -91,6 +98,34 @@
       "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; ruff format /workspace/code/${pkg} --check; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
       "problemMatcher": [],
       "detail": "Checks ruff formatting for the package derived from the currently active file path."
+    },
+    {
+      "label": "Run pytest (unit)",
+      "type": "shell",
+      "command": "pytest -m unit",
+      "problemMatcher": [],
+      "detail": "Runs fast unit tests marked with @pytest.mark.unit."
+    },
+    {
+      "label": "Run pytest (integration)",
+      "type": "shell",
+      "command": "pytest -m integration",
+      "problemMatcher": [],
+      "detail": "Runs integration tests marked with @pytest.mark.integration."
+    },
+    {
+      "label": "Run pytest (simulation)",
+      "type": "shell",
+      "command": "pytest -m sim",
+      "problemMatcher": [],
+      "detail": "Runs simulation tests marked with @pytest.mark.sim."
+    },
+    {
+      "label": "Run pytest with coverage",
+      "type": "shell",
+      "command": "pytest --cov=code --cov-report=term-missing",
+      "problemMatcher": [],
+      "detail": "Runs all tests and reports coverage for the code workspace."
     },
   ],
   "inputs": [

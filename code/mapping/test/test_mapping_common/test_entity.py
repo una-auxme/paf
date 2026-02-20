@@ -1,4 +1,8 @@
+import pytest
+
 from mapping_common import entity, shape, transform
+
+pytestmark = pytest.mark.unit
 
 
 def get_shape():

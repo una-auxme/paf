@@ -1,5 +1,9 @@
+import pytest
+
 from mapping_common import shape
 from mapping_common.transform import Transform2D, Vector2, Point2
+
+pytestmark = pytest.mark.unit
 
 
 def test_rectangle_conversion():

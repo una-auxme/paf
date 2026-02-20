@@ -1,2 +1,4 @@
 # Ruff version pinned via build/pins/ruff.env
 ruff
+pytest
+pytest-cov
