@@ -9,6 +9,7 @@
 ## First steps
 
 If this is your first time working with the project you can follow the first steps in [/doc/development/first_steps.md](/doc/development/first_steps.md).
+For a compact setup path see also [/doc/development/quickstart_contributor.md](/doc/development/quickstart_contributor.md).
 
 ## Development Guidelines
 

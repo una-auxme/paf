@@ -39,6 +39,7 @@ More detailed instructions about the setup can be found [here](./doc/general/ins
 To get an overview of the current architecture of the agent you can look at the general documentation [here](./doc/general/architecture.md). The individual components are explained in the README files of their subfolders.
 
 If you contribute to this project please read the guidelines first. They can be found [here](./doc/development/README.md).
+For a fast contributor setup, use the [10-minute quickstart](./doc/development/quickstart_contributor.md).
 
 ## Research
 
