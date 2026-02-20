@@ -55,7 +55,7 @@ class LaneFreeDirection(Enum):
 
 
 @dataclass
-class  Map:
+class Map:
     """2 dimensional map for the intermediate layer
 
     General information:

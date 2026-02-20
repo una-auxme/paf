@@ -16,6 +16,8 @@ import numpy as np
 from math import radians, sin, cos
 
 import shapely
+from shapely.affinity import translate
+from shapely.geometry import LineString, Point
 
 from uuid import UUID, uuid4
 from builtin_interfaces.msg import Time as TimeMsg
@@ -30,10 +32,6 @@ from mapping_common.shape import Shape2D
 from mapping_common.transform import Vector2, Transform2D, Point2
 
 from mapping_interfaces import msg
-
-import shapely.geometry as geom
-
-from geometry_msgs.msg import Point
 
 
 @dataclass
@@ -336,6 +334,29 @@ class TrackingInfo:
 
         return Motion2D(linear_motion=self.last_motion_data, angular_velocity=0.0)
 
+    def _predict_local_trajectory(
+        self, start_point: Point2, motion: Motion2D, time_horizon: float
+    ) -> LineString:
+        """
+        Predicts the entity's trajectory by linearly extrapolating current motion.
+
+        This function performs a constant-velocity projection from a given start point.
+        While currently limited to linear motion, it provides the basis for future
+        curvilinear models (incorporating yaw rate/acceleration).
+
+        Note:
+        Internal helper. Client code should use 'Entity.predict_local_trajectory'
+        """
+
+        end_point = start_point + motion.linear_motion * time_horizon
+
+        return LineString(
+            [
+                (start_point.x(), start_point.y()),
+                (end_point.x(), end_point.y()),
+            ]
+        )
+
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
         return TrackingInfo(
@@ -565,10 +586,6 @@ class Entity:
             motion_text = f"{speed_in_kmh:.2f} km/h"
             meta_markers.append(self.get_text_marker(motion_text))
 
-            prediction_marker = self.to_motion_prediction_marker()
-            if prediction_marker is not None:
-                meta_markers.append(prediction_marker)
-
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
@@ -602,50 +619,39 @@ class Entity:
         )
         return m
 
-    def to_motion_prediction_marker(self) -> Marker | None:
-        from mapping_common.markers import debug_marker
-        from shapely.geometry import LineString
-
-        """Visualizes a simple forward motion prediction as a green line."""
-        line = self.get_motion_prediction_line()
-        if line is None:
-            return None
-
-        return debug_marker(
-            line,
-            frame_id="hero",
-            color=(0.0, 1.0, 0.0, 1.0),
-        )
-
-    def get_motion_prediction_line(
+    def predict_local_trajectory(
         self,
         time_horizon: float = 4.0,
-    ) -> LineString | None:
-        from shapely.geometry import LineString
-
+    ) -> shapely.geometry.base.BaseGeometry:
         """
-        Returns a shapely LineString predicting the entity's forward motion.
-        Also used for collision checking.
+        Predicts the entity's forward motion path for collision checking.
+
+        For moving entities, returns a LineString representing the predicted path.
+        For static entities, returns the entity's translated shape. d
+
+        Args:
+            time_horizon: Prediction window in seconds.
+
+        Returns:
+            A shapely BaseGeometry (LineString for motion, Polygon for static).
         """
-        if self.matches_filter(FlagFilter(is_hero=True)):
-            return None
 
-        if self.motion is None:
-            return None
+        # Static Object Logic (No Motion)
+        if self.motion is None or self.motion.linear_motion.length() == 0.0:
+            tx = self.transform.translation().x()
+            ty = self.transform.translation().y()
 
-        motion_vec = self.motion.linear_motion
-        if motion_vec.length() < 0.01:
-            return None
+            return translate(self.shape.to_shapely(), xoff=tx, yoff=ty)
 
-        start = Point2.from_vector(self.transform.translation())
-        end = start + motion_vec * time_horizon
+        # Moving Object Logic
+        start_point = Point2.from_vector(self.transform.translation())
 
-        return LineString(
-            [
-                (start.x(), start.y()),
-                (end.x(), end.y()),
-            ]
+        # Delegate extrapolation to the internal tracking
+        local_trajectory = self.tracking_info._predict_local_trajectory(
+            start_point=start_point, motion=self.motion, time_horizon=time_horizon
         )
+
+        return local_trajectory
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
         """Creates a text marker at the entity's position
@@ -795,8 +801,18 @@ class Entity:
             float: width
         """
         local_poly = self.shape.to_shapely()
-        min_x, min_y, max_x, max_y = local_poly.bounds
-        return max_y - min_y
+        # min_x, min_y, max_x, max_y = local_poly.bounds
+        # return max_y - min_y
+
+        box = local_poly.minimum_rotated_rectangle
+        x, y = box.exterior.coords.xy
+
+        edge_length = (
+            Point(x[0], y[0]).distance(Point(x[1], y[1])),
+            Point(x[1], y[1]).distance(Point(x[2], y[2])),
+        )
+
+        return min(edge_length)
 
     def get_front_x(self) -> float:
         """Returns the local x length from the center to the front of the entity

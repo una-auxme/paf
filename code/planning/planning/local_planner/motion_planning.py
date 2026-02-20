@@ -1,9 +1,11 @@
 import math
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 import numpy as np
 import shapely
-from shapely import LineString
+from shapely.geometry import LineString
+from shapely.strtree import STRtree
+from shapely.ops import nearest_points
 
 import rclpy
 import rclpy.callback_groups
@@ -21,12 +23,22 @@ from planning_interfaces.srv import (
     GetSpeedLimits,
 )
 
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.duration import Duration
+
+from paf_common.parameters import update_attributes
+
 import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
 from mapping_common.transform import Point2, Transform2D, Vector2
-from mapping_common.entity import FlagFilter
+from mapping_common.entity import FlagFilter, Entity
 from mapping_interfaces.msg import Map as MapMsg
+
+from visualization_msgs.msg import Marker, MarkerArray
+
+from mapping_common.markers import debug_marker_array, debug_marker
 
 TRAJECTORY_DISTANCE_THRESHOLD: float = 0.5
 """threshold under which the planner decides it is on a trajectory
@@ -66,6 +78,31 @@ class MotionPlanning(Node):
             .string_value
         )
 
+        self.time_horizon = (
+            self.declare_parameter(
+                "time_horizon",
+                3.0,
+                descriptor=ParameterDescriptor(
+                    description="Set time_horizon in seconds for trajectory prediction",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
+        self.crash_threshold = (
+            self.declare_parameter(
+                "crash_threshold",
+                2.0,
+                descriptor=ParameterDescriptor(
+                    description="Set crash_threshold in seconds",
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
+        self.add_on_set_parameters_callback(self._set_parameters_callback)
+
         # Overtake related stuff
         self.overtake_request: Optional[StartOvertake.Request] = None
         """If an overtake is queued or running, this is populated
@@ -73,6 +110,8 @@ class MotionPlanning(Node):
         self.overtake_status: OvertakeStatus.Response = OvertakeStatus.Response(
             status=OvertakeStatus.Response.NO_OVERTAKE
         )
+
+        self.ego_vehicle: Optional[Entity] = None
 
         # Trajectory related stuff
         self.current_pos: Optional[Point2] = None
@@ -155,6 +194,10 @@ class MotionPlanning(Node):
             Float32, f"/paf/{self.role_name}/speed_limit", qos_profile=1
         )
 
+        self.marker_publisher: Publisher = self.create_publisher(
+            MarkerArray, "/paf/hero/planning/collision_trajectories", qos_profile=1
+        )
+
         # Service clients
         self.client_callback_group = (
             rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
@@ -181,8 +224,18 @@ class MotionPlanning(Node):
         self.hero_transform: Transform2D | None = None
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
+    def _set_parameters_callback(self, params: List[Parameter]):
+        """Callback for parameter updates."""
+        return update_attributes(self, params)
+
     def _map_callback(self, msg: MapMsg):
         self.current_map = mapping_common.map.Map.from_ros_msg(msg)
+
+        self.ego_vehicle = None
+        for entity in self.current_map.entities:
+            if entity.matches_filter(FlagFilter(is_hero=True)):
+                self.ego_vehicle = entity
+                return
 
     def __start_overtake_callback(
         self, req: StartOvertake.Request, res: StartOvertake.Response
@@ -316,7 +369,7 @@ class MotionPlanning(Node):
             )
             return
 
-        predicted_entity_lines = self.get_predicted_entity_lines()
+        predicted_entity_lines = self.predict_local_trajectory_entity()
 
         collision = self.check_trajectory_collisions(
             local_trajectory,
@@ -356,48 +409,166 @@ class MotionPlanning(Node):
 
     def check_trajectory_collisions(
         self,
-        trajectory: LineString,
-        predicted_entities: list[LineString],
-        distance_threshold: float = 0.5,
+        ego_vehicle_trajectory: LineString,
+        env_entity_information: List[Tuple[Entity, shapely.geometry.base.BaseGeometry]],
     ) -> bool:
         """
-        Returns True if a collision is likely.
+        Evaluates potential collisions by identifying overlaps between
+        the ego vehicle's path and environment entities.
+
+        This method performs a two-stage check:
+        1. Spatial: Prunes entities using an STRtree to find path intersections.
+        2. Temporal: Calculates the Time-to-Collision (TTC) for both the ego and
+           target entities at the first point of contact within the conflict zone.
+
+        Args:
+            ego_vehicle_trajectory: The planned path for the ego vehicle.
+            env_entity_information: A list of tuples containing the Entity object
+                and its corresponding spatial representation (LineString or Polygon).
+
+        Returns:
+            bool: True if a collision is predicted within the defined `crash_threshold`.
         """
 
-        for ent_line in predicted_entities:
-            if trajectory.distance(ent_line) < distance_threshold:
-                return True
-        return False
+        if self.ego_vehicle is None:
+            self.get_logger().warn("Ego vehicle does not exist in local scope.")
+            return False
 
-    def get_predicted_entity_lines(self) -> list[LineString]:
+        if (
+            self.ego_vehicle.motion is None
+            or self.ego_vehicle.motion.linear_motion.length() == 0.0
+        ):
+            # ToDo: Extend Framework to incooperate acceleration profile of entities
+            # to handle case of no motion!
+            self.get_logger().warn(
+                "Ego vehicle has no motion, cannot compute collions."
+            )
+            return False
+
+        ego_width = self.ego_vehicle.get_width()
+        buffered_ego_trajectory = ego_vehicle_trajectory.buffer(
+            ego_width / 2, cap_style="flat"
+        )
+        ego_motion = self.ego_vehicle.motion.linear_motion.length()
+        ego_shape = self.ego_vehicle.shape.to_shapely()
+
+        processed_geometries = []
+        for entity, geom in env_entity_information:
+            if isinstance(geom, LineString):
+                processed_geometries.append(
+                    geom.buffer(entity.get_width() / 2, cap_style="flat")
+                )
+            else:
+                processed_geometries.append(geom)
+
+        tree = STRtree(processed_geometries)
+        indices = tree.query(buffered_ego_trajectory, predicate="intersects")
+
+        markers: List[Marker] = []
+        collision_detected = False
+
+        for idx in indices:
+            env_entity, env_entity_geom = env_entity_information[idx]
+            conflict_area = shapely.intersection(
+                buffered_ego_trajectory, processed_geometries[idx]
+            )
+
+            # For the sake of simplicity we simple assume that the closest point of the
+            # intersection to our ego_vehicle is most relevant for crash prediction.
+            # Note that this might not be optimal.
+            _, collision_point = nearest_points(ego_shape, conflict_area)
+
+            t_ego = self.get_time_to_point_on_path(
+                ego_vehicle_trajectory,
+                ego_motion,
+                collision_point,
+            )
+
+            if isinstance(env_entity_geom, LineString):
+                env_motion = env_entity.motion.linear_motion.length()
+                t_env = self.get_time_to_point_on_path(
+                    env_entity_geom, env_motion, collision_point
+                )
+            else:
+                # If we interesect a static object we will hit it at t_ego
+                t_env = t_ego
+
+            dt = abs(t_ego - t_env)
+
+            is_crashing = dt < self.crash_threshold
+
+            if is_crashing:
+                collision_detected = True
+            else:
+                continue
+
+            markers.append(
+                debug_marker(
+                    processed_geometries[idx],
+                    frame_id="hero",
+                    color=(1.0, 0.0, 0.0, 1.0),
+                )
+            )
+
+        if len(markers) > 0:
+            lifetime = Duration(seconds=0.05).to_msg()
+            marker_array = debug_marker_array(
+                "entity_trajectories", markers, self.current_map.timestamp, lifetime
+            )
+            self.marker_publisher.publish(marker_array)
+
+        return collision_detected
+
+    def predict_local_trajectory_entity(
+        self,
+    ) -> List[Tuple[Entity, shapely.geometry.base.BaseGeometry]]:
+        """
+        Predicts future paths for all relevant colliders in the current map.
+
+        Returns:
+            List of (Entity, TrajectoryGeometry) pairs.
+        """
         if self.current_map is None:
             return []
 
-        lines: list[LineString] = []
+        local_trajectories: list[Tuple[Entity, shapely.geometry.base.BaseGeometry]] = []
 
-        for e in self.current_map.entities:
-
-            if e.motion is None:
-                continue
-            if e.matches_filter(FlagFilter(is_hero=True)):
-                continue
-            if not e.matches_filter(FlagFilter(is_collider=True)):
+        for entity in self.current_map.entities:
+            if entity.matches_filter(FlagFilter(is_hero=True)):
                 continue
 
-            # linear position prediction based on speed and time
-            line = e.get_motion_prediction_line(time_horizon=4.0)
-
-            if line is None:
+            if not entity.matches_filter(FlagFilter(is_collider=True)):
                 continue
 
-            entity_pos = e.transform.translation().point()
+            local_geom = entity.predict_local_trajectory(time_horizon=self.time_horizon)
 
-            if not self.is_entity_in_front(self.hero_transform, entity_pos):
+            if local_geom is None:
                 continue
 
-            lines.append(line)
+            local_trajectories.append((entity, local_geom))
 
-        return lines
+        return local_trajectories
+
+    @staticmethod
+    def get_time_to_point_on_path(
+        trajectory: shapely.LineString,
+        current_speed: float,
+        target_point: shapely.Point,
+    ) -> float:
+        """
+        Estimates time to reach a point along a trajectory.
+
+        Args:
+            path_linestring: The LineString representing the intended path.
+            current_speed: Current velocity (m/s).
+            target_point: The Point we want to reach.
+
+        Returns:
+        float: Estimated time in seconds.
+        """
+
+        distance_along_trajectory = trajectory.project(target_point)
+        return distance_along_trajectory / current_speed
 
     def is_entity_in_front(
         self,
@@ -419,10 +590,7 @@ class MotionPlanning(Node):
         to_entity = entity_pos.vector() - hero_pos
 
         # Projection in the direction of travel
-        dot = (
-            forward.x() * to_entity.x()
-            + forward.y() * to_entity.y()
-        )
+        dot = forward.x() * to_entity.x() + forward.y() * to_entity.y()
 
         return dot > min_distance
 
@@ -574,9 +742,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting global trajectory...")
         req = GetPath.Request()
-        response: Optional[GetPath.Response] = (
-            await self.global_trajectory_client.call_async(req)
-        )
+        response: Optional[
+            GetPath.Response
+        ] = await self.global_trajectory_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.global_trajectory_client.service_name} service returned None."
@@ -605,9 +773,9 @@ class MotionPlanning(Node):
 
         self.get_logger().info("Requesting speed_limits...")
         req = GetSpeedLimits.Request()
-        response: Optional[GetSpeedLimits.Response] = (
-            await self.speed_limits_client.call_async(req)
-        )
+        response: Optional[
+            GetSpeedLimits.Response
+        ] = await self.speed_limits_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.speed_limits_client.service_name} service returned None."
