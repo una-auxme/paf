@@ -1,23 +1,36 @@
-# Install python packages
+# Install Python packages
 
-(Kept from previous group [paf22])
+**Summary:** Python dependencies are managed from repository manifests and synchronized inside the running development container.
 
-**Summary:** This page gives a short overview how to add python packages to the project.
+## Choose the correct requirements file
 
-- [Install python packages](#install-python-packages)
-  - [Adding packages with pip](#adding-packages-with-pip)
+- `code/requirements.txt`: shared runtime dependencies.
+- `code/requirements.cpu.txt`, `code/requirements.cuda.txt`, `code/requirements.rocm.txt`: hardware-specific runtime dependencies.
+- `code/requirements_infrastructure.txt`: developer tooling (`ruff`, `pytest`, etc.).
 
-## Adding packages with pip
+Every dependency must be pinned with `==`.
 
-To have a unified setup every python package has to be added with a fixed version.
+## Add a dependency safely
 
-> Please don't install a package (inside a container) with `pip install xxx` since it would then be just installed in your specific container.
+1. Edit the matching `requirements*.txt` file.
+2. Open a shell in the `agent-dev` container.
+3. Run:
 
-Instead, any package should be added to `code/requirements.txt`. Always set the package to a fixed version with `==` to avoid version conflicts.
-
-An example how this file could look like is given below:
-
-```text
-torch==1.13.0
-torchvision==0.1.9
+```bash
+dep.sync
+devbuild
 ```
+
+4. Validate with:
+
+```bash
+python3 -m pip check
+ruff check /workspace/code/
+pytest -m unit
+```
+
+## Important container note
+
+Avoid ad-hoc `pip install <package>` as a long-term fix. It only mutates your current container and is lost for other developers/CI unless the dependency is committed to `requirements*.txt`.
+
+For the full ROS + Python process (including `package.xml` and rosdep), see [Dependency Management](./dependency_management.md).

@@ -30,6 +30,7 @@ If you contribute to this project please read the following guidelines first:
 10. [Testing Strategy](./testing_strategy.md)
 11. [Logging Standard](./logging.md)
 12. [Context Retention](./context_retention.md)
+13. [Dependency Management](./dependency_management.md)
 
 ## Administrative Guidelines
 

@@ -127,6 +127,20 @@
       "problemMatcher": [],
       "detail": "Runs all tests and reports coverage for the code workspace."
     },
+    {
+      "label": "Dependency check in dev container",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.check'",
+      "problemMatcher": [],
+      "detail": "Validates rosdep and pip dependency health in the running agent-dev container environment."
+    },
+    {
+      "label": "Synchronize dependencies in dev container",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.sync'",
+      "problemMatcher": [],
+      "detail": "Installs rosdep and pip dependencies from package.xml and requirements manifests."
+    },
   ],
   "inputs": [
     {

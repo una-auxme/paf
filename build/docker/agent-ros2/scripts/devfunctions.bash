@@ -19,6 +19,8 @@ Development utility functions:
 - ruff.fix-lint: Apply the safe fixes that the ruff linter encounters during linting
 - ruff.check-format: Manually trigger the ruff formatter to check if the formatting of the python files is correct
 - ruff.format: Apply the ruff formatting to the python files
+- dep.check: Validates rosdep + pip dependency health for the current container environment
+- dep.sync: Installs rosdep and pip dependencies from the repository manifests
 EOF
 
 # This function sources the ROS /workspace
@@ -101,3 +103,17 @@ ruff.format() {
   )
 }
 export -f ruff.format
+
+dep.check() {
+  (
+    "${INTERNAL_WORKSPACE_DIR}/scripts/dependency-sync.sh" check
+  )
+}
+export -f dep.check
+
+dep.sync() {
+  (
+    "${INTERNAL_WORKSPACE_DIR}/scripts/dependency-sync.sh" sync
+  )
+}
+export -f dep.sync

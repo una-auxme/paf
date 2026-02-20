@@ -78,6 +78,7 @@ pre-commit run --all-files
    - `Lint current Python file with ruff`
    - `Format current Python file with ruff`
    - `Lint active package with ruff`
+   - `Dependency check in dev container`
 5. Commit only related files and open a focused PR.
 
 ## 7) Common problems
@@ -87,3 +88,6 @@ pre-commit run --all-files
 - If rosdep/pip setup failed during image build, inspect logs inside container:
   - `/internal_workspace/rosdep_install.log`
   - `/internal_workspace/pip_install.log`
+- If dependency drift appears after changing `requirements*.txt` or `package.xml`, run:
+   - `dep.sync`
+   - `devbuild`

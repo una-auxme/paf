@@ -368,6 +368,7 @@ WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
 COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
+  ${DOCKER_RESOURCE_BASE}/scripts/dependency-sync.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/reset_env.bash \
   ./scripts/
 
