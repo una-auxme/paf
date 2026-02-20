@@ -621,7 +621,7 @@ def pointcloud2_to_array(pointcloud_msg):
 
     # Convert PointCloud2 message to a numpy structured array
     cloud_array = ros2_numpy.point_cloud2.pointcloud2_to_array(pointcloud_msg)
-    
+
     # Stack the x, y, z coordinates with velocity to form a 2D array
     return np.column_stack(
         (cloud_array["x"], cloud_array["y"], cloud_array["z"], cloud_array["Velocity"])
@@ -1011,19 +1011,18 @@ def calculate_azimuth(points_with_labels):
 
     unique_labels = np.unique(valid_points[:, -1])
 
-    
-
-
-    # calculate azimuth angle for each cluster -> arctan(x,y) -> y it north per definition so we have to put x in y
-    azimuths = { label: np.mean(np.arctan2(valid_points[valid_points[:, -1] == label, 1], valid_points[valid_points[:, -1] == label, 0]))
-                for label in unique_labels
+    # calculate azimuth angle for each cluster -> arctan(x,y) -> y north
+    azimuths = {
+        label: np.mean(np.arctan2(valid_points[valid_points[:, -1] == label, 1],
+                                  valid_points[valid_points[:, -1] == label, 0]))
+        for label in unique_labels
     }
-    
+
     azimuth_array = np.full(len(points_with_labels), None, dtype=object)
     azimuth_array[valid_mask] = [
         azimuths[label]
         for label in labels[valid_mask]
-    ] 
+    ]
 
     return azimuth_array
 
