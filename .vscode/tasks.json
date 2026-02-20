@@ -57,6 +57,41 @@
       "problemMatcher": [],
       "detail": "Manually trigger the ruff formatter to format the python files.",
     },
+    {
+      "label": "Start dev container stack (CUDA)",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/dev-up.sh",
+      "problemMatcher": [],
+      "detail": "Updates build/.env, checks NVIDIA driver, and starts agent-dev via Docker Compose."
+    },
+    {
+      "label": "Lint current Python file with ruff",
+      "type": "shell",
+      "command": "ruff check ${file}",
+      "problemMatcher": [],
+      "detail": "Runs ruff check for the currently active file."
+    },
+    {
+      "label": "Format current Python file with ruff",
+      "type": "shell",
+      "command": "ruff format ${file}",
+      "problemMatcher": [],
+      "detail": "Runs ruff format for the currently active file."
+    },
+    {
+      "label": "Lint active package with ruff",
+      "type": "shell",
+      "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; ruff check /workspace/code/${pkg}; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
+      "problemMatcher": [],
+      "detail": "Runs ruff check on the package derived from the currently active file path."
+    },
+    {
+      "label": "Check active package formatting with ruff",
+      "type": "shell",
+      "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; ruff format /workspace/code/${pkg} --check; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
+      "problemMatcher": [],
+      "detail": "Checks ruff formatting for the package derived from the currently active file path."
+    },
   ],
   "inputs": [
     {
