@@ -13,6 +13,11 @@
 
 We use [Ruff](https://docs.astral.sh/ruff/) for both linting and formatting Python code.
 
+Repository configs:
+
+- `ruff.toml`: baseline rules used in CI.
+- `ruff-strict.toml`: stricter optional profile for gradual hardening (includes docstring checks and additional maintainability rules).
+
 ### Ruff versioning
 
 - The pinned version lives in `build/pins/ruff.env` (kept in sync with `build/.env` via `scripts/update-dotenv.sh`, which VS Code runs on folder open).
@@ -27,6 +32,12 @@ Helper commands are available in `build/docker/agent-ros2/scripts/devfunctions.b
 - `ruff.check-format`: run `ruff format --check`.
 - `ruff.format`: apply formatting with `ruff format`.
 
+Use the strict profile when hardening a package:
+
+```bash
+ruff check /workspace/code/<package> --config /workspace/ruff-strict.toml
+```
+
 ### Run Ruff via Docker Compose
 
 Use the pinned version directly from the host:
@@ -36,6 +47,16 @@ docker compose -f build/docker-compose.linter.yaml up
 ```
 
 The Compose file mounts the repo into the container and runs Ruff against it.
+
+## ✅ Test lint-adjacent workflow
+
+Use pytest markers to scope feedback loops:
+
+```bash
+pytest -m unit
+pytest -m integration
+pytest -m sim
+```
 
 ## 💬 Markdown Linter
 

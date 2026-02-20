@@ -84,6 +84,7 @@ Do not attempt to fix unrelated failing tests/lints outside the requested scope.
 - Update docs when behavior, setup, commands, or interfaces change.
 - For developer-facing changes, prefer updating docs under `doc/development/` or package README files.
 - Keep Markdown concise, structured, and actionable.
+- Capture non-trivial architectural decisions in `doc/adr/` using the ADR template.
 
 ## 10) Git and PR hygiene
 
@@ -106,4 +107,10 @@ Before finishing, ensure:
 - [ ] Lint/format checks were run (or clearly state why not).
 - [ ] Relevant docs were updated when needed.
 - [ ] Any remaining risks or manual follow-ups are clearly noted.
+
+## 13) Quality gates and contributor contract
+
+- Follow `doc/development/developer_contract.md` for PR assumptions, validation summary, and known gaps.
+- Use `pytest` markers defined in `pytest.ini` (`unit`, `integration`, `sim`) to scope validation.
+- Use `ruff-strict.toml` for incremental hardening of packages (docstring and maintainability checks).
 

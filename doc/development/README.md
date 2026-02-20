@@ -26,6 +26,10 @@ If you contribute to this project please read the following guidelines first:
    3. [drive action](./drive_action.md)
 7. [Install python packages](./installing_python_packages.md)
 8. [Discord Webhook Documentation](./discord_webhook.md)
+9. [Developer Contract](./developer_contract.md)
+10. [Testing Strategy](./testing_strategy.md)
+11. [Logging Standard](./logging.md)
+12. [Context Retention](./context_retention.md)
 
 ## Administrative Guidelines
 

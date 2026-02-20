@@ -21,6 +21,18 @@ e.g. is old functionality not usable anymore
 
 Which files functionalities are most important in this PR. On which part should the reviewer be focussed on?
 
+## Assumptions and constraints
+
+List assumptions, environment constraints, and any scope limits used for this change.
+
+## Validation summary
+
+List commands executed and outcomes (lint, format, tests, simulation checks, etc.).
+
+## Known gaps / follow-ups
+
+List remaining risks or follow-up work that is intentionally out of scope.
+
 # Checklist:
 
 - [ ] My code follows the style guidelines of this project
@@ -30,4 +42,5 @@ Which files functionalities are most important in this PR. On which part should 
 - [ ] My changes generate no new warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works (might be obsolete with CI later on)
 - [ ] New and existing unit tests pass locally with my changes (might be obsolete with CI later on)
+- [ ] I documented assumptions, validation steps, and known gaps in this PR
 

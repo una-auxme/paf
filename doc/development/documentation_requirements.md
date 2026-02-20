@@ -85,6 +85,15 @@ Press `Enter` or select the option and it should produce a docstring that looks 
 
 ![docstring.png](/doc/assets/development/docstring.png)
 
+Docstrings are required for public modules, classes, and functions in maintained ROS2 packages.
+Use Google-style docstrings and keep them aligned with actual behavior and parameter names.
+
+For incremental enforcement use:
+
+```bash
+ruff check /workspace/code/<package> --config /workspace/ruff-strict.toml
+```
+
 ### 1.5. Readability and Maintainability
 
 - **Consistent Formatting:** Code should follow a consistent and readable formatting style. Tools like linters or formatters can help enforce a consistent code style.
