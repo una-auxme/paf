@@ -147,10 +147,10 @@ def estimate_velocity_from_radial(
         raise EstimationError("at least 2 measurements are required")
 
     rank = int(np.linalg.matrix_rank(U))
-    if rank < min_condition_rank:
-        raise EstimationError(
-            "insufficient LOS diversity: rank(U) < 2, velocity is not fully observable"
-        )
+    #if rank < min_condition_rank:
+    #    raise EstimationError(
+    #        "insufficient LOS diversity: rank(U) < 2, velocity is not fully observable"
+    #    )
 
     cond = float(np.linalg.cond(U))
     if not np.isfinite(cond) or cond > max_condition_number:

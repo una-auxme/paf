@@ -5,12 +5,13 @@ from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.duration import Duration
 import numpy as np
+from math import radians, sin, cos
 from std_msgs.msg import String, Header
 from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
 from sklearn.cluster import DBSCAN
 from carla_msgs.msg import CarlaSpeedometer
-
+from std_msgs.msg import Float32
 
 
 from sklearn.preprocessing import StandardScaler
@@ -36,7 +37,7 @@ from .radar_speed_estimate import estimate_velocity_from_xyvr
 class RadarNode(Node):
     """See doc/perception/radar_node.md on how to configure this node."""
     hero_speed: Optional[CarlaSpeedometer] = None
-
+    delta_heading: Optional[float] = 0.0
 
     def __init__(self):
         super().__init__(type(self).__name__)
@@ -186,9 +187,17 @@ class RadarNode(Node):
             lambda msg: self.callback(msg, "RADAR1"),
             10,
         )
+        self.create_subscription(
+            msg_type=Float32,
+            topic="/paf/hero/delta_heading",
+            callback=self.delta_heading_callback,
+            qos_profile=1,
+        )
         self.create_subscription(Clock, "/clock", self.time_check, 10)
 
         self.create_subscription(Imu, "/carla/hero/IMU", self.imu_callback, 10)
+
+
 
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
@@ -197,6 +206,9 @@ class RadarNode(Node):
         """Callback for parameter updates."""
         return update_attributes(self, params)
     
+    def delta_heading_callback(self, data:Float32):
+        self.delta_heading = data.data
+
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
 
@@ -672,13 +684,25 @@ class RadarNode(Node):
                 # motion_vectors[i,1] = vec.y()
                 # motion_vectors[i,2] = point[-1]     # label of the point
 
-                motion_vectors[i,0] = point[0]      # y as north
-                motion_vectors[i,1] = point[1]
+                # ego rotation conversion
+                if self.delta_heading is not 0.0:
+                    theta = radians(self.delta_heading)
+                    c, s = cos(theta), sin(theta)
+
+                    self.get_logger().info(f"theta {theta} of {self.delta_heading}")
+
+                    x_pos_converted = point[0] * c - point[1] * s 
+                    y_pos_converted = point[0] * c + point[1] * s
+                else: 
+                    x_pos_converted = point[0]
+                    y_pos_converted = point[1]
+                
+                motion_vectors[i,0] = x_pos_converted    
+                motion_vectors[i,1] = y_pos_converted
                 motion_vectors[i,2] = v_radial 
                 motion_vectors[i,3] = point[-1]     # label of the point
 
-                
-
+            
 
         avg_motion = {}
         for label in unique_labels:
