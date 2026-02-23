@@ -3,17 +3,15 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-from sensor_msgs.msg import Image as ImageMsg
-from perception_interfaces.msg import TrafficLightState
+from perception_interfaces.msg import TrafficLightState, TrafficLightImages
 from cv_bridge import CvBridge
 import cv2
-import numpy as np
-
 from visualization_msgs.msg import Marker
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
+from collections import deque
 
 from traffic_light_detection.src.traffic_light_inference import (
     TrafficLightInference,
@@ -57,6 +55,10 @@ class TrafficLightNode(Node):
         self.last_info_time = self.get_clock().now()
         self.traffic_light_msg = TrafficLightState()
         self.traffic_light_msg.state = 0
+        self.state_buffer = deque(maxlen=10)
+        self.last_state = 0
+        self.last_interim_state = 0
+        self.interim_state = 0
 
         # publish / subscribe setup
         self.setup_camera_subscriptions()
@@ -73,7 +75,7 @@ class TrafficLightNode(Node):
     def setup_camera_subscriptions(self):
         """receives images and runs handel_camera_image"""
         self.create_subscription(
-            msg_type=ImageMsg,
+            msg_type=TrafficLightImages,
             callback=self.handle_camera_image,
             topic=f"/paf/{self.role_name}/{self.side}/segmented_traffic_light",
             qos_profile=1,
@@ -91,27 +93,46 @@ class TrafficLightNode(Node):
             Marker, "/paf/hero/TrafficLight/state/debug_marker", 10
         )
 
-    def handle_camera_image(self, image):
-        # calculates the current state of the traffic light
-        cv2_image = self.bridge.imgmsg_to_cv2(image)
-        rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
-        # apply a NN on the image to determine state
-        result, data = self.classifier(cv2_image)
+    def handle_camera_image(self, msg: TrafficLightImages):
+        # Classifies all traffic light images that appear per frame
+        results = []
+        i = 0
+        # Classifies and checks whether it is a traffic light when turning
+        # Checks whether the classified condition is appropriate
+        for image_msg in msg.images:
+            cv_image = self.bridge.imgmsg_to_cv2(image_msg, "rgb8")
+            result = self.classifier(cv_image)
+            if self.filter_turn_lights(cv_image) and self.meaningful_state(result):
+                results.append(result)
+            if result != 0:
+                i += 1
 
-        if (
-            data[0][0] > 1e-15
-            and data[0][3] > 1e-15
-            or data[0][0] > 1e-10
-            or data[0][3] > 1e-10
-        ):
-            return  # too uncertain, may not be a traffic light
-        # checks if the traffic light has correct orientation
-        if not is_front(rgb_image):
-            return  # not a front facing traffic light
+        if not results or i > 1:
+            return
 
-        # 1: Green, 2: Red, 4: Yellow other values (back or side of traffic light) are
-        # interpreted as unknown
-        state = result if result in [1, 2, 4] else 0
+        for interim in (1, 2, 4):
+            if interim in results:
+                self.interim_state = interim
+                self.last_interim_state = interim
+                break
+        else:
+            self.interim_state = 0
+
+        # Final State change only after reaching a certain number of states
+        self.state_buffer.append(self.interim_state)
+        if self.state_buffer.count(2) >= 4:
+            state = 2
+            self.last_state = 2
+        elif self.state_buffer.count(1) >= 5:
+            state = 1
+            self.last_state = 1
+        elif self.state_buffer.count(4) >= 3:
+            state = 4
+            self.last_state = 4
+
+        else:
+            state = self.last_state
+
         self.traffic_light_msg.state = state
         if state != 0:
             self.last_info_time = self.get_clock().now()
@@ -123,6 +144,9 @@ class TrafficLightNode(Node):
             and self.traffic_light_msg.state != 0
         ):
             self.traffic_light_msg.state = 0
+            self.last_state = 0
+            self.last_interim_state = 0
+            self.state_buffer.clear()
         self.traffic_light_publisher.publish(self.traffic_light_msg)
         if self.tfs_debug:
             self.traffic_light_visualization(self.traffic_light_msg.state)
@@ -175,44 +199,39 @@ class TrafficLightNode(Node):
         # Publish the marker
         self.marker_pub.publish(text_marker)
 
+    def meaningful_state(self, new_state):
+        # Checks whether the potential state makes sense
+        # e.g., green cannot be followed directly by red.
+        if self.last_interim_state == 1 and new_state == 2:
+            return False
+        elif self.last_interim_state == 2 and new_state == 4:
+            return False
+        elif self.last_interim_state == 4 and new_state == 1:
+            return False
+        else:
+            return True
 
-def get_light_mask(image):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    def filter_turn_lights(self, image):
+        # Traffic lights that are detected when turning are ignored
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-    # Define lower and upper bounds for the hue, saturation, and value
-    # - Red and Yellow combined since they are so close in the color spectrum
-    lower_red_yellow = np.array([0, 75, 100])
-    upper_red_yellow = np.array([40, 255, 255])
-    lower_green = np.array([40, 200, 200])
-    upper_green = np.array([80, 255, 255])
+        circles = cv2.HoughCircles(
+            gray,
+            cv2.HOUGH_GRADIENT,
+            dp=1.0,
+            minDist=35,
+            param1=150,
+            param2=7,
+            minRadius=2,
+            maxRadius=7,
+        )
 
-    # Mask where the pixels within the bounds are white, otherwise black
-    m1 = cv2.inRange(hsv, lower_red_yellow, upper_red_yellow)
-    m2 = cv2.inRange(hsv, lower_green, upper_green)
-    mask = cv2.bitwise_or(m1, m2)
-
-    return mask
-
-
-def is_front(image):
-    mask = get_light_mask(image)
-
-    # Find contours in the thresholded image, use only the largest one
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
-    contour = contours[0] if contours else None
-
-    if contour is None:
-        return False
-
-    _, _, width, height = cv2.boundingRect(contour)
-    aspect_ratio = width / height
-
-    # If aspect ratio is within range of a square (therefore a circle)
-    if 0.75 <= aspect_ratio <= 1.3:
-        return True
-    else:
-        return False
+        # Higher resolution of the traffic light image -> more circles
+        # Turning traffic lights closer to us -> higher resolution
+        if circles is not None and len(circles[0]) >= 2:
+            return False
+        else:
+            return True
 
 
 def main(args=None):
