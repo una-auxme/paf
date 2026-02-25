@@ -625,6 +625,7 @@ class RadarNode(Node):
         )  # Apply translation to (x, y, z), keep velocity unchanged
 
         return transformed_points
+        
     def calculate_cluster_velocity(self, points_with_labels):
         """
         Computes the average velocity for each labeled cluster and assigns it to each point.
@@ -644,11 +645,32 @@ class RadarNode(Node):
             computation.
         - The output array has the same length as the input array.
         """
+
+        radar0mask = points_with_labels[:,0] >= 0
+        radar1mask = ~radar0mask
+
+        sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
+        sensor1_x, sensor1_y, sensor1_z = self.sensor_config["RADAR1"]
+
+        
+
+        translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
+        transformed_points0 = np.column_stack(
+            (points_with_labels[radar0mask, :3] - translation0, points_with_labels[radar0mask, 3]))
+
+
+        translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
+
+        transformed_points1 = np.column_stack(
+            (points_with_labels[radar1mask, :3] - translation1, points_with_labels[radar1mask, 3]))
+
+        points_with_labels = np.vstack((transformed_points0,transformed_points1))
+
         labels = points_with_labels[:, -1]
         valid_mask = labels != -1  # Filter invalid labels
         valid_points = points_with_labels[valid_mask]
 
-        motion_vectors = np.full((len(points_with_labels), 4), None, dtype=object)
+        motion_vectors = np.full((len(points_with_labels), 5), None, dtype=object)
         motion_array = np.full((len(points_with_labels)), None, dtype=object)
 
         unique_labels = np.unique(valid_points[:, -1])
@@ -672,56 +694,67 @@ class RadarNode(Node):
                 
                 vec = speed_vector + point_motion_vector
 
-                # get radial velocity 
+                # # get radial velocity 
 
-                px, py = point[0], point[1]
-                r = np.hypot(px,py)
-                ux,uy = px/r, py /r
+                # px, py = point[0], point[1]
+                # r = np.hypot(px,py)
+                # ux,uy = px/r, py /r
 
-                v_radial = vec.x() * ux + vec.y() * uy 
+                # v_radial = vec.x() * ux + vec.y() * uy 
 
-                # motion_vectors[i,0] = vec.x() 
-                # motion_vectors[i,1] = vec.y()
-                # motion_vectors[i,2] = point[-1]     # label of the point
+                # # motion_vectors[i,0] = vec.x() 
+                # # motion_vectors[i,1] = vec.y()
+                # # motion_vectors[i,2] = point[-1]     # label of the point
 
                 # ego rotation conversion
-                if self.delta_heading is not 0.0:
-                    theta = radians(self.delta_heading)
-                    c, s = cos(theta), sin(theta)
+                # if self.delta_heading is not 0.0:
+                #     theta = radians(self.delta_heading)
+                #     c, s = cos(theta), sin(theta)
 
-                    self.get_logger().info(f"theta {theta} of {self.delta_heading}")
+                #     self.get_logger().info(f"theta {theta} of {self.delta_heading}")
 
-                    x_pos_converted = point[0] * c - point[1] * s 
-                    y_pos_converted = point[0] * c + point[1] * s
-                else: 
-                    x_pos_converted = point[0]
-                    y_pos_converted = point[1]
+                #     x_pos_converted = point[0] * c - point[1] * s 
+                #     y_pos_converted = point[0] * c + point[1] * s
+                # else: 
+                #     x_pos_converted = point[0]
+                #     y_pos_converted = point[1]
                 
-                motion_vectors[i,0] = x_pos_converted    
-                motion_vectors[i,1] = y_pos_converted
-                motion_vectors[i,2] = v_radial 
-                motion_vectors[i,3] = point[-1]     # label of the point
+                motion_vectors[i,0] = point[0]    
+                motion_vectors[i,1] = point[1]
+                motion_vectors[i,2] = vec.x() 
+                motion_vectors[i,3] = vec.y()    
+                motion_vectors[i,4] = point[-1] # label of the point
 
             
 
         avg_motion = {}
         for label in unique_labels:
-            mask = motion_vectors[:, 3] == label
+            mask = motion_vectors[:, 4] == label
             if not np.any(mask):
                 self.get_logger().info(f"Fuck off")
                 continue
+            clusterpoints = motion_vectors[mask, :4]
+            # x_motion_array = np.full((len(clusterpoints)),None)
+            # y_motion_array = np.full((len(clusterpoints)),None)
+            # for i,point in enumerate(clusterpoints):
 
+            #     azimuth = point[3]
 
-            xyv = motion_vectors[mask, :3]
-            self.get_logger().info(f"Shape {xyv.shape}")
+            #     x_motion_array[i] = point[2] * np.cos(azimuth)
+            #     y_motion_array[i] = point[2] * np.sin(azimuth)
+            x = np.mean(clusterpoints[:,2])
+            y = np.mean(clusterpoints[:,3])
+            
 
-            if len(xyv) < 3:
-                self.get_logger().info(f"Fuck off 2")
-                continue
+            #self.get_logger().info(f"Shape {xyv.shape}")
 
-            est = estimate_velocity_from_xyvr(xyv)
+            #if len(xyv) < 3:
+            #    self.get_logger().info(f"Fuck off 2")
+            #    continue
 
-            avg_motion[label] = Motion2D(Vector2.new(est.vx, est.vy), 0.0)
+            #est = estimate_velocity_from_xyvr(xyv)
+
+            avg_motion[label] = Motion2D(Vector2.new(x, y), 0.0)
 
         # self.get_logger().info(f"Motion Vector: {motion_vectors[0]}")
         # avg_x = {
@@ -866,7 +899,7 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
     data_scaled = scaler.fit_transform(data_reduced)
 
     # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
-    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
 
     return clustered_points.labels_
 
