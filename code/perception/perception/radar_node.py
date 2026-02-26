@@ -32,8 +32,10 @@ from collections import deque
 
 from .perception_utils import array_to_clustered_points
 
+
 class RadarNode(Node):
     """See doc/perception/radar_node.md on how to configure this node."""
+
     hero_speed: Optional[CarlaSpeedometer] = None
     delta_heading: Optional[float] = 0.0
 
@@ -195,8 +197,6 @@ class RadarNode(Node):
 
         self.create_subscription(Imu, "/carla/hero/IMU", self.imu_callback, 10)
 
-
-
         self.add_on_set_parameters_callback(self._set_parameters_callback)
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
@@ -204,7 +204,7 @@ class RadarNode(Node):
         """Callback for parameter updates."""
         return update_attributes(self, params)
 
-    def delta_heading_callback(self, data:Float32):
+    def delta_heading_callback(self, data: Float32):
         self.delta_heading = data.data
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
@@ -547,8 +547,7 @@ class RadarNode(Node):
 
             motionArray = [m.to_ros_msg() for m in motionArray]
 
-
-#            azimuthArray = [m.to_ros_msg() for m in azimuthArray]
+            #            azimuthArray = [m.to_ros_msg() for m in azimuthArray]
 
             clusteredpoints = array_to_clustered_points(
                 self.get_clock().now(),
@@ -645,7 +644,7 @@ class RadarNode(Node):
         - The output array has the same length as the input array.
         """
         # translate points back to the radar origin
-        radar0mask = points_with_labels[:,0] >= 0
+        radar0mask = points_with_labels[:, 0] >= 0
         radar1mask = ~radar0mask
 
         sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
@@ -653,18 +652,23 @@ class RadarNode(Node):
 
         translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
         transformed_points0 = np.column_stack(
-            (points_with_labels[radar0mask, :3] - translation0,
-             points_with_labels[radar0mask, 3]))
+            (
+                points_with_labels[radar0mask, :3] - translation0,
+                points_with_labels[radar0mask, 3],
+            )
+        )
 
         translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
         transformed_points1 = np.column_stack(
-            (points_with_labels[radar1mask, :3] - translation1,
-             points_with_labels[radar1mask, 3]))
+            (
+                points_with_labels[radar1mask, :3] - translation1,
+                points_with_labels[radar1mask, 3],
+            )
+        )
 
-        points_with_labels = np.vstack((transformed_points0,transformed_points1))
+        points_with_labels = np.vstack((transformed_points0, transformed_points1))
 
-
-        #filter invalid points
+        # filter invalid points
         labels = points_with_labels[:, -1]
         valid_mask = labels != -1  # Filter invalid labels
         valid_points = points_with_labels[valid_mask]
@@ -674,21 +678,22 @@ class RadarNode(Node):
 
         unique_labels = np.unique(valid_points[:, -1])
 
-        #ego motion compensation per point
-        for i,point in enumerate(valid_points):
-            velocity_per_point =  point[3]
+        # ego motion compensation per point
+        for i, point in enumerate(valid_points):
+            velocity_per_point = point[3]
             azimuth_per_point = np.arctan2(point[1], point[0])
             cos_azimuth_per_point = np.cos(azimuth_per_point)
 
-            #split velocity into x and y velocities
+            # split velocity into x and y velocities
             x_velocities_per_point = velocity_per_point * np.cos(azimuth_per_point)
             y_velocities_per_point = velocity_per_point * np.sin(azimuth_per_point)
 
             point_motion_vector = Vector2.new(
-                x_velocities_per_point,y_velocities_per_point)
+                x_velocities_per_point, y_velocities_per_point
+            )
 
             if self.hero_speed is not None:
-                #bend ego motion vector towards object and compensate movement
+                # bend ego motion vector towards object and compensate movement
                 hypspeed = self.hero_speed.speed * cos_azimuth_per_point
                 xspeed = hypspeed * cos_azimuth_per_point
                 yspeed = hypspeed * np.sin(azimuth_per_point)
@@ -696,11 +701,11 @@ class RadarNode(Node):
 
                 vec = speed_vector + point_motion_vector
 
-                #array of the points motions in the form (x-velocity, y-velocity, label)
-                motion_vectors[i,0] = vec.x()
-                motion_vectors[i,1] = vec.y()
-                motion_vectors[i,2] = point[-1]
-
+                # array of the points motions in the form
+                # (x-velocity, y-velocity, label)
+                motion_vectors[i, 0] = vec.x()
+                motion_vectors[i, 1] = vec.y()
+                motion_vectors[i, 2] = point[-1]
 
         # averaging per point velocity on cluster level
         avg_motion = {}
@@ -711,23 +716,21 @@ class RadarNode(Node):
                 continue
             clusterpoints = motion_vectors[mask, :2]
 
-            x_cluster_velocity = np.mean(clusterpoints[:,0])
-            y_cluster_velocity = np.mean(clusterpoints[:,1])
+            x_cluster_velocity = np.mean(clusterpoints[:, 0])
+            y_cluster_velocity = np.mean(clusterpoints[:, 1])
 
             avg_motion[label] = Motion2D(
-                Vector2.new(x_cluster_velocity, y_cluster_velocity), 0.0)
+                Vector2.new(x_cluster_velocity, y_cluster_velocity), 0.0
+            )
 
         motion_array[valid_mask] = [
-            avg_motion[label] if label in avg_motion
+            avg_motion[label]
+            if label in avg_motion
             else Motion2D(Vector2.new(0.0, 0.0), 0.0)
             for label in labels[valid_mask]
         ]
 
         return motion_array
-
-
-
-
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -1069,6 +1072,7 @@ def create_bounding_box_marker(label, bbox, bbox_type="aabb", bbox_lifetime=0.1)
         raise ValueError(f"Unsupported bbox_type: {bbox_type}")
 
     return marker
+
 
 def generate_cluster_info(cluster_labels, data, marker_array, bounding_boxes):
     """

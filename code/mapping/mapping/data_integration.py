@@ -635,7 +635,7 @@ class MappingDataIntegrationNode(Node):
             else None
         )
 
-        #azimutharray = np.array(data.azimuth_angle) if data.azimuth_angle else None
+        # azimutharray = np.array(data.azimuth_angle) if data.azimuth_angle else None
 
         objectclassarray = np.array(data.object_class) if data.object_class else None
 
@@ -691,7 +691,7 @@ class MappingDataIntegrationNode(Node):
                 motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
                     if np.abs(motion.linear_motion._matrix[0]) < 1.5:
-                            motion = None
+                        motion = None
 
             # Optional: Füge die Objektklasse hinzu
             object_class = None
