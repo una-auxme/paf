@@ -832,8 +832,7 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
     if len(data) == 0:
         return np.array([])
 
-    # The use of StandardScale
-    # # Scaling the data for better clustering performance
+    # The use of StandardScaler yielded poorer results for higher FOV in Radar Configs
     # scaler = StandardScaler()
 
     # # data_reduced = data[:, [0, 1, 3]]
