@@ -42,7 +42,7 @@
   </node>
 
   <node pkg="perception" exec="radar_node" name="radar_node">
-    <param name="dbscan_eps" value="0.3"/>
+    <param name="dbscan_eps" value="0.9"/>
     <param name="dbscan_samples" value="2"/>
     <param name="data_buffered" value="False"/>
     <param name="data_buffer_time" value="0.1"/>
