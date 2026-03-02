@@ -537,15 +537,12 @@ class RadarNode(Node):
 
             motionArray = [m.to_ros_msg() for m in motionArray]
 
-            #            azimuthArray = [m.to_ros_msg() for m in azimuthArray]
-
             clusteredpoints = array_to_clustered_points(
                 self.get_clock().now(),
                 clusterPointsNpArray,
                 indexArray,
                 motionArray,
                 header_id="hero/RADAR",
-                object_azimuth_array=None,
             )
             self.entity_radar_publisher.publish(clusteredpoints)
 
@@ -695,6 +692,10 @@ class RadarNode(Node):
                 # (x-velocity, y-velocity, label)
                 motion_vectors[i, 0] = vec.x()
                 motion_vectors[i, 1] = vec.y()
+                motion_vectors[i, 2] = point[-1]
+            else:
+                motion_vectors[i, 0] = x_velocities_per_point
+                motion_vectors[i, 1] = y_velocities_per_point
                 motion_vectors[i, 2] = point[-1]
 
         # averaging per point velocity on cluster level

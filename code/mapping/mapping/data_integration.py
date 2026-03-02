@@ -348,17 +348,20 @@ class MappingDataIntegrationNode(Node):
             .double_value
         )
         # Parameter Radar classification
-        self.classification_threshold = self.declare_parameter(
-            "classification_threshold",
-            1.5,
-            descriptor=ParameterDescriptor(
-                description="Threshold when an entity is classified as stationary",
-                floating_point_range=[
-                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
-                ],
-            ),
+        self.classification_threshold = (
+            self.declare_parameter(
+                "classification_threshold",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Threshold when an entity is classified as stationary",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
-
         # For the stop marks:
         self.stop_marks = {}
 
@@ -700,7 +703,7 @@ class MappingDataIntegrationNode(Node):
                 motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
                     if (
-                        np.abs(motion.linear_motion._matrix[0])
+                        np.abs(motion.linear_motion.length())
                         < self.classification_threshold
                     ):
                         motion = None
