@@ -53,8 +53,8 @@ class Motion2D:
     angular_velocity: float = 0.0
     """Angular velocity in radians/s
 
-    - angle > 0: CCW
-    - angle < 0: CW
+    - angle > 0: CounterClockWise
+    - angle < 0: ClockWise
     """
 
     @staticmethod
@@ -581,6 +581,7 @@ class Entity:
 
         if self.motion is not None:
             meta_markers.append(self.to_motion_marker())
+
             speed_in_ms = self.motion.linear_motion.length()
             speed_in_kmh = speed_in_ms * 3.6
             motion_text = f"{speed_in_kmh:.2f} km/h"

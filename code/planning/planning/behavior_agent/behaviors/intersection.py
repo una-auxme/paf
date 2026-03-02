@@ -59,7 +59,7 @@ def tr_status_str(t: Optional[TrafficLightState]):
 INTERSECTION_LINE_STOPMARKS_ID = "intersection"
 INTERSECTION_LEFT_STOPMARKS_ID = "intersection_left"
 
-INTERSECTION_START_MIN_DISTANCE = 5.0
+INTERSECTION_START_MIN_DISTANCE = 10.0
 """Distance at which we (force) enter into the approach behavior
 if it was not possible before.
 

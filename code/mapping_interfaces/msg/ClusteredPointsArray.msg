@@ -14,3 +14,4 @@ Motion2D[] motion_array
 
 # Object class for each cluster
 int32[] object_class
+
