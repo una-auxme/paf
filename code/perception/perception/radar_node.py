@@ -10,7 +10,6 @@ from sensor_msgs.msg import Imu, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
 from sklearn.cluster import DBSCAN
 from carla_msgs.msg import CarlaSpeedometer
-from std_msgs.msg import Float32
 
 
 from sklearn.preprocessing import StandardScaler
@@ -186,7 +185,7 @@ class RadarNode(Node):
             lambda msg: self.callback(msg, "RADAR1"),
             10,
         )
-        
+
         self.create_subscription(Clock, "/clock", self.time_check, 10)
 
         self.create_subscription(Imu, "/carla/hero/IMU", self.imu_callback, 10)

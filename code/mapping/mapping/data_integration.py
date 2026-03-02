@@ -353,7 +353,7 @@ class MappingDataIntegrationNode(Node):
                 "classification_threshold",
                 1.5,
                 descriptor=ParameterDescriptor(
-                    description="Threshold under which an entity is classified as stationary",
+                    description="Threshold when an entity is classified as stationary",
                     floating_point_range=[
                         FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
                     ],
@@ -701,7 +701,8 @@ class MappingDataIntegrationNode(Node):
             if motion_array_converted is not None:
                 motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
-                    if np.abs(motion.linear_motion._matrix[0]) < self.classification_threshold:
+                    if (np.abs(motion.linear_motion._matrix[0]) <
+                        self.classification_threshold):
                         motion = None
 
             # Optional: Füge die Objektklasse hinzu
