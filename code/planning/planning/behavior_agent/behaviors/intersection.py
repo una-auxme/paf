@@ -113,54 +113,14 @@ PRIORITY_CHECK_WIDTH = 50.0
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
 
 
-def check_cross_traffic(map: Map, tree: MapTree):
-    """
-    Prüft, ob im Bereich der Kreuzung vor dem Fahrzeug bewegter Quer­verkehr ist.
-
-    Returns:
-        (cross_clear, mask_polygon)
-        cross_clear = True  → kein bewegter Quer­verkehr
-        cross_clear = False → Quer­verkehr erkannt
-    """
-    hero = map.hero()
-    if hero is None:
-        return True, None
-
-    offset = Transform2D.new_translation(
-        Vector2.new(CROSS_CHECK_DISTANCE + hero.get_front_x(), 0.0)
-    )
-    rect = Rectangle(
-        length=CROSS_CHECK_LENGTH,
-        width=CROSS_CHECK_WIDTH,
-        offset=offset,
-    )
-    mask = rect.to_shapely(hero.transform)
-
-    shapely_entities = tree.get_overlapping_entities(mask)
-
-    for se in shapely_entities:
-        entity = se.entity
-        motion = entity.motion
-        if motion is None:
-            continue
-        v = motion.linear_motion
-        speed = math.hypot(v.x(), v.y())
-        if speed > CROSS_TRAFFIC_SPEED_THRESHOLD:
-            # moving object at an intersection → cross traffic
-            return False, mask
-
-    return True, mask
-
-
 def check_priority_cross_traffic(map: Map, tree: MapTree):
     """
-    Prüft, ob sich im größeren Kreuzungsbereich schnelle Fahrzeuge (> 25 km/h)
-    von rechts oder links nähern (z.B. Einsatzfahrzeuge mit Sonderrechten).
+    Checks whether there are fast vehicles in the larger intersection area.
 
     Returns:
         (priority_clear, mask_polygon)
-        priority_clear = True  → kein schneller Quer­verkehr
-        priority_clear = False → schneller Quer­verkehr erkannt
+        priority_clear = True  → no fast cross traffic detected
+        priority_clear = False → fast cross traffic detected
     """
     hero = map.hero()
     if hero is None:
