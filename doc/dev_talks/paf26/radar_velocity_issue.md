@@ -86,4 +86,6 @@ motion_text = f"{speed_in_kmh:.2f} km/h"
 
 ## Summary
 
-The core issue appears to be a **misinterpretation of radial Doppler velocity as absolute longitudinal velocity**, especially for objects at large azimuth angles and close range. Proper handling of radar geometry, angular dependency, and ego-motion compensation is likely required to reliably distinguish between moving and stationary objects.
+The core issue appears to be a **misinterpretation of radial Doppler velocity as absolute longitudinal velocity**,
+especially for objects at large azimuth angles and close range. Proper handling of radar geometry, angular dependency,
+and ego-motion compensation is likely required to reliably distinguish between moving and stationary objects.
