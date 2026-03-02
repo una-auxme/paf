@@ -31,6 +31,8 @@ from builtin_interfaces.msg import Time as TimeMsg
 
 from mapping_interfaces import msg
 
+CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
+
 
 class LaneFreeState(Enum):
     TO_BE_CHECKED = 2
