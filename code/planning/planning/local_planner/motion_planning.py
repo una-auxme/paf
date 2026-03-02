@@ -570,30 +570,6 @@ class MotionPlanning(Node):
         distance_along_trajectory = trajectory.project(target_point)
         return distance_along_trajectory / current_speed
 
-    def is_entity_in_front(
-        self,
-        hero_transform: Transform2D,
-        entity_pos: Point2,
-        min_distance: float = 0.5,
-    ) -> bool:
-        """
-        Returns True if entity is in front of hero (dot product test)
-        """
-
-        hero_pos = hero_transform.translation()
-        hero_heading = hero_transform.rotation()
-
-        # Direction of travel of the Hero
-        forward = Vector2.new(math.cos(hero_heading), math.sin(hero_heading))
-
-        # Vector from hero to entity
-        to_entity = entity_pos.vector() - hero_pos
-
-        # Projection in the direction of travel
-        dot = forward.x() * to_entity.x() + forward.y() * to_entity.y()
-
-        return dot > min_distance
-
     def _update_current_global_waypoint_idx(self):
         """The next_global_waypoint_idx is used to limit the build_trajectory
         algorithm to a certain part of the trajectory.

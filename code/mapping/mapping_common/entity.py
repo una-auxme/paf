@@ -801,18 +801,8 @@ class Entity:
             float: width
         """
         local_poly = self.shape.to_shapely()
-        # min_x, min_y, max_x, max_y = local_poly.bounds
-        # return max_y - min_y
-
-        box = local_poly.minimum_rotated_rectangle
-        x, y = box.exterior.coords.xy
-
-        edge_length = (
-            Point(x[0], y[0]).distance(Point(x[1], y[1])),
-            Point(x[1], y[1]).distance(Point(x[2], y[2])),
-        )
-
-        return min(edge_length)
+        min_x, min_y, max_x, max_y = local_poly.bounds
+        return max_y - min_y
 
     def get_front_x(self) -> float:
         """Returns the local x length from the center to the front of the entity
