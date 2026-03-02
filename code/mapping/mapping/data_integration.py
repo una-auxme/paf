@@ -709,7 +709,7 @@ class MappingDataIntegrationNode(Node):
                     ):
                         motion = None
 
-            # add cluster logic
+            # add object class
             object_class = None
             if objectclassarray is not None:
                 object_class = objectclassarray[indexarray == label][0]
