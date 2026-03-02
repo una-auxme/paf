@@ -622,7 +622,7 @@ class Entity:
     def predict_local_trajectory(
         self,
         time_horizon: float = 4.0,
-    ) -> shapely.geometry.base.BaseGeometry:
+    ) -> Optional[shapely.geometry.base.BaseGeometry]:
         """
         Predicts the entity's forward motion path for collision checking.
 
@@ -642,6 +642,9 @@ class Entity:
             ty = self.transform.translation().y()
 
             return translate(self.shape.to_shapely(), xoff=tx, yoff=ty)
+
+        if self.tracking_info is None:
+            return None
 
         # Moving Object Logic
         start_point = Point2.from_vector(self.transform.translation())

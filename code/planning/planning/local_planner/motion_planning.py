@@ -371,16 +371,10 @@ class MotionPlanning(Node):
 
         predicted_entity_lines = self.predict_local_trajectory_entity()
 
-        collision = self.check_trajectory_collisions(
+        _ = self.check_trajectory_collisions(
             local_trajectory,
             predicted_entity_lines,
         )
-
-        if collision:
-            self.get_logger().warn(
-                "MotionPlanning: potential collision detected!",
-                throttle_duration_sec=0.5,
-            )
 
         # Calculation finished, ready for publishing
         local_path = mapping_common.mask.line_to_ros_path(local_trajectory)
@@ -438,10 +432,10 @@ class MotionPlanning(Node):
             self.ego_vehicle.motion is None
             or self.ego_vehicle.motion.linear_motion.length() == 0.0
         ):
-            # ToDo: Extend Framework to incooperate acceleration profile of entities
+            # ToDo: Extend Framework to incorporate acceleration profile of entities
             # to handle case of no motion!
             self.get_logger().warn(
-                "Ego vehicle has no motion, cannot compute collions."
+                "Ego vehicle has no motion, cannot compute collisions."
             )
             return False
 
