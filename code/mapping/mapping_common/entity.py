@@ -17,7 +17,7 @@ from math import radians, sin, cos
 
 import shapely
 from shapely.affinity import translate
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString
 
 from uuid import UUID, uuid4
 from builtin_interfaces.msg import Time as TimeMsg

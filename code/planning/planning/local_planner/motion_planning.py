@@ -32,7 +32,7 @@ from paf_common.parameters import update_attributes
 import mapping_common.hero
 import mapping_common.mask
 import mapping_common.map
-from mapping_common.transform import Point2, Transform2D, Vector2
+from mapping_common.transform import Point2, Transform2D
 from mapping_common.entity import FlagFilter, Entity
 from mapping_interfaces.msg import Map as MapMsg
 
