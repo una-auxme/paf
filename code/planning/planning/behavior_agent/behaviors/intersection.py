@@ -642,7 +642,7 @@ class Wait(py_trees.behaviour.Behaviour):
                     "Wait Confirm green light!",
                 )
             elif (
-                self.clock.now() - self.green_light_time > Duration(seconds=1.0)
+                self.clock.now() - self.green_light_time > Duration(seconds=0.5)
                 and traffic_light_status.state == TrafficLightState.GREEN
                 and self.was_red
             ):

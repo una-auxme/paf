@@ -4,6 +4,7 @@ from sklearn.cluster import DBSCAN
 import torch
 import cv2
 from sensor_msgs.msg import Image as ImageMsg
+from perception_interfaces.msg import TrafficLightImages
 from cv_bridge import CvBridge
 from torchvision.utils import draw_segmentation_masks
 import numpy as np
@@ -163,7 +164,7 @@ class VisionNode(Node):
         )
 
         self.traffic_light_publisher = self.create_publisher(
-            msg_type=ImageMsg,
+            msg_type=TrafficLightImages,
             topic=f"/paf/{self.role_name}/Center/segmented_traffic_light",
             qos_profile=1,
         )
@@ -448,6 +449,10 @@ class VisionNode(Node):
         indices = (prediction.boxes.cls == 9).nonzero().squeeze().cpu().numpy()
         indices = np.asarray([indices]) if indices.size == 1 else indices
 
+        msg = TrafficLightImages()
+        msg.header = image_header
+        msg.images = []
+
         # set the dynamic values
         min_x = self.min_x
         max_x = self.max_x
@@ -482,8 +487,11 @@ class VisionNode(Node):
 
             traffic_light_image = self.bridge.cv2_to_imgmsg(segmented, encoding="rgb8")
             traffic_light_image.header = image_header
-            # publish cropped traffic light image to the topic
-            self.traffic_light_publisher.publish(traffic_light_image)
+            msg.images.append(traffic_light_image)
+
+        if msg.images:
+            # publish collected and cropped traffic light image to the topic
+            self.traffic_light_publisher.publish(msg)
 
 
 def main(args=None):
