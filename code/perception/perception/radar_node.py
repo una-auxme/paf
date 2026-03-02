@@ -37,7 +37,6 @@ class RadarNode(Node):
     """See doc/perception/radar_node.md on how to configure this node."""
 
     hero_speed: Optional[CarlaSpeedometer] = None
-    delta_heading: Optional[float] = 0.0
 
     def __init__(self):
         super().__init__(type(self).__name__)
@@ -187,12 +186,7 @@ class RadarNode(Node):
             lambda msg: self.callback(msg, "RADAR1"),
             10,
         )
-        self.create_subscription(
-            msg_type=Float32,
-            topic="/paf/hero/delta_heading",
-            callback=self.delta_heading_callback,
-            qos_profile=1,
-        )
+        
         self.create_subscription(Clock, "/clock", self.time_check, 10)
 
         self.create_subscription(Imu, "/carla/hero/IMU", self.imu_callback, 10)
@@ -203,9 +197,6 @@ class RadarNode(Node):
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""
         return update_attributes(self, params)
-
-    def delta_heading_callback(self, data: Float32):
-        self.delta_heading = data.data
 
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
@@ -607,7 +598,7 @@ class RadarNode(Node):
 
         # If the sensor is "RADAR1", apply a coordinate transformation (rear-facing)
         if sensor_name == "RADAR1":
-            data_array[:, [0, 1]] *= -1  # Mirror x, y, and velocity axes
+            data_array[:, [0, 1]] *= -1  # Mirror x and y axes
 
         # Retrieve sensor position in the vehicle coordinate system
         sensor_x, sensor_y, sensor_z = self.sensor_config[sensor_name]

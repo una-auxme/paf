@@ -15,5 +15,3 @@ Motion2D[] motion_array
 # Object class for each cluster
 int32[] object_class
 
-# Array of azimuth angles
-float64[] azimuth_angle

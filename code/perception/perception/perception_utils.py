@@ -15,7 +15,6 @@ def array_to_clustered_points(
     object_speed_array=None,
     object_class_array=None,
     header_id="hero",
-    object_azimuth_array=None,
 ):
     """
     Convert the given points and point indices to a ClusteredPointsArray message.
@@ -49,10 +48,6 @@ def array_to_clustered_points(
     # Populate the object_class if object_class_array is provided
     if object_class_array is not None:
         clustered_points.object_class = object_class_array
-
-    # Populate the object_azimuth angle if object_azimuth_array is provided
-    if object_azimuth_array is not None:
-        clustered_points.azimuth_angle = object_azimuth_array
 
     return clustered_points
 
