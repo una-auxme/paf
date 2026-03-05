@@ -632,28 +632,16 @@ class RadarNode(Node):
         """
         # translate points back to the radar origin
         radar0mask = points_with_labels[:, 0] >= 0
-        radar1mask = ~radar0mask
+        radar1mask = points_with_labels[:, 0] < 0
 
         sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
         sensor1_x, sensor1_y, sensor1_z = self.sensor_config["RADAR1"]
 
         translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
-        transformed_points0 = np.column_stack(
-            (
-                points_with_labels[radar0mask, :3] - translation0,
-                points_with_labels[radar0mask, 3],
-            )
-        )
-
         translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
-        transformed_points1 = np.column_stack(
-            (
-                points_with_labels[radar1mask, :3] - translation1,
-                points_with_labels[radar1mask, 3],
-            )
-        )
 
-        points_with_labels = np.vstack((transformed_points0, transformed_points1))
+        points_with_labels[radar0mask, :3] -= translation0
+        points_with_labels[radar1mask, :3] -= translation1
 
         # filter invalid points
         labels = points_with_labels[:, -1]
