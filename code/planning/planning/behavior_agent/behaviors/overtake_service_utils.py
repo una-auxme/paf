@@ -23,8 +23,12 @@ def get_global_hero_transform() -> Optional[Transform2D]:
         Optional[Transform2D]: None if the required data is not yet available
     """
     blackboard = Blackboard()
-    current_pos: Optional[PoseStamped] = blackboard.try_get("/paf/hero/current_pos")
-    current_heading: Optional[Float32] = blackboard.try_get("/paf/hero/current_heading")
+    current_pos: Optional[PoseStamped] = blackboard.try_get(
+        "/paf/hero/global_current_pos"
+    )
+    current_heading: Optional[Float32] = blackboard.try_get(
+        "/paf/hero/global_current_heading"
+    )
     if current_pos is None or current_heading is None:
         return None
     hero_transform = mapping_common.map.build_global_hero_transform(

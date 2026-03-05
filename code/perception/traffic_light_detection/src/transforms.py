@@ -49,7 +49,6 @@ class Normalize(object):
 
 
 class ApplyMask(object):
-
     def __init__(self, path):
         """
         Creates a transformation object that masks an image with a grayscale

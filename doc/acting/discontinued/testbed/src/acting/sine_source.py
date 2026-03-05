@@ -10,7 +10,6 @@ NAME = "sine"
 
 
 class SineGenerator(TrajectoryGenerator):
-
     def __init__(self):
         super().__init__(NAME)
 

@@ -1,0 +1,24 @@
+name: Linter markdown
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+    linter:
+        name: Linter markdown
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check out the repo
+            uses: actions/checkout@v2
+          # Execute the markdown linter
+          - name: Run the markdown linter
+            uses: addnab/docker-run-action@v3
+            with:
+              image: peterdavehello/markdownlint:0.32.2
+              options: -v ${{ github.workspace }}:/md
+              run: markdownlint /md/

@@ -1,6 +1,5 @@
 import argparse
 
-import torch
 import torchvision.transforms as t
 from .transforms import (
     Normalize,
@@ -19,7 +18,7 @@ def parse_args():
     Parses arguments for execution given by the command line.
     @return: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Inference traffic light " "detection")
+    parser = argparse.ArgumentParser(description="Inference traffic light detection")
     parser.add_argument(
         "--model",
         default="/opt/project/code/perception/src/"
@@ -36,7 +35,6 @@ def parse_args():
 
 
 class TrafficLightInference:
-
     def __init__(self, model_path):
         """
         Initializes an instance to inference a TLD net.
@@ -51,10 +49,10 @@ class TrafficLightInference:
                 Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             ]
         )
-
         self.model = ClassificationModel.load_model(self.cfg)
         self.model = self.model.to(self.cfg.DEVICE)
         self.class_dict = {0: "Backside", 1: "Green", 2: "Red", 3: "Side", 4: "Yellow"}
+        self.min_dominance = 0.99
 
     def __call__(self, img):
         """
@@ -66,8 +64,19 @@ class TrafficLightInference:
             out = self.model(img[None, :])
         else:
             out = self.model(img)
-        _, prediction = torch.max(out.data, 1)
-        return (prediction.item(), out.data.cpu().numpy())
+
+        isolate_data = out.data.squeeze().cpu().numpy()
+        max_id = int(isolate_data.argmax())
+        max_val = isolate_data[max_id]
+
+        # dominance of the current value over the others
+        sum_others = isolate_data.sum() - max_val
+        dominance = max_val - sum_others
+
+        if dominance >= self.min_dominance:
+            return max_id
+        else:
+            return 0
 
 
 # main function for testing purposes

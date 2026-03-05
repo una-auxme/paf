@@ -11,7 +11,6 @@ import random
 
 
 class TestRoute(CompatibleNode):
-
     def __init__(self):
         super(TestRoute, self).__init__("testRoute")
 

@@ -22,7 +22,6 @@ import math
 
 
 class GlobalPlanDistance(Node):
-
     def __init__(self):
         super().__init__("global_plan_distance_publisher")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
@@ -42,7 +41,7 @@ class GlobalPlanDistance(Node):
         # Subscriptions
         self.pos_subscriber = self.create_subscription(
             PoseStamped,
-            "/paf/" + self.role_name + "/current_pos",
+            "/paf/" + self.role_name + "/global_current_pos",
             self.update_position,
             qos_profile=1,
         )
@@ -179,9 +178,9 @@ class GlobalPlanDistance(Node):
 
         self.get_logger().info("Requesting global plan...")
         req = GetCarlaRoute.Request()
-        response: Optional[GetCarlaRoute.Response] = (
-            await self.global_plan_client.call_async(req)
-        )
+        response: Optional[
+            GetCarlaRoute.Response
+        ] = await self.global_plan_client.call_async(req)
         if response is None:
             self.get_logger().warn(
                 f"{self.global_plan_client.service_name} service returned None."

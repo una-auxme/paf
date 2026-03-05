@@ -74,12 +74,12 @@ def create_node(role_name: str, callback_group: Optional[CallbackGroup] = None):
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/current_pos",
+            "name": f"/paf/{role_name}/global_current_pos",
             "msg": PoseStamped,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },
         {
-            "name": f"/paf/{role_name}/current_heading",
+            "name": f"/paf/{role_name}/global_current_heading",
             "msg": Float32,
             "clearing-policy": py_trees.common.ClearingPolicy.NEVER,
         },

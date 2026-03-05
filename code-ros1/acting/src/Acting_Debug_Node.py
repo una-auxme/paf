@@ -94,7 +94,7 @@ class Acting_Debug_Node(CompatibleNode):
         # Subscriber of current_pos, used for Steering Debugging
         self.current_pos_sub: Subscriber = self.new_subscription(
             msg_type=PoseStamped,
-            topic="/paf/" + self.role_name + "/current_pos",
+            topic="/paf/" + self.role_name + "/global_current_pos",
             callback=self.__current_position_callback,
             qos_profile=1,
         )
@@ -111,7 +111,7 @@ class Acting_Debug_Node(CompatibleNode):
         # Subscriber for current_heading
         self.heading_sub: Subscriber = self.new_subscription(
             Float32,
-            f"/paf/{self.role_name}/current_heading",
+            f"/paf/{self.role_name}/global_current_heading",
             self.__get_heading,
             qos_profile=1,
         )

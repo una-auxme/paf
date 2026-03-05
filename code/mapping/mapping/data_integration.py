@@ -21,6 +21,7 @@ from mapping_common.filter import (
     GrowthMergingFilter,
     LaneIndexFilter,
     GrowPedestriansFilter,
+    TrackingFilter,
 )
 
 from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
@@ -246,6 +247,33 @@ class MappingDataIntegrationNode(Node):
             .double_value
         )
 
+        self.filter_tracking_entities = (
+            self.declare_parameter(
+                "filter_tracking_entities",
+                True,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable the tracking filter",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.update_tracking_velocity = (
+            self.declare_parameter(
+                "update_tracking_velocity",
+                False,
+                descriptor=ParameterDescriptor(
+                    description="Enable or disable to update tracking motion data ",
+                ),
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.tracking_filter = TrackingFilter()
+        self.tracking_filter.set_tracking_velocity_status(self.update_tracking_velocity)
+
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
         self.lidar_z_min = (
@@ -319,19 +347,33 @@ class MappingDataIntegrationNode(Node):
             .get_parameter_value()
             .double_value
         )
-
+        # Parameter Radar classification
+        self.classification_threshold = (
+            self.declare_parameter(
+                "classification_threshold",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Threshold when an entity is classified as stationary",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
         # For the stop marks:
         self.stop_marks = {}
 
         self.current_pos_sub = self.create_subscription(
             PoseStamped,
-            "/paf/hero/current_pos",
+            "/paf/hero/global_current_pos",
             self.current_pos_callback,
             qos_profile=1,
         )
         self.head_sub = self.create_subscription(
             Float32,
-            "/paf/hero/current_heading",
+            "/paf/hero/global_current_heading",
             self.heading_callback,
             qos_profile=1,
         )
@@ -379,6 +421,13 @@ class MappingDataIntegrationNode(Node):
             topic="/paf/hero/Radar/clustered_points",
             msg_type=ClusteredPointsArray,
             callback=self.radar_clustered_points_callback,
+            qos_profile=1,
+        )
+
+        self.create_subscription(
+            topic="/paf/hero/delta_heading",
+            msg_type=Float32,
+            callback=self.delta_heading_callback,
             qos_profile=1,
         )
 
@@ -446,6 +495,9 @@ class MappingDataIntegrationNode(Node):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def delta_heading_callback(self, data: Float32):
+        self.tracking_filter.set_delta_heading(data.data)
 
     def entities_from_lidar_marker(self) -> List[Entity]:
         data = self.lidar_marker_data
@@ -640,7 +692,8 @@ class MappingDataIntegrationNode(Node):
                     continue
 
                 shape = Polygon.from_shapely(
-                    cluster_polygon_hull, make_centered=True  # type: ignore
+                    cluster_polygon_hull,
+                    make_centered=True,  # type: ignore
                 )
                 transform = shape.offset
                 shape.offset = Transform2D.identity()
@@ -649,10 +702,11 @@ class MappingDataIntegrationNode(Node):
             if motion_array_converted is not None:
                 motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
-                    motion_vector_hero = Vector2.forward() * self.hero_speed.speed
-                    motion = Motion2D(
-                        motion_vector_hero + motion.linear_motion, angular_velocity=0.0
-                    )
+                    if (
+                        np.abs(motion.linear_motion.length())
+                        < self.classification_threshold
+                    ):
+                        motion = None
 
             # Optional: Füge die Objektklasse hinzu
             object_class = None
@@ -813,6 +867,11 @@ class MappingDataIntegrationNode(Node):
             map_filters.append(LaneIndexFilter())
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
+        if self.filter_tracking_entities:
+            self.tracking_filter.set_tracking_velocity_status(
+                self.update_tracking_velocity
+            )
+            map_filters.append(self.tracking_filter)
 
         return map_filters
 

@@ -73,7 +73,7 @@ def main():
                 "visualization = mapping.visualization:main",
             ],
         },
-        **ext_modules
+        **ext_modules,
     )
 
 

@@ -43,7 +43,7 @@
             <position x="-705.4" y="5204.9" z="376"/>
             <position x="-269.4" y="5151.9" z="374"/>
             <position x="-218.7" y="5271.0" z="373"/>
-            <position x="-163.9" y="5404.6" z="372"/>
+            <position x="-163.9" y="5404.6"<distance value="100"/> z="372"/>
             <position x="75.0" y="5587.0" z="367.2"/>
         </waypoints>
         <scenarios>

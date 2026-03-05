@@ -9,12 +9,15 @@ Overview of the main components:
 
 """
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
 import numpy as np
+from math import radians, sin, cos
 
 import shapely
+from shapely.affinity import translate
+from shapely.geometry import LineString
 
 from uuid import UUID, uuid4
 from builtin_interfaces.msg import Time as TimeMsg
@@ -50,8 +53,8 @@ class Motion2D:
     angular_velocity: float = 0.0
     """Angular velocity in radians/s
 
-    - angle > 0: CCW
-    - angle < 0: CW
+    - angle > 0: CounterClockWise
+    - angle < 0: ClockWise
     """
 
     @staticmethod
@@ -143,6 +146,14 @@ class Flags:
 
 
 @dataclass
+class TrackedFrame:
+    """Stores a position together with its timestamp (t) for calculation"""
+
+    entity_position: Vector2
+    timestamp: float  # Time in seconds
+
+
+@dataclass
 class FlagFilter:
     """Filter mask to filter entities by their flags
 
@@ -167,46 +178,184 @@ class FlagFilter:
 
 @dataclass
 class TrackingInfo:
-    """Information that might be required to consistently track entities
+    """Information that might be required to consistently track entities."""
 
-    Note: As of 03.2025, this class and attribute in #Entity is still completely unused.
-    PAF24 still left it in as a base/guidance for future tracking experiments
-    """
-
-    visibility_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long the entity has been visible for. Never gets reset"""
-    invisibility_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long the entity has been uninterruptedly not visible.
-    Reset when the entity is visible again"""
+    # --- ROS Persistence Fields ---
+    visibility_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    invisibility_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
     visibility_frame_count: int = 0
-    """In how many data frames the entity was visible. Never gets reset"""
     invisibility_frame_count: int = 0
-    """In how many consecutive data frames the entity was not visible.
-    Reset when the entity is visible again"""
-    moving_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long an entity was moving continuously. Reset when standing
-
-    This might be used to decide if we should overtake
-    """
-    standing_time: DurationMsg = field(default_factory=DurationMsg)
-    """How long an entity stood still continuously. Reset when moving
-
-    This might be used to decide if we should overtake
-    """
-    moving_time_sum: DurationMsg = field(default_factory=DurationMsg)
-    """Sums of all the time the entity was moving. Never gets reset
-
-    This might be used to decide if we should overtake
-    """
-    standing_time_sum: DurationMsg = field(default_factory=DurationMsg)
-    """Sums of all the time the entity was standing still. Never gets reset
-
-    This might be used to decide if we should overtake
-    """
+    moving_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    standing_time: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    moving_time_sum: "DurationMsg" = field(default_factory=lambda: DurationMsg())
+    standing_time_sum: "DurationMsg" = field(default_factory=lambda: DurationMsg())
     min_linear_speed: float = 0.0
-    """Minimum linear speed of this entity ever recorded"""
     max_linear_speed: float = 0.0
-    """Maximum linear speed of this entity ever recorded"""
+
+    # --- Local Tracking State ---
+    history: List["TrackedFrame"] = field(default_factory=list, repr=False)
+    MIN_HISTORY_SIZE: int = 5
+    MAX_HISTORY_SIZE: int = 20
+
+    last_motion_data: Optional["Vector2"] = field(default=None)
+
+    EMA_ALPHA: float = 0.6
+    Z_SCORE_THRESHOLD: float = 1.5
+
+    def append_frame(
+        self,
+        entity_pos: Vector2,
+        ego_pos: Motion2D,
+        ego_delta_heading: float,
+        timestamp: float,
+    ):
+        """Adds a new frame and updates motion estimation."""
+        # 1. Compensate OLD points based on ego movement since the last frame
+        if self.history:
+            self._compensate_positions(ego_pos, ego_delta_heading, timestamp)
+
+        # 2. Add the new point
+        self.history.append(TrackedFrame(entity_pos, timestamp))
+
+        if len(self.history) > self.MAX_HISTORY_SIZE:
+            self.history.pop(0)
+
+        # 3. Velocity Estimation
+        robust_motion = self._calculate_robust_weighted_motion()
+        if robust_motion:
+            if self.last_motion_data:
+                prev_velocity = self.last_motion_data
+                smoothed_v = (robust_motion * self.EMA_ALPHA) + (
+                    prev_velocity * (1.0 - self.EMA_ALPHA)
+                )
+
+            else:
+                smoothed_v = robust_motion
+
+            self.last_motion_data = smoothed_v
+
+    def _compensate_positions(
+        self,
+        current_ego_motion: "Motion2D",
+        ego_delta_heading: float,
+        current_timestamp: float,
+    ):
+        """Stabilizes history by removing ego-displacement."""
+        prev_timestamp = self.history[-1].timestamp
+        dt = current_timestamp - prev_timestamp
+
+        # Guard against zero or negative dt (clock sync issues)
+        if dt <= 0:
+            return
+
+        # Distance the ego traveled: dist = vel * time
+        ego_displacement = current_ego_motion.linear_motion * dt
+
+        theta = radians(ego_delta_heading)
+        c, s = cos(theta), sin(theta)
+
+        # Subtract ego movement from all historical observations
+        for frame in self.history:
+            old_x = frame.entity_position.x()
+            old_y = frame.entity_position.y()
+
+            # Standard 2D Rotation Matrix application
+            new_x = old_x * c - old_y * s
+            new_y = old_x * s + old_y * c
+
+            frame.entity_position._matrix[0] = new_x
+            frame.entity_position._matrix[1] = new_y
+
+            frame.entity_position -= ego_displacement
+
+    def _calculate_robust_weighted_motion(self) -> Optional["Vector2"]:
+        """Calculates velocity using weighted average of historical pairs."""
+
+        h_len = len(self.history)
+        if h_len < self.MIN_HISTORY_SIZE:
+            return None
+
+        weighted_velocity_sum = Vector2.zero()
+        total_weight_sum = 0.0
+
+        segments: List[Tuple[Vector2, float]] = []
+
+        for i in range(h_len - 1):
+            p_i, t_i = self.history[i].entity_position, self.history[i].timestamp
+
+            # Use two steps to account for pairing between [new, new]
+            # and [old, old] lidar data samples.
+            for j in range(i + 1, h_len, 2):
+                p_j, t_j = self.history[j].entity_position, self.history[j].timestamp
+
+                dt = t_j - t_i
+                if dt <= 1e-5:
+                    continue  # Avoid noise/div by zero
+
+                v_seg = (p_j - p_i) / dt
+
+                # Weighting Strategy:
+                # (j - i): Longer time baselines are less sensitive to noise.
+                # (j / h_len): Recent segments are more relevant for current velocity.
+                weight = (j - i) / (2 ** (h_len - j))
+
+                segments.append((v_seg, weight))
+
+        v_xs = np.array([s[0].x() for s in segments])
+        v_ys = np.array([s[0].y() for s in segments])
+
+        c_x = np.median(v_xs)
+        c_y = np.median(v_ys)
+
+        dists_sqrt = (v_xs - c_x) ** 2 + (v_ys - c_y) ** 2
+        dists = np.sqrt(dists_sqrt)
+
+        mean = np.mean(dists)
+        std = np.std(dists)
+
+        for idx, (v_seg, weight) in enumerate(segments):
+            if std > 0.1:
+                z_score = abs((dists[idx] - mean) / std)
+
+                if z_score > self.Z_SCORE_THRESHOLD:
+                    continue
+
+            weighted_velocity_sum += v_seg * weight
+            total_weight_sum += weight
+
+        if total_weight_sum == 0.0:
+            return None
+
+        return weighted_velocity_sum / total_weight_sum
+
+    def get_motion(self) -> Optional["Motion2D"]:
+        if not self.last_motion_data:
+            return None
+
+        return Motion2D(linear_motion=self.last_motion_data, angular_velocity=0.0)
+
+    def _predict_local_trajectory(
+        self, start_point: Point2, motion: Motion2D, time_horizon: float
+    ) -> LineString:
+        """
+        Predicts the entity's trajectory by linearly extrapolating current motion.
+
+        This function performs a constant-velocity projection from a given start point.
+        While currently limited to linear motion, it provides the basis for future
+        curvilinear models (incorporating yaw rate/acceleration).
+
+        Note:
+        Internal helper. Client code should use 'Entity.predict_local_trajectory'
+        """
+
+        end_point = start_point + motion.linear_motion * time_horizon
+
+        return LineString(
+            [
+                (start_point.x(), start_point.y()),
+                (end_point.x(), end_point.y()),
+            ]
+        )
 
     @staticmethod
     def from_ros_msg(m: msg.TrackingInfo) -> "TrackingInfo":
@@ -389,7 +538,7 @@ class Entity:
             type_name=type_name,
         )
 
-    def to_marker(self) -> Marker:
+    def to_marker(self, show_tracking_info: bool) -> Marker:
         """Creates a ROS marker based on the entity
 
         The Marker only visualizes the transform and shape of the Entity.
@@ -398,12 +547,28 @@ class Entity:
             Marker: ROS marker message
         """
         m = self.shape.to_marker(self.transform)
+        m.lifetime = Duration(
+            seconds=2 / 20.0
+        ).to_msg()  # Set lifetime based on map rate
 
-        m.color.r = 1.0
-        m.color.g = 1.0
-        m.color.b = 1.0
-        m.color.a = 0.5
+        # Set color based on tracking status
+        if show_tracking_info and not self.flags._is_hero:
+            # Tracked: Use a unique, stable color based on the uuid
+            r, g, b = _get_stable_color_from_uuid(self.uuid)
+            m.color.r = r
+            m.color.g = g
+            m.color.b = b
+            m.color.a = 0.8  # Solid for easy tracking
+        else:
+            # Not Tracked: Use the default neutral gray
+            m.color.r = 0.5
+            m.color.g = 0.5
+            m.color.b = 0.5
+            m.color.a = 0.5  # Semi-transparent gray
+
+        # Base z position of the marker
         m.pose.position.z = m.scale.z / 2.0
+
         return m
 
     def get_meta_markers(self) -> List[Marker]:
@@ -413,12 +578,15 @@ class Entity:
             List[Marker]: List of ROS marker messages
         """
         meta_markers = []
+
         if self.motion is not None:
             meta_markers.append(self.to_motion_marker())
+
             speed_in_ms = self.motion.linear_motion.length()
             speed_in_kmh = speed_in_ms * 3.6
             motion_text = f"{speed_in_kmh:.2f} km/h"
             meta_markers.append(self.get_text_marker(motion_text))
+
         return meta_markers
 
     def to_motion_marker(self) -> Marker:
@@ -451,6 +619,43 @@ class Entity:
             .to_ros_msg()
         )
         return m
+
+    def predict_local_trajectory(
+        self,
+        time_horizon: float = 4.0,
+    ) -> Optional[shapely.geometry.base.BaseGeometry]:
+        """
+        Predicts the entity's forward motion path for collision checking.
+
+        For moving entities, returns a LineString representing the predicted path.
+        For static entities, returns the entity's translated shape. d
+
+        Args:
+            time_horizon: Prediction window in seconds.
+
+        Returns:
+            A shapely BaseGeometry (LineString for motion, Polygon for static).
+        """
+
+        # Static Object Logic (No Motion)
+        if self.motion is None or self.motion.linear_motion.length() == 0.0:
+            tx = self.transform.translation().x()
+            ty = self.transform.translation().y()
+
+            return translate(self.shape.to_shapely(), xoff=tx, yoff=ty)
+
+        if self.tracking_info is None:
+            return None
+
+        # Moving Object Logic
+        start_point = Point2.from_vector(self.transform.translation())
+
+        # Delegate extrapolation to the internal tracking
+        local_trajectory = self.tracking_info._predict_local_trajectory(
+            start_point=start_point, motion=self.motion, time_horizon=time_horizon
+        )
+
+        return local_trajectory
 
     def get_text_marker(self, text: str, offset: Optional[Vector2] = None) -> Marker:
         """Creates a text marker at the entity's position
@@ -652,12 +857,14 @@ class Car(Entity):
         )
         return m
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
         # [0, 0, 255],  # 10: Vehicles
-        m.color.r = 0.0
-        m.color.g = 0.0
-        m.color.b = 1.0
+
+        if not show_tracking_info or self.flags._is_hero:
+            m.color.r = 0.0
+            m.color.g = 0.0
+            m.color.b = 1.0
         return m
 
 
@@ -699,7 +906,7 @@ class Lanemarking(Entity):
         )
         return m
 
-    def to_marker(self) -> Marker:
+    def to_marker(self, show_tracking_info: bool) -> Marker:
         """Creates an ROS marker based on the entity
 
         Returns:
@@ -785,11 +992,12 @@ class StopMark(Entity):
         m.type_stop_mark = msg.TypeStopMark(reason=self.reason)
         return m
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
-        m.color.r = 1.0
-        m.color.g = 0.5
-        m.color.b = 0.0
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
+        if not show_tracking_info:
+            m.color.r = 1.0
+            m.color.g = 0.5
+            m.color.b = 0.0
 
         m.scale.z = 0.2
         m.pose.position.z = 0.1
@@ -814,12 +1022,13 @@ class Pedestrian(Entity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def to_marker(self) -> Marker:
-        m = super().to_marker()
+    def to_marker(self, show_tracking_info: bool) -> Marker:
+        m = super().to_marker(show_tracking_info)
         # [220, 20, 60],  # 4: Pedestrians
-        m.color.r = 220 / 255
-        m.color.g = 20 / 255
-        m.color.b = 60 / 255
+        if not show_tracking_info:
+            m.color.r = 220 / 255
+            m.color.g = 20 / 255
+            m.color.b = 60 / 255
         return m
 
 
@@ -866,3 +1075,25 @@ class ShapelyEntity:
         """
 
         return float(shapely.distance(self.poly, other.poly))
+
+
+def _get_stable_color_from_uuid(uid: UUID) -> Tuple[float, float, float]:
+    """
+    Generates a stable, distinct color (R, G, B) from a UUID.
+    This ensures the same tracked object keeps the same color across frames.
+    """
+    # Use the first 3 bytes of the UUID as seeds for R, G, B components
+    uuid_int = uid.int
+    r_val = (uuid_int >> 16) & 0xFF
+    g_val = (uuid_int >> 8) & 0xFF
+    b_val = uuid_int & 0xFF
+
+    # Simple normalization and mixing to ensure contrast and brightness
+    r = (r_val % 192 + 64) / 255.0
+    g = (g_val % 192 + 64) / 255.0
+    b = (b_val % 192 + 64) / 255.0
+
+    # Simple color shift to add variation
+    r, g, b = b, r, g
+
+    return (r, g, b)

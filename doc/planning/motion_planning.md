@@ -26,8 +26,8 @@ Otherwise the received trajectory is published without any changes.
 
 This node subscribes to the following topics:
 
-- `/paf/hero/current_heading`: Subscribes to the filtered heading of the ego vehicle.
-- `/paf/hero/current_pos`: Subscribes to the filtered position of our car.
+- `/paf/hero/global_current_heading`: Subscribes to the filtered heading of the ego vehicle.
+- `/paf/hero/global_current_pos`: Subscribes to the filtered position of our car.
 - `/paf/hero/speed_limits_OpenDrive`: Subscribes to the OpenDrive map speed limit.
 - `/paf/hero/trajectory_global`: Subscribes to the global trajectory, which is calculated at the start of the simulation.
 
