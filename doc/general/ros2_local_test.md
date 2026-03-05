@@ -4,13 +4,14 @@
 
 - [Time](#time)
 - [Required files](#required-files)
-- [Create new test scenario](#create-new-test-scenario)
+- [Definitions](#definitions)
+- [Create new test route with scenario](#create-new-test-route-with-scenario)
 - [Start Test](#start-test)
 - [Output](#output)
 
 ## Time
 
-The test takes an eternity at the current point beacause of the game to system time ratio (as to be seen in output). In the event that the agent gets stuck, the test may take even longer because Carla needs a certain amount of time until it aborts the simulation
+The test takes an eternity at the current point because of the game to system time ratio (as shown in output). If the agent gets stuck, the test may take even longer because Carla needs a certain amount of time until it aborts the simulation
 
 ## Required files
 
@@ -18,6 +19,7 @@ The test takes an eternity at the current point beacause of the game to system t
 - code/test/run_test.py
 - code/test/index_dict.py
 - code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+
 ## Definitions
 
 **route**: A predefined way the agent has to take.
@@ -30,7 +32,7 @@ For creating a new route, the following must be considered:
 
 1. Create a new route in code/routes/test.xml. The routes always need a unique ID number that increments sequentially. To create a new route, refer to the documentation in [create_new_route.md](/doc/general/create_new_route.md)
 2. Create a separate .xml and copy the route you created into the file, so that it can be loaded later as a checkpoint. Name the route after the scenario that will be triggered.
-3. Add the route to the map in the file doc/general/[load_checkpoints](/doc/general/load_checkpoints.md).
+3. Add the route to the map in the file [load_checkpoints](/doc/general/load_checkpoints.md).
 4. Add route to the list in code/test/index_dict.py. The structure of the list is as follows: ID number, scenario name, time allowed to complete the route.
 
 ## Start Test
@@ -40,5 +42,3 @@ To start a test, simply run leaderboard.test in the build/docker-compose.dev.cud
 ## Output
 
 ![test output](../assets/ros2_test_output.png)
-
-
