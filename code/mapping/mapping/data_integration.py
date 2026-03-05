@@ -905,7 +905,8 @@ class MappingDataIntegrationNode(Node):
 
         if len(radar_motion) != radar_xy.shape[0]:
             self.get_logger().warn(
-                f"Radar motion_array size mismatch: motions={len(radar_motion)} points={radar_xy.shape[0]}",
+                f"Radar motion_array size mismatch: motions={len(radar_motion)} "
+                f"points={radar_xy.shape[0]}",
                 throttle_duration_sec=2.0,
             )
             return
