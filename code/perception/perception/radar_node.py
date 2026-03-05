@@ -630,7 +630,7 @@ class RadarNode(Node):
             computation.
         - The output array has the same length as the input array.
         """
-         # translate points back to the radar origin
+        # translate points back to the radar origin
         radar0mask = points_with_labels[:, 0] >= 0
         radar1mask = points_with_labels[:, 0] < 0
 
@@ -639,7 +639,7 @@ class RadarNode(Node):
 
         translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
         translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
-       
+
         points_with_labels[radar0mask, :3] -= translation0
         points_with_labels[radar1mask, :3] -= translation1
 
