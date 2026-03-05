@@ -552,13 +552,14 @@ class RadarNode(Node):
                 )
                 self.cluster_info_radar_publisher.publish(cluster_info)
         else:
-            motionArray = [
-                Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
-            ]
+            points = combined_points
+            motion_array = self.calculate_point_velocity(points)
+            motionArray = [m.to_ros_msg() for m in motion_array]
+
             clusteredpoints = array_to_clustered_points(
                 self.get_clock().now(),
-                combined_points[:, :3],
-                np.arange(len(combined_points)),
+                points[:, :3],
+                np.arange(points.shape[0]),
                 motionArray,
                 header_id="hero/RADAR",
             )
@@ -610,116 +611,56 @@ class RadarNode(Node):
 
         return transformed_points
 
-    def calculate_cluster_velocity(self, points_with_labels):
+    def calculate_point_velocity(self, points: np.ndarray) -> np.ndarray:
         """
-        Computes the average velocity for each labeled point in a cluster
-        and assigns it to the corresponding cluster.
-
-        Parameters:
-        - points_with_labels (numpy.ndarray): An array where each row represents a point
-          with its corresponding label in the last column. The fourth column (index 3)
-          contains the velocity values.
-
-        Returns:
-        - numpy.ndarray: An array of Motion2D objects where each entry corresponds to
-          the average point velocity of the cluster each point in the cluster then gets
-          the same value. Entries for invalid labels (-1) are None.
-
-        Notes:
-        - Points with a label of -1 are considered invalid and excluded from velocity
-            computation.
-        - The output array has the same length as the input array.
+        Computes ego-compensated velocity per radar point.
+        points: array with columns [x, y, z, doppler_vel] in map frame (same as before).
+        returns: np.ndarray of Motion2D with same length as points.
         """
+
         # translate points back to the radar origin
-        radar0mask = points_with_labels[:, 0] >= 0
+        radar0mask = points[:, 0] >= 0
         radar1mask = ~radar0mask
 
         sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
         sensor1_x, sensor1_y, sensor1_z = self.sensor_config["RADAR1"]
 
         translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
-        transformed_points0 = np.column_stack(
-            (
-                points_with_labels[radar0mask, :3] - translation0,
-                points_with_labels[radar0mask, 3],
-            )
-        )
+        points0 = points[radar0mask, :3] - translation0
+        doppler0 = points[radar0mask, 3:4]
+        transformed_points0 = np.hstack((points0, doppler0))
 
         translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
-        transformed_points1 = np.column_stack(
-            (
-                points_with_labels[radar1mask, :3] - translation1,
-                points_with_labels[radar1mask, 3],
-            )
-        )
+        points1 = points[radar1mask, :3] - translation1
+        doppler1 = points[radar1mask, 3:4]
+        transformed_points1 = np.hstack((points1, doppler1))
 
-        points_with_labels = np.vstack((transformed_points0, transformed_points1))
+        transformed = np.vstack((transformed_points0, transformed_points1))
 
-        # filter invalid points
-        labels = points_with_labels[:, -1]
-        valid_mask = labels != -1  # Filter invalid labels
-        valid_points = points_with_labels[valid_mask]
+        motion_array = np.full((len(transformed),), None, dtype=object)
 
-        motion_vectors = np.full((len(points_with_labels), 3), None, dtype=object)
-        motion_array = np.full((len(points_with_labels)), None, dtype=object)
+        for i, point in enumerate(transformed):
+            velocity_per_point = float(point[3])
 
-        unique_labels = np.unique(valid_points[:, -1])
+            azimuth = np.arctan2(point[1], point[0])
+            cos_az = np.cos(azimuth)
 
-        # ego motion compensation per point
-        for i, point in enumerate(valid_points):
-            velocity_per_point = point[3]
-            azimuth_per_point = np.arctan2(point[1], point[0])
-            cos_azimuth_per_point = np.cos(azimuth_per_point)
+            # split doppler into x/y
+            vx = velocity_per_point * np.cos(azimuth)
+            vy = velocity_per_point * np.sin(azimuth)
+            point_motion_vector = Vector2.new(vx, vy)
 
-            # split velocity into x and y velocities
-            x_velocities_per_point = velocity_per_point * np.cos(azimuth_per_point)
-            y_velocities_per_point = velocity_per_point * np.sin(azimuth_per_point)
+            vec = point_motion_vector
 
-            point_motion_vector = Vector2.new(
-                x_velocities_per_point, y_velocities_per_point
-            )
-
+            # ego motion compensation
             if self.hero_speed is not None:
-                # bend ego motion vector towards object and compensate movement
-                hypspeed = self.hero_speed.speed * cos_azimuth_per_point
-                xspeed = hypspeed * cos_azimuth_per_point
-                yspeed = hypspeed * np.sin(azimuth_per_point)
+                hypspeed = self.hero_speed.speed * cos_az
+                xspeed = hypspeed * cos_az
+                yspeed = hypspeed * np.sin(azimuth)
                 speed_vector = Vector2.new(xspeed, yspeed)
-
                 vec = speed_vector + point_motion_vector
 
-                # array of the points motions in the form
-                # (x-velocity, y-velocity, label)
-                motion_vectors[i, 0] = vec.x()
-                motion_vectors[i, 1] = vec.y()
-                motion_vectors[i, 2] = point[-1]
-            else:
-                motion_vectors[i, 0] = x_velocities_per_point
-                motion_vectors[i, 1] = y_velocities_per_point
-                motion_vectors[i, 2] = point[-1]
-
-        # averaging per point velocity on cluster level
-        avg_motion = {}
-        for label in unique_labels:
-            mask = motion_vectors[:, 2] == label
-            if not np.any(mask):
-                self.get_logger().warn("No valid Mask")
-                continue
-            clusterpoints = motion_vectors[mask, :2]
-
-            x_cluster_velocity = np.mean(clusterpoints[:, 0])
-            y_cluster_velocity = np.mean(clusterpoints[:, 1])
-
-            avg_motion[label] = Motion2D(
-                Vector2.new(x_cluster_velocity, y_cluster_velocity), 0.0
-            )
-
-        motion_array[valid_mask] = [
-            avg_motion[label]
-            if label in avg_motion
-            else Motion2D(Vector2.new(0.0, 0.0), 0.0)
-            for label in labels[valid_mask]
-        ]
+            motion_array[i] = Motion2D(vec, 0.0)
 
         return motion_array
 
