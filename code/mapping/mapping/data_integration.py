@@ -749,6 +749,7 @@ class MappingDataIntegrationNode(Node):
                     motion=motion,
                     sensor_id=sensor_ids,
                 )
+            entity.sensor_id = list(set(entity.sensor_id))
             entities.append(entity)
 
         return entities
@@ -846,6 +847,11 @@ class MappingDataIntegrationNode(Node):
 
         for filter in self.get_current_map_filters():
             map = filter.filter(map)
+
+        for e in map.entities:
+            if e.sensor_id:
+                e.sensor_id = list(dict.fromkeys(e.sensor_id))
+
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
