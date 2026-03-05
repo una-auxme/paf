@@ -10,6 +10,7 @@ import mapping_common.mask
 from mapping_common.map import Map, MapTree, LaneFreeState
 from mapping_common.entity import ShapelyEntity, Entity, StopMark
 from mapping_common.markers import debug_marker
+from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Vector2, Point2
 import shapely
 from mapping_common.entity import FlagFilter, Car
@@ -36,7 +37,7 @@ from planning.local_planner.utils import (
 OVERTAKE_MARKER_COLOR = (17 / 255, 232 / 255, 35 / 255, 1.0)
 
 OVERTAKE_SPACE_STOPMARKS_ID = "overtake_space"
-
+OVERTAKE_OBSTACLE_BLOCKER_ID = "obstacle_to_overtake"
 
 def set_space_stop_mark(client: Client, obstacle: Entity):
     reason = "Obstacle: overtake space"
@@ -58,6 +59,22 @@ def set_space_stop_mark(client: Client, obstacle: Entity):
         marks=[mark],
     )
 
+def set_obstacle_blocker(client: Client, obstacle: Entity):
+    reason = "Obstacle: overtake length blocker"
+    transform = (
+        Transform2D.new_translation(Vector2.new() * 4) * obstacle.transform
+    )
+    mask = Rectangle(10.0, 5.0, offset=transform)
+    
+    update_stop_marks(
+        client,
+        id=OVERTAKE_OBSTACLE_BLOCKER_ID,
+        reason=reason,
+        is_global=False,
+        marks=[mask],
+    )
+
+
 
 def unset_space_stop_mark(client: Client):
     update_stop_marks(
@@ -68,7 +85,14 @@ def unset_space_stop_mark(client: Client):
         marks=[],
     )
 
-
+def unset_obstacle_blocker(client: Client):
+    update_stop_marks(
+        client,
+        id=OVERTAKE_OBSTACLE_BLOCKER_ID,
+        reason="overtake over",
+        is_global=False,
+        marks=[],
+    )
 """
 Source: https://github.com/ll7/psaf2
 """
@@ -325,7 +349,7 @@ class Approach(py_trees.behaviour.Behaviour):
             )
 
         set_space_stop_mark(self.stop_client, obstacle=entity)
-
+        set_obstacle_blocker(self.stop_client, obstacle=entity)
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
             ot_free, ot_mask = tree.is_lane_free(
@@ -383,7 +407,7 @@ class Approach(py_trees.behaviour.Behaviour):
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
             unset_space_stop_mark(self.stop_client)
-
+            unset_obstacle_blocker(self.stop_client)
 
 class Wait(py_trees.behaviour.Behaviour):
     """
@@ -467,12 +491,13 @@ class Wait(py_trees.behaviour.Behaviour):
             return debug_status(self.name, Status.FAILURE, "Obstacle started moving")
 
         set_space_stop_mark(self.stop_client, obstacle=entity)
+        set_obstacle_blocker(self.stop_client, obstacle=entity)
 
         self.curr_behavior_pub.publish(String(data=bs.ot_wait.name))
         ot_free, ot_mask = tree.is_lane_free(
             right_lane=False,
             lane_length=self.clear_distance,
-            lane_transform=10.0,
+            lane_transform=20.0,
             check_method="fallback",
         )
 
@@ -499,6 +524,7 @@ class Wait(py_trees.behaviour.Behaviour):
     def terminate(self, new_status):
         if new_status is Status.FAILURE or new_status is Status.INVALID:
             unset_space_stop_mark(self.stop_client)
+            unset_obstacle_blocker(self.stop_client)
 
 
 class Enter(py_trees.behaviour.Behaviour):
@@ -584,12 +610,13 @@ class Leave(py_trees.behaviour.Behaviour):
         curr_behavior_pub: Publisher,
         overtake_status_client: Client,
         end_overtake_client: Client,
+        stop_client: Client,
     ):
         super().__init__(name)
         self.curr_behavior_pub = curr_behavior_pub
         self.overtake_status_client = overtake_status_client
         self.end_overtake_client = end_overtake_client
-
+        self.stop_client = stop_client
     def setup(self, **kwargs):
         self.blackboard = Blackboard()
 
@@ -626,8 +653,8 @@ class Leave(py_trees.behaviour.Behaviour):
             ot_free, ot_mask = tree.is_lane_free(
                 right_lane=True,
                 lane_length=15.0,
-                lane_transform=7.5,
-                check_method="lanemarking",
+                lane_transform=3.0,
+                check_method="fallback",
             )
             add_debug_entry(self.name, f"Right lane free?: {ot_free.name}")
             if isinstance(ot_mask, shapely.Polygon):
@@ -664,7 +691,7 @@ class Leave(py_trees.behaviour.Behaviour):
                         Status.RUNNING,
                         "Obstacle in front. Finishing overtake...",
                     )
-
+            unset_obstacle_blocker(self.stop_client)
         if status.status == OvertakeStatus.Response.OVERTAKE_ENDING:
             return debug_status(
                 self.name,
