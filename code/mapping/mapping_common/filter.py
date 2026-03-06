@@ -30,8 +30,13 @@ from .entity import (
     TrafficLight,
     StopMark,
 )
+from mapping_common.entity import Motion2D
+
 from .shape import Polygon, Shape2D
 from .transform import Transform2D, Vector2
+from shapely.geometry import Point
+from shapely.strtree import STRtree
+import ros2_numpy
 
 
 class MapFilter:
@@ -524,6 +529,130 @@ class TrackingFilter(MapFilter):
 
             if not is_matched_s1 and not is_matched_s2:
                 self._assign_new_track_id(entity)
+
+        # Recombine tracked entities (with persistent IDs) and preserved lanemarks
+        map.entities = cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks
+        return map
+
+
+class RadarPointAssignmentFilter(MapFilter):
+    """
+    Assigns radar-derived velocities to LiDAR entities using spatial association.
+    """
+
+    radar_compensated_points_data = None
+    classification_threshold = None
+    radar_lidar_assoc_buffer = None
+
+    def set_radar_lidar_assoc_buffer(self, radar_lidar_assoc_buffer):
+        self.radar_lidar_assoc_buffer = radar_lidar_assoc_buffer
+
+    def set_classification_threshold(self, classification_threshold):
+        self.classification_threshold = classification_threshold
+
+    def set_radar_points(self, radar_compensated_points_data):
+        self.radar_compensated_points_data = radar_compensated_points_data
+
+    def fuse_radar_velocity_into_lidar_entities(
+        self, lidar_entities: List[Entity]
+    ) -> None:
+        """Assign radar-derived velocities to lidar entities (in-place)."""
+        data_msg = self.radar_compensated_points_data
+        if data_msg is None:
+            return
+
+        data = ros2_numpy.point_cloud2.pointcloud2_to_array(data_msg)
+        if data is None or data.size == 0:
+            return
+
+        radar_xy = np.stack([data["x"], data["y"]], axis=-1).astype(float)
+        radar_motion = np.stack([data["vx"], data["vy"]], axis=-1).astype(float)
+        if len(radar_motion) != len(radar_xy):
+            get_logger().warn(
+                f"Radar motion_array size mismatch: motions={len(radar_motion)} "
+                f"points={len(radar_xy)}",
+                throttle_duration_sec=2.0,
+            )
+            return
+
+        point_goems = [Point(p[0], p[1]) for p in radar_xy]
+        tree = STRtree(point_goems)
+
+        for entity in lidar_entities:
+            poly = entity.shape.to_shapely(entity.transform)
+            if poly is None or poly.is_empty:
+                continue
+
+            search_region = poly.buffer(self.radar_lidar_assoc_buffer)
+            indices = tree.query(search_region, predicate="covers")
+
+            if len(indices) == 0:
+                continue
+
+            entity_motion_array = radar_motion[indices]
+            mean_motion = np.mean(entity_motion_array, axis=0)
+
+            vx = float(mean_motion[0])
+            vy = float(mean_motion[1])
+
+            fused_motion = Motion2D(
+                linear_motion=Vector2.new(vx, vy), angular_velocity=0.0
+            )
+
+            if (
+                np.abs(fused_motion.linear_motion.length())
+                < self.classification_threshold
+            ):
+                fused_motion = None
+
+            entity.motion = fused_motion
+
+    def check_valid_data(self):
+        """
+        Checks if there is enough history (at least one previous frame)
+        to start tracking.
+        """
+
+        if self.radar_compensated_points_data is None:
+            get_logger().error(
+                "radar_compensated_points_data must be set before access!"
+            )
+            return False
+
+        if self.classification_threshold is None:
+            get_logger().error("classification_threshold must be set before access!")
+            return False
+
+        if self.radar_lidar_assoc_buffer is None:
+            get_logger().error("radar_lidar_assoc_buffer must be set before access!")
+            return False
+
+        return True
+
+    def filter(self, map: Map) -> Map:
+        """
+        Filters the map by performing two-stage tracking
+        and re-assigning persistent IDs.
+        """
+        if not self.check_valid_data():
+            return map
+
+        ego_filter = FlagFilter(is_hero=True)
+        lanemark_filter = FlagFilter(is_lanemark=True)
+        stop_mark_filter = FlagFilter(is_stopmark=True)
+        cur_to_track_filter = FlagFilter(
+            is_lanemark=False, is_stopmark=False, is_hero=False
+        )
+
+        cur_ego_vehicle = map.filtered(ego_filter)
+
+        # 1. Separate Lanemarkings (Static) and Entities to Track
+        cur_lanemarks = map.filtered(lanemark_filter)
+        cur_stopmarks = map.filtered(stop_mark_filter)
+
+        cur_to_track = map.filtered(cur_to_track_filter)
+
+        self.fuse_radar_velocity_into_lidar_entities(cur_to_track)
 
         # Recombine tracked entities (with persistent IDs) and preserved lanemarks
         map.entities = cur_ego_vehicle + cur_to_track + cur_lanemarks + cur_stopmarks

@@ -22,6 +22,7 @@ from mapping_common.filter import (
     LaneIndexFilter,
     GrowPedestriansFilter,
     TrackingFilter,
+    RadarPointAssignmentFilter,
 )
 
 from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
@@ -59,6 +60,7 @@ class MappingDataIntegrationNode(Node):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    radar_compensated_points_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -153,6 +155,17 @@ class MappingDataIntegrationNode(Node):
             )
             .get_parameter_value()
             .bool_value
+        )
+        self.radar_lidar_assoc_buffer = (
+            self.declare_parameter(
+                "radar_lidar_assoc_buffer",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Buffer [m] around lidar polygon for radar association"
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
 
         # Parameters: Filtering
@@ -272,7 +285,7 @@ class MappingDataIntegrationNode(Node):
         )
 
         self.tracking_filter = TrackingFilter()
-        self.tracking_filter.set_tracking_velocity_status(self.update_tracking_velocity)
+        self.radar_point_assignment_filter = RadarPointAssignmentFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -425,6 +438,13 @@ class MappingDataIntegrationNode(Node):
         )
 
         self.create_subscription(
+            topic="/paf/hero/Radar/compensated_points",
+            msg_type=PointCloud2,
+            callback=self.radar_compensated_points_callback,
+            qos_profile=1,
+        )
+
+        self.create_subscription(
             topic="/paf/hero/delta_heading",
             msg_type=Float32,
             callback=self.delta_heading_callback,
@@ -495,6 +515,9 @@ class MappingDataIntegrationNode(Node):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def radar_compensated_points_callback(self, data: PointCloud2):
+        self.radar_compensated_points_data = data
 
     def delta_heading_callback(self, data: Float32):
         self.tracking_filter.set_delta_heading(data.data)
@@ -787,7 +810,9 @@ class MappingDataIntegrationNode(Node):
         missing_data = []
         if self.enable_lidar_cluster:
             if self.lidar_clustered_points_data is not None:
-                entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
+                lidar_entities = self.create_entities_from_clusters(sensortype="lidar")
+
+                entities.extend(lidar_entities)
             else:
                 missing_data.append("lidar_clustered_points")
 
@@ -872,6 +897,18 @@ class MappingDataIntegrationNode(Node):
                 self.update_tracking_velocity
             )
             map_filters.append(self.tracking_filter)
+        if not self.enable_radar_cluster:
+            self.radar_point_assignment_filter.set_radar_points(
+                self.radar_compensated_points_data
+            )
+            self.radar_point_assignment_filter.set_classification_threshold(
+                self.classification_threshold
+            )
+            self.radar_point_assignment_filter.set_radar_lidar_assoc_buffer(
+                self.radar_lidar_assoc_buffer
+            )
+
+            map_filters.append(self.radar_point_assignment_filter)
 
         return map_filters
 
