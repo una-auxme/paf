@@ -60,7 +60,8 @@ class MappingDataIntegrationNode(Node):
 
     lidar_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
-    lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
+    lidar_old_clustered_points_data: Optional[ClusteredPointsArray] = None
+    lidar_new_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     vision_clustered_points_data: Optional[ClusteredPointsArray] = None
 
@@ -406,9 +407,15 @@ class MappingDataIntegrationNode(Node):
             qos_profile=1,
         )
         self.create_subscription(
-            topic="/paf/hero/Lidar/clustered_points",
+            topic="/paf/hero/Lidar/clustered_old_points",
             msg_type=ClusteredPointsArray,
-            callback=self.lidar_clustered_points_callback,
+            callback=self.lidar_old_clustered_points_callback,
+            qos_profile=1,
+        )
+        self.create_subscription(
+            topic="/paf/hero/Lidar/clustered_new_points",
+            msg_type=ClusteredPointsArray,
+            callback=self.lidar_new_clustered_points_callback,
             qos_profile=1,
         )
         self.create_subscription(
@@ -484,9 +491,12 @@ class MappingDataIntegrationNode(Node):
     def hero_speed_callback(self, data: CarlaSpeedometer):
         self.hero_speed = data
 
-    def lidar_clustered_points_callback(self, data: ClusteredPointsArray):
-        self.lidar_clustered_points_data = data
+    def lidar_old_clustered_points_callback(self, data: ClusteredPointsArray):
+        self.lidar_old_clustered_points_data = data
 
+    def lidar_new_clustered_points_callback(self, data: ClusteredPointsArray):
+        self.lidar_new_clustered_points_data = data
+    
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
         self.radar_clustered_points_data = data
 
@@ -629,8 +639,10 @@ class MappingDataIntegrationNode(Node):
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
-        elif sensortype == "lidar":
-            data = self.lidar_clustered_points_data
+        elif sensortype == "lidar_old":
+            data = self.lidar_old_clustered_points_data
+        elif sensortype == "lidar_new":
+            data = self.lidar_new_clustered_points_data
         elif sensortype == "vision":
             data = self.vision_clustered_points_data
         else:
@@ -786,8 +798,13 @@ class MappingDataIntegrationNode(Node):
 
         missing_data = []
         if self.enable_lidar_cluster:
-            if self.lidar_clustered_points_data is not None:
-                entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
+            if (self.lidar_old_clustered_points_data is not None and 
+            self.lidar_new_clustered_points_data is not None):
+                entities.extend(self.create_entities_from_clusters(sensortype="lidar_old"))
+                self.get_logger().info(f"shape of entity1:{len(entities)}")
+                entities.extend(self.create_entities_from_clusters(sensortype="lidar_new"))
+                self.get_logger().info(f"shape of entity2:{len(entities)}")
+
             else:
                 missing_data.append("lidar_clustered_points")
 

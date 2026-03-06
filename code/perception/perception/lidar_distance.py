@@ -114,9 +114,15 @@ class LidarDistance(Node):
             msg_type=MarkerArray, topic="/paf/hero/Lidar/Marker", qos_profile=10
         )
 
-        self.clustered_points_publisher = self.create_publisher(
+        self.clustered_old_points_publisher = self.create_publisher(
             msg_type=ClusteredPointsArray,
-            topic="/paf/hero/Lidar/clustered_points",
+            topic="/paf/hero/Lidar/clustered_old_points",
+            qos_profile=10,
+        )
+
+        self.clustered_new_points_publisher = self.create_publisher(
+            msg_type=ClusteredPointsArray,
+            topic="/paf/hero/Lidar/clustered_new_points",
             qos_profile=10,
         )
 
@@ -172,13 +178,23 @@ class LidarDistance(Node):
 
         :param data: The raw PointCloud2 message.
         """
+        timestamp = self.get_clock().now()
+        clustered_points, cluster_labels = self.start_clustering(data=data,time=timestamp)
+        
 
-        self.Compensation.set_lidar_data(data)
+        if isinstance(self.Compensation, LocalCompensation):
+            time = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
+            self.Compensation.set_motion_data(time=time)
 
-        point_cloud = self.Compensation.compensate()
-        if point_cloud is None:
+
+        self.Compensation.set_lidar_data(clustered_points)
+
+        self.get_logger().info(f"form of clusteredpoints1{clustered_points.shape}")
+
+        cluster_points_comp = self.Compensation.compensate()
+        if cluster_points_comp is None:
             return
-
+        self.get_logger().info(f"form of clusteredpoints{cluster_points_comp.shape}")
         if (
             isinstance(self.Compensation, LocalCompensation)
             and self.Compensation.delta_heading is not None
@@ -187,8 +203,17 @@ class LidarDistance(Node):
             msg.data = float(self.Compensation.delta_heading)
             self.delta_heading_publisher.publish(msg)
 
-        self.start_clustering(point_cloud)
-        self.start_image_calculation(point_cloud)
+        clustered_points_msg = array_to_clustered_points(
+            timestamp,
+            cluster_points_comp,
+            cluster_labels,
+            header_id="hero/LIDAR",
+        )
+        self.clustered_old_points_publisher.publish(clustered_points_msg)
+
+
+
+        self.start_image_calculation(data)
 
     def ekf_callback(self, data: PoseStamped):
         """
@@ -246,7 +271,7 @@ class LidarDistance(Node):
         heading = quaternion_to_heading(x, y, z, w)
         self.Compensation.set_motion_data(heading=heading)
 
-    def start_clustering(self, data):
+    def start_clustering(self, data, time):
         """
         Processes LIDAR point clouds by filtering, clustering,
         generating bounding boxes, and publishing the results.
@@ -317,13 +342,15 @@ class LidarDistance(Node):
         # Prepare and publish clustered entity data
         cluster_points_np = points_with_labels[:, :3]
         index_array = points_with_labels[:, -1]
-        clustered_points_msg = array_to_clustered_points(
-            self.get_clock().now(),
+        clustered_new_points_msg = array_to_clustered_points(
+            time,
             cluster_points_np,
             index_array,
-            header_id="hero/LIDAR",
+            header_id="hero/LIDAR_OLD",
         )
-        self.clustered_points_publisher.publish(clustered_points_msg)
+        self.clustered_new_points_publisher.publish(clustered_new_points_msg)
+
+        return cluster_points_np, index_array
 
     def start_image_calculation(self, data):
         """
@@ -737,27 +764,23 @@ class CompensationStrategy(ABC):
     """
     Abstract Base Class (Strategy) for all Lidar compensation methods.
 
-    Defines the interface and common buffering logic for handling PointCloud2 data
+    Defines the interface and common buffering logic for handling ClusteredPointsArray data
     and separating points belonging to the ego vehicle from the environment.
     """
 
     def __init__(self):
         super().__init__()
-        self._cur_lidar_data: Optional[PointCloud2] = None
-        self._prev_lidar_data: Optional[PointCloud2] = None
+        self._old_lidar_data: Optional[np.ndarray] = None
 
-    def set_lidar_data(self, data: PointCloud2):
+    def set_lidar_data(self, data):
         """
         Updates the Lidar data buffer, shifting the current data to the previous
         buffer before setting the new data.
 
-        :param data: The incoming Lidar PointCloud2 message.
+        :param data: The incoming Lidar ClusteredPointsArray message.
         """
 
-        if self._cur_lidar_data is not None:
-            self._prev_lidar_data = self._cur_lidar_data
-
-        self._cur_lidar_data = data
+        self._old_lidar_data = data
 
     def valid_lidar_data(self):
         """
@@ -767,13 +790,10 @@ class CompensationStrategy(ABC):
         :return: True if both buffers are valid, False otherwise.
         """
 
-        if self._cur_lidar_data is None:
+        if self._old_lidar_data is None:
             rclpy.logging.get_logger("lidar_distance").error(
-                "Current Lidar data must be set before compensating."
+                "Old Lidar data must be set before compensating."
             )
-            return False
-
-        if self._prev_lidar_data is None:
             return False
 
         return True
@@ -784,16 +804,19 @@ class CompensationStrategy(ABC):
         the previous frame into ego vehicle points and environment points.
         """
 
-        self.cur_points = ros2_numpy.point_cloud2.pointcloud2_to_array(
-            self._cur_lidar_data
-        )
-        self.prev_points = ros2_numpy.point_cloud2.pointcloud2_to_array(
-            self._prev_lidar_data
-        )
+        self.old_points = self._old_lidar_data
 
-        ego_mask = create_ego_vehicle_mask(self.prev_points)
-        self.prev_ego_points = self.prev_points[ego_mask]
-        self.prev_env_points = self.prev_points[~ego_mask]
+        if self.old_points is None:
+            rclpy.logging.get_logger("lidar_distance").error(
+                "Old Lidar Data is None"
+            )
+            return
+
+        
+
+        ego_mask = create_ego_vehicle_mask(self.old_points)
+        self.prev_ego_points = self.old_points[ego_mask]
+        self.prev_env_points = self.old_points[~ego_mask]
 
     @abstractmethod
     def set_motion_data(self, **kwargs):
@@ -804,12 +827,12 @@ class CompensationStrategy(ABC):
         pass
 
     @abstractmethod
-    def compensate(self) -> PointCloud2:
+    def compensate(self) -> np.ndarray:
         """
         Abstract method for computing the compensated point cloud.
         Must be implemented by concrete strategies.
 
-        :return: The resulting combined/compensated PointCloud2 message.
+        :return: The resulting combined/compensated ClusteredPointsArray message.
         """
         pass
 
@@ -825,13 +848,13 @@ class NoCompensation(CompensationStrategy):
 
         pass
 
-    def compensate(self) -> PointCloud2:
+    def compensate(self) -> np.ndarray:
         """
         Returns the current Lidar data directly.
         """
 
         self.valid_lidar_data()  # Ensures the current data is set
-        return self._cur_lidar_data
+        return self._old_lidar_data
 
 
 class Buffer(CompensationStrategy):
@@ -845,22 +868,27 @@ class Buffer(CompensationStrategy):
 
         pass
 
-    def compensate(self) -> PointCloud2:
+    def compensate(self) -> np.ndarray:
         """
         Concatenates the current and previous Lidar points.
 
-        :return: A single PointCloud2 containing both frames.
+        :return: A single ClusteredPointsArray containing both frames.
         """
+        if self._old_lidar_data is None:
+            rclpy.logging.get_logger("lidar_distance").error(
+                "Old Lidar data must be set before compensating."
+            )
+            return 
+        # if not self.valid_lidar_data():
+        #     return self._old_lidar_data
 
-        if not self.valid_lidar_data():
-            return self._cur_lidar_data
+        # self.prepare_data()
 
-        self.prepare_data()
-
-        lidar_data = np.concatenate([self.cur_points, self.prev_points])
-        lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_data)
-        lidar_cloud.header = self._cur_lidar_data.header
-        return lidar_cloud
+        # lidar_cluster = np.concatenate([self._cur_lidar_data, self._prev_lidar_data], dtype=np.ndarray)
+        
+        # lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_data)  # HIER WEITER
+        # lidar_cloud.header = self._cur_lidar_data.header
+        return self._old_lidar_data
 
 
 class EgoMotionCompensation(CompensationStrategy):
@@ -901,7 +929,7 @@ class EgoMotionCompensation(CompensationStrategy):
 
             self._cur_ekf_pose = data
 
-    def compensate(self) -> PointCloud2:
+    def compensate(self) -> np.ndarray:
         """
         Calculates the delta transformation matrix (dT) from EKF poses and applies
         it to the previous frame's environment points.
@@ -922,7 +950,7 @@ class EgoMotionCompensation(CompensationStrategy):
             [self.cur_points, comp_env_points, self.prev_ego_points]
         )
 
-        lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
+        lidar_cloud = ros2_numpy.point_cloud2.array_to_(lidar_points)
         lidar_cloud.header = self._cur_lidar_data.header
 
         return lidar_cloud
@@ -941,6 +969,9 @@ class LocalCompensation(CompensationStrategy):
         self._cur_heading: Optional[float] = None
         self.delta_heading: Optional[float] = None
         self._velocity: Optional[float] = None
+        self._prev_time: Optional[float] = None
+        self._cur_time: Optional[float] = None
+
 
     def valid_heading_data(self) -> bool:
         """Checks if both current and previous heading data are buffered."""
@@ -971,6 +1002,7 @@ class LocalCompensation(CompensationStrategy):
         self,
         heading: Optional[float] = None,
         velocity: Optional[float] = None,
+        time: Optional[float] = None,
         **kwargs,
     ):
         """
@@ -986,7 +1018,13 @@ class LocalCompensation(CompensationStrategy):
         if velocity is not None:
             self._velocity = velocity
 
-    def compensate(self) -> PointCloud2:
+        if time is not None:
+            if self._cur_time is not None:
+                self._prev_time = self._cur_time
+            
+            self._cur_time = time
+
+    def compensate(self) -> np.ndarray:
         """
         Calculates d_x (distance traveled) and d_heading (yaw change) and applies
         the local compensation to the previous frame's environment points.
@@ -997,18 +1035,20 @@ class LocalCompensation(CompensationStrategy):
             or not self.valid_heading_data()
             or not self.valid_velocity_data()
         ):
-            return self._cur_lidar_data
+            return self._old_lidar_data
+
+        
 
         self.prepare_data()
 
-        t_prev = (
-            self._prev_lidar_data.header.stamp.sec
-            + self._prev_lidar_data.header.stamp.nanosec / 1e9
-        )
-        t_cur = (
-            self._cur_lidar_data.header.stamp.sec
-            + self._cur_lidar_data.header.stamp.nanosec / 1e9
-        )
+        if self._cur_time is None or self._prev_time is None:
+            rclpy.logging.get_logger("lidar_distance").error(
+                "Time is None."
+            )
+            return self._old_lidar_data
+
+        t_prev = self._prev_time
+        t_cur = self._cur_time
 
         d_t = t_cur - t_prev
         d_x = self._velocity * d_t
@@ -1019,13 +1059,13 @@ class LocalCompensation(CompensationStrategy):
         )
 
         lidar_points = np.concatenate(
-            [self.cur_points, comp_env_points, self.prev_ego_points]
+            [comp_env_points, self.prev_ego_points]
         )
 
-        lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
-        lidar_cloud.header = self._cur_lidar_data.header
+        # lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
+        # lidar_cloud.header = self._cur_lidar_data.header
 
-        return lidar_cloud
+        return lidar_points
 
 
 def main(args=None):
