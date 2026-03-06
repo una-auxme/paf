@@ -22,6 +22,7 @@ from mapping_common.filter import (
     LaneIndexFilter,
     GrowPedestriansFilter,
     TrackingFilter,
+    RadarPointAssignmentFilter,
 )
 
 from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
@@ -34,7 +35,7 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
-from shapely.geometry import MultiPoint, Point
+from shapely.geometry import MultiPoint
 import shapely
 
 
@@ -59,6 +60,7 @@ class MappingDataIntegrationNode(Node):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    radar_compensated_points_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -157,7 +159,7 @@ class MappingDataIntegrationNode(Node):
         self.radar_lidar_assoc_buffer = (
             self.declare_parameter(
                 "radar_lidar_assoc_buffer",
-                0.8,
+                1.5,
                 descriptor=ParameterDescriptor(
                     description="Buffer [m] around lidar polygon for radar association"
                 ),
@@ -283,7 +285,7 @@ class MappingDataIntegrationNode(Node):
         )
 
         self.tracking_filter = TrackingFilter()
-        self.tracking_filter.set_tracking_velocity_status(self.update_tracking_velocity)
+        self.radar_point_assignment_filter = RadarPointAssignmentFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -436,6 +438,13 @@ class MappingDataIntegrationNode(Node):
         )
 
         self.create_subscription(
+            topic="/paf/hero/Radar/compensated_points",
+            msg_type=PointCloud2,
+            callback=self.radar_compensated_points_callback,
+            qos_profile=1,
+        )
+
+        self.create_subscription(
             topic="/paf/hero/delta_heading",
             msg_type=Float32,
             callback=self.delta_heading_callback,
@@ -506,6 +515,9 @@ class MappingDataIntegrationNode(Node):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def radar_compensated_points_callback(self, data: PointCloud2):
+        self.radar_compensated_points_data = data
 
     def delta_heading_callback(self, data: Float32):
         self.tracking_filter.set_delta_heading(data.data)
@@ -800,9 +812,6 @@ class MappingDataIntegrationNode(Node):
             if self.lidar_clustered_points_data is not None:
                 lidar_entities = self.create_entities_from_clusters(sensortype="lidar")
 
-                # fuse radar velocities onto lidar entities
-                self.fuse_radar_velocity_into_lidar_entities(lidar_entities)
-
                 entities.extend(lidar_entities)
             else:
                 missing_data.append("lidar_clustered_points")
@@ -888,79 +897,20 @@ class MappingDataIntegrationNode(Node):
                 self.update_tracking_velocity
             )
             map_filters.append(self.tracking_filter)
+        if not self.enable_radar_cluster:
+            self.radar_point_assignment_filter.set_radar_points(
+                self.radar_compensated_points_data
+            )
+            self.radar_point_assignment_filter.set_classification_threshold(
+                self.classification_threshold
+            )
+            self.radar_point_assignment_filter.set_radar_lidar_assoc_buffer(
+                self.radar_lidar_assoc_buffer
+            )
+
+            map_filters.append(self.radar_point_assignment_filter)
 
         return map_filters
-
-    def fuse_radar_velocity_into_lidar_entities(
-        self, lidar_entities: List[Entity]
-    ) -> None:
-        """Assign radar-derived velocities to lidar entities (in-place)."""
-        data = self.radar_clustered_points_data
-        if data is None or not data.motion_array or not data.cluster_points_array:
-            return
-
-        radar_pts = np.array(data.cluster_points_array, dtype=float).reshape(-1, 3)
-        radar_xy = radar_pts[:, :2]
-        radar_motion = [Motion2D.from_ros_msg(m) for m in data.motion_array]
-
-        if len(radar_motion) != radar_xy.shape[0]:
-            self.get_logger().warn(
-                f"Radar motion_array size mismatch: motions={len(radar_motion)} "
-                f"points={radar_xy.shape[0]}",
-                throttle_duration_sec=2.0,
-            )
-            return
-
-        # Pre-extract vx/vy for speed
-        radar_v = np.array(
-            [[m.linear_motion.x(), m.linear_motion.y()] for m in radar_motion],
-            dtype=float,
-        )
-
-        buf = float(self.radar_lidar_assoc_buffer)
-
-        for e in lidar_entities:
-            # Don't overwrite existing motion
-            if getattr(e, "motion", None) is not None:
-                continue
-
-            # Build shapely polygon of entity in map frame
-            try:
-                poly = e.shape.to_shapely(e.transform)
-            except Exception:
-                continue
-
-            if poly is None or poly.is_empty:
-                continue
-
-            region = poly.buffer(buf)
-
-            inside = []
-            # covers() counts boundary points, contains() does not
-            for i in range(radar_xy.shape[0]):
-                px, py = float(radar_xy[i, 0]), float(radar_xy[i, 1])
-                if region.covers(Point(px, py)):
-                    inside.append(radar_v[i])
-
-            if not inside:
-                continue
-
-            inside_arr = np.array(inside, dtype=float)
-            mean_v = inside_arr.mean(axis=0)
-            vx, vy = float(mean_v[0]), float(mean_v[1])
-
-            fused_motion = Motion2D(
-                linear_motion=Vector2.new(vx, vy), angular_velocity=0.0
-            )
-
-            if self.hero_speed is not None:
-                if (
-                    np.abs(fused_motion.linear_motion.length())
-                    < self.classification_threshold
-                ):
-                    fused_motion = None
-
-            e.motion = fused_motion
 
 
 def main(args=None):
