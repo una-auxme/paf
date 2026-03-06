@@ -12,7 +12,6 @@ from sklearn.cluster import DBSCAN
 from carla_msgs.msg import CarlaSpeedometer
 
 
-from sklearn.preprocessing import StandardScaler
 import json
 from visualization_msgs.msg import Marker, MarkerArray
 from transforms3d.quaternions import mat2quat
@@ -833,16 +832,15 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
     if len(data) == 0:
         return np.array([])
 
-    # Scaling the data for better clustering performance
-    scaler = StandardScaler()
+    # The use of StandardScaler yielded poorer results for higher FOV in Radar Configs
+    # scaler = StandardScaler()
 
-    # data_reduced = data[:, [0, 1, 3]]
-    data_reduced = data
-    data_reduced[:, 2] = 1
-    data_scaled = scaler.fit_transform(data_reduced)
+    # # data_reduced = data[:, [0, 1, 3]]
+    # data_reduced = data
+    # data_reduced[:, 2] = 1
+    # data_scaled = scaler.fit_transform(data_reduced)
 
-    # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
-    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
 
     return clustered_points.labels_
 

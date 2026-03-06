@@ -46,6 +46,24 @@ class LidarDistance(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
+        self.activate_normalization = (
+            self.declare_parameter(
+                "activate_normalization",
+                True,
+            )
+            .get_parameter_value()
+            .bool_value
+        )
+
+        self.clustering_w = (
+            self.declare_parameter(
+                "clustering_w",
+                0.0285,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
         self.clustering_lidar_z_min = (
             self.declare_parameter(
                 "clustering_lidar_z_min",
@@ -54,10 +72,20 @@ class LidarDistance(Node):
             .get_parameter_value()
             .double_value
         )
+
+        self.clustering_lidar_z_max = (
+            self.declare_parameter(
+                "clustering_lidar_z_max",
+                1.5,
+            )
+            .get_parameter_value()
+            .double_value
+        )
+
         self.dbscan_eps = (
             self.declare_parameter(
                 "dbscan_eps",
-                0.4,
+                0.03375,
             )
             .get_parameter_value()
             .double_value
@@ -273,13 +301,20 @@ class LidarDistance(Node):
                 & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
             )
             & (
-                coordinates["z"] > self.clustering_lidar_z_min
-            )  # Exclude points below a certain height (street)
+                (coordinates["z"] > self.clustering_lidar_z_min)
+                & (coordinates["z"] < self.clustering_lidar_z_max)
+            )
+            # Exclude points below a certain height (street)
+            # Exclude points above a certain height (e.g. leafs of tree)
         ]
 
         # Perform DBSCAN clustering
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
-            filtered_coordinates, self.dbscan_eps, self.dbscan_min_samples
+            filtered_coordinates,
+            self.dbscan_eps,
+            self.dbscan_min_samples,
+            self.clustering_w,
+            self.activate_normalization,
         )
 
         # Extract x, y, z coordinates into a separate array
@@ -688,13 +723,29 @@ def array_to_pointcloud2(
     return pointcloud_msg
 
 
-def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
+def cluster_lidar_data_from_pointcloud(
+    coordinates,
+    eps,
+    min_samples,
+    distance_weight,
+    activate_normalization,
+    sensor_origin=np.array([0, 0, 1.7]),
+):
     """
     Performs clustering on LIDAR data using DBSCAN and returns the clusters.
+
+    If normalization is activated, points are projected onto a unit sphere and augmented
+    with a weighted distance component. This effectively turns DBSCAN into a
+    polar/angular clustering method, which is often more robust for varying point
+    densities in LIDAR sweeps.
 
     :param coordinates: LIDAR point cloud as a NumPy array with "x", "y", "z".
     :param eps: Maximum distance between points to group them into a cluster.
     :param min_samples: Minimum number of points required to form a cluster.
+    :param distance_weight: Multiplier applied to the distance during clustering.
+    :param activate_normalization: Boolean flag.
+        If True, uses angular/normalized distance logic.
+        If False, uses raw Euclidean distance.
     :return: Dictionary with cluster IDs and their corresponding point clouds.
     """
     if coordinates.shape[0] == 0:
@@ -703,17 +754,29 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
         )
         return {}
 
-    # Extract x, y, and z from the coordinates for DBSCAN clustering
-    xyz = np.column_stack((coordinates["x"], coordinates["y"], coordinates["z"]))
+    coordinates = np.column_stack(
+        (coordinates["x"], coordinates["y"], coordinates["z"])
+    )
 
-    if xyz.shape[0] == 0:
+    if activate_normalization:
+        d = np.linalg.norm(coordinates - sensor_origin, axis=1, keepdims=True)
+        coordinates[:, :3] /= d
+
+        xyzd = np.hstack([coordinates, distance_weight * d])
+    else:
+        xyzd = coordinates
+        # Override eps.
+        # This is just for visualization comparision and intended for usage.
+        eps = 0.4
+
+    if xyzd.shape[0] == 0:
         rclpy.logging.get_logger("lidar_distance").warn(
             "No data points available for DBSCAN. Skipping clustering."
         )
         return {}
 
     # Apply DBSCAN to compute cluster labels for the point cloud
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(xyz)
+    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(xyzd)
     labels = clustering.labels_
 
     # Remove noise (cluster ID: -1) and identify valid cluster IDs
@@ -722,7 +785,7 @@ def cluster_lidar_data_from_pointcloud(coordinates, eps, min_samples):
 
     # Create a dictionary with cluster IDs and their corresponding points
     clusters = Parallel(n_jobs=-1)(
-        delayed(lambda cluster_label: (cluster_label, xyz[labels == cluster_label]))(
+        delayed(lambda cluster_label: (cluster_label, xyzd[labels == cluster_label]))(
             label
         )
         for label in valid_labels
