@@ -143,8 +143,8 @@ def create_ego_vehicle_mask(data_array: np.ndarray) -> np.ndarray:
     min_y = -1
     max_y = 1
 
-    mask_x = (data_array["x"] >= min_x) & (data_array["x"] <= max_x)
-    mask_y = (data_array["y"] >= min_y) & (data_array["y"] <= max_y)
+    mask_x = (data_array[:, 0] >= min_x) & (data_array[:, 0] <= max_x)
+    mask_y = (data_array[:, 1] >= min_y) & (data_array[:, 1] <= max_y)
 
     ego_mask = mask_x & mask_y
     return ego_mask
@@ -167,16 +167,17 @@ def apply_local_motion_compensation(
     """
 
     comp_points = np.copy(points)
-    comp_points["x"] = comp_points["x"] - d_x
+    comp_points[:, 0] -= d_x
+    
 
     if account_heading:
-        points_xyz = np.stack([comp_points["x"], comp_points["y"], comp_points["z"]])
+        points_xyz = np.stack([comp_points[:, 0], comp_points[:,1], comp_points[:,2]])
         R = Rotation.from_euler("z", d_heading, degrees=True).as_matrix()
         comp_3xN = R @ points_xyz
 
-        comp_points["x"] = comp_3xN[0, :]
-        comp_points["y"] = comp_3xN[1, :]
-        comp_points["z"] = comp_3xN[2, :]
+        comp_points[:, 0] = comp_3xN[0, :]
+        comp_points[:, 1] = comp_3xN[1, :]
+        comp_points[:, 2] = comp_3xN[2, :]
 
     return comp_points
 
