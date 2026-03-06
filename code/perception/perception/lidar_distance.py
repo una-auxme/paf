@@ -303,7 +303,9 @@ class LidarDistance(Node):
             & (
                 (coordinates["z"] > self.clustering_lidar_z_min)
                 & (coordinates["z"] < self.clustering_lidar_z_max)
-            )  # Exclude points below a certain height (street)
+            )
+            # Exclude points below a certain height (street)
+            # Exclude points above a certain height (e.g. leafs of tree)
         ]
 
         # Perform DBSCAN clustering
@@ -732,9 +734,18 @@ def cluster_lidar_data_from_pointcloud(
     """
     Performs clustering on LIDAR data using DBSCAN and returns the clusters.
 
+    If normalization is activated, points are projected onto a unit sphere and augmented
+    with a weighted distance component. This effectively turns DBSCAN into a
+    polar/angular clustering method, which is often more robust for varying point
+    densities in LIDAR sweeps.
+
     :param coordinates: LIDAR point cloud as a NumPy array with "x", "y", "z".
     :param eps: Maximum distance between points to group them into a cluster.
     :param min_samples: Minimum number of points required to form a cluster.
+    :param distance_weight: Multiplier applied to the distance during clustering.
+    :param activate_normalization: Boolean flag.
+        If True, uses angular/normalized distance logic.
+        If False, uses raw Euclidean distance.
     :return: Dictionary with cluster IDs and their corresponding point clouds.
     """
     if coordinates.shape[0] == 0:
@@ -754,6 +765,8 @@ def cluster_lidar_data_from_pointcloud(
         xyzd = np.hstack([coordinates, distance_weight * d])
     else:
         xyzd = coordinates
+        # Override eps.
+        # This is just for visualization comparision and intended for usage.
         eps = 0.4
 
     if xyzd.shape[0] == 0:
