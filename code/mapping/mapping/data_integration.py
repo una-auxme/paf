@@ -626,6 +626,7 @@ class MappingDataIntegrationNode(Node):
         return lidar_entities
 
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
+        sensor_ids = [sensortype]
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
@@ -708,7 +709,7 @@ class MappingDataIntegrationNode(Node):
                     ):
                         motion = None
 
-            # Optional: Füge die Objektklasse hinzu
+            # add object class
             object_class = None
             if objectclassarray is not None:
                 object_class = objectclassarray[indexarray == label][0]
@@ -724,6 +725,7 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
             elif object_class == 10:
                 entity = Car(
@@ -734,6 +736,7 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
             else:
                 entity = Entity(
@@ -744,7 +747,9 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
+            entity.sensor_id = list(set(entity.sensor_id))
             entities.append(entity)
 
         return entities
@@ -842,6 +847,11 @@ class MappingDataIntegrationNode(Node):
 
         for filter in self.get_current_map_filters():
             map = filter.filter(map)
+
+        for e in map.entities:
+            if e.sensor_id:
+                e.sensor_id = list(dict.fromkeys(e.sensor_id))
+
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
