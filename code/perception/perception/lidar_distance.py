@@ -757,13 +757,6 @@ def cluster_lidar_data_from_pointcloud(
     coordinates = np.column_stack(
         (coordinates["x"], coordinates["y"], coordinates["z"])
     )
-
-    if activate_normalization:
-        d = np.linalg.norm(coordinates - sensor_origin, axis=1, keepdims=True)
-        coordinates[:, :3] /= d
-
-        xyzd = np.hstack([coordinates, distance_weight * d])
-
     if xyzd.shape[0] == 0:
         rclpy.logging.get_logger("lidar_distance").warn(
             "No data points available for DBSCAN. Skipping clustering."
