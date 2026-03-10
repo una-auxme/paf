@@ -158,8 +158,8 @@ class RadarNode(Node):
         self.visualization_radar_break_filtered = self.create_publisher(
             PointCloud2, "/paf/hero/Radar/radar_break_filtered", 10
         )
-        self.combined_points = self.create_publisher(
-            PointCloud2, "/paf/hero/Radar/combined_points", 10
+        self.compensated_points = self.create_publisher(
+            PointCloud2, "/paf/hero/Radar/compensated_points", 10
         )
         self.marker_pub = self.create_publisher(
             Marker, "/paf/hero/Radar/IMU/ground_filter/debug_marker", 10
@@ -496,6 +496,10 @@ class RadarNode(Node):
 
         # Cluster and bounding box processing
 
+        header = Header()
+        header.stamp = self.get_clock().now().to_msg()
+        header.frame_id = "hero"
+
         if self.enable_clustering:
             cluster_labels = cluster_data(
                 combined_points,
@@ -522,10 +526,6 @@ class RadarNode(Node):
 
             self.marker_visualization_radar_publisher.publish(marker_array)
 
-            header = Header()
-            header.stamp = self.get_clock().now().to_msg()
-            header.frame_id = "hero/RADAR"
-
             clusterPointsNpArray = points_with_labels[:, :3]
             indexArray = points_with_labels[:, -1]
             valid_indices = indexArray != -1
@@ -551,18 +551,12 @@ class RadarNode(Node):
                 )
                 self.cluster_info_radar_publisher.publish(cluster_info)
         else:
-            motionArray = [
-                Motion2D(Vector2.new(m[3], 0.0)).to_ros_msg() for m in combined_points
-            ]
-            clusteredpoints = array_to_clustered_points(
-                self.get_clock().now(),
-                combined_points[:, :3],
-                np.arange(len(combined_points)),
-                motionArray,
-                header_id="hero/RADAR",
+            points = combined_points
+            motion_array = self.calculate_point_velocity(points)
+            motion_pointcloud = create_velocity_pointcloud2(
+                header, points, motion_array
             )
-            self.entity_radar_publisher.publish(clusteredpoints)
-
+            self.compensated_points.publish(motion_pointcloud)
         # Reset the saved messages
         self.sensor_data = {key: None for key in self.sensor_data}
 
@@ -630,62 +624,18 @@ class RadarNode(Node):
         - The output array has the same length as the input array.
         """
         # translate points back to the radar origin
-        radar0mask = points_with_labels[:, 0] >= 0
-        radar1mask = points_with_labels[:, 0] < 0
-
-        sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
-        sensor1_x, sensor1_y, sensor1_z = self.sensor_config["RADAR1"]
-
-        translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
-        translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
-
-        points_with_labels[radar0mask, :3] -= translation0
-        points_with_labels[radar1mask, :3] -= translation1
+        transformed_points = self._translate_radar_points_back_to_sensor(
+            points_with_labels
+        )
 
         # filter invalid points
-        labels = points_with_labels[:, -1]
+        labels = transformed_points[:, -1]
         valid_mask = labels != -1  # Filter invalid labels
-        valid_points = points_with_labels[valid_mask]
+        valid_points = transformed_points[valid_mask]
 
-        motion_vectors = np.full((len(points_with_labels), 3), None, dtype=object)
-        motion_array = np.full((len(points_with_labels)), None, dtype=object)
-
-        unique_labels = np.unique(valid_points[:, -1])
-
-        # ego motion compensation per point
-        for i, point in enumerate(valid_points):
-            velocity_per_point = point[3]
-            azimuth_per_point = np.arctan2(point[1], point[0])
-            cos_azimuth_per_point = np.cos(azimuth_per_point)
-
-            # split velocity into x and y velocities
-            x_velocities_per_point = velocity_per_point * np.cos(azimuth_per_point)
-            y_velocities_per_point = velocity_per_point * np.sin(azimuth_per_point)
-
-            point_motion_vector = Vector2.new(
-                x_velocities_per_point, y_velocities_per_point
-            )
-
-            if self.hero_speed is not None:
-                # bend ego motion vector towards object and compensate movement
-                hypspeed = self.hero_speed.speed * cos_azimuth_per_point
-                xspeed = hypspeed * cos_azimuth_per_point
-                yspeed = hypspeed * np.sin(azimuth_per_point)
-                speed_vector = Vector2.new(xspeed, yspeed)
-
-                vec = speed_vector + point_motion_vector
-
-                # array of the points motions in the form
-                # (x-velocity, y-velocity, label)
-                motion_vectors[i, 0] = vec.x()
-                motion_vectors[i, 1] = vec.y()
-                motion_vectors[i, 2] = point[-1]
-            else:
-                motion_vectors[i, 0] = x_velocities_per_point
-                motion_vectors[i, 1] = y_velocities_per_point
-                motion_vectors[i, 2] = point[-1]
-
+        _, motion_vectors = self._compensate_motion(valid_points)
         # averaging per point velocity on cluster level
+        unique_labels = np.unique(valid_points[:, -1])
         avg_motion = {}
         for label in unique_labels:
             mask = motion_vectors[:, 2] == label
@@ -701,6 +651,7 @@ class RadarNode(Node):
                 Vector2.new(x_cluster_velocity, y_cluster_velocity), 0.0
             )
 
+        motion_array = np.full((len(points_with_labels)), None, dtype=object)
         motion_array[valid_mask] = [
             avg_motion[label]
             if label in avg_motion
@@ -709,6 +660,65 @@ class RadarNode(Node):
         ]
 
         return motion_array
+
+    def calculate_point_velocity(self, points: np.ndarray) -> np.ndarray:
+        """
+        Computes ego-compensated velocity per radar point.
+        points: array with columns [x, y, z, doppler_vel] in map frame (same as before).
+        returns: np.ndarray of Motion2D with same length as points.
+        """
+
+        # translate points back to the radar origin
+        transformed_points = self._translate_radar_points_back_to_sensor(points)
+        motion_array, _ = self._compensate_motion(transformed_points)
+        return motion_array
+
+    def _translate_radar_points_back_to_sensor(self, points: np.ndarray):
+        transformed_points = np.copy(points)
+
+        radar0mask = transformed_points[:, 0] >= 0
+        radar1mask = ~radar0mask
+
+        sensor0_x, sensor0_y, sensor0_z = self.sensor_config["RADAR0"]
+        sensor1_x, sensor1_y, sensor1_z = self.sensor_config["RADAR1"]
+
+        translation0 = np.array([sensor0_x, -sensor0_y, sensor0_z])
+        transformed_points[radar0mask, :3] -= translation0
+
+        translation1 = np.array([sensor1_x, -sensor1_y, sensor1_z])
+        transformed_points[radar1mask, :3] -= translation1
+
+        return transformed_points
+
+    def _compensate_motion(self, points: np.ndarray):
+        motion_vectors = np.full((len(points), 3), None, dtype=object)
+        motion_array = np.full((len(points)), None, dtype=object)
+
+        for i, point in enumerate(points):
+            velocity_per_point = float(point[3])
+
+            azimuth = np.arctan2(point[1], point[0])
+            cos_az = np.cos(azimuth)
+
+            vx = velocity_per_point * np.cos(azimuth)
+            vy = velocity_per_point * np.sin(azimuth)
+            point_motion_vec = Vector2.new(vx, vy)
+
+            motion_vec = point_motion_vec
+
+            # ego motion compensation
+            if self.hero_speed is not None:
+                hypspeed = self.hero_speed.speed * cos_az
+
+                xspeed = hypspeed * cos_az
+                yspeed = hypspeed * np.sin(azimuth)
+                ego_motion_vec = Vector2.new(xspeed, yspeed)
+                motion_vec += ego_motion_vec
+
+            motion_array[i] = Motion2D(motion_vec, 0.0)
+            motion_vectors[i] = np.array([motion_vec.x(), motion_vec.y(), point[-1]])
+
+        return motion_array, motion_vectors
 
 
 def pointcloud2_to_array(pointcloud_msg):
@@ -896,6 +906,34 @@ def create_pointcloud2(
     ]
 
     return point_cloud2.create_cloud(header, fields, points)
+
+
+def create_velocity_pointcloud2(header, points, motion_array):
+    """
+    Converts points and Motion2D objects into a PointCloud2 with
+    [x, y, z, vx, vy] fields.
+    """
+
+    # Extract x and y velocities from Motion2D objects
+    # motion_array is dtype=object containing Motion2D instances
+    vx_vy = np.array(
+        [[m.linear_motion.x(), m.linear_motion.y()] for m in motion_array],
+        dtype=np.float32,
+    )
+
+    # Combine [x, y, z] from points and [vx, vy] from motion
+    # We use points[:, :3] to ensure we only get spatial coordinates
+    combined_data = np.hstack((points[:, :3].astype(np.float32), vx_vy))
+
+    fields = [
+        PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+        PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+        PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+        PointField(name="vx", offset=12, datatype=PointField.FLOAT32, count=1),
+        PointField(name="vy", offset=16, datatype=PointField.FLOAT32, count=1),
+    ]
+
+    return point_cloud2.create_cloud(header, fields, combined_data)
 
 
 def calculate_aabb(cluster_points):
