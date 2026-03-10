@@ -65,6 +65,8 @@ class MappingDataIntegrationNode(Node):
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
     vision_clustered_points_data: Optional[ClusteredPointsArray] = None
 
+    counter = 0
+
     stop_marks: Dict[str, List[StopMark]]
     """StopMarks from the UpdateStopMarks service
 
@@ -492,11 +494,17 @@ class MappingDataIntegrationNode(Node):
         self.hero_speed = data
 
     def lidar_old_clustered_points_callback(self, data: ClusteredPointsArray):
+        # self.get_logger().info(
+        #     f"Old Lidar arrived {np.array(data.cluster_points_array).reshape(-1, 3).shape}"
+        # )
         self.lidar_old_clustered_points_data = data
 
     def lidar_new_clustered_points_callback(self, data: ClusteredPointsArray):
+        # self.get_logger().info(
+        #     f"New Lidar arrived {np.array(data.cluster_points_array).reshape(-1, 3).shape}"
+        # )
         self.lidar_new_clustered_points_data = data
-    
+
     def radar_clustered_points_callback(self, data: ClusteredPointsArray):
         self.radar_clustered_points_data = data
 
@@ -759,6 +767,12 @@ class MappingDataIntegrationNode(Node):
                 )
             entities.append(entity)
 
+        if sensortype == "lidar_old":
+            self.get_logger().info(f"Old Entities: {len(entities)}")
+
+        if sensortype == "lidar_new":
+            self.get_logger().info(f"New Entities: {len(entities)}")
+
         return entities
 
     def create_hero_entity(self) -> Optional[Car]:
@@ -798,12 +812,19 @@ class MappingDataIntegrationNode(Node):
 
         missing_data = []
         if self.enable_lidar_cluster:
-            if (self.lidar_old_clustered_points_data is not None and 
-            self.lidar_new_clustered_points_data is not None):
-                entities.extend(self.create_entities_from_clusters(sensortype="lidar_old"))
-                self.get_logger().info(f"shape of entity1:{len(entities)}")
-                entities.extend(self.create_entities_from_clusters(sensortype="lidar_new"))
-                self.get_logger().info(f"shape of entity2:{len(entities)}")
+            if (
+                self.lidar_old_clustered_points_data is not None
+                and self.lidar_new_clustered_points_data is not None
+            ):
+                self.get_logger().info(f"Counter: {self.counter}")
+                entities.extend(
+                    self.create_entities_from_clusters(sensortype="lidar_new")
+                )
+                entities.extend(
+                    self.create_entities_from_clusters(sensortype="lidar_old")
+                )
+
+                self.counter += 1
 
             else:
                 missing_data.append("lidar_clustered_points")

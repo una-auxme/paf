@@ -45,6 +45,8 @@ class LidarDistance(Node):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
+        self.prev_labels = None
+
         # Parameters
         self.clustering_lidar_z_min = (
             self.declare_parameter(
@@ -179,41 +181,38 @@ class LidarDistance(Node):
         :param data: The raw PointCloud2 message.
         """
         timestamp = self.get_clock().now()
-        clustered_points, cluster_labels = self.start_clustering(data=data,time=timestamp)
-        
+        clustered_points, cluster_labels = self.start_clustering(
+            data=data, time=timestamp
+        )
+        # self.get_logger().info(f"form of clusteredpoints1{clustered_points.shape}")
+
+        cluster_points_comp = self.Compensation.compensate()
+        if cluster_points_comp is not None:
+            # self.get_logger().info(f"form of clusteredpoints{cluster_points_comp.shape}")
+            if (
+                isinstance(self.Compensation, LocalCompensation)
+                and self.Compensation.delta_heading is not None
+            ):
+                msg = Float32()
+                msg.data = float(self.Compensation.delta_heading)
+                self.delta_heading_publisher.publish(msg)
+
+            clustered_points_msg = array_to_clustered_points(
+                timestamp,
+                cluster_points_comp,
+                self.prev_labels,
+                header_id="hero/Lidar",
+            )
+            self.clustered_old_points_publisher.publish(clustered_points_msg)
+
+            self.start_image_calculation(data)
 
         if isinstance(self.Compensation, LocalCompensation):
             time = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
             self.Compensation.set_motion_data(time=time)
 
-
         self.Compensation.set_lidar_data(clustered_points)
-
-        self.get_logger().info(f"form of clusteredpoints1{clustered_points.shape}")
-
-        cluster_points_comp = self.Compensation.compensate()
-        if cluster_points_comp is None:
-            return
-        self.get_logger().info(f"form of clusteredpoints{cluster_points_comp.shape}")
-        if (
-            isinstance(self.Compensation, LocalCompensation)
-            and self.Compensation.delta_heading is not None
-        ):
-            msg = Float32()
-            msg.data = float(self.Compensation.delta_heading)
-            self.delta_heading_publisher.publish(msg)
-
-        clustered_points_msg = array_to_clustered_points(
-            timestamp,
-            cluster_points_comp,
-            cluster_labels,
-            header_id="hero/LIDAR",
-        )
-        self.clustered_old_points_publisher.publish(clustered_points_msg)
-
-
-
-        self.start_image_calculation(data)
+        self.prev_labels = cluster_labels
 
     def ekf_callback(self, data: PoseStamped):
         """
@@ -346,7 +345,7 @@ class LidarDistance(Node):
             time,
             cluster_points_np,
             index_array,
-            header_id="hero/LIDAR_OLD",
+            header_id="hero/Lidar",
         )
         self.clustered_new_points_publisher.publish(clustered_new_points_msg)
 
@@ -807,12 +806,8 @@ class CompensationStrategy(ABC):
         self.old_points = self._old_lidar_data
 
         if self.old_points is None:
-            rclpy.logging.get_logger("lidar_distance").error(
-                "Old Lidar Data is None"
-            )
+            rclpy.logging.get_logger("lidar_distance").error("Old Lidar Data is None")
             return
-
-        
 
         ego_mask = create_ego_vehicle_mask(self.old_points)
         self.prev_ego_points = self.old_points[ego_mask]
@@ -878,14 +873,14 @@ class Buffer(CompensationStrategy):
             rclpy.logging.get_logger("lidar_distance").error(
                 "Old Lidar data must be set before compensating."
             )
-            return 
+            return
         # if not self.valid_lidar_data():
         #     return self._old_lidar_data
 
         # self.prepare_data()
 
         # lidar_cluster = np.concatenate([self._cur_lidar_data, self._prev_lidar_data], dtype=np.ndarray)
-        
+
         # lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_data)  # HIER WEITER
         # lidar_cloud.header = self._cur_lidar_data.header
         return self._old_lidar_data
@@ -972,7 +967,6 @@ class LocalCompensation(CompensationStrategy):
         self._prev_time: Optional[float] = None
         self._cur_time: Optional[float] = None
 
-
     def valid_heading_data(self) -> bool:
         """Checks if both current and previous heading data are buffered."""
 
@@ -1021,7 +1015,7 @@ class LocalCompensation(CompensationStrategy):
         if time is not None:
             if self._cur_time is not None:
                 self._prev_time = self._cur_time
-            
+
             self._cur_time = time
 
     def compensate(self) -> np.ndarray:
@@ -1037,14 +1031,10 @@ class LocalCompensation(CompensationStrategy):
         ):
             return self._old_lidar_data
 
-        
-
         self.prepare_data()
 
         if self._cur_time is None or self._prev_time is None:
-            rclpy.logging.get_logger("lidar_distance").error(
-                "Time is None."
-            )
+            rclpy.logging.get_logger("lidar_distance").error("Time is None.")
             return self._old_lidar_data
 
         t_prev = self._prev_time
@@ -1058,9 +1048,7 @@ class LocalCompensation(CompensationStrategy):
             self.prev_env_points, d_x, self.delta_heading
         )
 
-        lidar_points = np.concatenate(
-            [comp_env_points, self.prev_ego_points]
-        )
+        lidar_points = np.concatenate([comp_env_points, self.prev_ego_points])
 
         # lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
         # lidar_cloud.header = self._cur_lidar_data.header
