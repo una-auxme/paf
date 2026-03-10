@@ -28,9 +28,9 @@
   <arg name="polygon_simplify_tolerance" default="0.1" />
 
   <arg name="filter_tracking_entities" default="True" />
-  <arg name="update_tracking_velocity" default="False" />
+  <arg name="update_tracking_velocity" default="True" />
 
-  <arg name="show_tracking_info" default="False" />
+  <arg name="show_tracking_info" default="True" />
 
   <node pkg="mapping" exec="data_integration" name="mapping_data_integration">
     <param name="map_publish_rate" value="$(var map_publish_rate)" />

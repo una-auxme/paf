@@ -902,11 +902,6 @@ class MappingDataIntegrationNode(Node):
             map_filters.append(LaneIndexFilter())
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
-        if self.filter_tracking_entities:
-            self.tracking_filter.set_tracking_velocity_status(
-                self.update_tracking_velocity
-            )
-            map_filters.append(self.tracking_filter)
         if not self.enable_radar_cluster:
             self.radar_point_assignment_filter.set_radar_points(
                 self.radar_compensated_points_data
@@ -919,6 +914,11 @@ class MappingDataIntegrationNode(Node):
             )
 
             map_filters.append(self.radar_point_assignment_filter)
+        if self.filter_tracking_entities:
+            self.tracking_filter.set_tracking_velocity_status(
+                self.update_tracking_velocity
+            )
+            map_filters.append(self.tracking_filter)
 
         return map_filters
 

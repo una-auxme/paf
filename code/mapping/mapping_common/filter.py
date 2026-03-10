@@ -575,7 +575,17 @@ class RadarPointAssignmentFilter(MapFilter):
             )
             return
 
-        point_goems = [Point(p[0], p[1]) for p in radar_xy]
+        magnitudes = np.linalg.norm(radar_motion, axis=1)
+        mask_dynamic = magnitudes >= self.classification_threshold
+
+        filtered_xy = radar_xy[mask_dynamic]
+        filtered_motion = radar_motion[mask_dynamic]
+
+        if len(filtered_xy) == 0:
+            # No moving points to fuse; clear motion for all entities if necessary
+            return
+
+        point_goems = [Point(p[0], p[1]) for p in filtered_xy]
         tree = STRtree(point_goems)
 
         for entity in lidar_entities:
@@ -589,7 +599,7 @@ class RadarPointAssignmentFilter(MapFilter):
             if len(indices) == 0:
                 continue
 
-            entity_motion_array = radar_motion[indices]
+            entity_motion_array = filtered_motion[indices]
             mean_motion = np.mean(entity_motion_array, axis=0)
 
             vx = float(mean_motion[0])
