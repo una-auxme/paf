@@ -46,15 +46,6 @@ class LidarDistance(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.activate_normalization = (
-            self.declare_parameter(
-                "activate_normalization",
-                True,
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-
         self.clustering_w = (
             self.declare_parameter(
                 "clustering_w",
@@ -314,7 +305,6 @@ class LidarDistance(Node):
             self.dbscan_eps,
             self.dbscan_min_samples,
             self.clustering_w,
-            self.activate_normalization,
         )
 
         # Extract x, y, z coordinates into a separate array
@@ -728,13 +718,12 @@ def cluster_lidar_data_from_pointcloud(
     eps,
     min_samples,
     distance_weight,
-    activate_normalization,
     sensor_origin=np.array([0, 0, 1.7]),
 ):
     """
     Performs clustering on LIDAR data using DBSCAN and returns the clusters.
 
-    If normalization is activated, points are projected onto a unit sphere and augmented
+    Points are projected onto a unit sphere and augmented
     with a weighted distance component. This effectively turns DBSCAN into a
     polar/angular clustering method, which is often more robust for varying point
     densities in LIDAR sweeps.
@@ -743,9 +732,6 @@ def cluster_lidar_data_from_pointcloud(
     :param eps: Maximum distance between points to group them into a cluster.
     :param min_samples: Minimum number of points required to form a cluster.
     :param distance_weight: Multiplier applied to the distance during clustering.
-    :param activate_normalization: Boolean flag.
-        If True, uses angular/normalized distance logic.
-        If False, uses raw Euclidean distance.
     :return: Dictionary with cluster IDs and their corresponding point clouds.
     """
     if coordinates.shape[0] == 0:
@@ -757,6 +743,12 @@ def cluster_lidar_data_from_pointcloud(
     coordinates = np.column_stack(
         (coordinates["x"], coordinates["y"], coordinates["z"])
     )
+
+    d = np.linalg.norm(coordinates - sensor_origin, axis=1, keepdims=True)
+    coordinates[:, :3] /= d
+
+    xyzd = np.hstack([coordinates, distance_weight * d])
+
     if xyzd.shape[0] == 0:
         rclpy.logging.get_logger("lidar_distance").warn(
             "No data points available for DBSCAN. Skipping clustering."
