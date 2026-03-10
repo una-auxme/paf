@@ -31,8 +31,11 @@
 
   <node pkg="perception" exec="lidar_distance" name="lidar_distance">
     <!-- Cluster configuration -->
+    <param name="activate_normalization" value="True" />
+    <param name="clustering_w" value="0.0285" />
     <param name="clustering_lidar_z_min" value="-1.4" />
-    <param name="dbscan_eps" value="0.4" />
+    <param name="clustering_lidar_z_max" value="1.5" />
+    <param name="dbscan_eps" value="0.03375" />
     <param name="dbscan_min_samples" value="10" />
     <param name="compensation_strategy" value="LocalCompensation" />
   </node>

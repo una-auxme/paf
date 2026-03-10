@@ -12,7 +12,6 @@ from sklearn.cluster import DBSCAN
 from carla_msgs.msg import CarlaSpeedometer
 
 
-from sklearn.preprocessing import StandardScaler
 import json
 from visualization_msgs.msg import Marker, MarkerArray
 from transforms3d.quaternions import mat2quat
@@ -826,23 +825,13 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
         - If the input data is empty, the function returns an empty array.
         - Data is scaled before clustering for better performance
             using the `StandardScaler`.
-        - The function assumes that the input `data` has 4 columns (x, y, z, velocity),
-            and the z-values are replaced by 1 for the purpose of clustering.
+        - The function assumes that the input `data` has 4 columns (x, y, z, velocity).
     """
 
     if len(data) == 0:
         return np.array([])
 
-    # Scaling the data for better clustering performance
-    scaler = StandardScaler()
-
-    # data_reduced = data[:, [0, 1, 3]]
-    data_reduced = data
-    data_reduced[:, 2] = 1
-    data_scaled = scaler.fit_transform(data_reduced)
-
-    # clustered_points = HDBSCAN(min_cluster_size=10).fit(data_scaled)
-    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data_scaled)
+    clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
 
     return clustered_points.labels_
 
