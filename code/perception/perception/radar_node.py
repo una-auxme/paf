@@ -825,20 +825,11 @@ def cluster_data(data, eps, min_samples) -> np.ndarray:
         - If the input data is empty, the function returns an empty array.
         - Data is scaled before clustering for better performance
             using the `StandardScaler`.
-        - The function assumes that the input `data` has 4 columns (x, y, z, velocity),
-            and the z-values are replaced by 1 for the purpose of clustering.
+        - The function assumes that the input `data` has 4 columns (x, y, z, velocity).
     """
 
     if len(data) == 0:
         return np.array([])
-
-    # The use of StandardScaler yielded poorer results for higher FOV in Radar Configs
-    # scaler = StandardScaler()
-
-    # # data_reduced = data[:, [0, 1, 3]]
-    # data_reduced = data
-    # data_reduced[:, 2] = 1
-    # data_scaled = scaler.fit_transform(data_reduced)
 
     clustered_points = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
 

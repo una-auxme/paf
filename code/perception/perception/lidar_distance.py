@@ -763,11 +763,6 @@ def cluster_lidar_data_from_pointcloud(
         coordinates[:, :3] /= d
 
         xyzd = np.hstack([coordinates, distance_weight * d])
-    else:
-        xyzd = coordinates
-        # Override eps.
-        # This is just for visualization comparision and intended for usage.
-        eps = 0.4
 
     if xyzd.shape[0] == 0:
         rclpy.logging.get_logger("lidar_distance").warn(
