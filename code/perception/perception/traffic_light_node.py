@@ -129,7 +129,7 @@ class TrafficLightNode(Node):
         elif self.state_buffer.count(4) >= 3:
             state = 4
             self.last_state = 4
-        elif self.state_buffer.count(0) >= 8:
+        elif self.state_buffer.count(0) >= 10:
             state = 0
         else:
             state = self.last_state
