@@ -11,6 +11,7 @@
 - [Filtering of images](#filtering-of-images)
   - [1. Vision Node](#1-vision-node)
   - [2. Traffic Light Node](#2-traffic-light-node)
+  - [3. Traffic Light Inference](#3-traffic-light-inference)
 
 ## Vision Node
 
@@ -44,7 +45,7 @@ With this values some exclusion criteria are now getting checked. The conditions
 
 [*] Note that origin of the coordinate system is in the upper left corner of the image.
 
-Through this can be ensured, that only relevant traffic lights will be further processed. If all criteria are met the image of the traffic light gets cropped from the frame in which it occured. It then gets published onto the topic `/paf/hero/Center/segmented_traffic_light`.
+Through this can be ensured, that only relevant traffic lights will be further processed. If all criteria are met, the traffic light image is cropped from the section of the frame in which it was captured. This process is performed for every traffic light detected in each frame. The traffic lights collected from a frame are then published under the topic `/paf/hero/Center/segmented_traffic_light`.
 
 ## TrafficLightNode
 
@@ -59,7 +60,10 @@ This class is responsible for setting up the traffic light detection system and 
 - `side`: The side of the node, default is "Center".
 - `classifier`: An instance of TrafficLightInference for traffic light detection (CNN module).
 - `last_info_time`: The time of the last information received.
+- `state_buffer`: A buffer that stores intermediate states.  
 - `last_state`: The last state of the traffic light.
+- `last_interim_state`: An intermediate state used to identify meaningful subsequent intermediate states
+- `interim_state`: Intermediate state that is buffered in order to determine a more accurate final state
 - `traffic_light_publisher`: A publisher for traffic light state messages.
 
 ### Methods
@@ -70,12 +74,13 @@ This class is responsible for setting up the traffic light detection system and 
 - `auto_invalidate_state(self)`: Runs in a separate thread and invalidates the traffic light state if no new information has been received for 2 seconds.
 - `handle_camera_image(self, image)`: Callback for the image subscription. Converts the image to RGB, infers the traffic light state, and publishes the state if it has changed.
 - `run(self)`: Spins the node to handle callbacks.
+- `loop(self)`: Check whether the last state was received more than 2 seconds ago. If so, reset `state`, `last_state`, `last_interim_state`, and `state_buffer`, and publish state 0.
 
 ### Functions
 
 - `traffic_light_visualization(self, state)`: Creates are marker in the shape of text that contains the current value of state. This marker than gets published to be visualized in the intermediate layer.
-- `get_light_mask(image)`: Returns a binary mask where the pixels within the hue, saturation, and value bounds for red, yellow, and green are white, and all other pixels are black.
-- `is_front(image)`: Returns `True` if the largest contour in the light mask has an aspect ratio within the range of a square (therefore a circle), and `False` otherwise.
+- `meaningful_state(self, new_state)`: Checks whether the potential state makes sense, e.g., green cannot be followed directly by red. Returns a Boolean value.
+- `filter_turn_lights(self, image)`: Traffic lights that are detected when turning are ignored. A higher resolution of the traffic light photo means more circles. The closer the traffic lights are to us, the higher the resolution. If a turn traffic light is detected, `False` is returned, otherwise, `True` is returned.
 
 ### Usage
 
@@ -96,8 +101,14 @@ Objects, which are detected as traffic light by the YOLO11 model (or others), mu
 
 Objects, which are published by the Vision Node, are further filtered by the following criterias:
 
-- Classification probabilities of "Unknown" and "Side" are either both below 1e-10 or one of both are below 1e-15.
-- "Side" is treated as "Unknown".
-- Valid states (Red, Green, Yellow) must be present at least twice in a row to be actually published.
-- A state decays (state=0; "Unknown") after 2 seconds if there is no new info in the meantime.
-- Filter out side-facing traffic lights by analysing their light shape (oval vs. round) using HSV + contour analysis.
+- Invalid states (e.g., green -> red) are discarded.
+- We also ignore traffic lights that we detect while turning.
+- If more than one state (red, green, yellow) is classified in a single frame, the entire frame is discarded.
+- Final states must occur frequently enough in the buffer to be actually published. The frequency depends on the state. If no state reaches the required number of occurrences, the last state is reused.
+- A state expires (state=0; “Unknown”) after 2 seconds if no new information is available in the meantime
+
+### 3. Traffic Light Inference
+
+Objects that need to be classified in the Traffic Light node must meet the following criteria to ensure reliable results:
+
+- The `dominance` (the sum of the second-largest to the smallest values) is subtracted from the largest value. The `dominance` factor must not be too high (currently `min_dominance` = 0.99). This is intended to ensure that classifications are ambiguous and certain.
