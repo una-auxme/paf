@@ -9,7 +9,7 @@ The current maintainers of the project are @JulianTrommer and @ll7.
 ## Video of the final presentation
 
 A presentation to show the achievements of the module was held on 2026-03-23 for PAF25.
-The recoding of it can be seen in the following video:
+The recording of it can be seen in the following video:
 
 [![Video of the final presentation](https://img.youtube.com/vi/UgyjfORq77A/0.jpg)](https://www.youtube.com/watch?v=UgyjfORq77A)
 

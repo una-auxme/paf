@@ -3,7 +3,7 @@
 **Summary**: The PAF24 folder contains documents that are relevant for the PAF24 group.
 
 A presentation to show the achievements of the module was held on 2025-03-17.
-The recoding of it can be seen in the following video:
+The recording of it can be seen in the following video:
 
 [![Video of the final presentation](https://img.youtube.com/vi/NASVWiUFw2A/0.jpg)](https://www.youtube.com/watch?v=NASVWiUFw2A)
 
