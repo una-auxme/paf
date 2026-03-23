@@ -8,6 +8,9 @@
   - [Approach](#approach)
   - [Wait](#wait)
   - [Enter](#enter)
+  - [Cross Traffic Detection](#cross-traffic-detection)
+  - [Emergency Handling](#emergency-handling)
+  - [Parameters](#parameters)
 
 ## General
 
@@ -38,7 +41,7 @@ In case of a left turn a stopmarker is created on the left lane relative to the 
 
 Handles wating at the stop line until the vehicle is allowed to drive.
 
-Waits 2 seconds at a stopline without a traffic light.
+Waits 0.5 seconds at a stopline without a traffic light.
 
 In case of a left turn oncoming traffic is checked after driving over the stopline. This is based on a counter to avoid inconsistencies.
 
@@ -53,3 +56,33 @@ Handles driving through the intersection.
 In case of driving straight a low speed limit is set for ACC to avoid emergency vehicles. This is a temporary solution.
 
 Returns FAILURE to end the intersection behavior once the current intersection waypoint is far enough behind the car.
+
+## Cross Traffic Detection
+
+Oncoming and cross traffic is evaluated using dynamic entities from the map.
+
+A rectangular check area is created in front of and across the intersection. All entities within this area are retrieved and analyzed.
+
+Only entities with motion information are considered. Their velocity is evaluated to determine whether they pose a risk.
+
+Fast moving objects (e.g. cross traffic) are detected based on a velocity threshold and can block the intersection.
+
+A velocity threshold is used to filter relevant traffic. Static or slow-moving objects are ignored to reduce false positives.
+
+## Emergency Handling
+
+If fast cross traffic is detected while the ego vehicle is still moving above a certain speed, an emergency signal is triggered.
+
+This signal is published to notify about a potentially dangerous situation.
+
+## Parameters
+
+The following parameters are used for cross traffic detection:
+
+- CROSS_TRAFFIC_SPEED_THRESHOLD: Minimum speed for detecting relevant cross traffic (2.5 m/s)
+- CROSS_CHECK_DISTANCE: Distance in front of the ego vehicle used for checking traffic
+- CROSS_CHECK_LENGTH / WIDTH: Size of the rectangular check area
+- PRIORITY_SPEED_THRESHOLD: Speed threshold for prioritizing traffic
+- PRIORITY_CHECK_DISTANCE: Distance for priority traffic detection
+- PRIORITY_CHECK_LENGTH / WIDTH: Size of the priority check area
+- SELF_EMERGENCY_THRESHOLD: Ego speed above which emergency handling is triggered
