@@ -306,7 +306,7 @@ this entity is the SssssssssssssssssssssuperCar
 class TrackingInfo()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L169)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L180)
 
 Information that might be required to consistently track entities
 
@@ -429,7 +429,7 @@ def append_frame(entity_pos: Vector2,
                  timestamp: float)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L200)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L205)
 
 Adds a new frame and updates motion estimation.
 
@@ -443,7 +443,7 @@ def _compensate_positions(current_ego_motion: "Motion2D",
                          current_timestamp: float)
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L225)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L237)
 
 Stabilizes history by removing ego-displacement.
 
@@ -455,7 +455,7 @@ Stabilizes history by removing ego-displacement.
 def _calculate_robust_weighted_motion() -> Optional["Vector2"]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L250)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L271)
 
 Calculates velocity using weighted average of historical pairs.
 
@@ -467,7 +467,7 @@ Calculates velocity using weighted average of historical pairs.
 def get_motion() -> Optional["Motion2D"]
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L295)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L331)
 
 <a id="mapping_common.entity.TrackingInfo._predict_local_trajectory"></a>
 
@@ -479,7 +479,7 @@ def _predict_local_trajectory(start_point: Point2,
                              time_horizon: float) -> LineString
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L301)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L337)
 
 Predicts the entity's trajectory by linearly extrapolating current motion.
 
