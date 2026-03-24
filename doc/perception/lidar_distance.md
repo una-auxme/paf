@@ -19,6 +19,8 @@ The node uses the Strategy pattern to allow switching between different compensa
 
 The available compensation modes are:
 
+**Default Mode:** The default compensation strategy is `LocalCompensation`, which uses local vehicle dynamics for simplified motion correction.
+
 ### 2.1 NoCompensation (Baseline)
 
 This strategy represents the simplest case, where no buffering, registration, or compensation is performed on the incoming LiDAR data.
@@ -175,6 +177,17 @@ LocalCompensation active:
 - **Data Type:** `sensor_msgs/Imu`
 - **Description:** Provides data used for calculating the heading.
 
+## 2.5 Parameters
+
+The node supports dynamic reconfiguration of the following parameters:
+
+- `clustering_w`: Weight factor for clustering width (default: 0.0285)
+- `clustering_lidar_z_min`: Minimum Z-coordinate for clustering (filters ground points, default: -1.4)
+- `clustering_lidar_z_max`: Maximum Z-coordinate for clustering (filters high points like tree leaves, default: 1.5)
+- `dbscan_eps`: DBSCAN epsilon parameter for clustering (default: 0.03375)
+- `dbscan_min_samples`: Minimum samples for DBSCAN clusters (default: 10)
+- `compensation_strategy`: Compensation mode (default: "LocalCompensation", options: "NoCompensation", "Buffer", "EgoMotionCompensation", "LocalCompensation")
+
 ## 4. Processing Pipeline
 
 ### Processing Steps
@@ -186,15 +199,18 @@ LocalCompensation active:
 ### 4.2 Motion Compensation of Point Cloud
 
 - Compensates point cloud based on the compensation mode (NoCompensation, Buffer, EgoMotionCompensation, LocalCompensation)
+- If LocalCompensation is active, publishes the calculated delta heading to `/paf/hero/delta_heading`
 
 ### 4.3 Filtering and Preprocessing
 
 - Removes points representing the ego vehicle (`start_clustering`).
-- Filters out points below a certain height to avoid clustering the road surface (`start_clustering`).
+- Filters out points below a certain height (`clustering_lidar_z_min`) to avoid clustering the road surface (`start_clustering`).
+- Filters out points above a maximum height (`clustering_lidar_z_max`) to exclude high objects like tree leaves or overhead structures.
 
 ### 4.4 Clustering the LiDAR Data
 
 - Uses DBSCAN to group spatially related points (`start_clustering`).
+- Applies coordinate normalization by projecting points onto a unit sphere and augmenting with weighted distance components, creating a polar-coordinate-like clustering approach for better handling of varying point densities in LiDAR sweeps.
 - Removes noise points classified by DBSCAN (`cluster_labels != -1`).
 - Generates bounding boxes for identified clusters (`generate_bounding_boxes`).
 - **Publishes:**
@@ -213,7 +229,7 @@ LocalCompensation active:
 
 ### Filtered Point Clouds
 
-- **Topic Name:** `~point_cloud_topic` (Default: `/carla/hero/_filtered`)
+- **Topic Name:** `/carla/hero/LIDAR_filtered`
 - **Data Type:** `sensor_msgs/PointCloud2`
 - **Description:** Contains filtered LiDAR data after noise suppression.
 
@@ -238,3 +254,9 @@ LocalCompensation active:
 - **Topic Name:** `~clustered_points_lidar_topic` (Default: `/paf/hero/Lidar/clustered_points`)
 - **Data Type:** `ClusteredPointsArray`
 - **Description:** Clusters LiDAR data for further downstream analysis in the intermediate layer.
+
+### Delta Heading
+
+- **Topic Name:** `/paf/hero/delta_heading`
+- **Data Type:** `std_msgs/Float32`
+- **Description:** Publishes the change in vehicle heading (delta heading) calculated during LocalCompensation mode.
