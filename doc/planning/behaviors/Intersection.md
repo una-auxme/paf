@@ -2,15 +2,15 @@
 
 **Summary:** This file explains the Intersection behavior.
 
-- [Intersection Behavior](#intersection-behavior)
-  - [General](#general)
-  - [Intersection Ahead](#intersection-ahead)
-  - [Approach](#approach)
-  - [Wait](#wait)
-  - [Enter](#enter)
-  - [Cross Traffic Detection](#cross-traffic-detection)
+- [General](#general)
+- [Intersection ahead](#intersection-ahead)
+- [Approach](#approach)
+- [Wait](#wait)
+- [Enter](#enter)
+- [Cross Traffic Detection](#cross-traffic-detection)
   - [Emergency Handling](#emergency-handling)
-  - [Parameters](#parameters)
+  - [Current Limitations](#current-limitations)
+- [Parameters](#parameters)
 
 ## General
 
@@ -69,11 +69,23 @@ Fast moving objects (e.g. cross traffic) are detected based on a velocity thresh
 
 A velocity threshold is used to filter relevant traffic. Static or slow-moving objects are ignored to reduce false positives.
 
-## Emergency Handling
+### Emergency Handling
 
 If fast cross traffic is detected while the ego vehicle is still moving above a certain speed, an emergency signal is triggered.
 
 This signal is published to notify about a potentially dangerous situation.
+
+### Current Limitations
+
+The current cross traffic check does not yet consider the motion direction of detected objects.
+
+As a result, the vehicle may brake whenever an object inside the check area moves above the configured speed threshold, even if that object is moving away from the ego vehicle and does not actually pose a risk.
+
+In addition, the rectangular check area currently rotates together with the ego vehicle. This can affect the relevance of the checked region during turning maneuvers.
+
+The current check should therefore be understood as a conservative safety mechanism.
+
+In the long term, this check may become less relevant or unnecessary if the collision check becomes sufficiently reliable.
 
 ## Parameters
 
