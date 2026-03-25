@@ -12,6 +12,10 @@
 The [Vehicle Controller](../../code/control/src/vehicle_controller.py) collects all information from the other controllers in Control ```throttle```, ```brake```, ```reverse```, ```pure_puresuit_steer```
 to fill them into the CARLA-Vehicle Command Message ```vehicle_control_cmd``` and send this to the CARLA simulator.
 
+Currently the loop of the node has a sleep command in it. The control command triggers the carla simulator to render the next frame. 
+If the loop does not have the time to sleep the simulator will run as fast as the system allows it to run.
+By default its set to 0.2 to run the controller at a reasonable speed
+
 It also reacts to some special case - Messages from Planning, such as emergency-braking or executing the unstuck-routine.
 
 ## Vehicle Controller Output
