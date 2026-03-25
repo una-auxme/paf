@@ -76,17 +76,18 @@ At startup, several parameters are retrieved via `get_param` to configure the no
   - Points below the calculated ground level are filtered out.
   - The `filter_points` function applies masking based on the computed pitch angle.
 - **Clustering:**
+Radar clustering is not the primary use case in the current system configuration.
+By default, clustering is disabled and radar data is mainly used for velocity estimation and fusion with lidar-based entities in the mapping stage.
   - [`DBSCAN`](./README.md) is used for clustering radar points.
   - Clustering criteria: x, y, z and velocity.
   - **Clustering Parameters:**
     - `eps` (maximum distance between points in a cluster) = 0.3
     - `min_samples` (minimum number of points per cluster) = 3
 - **Cluster velocity:**
-  - The average velocity for each cluster is calculated by calculation of per point velocity and then getting
-    the mean of the point velocities per cluster.
-    - to achieve correct absolute motion values it is necessary to compensate the velocity from the Radar with
-      the ego vehicles motion.
-    - The given radar points must be translated into the sensor space beforehand.
+  - The average velocity for each cluster is computed by first calculating of per-point velocity and then taking
+    the mean of all points in that cluster.
+    - to obtain correct absolute motion, radar velocity is compensated with ego-vehicle motion.
+    - radar points are transformed back into the radar sensor coordinate system before motion compensation.
 - **Additional debugging functions:**
   - These functions can be used to improve radar clustering without depending on the intermediate layer
     - filter_data: Filters data in x,y and z direction as well as maximum distance to the sensor.
@@ -94,7 +95,10 @@ At startup, several parameters are retrieved via `get_param` to configure the no
     - generate_bounding_boxes, create_bounding_box_marker: Creates bounding boxes and markers of radar clusters.
     - generate_cluster_info: Generates a string with cluster information.
 - **Output to intermediate layer:**
-  - Clustered points array containing:
+  - Radar points with ego-motion compensated velocity (`/paf/hero/Radar/compensated_points`)
+  - These points contain spatial position and velocity information and are used for radar-lidar fusion in the mapping stage
+  
+  - Optional output (if clustering enabled):
     - points (clusterPointsNpArray): numpy array shape (N, 3)
     - point_indices (indexArray): numpy array with the shape (N)
     - object_speed_array (motionArray): numpy array with the shape (N)
@@ -107,18 +111,27 @@ In particular, the measured velocity information allows reliable detection of fa
 
 The radar node itself does not directly perform the behavioral decision. Instead, it provides processed motion-related information that can be used in the planning and intersection logic.
 
+### 4.2 Ego Motion Compensation and Velocity Estimation
+
+Radar points are processed to compute ego-motion compensated velocities.
+
+Each radar point contains Doppler velocity information. This velocity is transformed into Cartesian motion components and then compensated using the ego vehicle speed.
+
+As a result, a motion vector is computed for each radar point. These per-point velocities are used for further processing in the mapping stage, especially for assigning radar-derived motion to lidar-based entities.
+
 ## 5. ROS Topics
 
-| Topic                              | Type                               | Description                                 |
-| ---------------------------------- | ---------------------------------- | ------------------------------------------- |
-| `/carla/hero/RADAR0`               | `sensor_msgs/PointCloud2`          | Input data from Radar 0                     |
-| `/carla/hero/RADAR1`               | `sensor_msgs/PointCloud2`          | Input data from Radar 1                     |
-| `/carla/hero/Speed`                | `sensor_msgs/CarlaSpeedometer`     | Input data from CarlaSpeedometer            |
-| `/paf/hero/Radar/Visualization`    | `sensor_msgs/PointCloud2`          | Visualization of clustered points           |
-| `/paf/hero/Radar/Marker`           | `visualization_msgs/MarkerArray`   | Bounding boxes of clusters                  |
-| `/paf/hero/Radar/clustered_points` | `mapping.msg.ClusteredPointsArray` | Clustered radar points with velocity values |
-| `/paf/hero/Radar/ClusterInfo`      | `std_msgs/String`                  | JSON with cluster information               |
-| `/paf/hero/IMU`                    | `sensor_msgs/Imu`                  | Input data from the IMU sensor              |
+| Topic                               | Type                               | Description                                      |
+| ----------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| `/carla/hero/RADAR0`                | `sensor_msgs/PointCloud2`          | Input data from Radar 0                          |
+| `/carla/hero/RADAR1`                | `sensor_msgs/PointCloud2`          | Input data from Radar 1                          |
+| `/carla/hero/Speed`                 | `sensor_msgs/CarlaSpeedometer`     | Input data from CarlaSpeedometer                 |
+| `/paf/hero/Radar/Visualization`     | `sensor_msgs/PointCloud2`          | Visualization of clustered points                |
+| `/paf/hero/Radar/Marker`            | `visualization_msgs/MarkerArray`   | Bounding boxes of clusters                       |
+| `/paf/hero/Radar/clustered_points`  | `mapping.msg.ClusteredPointsArray` | Clustered radar points with velocity values      |
+| `/paf/hero/Radar/ClusterInfo`       | `std_msgs/String`                  | JSON with cluster information                    |
+| `/paf/hero/Radar/compensated_points`| `sensor_msgs/PointCloud2`          | Radar points with ego-motion compensated velocity|
+| `/paf/hero/IMU`                     | `sensor_msgs/Imu`                  | Input data from the IMU sensor                   |
 
 ## 6. Additional Debugging Tool
 
@@ -130,6 +143,6 @@ This script can be used to inspect raw radar point cloud messages directly. It i
 
 ## 7. Conclusion
 
-This radar node enables robust processing of radar signals for object detection. By integrating DBSCAN clustering and IMU data, sensor data quality is improved. The generated bounding boxes and visualizations facilitate environmental analysis.
+This radar node enables robust processing of radar signals for object detection. By integrating IMU data, sensor data quality is improved. Radar-derived velocities are now used in the mapping stage to enrich lidar-based entities with motion information.
 
 In addition to its original use cases, radar now also contributes to cross traffic detection by providing velocity information for dynamic objects. This makes the perception pipeline more robust in intersection scenarios and improves the system’s reaction to fast approaching vehicles.

@@ -25,6 +25,12 @@ The **Intermediate Layer** receives most sensor information (everything except t
 The base data type is the [Map](/doc/mapping/generated/mapping_common/map.md#map). It consists of [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
 These entities all have a [transform](/doc/mapping/generated/mapping_common/transform.md#transform2d) and a [shape](/doc/mapping/generated/mapping_common/shape.md#shape2d) and can be all kinds of colliders (car, pedestrian, etc.), lanemarkings or other localized things of interest around the hero car.
 
+Entities also store information about the sensor sources they originate from.
+This information is stored in the `sensor_id` field as a list of strings. A list is used because a single entity may be associated with multiple sensors during data integration.
+Typical values are for example `lidar`, `radar`, and `vision`.
+Before publishing the map, duplicate sensor entries are removed so that each sensor source appears only once per entity.
+In addition, radar and lidar data are fused to improve dynamic object understanding. While lidar provides accurate spatial information, radar contributes velocity estimates, which are assigned to lidar-based entities during data integration.
+
 The [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode) collects all sensor information and publishes the resulting map to `/paf/hero/mapping/init_data`.
 
 The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support [dynamic reconfigure](/doc/general/dynamic_reconfigure.md) for managing sensor input and filter parameters.
@@ -41,6 +47,9 @@ To do intersection checks on the map:
   - [`map_tree.get_nearest_entity()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_nearest_entity)
   - [`map_tree.is_lane_free()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.is_lane_free)
 - Functions for creating collision masks can be found in the [mapping_common.mask](/doc/mapping/generated/mapping_common/mask.md) module
+
+For intersection-related traffic checks, dynamic entities can also be evaluated using motion information and speed thresholds.
+This is especially relevant for cross traffic detection, where static objects should not block the decision process, but fast moving traffic must still be detected reliably.
 
 ### Visualization
 
@@ -72,13 +81,20 @@ Quick overview of the data flow inside the intermediate layer.
 flowchart TD
     NF{New empty dataframe} --> A[node: <a href='doc/mapping/generated/nodes.md#mappingdataintegrationnode'>mapping_data_integration</a>]
     S{Sensors} --> A
-    A --> F1(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#growthmergingfilter'>GrowthMergingFilter</a>)
+    A --> F0(filter: RadarPointAssignmentFilter)
+    F0 --> F1(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#growthmergingfilter'>GrowthMergingFilter</a>)
     F1 --> F2(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#laneindexfilter'>LaneIndexFilter</a>)
     F2 --> F3(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#growpedestriansfilter'>GrowPedestriansFilter</a>)
     F3 -->|topic: /paf/hero/mapping/init_data| 1[node: <a href='/code/mapping_visualization/src/visualization.py'>mapping_visualization</a>]
 ```
 
 The links inside the diagram currently only work inside Vs Code.
+
+During entity creation, the originating sensor type is attached to each entity via the `sensor_id` field.
+This makes it possible to trace whether an entity was created from lidar, radar, vision, or a combination of multiple sensor sources after later processing steps.
+
+Radar data is further used to enrich lidar-based entities with velocity information.
+For this purpose, radar points are spatially associated with lidar entities. This allows the system to combine accurate geometric information from lidar with reliable velocity measurements from radar.
 
 ## Tests
 
