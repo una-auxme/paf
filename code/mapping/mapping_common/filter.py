@@ -551,7 +551,8 @@ class RadarPointAssignmentFilter(MapFilter):
 
     Parameters:
     - radar_lidar_assoc_buffer: spatial buffer around lidar entities for association
-    - classification_threshold: minimum velocity magnitude to consider a radar point as dynamic
+    - classification_threshold: minimum velocity magnitude to consider a radar point
+    as dynamic
     """
 
     radar_compensated_points_data = None
@@ -575,7 +576,8 @@ class RadarPointAssignmentFilter(MapFilter):
         Radar points are filtered by motion magnitude. For each lidar entity,
         all radar points inside a configurable buffered region are collected.
 
-        Their motion vectors are averaged and assigned to the entity as motion information.
+        Their motion vectors are averaged and assigned to the entity as motion
+        information.
         """
         data_msg = self.radar_compensated_points_data
         if data_msg is None:

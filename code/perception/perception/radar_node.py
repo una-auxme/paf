@@ -668,8 +668,8 @@ class RadarNode(Node):
         Args:
             - points(numpy.ndarray): array with columns [x, y, z, doppler_vel]
                 in map frame (same as before).
-        
-        Returns: 
+
+        Returns:
             - motion_array(np.ndarray(Motion2D)): same length as points.
         """
 
@@ -713,11 +713,11 @@ class RadarNode(Node):
             - points(numpy.ndarray): array with columns [x, y, z, doppler_vel]
 
         Returns:
-            - motion_array(Array(Motion2D)): array of compensated 2DMotion 
+            - motion_array(Array(Motion2D)): array of compensated 2DMotion
                 objects
             - motion_vectors(numpy.ndarray): array of compensated Motion split
-                into x-velocity, y-velocity and the clusterlabel the point 
-                belongs to 
+                into x-velocity, y-velocity and the clusterlabel the point
+                belongs to
         """
         motion_vectors = np.full((len(points), 3), None, dtype=object)
         motion_array = np.full((len(points)), None, dtype=object)
