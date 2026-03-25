@@ -5,7 +5,8 @@
 The **Radar Node** processes data from multiple radar sensors to improve environmental perception. It enables the detection of objects, their speeds, and distances, contributing to applications such as overtaking safety, turning maneuvers, and adaptive cruise control.
 
 Initially, two forward-facing radar sensors were used to enhance long-range visibility and clustering robustness.
-However, after further evaluation, one of the sensors was repositioned to the rear to improve the detection of approaching vehicles, making overtaking and parking maneuvers safer.
+However, after further evaluation, one of the sensors was repositioned to the rear to improve the detection of approaching vehicles, making overtaking and parking maneuvers safer. Additionally the horizontal FOV of the radar sensors was set to
+130 degrees to provide a better perception of lateral objects on e.g. intersections.
 This configuration balances forward and rearward perception while maintaining overall system reliability.
 
 This decision aligns with the objectives shown in the provided image, highlighting the motivation for using radar sensors:
@@ -20,8 +21,8 @@ The sensors are configured as follows:
 
 | Sensor | x    | y    | z   | Horizontal FOV | Vertical FOV | roll | pitch | yaw   |
 | ------ | ---- | ---- | --- | -------------- | ------------ | ---- | ----- | ----- |
-| RADAR0 | 2.0  | -1.5 | 0.5 | 25             | 0.1          | 0.0  | 0.0   | 0.0   |
-| RADAR1 | -2.0 | -1.5 | 0.5 | 25             | 0.1          | 0.0  | 0.0   | 180.0 |
+| RADAR0 | 2.0  | -1.5 | 0.5 | 130            | 0.1          | 0.0  | 0.0   | 0.0   |
+| RADAR1 | -2.0 | -1.5 | 0.5 | 130            | 0.1          | 0.0  | 0.0   | 180.0 |
 
 **Special Note:** RADAR1 is rotated 180° to face backward.
 
@@ -81,7 +82,11 @@ At startup, several parameters are retrieved via `get_param` to configure the no
     - `eps` (maximum distance between points in a cluster) = 0.3
     - `min_samples` (minimum number of points per cluster) = 3
 - **Cluster velocity:**
-  - The average velocity for each cluster is calculated.
+  - The average velocity for each cluster is calculated by calculation of per point velocity and then getting
+    the mean of the point velocities per cluster.
+    - to achieve correct absolute motion values it is necessary to compensate the velocity from the Radar with
+      the ego vehicles motion.
+    - The given radar points must be translated into the sensor space beforehand. 
 - **Additional debugging functions:**
   - These functions can be used to improve radar clustering without depending on the intermediate layer
     - filter_data: Filters data in x,y and z direction as well as maximum distance to the sensor.
@@ -100,6 +105,7 @@ At startup, several parameters are retrieved via `get_param` to configure the no
 | ---------------------------------- | ---------------------------------- | ------------------------------------------- |
 | `/carla/hero/RADAR0`               | `sensor_msgs/PointCloud2`          | Input data from Radar 0                     |
 | `/carla/hero/RADAR1`               | `sensor_msgs/PointCloud2`          | Input data from Radar 1                     |
+| `/carla/hero/Speed`                | `sensor_msgs/CarlaSpeedometer`     | Input data from CarlaSpeedometer            |
 | `/paf/hero/Radar/Visualization`    | `sensor_msgs/PointCloud2`          | Visualization of clustered points           |
 | `/paf/hero/Radar/Marker`           | `visualization_msgs/MarkerArray`   | Bounding boxes of clusters                  |
 | `/paf/hero/Radar/clustered_points` | `mapping.msg.ClusteredPointsArray` | Clustered radar points with velocity values |

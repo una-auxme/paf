@@ -664,8 +664,13 @@ class RadarNode(Node):
     def calculate_point_velocity(self, points: np.ndarray) -> np.ndarray:
         """
         Computes ego-compensated velocity per radar point.
-        points: array with columns [x, y, z, doppler_vel] in map frame (same as before).
-        returns: np.ndarray of Motion2D with same length as points.
+
+        Args:
+            - points(numpy.ndarray): array with columns [x, y, z, doppler_vel]
+                in map frame (same as before).
+        
+        Returns: 
+            - motion_array(np.ndarray(Motion2D)): same length as points.
         """
 
         # translate points back to the radar origin
@@ -674,6 +679,16 @@ class RadarNode(Node):
         return motion_array
 
     def _translate_radar_points_back_to_sensor(self, points: np.ndarray):
+        """
+        Translates points back into the radar space
+
+        Args:
+            - points(numpy.ndarray): array of radarpoints in vehicle space
+
+        Returns:
+            - transformed_points(numpy.ndarray): array of radarpoints shifted
+                into radar space
+        """
         transformed_points = np.copy(points)
 
         radar0mask = transformed_points[:, 0] >= 0
@@ -691,6 +706,19 @@ class RadarNode(Node):
         return transformed_points
 
     def _compensate_motion(self, points: np.ndarray):
+        """
+        Compensates the ego motion of the given radar points
+
+        Args:
+            - points(numpy.ndarray): array with columns [x, y, z, doppler_vel]
+
+        Returns:
+            - motion_array(Array(Motion2D)): array of compensated 2DMotion 
+                objects
+            - motion_vectors(numpy.ndarray): array of compensated Motion split
+                into x-velocity, y-velocity and the clusterlabel the point 
+                belongs to 
+        """
         motion_vectors = np.full((len(points), 3), None, dtype=object)
         motion_array = np.full((len(points)), None, dtype=object)
 
