@@ -493,7 +493,7 @@ Services:
 - ```/GlobalPlanDistance/get_loggers```
 - ```/GlobalPlanDistance/set_logger_level```
 
-### Behavior Agent ([behavior_agent](/../paf/code/planning/planning//behavior_agent/behavior_tree.py))
+### Behavior Agent ([behavior_agent](/../paf/code/planning/planning/behavior_agent/behavior_tree.py))
 
 Decides which speed is the right one to pass through a certain situation and
 also checks if an overtake is necessary.

@@ -31,21 +31,22 @@ The motion planning node includes a collision detection system that predicts pot
 - Publishes collision markers to `/paf/hero/planning/collision_trajectories` for visualization and debugging purposes
 
 **Algorithm Overview:**
+
 1. **Spatial Pruning:** Uses an STRtree to efficiently identify entities whose predicted trajectories intersect with the ego vehicle's buffered trajectory
 2. **Conflict Zone Identification:** Computes the intersection area between the ego trajectory and each entity's predicted path
 3. **Time-to-Collision (TTC) Calculation:** Determines the time at which the ego and target entity will reach the collision point
 4. **Collision Assessment:** Flags a collision as critical if the time difference between ego and target arrival is below `crash_threshold` (default: 2.0 seconds)
 
 **Limitations:**
+
 - Assumes constant velocity for entity trajectory prediction (no acceleration or deceleration considered, as well as no angular velocity)
 - Does not account for uncertainties in position, velocity, or future behavior
 - Limited to 2D geometric intersection checks without considering vehicle dynamics or safety margins
 - Prediction horizon is fixed and may not cover all relevant scenarios
 - Collision detection assumes linear motion and does not model trajectory deviations
 
-**Current Status:** The collision detection is implemented and computed on every planning cycle, but the results are not yet integrated into the decision-making process. The system currently only logs and visualizes potential collisions (via RViz markers) without triggering any avoidance maneuvers or speed adjustments.
-
-
+**Current Status:** The collision detection is implemented and computed on every planning cycle, but the results are not yet integrated into the decision-making process.
+The system currently only logs and visualizes potential collisions (via RViz markers) without triggering any avoidance maneuvers or speed adjustments.
 
 ## ROS Data Interface
 

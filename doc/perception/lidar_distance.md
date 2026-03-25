@@ -1,5 +1,13 @@
 # Documentation: Lidar Distance Node
 
+## Table of Contents
+
+- [1. Integration into the Perception Pipeline](#1-integration-into-the-perception-pipeline)
+- [2. Point Cloud Compensation](#2-point-cloud-compensation)
+- [3. Input: Received Data](#3-input-received-data)
+- [4. Processing Pipeline](#4-processing-pipeline)
+- [5. Output: Published Topics](#5-output-published-topics)
+
 ## 1. Integration into the Perception Pipeline
 
 The `lidar_distance.py` node is part of the perception pipeline. This node processes LiDAR data to provide precise distance information. The extracted and processed data serves as a foundation for subsequent layers such as the Intermediate Layer and the Planning module.
@@ -176,17 +184,6 @@ LocalCompensation active:
 - **Topic Name:** `/carla/hero/IMU`
 - **Data Type:** `sensor_msgs/Imu`
 - **Description:** Provides data used for calculating the heading.
-
-## 2.5 Parameters
-
-The node supports dynamic reconfiguration of the following parameters:
-
-- `clustering_w`: Weight factor for clustering width (default: 0.0285)
-- `clustering_lidar_z_min`: Minimum Z-coordinate for clustering (filters ground points, default: -1.4)
-- `clustering_lidar_z_max`: Maximum Z-coordinate for clustering (filters high points like tree leaves, default: 1.5)
-- `dbscan_eps`: DBSCAN epsilon parameter for clustering (default: 0.03375)
-- `dbscan_min_samples`: Minimum samples for DBSCAN clusters (default: 10)
-- `compensation_strategy`: Compensation mode (default: "LocalCompensation", options: "NoCompensation", "Buffer", "EgoMotionCompensation", "LocalCompensation")
 
 ## 4. Processing Pipeline
 
