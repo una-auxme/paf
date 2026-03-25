@@ -86,7 +86,7 @@ At startup, several parameters are retrieved via `get_param` to configure the no
     the mean of the point velocities per cluster.
     - to achieve correct absolute motion values it is necessary to compensate the velocity from the Radar with
       the ego vehicles motion.
-    - The given radar points must be translated into the sensor space beforehand. 
+    - The given radar points must be translated into the sensor space beforehand.
 - **Additional debugging functions:**
   - These functions can be used to improve radar clustering without depending on the intermediate layer
     - filter_data: Filters data in x,y and z direction as well as maximum distance to the sensor.
@@ -98,6 +98,14 @@ At startup, several parameters are retrieved via `get_param` to configure the no
     - points (clusterPointsNpArray): numpy array shape (N, 3)
     - point_indices (indexArray): numpy array with the shape (N)
     - object_speed_array (motionArray): numpy array with the shape (N)
+
+### 4.1 Usage for Cross Traffic Detection
+
+Radar data is also used to support cross traffic detection at intersections.
+
+In particular, the measured velocity information allows reliable detection of fast approaching vehicles from the side. This improves decision-making in intersection scenarios, where dynamic objects are more relevant than purely static occupancy.
+
+The radar node itself does not directly perform the behavioral decision. Instead, it provides processed motion-related information that can be used in the planning and intersection logic.
 
 ## 5. ROS Topics
 
@@ -112,6 +120,16 @@ At startup, several parameters are retrieved via `get_param` to configure the no
 | `/paf/hero/Radar/ClusterInfo`      | `std_msgs/String`                  | JSON with cluster information               |
 | `/paf/hero/IMU`                    | `sensor_msgs/Imu`                  | Input data from the IMU sensor              |
 
-## 6. Conclusion
+## 6. Additional Debugging Tool
+
+For debugging raw radar measurements, the project also contains a dedicated tool:
+
+- `perception/radar_raw_debugger.py`
+
+This script can be used to inspect raw radar point cloud messages directly. It is useful for checking available fields, validating point cloud structure, and investigating sensor-specific issues during development.
+
+## 7. Conclusion
 
 This radar node enables robust processing of radar signals for object detection. By integrating DBSCAN clustering and IMU data, sensor data quality is improved. The generated bounding boxes and visualizations facilitate environmental analysis.
+
+In addition to its original use cases, radar now also contributes to cross traffic detection by providing velocity information for dynamic objects. This makes the perception pipeline more robust in intersection scenarios and improves the system’s reaction to fast approaching vehicles.
