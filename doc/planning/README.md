@@ -42,8 +42,11 @@ The decision making uses this information for triggering special events (e.g. la
 This module includes the Nodes: \
 [ACC (ACC.py)](./ACC.md) and [MotionPlanning (motion_planning.py)](./motion_planning.md)
 
-The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
+The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e.g. lowering speed.
 The local planning also executes behaviors e.g. changes the trajectory for an overtake.
+
+> Clarification: In this planning context, “Local Planner” means the `planning` pipeline in `code/planning` and consists of ACC + Motion Planning.
+In the acting testbed history, “local planner” refers to independent algorithms such as TEB and Potential Field (see `doc/acting/discontinued`). These are now considered separate legacy/experimental acting approaches.
 
 #### Collision Detection
 
