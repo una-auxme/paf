@@ -11,9 +11,15 @@
 
 ## General
 
-This behavior is used to dynamically overtake an object in close proximity. An overtake checks for traffic on the other lane with the map function is_lane_free(...) and swaps lane as soon as it is free.
+This behavior is used to dynamically bypass an obstacle in close proximity by temporarily using the lane to the left of the ego vehicle.
 
-After the overtake is finished, the vehicle returns to the original lane as soon as it is free.
+To do this, it checks whether the other lane is free with the map function `is_lane_free(...)` and initiates the maneuver as soon as it is considered safe.
+
+In the common case, this corresponds to a classical overtake of a blocked or slow obstacle on the current lane. However, the behavior is implemented more generally as a temporary transition onto the left / oncoming lane segment if that lane is free.
+
+After the maneuver is finished, the vehicle returns to the original lane as soon as it is free again.
+
+This means the behavior is not limited to standard overtaking of slower vehicles. It can also be used in situations where the lane to the left is an oncoming lane, as long as the lane-availability checks allow the maneuver.
 
 To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks, see [Motion Planning](../motion_planning.md).
 
