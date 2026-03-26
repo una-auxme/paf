@@ -8,6 +8,7 @@
 - [Wait](#wait)
 - [Enter](#enter)
 - [Leave](#leave)
+- [Limitations](#limitations)
 
 ## General
 
@@ -78,3 +79,13 @@ If it is free a request is sent to end the overtake and returns RUNNING.
 If there is an obstalce in front in close proximity while overtaking a request is sent to end the overtake as well.
 
 Returns FAILURE when the overtake is finished.
+
+## Limitations
+
+The current overtake behavior does not explicitly consider traffic light states or the reason why a vehicle in front is stopped.
+
+As a result, the behavior may incorrectly trigger an overtake in situations where vehicles are waiting at a red traffic light or other controlled stopping points.
+
+In these cases, the system interprets the stopped vehicle as an obstacle and attempts to bypass it if the left / oncoming lane is considered free.
+
+This can lead to unnecessary or undesired overtaking maneuvers in situations where the ego vehicle should instead remain in its lane and wait.
