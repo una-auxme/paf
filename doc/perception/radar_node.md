@@ -105,9 +105,11 @@ By default, clustering is disabled and radar data is mainly used for velocity es
 
 ### 4.1 Usage for Cross Traffic Detection
 
-Radar data is also used to support cross traffic detection at intersections.
+Radar data is also used to support cross-traffic detection at intersections.
 
-In particular, the measured velocity information allows reliable detection of fast approaching vehicles from the side. This improves decision-making in intersection scenarios, where dynamic objects are more relevant than purely static occupancy.
+In particular, the measured velocity information allows reliable detection of fast-approaching vehicles from the side. This improves decision-making in intersection scenarios, where dynamic objects are more relevant than purely static occupancy.
+
+It should be noted that radar data is not used for standalone object detection (as clustering is deactivated by default), but rather to assign motion information to objects detected by other sensors (e.g., LiDAR or vision). Radar points that cannot be associated with existing objects are not considered.
 
 The radar node itself does not directly perform the behavioral decision. Instead, it provides processed motion-related information that can be used in the planning and intersection logic.
 
@@ -145,4 +147,4 @@ This script can be used to inspect raw radar point cloud messages directly. It i
 
 This radar node enables robust processing of radar signals for object detection. By integrating IMU data, sensor data quality is improved. Radar-derived velocities are now used in the mapping stage to enrich lidar-based entities with motion information.
 
-In addition to its original use cases, radar now also contributes to cross traffic detection by providing velocity information for dynamic objects. This makes the perception pipeline more robust in intersection scenarios and improves the system’s reaction to fast approaching vehicles.
+In addition to its original use cases, radar now also contributes to cross-traffic detection by providing velocity information for dynamic objects. This makes the perception pipeline more robust in intersection scenarios and improves the system’s reaction to fast-approaching vehicles.
