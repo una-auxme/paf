@@ -45,7 +45,12 @@ With this values some exclusion criteria are now getting checked. The conditions
 
 [*] Note that origin of the coordinate system is in the upper left corner of the image.
 
-Through this can be ensured, that only relevant traffic lights will be further processed. If all criteria are met, the traffic light image is cropped from the section of the frame in which it was captured. This process is performed for every traffic light detected in each frame. The traffic lights collected from a frame are then published under the topic `/paf/hero/Center/segmented_traffic_light`.
+Through this can be ensured, that only relevant traffic lights will be
+further processed. If all criteria are met, the traffic light image is
+cropped from the section of the frame in which it was captured. This
+process is performed for every traffic light detected in each frame. The
+traffic lights collected from a frame are then published under the topic
+`/paf/hero/Center/segmented_traffic_light`.
 
 ## TrafficLightNode
 
@@ -80,7 +85,11 @@ This class is responsible for setting up the traffic light detection system and 
 
 - `traffic_light_visualization(self, state)`: Creates are marker in the shape of text that contains the current value of state. This marker than gets published to be visualized in the intermediate layer.
 - `meaningful_state(self, new_state)`: Checks whether the potential state makes sense, e.g., green cannot be followed directly by red. Returns a Boolean value.
-- `filter_turn_lights(self, image)`: Traffic lights that are detected when turning are ignored. A higher resolution of the traffic light photo means more circles. The closer the traffic lights are to us, the higher the resolution. If a turn traffic light is detected, `False` is returned, otherwise, `True` is returned.
+- `filter_turn_lights(self, image)`: Traffic lights that are detected when
+  turning are ignored. A higher resolution of the traffic light photo means
+  more circles. The closer the traffic lights are to us, the higher the
+  resolution. If a turn traffic light is detected, `False` is returned,
+  otherwise, `True` is returned.
 
 ### Usage
 
