@@ -79,13 +79,26 @@ Quick overview of the data flow inside the intermediate layer.
 
 ```mermaid
 flowchart TD
-    NF{New empty dataframe} --> A[node: <a href='doc/mapping/generated/nodes.md#mappingdataintegrationnode'>mapping_data_integration</a>]
-    S{Sensors} --> A
-    A --> F0(filter: RadarPointAssignmentFilter)
-    F0 --> F1(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#growthmergingfilter'>GrowthMergingFilter</a>)
-    F1 --> F2(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#laneindexfilter'>LaneIndexFilter</a>)
-    F2 --> F3(filter: <a href='/doc/mapping/generated/mapping_common/filter.md#growpedestriansfilter'>GrowPedestriansFilter</a>)
-    F3 -->|topic: /paf/hero/mapping/init_data| 1[node: <a href='/code/mapping_visualization/src/visualization.py'>mapping_visualization</a>]
+    %% Nodes
+    NF{New empty dataframe}
+    S{Sensors}
+    A[node: mapping_data_integration]
+    F1(filter: GrowthMergingFilter)
+    F2(filter: LaneIndexFilter)
+    F3(filter: GrowPedestriansFilter)
+    F4(filter: RadarPointAssignmentFilter)
+    F5(filter: TrackingFilter)
+    VIS[node: mapping_visualization]
+
+    %% Flow
+    NF --> A
+    S --> A
+    A --> F1
+    F1 --> F2
+    F2 --> F3
+    F3 --> F4
+    F4 --> F5
+    F5 -->|topic: /paf/hero/mapping/init_data| VIS
 ```
 
 The links inside the diagram currently only work inside Vs Code.
