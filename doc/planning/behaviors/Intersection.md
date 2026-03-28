@@ -92,9 +92,9 @@ In the long term, this check may become less relevant or unnecessary if the coll
 The following parameters are used for cross traffic detection:
 
 - CROSS_TRAFFIC_SPEED_THRESHOLD: Minimum speed for detecting relevant cross traffic (2.5 m/s)
-- CROSS_CHECK_DISTANCE: Distance in front of the ego vehicle used for checking traffic
-- CROSS_CHECK_LENGTH / WIDTH: Size of the rectangular check area
-- PRIORITY_SPEED_THRESHOLD: Speed threshold for prioritizing traffic
-- PRIORITY_CHECK_DISTANCE: Distance for priority traffic detection
-- PRIORITY_CHECK_LENGTH / WIDTH: Size of the priority check area
-- SELF_EMERGENCY_THRESHOLD: Ego speed above which emergency handling is triggered
+- CROSS_CHECK_DISTANCE: Distance in front of the ego vehicle used for checking traffic (15.0 m)
+- CROSS_CHECK_LENGTH / WIDTH: Size of the rectangular check area (25.0 m / 50.0 m)
+- PRIORITY_SPEED_THRESHOLD: Speed threshold for prioritizing traffic (25.0/3.6 m/s ≈ 6.94 m/s)
+- PRIORITY_CHECK_DISTANCE: Distance for priority traffic detection (13.0 m)
+- PRIORITY_CHECK_LENGTH / WIDTH: Size of the priority check area (25.0 m / 50.0 m)
+- SELF_EMERGENCY_THRESHOLD: Ego speed above which emergency handling is triggered (10.0/3.6 m/s ≈ 2.78 m/s)
