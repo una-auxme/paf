@@ -97,6 +97,7 @@ By default, clustering is disabled and radar data is mainly used for velocity es
     the mean of all points in that cluster.
     - to obtain correct absolute motion, radar velocity is compensated with ego-vehicle motion.
     - radar points are transformed back into the radar sensor coordinate system before motion compensation.
+  - Disclaimer: Currently the angular velocity of the ego vehicle is not considered and might result in inacurate motion values while turning.
 - **Additional debugging functions:**
   - These functions can be used to improve radar clustering without depending on the intermediate layer
     - filter_data: Filters data in x,y and z direction as well as maximum distance to the sensor.
