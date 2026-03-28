@@ -51,6 +51,8 @@ jobs:
             PAF_UID: 1000
             PAF_GID: 1000
             BASE_FLAVOUR: cuda
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       - name: Build and push Docker image
         id: build
@@ -68,6 +70,8 @@ jobs:
             PAF_UID: 1000
             PAF_GID: 1000
             BASE_FLAVOUR: cuda
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       - name: Save pull request artifact
         if: github.event_name == 'pull_request'
