@@ -1,5 +1,13 @@
 # Documentation: Lidar Distance Node
 
+## Table of Contents
+
+- [1. Integration into the Perception Pipeline](#1-integration-into-the-perception-pipeline)
+- [2. Point Cloud Compensation](#2-point-cloud-compensation)
+- [3. Input: Received Data](#3-input-received-data)
+- [4. Processing Pipeline](#4-processing-pipeline)
+- [5. Output: Published Topics](#5-output-published-topics)
+
 ## 1. Integration into the Perception Pipeline
 
 The `lidar_distance.py` node is part of the perception pipeline. This node processes LiDAR data to provide precise distance information. The extracted and processed data serves as a foundation for subsequent layers such as the Intermediate Layer and the Planning module.
@@ -18,6 +26,8 @@ The node uses the Strategy pattern to allow switching between different compensa
 - The Compensation object handles buffering, data preparation and returns the compensated point cloud.
 
 The available compensation modes are:
+
+**Default Mode:** The default compensation strategy is `LocalCompensation`, which uses local vehicle dynamics for simplified motion correction.
 
 ### 2.1 NoCompensation (Baseline)
 
@@ -186,15 +196,18 @@ LocalCompensation active:
 ### 4.2 Motion Compensation of Point Cloud
 
 - Compensates point cloud based on the compensation mode (NoCompensation, Buffer, EgoMotionCompensation, LocalCompensation)
+- If LocalCompensation is active, publishes the calculated delta heading to `/paf/hero/delta_heading`
 
 ### 4.3 Filtering and Preprocessing
 
 - Removes points representing the ego vehicle (`start_clustering`).
-- Filters out points below a certain height to avoid clustering the road surface (`start_clustering`).
+- Filters out points below a certain height (`clustering_lidar_z_min`) to avoid clustering the road surface (`start_clustering`).
+- Filters out points above a maximum height (`clustering_lidar_z_max`) to exclude high objects like tree leaves or overhead structures.
 
 ### 4.4 Clustering the LiDAR Data
 
 - Uses DBSCAN to group spatially related points (`start_clustering`).
+- Applies coordinate normalization by projecting points onto a unit sphere and augmenting with weighted distance components, creating a polar-coordinate-like clustering approach for better handling of varying point densities in LiDAR sweeps.
 - Removes noise points classified by DBSCAN (`cluster_labels != -1`).
 - Generates bounding boxes for identified clusters (`generate_bounding_boxes`).
 - **Publishes:**
@@ -213,7 +226,7 @@ LocalCompensation active:
 
 ### Filtered Point Clouds
 
-- **Topic Name:** `~point_cloud_topic` (Default: `/carla/hero/_filtered`)
+- **Topic Name:** `/carla/hero/LIDAR_filtered`
 - **Data Type:** `sensor_msgs/PointCloud2`
 - **Description:** Contains filtered LiDAR data after noise suppression.
 
@@ -238,3 +251,9 @@ LocalCompensation active:
 - **Topic Name:** `~clustered_points_lidar_topic` (Default: `/paf/hero/Lidar/clustered_points`)
 - **Data Type:** `ClusteredPointsArray`
 - **Description:** Clusters LiDAR data for further downstream analysis in the intermediate layer.
+
+### Delta Heading
+
+- **Topic Name:** `/paf/hero/delta_heading`
+- **Data Type:** `std_msgs/Float32`
+- **Description:** Publishes the change in vehicle heading (delta heading) calculated during LocalCompensation mode.

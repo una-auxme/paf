@@ -159,7 +159,7 @@ Beyond that it provides localization of the agent and filtering noise from senso
 Further information regarding the perception can be found [here](../perception/README.md).
 Research for the perception can be found [here](../research/paf24/perception/).
 
-### Vision Node ([vision_node.py](/../paf/code/perception/src/vision_node.py))
+### Vision Node ([vision_node.py](/../paf/code/perception/perception/vision_node.py))
 
 Evaluates sensor data to detect and classify objects around the ego vehicle.
 Other road users and objects blocking the vehicle's path are recognized (most of the time).
@@ -185,7 +185,7 @@ Services:
 - ```/VisionNode/set_logger_level```
 - ```/VisionNode/set_parameters```
 
-### Traffic Light Detection ([traffic_light_node.py](/../paf/code/perception/src/traffic_light_node.py))
+### Traffic Light Detection ([traffic_light_node.py](/../paf/code/perception/perception/traffic_light_node.py))
 
 Recognizes traffic lights and what they are showing at the moment.
 In particular traffic lights that are relevant for the correct traffic behavior of the ego vehicle,
@@ -206,7 +206,7 @@ Services:
 - ```/TrafficLightNode/get_loggers```
 - ```/TrafficLightNode/set_logger_level```
 
-### Lidar Node ([lidar_distance.py](/../paf/code/perception/src/lidar_distance.py))
+### Lidar Node ([lidar_distance.py](/../paf/code/perception/perception/lidar_distance.py))
 
 Processes LIDAR point clouds by filtering, clustering, generating bounding boxes and publishing the results.
 
@@ -348,7 +348,7 @@ Services:
 
 The so called intermediate layer.
 
-### Mapping Data Integration ([mapping_data_integration.py](/../paf/code/mapping/src/mapping_data_integration.py))
+### Mapping Data Integration ([mapping_data_integration.py](/../paf/code/mapping/mapping/data_integration.py))
 
 More information can be found [here](/code/mapping/README.md).
 
@@ -358,26 +358,23 @@ Subscriptions:
 - ```/carla/hero/Speed``` \(/carla_ros_bridge\) ([ros_carla_msgs/CarlaSpeedometer](https://github.com/carla-simulator/ros-carla-msgs/blob/leaderboard-2.0/msg/CarlaSpeedometer.msg))
 - ```/paf/hero/Lidar/clustered_points``` \(/lidar_distance\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
 - ```/paf/hero/Radar/clustered_points``` \(/radar_node\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
+- ```/paf/hero/Radar/compensated_points``` \(/radar_node\) ([sensor_msgs/PointCloud2](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/PointCloud2.html))
 - ```/paf/hero/global_current_heading``` \(/position_heading_publisher_node\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/mapping/init_lanemarkings``` \(/lane_position\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 - ```/paf/hero/visualization_pointcloud``` \(/VisionNode\) ([mapping/ClusturedPointsArray](../../code/mapping/msg/ClusteredPointsArray.msg))
+- ```/paf/hero/delta_heading``` \(/lidar_distance\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 
 Publishes:
 
-- ```/mapping_data_integration/parameter_description```  ([dynamic_reconfigure/ConfigDescription](https://wiki.ros.org/dynamic_reconfigure))
-- ```/mapping_data_integration/parameter_update``` ([dynamic_reconfigure/Config](https://wiki.ros.org/dynamic_reconfigure))
 - ```/paf/hero/mapping/clusterpoints``` \(no subscriber at the moment\) ([sensor_msgs/PointCloud2](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/PointCloud2.html))
 - ```/paf/hero/mapping/init_data``` \(/mapping_visualization, /ACC, /behavior_agent\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 
 Services:
 
-- ```/mapping_data_integration/get_loggers```
-- ```/mapping_data_integration/set_logger_level```
-- ```/mapping_data_integration/set_parameters```
 - ```/paf/hero/mapping/update_stop_marks```
 
-### Mapping Visualization ([visualization.py](/../paf/code/mapping_visualization/src/visualization.py))
+### Mapping Visualization ([visualization.py](/../paf/code/mapping/mapping/visualization.py))
 
 Subscriptions:
 
@@ -400,7 +397,7 @@ The planning uses the data from the [Perception](#Perception) to find a path on 
 Further information regarding the planning can be found [here](../planning/README.md).
 Research for the planning can be found [here](../research/planning/README.md).
 
-### ACC ([ACC.py](/../paf/code/planning/src/local_planner/ACC.py))
+### ACC ([ACC.py](/../paf/code/planning/planning/local_planner/ACC.py))
 
 More information under [ACC.md](/doc/planning/ACC.md).
 
@@ -427,7 +424,7 @@ Services:
 - ```/ACC/set_parameters```
 - ```/paf/hero/acc/speed_alteration```
 
-### MotionPlanning ([motion_planning.py](/../paf/code/planning/src/local_planner/motion_planning.py))
+### MotionPlanning ([motion_planning.py](/../paf/code/planning/planning/local_planner/motion_planning.py))
 
 Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point.
 
@@ -439,12 +436,15 @@ Subscriptions:
 - ```/paf/hero/global_current_pos``` \(/position_heading_publisher_node\) ([geometry_msgs/PoseStamped](https://docs.ros2.org/foxy/api/geometry_msgs/msg/PoseStamped.html))
 - ```/paf/hero/speed_limits_OpenDrive``` \(/PrePlanner\) ([sensor_msgs/Float32MultiArray](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32MultiArray.html))
 - ```/paf/hero/trajectory_global``` \(/PrePlanner\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+- ```/paf/hero/mapping/init_data``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 
 Publishes:
 
 - ```/paf/hero/speed_limit``` \(/ACC\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/trajectory``` \(no subscribers at the moment\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 - ```/paf/hero/trajectory_local``` \(/ACC, /rviz, /GlobalPlanDistance, /behavior_agent\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
+
+- ```/paf/hero/planning/collision_trajectories``` \(/rviz\) ([visualization_msgs/MarkerArray](https://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
 
 Services:
 
@@ -454,7 +454,7 @@ Services:
 - ```/paf/hero/motion_planning/overtake_status```
 - ```/paf/hero/motion_planning/start_overtake```
 
-### PrePlanner ([global_planner_node.py](/../paf/code/planning/src/global_planner/global_planner_node.py))
+### PrePlanner ([global_planner_node.py](/../paf/code/planning/planning/global_planner/global_planner_node.py))
 
 Uses information from the map and the path specified by CARLA to find a first concrete path to the next intermediate point.
 
@@ -476,7 +476,7 @@ Services:
 - ```/PrePlanner/get_loggers```
 - ```/PrePlanner/set_logger_level```
 
-### GlobalPlanDistance ([global_plan_distance_publisher.py](/../paf/code/planning/src/global_planner/global_plan_distance_publisher.py))
+### GlobalPlanDistance ([global_plan_distance_publisher.py](/../paf/code/planning/planning/global_planner/global_plan_distance_publisher.py))
 
 Subscriptions:
 
@@ -493,7 +493,7 @@ Services:
 - ```/GlobalPlanDistance/get_loggers```
 - ```/GlobalPlanDistance/set_logger_level```
 
-### Behavior Agent ([behavior_agent](/../paf/code/planning/src/behavior_agent/))
+### Behavior Agent ([behavior_agent](/../paf/code/planning/planning/behavior_agent/behavior_tree.py))
 
 Decides which speed is the right one to pass through a certain situation and
 also checks if an overtake is necessary.
@@ -548,7 +548,7 @@ All information regarding research done about acting can be found [here](../rese
 
 Indepth information about the currently implemented acting Components can be found [here](../acting/README.md)!
 
-### Passthrough ([passthrough.py](/../paf/code/acting/src/acting/passthrough.py))
+### Passthrough ([passthrough.py](/../paf/code/acting/acting/passthrough.py))
 
 More information under [passthrouhg.md](/doc/acting/passthrough.md).
 
@@ -572,7 +572,7 @@ Services:
 - ```/passthrough/get_loggers```
 - ```/passthrough/set_logger_level```
 
-### [velocity_controller](/../paf/code/control/src/velocity_controller.py)
+### [velocity_controller](/../paf/code/control/control/velocity_controller.py)
 
 Calculates acceleration values to drive the target-velocity given by the [Local path planning](#Local-path-planning).
 
@@ -597,7 +597,7 @@ Services:
 - ```/velocity_controller/set_logger_level```
 - ```/velocity_controller/set_parameters```
 
-### [pure_pursuit_controller](/../paf/code/control/src/pure_pursuit_controller.py)
+### [pure_pursuit_controller](/../paf/code/control/control/pure_pursuit_controller.py)
 
 Calculates steering angles that keep the ego vehicle on the path given by
 the [Local path planning](#Local-path-planning).
@@ -621,7 +621,7 @@ Services:
 - ```/pure_pursuit_controller/set_logger_level```
 - ```/pure_pursuit_controller/set_parameters```
 
-### [vehicle_controller](/../paf/code/control/src/vehicle_controller.py)
+### [vehicle_controller](/../paf/code/control/control/vehicle_controller.py)
 
 More information under [vehicle_controller.md](/doc/control/vehicle_controller.md).
 

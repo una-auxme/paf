@@ -306,12 +306,11 @@ this entity is the SssssssssssssssssssssuperCar
 class TrackingInfo()
 ```
 
-[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L169)
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L180)
 
 Information that might be required to consistently track entities
 
-Note: As of 03.2025, this class and attribute in [`Entity`](#mapping_common.entity.Entity) is still completely unused.
-PAF24 still left it in as a base/guidance for future tracking experiments
+Note: As of 03.2026, this class is fully implemented and used in the TrackingFilter for multi-frame entity persistence and motion estimation. However, many of the ROS persistence attributes (visibility_time, invisibility_time, etc.) are not properly set and serve as placeholders for potential future information. Currently, only the uuid and motion-related fields are actively updated.
 
 <a id="mapping_common.entity.TrackingInfo.visibility_time"></a>
 
@@ -382,6 +381,114 @@ Minimum linear speed of this entity ever recorded
 #### max\_linear\_speed: `float`
 
 Maximum linear speed of this entity ever recorded
+
+<a id="mapping_common.entity.TrackingInfo.history"></a>
+
+#### history: `List[TrackedFrame]`
+
+History of tracked frames for motion estimation
+
+<a id="mapping_common.entity.TrackingInfo.MIN_HISTORY_SIZE"></a>
+
+#### MIN\_HISTORY\_SIZE: `int`
+
+Minimum history size for velocity calculation
+
+<a id="mapping_common.entity.TrackingInfo.MAX_HISTORY_SIZE"></a>
+
+#### MAX\_HISTORY\_SIZE: `int`
+
+Maximum history size to prevent unbounded growth
+
+<a id="mapping_common.entity.TrackingInfo.last_motion_data"></a>
+
+#### last\_motion\_data: `Optional[Vector2]`
+
+Last computed motion vector
+
+<a id="mapping_common.entity.TrackingInfo.EMA_ALPHA"></a>
+
+#### EMA\_ALPHA: `float`
+
+Exponential moving average alpha for smoothing
+
+<a id="mapping_common.entity.TrackingInfo.Z_SCORE_THRESHOLD"></a>
+
+#### Z\_SCORE\_THRESHOLD: `float`
+
+Z-score threshold for outlier rejection in motion estimation
+
+<a id="mapping_common.entity.TrackingInfo.append_frame"></a>
+
+#### append\_frame
+
+```python
+def append_frame(entity_pos: Vector2,
+                 ego_pos: Motion2D,
+                 ego_delta_heading: float,
+                 timestamp: float)
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L205)
+
+Adds a new frame and updates motion estimation.
+
+<a id="mapping_common.entity.TrackingInfo._compensate_positions"></a>
+
+#### \_compensate\_positions
+
+```python
+def _compensate_positions(current_ego_motion: "Motion2D",
+                         ego_delta_heading: float,
+                         current_timestamp: float)
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L237)
+
+Stabilizes history by removing ego-displacement.
+
+<a id="mapping_common.entity.TrackingInfo._calculate_robust_weighted_motion"></a>
+
+#### \_calculate\_robust\_weighted\_motion
+
+```python
+def _calculate_robust_weighted_motion() -> Optional["Vector2"]
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L271)
+
+Calculates velocity using weighted average of historical pairs.
+
+<a id="mapping_common.entity.TrackingInfo.get_motion"></a>
+
+#### get\_motion
+
+```python
+def get_motion() -> Optional["Motion2D"]
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L331)
+
+<a id="mapping_common.entity.TrackingInfo._predict_local_trajectory"></a>
+
+#### \_predict\_local\_trajectory
+
+```python
+def _predict_local_trajectory(start_point: Point2,
+                             motion: Motion2D,
+                             time_horizon: float) -> LineString
+```
+
+[[view_source]](/doc/mapping/../../code/mapping/mapping_common/entity.py#L337)
+
+Predicts the entity's trajectory by linearly extrapolating current motion.
+
+This function performs a constant-velocity projection from a given start point.
+While currently limited to linear motion, it provides the basis for future
+curvilinear models (incorporating yaw rate/acceleration).
+
+Note:
+Internal helper. Client code should use 'Entity.predict_local_trajectory'
 
 <a id="mapping_common.entity.TrackingInfo.from_ros_msg"></a>
 
