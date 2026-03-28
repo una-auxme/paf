@@ -11,7 +11,7 @@
 2. Replace the standard leaderboard route. (--routes="${INTERNAL_WORKSPACE_DIR}/leaderboard/data/routes_devtest.xml" ln:6)
    with the route you want to start e.g. --routes="/workspace/code/routes/routes_highway.xml". Do not change the order of the commands
    or else the leaderboard wont start up.
-4. Now Compose up the [docker-compose.dev.cuda.yml](/build/docker-compose.dev.cuda.yml) file.
+3. Now Compose up the [docker-compose.dev.cuda.yml](/build/docker-compose.dev.cuda.yml) file.
 
 ## Scenario Map
 
