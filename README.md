@@ -13,6 +13,10 @@ The recording of it can be seen in the following video:
 
 [![Video of the final presentation](https://img.youtube.com/vi/UgyjfORq77A/0.jpg)](https://www.youtube.com/watch?v=UgyjfORq77A)
 
+## Previous presentations
+
+[Final presentation PAF24](https://www.youtube.com/watch?v=NASVWiUFw2A)
+
 ## Prerequisites
 
 To be able to execute and develop the project, you need a Linux system equipped with:
