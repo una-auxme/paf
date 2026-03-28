@@ -136,7 +136,7 @@ As a result, a motion vector is computed for each radar point. These per-point v
 | ----------------------------------- | ---------------------------------- | ------------------------------------------------ |
 | `/carla/hero/RADAR0`                | `sensor_msgs/PointCloud2`          | Input data from Radar 0                          |
 | `/carla/hero/RADAR1`                | `sensor_msgs/PointCloud2`          | Input data from Radar 1                          |
-| `/carla/hero/Speed`                 | `sensor_msgs/CarlaSpeedometer`     | Input data from CarlaSpeedometer                 |
+| `/carla/hero/Speed`                 | `carla_msgs/CarlaSpeedometer`     | Input data from CarlaSpeedometer                 |
 | `/paf/hero/Radar/Visualization`     | `sensor_msgs/PointCloud2`          | Visualization of clustered points                |
 | `/paf/hero/Radar/Marker`            | `visualization_msgs/MarkerArray`   | Bounding boxes of clusters                       |
 | `/paf/hero/Radar/clustered_points`  | `mapping.msg.ClusteredPointsArray` | Clustered radar points with velocity values      |
