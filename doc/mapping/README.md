@@ -49,7 +49,7 @@ To do intersection checks on the map:
 - Functions for creating collision masks can be found in the [mapping_common.mask](/doc/mapping/generated/mapping_common/mask.md) module
 
 For intersection-related traffic checks, dynamic entities can also be evaluated using motion information and speed thresholds.
-This is especially relevant for cross traffic detection, where static objects should not block the decision process, but fast moving traffic must still be detected reliably.
+This is especially relevant for cross-traffic detection, where static objects should not block the decision process, but fast-moving traffic must still be detected reliably.
 
 ### Visualization
 
