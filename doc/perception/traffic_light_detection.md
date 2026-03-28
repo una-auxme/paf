@@ -111,4 +111,4 @@ Objects, which are published by the Vision Node, are further filtered by the fol
 
 Objects that need to be classified in the Traffic Light node must meet the following criteria to ensure reliable results:
 
-- The `dominance` (the sum of the second-largest to the smallest values) is subtracted from the largest value. The `dominance` factor must not be too high (currently `min_dominance` = 0.99). This is intended to ensure that classifications are ambiguous and certain.
+- The `dominance` (the sum of the second-largest to the smallest values) is subtracted from the largest value. The `dominance` factor must be high enough (currently `min_dominance` = 0.99). This is intended to ensure that classifications are ambiguous and certain.
