@@ -8,8 +8,9 @@
 ## Instruction
 
 1. Go to the [launch_leaderboard.dev.sh](/code/leaderboard_launcher/scripts/launch_leaderboard.dev.sh) file in the build directory.
-2. Comment out the standard leaderboard route if it is in. ('''- ROUTE=/opt/leaderboard/data/routes_devtest.xml''' ln:32)
-3. Comment in your specific route you want. The specific routes start at line 34. (the name describes the emerging scenario in the route)
+2. Replace the standard leaderboard route. (--routes="${INTERNAL_WORKSPACE_DIR}/leaderboard/data/routes_devtest.xml" ln:6)
+   with the route you want to start e.g. --routes="/workspace/code/routes/routes_highway.xml". Do not change the order of the commands
+   or else the leaderboard wont start up.
 4. Now Compose up the [docker-compose.dev.cuda.yml](/build/docker-compose.dev.cuda.yml) file.
 
 ## Scenario Map
