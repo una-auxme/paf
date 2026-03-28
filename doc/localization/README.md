@@ -40,6 +40,11 @@ An even simpler approach is calculating the current state using a **Running Aver
 
 If you do not want to use a filter and simply make use of the raw sensor data then the **None** "filter" can be selected.
 
+### Filter Performance
+
+> [!NOTE]
+> In terms of localization accuracy, the **Extended Kalman Filter (EKF)** clearly outperforms all other available filter options. The EKF provides the most precise position and heading estimates by effectively combining multiple sensor inputs and accounting for non-linear relationships in the data.
+
 ### Choosing a filter
 
 The filter to be used is chosen in the [localization.launch](https://github.com/una-auxme/paf/blob/main/code/localization/launch/localization.launch) file.

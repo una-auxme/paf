@@ -1,5 +1,14 @@
 # Detailed Description of the Radar Node
 
+## Table of Contents
+
+- [1. General Functionality](#1-general-functionality)
+- [2. Sensor Configuration](#2-sensor-configuration)
+- [3. Initialization and ROS Parameters](#3-initialization-and-ros-parameters)
+- [4. Data Processing](#4-data-processing)
+- [5. ROS Topics](#5-ros-topics)
+- [6. Conclusion](#6-conclusion)
+
 ## 1. General Functionality
 
 The **Radar Node** processes data from multiple radar sensors to improve environmental perception. It enables the detection of objects, their speeds, and distances, contributing to applications such as overtaking safety, turning maneuvers, and adaptive cruise control.
