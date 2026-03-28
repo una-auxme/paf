@@ -16,7 +16,7 @@ which starts the simulation.
 
 ## Control Architecture
 
-![MISSING: Control-ARCHITECTURE](./../assets/control/control_architecture.png)
+![Control-ARCHITECTURE](./../assets/control/control_architecture.drawio.png)
 
 > [!NOTE]
 > [Click here to go to acting architecture](./../acting/architecture_documentation.md)

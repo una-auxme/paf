@@ -7,46 +7,97 @@
 - [Approach](#approach)
 - [Wait](#wait)
 - [Change](#change)
+- [Stop Marker Handling](#stop-marker-handling)
 
 ## General
 
-This behaviour executes a lane change. It proceeds an early lane change when the change lane is free. It also detects if the hero is already on the desired lane (e.g. through an overtake).
+This behavior executes a lane change and manages the transition between lanes in a safe and controlled manner.
 
-It slows the vehicle down and stops it (with the help of a stopmark) when the lane change point is reached when no change occured till then and then it proceeds to switch lanes.
+It supports:
 
-The behavior also detects if a change to left or right is planned and reacts to this accordingly.
+- early lane changes when the target lane is free
+- stopping before the lane change point if necessary
+- detecting if the vehicle is already on the desired lane (e.g. after an overtake)
+
+If the lane change cannot be executed immediately, the vehicle slows down and eventually stops before the lane change point using a stop marker.
+
+The behavior distinguishes between left and right lane changes and reacts accordingly.
 
 ## Ahead
 
-Checks whether the next waypoint (/paf/hero/current_waypoint) is a lane change and inititates the lane change sequence accordingly.
+Checks whether the next waypoint (`/paf/hero/current_waypoint`) indicates a lane change and initiates the lane change sequence.
 
-When a lane change is ahead, a stop marker gets published at its position, preventing our car to drive on the change lane unchecked. This avoids crashed with traffic that is driving on the change lane.
+When a lane change is detected ahead, a stop marker is inserted at the lane change position. This ensures that the vehicle does not enter the lane change area unchecked.
+
+The stop marker prevents unsafe behavior by forcing the vehicle to stop before entering the target lane if the situation is not yet safe.
 
 ## Approach
 
-Tries to do an early lane change. \
-For this purpose, the is_lane_free function is used while we are still driving (on the old lane).
+Attempts to perform an early lane change while still driving on the current lane.
 
-If the lane is free, the trajectory immediatly gets planned to the desired change lane, this happens with the help of the request_start_overtake() service.
+This is done using the `is_lane_free` function:
 
-If the lane is not free, the hero continues to drive on the old lane with a continuous check whether the lane is now free.
+- If the lane is free → the trajectory is immediately planned to the target lane using `request_start_overtake()`
+- If the lane is not free → the vehicle continues on the current lane while continuously rechecking
 
-Once the car is nearby the change point (< TARGET_DISTANCE_TO_STOP_LANECHANGE) and no change occured yet, a switch to the wait subbehavior takes place. Meanwhile, because of the stop marker set in the Ahead subbehavior, the hero stops just before the change point (still on the old lane).
+If the vehicle approaches the lane change point (`< TARGET_DISTANCE_TO_STOP_LANECHANGE`) and no lane change has occurred yet:
 
-Only tries to approach when we are still on the old lane. (Through a
-scheduled overtake before it can happen that the hero is already on the disired change lane.)
+- the behavior transitions to **Wait**
+- the vehicle is already slowed down and will stop due to the stop marker set in the Ahead phase
+
+This phase is only active while the vehicle is still on the original lane.
 
 ## Wait
 
-Waits at the lane change point until the lane change is not blocked. This is executed with the
-help of the is_lane_free function.
+Waits at the lane change point until the lane is free.
 
-Only wait when we are still on the old lane (not changed in approach before as the change lane was not free till now).
+- Uses `is_lane_free` continuously
+- Keeps the vehicle stopped using the stop marker
+
+This state is only entered if:
+
+- the lane change could not be executed in the Approach phase
+- the vehicle is still on the original lane
 
 ## Change
 
-Executes the lane change. This will delete the stop marker that prevented driving to the next lane. As the change is only executed after the lane is free the change should be collision free.
+Executes the lane change once the target lane is free.
 
-When the car is already on its desired lane when entering the change state, this subbehavior only is only responsible for a correct end of the lane change behavior (see below).
+- The stop marker is removed
+- The trajectory is executed towards the target lane
 
-As soon as we moved more than five meters away from the global lane change position (from the waypoint message) the change is considered as done and the whole lane change behavior completes.
+Since the lane is checked before execution, the maneuver is expected to be collision-free.
+
+If the vehicle is already on the desired lane when entering this state:
+
+- the state only ensures proper completion of the behavior
+
+The lane change is considered complete when:
+
+- the vehicle has moved more than 5 meters away from the original lane change position
+
+## Stop Marker Handling
+
+Stop markers used for lane changes are inserted into the intermediate layer map via the service:
+`/paf/hero/mapping/update_stop_marks`
+
+(Service type: `mapping_interfaces/srv/UpdateStopMarks`)
+
+They are not published as a standalone topic. Instead, they are integrated into the map as virtual stop obstacles by the mapping system.
+
+In the lane change behavior:
+
+- a rectangular stop marker is placed at the lane change position during the **Ahead** phase
+- this forces the vehicle to stop before entering the lane change area if the maneuver is not yet safe
+
+The stop marker prevents:
+
+- entering a blocked or occupied target lane
+- executing a lane change too early
+- unsafe interactions with traffic on the target lane
+
+Once the lane is free and the lane change is executed:
+
+- the stop marker is removed again
+
+The stop marker is managed using a dedicated identifier (`lanechange`) and updated dynamically during the behavior execution.

@@ -538,6 +538,21 @@ class TrackingFilter(MapFilter):
 class RadarPointAssignmentFilter(MapFilter):
     """
     Assigns radar-derived velocities to LiDAR entities using spatial association.
+
+    This filter associates radar points with lidar-based entities by checking
+    which radar points lie within a configurable buffer region around each entity.
+
+    The velocity of associated radar points is averaged and assigned to the
+    corresponding entity as motion information.
+
+    This enables sensor fusion by combining:
+    - accurate geometry from lidar
+    - reliable velocity estimation from radar
+
+    Parameters:
+    - radar_lidar_assoc_buffer: spatial buffer around lidar entities for association
+    - classification_threshold: minimum velocity magnitude to consider a radar point
+    as dynamic
     """
 
     radar_compensated_points_data = None
@@ -556,7 +571,14 @@ class RadarPointAssignmentFilter(MapFilter):
     def fuse_radar_velocity_into_lidar_entities(
         self, lidar_entities: List[Entity]
     ) -> None:
-        """Assign radar-derived velocities to lidar entities (in-place)."""
+        """Assign radar-derived velocities to lidar entities in-place.
+
+        Radar points are filtered by motion magnitude. For each lidar entity,
+        all radar points inside a configurable buffered region are collected.
+
+        Their motion vectors are averaged and assigned to the entity as motion
+        information.
+        """
         data_msg = self.radar_compensated_points_data
         if data_msg is None:
             return
