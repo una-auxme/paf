@@ -31,50 +31,34 @@ class SensorCovarianceFusion(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.imu_orientation = (
-            self.declare_parameter(
-                "imu_orientation",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="IMU Covariance for Orientation",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
-        self.imu_angular_velocity = (
-            self.declare_parameter(
-                "imu_angular_velocity",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="IMU Covariance for Angular Velocity",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
-        self.imu_linear_acceleration = (
-            self.declare_parameter(
-                "imu_linear_acceleration",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="IMU Covariance for Linear Acceleration",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
-        self.gps_position = (
-            self.declare_parameter(
-                "gps_position",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="Alt,Lat,Long Covariance",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
+        self.imu_orientation = self.declare_parameter(
+            "imu_orientation",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="IMU Covariance for Orientation",
+            ),
+        ).value
+        self.imu_angular_velocity = self.declare_parameter(
+            "imu_angular_velocity",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="IMU Covariance for Angular Velocity",
+            ),
+        ).value
+        self.imu_linear_acceleration = self.declare_parameter(
+            "imu_linear_acceleration",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="IMU Covariance for Linear Acceleration",
+            ),
+        ).value
+        self.gps_position = self.declare_parameter(
+            "gps_position",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="Alt,Lat,Long Covariance",
+            ),
+        ).value
 
         # The publishers (topic names have to coincide with ekf_config.yaml)
         self.imu_publisher = self.create_publisher(Imu, "/imu/data", qos_profile=10)

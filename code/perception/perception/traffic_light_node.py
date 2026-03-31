@@ -25,28 +25,14 @@ class TrafficLightNode(Node):
 
         # Parameters
 
-        self.control_loop_rate = (
-            self.declare_parameter(
-                "control_loop_rate",
-                0.05,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.side = (
-            self.declare_parameter("side", "Center").get_parameter_value().string_value
-        )
-        self.model = (
-            self.declare_parameter("model", "").get_parameter_value().string_value
-        )
-        self.tfs_debug = (
-            self.declare_parameter("tfs_debug", False).get_parameter_value().bool_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate",
+            0.05,
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.side = self.declare_parameter("side", "Center").value
+        self.model = self.declare_parameter("model", "").value
+        self.tfs_debug = self.declare_parameter("tfs_debug", False).value
 
         # general setup
         self.bridge = CvBridge()

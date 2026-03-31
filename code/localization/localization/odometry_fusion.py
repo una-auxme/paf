@@ -31,36 +31,22 @@ class OdometryNode(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.control_loop_rate = (
-            self.declare_parameter("loop_rate", 0.05).get_parameter_value().double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.pose_covariance = (
-            self.declare_parameter(
-                "pose_covariance",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="Covariance for Odometry Pose",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
-        self.twist_covariance = (
-            self.declare_parameter(
-                "twist_covariance",
-                ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
-                descriptor=ParameterDescriptor(
-                    description="Covariance for Odometry Twist",
-                ),
-            )
-            .get_parameter_value()
-            .double_array_value
-        )
+        self.control_loop_rate = self.declare_parameter("loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.pose_covariance = self.declare_parameter(
+            "pose_covariance",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="Covariance for Odometry Pose",
+            ),
+        ).value
+        self.twist_covariance = self.declare_parameter(
+            "twist_covariance",
+            ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY),
+            descriptor=ParameterDescriptor(
+                description="Covariance for Odometry Twist",
+            ),
+        ).value
 
         # Node starts only if at least one steer angle
         # and one speed message was received
