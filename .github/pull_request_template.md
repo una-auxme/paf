@@ -43,4 +43,5 @@ List remaining risks or follow-up work that is intentionally out of scope.
 - [ ] I have added tests that prove my fix is effective or that my feature works (might be obsolete with CI later on)
 - [ ] New and existing unit tests pass locally with my changes (might be obsolete with CI later on)
 - [ ] I documented assumptions, validation steps, and known gaps in this PR
+- [ ] I ran dependency validation (`dep.check` or `scripts/dependency-doctor.sh`) when touching dependencies
 

@@ -57,6 +57,26 @@ Use `Dev Containers: Rebuild Container` when you change image-level inputs such 
 
 For regular `package.xml` / `requirements*.txt` updates, an image rebuild is usually not needed; run `dep.sync` + `devbuild` in the existing container.
 
+### Rebuild vs sync decision table
+
+| Change type | `dep.sync` | `devbuild` | Rebuild container |
+|---|---|---|---|
+| `code/**/requirements*.txt` | ✅ | ✅ | ❌ |
+| `code/**/package.xml` | ✅ | ✅ | ❌ |
+| `build/docker/agent-ros2/scripts/*.sh` | ❌ | ❌ | ✅ |
+| `build/docker/agent-ros2/Dockerfile` | ❌ | ❌ | ✅ |
+| `build/pins/*.env` | ❌ | ❌ | ✅ |
+
+## Dependency doctor
+
+Use the repository doctor script to catch pinning issues and conflicts early:
+
+```bash
+bash scripts/dependency-doctor.sh
+```
+
+This check is also executed in CI by `.github/workflows/dependency-doctor.yml`.
+
 ## Troubleshooting
 
 - Build-time failures:

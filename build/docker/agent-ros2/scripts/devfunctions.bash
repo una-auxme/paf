@@ -6,6 +6,7 @@ cat <<EOF
 Development utility functions:
 - devsource: sources the ${INTERNAL_WORKSPACE_DIR}/env.bash (includes the ${PAF_ROS_WS}/install/local_setup.bash)
 - devbuild: colcon builds the ${PAF_ROS_WS} (colcon build --symlink-install)
+- devbuild.pkg <name>: colcon builds only selected package for faster local iteration
 - pytrees.viewer: Launches the py-trees tree viewer for behavior trees
                    Note: You need to have a behavior tree running (like the agent) for this to show anything
 - leaderboard.dev: Starts code/leaderboard_launcher/scripts/launch_leaderboard.dev.sh
@@ -49,6 +50,28 @@ EOF
   devsource || return $?
 }
 export -f devbuild
+
+devbuild.pkg() {
+  if [ -z "${1:-}" ]; then
+    echo "Usage: devbuild.pkg <package_name>"
+    return 2
+  fi
+
+  (
+  cd "${PAF_ROS_WS}" || return $?
+
+  colcon build --symlink-install --continue-on-error --packages-select "$1" || return $?
+  )
+
+  cat <<EOF
+
+Package '$1' built successfully.
+Source updates in other shells with: devsource
+EOF
+
+  devsource || return $?
+}
+export -f devbuild.pkg
 
 leaderboard.dev() {
   /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.dev.sh

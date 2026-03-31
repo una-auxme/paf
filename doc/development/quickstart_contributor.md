@@ -79,6 +79,7 @@ pre-commit run --all-files
    - `Format current Python file with ruff`
    - `Lint active package with ruff`
    - `Dependency check in dev container`
+   - `Pre-PR quality check`
 5. Commit only related files and open a focused PR.
 
 ## 7) Common problems
@@ -91,3 +92,5 @@ pre-commit run --all-files
 - If dependency drift appears after changing `requirements*.txt` or `package.xml`, run:
    - `dep.sync`
    - `devbuild`
+- If requirements consistency is unclear across files, run:
+   - `Run dependency doctor` task or `bash scripts/dependency-doctor.sh`

@@ -22,3 +22,6 @@ __pycache__/
 # Auto downloaded models
 code/*.pt
 /*.pt
+
+# VS Code transient browse database files
+.vscode/browse.vc.db*
