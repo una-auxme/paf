@@ -42,8 +42,22 @@ The decision making uses this information for triggering special events (e.g. la
 This module includes the Nodes: \
 [ACC (ACC.py)](./ACC.md) and [MotionPlanning (motion_planning.py)](./motion_planning.md)
 
-The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e. g. lowering speed.
+The Local Planning package is responsible for planning a local trajectory and adjusting the speed accordingly. It contains components responsible for detecting collisions and reacting e.g. lowering speed.
 The local planning also executes behaviors e.g. changes the trajectory for an overtake.
+
+> Clarification: In this planning context, “Local Planner” means the `planning` pipeline in `code/planning` and consists of ACC + Motion Planning.
+In the acting testbed history, “local planner” refers to independent algorithms such as TEB and Potential Field (see `doc/acting/discontinued`). These are now considered separate legacy/experimental acting approaches.
+
+#### Collision Detection
+
+The local planner includes a collision detection system that predicts potential collisions between the ego vehicle's trajectory and entities in the environment:
+
+- **Detection Method:** Performs both spatial analysis (using STRtree for efficient pruning) and temporal analysis (Time-to-Collision calculation)
+- **Entity Prediction:** Predicts future trajectories of surrounding entities over a configurable time horizon
+- **Visualization:** Publishes collision markers to `/paf/hero/planning/collision_trajectories` for RViz debugging
+- **Current Integration:** Collision detection is implemented and continuously computed but not yet integrated into the decision-making and speed adjustment logic
+
+For detailed information about the collision detection algorithm, limitations, and implementation, see [Collision Detection in Motion Planning](./motion_planning.md#collision-detection).
 
 ### [Decision making (/behavior_agent)](./Behavior_tree.md)
 

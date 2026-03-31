@@ -12,7 +12,7 @@ navigate on a local basis. This information is then processed in the [control_co
 
 ## Acting Architecture
 
-![MISSING: Acting-ARCHITECTURE](./../assets/acting/acting_architecture.png)
+![Acting-ARCHITECTURE](./../assets/acting/acting_architecture.drawio.png)
 
 > [!NOTE]
 > [Click here to go to control architecture](./../control/architecture_documentation.md)

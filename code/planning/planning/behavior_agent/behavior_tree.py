@@ -5,7 +5,7 @@ import rclpy.executors
 import rclpy.callback_groups
 from rclpy.callback_groups import CallbackGroup
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
 from rclpy.parameter import Parameter
@@ -100,11 +100,13 @@ def grow_a_tree(
                                                 node.get_clock(),
                                                 node.curr_behavior_pub,
                                                 node.stop_marks_client,
+                                                node.emergency_pub,
                                             ),
                                             intersection.Enter(
                                                 "Enter Intersection",
                                                 node.curr_behavior_pub,
                                                 node.stop_marks_client,
+                                                node.emergency_pub,
                                             ),
                                         ],
                                     ),
@@ -261,6 +263,14 @@ class BehaviorTree(Node):
         )
         self.info_publisher = self.create_publisher(
             Marker, "/paf/hero/behavior_tree/info_marker", 1
+        )
+        self.curr_behavior_pub = self.create_publisher(
+            String, f"/paf/{self.role_name}/curr_behavior", 1
+        )
+        self.emergency_pub = self.create_publisher(
+            Bool,
+            f"/paf/{self.role_name}/emergency",
+            1,
         )
 
         # Service clients

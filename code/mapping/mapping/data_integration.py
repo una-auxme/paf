@@ -22,6 +22,7 @@ from mapping_common.filter import (
     LaneIndexFilter,
     GrowPedestriansFilter,
     TrackingFilter,
+    RadarPointAssignmentFilter,
 )
 
 from mapping_interfaces.msg import Map as MapMsg, ClusteredPointsArray
@@ -59,6 +60,7 @@ class MappingDataIntegrationNode(Node):
     """
 
     lidar_data: Optional[PointCloud2] = None
+    radar_compensated_points_data: Optional[PointCloud2] = None
     hero_speed: Optional[CarlaSpeedometer] = None
     lidar_clustered_points_data: Optional[ClusteredPointsArray] = None
     radar_clustered_points_data: Optional[ClusteredPointsArray] = None
@@ -153,6 +155,17 @@ class MappingDataIntegrationNode(Node):
             )
             .get_parameter_value()
             .bool_value
+        )
+        self.radar_lidar_assoc_buffer = (
+            self.declare_parameter(
+                "radar_lidar_assoc_buffer",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Buffer [m] around lidar polygon for radar association"
+                ),
+            )
+            .get_parameter_value()
+            .double_value
         )
 
         # Parameters: Filtering
@@ -272,7 +285,7 @@ class MappingDataIntegrationNode(Node):
         )
 
         self.tracking_filter = TrackingFilter()
-        self.tracking_filter.set_tracking_velocity_status(self.update_tracking_velocity)
+        self.radar_point_assignment_filter = RadarPointAssignmentFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
@@ -347,7 +360,21 @@ class MappingDataIntegrationNode(Node):
             .get_parameter_value()
             .double_value
         )
-
+        # Parameter Radar classification
+        self.classification_threshold = (
+            self.declare_parameter(
+                "classification_threshold",
+                1.5,
+                descriptor=ParameterDescriptor(
+                    description="Threshold when an entity is classified as stationary",
+                    floating_point_range=[
+                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
+                    ],
+                ),
+            )
+            .get_parameter_value()
+            .double_value
+        )
         # For the stop marks:
         self.stop_marks = {}
 
@@ -407,6 +434,13 @@ class MappingDataIntegrationNode(Node):
             topic="/paf/hero/Radar/clustered_points",
             msg_type=ClusteredPointsArray,
             callback=self.radar_clustered_points_callback,
+            qos_profile=1,
+        )
+
+        self.create_subscription(
+            topic="/paf/hero/Radar/compensated_points",
+            msg_type=PointCloud2,
+            callback=self.radar_compensated_points_callback,
             qos_profile=1,
         )
 
@@ -481,6 +515,9 @@ class MappingDataIntegrationNode(Node):
 
     def lidar_callback(self, data: PointCloud2):
         self.lidar_data = data
+
+    def radar_compensated_points_callback(self, data: PointCloud2):
+        self.radar_compensated_points_data = data
 
     def delta_heading_callback(self, data: Float32):
         self.tracking_filter.set_delta_heading(data.data)
@@ -612,6 +649,7 @@ class MappingDataIntegrationNode(Node):
         return lidar_entities
 
     def create_entities_from_clusters(self, sensortype="") -> List[Entity]:
+        sensor_ids = [sensortype]
         data = None
         if sensortype == "radar":
             data = self.radar_clustered_points_data
@@ -688,12 +726,13 @@ class MappingDataIntegrationNode(Node):
             if motion_array_converted is not None:
                 motion = motion_array_converted[cluster_mask][0]
                 if self.hero_speed is not None:
-                    motion_vector_hero = Vector2.forward() * self.hero_speed.speed
-                    motion = Motion2D(
-                        motion_vector_hero + motion.linear_motion, angular_velocity=0.0
-                    )
+                    if (
+                        np.abs(motion.linear_motion.length())
+                        < self.classification_threshold
+                    ):
+                        motion = None
 
-            # Optional: Füge die Objektklasse hinzu
+            # add object class
             object_class = None
             if objectclassarray is not None:
                 object_class = objectclassarray[indexarray == label][0]
@@ -709,6 +748,7 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
             elif object_class == 10:
                 entity = Car(
@@ -719,6 +759,7 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
             else:
                 entity = Entity(
@@ -729,7 +770,9 @@ class MappingDataIntegrationNode(Node):
                     timestamp=timestamp,
                     flags=flags,
                     motion=motion,
+                    sensor_id=sensor_ids,
                 )
+            entity.sensor_id = list(set(entity.sensor_id))
             entities.append(entity)
 
         return entities
@@ -772,7 +815,9 @@ class MappingDataIntegrationNode(Node):
         missing_data = []
         if self.enable_lidar_cluster:
             if self.lidar_clustered_points_data is not None:
-                entities.extend(self.create_entities_from_clusters(sensortype="lidar"))
+                lidar_entities = self.create_entities_from_clusters(sensortype="lidar")
+
+                entities.extend(lidar_entities)
             else:
                 missing_data.append("lidar_clustered_points")
 
@@ -827,6 +872,11 @@ class MappingDataIntegrationNode(Node):
 
         for filter in self.get_current_map_filters():
             map = filter.filter(map)
+
+        for e in map.entities:
+            if e.sensor_id:
+                e.sensor_id = list(dict.fromkeys(e.sensor_id))
+
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
 
@@ -852,6 +902,18 @@ class MappingDataIntegrationNode(Node):
             map_filters.append(LaneIndexFilter())
         if self.filter_enable_pedestrian_grow:
             map_filters.append(GrowPedestriansFilter())
+        if not self.enable_radar_cluster:
+            self.radar_point_assignment_filter.set_radar_points(
+                self.radar_compensated_points_data
+            )
+            self.radar_point_assignment_filter.set_classification_threshold(
+                self.classification_threshold
+            )
+            self.radar_point_assignment_filter.set_radar_lidar_assoc_buffer(
+                self.radar_lidar_assoc_buffer
+            )
+
+            map_filters.append(self.radar_point_assignment_filter)
         if self.filter_tracking_entities:
             self.tracking_filter.set_tracking_velocity_status(
                 self.update_tracking_velocity

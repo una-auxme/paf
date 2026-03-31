@@ -8,12 +8,19 @@
 - [Wait](#wait)
 - [Enter](#enter)
 - [Leave](#leave)
+- [Limitations](#limitations)
 
 ## General
 
-This behavior is used to dynamically overtake an object in close proximity. An overtake checks for traffic on the other lane with the map function is_lane_free(...) and swaps lane as soon as it is free.
+This behavior is used to dynamically bypass an obstacle in close proximity by temporarily using the lane to the left of the ego vehicle.
 
-After the overtake is finished, the vehicle returns to the original lane as soon as it is free.
+To do this, it checks whether the other lane is free with the map function `is_lane_free(...)` and initiates the maneuver as soon as it is considered safe.
+
+In the common case, this corresponds to a classical overtake of a blocked or slow obstacle on the current lane. However, the behavior is implemented more generally as a temporary transition onto the left / oncoming lane segment if that lane is free.
+
+After the maneuver is finished, the vehicle returns to the original lane as soon as it is free again.
+
+This means the behavior is not limited to standard overtaking of slower vehicles. It can also be used in situations where the lane to the left is an oncoming lane, as long as the lane-availability checks allow the maneuver.
 
 To handle the dynamic overtaking a overtake service has been implemented to allow overtake requests and status checks, see [Motion Planning](../motion_planning.md).
 
@@ -72,3 +79,13 @@ If it is free a request is sent to end the overtake and returns RUNNING.
 If there is an obstalce in front in close proximity while overtaking a request is sent to end the overtake as well.
 
 Returns FAILURE when the overtake is finished.
+
+## Limitations
+
+The current overtake behavior does not explicitly consider traffic light states or the reason why a vehicle in front is stopped.
+
+As a result, the behavior may incorrectly trigger an overtake in situations where vehicles are waiting at a red traffic light or other controlled stopping points.
+
+In these cases, the system interprets the stopped vehicle as an obstacle and attempts to bypass it if the left / oncoming lane is considered free.
+
+This can lead to unnecessary or undesired overtaking maneuvers in situations where the ego vehicle should instead remain in its lane and wait.

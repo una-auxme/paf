@@ -24,15 +24,19 @@ endif()
 # find_package(<dependency> REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 # Add all your interface files here:
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MinDistance.msg"
   "msg/TrafficLightState.msg"
   "msg/Waypoint.msg"
+  "msg/TrafficLightImages.msg"
 
   DEPENDENCIES # Add packages that above messages depend on
   geometry_msgs
+  std_msgs sensor_msgs
 )
 
 ament_package()

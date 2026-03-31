@@ -16,6 +16,7 @@
   - [Tree Definition](#tree-definition)
   - [Behaviors](#behaviors)
     - [Blackboard](#blackboard)
+    - [Emergency Publisher](#emergency-publisher)
   - [Guidelines](#guidelines)
     - [Non-Blocking](#non-blocking)
     - [Functions](#functions)
@@ -107,6 +108,17 @@ speed = self.blackboard.get("/carla/hero/Speed")
 ```
 
 Note that you still need to resolve the data-fields of the message (i.e. `blackboardmessage.data` for a `Float64`).
+
+#### Emergency Publisher
+
+The behavior tree also provides an emergency publisher for intersection-related behaviors.
+
+- Topic: `/paf/<role_name>/emergency`
+- Type: `std_msgs/Bool`
+
+This topic is used to signal potentially dangerous situations at intersections, especially when fast cross traffic is detected.
+
+The publisher is created in the behavior tree and passed to the intersection-related behaviors, where it can be used to trigger an emergency warning if required.
 
 ### Guidelines
 

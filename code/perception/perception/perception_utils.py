@@ -192,6 +192,10 @@ def quaternion_to_heading(x: float, y: float, z: float, w: float) -> float:
     """
 
     quaternion = (x, y, z, w)
-    rot = Rotation.from_quat(quaternion)
-    rot_euler = rot.as_euler("xyz", degrees=True)
-    return rot_euler[2]
+    try:
+        rot = Rotation.from_quat(quaternion)
+        rot_euler = rot.as_euler("xyz", degrees=True)
+        return rot_euler[2]
+
+    except ValueError:
+        return 0.0

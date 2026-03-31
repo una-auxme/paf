@@ -14,6 +14,7 @@ The research is structured in folders for each year:
 - [PAF22](./paf22/)
 - [PAF23](./paf23/)
 - [PAF24](./paf24/README.md)
+- [PAF25](./paf25/)
 
 ## 2. Key Resources for Your Research
 
@@ -30,12 +31,12 @@ In addition to the research of the previous years, the following resources can b
   - [Sensor Override Guide](https://leaderboard.carla.org/get_started/#33-override-the-sensors-method)
     - Learn about available sensors, their functions, advantages, and limitations.
 - **Leaderboard Repository**
-  - [Repository Link](https://github.com/carla-simulator/leaderboard/tree/leaderboard-2.0)
-    - Ensure you use the `leaderboard-2.0` branch.
+  - [Repository Link](https://github.com/carla-simulator/leaderboard/tree/leaderboard-2.1)
+    - Ensure you use the `leaderboard-2.1` branch.
     - Currently, we are working on a **Fork**:
-      - [Forked Repository](https://github.com/una-auxme/leaderboard/tree/leaderboard-2.0)
+      - [Forked Repository](https://github.com/una-auxme/leaderboard/tree/leaderboard-2.1)
       - View our changes: [Commit Details](https://github.com/carla-simulator/leaderboard/commit/55a60afc4d60ec1e6766c8640106d377f788fbc5)
-  - **Sensor Noise Configuration** can be accessed [here](https://github.com/una-auxme/leaderboard/blob/leaderboard-2.0/leaderboard/autoagents/agent_wrapper.py).
+  - **Sensor Noise Configuration** can be accessed [here](https://github.com/una-auxme/leaderboard/blob/leaderboard-2.1/leaderboard/autoagents/agent_wrapper.py).
 - **CARLA Documentation**
   - [Core Sensors](https://carla.readthedocs.io/en/latest/core_sensors/)
     - Learn about the general sensors in CARLA; note that not all sensors are available for the leaderboard.
@@ -43,7 +44,7 @@ In addition to the research of the previous years, the following resources can b
   - [ROS Bridge](https://github.com/carla-simulator/ros-bridge)
     - Interface linking the leaderboard, CARLA Python API, and ROS nodes.
   - [Scenario Runner](https://github.com/carla-simulator/scenario_runner)
-    - Defines general scenarios. Find test scenarios for the leaderboard [here](https://github.com/una-auxme/leaderboard/blob/leaderboard-2.0/data/routes_devtest.xml).
+    - Defines general scenarios. Find test scenarios for the leaderboard [here](https://github.com/una-auxme/leaderboard/blob/leaderboard-2.1/data/routes_devtest.xml).
   - [Awesome CARLA Repository](https://github.com/Amin-Tgz/awesome-CARLA)
 
 ### 2.2. General Autonomous Driving Resources

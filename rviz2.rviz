@@ -162,6 +162,7 @@ Visualization Manager:
         ACCDebug: true
         BehaviorInfo: true
         BehaviorMarkers: true
+        CollisionTrajectories: true
         Grid: true
         Lidar: false
         Mapping: true
@@ -310,6 +311,16 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /paf/hero/control/pp_debug_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: CollisionTrajectories
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /paf/hero/planning/collision_trajectories
       Value: true
   Enabled: true
   Global Options:
