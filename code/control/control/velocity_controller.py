@@ -22,88 +22,60 @@ class VelocityController(Node):
         super().__init__("velocity_controller")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.control_loop_rate = (
-            self.declare_parameter(
-                "control_loop_rate",
-                0.05,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate",
+            0.05,
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
-        self.fixed_speed = (
-            self.declare_parameter(
-                "fixed_speed",
-                0.0,
-                descriptor=ParameterDescriptor(
-                    description="Drive with fixed speed / disregard input",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.fixed_speed_active = (
-            self.declare_parameter(
-                "fixed_speed_active",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Activate fixed speed mode disregards input"
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.fixed_speed = self.declare_parameter(
+            "fixed_speed",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Drive with fixed speed / disregard input",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.fixed_speed_active = self.declare_parameter(
+            "fixed_speed_active",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Activate fixed speed mode disregards input"
+            ),
+        ).value
 
-        self.pid_p = (
-            self.declare_parameter(
-                "pid_p",
-                0.60,
-                descriptor=ParameterDescriptor(
-                    description="P for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.pid_i = (
-            self.declare_parameter(
-                "pid_i",
-                0.00076,
-                descriptor=ParameterDescriptor(
-                    description="I for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.pid_d = (
-            self.declare_parameter(
-                "pid_d",
-                0.63,
-                descriptor=ParameterDescriptor(
-                    description="D for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.pid_p = self.declare_parameter(
+            "pid_p",
+            0.60,
+            descriptor=ParameterDescriptor(
+                description="P for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
+                ],
+            ),
+        ).value
+        self.pid_i = self.declare_parameter(
+            "pid_i",
+            0.00076,
+            descriptor=ParameterDescriptor(
+                description="I for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
+                ],
+            ),
+        ).value
+        self.pid_d = self.declare_parameter(
+            "pid_d",
+            0.63,
+            descriptor=ParameterDescriptor(
+                description="D for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
 
         self.target_velocity_sub: Subscription = self.create_subscription(
             Float32,

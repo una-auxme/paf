@@ -38,69 +38,45 @@ class VehicleController(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.loop_sleep_time = (
-            self.declare_parameter(
-                "loop_sleep_time",
-                0.2,
-                descriptor=ParameterDescriptor(
-                    description="This sleep time is used to slow down the vehicle "
-                    "controller to a reasonable speed",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.05, to_value=0.4, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.loop_sleep_time = self.declare_parameter(
+            "loop_sleep_time",
+            0.2,
+            descriptor=ParameterDescriptor(
+                description="This sleep time is used to slow down the vehicle "
+                "controller to a reasonable speed",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.05, to_value=0.4, step=0.01)
+                ],
+            ),
+        ).value
         # Manual control
-        self.manual_override_active = (
-            self.declare_parameter(
-                "manual_override_active",
-                False,
-                descriptor=ParameterDescriptor(description="Activate Manual Override"),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.manual_steer = (
-            self.declare_parameter(
-                "manual_steer",
-                0.0,
-                descriptor=ParameterDescriptor(
-                    description="Steering input sent to carla.",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.manual_throttle = (
-            self.declare_parameter(
-                "manual_throttle",
-                0.0,
-                descriptor=ParameterDescriptor(
-                    description="Throttle input sent to carla.",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.manual_override_active = self.declare_parameter(
+            "manual_override_active",
+            False,
+            descriptor=ParameterDescriptor(description="Activate Manual Override"),
+        ).value
+        self.manual_steer = self.declare_parameter(
+            "manual_steer",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Steering input sent to carla.",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.manual_throttle = self.declare_parameter(
+            "manual_throttle",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Throttle input sent to carla.",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-1.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
 
         # State variables
         self.__curr_behavior = None

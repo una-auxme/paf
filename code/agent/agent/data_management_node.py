@@ -21,11 +21,7 @@ class DataManagement(Node):
         self.global_plan: Optional[CarlaRoute] = None
 
         # Parameters
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
         # Services
         # Get created only after data is available

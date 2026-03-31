@@ -239,19 +239,11 @@ class BehaviorTree(Node):
         )
 
         # Parameters
-        self.control_loop_rate = (
-            self.declare_parameter(
-                "control_loop_rate",
-                1.0 / 5.3,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate",
+            1.0 / 5.3,
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
         register_parameters(self, self.blackboard)
 
         # Publishers

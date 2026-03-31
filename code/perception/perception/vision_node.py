@@ -50,72 +50,40 @@ class VisionNode(Node):
         self.bridge = CvBridge()
 
         # Parameters
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.view_camera = (
-            self.declare_parameter("view_camera", False)
-            .get_parameter_value()
-            .bool_value
-        )
-        self.camera_resolution = (
-            self.declare_parameter("camera_resolution", 1280)
-            .get_parameter_value()
-            .integer_value
-        )
-        self.model = (
-            self.declare_parameter("model", "yolo11m-seg")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.view_camera = self.declare_parameter("view_camera", False).value
+        self.camera_resolution = self.declare_parameter("camera_resolution", 1280).value
+        self.model = self.declare_parameter("model", "yolo11m-seg").value
         # Traffic light parameters
-        self.min_x: int = (
-            self.declare_parameter(
-                "min_x",
-                485,
-                descriptor=ParameterDescriptor(
-                    description="Left End of Traffic Light bounding box",
-                ),
-            )
-            .get_parameter_value()
-            .integer_value
-        )
-        self.max_x: int = (
-            self.declare_parameter(
-                "max_x",
-                780,
-                descriptor=ParameterDescriptor(
-                    description="Right End of Traffic Light bounding box",
-                ),
-            )
-            .get_parameter_value()
-            .integer_value
-        )
-        self.max_y: int = (
-            self.declare_parameter(
-                "max_y",
-                360,
-                descriptor=ParameterDescriptor(
-                    description="Lower End of Traffic Light bounding box measuring "
-                    "from the top. (0,0) is the top left corner",
-                ),
-            )
-            .get_parameter_value()
-            .integer_value
-        )
-        self.min_prob: float = (
-            self.declare_parameter(
-                "min_prob",
-                0.30,
-                descriptor=ParameterDescriptor(
-                    description="Minimal Probability, that it's a light",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.min_x: int = self.declare_parameter(
+            "min_x",
+            485,
+            descriptor=ParameterDescriptor(
+                description="Left End of Traffic Light bounding box",
+            ),
+        ).value
+        self.max_x: int = self.declare_parameter(
+            "max_x",
+            780,
+            descriptor=ParameterDescriptor(
+                description="Right End of Traffic Light bounding box",
+            ),
+        ).value
+        self.max_y: int = self.declare_parameter(
+            "max_y",
+            360,
+            descriptor=ParameterDescriptor(
+                description="Lower End of Traffic Light bounding box measuring "
+                "from the top. (0,0) is the top left corner",
+            ),
+        ).value
+        self.min_prob: float = self.declare_parameter(
+            "min_prob",
+            0.30,
+            descriptor=ParameterDescriptor(
+                description="Minimal Probability, that it's a light",
+            ),
+        ).value
 
         self.depth_images = []
         self.lidar_array = None

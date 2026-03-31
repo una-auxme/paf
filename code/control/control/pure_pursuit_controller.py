@@ -36,73 +36,49 @@ class PurePursuitController(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
-        self.k_lad = (
-            self.declare_parameter(
-                "k_lad",
-                0.85,
-                descriptor=ParameterDescriptor(
-                    description="Impact of velocity on lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_la_distance = (
-            self.declare_parameter(
-                "min_la_distance",
-                3.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimal lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_la_distance = (
-            self.declare_parameter(
-                "max_la_distance",
-                25.0,
-                descriptor=ParameterDescriptor(
-                    description="Maximal lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=10.0, to_value=50.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.k_pub = (
-            self.declare_parameter(
-                "k_pub",
-                0.8,
-                descriptor=ParameterDescriptor(
-                    description="Proportional factor of published steer",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.1, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.k_lad = self.declare_parameter(
+            "k_lad",
+            0.85,
+            descriptor=ParameterDescriptor(
+                description="Impact of velocity on lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.min_la_distance = self.declare_parameter(
+            "min_la_distance",
+            3.0,
+            descriptor=ParameterDescriptor(
+                description="Minimal lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.max_la_distance = self.declare_parameter(
+            "max_la_distance",
+            25.0,
+            descriptor=ParameterDescriptor(
+                description="Maximal lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=10.0, to_value=50.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.k_pub = self.declare_parameter(
+            "k_pub",
+            0.8,
+            descriptor=ParameterDescriptor(
+                description="Proportional factor of published steer",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.1, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
 
         self.trajectory_sub: Subscription = self.create_subscription(
             Path, "/paf/acting/trajectory_local", self.__set_trajectory, qos_profile=1

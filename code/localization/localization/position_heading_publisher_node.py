@@ -58,44 +58,26 @@ class PositionHeadingPublisherNode(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
         # Filter used:
         """
         Possible Filters:
         Pos: EKF, Kalman, RunningAvg, None
         Heading: EKF, Kalman, None
         """
-        self.pos_filter = (
-            self.declare_parameter(
-                "pos_filter",
-                "EKF",
-                descriptor=ParameterDescriptor(
-                    description="Options: EKF, Kalman, RunningAvg, None"
-                ),
-            )
-            .get_parameter_value()
-            .string_value
-        )
-        self.heading_filter = (
-            self.declare_parameter(
-                "heading_filter",
-                "EKF",
-                descriptor=ParameterDescriptor(
-                    description="Options: EKF, Kalman, None"
-                ),
-            )
-            .get_parameter_value()
-            .string_value
-        )
+        self.pos_filter = self.declare_parameter(
+            "pos_filter",
+            "EKF",
+            descriptor=ParameterDescriptor(
+                description="Options: EKF, Kalman, RunningAvg, None"
+            ),
+        ).value
+        self.heading_filter = self.declare_parameter(
+            "heading_filter",
+            "EKF",
+            descriptor=ParameterDescriptor(description="Options: EKF, Kalman, None"),
+        ).value
         self.get_logger().info(
             f"Pos Filter: {self.pos_filter}, Heading Filter: {self.heading_filter}"
         )

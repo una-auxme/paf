@@ -46,55 +46,33 @@ class LidarDistance(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.clustering_w = (
-            self.declare_parameter(
-                "clustering_w",
-                0.0285,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_w = self.declare_parameter(
+            "clustering_w",
+            0.0285,
+        ).value
 
-        self.clustering_lidar_z_min = (
-            self.declare_parameter(
-                "clustering_lidar_z_min",
-                -1.4,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_lidar_z_min = self.declare_parameter(
+            "clustering_lidar_z_min",
+            -1.4,
+        ).value
 
-        self.clustering_lidar_z_max = (
-            self.declare_parameter(
-                "clustering_lidar_z_max",
-                1.5,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_lidar_z_max = self.declare_parameter(
+            "clustering_lidar_z_max",
+            1.5,
+        ).value
 
-        self.dbscan_eps = (
-            self.declare_parameter(
-                "dbscan_eps",
-                0.03375,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.dbscan_min_samples = (
-            self.declare_parameter(
-                "dbscan_min_samples",
-                10,
-            )
-            .get_parameter_value()
-            .integer_value
-        )
+        self.dbscan_eps = self.declare_parameter(
+            "dbscan_eps",
+            0.03375,
+        ).value
+        self.dbscan_min_samples = self.declare_parameter(
+            "dbscan_min_samples",
+            10,
+        ).value
 
-        self.compensation_strategy = (
-            self.declare_parameter("compensation_strategy", "LocalCompensation")
-            .get_parameter_value()
-            .string_value
-        )
+        self.compensation_strategy = self.declare_parameter(
+            "compensation_strategy", "LocalCompensation"
+        ).value
 
         compensation_dict = {
             "NoCompensation": NoCompensation,

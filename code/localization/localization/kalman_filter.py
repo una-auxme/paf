@@ -94,16 +94,10 @@ class KalmanFilter(Node):
 
         # basic info
         self.transformer = None  # for coordinate transformation
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.001)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate", 0.001
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
         self.frame_id = "map"
 
         self.dt = self.control_loop_rate

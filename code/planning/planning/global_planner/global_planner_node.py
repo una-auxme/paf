@@ -65,19 +65,11 @@ class PrePlanner(Node):
         self.speed_limits: Optional[Float32MultiArray] = None
 
         # Parameters
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.distance_spawn_to_first_wp = (
-            self.declare_parameter(
-                "distance_spawn_to_first_wp",
-                100.0,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.distance_spawn_to_first_wp = self.declare_parameter(
+            "distance_spawn_to_first_wp",
+            100.0,
+        ).value
 
         # Services
         # Get created only after data is available

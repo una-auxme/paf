@@ -82,299 +82,206 @@ class MappingDataIntegrationNode(Node):
 
         # Parameters
 
-        self.map_publish_rate = (
-            self.declare_parameter("map_publish_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
+        self.map_publish_rate = self.declare_parameter("map_publish_rate", 0.05).value
 
         # Parameters: Enable entity sources
 
-        self.enable_radar_cluster = (
-            self.declare_parameter(
-                "enable_radar_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Radar Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_lidar_cluster = (
-            self.declare_parameter(
-                "enable_lidar_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Lidar Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_vision_cluster = (
-            self.declare_parameter(
-                "enable_vision_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Vision Node Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_raw_lidar_points = (
-            self.declare_parameter(
-                "enable_raw_lidar_points",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Enable raw lidar input",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_lane_marker = (
-            self.declare_parameter(
-                "enable_lane_marker",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Lane Mark integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_stop_marks = (
-            self.declare_parameter(
-                "enable_stop_marks",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable stop marks from the UpdateStopMarks service",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.radar_lidar_assoc_buffer = (
-            self.declare_parameter(
-                "radar_lidar_assoc_buffer",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Buffer [m] around lidar polygon for radar association"
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.enable_radar_cluster = self.declare_parameter(
+            "enable_radar_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Radar Cluster integration",
+            ),
+        ).value
+        self.enable_lidar_cluster = self.declare_parameter(
+            "enable_lidar_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Lidar Cluster integration",
+            ),
+        ).value
+        self.enable_vision_cluster = self.declare_parameter(
+            "enable_vision_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Vision Node Cluster integration",
+            ),
+        ).value
+        self.enable_raw_lidar_points = self.declare_parameter(
+            "enable_raw_lidar_points",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Enable raw lidar input",
+            ),
+        ).value
+        self.enable_lane_marker = self.declare_parameter(
+            "enable_lane_marker",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Lane Mark integration",
+            ),
+        ).value
+        self.enable_stop_marks = self.declare_parameter(
+            "enable_stop_marks",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable stop marks from the UpdateStopMarks service",
+            ),
+        ).value
+        self.radar_lidar_assoc_buffer = self.declare_parameter(
+            "radar_lidar_assoc_buffer",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Buffer [m] around lidar polygon for radar association"
+            ),
+        ).value
 
         # Parameters: Filtering
 
-        self.filter_enable_lane_index = (
-            self.declare_parameter(
-                "filter_enable_lane_index",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the lane index filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_enable_pedestrian_grow = (
-            self.declare_parameter(
-                "filter_enable_pedestrian_grow",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the pedestrian grow filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_enable_merge = (
-            self.declare_parameter(
-                "filter_enable_merge",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the merging filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_merge_growth_distance = (
-            self.declare_parameter(
-                "filter_merge_growth_distance",
-                0.3,
-                descriptor=ParameterDescriptor(
-                    description="Amount shapes grow before merging in meters",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.filter_merge_min_overlap_percent = (
-            self.declare_parameter(
-                "filter_merge_min_overlap_percent",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Min overlap of the grown shapes in percent",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.filter_merge_min_overlap_area = (
-            self.declare_parameter(
-                "filter_merge_min_overlap_area",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Min overlap of the grown shapes in m2",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.polygon_simplify_tolerance = (
-            self.declare_parameter(
-                "polygon_simplify_tolerance",
-                0.1,
-                descriptor=ParameterDescriptor(
-                    description="The polygon simplify tolerance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.filter_enable_lane_index = self.declare_parameter(
+            "filter_enable_lane_index",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the lane index filter",
+            ),
+        ).value
+        self.filter_enable_pedestrian_grow = self.declare_parameter(
+            "filter_enable_pedestrian_grow",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the pedestrian grow filter",
+            ),
+        ).value
+        self.filter_enable_merge = self.declare_parameter(
+            "filter_enable_merge",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the merging filter",
+            ),
+        ).value
+        self.filter_merge_growth_distance = self.declare_parameter(
+            "filter_merge_growth_distance",
+            0.3,
+            descriptor=ParameterDescriptor(
+                description="Amount shapes grow before merging in meters",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.filter_merge_min_overlap_percent = self.declare_parameter(
+            "filter_merge_min_overlap_percent",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Min overlap of the grown shapes in percent",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.filter_merge_min_overlap_area = self.declare_parameter(
+            "filter_merge_min_overlap_area",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Min overlap of the grown shapes in m2",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.polygon_simplify_tolerance = self.declare_parameter(
+            "polygon_simplify_tolerance",
+            0.1,
+            descriptor=ParameterDescriptor(
+                description="The polygon simplify tolerance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.filter_tracking_entities = (
-            self.declare_parameter(
-                "filter_tracking_entities",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the tracking filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.filter_tracking_entities = self.declare_parameter(
+            "filter_tracking_entities",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the tracking filter",
+            ),
+        ).value
 
-        self.update_tracking_velocity = (
-            self.declare_parameter(
-                "update_tracking_velocity",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable to update tracking motion data ",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.update_tracking_velocity = self.declare_parameter(
+            "update_tracking_velocity",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable to update tracking motion data ",
+            ),
+        ).value
 
         self.tracking_filter = TrackingFilter()
         self.radar_point_assignment_filter = RadarPointAssignmentFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
-        self.lidar_z_min = (
-            self.declare_parameter(
-                "lidar_z_min",
-                -1.5,
-                descriptor=ParameterDescriptor(
-                    description="Excludes lidar points below this height",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-10.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_z_max = (
-            self.declare_parameter(
-                "lidar_z_max",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Exclude lidar points above this height",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_shape_radius = (
-            self.declare_parameter(
-                "lidar_shape_radius",
-                0.15,
-                descriptor=ParameterDescriptor(
-                    description="The radius with which lidar points get added to map",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_priority = (
-            self.declare_parameter(
-                "lidar_priority",
-                0.25,
-                descriptor=ParameterDescriptor(
-                    description="The priority lidar points have in the map",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_discard_probability = (
-            self.declare_parameter(
-                "lidar_discard_probability",
-                0.9,
-                descriptor=ParameterDescriptor(
-                    description="Discard this many lidar points. "
-                    "Important for performance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.lidar_z_min = self.declare_parameter(
+            "lidar_z_min",
+            -1.5,
+            descriptor=ParameterDescriptor(
+                description="Excludes lidar points below this height",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-10.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_z_max = self.declare_parameter(
+            "lidar_z_max",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Exclude lidar points above this height",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_shape_radius = self.declare_parameter(
+            "lidar_shape_radius",
+            0.15,
+            descriptor=ParameterDescriptor(
+                description="The radius with which lidar points get added to map",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_priority = self.declare_parameter(
+            "lidar_priority",
+            0.25,
+            descriptor=ParameterDescriptor(
+                description="The priority lidar points have in the map",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_discard_probability = self.declare_parameter(
+            "lidar_discard_probability",
+            0.9,
+            descriptor=ParameterDescriptor(
+                description="Discard this many lidar points. Important for performance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
         # Parameter Radar classification
-        self.classification_threshold = (
-            self.declare_parameter(
-                "classification_threshold",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Threshold when an entity is classified as stationary",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.classification_threshold = self.declare_parameter(
+            "classification_threshold",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Threshold when an entity is classified as stationary",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
+                ],
+            ),
+        ).value
         # For the stop marks:
         self.stop_marks = {}
 

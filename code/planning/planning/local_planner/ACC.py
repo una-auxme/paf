@@ -51,184 +51,132 @@ class ACC(Node):
         mapping_common.set_logger(self.get_logger())
 
         # Parameters
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
-        self.k_p = (
-            self.declare_parameter(
-                "k_p",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Kp used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.k_i = (
-            self.declare_parameter(
-                "k_i",
-                1.2,
-                descriptor=ParameterDescriptor(
-                    description="Ki used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.t_gap = (
-            self.declare_parameter(
-                "t_gap",
-                1.9,
-                descriptor=ParameterDescriptor(
-                    description="Time gap used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.d_min = (
-            self.declare_parameter(
-                "d_min",
-                0.7,
-                descriptor=ParameterDescriptor(
-                    description="Minimal distance to the object in front when standing",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.k_p = self.declare_parameter(
+            "k_p",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Kp used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.k_i = self.declare_parameter(
+            "k_i",
+            1.2,
+            descriptor=ParameterDescriptor(
+                description="Ki used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.t_gap = self.declare_parameter(
+            "t_gap",
+            1.9,
+            descriptor=ParameterDescriptor(
+                description="Time gap used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.d_min = self.declare_parameter(
+            "d_min",
+            0.7,
+            descriptor=ParameterDescriptor(
+                description="Minimal distance to the object in front when standing",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.hard_approach_distance = (
-            self.declare_parameter(
-                "hard_approach_distance",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Minimum distance when closely approaching an obstacle",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.hard_approach_speed = (
-            self.declare_parameter(
-                "hard_approach_speed",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimum speed when closely approaching an obstacle",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.hard_approach_distance = self.declare_parameter(
+            "hard_approach_distance",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Minimum distance when closely approaching an obstacle",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.hard_approach_speed = self.declare_parameter(
+            "hard_approach_speed",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Minimum speed when closely approaching an obstacle",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.acceleration_factor = (
-            self.declare_parameter(
-                "acceleration_factor",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Adjusts the acceleration",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.acceleration_factor = self.declare_parameter(
+            "acceleration_factor",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Adjusts the acceleration",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.curve_line_angle = (
-            self.declare_parameter(
-                "curve_line_angle",
-                15.0,
-                descriptor=ParameterDescriptor(
-                    description="Angle (deg!) of the line "
-                    "used to calculate the curve distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_curve_speed = (
-            self.declare_parameter(
-                "min_curve_speed",
-                4.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimum desired curve speed at min_curve_distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_curve_distance = (
-            self.declare_parameter(
-                "min_curve_distance",
-                2.0,
-                descriptor=ParameterDescriptor(
-                    description="Distance to the intersection with the trajectory",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_curve_speed = (
-            self.declare_parameter(
-                "max_curve_speed",
-                30.0,
-                descriptor=ParameterDescriptor(
-                    description="Maximum desired curve speed at max_curve_distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=50.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_curve_distance = (
-            self.declare_parameter(
-                "max_curve_distance",
-                50.0,
-                descriptor=ParameterDescriptor(
-                    description="Distance to the intersection with the trajectory",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.curve_line_angle = self.declare_parameter(
+            "curve_line_angle",
+            15.0,
+            descriptor=ParameterDescriptor(
+                description="Angle (deg!) of the line "
+                "used to calculate the curve distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.min_curve_speed = self.declare_parameter(
+            "min_curve_speed",
+            4.0,
+            descriptor=ParameterDescriptor(
+                description="Minimum desired curve speed at min_curve_distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.min_curve_distance = self.declare_parameter(
+            "min_curve_distance",
+            2.0,
+            descriptor=ParameterDescriptor(
+                description="Distance to the intersection with the trajectory",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.max_curve_speed = self.declare_parameter(
+            "max_curve_speed",
+            30.0,
+            descriptor=ParameterDescriptor(
+                description="Maximum desired curve speed at max_curve_distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=50.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.max_curve_distance = self.declare_parameter(
+            "max_curve_distance",
+            50.0,
+            descriptor=ParameterDescriptor(
+                description="Distance to the intersection with the trajectory",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
+                ],
+            ),
+        ).value
 
         # Get Map
         self.map_sub: Subscription = self.create_subscription(

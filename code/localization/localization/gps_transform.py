@@ -27,16 +27,10 @@ class GpsTransform(Node):
         super().__init__("gps_transform")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
         self.transformer = CoordinateTransformer()
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
-        self.position_use_ground_truth = (
-            self.declare_parameter("position_use_ground_truth", False)
-            .get_parameter_value()
-            .bool_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.position_use_ground_truth = self.declare_parameter(
+            "position_use_ground_truth", False
+        ).value
 
         # Initalize publisher for Odometry data
         self.odometry_publisher: Publisher = self.create_publisher(

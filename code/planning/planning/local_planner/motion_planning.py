@@ -72,35 +72,23 @@ class MotionPlanning(Node):
 
         mapping_common.set_logger(self.get_logger())
 
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
-        self.time_horizon = (
-            self.declare_parameter(
-                "time_horizon",
-                3.0,
-                descriptor=ParameterDescriptor(
-                    description="Set time_horizon in seconds for trajectory prediction",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.time_horizon = self.declare_parameter(
+            "time_horizon",
+            3.0,
+            descriptor=ParameterDescriptor(
+                description="Set time_horizon in seconds for trajectory prediction",
+            ),
+        ).value
 
-        self.crash_threshold = (
-            self.declare_parameter(
-                "crash_threshold",
-                2.0,
-                descriptor=ParameterDescriptor(
-                    description="Set crash_threshold in seconds",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.crash_threshold = self.declare_parameter(
+            "crash_threshold",
+            2.0,
+            descriptor=ParameterDescriptor(
+                description="Set crash_threshold in seconds",
+            ),
+        ).value
         self.add_on_set_parameters_callback(self._set_parameters_callback)
 
         # Overtake related stuff
