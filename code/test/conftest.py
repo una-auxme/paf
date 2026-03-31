@@ -8,6 +8,9 @@ from types import SimpleNamespace
 import pytest
 
 
+collect_ignore = ["run_test.py"]
+
+
 @pytest.fixture(autouse=True)
 def deterministic_seed() -> None:
     """Set deterministic pseudo-random seeds for repeatable test behavior."""
