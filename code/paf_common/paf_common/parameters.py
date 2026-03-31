@@ -1,4 +1,4 @@
-from typing import List
+"""Helpers for mapping ROS parameter updates onto node attributes."""
 
 from rclpy.node import Node
 from rclpy.parameter import Parameter
@@ -7,17 +7,17 @@ from rcl_interfaces.msg import (
 )
 
 
-def update_attributes(obj: Node, params: List[Parameter]) -> SetParametersResult:
-    """Update attributes of obj with params
+def update_attributes(obj: Node, params: list[Parameter]) -> SetParametersResult:
+    """Update node attributes from ROS parameter values.
 
-    Important: Attribute names must match parameter names
+    Important: Attribute names must match parameter names.
 
     Args:
-        obj (Node): Node which attributes are updated
-        params (List[Parameter]): parameters with new values
+        obj: Node whose attributes are updated.
+        params: Parameters with new values.
 
     Returns:
-        SetParametersResult:
+        Result object describing whether all updates succeeded.
     """
     result = SetParametersResult()
     result.successful = True

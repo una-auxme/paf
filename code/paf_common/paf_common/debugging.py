@@ -1,4 +1,5 @@
-from typing import Optional
+"""Helpers for attaching a debugpy debugger to running ROS nodes."""
+
 import inspect
 import importlib.util
 
@@ -7,10 +8,12 @@ from rclpy.impl.rcutils_logger import RcutilsLogger
 
 
 def get_logger() -> RcutilsLogger:
+    """Return the shared debugger logger."""
     return rclpy.logging.get_logger("debugger")
 
 
 def get_caller_file() -> str:
+    """Return the outermost caller filename when available."""
     stack = inspect.stack()
     if len(stack) < 1:
         return "unknown"
@@ -19,19 +22,18 @@ def get_caller_file() -> str:
 
 
 def start_debugger(
-    node_module_name: Optional[str] = None,
+    node_module_name: str | None = None,
     host: str = "127.0.0.1",
     port: int = 53000,
     wait_for_client: bool = False,
-):
-    """_summary_
+)-> None:
+    """Start a debugpy listener for the current node when debugpy is available.
 
     Args:
-        node_module_name (str): Name of the underlying node. Only used for logging
-        host (str): host the debugger binds to
-        port (int): debugger port
-        wait_for_client (bool, optional): If the debugger should wait
-            for a client to attach. Defaults to False.
+        node_module_name: Name of the underlying node. Used for logging only.
+        host: Host address the debugger binds to.
+        port: Debugger port.
+        wait_for_client: Whether to wait until a debugger client attaches.
     """
     debugger_spec = importlib.util.find_spec("debugpy")
     if debugger_spec is not None:

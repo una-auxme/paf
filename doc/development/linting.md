@@ -38,6 +38,11 @@ Use the strict profile when hardening a package:
 ruff check /workspace/code/<package> --config /workspace/ruff-strict.toml
 ```
 
+Current rollout:
+
+- `code/paf_common` is gated in CI with the strict profile.
+- Expand strict enforcement package-by-package instead of enabling it repo-wide at once.
+
 ### Run Ruff via Docker Compose
 
 Use the pinned version directly from the host:
