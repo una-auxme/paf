@@ -78,6 +78,8 @@ pre-commit run --all-files
    - `Lint current Python file with ruff`
    - `Format current Python file with ruff`
    - `Lint active package with ruff`
+   - `Run host smoke tests`
+   - `Run ROS-backed unit tests (dev container)`
    - `Dependency check in dev container`
    - `Pre-PR quality check`
 5. Commit only related files and open a focused PR.

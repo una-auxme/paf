@@ -1,7 +1,11 @@
-from mapping_common.transform import Transform2D, Vector2, Point2
 import math
 
+import pytest
+
+from mapping_common.transform import Transform2D, Vector2, Point2
 from test_shape import get_polygon
+
+pytestmark = pytest.mark.unit
 
 
 def test_point_conversion():

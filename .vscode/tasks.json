@@ -100,30 +100,37 @@
       "detail": "Checks ruff formatting for the package derived from the currently active file path."
     },
     {
-      "label": "Run pytest (unit)",
+      "label": "Run host smoke tests",
       "type": "shell",
-      "command": "pytest -m unit",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit",
       "problemMatcher": [],
-      "detail": "Runs fast unit tests marked with @pytest.mark.unit."
+      "detail": "Runs the host-runnable smoke test subset under code/test."
+    },
+    {
+      "label": "Run ROS-backed unit tests (dev container)",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && colcon build --symlink-install --continue-on-error --packages-up-to mapping perception planning && devsource && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest /workspace/code/perception/tests /workspace/code/mapping/test /workspace/code/planning/test -m unit'",
+      "problemMatcher": [],
+      "detail": "Builds mapping, perception, and planning plus dependencies in the dev container and runs ROS-backed unit tests."
     },
     {
       "label": "Run pytest (integration)",
       "type": "shell",
-      "command": "pytest -m integration",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m integration",
       "problemMatcher": [],
       "detail": "Runs integration tests marked with @pytest.mark.integration."
     },
     {
       "label": "Run pytest (simulation)",
       "type": "shell",
-      "command": "pytest -m sim",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m sim",
       "problemMatcher": [],
       "detail": "Runs simulation tests marked with @pytest.mark.sim."
     },
     {
       "label": "Run pytest with coverage",
       "type": "shell",
-      "command": "pytest --cov=code --cov-report=term-missing",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest --cov=code --cov-report=term-missing",
       "problemMatcher": [],
       "detail": "Runs all tests and reports coverage for the code workspace."
     },
@@ -151,9 +158,9 @@
     {
       "label": "Pre-PR quality check",
       "type": "shell",
-      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.check && ruff check /workspace/code/ && ruff format /workspace/code/ --check && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest code/test -m unit'",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.check && ruff check /workspace/code/ && ruff format /workspace/code/ --check && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit'",
       "problemMatcher": [],
-      "detail": "Runs dependency check, lint, format, and fast unit tests before opening a PR."
+      "detail": "Runs dependency check, lint, format, and the host smoke test subset before opening a PR."
     },
     {
       "label": "Run dependency doctor",

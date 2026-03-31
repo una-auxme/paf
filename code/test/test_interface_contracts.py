@@ -9,10 +9,12 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
+CODE_ROOT = Path(__file__).resolve().parents[1]
+
 INTERFACE_PACKAGE_XML = [
-    Path("/workspace/code/mapping_interfaces/package.xml"),
-    Path("/workspace/code/perception_interfaces/package.xml"),
-    Path("/workspace/code/planning_interfaces/package.xml"),
+    CODE_ROOT / "mapping_interfaces/package.xml",
+    CODE_ROOT / "perception_interfaces/package.xml",
+    CODE_ROOT / "planning_interfaces/package.xml",
 ]
 
 REQUIRED_TEXT_TAGS = {

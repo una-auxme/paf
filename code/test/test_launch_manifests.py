@@ -9,14 +9,16 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
+CODE_ROOT = Path(__file__).resolve().parents[1]
+
 LAUNCH_XML_FILES = [
-    Path("/workspace/code/acting/launch/acting.xml"),
-    Path("/workspace/code/agent/launch/agent.dev.xml"),
-    Path("/workspace/code/control/launch/control.xml"),
-    Path("/workspace/code/localization/launch/localization.xml"),
-    Path("/workspace/code/mapping/launch/mapping.xml"),
-    Path("/workspace/code/perception/launch/perception.xml"),
-    Path("/workspace/code/planning/launch/planning.dev.xml"),
+    CODE_ROOT / "acting/launch/acting.xml",
+    CODE_ROOT / "agent/launch/agent.dev.xml",
+    CODE_ROOT / "control/launch/control.xml",
+    CODE_ROOT / "localization/launch/localization.xml",
+    CODE_ROOT / "mapping/launch/mapping.xml",
+    CODE_ROOT / "perception/launch/perception.xml",
+    CODE_ROOT / "planning/launch/planning.dev.xml",
 ]
 
 
@@ -30,7 +32,7 @@ def test_launch_xml_is_well_formed(launch_path: Path) -> None:
 
 def test_agent_launch_contains_core_subsystems() -> None:
     """Ensure the dev agent launch includes the subsystem launch files."""
-    agent_launch = Path("/workspace/code/agent/launch/agent.dev.xml")
+    agent_launch = CODE_ROOT / "agent/launch/agent.dev.xml"
     root = ET.parse(agent_launch).getroot()
     included_files = {include.get("file", "") for include in root.findall("include")}
 
@@ -47,7 +49,7 @@ def test_agent_launch_contains_core_subsystems() -> None:
 
 def test_agent_persistent_launch_contains_localization() -> None:
     """Ensure persistent launch file keeps localization and persistent planning."""
-    persistent_launch = Path("/workspace/code/agent/launch/agent.dev.persistent.xml")
+    persistent_launch = CODE_ROOT / "agent/launch/agent.dev.persistent.xml"
     root = ET.parse(persistent_launch).getroot()
     included_files = {include.get("file", "") for include in root.findall("include")}
 

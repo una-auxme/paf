@@ -1,6 +1,8 @@
-from typing import List
-import shapely
 import math
+from typing import List
+
+import pytest
+import shapely
 
 import mapping_common.map
 import mapping_common.mask
@@ -10,6 +12,8 @@ from mapping_common.transform import Transform2D, Vector2
 
 import test_entity
 import test_shape
+
+pytestmark = pytest.mark.unit
 
 
 def test_circle_shapely():

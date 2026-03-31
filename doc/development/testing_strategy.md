@@ -16,10 +16,27 @@
 
 Repository markers are defined in `pytest.ini`.
 
-- Run unit tests: `pytest -m unit`
+- Run host smoke tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit`
+- Run unit tests in the current environment: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m unit`
 - Run integration tests: `pytest -m integration`
 - Run simulation tests: `pytest -m sim`
 - Run all tests with coverage: `pytest --cov=code --cov-report=term-missing`
+
+## Host smoke tests vs ROS-backed unit tests
+
+Use two different fast loops:
+
+- Host smoke tests: `code/test` only. These must stay runnable outside the dev container and should not depend on `/workspace`, sourced ROS overlays, or generated interfaces.
+- ROS-backed unit tests: package-local tests such as `code/perception/tests`, `code/mapping/test`, and `code/planning/test`. These run inside the dev container after building the required package closure.
+
+Example ROS-backed unit test loop inside the dev container:
+
+```bash
+source /internal_workspace/dev.bashrc
+colcon build --symlink-install --continue-on-error --packages-up-to mapping perception planning
+devsource
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest /workspace/code/perception/tests /workspace/code/mapping/test /workspace/code/planning/test -m unit
+```
 
 ## Submodule strategy
 
@@ -32,6 +49,8 @@ For each package under `code/<package>`:
 
 ## CI recommendation (phased)
 
-- On every PR: run `unit` tests.
+- On every PR: run host smoke tests on `ubuntu-latest`.
+- On every PR: run ROS-backed mapping/perception/planning unit tests in the agent container on the self-hosted build runner.
+- On every PR: run strict Ruff for starter packages that have opted in.
 - On merge to main or scheduled runs: run `integration` tests.
 - Nightly or hardware-backed pipeline: run `sim` tests.

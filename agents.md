@@ -70,6 +70,7 @@ After changes:
 1. Run targeted lint/format checks for touched Python files.
 2. Run nearest relevant tests (if present) before broad test runs.
 3. If Docker/ROS behavior changed, validate with the closest existing launch/build flow.
+4. For ROS-backed pytest runs in the dev container, source `/internal_workspace/dev.bashrc`, build the required package closure, and call `devsource` before running tests so generated interfaces are on `PYTHONPATH`.
 
 Do not attempt to fix unrelated failing tests/lints outside the requested scope.
 

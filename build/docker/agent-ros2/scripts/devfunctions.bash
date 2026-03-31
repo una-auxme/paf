@@ -27,6 +27,11 @@ EOF
 # This function sources the ROS /workspace
 devsource() {
   source "${INTERNAL_WORKSPACE_DIR}/env.bash"
+
+  if [ -f "${PAF_ROS_WS}/install/local_setup.bash" ]; then
+    source "${PAF_ROS_WS}/install/local_setup.bash"
+  fi
+
   echo "${INTERNAL_WORKSPACE_DIR}/env.bash sourced."
 }
 export -f devsource

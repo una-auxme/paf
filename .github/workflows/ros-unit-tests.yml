@@ -1,0 +1,40 @@
+name: ROS backed unit tests container
+
+on:
+    pull_request:
+        branches:
+            - main
+    push:
+        branches:
+            - main
+
+jobs:
+    ros_unit_tests:
+        name: Run ROS-backed unit tests in agent container
+        runs-on:
+            - self-hosted
+            - build
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set test image tag
+              run: echo "TEST_IMAGE=paf-agent-deploy-test:${GITHUB_SHA}" >> "$GITHUB_ENV"
+            - name: Build agent-deploy test image
+              run: |
+                  docker build \
+                    --target agent-deploy \
+                    --file build/docker/agent-ros2/Dockerfile \
+                    --build-arg PAF_USERNAME=paf \
+                    --build-arg PAF_UID=1000 \
+                    --build-arg PAF_GID=1000 \
+                    --build-arg BASE_FLAVOUR=cuda \
+                    --tag "${TEST_IMAGE}" \
+                    .
+            - name: Run ROS-backed unit tests
+              run: |
+                  docker run --rm \
+                    --entrypoint bash \
+                    "${TEST_IMAGE}" \
+                    -lc 'source /internal_workspace/deploy.bashrc && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest /workspace/code/perception/tests /workspace/code/mapping/test /workspace/code/planning/test -m unit'
+            - name: Cleanup test image
+              if: always()
+              run: docker image rm -f "${TEST_IMAGE}" || true

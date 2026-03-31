@@ -10,7 +10,8 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-PLANNING_SRC = Path("/workspace/code/planning")
+CODE_ROOT = Path(__file__).resolve().parents[1]
+PLANNING_SRC = CODE_ROOT / "planning"
 if str(PLANNING_SRC) not in sys.path:
     sys.path.insert(0, str(PLANNING_SRC))
 
