@@ -1,5 +1,4 @@
 import py_trees
-import math
 from py_trees.common import Status
 from typing import Optional
 
@@ -8,7 +7,8 @@ from rclpy.publisher import Publisher
 from rclpy.clock import Clock
 from rclpy.duration import Duration
 
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, Float32
+from geometry_msgs.msg import PoseStamped
 from perception_interfaces.msg import Waypoint, TrafficLightState
 from planning_interfaces.srv import OvertakeStatus
 from carla_msgs.msg import CarlaRoute
@@ -18,7 +18,7 @@ from mapping_common.map import Map, MapTree
 from mapping_common.entity import FlagFilter
 from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
-from mapping_common.transform import Transform2D, Vector2
+from mapping_common.transform import Transform2D, Point2, Vector2
 import shapely
 from planning.behavior_agent.blackboard_utils import Blackboard
 
@@ -99,6 +99,9 @@ INTERSECTION_HAS_TRAFFIC_LIGHT: bool = False
 at least once
 """
 
+CURRENT_PRIORITY_CHECK_REFERENCE: Optional[Transform2D] = None
+"""Global pose of the hero when the priority-cross-traffic check started."""
+
 # Cross traffic parameter
 CROSS_TRAFFIC_SPEED_THRESHOLD = 2.5  # m/s
 CROSS_CHECK_DISTANCE = 15.0
@@ -110,10 +113,84 @@ PRIORITY_SPEED_THRESHOLD = 25.0 / 3.6  # m/s ≈ 6.94
 PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
 PRIORITY_CHECK_LENGTH = 25.0
 PRIORITY_CHECK_WIDTH = 50.0
+PRIORITY_CLOSING_SPEED_THRESHOLD = 0.5
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
 
 
-def check_priority_cross_traffic(map: Map, tree: MapTree):
+def _dot(a: Vector2, b: Vector2) -> float:
+    return a.x() * b.x() + a.y() * b.y()
+
+
+def _pose_to_transform(
+    position: Optional[PoseStamped], heading: Optional[Float32]
+) -> Optional[Transform2D]:
+    if position is None or heading is None:
+        return None
+    return Transform2D.new_rotation_translation(
+        heading.data,
+        Vector2.new(position.pose.position.x, position.pose.position.y),
+    )
+
+
+def _get_current_pose_transform(blackboard: Blackboard) -> Optional[Transform2D]:
+    current_pos: Optional[PoseStamped] = blackboard.try_get(
+        "/paf/hero/global_current_pos"
+    )
+    current_heading: Optional[Float32] = blackboard.try_get(
+        "/paf/hero/global_current_heading"
+    )
+    return _pose_to_transform(current_pos, current_heading)
+
+
+def _build_priority_check_mask(
+    hero,
+    reference_pose: Optional[Transform2D] = None,
+    current_pose: Optional[Transform2D] = None,
+):
+    offset = Transform2D.new_translation(
+        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    )
+    rect = Rectangle(
+        length=PRIORITY_CHECK_LENGTH,
+        width=PRIORITY_CHECK_WIDTH,
+        offset=offset,
+    )
+    target_point = Point2.from_vector(offset.translation())
+
+    if reference_pose is not None and current_pose is not None:
+        mask_transform = current_pose.inverse() * reference_pose
+    else:
+        mask_transform = hero.transform
+
+    return rect.to_shapely(mask_transform), mask_transform * target_point
+
+
+def _get_entity_velocity_in_hero_frame(entity) -> Optional[Vector2]:
+    if entity.motion is None:
+        return None
+    return entity.transform * entity.motion.linear_motion
+
+
+def _is_priority_cross_traffic_threat(entity, target_point: Point2) -> bool:
+    velocity = _get_entity_velocity_in_hero_frame(entity)
+    if velocity is None or velocity.length() <= PRIORITY_SPEED_THRESHOLD:
+        return False
+
+    entity_position = Point2.from_vector(entity.transform.translation())
+    to_target = entity_position.vector_to(target_point)
+    if to_target.length() == 0.0:
+        return True
+
+    closing_speed = _dot(velocity, to_target.normalized())
+    return closing_speed > PRIORITY_CLOSING_SPEED_THRESHOLD
+
+
+def check_priority_cross_traffic(
+    map: Map,
+    tree: MapTree,
+    reference_pose: Optional[Transform2D] = None,
+    current_pose: Optional[Transform2D] = None,
+):
     """
     Checks whether there are fast vehicles in the larger intersection area.
 
@@ -126,30 +203,17 @@ def check_priority_cross_traffic(map: Map, tree: MapTree):
     if hero is None:
         return True, None
 
-    # Larger rectangle for approaching emergency vehicles
-    offset = Transform2D.new_translation(
-        Vector2.new(PRIORITY_CHECK_DISTANCE + hero.get_front_x(), 0.0)
+    mask, target_point = _build_priority_check_mask(
+        hero,
+        reference_pose=reference_pose,
+        current_pose=current_pose,
     )
-    rect = Rectangle(
-        length=PRIORITY_CHECK_LENGTH,
-        width=PRIORITY_CHECK_WIDTH,
-        offset=offset,
-    )
-    mask = rect.to_shapely(hero.transform)
 
     shapely_entities = tree.get_overlapping_entities(mask)
 
     for se in shapely_entities:
         entity = se.entity
-        motion = entity.motion
-        if motion is None:
-            continue
-
-        v = motion.linear_motion
-        speed = math.hypot(v.x(), v.y())
-
-        # Only consider fast objects
-        if speed > PRIORITY_SPEED_THRESHOLD:
+        if _is_priority_cross_traffic_threat(entity, target_point):
             return False, mask
 
     return True, mask
@@ -245,9 +309,9 @@ class Ahead(py_trees.behaviour.Behaviour):
         self.blackboard = Blackboard()
 
     def initialise(self):
-        global INTERSECTION_HAS_TRAFFIC_LIGHT
+        global INTERSECTION_HAS_TRAFFIC_LIGHT, CURRENT_PRIORITY_CHECK_REFERENCE
         INTERSECTION_HAS_TRAFFIC_LIGHT = False
-        pass
+        CURRENT_PRIORITY_CHECK_REFERENCE = None
 
     def update(self):
         """
@@ -531,8 +595,18 @@ class Wait(py_trees.behaviour.Behaviour):
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
         if self.intersection_type != CarlaRoute.LEFT:
+            global CURRENT_PRIORITY_CHECK_REFERENCE
+            current_pose = _get_current_pose_transform(self.blackboard)
+            if CURRENT_PRIORITY_CHECK_REFERENCE is None:
+                CURRENT_PRIORITY_CHECK_REFERENCE = current_pose
+
             # Priority cross traffic check
-            priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+            priority_clear, priority_mask = check_priority_cross_traffic(
+                map,
+                tree,
+                reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
+                current_pose=current_pose,
+            )
             add_debug_entry(
                 self.name,
                 f"[Wait] Priority cross traffic clear: {priority_clear}",
@@ -729,7 +803,7 @@ class Enter(py_trees.behaviour.Behaviour):
 
     def initialise(self):
         get_logger().info("Enter Intersection")
-        global CURRENT_INTERSECTION_WAYPOINT
+        global CURRENT_INTERSECTION_WAYPOINT, CURRENT_PRIORITY_CHECK_REFERENCE
         if CURRENT_INTERSECTION_WAYPOINT is None:
             get_logger().error(
                 "Intersection behavior: CURRENT_INTERSECTION_WAYPOINT not set"
@@ -739,6 +813,10 @@ class Enter(py_trees.behaviour.Behaviour):
         unset_line_stop(self.stop_client)
         self.curr_behavior_pub.publish(String(data=bs.int_enter.name))
         self.intersection_type = self.waypoint.road_option
+        if CURRENT_PRIORITY_CHECK_REFERENCE is None:
+            CURRENT_PRIORITY_CHECK_REFERENCE = _get_current_pose_transform(
+                self.blackboard
+            )
 
     def update(self):
         """
@@ -766,7 +844,17 @@ class Enter(py_trees.behaviour.Behaviour):
 
         tree = map.build_tree(FlagFilter(is_collider=True, is_hero=False))
 
-        priority_clear, priority_mask = check_priority_cross_traffic(map, tree)
+        global CURRENT_PRIORITY_CHECK_REFERENCE
+        current_pose = _get_current_pose_transform(self.blackboard)
+        if CURRENT_PRIORITY_CHECK_REFERENCE is None:
+            CURRENT_PRIORITY_CHECK_REFERENCE = current_pose
+
+        priority_clear, priority_mask = check_priority_cross_traffic(
+            map,
+            tree,
+            reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
+            current_pose=current_pose,
+        )
         add_debug_entry(
             self.name,
             f"[Enter] Priority cross traffic clear: {priority_clear}",
@@ -828,4 +916,5 @@ class Enter(py_trees.behaviour.Behaviour):
         )
 
     def terminate(self, new_status):
-        pass
+        global CURRENT_PRIORITY_CHECK_REFERENCE
+        CURRENT_PRIORITY_CHECK_REFERENCE = None

@@ -127,7 +127,14 @@ The radar node itself does not directly perform the behavioral decision. Instead
 
 Radar points are processed to compute ego-motion compensated velocities.
 
-Each radar point contains Doppler velocity information. This velocity is transformed into Cartesian motion components and then compensated using the ego vehicle speed.
+Each radar point contains Doppler velocity information. This velocity is interpreted along the radar line of sight and then compensated using the ego vehicle motion.
+
+The compensation now includes two components:
+
+- the translational ego speed from `/carla/hero/Speed`
+- the yaw-rate-induced sensor motion derived from `/carla/hero/IMU`
+
+The yaw-rate term is evaluated at the physical sensor offset of each radar. This reduces the false motion that stationary entities would otherwise receive while the ego vehicle rotates, for example when leaving the parking spot.
 
 As a result, a motion vector is computed for each radar point. These per-point velocities are used for further processing in the mapping stage, especially for assigning radar-derived motion to lidar-based entities.
 

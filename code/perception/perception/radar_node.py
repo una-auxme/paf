@@ -31,6 +31,47 @@ from collections import deque
 from .perception_utils import array_to_clustered_points
 
 
+def _vector_dot(a: Vector2, b: Vector2) -> float:
+    return a.x() * b.x() + a.y() * b.y()
+
+
+def _sensor_position_in_vehicle_frame(
+    sensor_name: str, sensor_config: dict[str, list[float]]
+) -> Vector2:
+    sensor_x, sensor_y, _ = sensor_config[sensor_name]
+    return Vector2.new(sensor_x, -sensor_y)
+
+
+def _sensor_ego_velocity(
+    sensor_position: Vector2,
+    ego_speed: float = 0.0,
+    yaw_rate: float = 0.0,
+) -> Vector2:
+    translational_velocity = Vector2.new(ego_speed, 0.0)
+    rotational_velocity = Vector2.new(
+        -yaw_rate * sensor_position.y(),
+        yaw_rate * sensor_position.x(),
+    )
+    return translational_velocity + rotational_velocity
+
+
+def _compensate_radar_radial_velocity(
+    radial_velocity: float,
+    azimuth: float,
+    ego_speed: float = 0.0,
+    yaw_rate: float = 0.0,
+    sensor_position: Optional[Vector2] = None,
+) -> Vector2:
+    line_of_sight = Vector2.new(np.cos(azimuth), np.sin(azimuth))
+    sensor_velocity = _sensor_ego_velocity(
+        sensor_position if sensor_position is not None else Vector2.zero(),
+        ego_speed=ego_speed,
+        yaw_rate=yaw_rate,
+    )
+    radial_compensation = _vector_dot(sensor_velocity, line_of_sight)
+    return line_of_sight * (radial_velocity + radial_compensation)
+
+
 class RadarNode(Node):
     """See doc/perception/radar_node.md on how to configure this node."""
 
@@ -64,82 +105,47 @@ class RadarNode(Node):
         self.accel_z_buffer = deque(maxlen=5)
 
         self.current_pitch = 0.0
+        self.current_yaw_rate = 0.0
 
         # Parameters
 
-        self.accelerometer_arrow_size = (
-            self.declare_parameter(
-                "accelerometer_arrow_size",
-                2.0,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.accelerometer_factor = (
-            self.declare_parameter(
-                "accelerometer_factor",
-                0.05,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.imu_debug = (
-            self.declare_parameter(
-                "imu_debug",
-                False,
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.accelerometer_arrow_size = self.declare_parameter(
+            "accelerometer_arrow_size",
+            2.0,
+        ).value
+        self.accelerometer_factor = self.declare_parameter(
+            "accelerometer_factor",
+            0.05,
+        ).value
+        self.imu_debug = self.declare_parameter(
+            "imu_debug",
+            False,
+        ).value
 
-        self.dbscan_eps = (
-            self.declare_parameter(
-                "dbscan_eps",
-                0.3,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.dbscan_samples = (
-            self.declare_parameter(
-                "dbscan_samples",
-                2,
-            )
-            .get_parameter_value()
-            .integer_value
-        )
-        self.data_buffered = (
-            self.declare_parameter(
-                "data_buffered",
-                False,
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.data_buffer_time = (
-            self.declare_parameter(
-                "data_buffer_time",
-                0.1,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.enable_clustering = (
-            self.declare_parameter(
-                "enable_clustering",
-                False,
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_debug_info = (
-            self.declare_parameter(
-                "enable_debug_info",
-                False,
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.dbscan_eps = self.declare_parameter(
+            "dbscan_eps",
+            0.3,
+        ).value
+        self.dbscan_samples = self.declare_parameter(
+            "dbscan_samples",
+            2,
+        ).value
+        self.data_buffered = self.declare_parameter(
+            "data_buffered",
+            False,
+        ).value
+        self.data_buffer_time = self.declare_parameter(
+            "data_buffer_time",
+            0.1,
+        ).value
+        self.enable_clustering = self.declare_parameter(
+            "enable_clustering",
+            False,
+        ).value
+        self.enable_debug_info = self.declare_parameter(
+            "enable_debug_info",
+            False,
+        ).value
 
         # Publishers
         self.visualization_radar_publisher = self.create_publisher(
@@ -266,6 +272,7 @@ class RadarNode(Node):
 
         self.accel_x_buffer.append(msg.linear_acceleration.x)
         self.accel_z_buffer.append(msg.linear_acceleration.z)
+        self.current_yaw_rate = msg.angular_velocity.z
 
         # Ensure that we have enough values (min. 5 measuring points)
         if len(self.accel_x_buffer) < 5:
@@ -726,22 +733,18 @@ class RadarNode(Node):
             velocity_per_point = float(point[3])
 
             azimuth = np.arctan2(point[1], point[0])
-            cos_az = np.cos(azimuth)
-
-            vx = velocity_per_point * np.cos(azimuth)
-            vy = velocity_per_point * np.sin(azimuth)
-            point_motion_vec = Vector2.new(vx, vy)
-
-            motion_vec = point_motion_vec
-
-            # ego motion compensation
-            if self.hero_speed is not None:
-                hypspeed = self.hero_speed.speed * cos_az
-
-                xspeed = hypspeed * cos_az
-                yspeed = hypspeed * np.sin(azimuth)
-                ego_motion_vec = Vector2.new(xspeed, yspeed)
-                motion_vec += ego_motion_vec
+            sensor_name = "RADAR0" if point[0] >= 0 else "RADAR1"
+            sensor_position = _sensor_position_in_vehicle_frame(
+                sensor_name, self.sensor_config
+            )
+            ego_speed = 0.0 if self.hero_speed is None else self.hero_speed.speed
+            motion_vec = _compensate_radar_radial_velocity(
+                radial_velocity=velocity_per_point,
+                azimuth=azimuth,
+                ego_speed=ego_speed,
+                yaw_rate=self.current_yaw_rate,
+                sensor_position=sensor_position,
+            )
 
             motion_array[i] = Motion2D(motion_vec, 0.0)
             motion_vectors[i] = np.array([motion_vec.x(), motion_vec.y(), point[-1]])
