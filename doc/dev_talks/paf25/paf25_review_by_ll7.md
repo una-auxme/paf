@@ -2,20 +2,47 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [1. Scope and Method](#1-scope-and-method)
 - [2. Executive Summary](#2-executive-summary)
 - [3. Repository Evolution](#3-repository-evolution)
+  - [3.1 Technical Direction](#31-technical-direction)
+  - [3.2 Tooling and Quality Workflow](#32-tooling-and-quality-workflow)
+  - [3.3 Documentation Activity](#33-documentation-activity)
 - [4. Topic Review](#4-topic-review)
   - [4.1 Traffic Light](#41-traffic-light)
+    - [What changed](#what-changed)
+    - [Why it matters](#why-it-matters)
+    - [Remaining weaknesses](#remaining-weaknesses)
   - [4.2 Radar and Sensor Message Handling](#42-radar-and-sensor-message-handling)
+    - [What changed](#what-changed-1)
+    - [Fusion direction](#fusion-direction)
+    - [Why it matters](#why-it-matters-1)
+    - [Remaining weaknesses](#remaining-weaknesses-1)
   - [4.3 Auto Tests](#43-auto-tests)
+    - [What changed](#what-changed-2)
+    - [Additional testing progress](#additional-testing-progress)
+    - [Remaining weaknesses](#remaining-weaknesses-2)
   - [4.4 Cross Traffic Check](#44-cross-traffic-check)
+    - [What changed](#what-changed-3)
+    - [Interaction with planning](#interaction-with-planning)
+    - [Remaining weaknesses](#remaining-weaknesses-3)
   - [4.5 Lidar, Tracking and Fusion](#45-lidar-tracking-and-fusion)
+    - [What changed in lidar itself](#what-changed-in-lidar-itself)
+    - [What changed in tracking and mapping](#what-changed-in-tracking-and-mapping)
+    - [Why it matters](#why-it-matters-2)
+    - [Remaining weaknesses](#remaining-weaknesses-4)
 - [5. Documentation Review Against the Requirements](#5-documentation-review-against-the-requirements)
-  - [5.1 What Is Clearly Better Than at paf25.start](#51-what-is-clearly-better-than-at-paf25start)
-  - [5.2 Where the Guidelines Are Not Fully Met Yet](#52-where-the-guidelines-are-not-fully-met-yet)
-  - [5.3 Requirement-by-Requirement Verdict](#53-requirement-by-requirement-verdict)
+- [5.1 What Is Clearly Better Than at paf25.start](#51-what-is-clearly-better-than-at-paf25start)
+- [5.2 Where the Guidelines Are Not Fully Met Yet](#52-where-the-guidelines-are-not-fully-met-yet)
+  - [Example 1: Traffic-light documentation is partially stale](#example-1-traffic-light-documentation-is-partially-stale)
+  - [Example 2: Architecture documentation is stale](#example-2-architecture-documentation-is-stale)
+  - [Example 3: Not all new docs follow the required Markdown structure](#example-3-not-all-new-docs-follow-the-required-markdown-structure)
+  - [Example 4: At least one Markdown file is malformed](#example-4-at-least-one-markdown-file-is-malformed)
+  - [Example 5: In-code documentation improved, but not uniformly](#example-5-in-code-documentation-improved-but-not-uniformly)
+- [5.3 Requirement-by-Requirement Verdict](#53-requirement-by-requirement-verdict)
 - [6. Overall Verdict](#6-overall-verdict)
+- [7. Final Verdict for the Students](#7-final-verdict-for-the-students)
 
 ## 1. Scope and Method
 
@@ -444,3 +471,17 @@ The main remaining weaknesses are:
 - increasing complexity in a few large core modules
 
 In summary, the repository did not merely accumulate new features during the last months. It became architecturally more coherent, more ROS2-focused, more fusion-aware and more testable. The remaining work is mostly in consolidation: align the documentation with the final code, keep reducing legacy leftovers, and add more targeted automated tests for the new planning and fusion logic.
+
+## 7. Final Verdict for the Students
+
+From a documentation perspective, it is clear that a substantial amount of work went into the project. At the same time, there are several central places where the documentation no longer matches the current state of the system. New teams in particular depend on these documents when trying to understand and work with the framework. If these introductory and architecture documents are outdated, they create confusion even when the implementation itself has already progressed significantly.
+
+This is especially visible in `doc/general/architecture_current.md`. Key areas such as the overview, radar and localization sections were not sufficiently updated to reflect the current state of the system. The same applies to `doc/perception/README.md`, which now feels outdated and is problematic as an entry point for new students because it is more likely to confuse than to guide. This is particularly true for the radar-related descriptions in that document, which no longer reliably reflect the present structure or actual usage.
+
+Another important point is the traffic-light documentation. `doc/perception/traffic_light_detection.md` still describes outdated APIs and outdated behavior in several places. Parts of the document still reflect an older model with a single image as input, refer to older helper functions and describe an earlier node structure. As a result, this documentation is no longer reliable enough to explain the current code correctly.
+
+More generally, many relationships and processes are described almost exclusively in text. For complex topics such as architecture, data flow or the perception pipeline, more images, diagrams or process sketches would be very helpful. In its current form, the documentation is misleading in several places for new teams. This is not a sign that too little work was done, but rather that the documentation did not keep pace everywhere with the technical development.
+
+The overall picture is much more positive for docstrings. In many areas, the docstrings are good to very good and clearly support understanding of the code.. Overall, the quality of the docstrings is clearly better than the quality of the central introductory documents.
+
+As a final constructive conclusion, the technical development of the system is clearly visible and overall convincing. However, the accompanying documentation has not consistently kept up with that development in all areas. Going forward, it would be especially important to keep the central architecture and onboarding documents up to date and to make stronger use of visual explanations. That would not only improve clarity, but would also make it much easier for future teams to get started with the system.
