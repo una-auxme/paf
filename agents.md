@@ -34,6 +34,7 @@ If guidance conflicts, prefer repository config files and actively used CI/lint 
 - Primary development is Linux + Docker, typically with NVIDIA GPU support.
 - Python target is **3.12** (`ruff.toml`).
 - Use containerized workflows when project docs expect them.
+- Before compose-based CARLA runs, refresh `build/.env` via `scripts/update-dotenv.sh`; in SSH-forwarded or headless sessions it sets `RENDER_OFFSCREEN=-RenderOffScreen` so the simulator can start without a local desktop renderer.
 
 ## 5) Code change rules
 
