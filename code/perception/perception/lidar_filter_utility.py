@@ -46,6 +46,49 @@ def bounding_box(
     return bb_filter
 
 
+def filter_ground_points(
+    points,
+    z_min,
+    z_max,
+    pitch_rad=0.0,
+    enable_pitch_compensation=True,
+):
+    """Filter lidar points using a base height window and an optional pitch-aware
+    ground plane.
+
+    The existing static cutoff is preserved when pitch compensation is disabled or
+    when ``pitch_rad`` is zero. When enabled, the lower z-bound is tilted along the
+    x-axis so that forward road points do not drift into the obstacle set during
+    ego pitch motion.
+
+    Parameters
+    ----------
+    points:
+        Structured numpy array with ``x`` and ``z`` fields.
+    z_min, z_max:
+        Base vertical bounds for obstacle clustering.
+    pitch_rad:
+        Current ego pitch in radians.
+    enable_pitch_compensation:
+        Whether to tilt the lower bound with the current pitch.
+
+    Returns
+    -------
+    numpy.ndarray
+        Filtered structured array containing only points inside the valid region.
+    """
+
+    if points.size == 0:
+        return points
+
+    lower_bound = np.full(points.shape[0], z_min, dtype=float)
+    if enable_pitch_compensation:
+        lower_bound = lower_bound + points["x"] * np.tan(pitch_rad)
+
+    mask = (points["z"] > lower_bound) & (points["z"] < z_max)
+    return points[mask]
+
+
 # https://stackoverflow.com/questions/15575878/how-do-you-remove-a-column-from-a-structured-numpy-array
 def remove_field_name(a, name):
     """Removes a column from a structured numpy array

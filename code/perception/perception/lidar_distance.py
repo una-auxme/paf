@@ -2,6 +2,7 @@ from typing import List
 
 from joblib import Parallel, delayed
 import numpy as np
+from scipy.spatial.transform import Rotation
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from transforms3d.quaternions import mat2quat
@@ -33,7 +34,11 @@ from .perception_utils import (
     apply_local_motion_compensation,
     quaternion_to_heading,
 )
-from .lidar_filter_utility import bounding_box, remove_field_name
+from .lidar_filter_utility import (
+    bounding_box,
+    filter_ground_points,
+    remove_field_name,
+)
 
 
 class LidarDistance(Node):
@@ -61,6 +66,11 @@ class LidarDistance(Node):
             1.5,
         ).value
 
+        self.enable_pitch_ground_filter = self.declare_parameter(
+            "enable_pitch_ground_filter",
+            True,
+        ).value
+
         self.dbscan_eps = self.declare_parameter(
             "dbscan_eps",
             0.03375,
@@ -84,6 +94,7 @@ class LidarDistance(Node):
         self.Compensation: CompensationStrategy = compensation_dict[
             self.compensation_strategy
         ]()
+        self.current_pitch = 0.0
 
         self.bridge = CvBridge()  # OpenCV bridge for image conversions
 
@@ -147,6 +158,10 @@ class LidarDistance(Node):
                 qos_profile=1,
             )
 
+        if (
+            self.compensation_strategy == "LocalCompensation"
+            or self.enable_pitch_ground_filter
+        ):
             self.create_subscription(
                 msg_type=Imu,
                 topic="/carla/hero/IMU",
@@ -222,26 +237,27 @@ class LidarDistance(Node):
 
     def imu_callback(self, imu_data: Imu):
         """
-        Receives IMU data and passes the extracted heading
-        to the LocalCompensation strategy.
+        Receives IMU data, updates the current pitch estimate for ground filtering,
+        and passes the extracted heading to the LocalCompensation strategy.
 
         :param imu_data: The IMU message containing orientation data.
         """
-
-        if self.compensation_strategy != "LocalCompensation":
-            self.get_logger().warn(
-                f"{type(self).__name__}"
-                "IMU callback is only active for LocalCompensation."
-            )
-            return
 
         x = imu_data.orientation.x
         y = imu_data.orientation.y
         z = imu_data.orientation.z
         w = imu_data.orientation.w
 
-        heading = quaternion_to_heading(x, y, z, w)
-        self.Compensation.set_motion_data(heading=heading)
+        try:
+            self.current_pitch = Rotation.from_quat((x, y, z, w)).as_euler(
+                "xyz", degrees=False
+            )[1]
+        except ValueError:
+            self.current_pitch = 0.0
+
+        if self.compensation_strategy == "LocalCompensation":
+            heading = quaternion_to_heading(x, y, z, w)
+            self.Compensation.set_motion_data(heading=heading)
 
     def start_clustering(self, data):
         """
@@ -269,13 +285,14 @@ class LidarDistance(Node):
                 & (coordinates["y"] >= -1)
                 & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
             )
-            & (
-                (coordinates["z"] > self.clustering_lidar_z_min)
-                & (coordinates["z"] < self.clustering_lidar_z_max)
-            )
-            # Exclude points below a certain height (street)
-            # Exclude points above a certain height (e.g. leafs of tree)
         ]
+        filtered_coordinates = filter_ground_points(
+            filtered_coordinates,
+            z_min=self.clustering_lidar_z_min,
+            z_max=self.clustering_lidar_z_max,
+            pitch_rad=self.current_pitch,
+            enable_pitch_compensation=self.enable_pitch_ground_filter,
+        )
 
         # Perform DBSCAN clustering
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
