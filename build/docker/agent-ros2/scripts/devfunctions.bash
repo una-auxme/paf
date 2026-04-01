@@ -15,6 +15,8 @@ Development utility functions:
                    Quitting: Ctrl+c does not work on the leaderboard. Use Right-Click->Kill Terminal
 - agent.dev: Launches the agent (ros2 launch agent agent.dev.xml); Ctrl+c to stop the agent
 - leaderboard.test: Launches the Simulation test at /code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+                    Cleans up stale run_test.py process groups first unless PAF_LEADERBOARD_TEST_SKIP_CLEANUP=1
+                    Override the traffic manager port with PAF_TRAFFIC_MANAGER_PORT=<port>
                     Kill Terminal to end
 - ruff.lint: Manually trigger the ruff linter to check the python files
 - ruff.fix-lint: Apply the safe fixes that the ruff linter encounters during linting
@@ -100,10 +102,45 @@ export -f pytrees.viewer
 
 leaderboard.test(){
   (
-    /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.test.sh
+    if [[ "${PAF_LEADERBOARD_TEST_SKIP_CLEANUP:-0}" != "1" ]]; then
+      leaderboard.test.cleanup
+    fi
+
+    /workspace/code/leaderboard_launcher/scripts/launch_leaderboard.test.sh "$@"
   )
 }
 export -f leaderboard.test
+
+leaderboard.test.cleanup() {
+  local pid
+  local pgid
+  local stale_pids
+
+  stale_pids=$(pgrep -f '/workspace/code/test/run_test.py' || true)
+  if [[ -z "$stale_pids" ]]; then
+    return 0
+  fi
+
+  echo "Stopping stale leaderboard.test process groups..."
+  while read -r pid; do
+    [[ -z "$pid" ]] && continue
+    pgid=$(ps -o pgid= -p "$pid" | tr -d '[:space:]')
+    [[ -z "$pgid" ]] && continue
+    kill -TERM -- "-$pgid" 2>/dev/null || true
+  done <<< "$stale_pids"
+
+  sleep 2
+
+  stale_pids=$(pgrep -f '/workspace/code/test/run_test.py' || true)
+  while read -r pid; do
+    [[ -z "$pid" ]] && continue
+    pgid=$(ps -o pgid= -p "$pid" | tr -d '[:space:]')
+    [[ -z "$pgid" ]] && continue
+    kill -KILL -- "-$pgid" 2>/dev/null || true
+  done <<< "$stale_pids"
+}
+export -f leaderboard.test.cleanup
+
 ruff.lint() {
   (
     ruff check /workspace/code/
