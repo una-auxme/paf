@@ -10,6 +10,7 @@
 
 If this is your first time working with the project you can follow the first steps in [/doc/development/first_steps.md](/doc/development/first_steps.md).
 For a compact setup path see also [/doc/development/quickstart_contributor.md](/doc/development/quickstart_contributor.md).
+For the host-auth dev container workflow see also [Dev Container Workflow](./devcontainer.md).
 
 ## Development Guidelines
 
@@ -32,6 +33,7 @@ If you contribute to this project please read the following guidelines first:
 12. [Context Retention](./context_retention.md)
 13. [Dependency Management](./dependency_management.md)
 14. [Performance Iteration Guide](./performance_iteration.md)
+15. [Dev Container Workflow](./devcontainer.md)
 
 ## Administrative Guidelines
 

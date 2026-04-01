@@ -36,6 +36,7 @@ This command:
 3. Select the `PAF Agent Dev (CUDA)` configuration if prompted.
 
 The devcontainer uses the existing `agent-dev` service and opens `/workspace`.
+For host-auth details for GitHub, Copilot, `gh`, and GHCR see [Dev Container Workflow](./devcontainer.md).
 
 ## 4) Verify local toolchain
 
