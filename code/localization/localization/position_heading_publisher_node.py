@@ -35,9 +35,11 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 
 from std_msgs.msg import Float32, Bool
-from localization.coordinate_transformation import CoordinateTransformer
-from localization.coordinate_transformation import quat_to_heading
-from xml.etree import ElementTree as eTree
+from localization.coordinate_transformation import (
+    CoordinateTransformer,
+    extract_geo_reference_from_opendrive,
+    quat_to_heading,
+)
 from paf_common.parameters import update_attributes
 from rcl_interfaces.msg import (
     ParameterDescriptor,
@@ -417,27 +419,9 @@ class PositionHeadingPublisherNode(Node):
                 f"{self.open_drive_client.service_name} service failed: {response.msg}."
             )
             return False
-        opendrive: str = response.data
-
-        root = eTree.fromstring(opendrive)
-        header = root.find("header")
-        geoRefText = header.find("geoReference").text
-
-        latString = "+lat_0="
-        lonString = "+lon_0="
-
-        indexLat = geoRefText.find(latString)
-        indexLon = geoRefText.find(lonString)
-
-        indexLatEnd = geoRefText.find(" ", indexLat)
-        indexLonEnd = geoRefText.find(" ", indexLon)
-
-        latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
-        lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
-
-        self.transformer.la_ref = latValue
-        self.transformer.ln_ref = lonValue
-        self.transformer.ref_set = True
+        self.transformer.configure_from_geo_reference(
+            extract_geo_reference_from_opendrive(response.data)
+        )
         self.get_logger().info("Geo ref updated.")
 
 

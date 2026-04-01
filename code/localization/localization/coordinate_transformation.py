@@ -9,10 +9,18 @@ http://dirsig.cis.rit.edu/docs/new/coordinates.html
 """
 
 import math
+from xml.etree import ElementTree as eTree
+
 import numpy as np
-from scipy.spatial.transform import Rotation
 import pymap3d
 import pymap3d.ellipsoid
+from scipy.spatial.transform import Rotation
+
+try:
+    from pyproj import CRS, Transformer
+except ModuleNotFoundError:
+    CRS = None
+    Transformer = None
 
 
 a = 6378137  # EARTH_RADIUS_EQUA in Pylot, used in geodetic_to_enu
@@ -23,6 +31,54 @@ alt_offset = 331.00000
 STD_LAT = 0.0
 STD_LON = 0.0
 STD_H = 0.0
+_GEO_REFERENCE_SKIP_PREFIXES = (
+    "+geoidgrids=",
+    "+vunits=",
+)
+
+
+def extract_geo_reference_from_opendrive(opendrive: str) -> str:
+    """Return the OpenDRIVE geoReference string used by CARLA for GNSS projection."""
+    root = eTree.fromstring(opendrive)
+    header = root.find("header")
+    if header is None:
+        raise ValueError("OpenDRIVE header missing.")
+
+    geo_reference = header.findtext("geoReference")
+    if geo_reference is None:
+        raise ValueError("OpenDRIVE geoReference missing.")
+
+    return geo_reference.strip()
+
+
+def _extract_proj_parameter(
+    geo_reference: str, parameter: str, default: float
+) -> float:
+    index = geo_reference.find(parameter)
+    if index == -1:
+        return default
+
+    end_index = geo_reference.find(" ", index)
+    if end_index == -1:
+        end_index = len(geo_reference)
+
+    return float(geo_reference[index + len(parameter) : end_index])
+
+
+def _sanitize_geo_reference(geo_reference: str) -> str:
+    return " ".join(
+        token
+        for token in geo_reference.replace("\n", " ").split()
+        if not token.startswith(_GEO_REFERENCE_SKIP_PREFIXES)
+    )
+
+
+def _build_geodetic_to_local_transformer(geo_reference: str):
+    if CRS is None or Transformer is None:
+        return None
+
+    target_crs = CRS.from_user_input(_sanitize_geo_reference(geo_reference))
+    return Transformer.from_crs(CRS.from_epsg(4326), target_crs, always_xy=True)
 
 
 class CoordinateTransformer:
@@ -32,13 +88,35 @@ class CoordinateTransformer:
     la_ref = STD_LAT
     ln_ref = STD_LON
     h_ref = STD_H
+    geo_reference = None
+    _geodetic_to_local = None
     ref_set = False
 
     def __init__(self):
         pass
 
+    @classmethod
+    def configure_from_geo_reference(cls, geo_reference: str):
+        cls.geo_reference = geo_reference.strip()
+        cls.la_ref = _extract_proj_parameter(cls.geo_reference, "+lat_0=", STD_LAT)
+        cls.ln_ref = _extract_proj_parameter(cls.geo_reference, "+lon_0=", STD_LON)
+        cls.h_ref = _extract_proj_parameter(cls.geo_reference, "+h_0=", STD_H)
+        cls._geodetic_to_local = _build_geodetic_to_local_transformer(cls.geo_reference)
+        cls.ref_set = True
+
     def gnss_to_xyz(self, lat, lon, h):
+        if self._geodetic_to_local is not None:
+            return self.projected_geodetic_to_xyz(lat, lon, h)
         return self.geodetic_to_enu(lat, lon, h)
+
+    def projected_geodetic_to_xyz(self, lat, lon, alt):
+        """Project WGS84 coordinates into CARLA's local map frame.
+
+        CARLA's projected northing is inverted relative to the localization frame,
+        so the returned y coordinate keeps the existing localization convention.
+        """
+        x, y = self._geodetic_to_local.transform(lon, lat)
+        return float(x), float(-y), alt + alt_offset
 
     def geodetic_to_enu(self, lat, lon, alt):
         """
