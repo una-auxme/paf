@@ -78,15 +78,34 @@ def filter_ground_points(
         Filtered structured array containing only points inside the valid region.
     """
 
+    return points[
+        ground_filter_mask(
+            points,
+            z_min=z_min,
+            z_max=z_max,
+            pitch_rad=pitch_rad,
+            enable_pitch_compensation=enable_pitch_compensation,
+        )
+    ]
+
+
+def ground_filter_mask(
+    points,
+    z_min,
+    z_max,
+    pitch_rad=0.0,
+    enable_pitch_compensation=True,
+):
+    """Return the boolean mask for points that pass the ground filter."""
+
     if points.size == 0:
-        return points
+        return np.array([], dtype=bool)
 
     lower_bound = np.full(points.shape[0], z_min, dtype=float)
     if enable_pitch_compensation:
         lower_bound = lower_bound + points["x"] * np.tan(pitch_rad)
 
-    mask = (points["z"] > lower_bound) & (points["z"] < z_max)
-    return points[mask]
+    return (points["z"] > lower_bound) & (points["z"] < z_max)
 
 
 # https://stackoverflow.com/questions/15575878/how-do-you-remove-a-column-from-a-structured-numpy-array

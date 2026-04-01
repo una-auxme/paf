@@ -9,6 +9,9 @@ float64[] cluster_points_array
 # Index array for points in clusters
 int32[] index_array
 
+# Whether each point is buffered from an earlier scan
+bool[] is_buffered_array
+
 # Array of motion properties for each cluster
 Motion2D[] motion_array
 

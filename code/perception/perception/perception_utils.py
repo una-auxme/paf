@@ -12,6 +12,7 @@ def array_to_clustered_points(
     stamp: Time,
     points,
     point_indices,
+    is_buffered_array=None,
     object_speed_array=None,
     object_class_array=None,
     header_id="hero",
@@ -22,6 +23,7 @@ def array_to_clustered_points(
     Args:
         points: numpy array with shape (N, 3)
         point_indices: numpy array with the shape (N,)
+        is_buffered_array: numpy array with the shape (N,)
         object_speed_array: numpy array with the shape (N,)
         object_class_array: numpy array with the shape (N,)
         header_id: string
@@ -39,6 +41,11 @@ def array_to_clustered_points(
 
     # Populate the indexArray
     clustered_points.index_array = point_indices.astype(int).tolist()
+
+    if is_buffered_array is not None:
+        clustered_points.is_buffered_array = np.asarray(
+            is_buffered_array, dtype=bool
+        ).tolist()
 
     # Populate the motionArray if object_speed_array is provided
     if object_speed_array is not None:

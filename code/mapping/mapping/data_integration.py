@@ -1,6 +1,6 @@
 from visualization_msgs.msg import Marker
 import numpy as np
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from copy import deepcopy
 
 import rclpy
@@ -37,6 +37,47 @@ from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
+
+
+def _select_tracking_points(
+    cluster_points_xy: np.ndarray, is_buffered_mask: Optional[np.ndarray]
+) -> np.ndarray:
+    if (
+        is_buffered_mask is None
+        or is_buffered_mask.shape[0] != cluster_points_xy.shape[0]
+    ):
+        return cluster_points_xy
+
+    fresh_points_xy = cluster_points_xy[~is_buffered_mask]
+    if fresh_points_xy.shape[0] == 0:
+        return cluster_points_xy
+
+    return fresh_points_xy
+
+
+def _build_polygon_shape_and_transform(
+    cluster_points_xy: np.ndarray, tracking_points_xy: np.ndarray
+) -> Optional[Tuple[Polygon, Transform2D]]:
+    cluster_polygon_hull = MultiPoint(cluster_points_xy).convex_hull
+    if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+        return None
+    if not isinstance(cluster_polygon_hull, shapely.Polygon):
+        return None
+
+    if tracking_points_xy.shape[0] == 0:
+        tracking_points_xy = cluster_points_xy
+
+    tracking_anchor = MultiPoint(tracking_points_xy).convex_hull.centroid
+    anchor_x = tracking_anchor.x
+    anchor_y = tracking_anchor.y
+
+    hull_coords = np.asarray(cluster_polygon_hull.exterior.coords[:-1], dtype=float)
+    if hull_coords.shape[0] < 3:
+        return None
+
+    shape = Polygon([Point2.new(x - anchor_x, y - anchor_y) for x, y in hull_coords])
+    transform = Transform2D.new_translation(Vector2.new(anchor_x, anchor_y))
+    return shape, transform
 
 
 class MappingDataIntegrationNode(Node):
@@ -580,6 +621,21 @@ class MappingDataIntegrationNode(Node):
             else None
         )
 
+        is_buffered_array = (
+            np.array(data.is_buffered_array, dtype=bool)
+            if data.is_buffered_array
+            else None
+        )
+        if (
+            is_buffered_array is not None
+            and is_buffered_array.shape[0] != clusterpointsarray.shape[0]
+        ):
+            self.get_logger().warn(
+                "Clustered point buffer mask size mismatch. Ignoring mask.",
+                throttle_duration_sec=2.0,
+            )
+            is_buffered_array = None
+
         objectclassarray = np.array(data.object_class) if data.object_class else None
 
         unique_labels = np.unique(indexarray)
@@ -594,6 +650,14 @@ class MappingDataIntegrationNode(Node):
             # Filter points for current cluster
             cluster_mask = indexarray == label
             cluster_points_xy = clusterpointsarray[cluster_mask, :2]
+            cluster_is_buffered = (
+                is_buffered_array[cluster_mask]
+                if is_buffered_array is not None
+                else None
+            )
+            tracking_points_xy = _select_tracking_points(
+                cluster_points_xy, cluster_is_buffered
+            )
 
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
@@ -605,29 +669,14 @@ class MappingDataIntegrationNode(Node):
                 else:
                     continue
             else:
-                if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                    # add startpoint to close polygon
-                    cluster_points_xy = np.vstack(
-                        [cluster_points_xy, cluster_points_xy[0]]
-                    )
-
-                cluster_polygon = MultiPoint(cluster_points_xy)
-                cluster_polygon_hull = cluster_polygon.convex_hull
-                if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                polygon_shape = _build_polygon_shape_and_transform(
+                    cluster_points_xy,
+                    tracking_points_xy,
+                )
+                if polygon_shape is None:
                     self.get_logger().debug("Empty hull", throttle_duration_sec=2.0)
                     continue
-                if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                    self.get_logger().debug(
-                        "Cluster is not polygon, continue", throttle_duration_sec=2.0
-                    )
-                    continue
-
-                shape = Polygon.from_shapely(
-                    cluster_polygon_hull,
-                    make_centered=True,  # type: ignore
-                )
-                transform = shape.offset
-                shape.offset = Transform2D.identity()
+                shape, transform = polygon_shape
 
             motion = None
             if motion_array_converted is not None:
