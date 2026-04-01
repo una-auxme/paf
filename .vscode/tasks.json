@@ -149,6 +149,13 @@
       "detail": "Installs rosdep and pip dependencies from package.xml and requirements manifests."
     },
     {
+      "label": "Validate live GNSS projection",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/validate-gnss-projection.sh",
+      "problemMatcher": [],
+      "detail": "While leaderboard.test is running, starts a sidecar gps_transform with position_use_ground_truth=false and measures its error against CARLA ground truth."
+    },
+    {
       "label": "Build active package with colcon",
       "type": "shell",
       "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; source /internal_workspace/dev.bashrc && devbuild.pkg ${pkg}; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",

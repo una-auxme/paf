@@ -38,6 +38,20 @@ devsource
 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest /workspace/code/perception/tests /workspace/code/mapping/test /workspace/code/planning/test -m unit
 ```
 
+## Live GNSS validation during CARLA runs
+
+Use the live GNSS projection check only while `leaderboard.test` is already running in the dev container.
+
+- Task: `Validate live GNSS projection`
+- Script: `bash scripts/validate-gnss-projection.sh`
+
+The script starts a sidecar `gps_transform` with `position_use_ground_truth=false`, waits for `/odometry/gps_projection_check`, and compares the output against CARLA ground truth for the live `hero` actor. If `pyproj` is missing in the dev container, it first runs the dependency synchronization workflow.
+
+Optional thresholds can be supplied through environment variables:
+
+- `PAF_GNSS_MEAN_THRESHOLD_M`
+- `PAF_GNSS_MAX_THRESHOLD_M`
+
 ## Submodule strategy
 
 For each package under `code/<package>`:

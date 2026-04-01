@@ -13,7 +13,9 @@ if [[ -z "${PAF_ROS_WS:-}" || -z "${INTERNAL_WORKSPACE_DIR:-}" || -z "${ROS_DIST
   exit 1
 fi
 
+set +u
 source "${INTERNAL_WORKSPACE_DIR}/env.bash"
+set -u
 cd "${PAF_ROS_WS}"
 
 echo "Refreshing apt and rosdep indices..."

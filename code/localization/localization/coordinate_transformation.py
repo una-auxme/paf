@@ -65,6 +65,20 @@ def _extract_proj_parameter(
     return float(geo_reference[index + len(parameter) : end_index])
 
 
+def _extract_proj_string_parameter(
+    geo_reference: str, parameter: str, default: str
+) -> str:
+    index = geo_reference.find(parameter)
+    if index == -1:
+        return default
+
+    end_index = geo_reference.find(" ", index)
+    if end_index == -1:
+        end_index = len(geo_reference)
+
+    return geo_reference[index + len(parameter) : end_index]
+
+
 def _sanitize_geo_reference(geo_reference: str) -> str:
     return " ".join(
         token
@@ -81,6 +95,17 @@ def _build_geodetic_to_local_transformer(geo_reference: str):
     return Transformer.from_crs(CRS.from_epsg(4326), target_crs, always_xy=True)
 
 
+def _uses_default_carla_projection(geo_reference: str) -> bool:
+    return (
+        _extract_proj_string_parameter(geo_reference, "+proj=", "") == "tmerc"
+        and math.isclose(_extract_proj_parameter(geo_reference, "+lat_0=", 0.0), 0.0)
+        and math.isclose(_extract_proj_parameter(geo_reference, "+lon_0=", 0.0), 0.0)
+        and math.isclose(_extract_proj_parameter(geo_reference, "+k=", 1.0), 1.0)
+        and math.isclose(_extract_proj_parameter(geo_reference, "+x_0=", 0.0), 0.0)
+        and math.isclose(_extract_proj_parameter(geo_reference, "+y_0=", 0.0), 0.0)
+    )
+
+
 class CoordinateTransformer:
     """This class can be used to transform coordinates between
     the x/y/z and GNSS reference frame"""
@@ -90,6 +115,7 @@ class CoordinateTransformer:
     h_ref = STD_H
     geo_reference = None
     _geodetic_to_local = None
+    _use_projected_transform = False
     ref_set = False
 
     def __init__(self):
@@ -102,12 +128,19 @@ class CoordinateTransformer:
         cls.ln_ref = _extract_proj_parameter(cls.geo_reference, "+lon_0=", STD_LON)
         cls.h_ref = _extract_proj_parameter(cls.geo_reference, "+h_0=", STD_H)
         cls._geodetic_to_local = _build_geodetic_to_local_transformer(cls.geo_reference)
+        cls._use_projected_transform = (
+            cls._geodetic_to_local is not None
+            and not _uses_default_carla_projection(cls.geo_reference)
+        )
         cls.ref_set = True
 
     def gnss_to_xyz(self, lat, lon, h):
-        if self._geodetic_to_local is not None:
+        if self._use_projected_transform and self._geodetic_to_local is not None:
             return self.projected_geodetic_to_xyz(lat, lon, h)
-        return self.geodetic_to_enu(lat, lon, h)
+        # Default CARLA maps still round-trip GNSS XY through the legacy transform
+        # more accurately than through the advertised zeroed tmerc projection.
+        x, y, _ = self.geodetic_to_enu(lat, lon, h)
+        return x, y, float(h)
 
     def projected_geodetic_to_xyz(self, lat, lon, alt):
         """Project WGS84 coordinates into CARLA's local map frame.
@@ -116,7 +149,9 @@ class CoordinateTransformer:
         so the returned y coordinate keeps the existing localization convention.
         """
         x, y = self._geodetic_to_local.transform(lon, lat)
-        return float(x), float(-y), alt + alt_offset
+        # CARLA's GNSS altitude already matches the local map frame, so adding the
+        # legacy map offset here double-counts elevation.
+        return float(x), float(-y), float(alt)
 
     def geodetic_to_enu(self, lat, lon, alt):
         """
