@@ -3,12 +3,14 @@ from carla_msgs.msg import CarlaSpeedometer
 import rclpy
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.subscription import Subscription
 from simple_pid import PID
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, UInt64
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 from rclpy.parameter import Parameter
 
 
@@ -27,6 +29,9 @@ class VelocityController(Node):
             0.05,
         ).value
         self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
         self.fixed_speed = self.declare_parameter(
             "fixed_speed",
@@ -102,6 +107,18 @@ class VelocityController(Node):
         self.reverse_pub: Publisher = self.create_publisher(
             Bool, f"/paf/{self.role_name}/reverse", qos_profile=1
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "velocity_controller"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "velocity_controller"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         self.__current_velocity: Optional[float] = None
         self.__target_velocity: Optional[float] = None
@@ -115,6 +132,7 @@ class VelocityController(Node):
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -182,6 +200,14 @@ class VelocityController(Node):
         self.reverse_pub.publish(Bool(data=reverse))
         self.brake_pub.publish(Float32(data=float(brake)))
         self.throttle_pub.publish(Float32(data=float(throttle)))
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def loop_handler(self):
         try:

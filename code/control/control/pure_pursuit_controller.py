@@ -5,11 +5,12 @@ from math import atan, sin
 import rclpy
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.subscription import Subscription
 
 from carla_msgs.msg import CarlaSpeedometer
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32, UInt64
 from visualization_msgs.msg import MarkerArray
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
@@ -21,6 +22,7 @@ from mapping_common.markers import debug_marker, debug_marker_array
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 
 
 # Constant: wheelbase of car
@@ -38,6 +40,9 @@ class PurePursuitController(Node):
         # Configuration parameters
         self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
         self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
         self.k_lad = self.declare_parameter(
             "k_lad",
@@ -101,12 +106,25 @@ class PurePursuitController(Node):
             f"/paf/{self.role_name}/control/pp_debug_markers",
             qos_profile=1,
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "pure_pursuit"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "pure_pursuit"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         self.__path: Optional[Path] = None
         self.__velocity: Optional[float] = None
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -140,6 +158,14 @@ class PurePursuitController(Node):
             )
         else:
             self.pure_pursuit_steer_pub.publish(Float32(data=steering_angle))
+            self.frame_complete_pub.publish(
+                UInt64(
+                    data=frame_id_from_time_ns(
+                        self.get_clock().now().nanoseconds,
+                        self.sync_frame_delta_seconds,
+                    )
+                )
+            )
 
     def loop_handler(self):
         try:

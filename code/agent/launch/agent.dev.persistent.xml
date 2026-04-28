@@ -11,6 +11,10 @@
         <param name="role_name" value="$(var role_name)" />
     </node>
 
+    <node pkg="agent" exec="startup_coordinator" name="startup_coordinator">
+      <param name="role_name" value="$(var role_name)" />
+    </node>
+
     <!-- kalman localization with robot localization package -->
     <include file="$(find-pkg-share localization)/launch/localization.xml">
       <arg name="control_loop_rate" value="$(var control_loop_rate)" />

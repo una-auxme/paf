@@ -52,8 +52,10 @@ def test_agent_persistent_launch_contains_localization() -> None:
     persistent_launch = CODE_ROOT / "agent/launch/agent.dev.persistent.xml"
     root = ET.parse(persistent_launch).getroot()
     included_files = {include.get("file", "") for include in root.findall("include")}
+    node_execs = {node.get("exec", "") for node in root.findall("node")}
 
     assert any("localization.xml" in file_path for file_path in included_files)
     assert any(
         "planning.dev.persistent.xml" in file_path for file_path in included_files
     )
+    assert "startup_coordinator" in node_execs

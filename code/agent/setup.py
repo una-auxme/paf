@@ -24,6 +24,7 @@ setup(
     entry_points={
         "console_scripts": [
             "data_management_node = agent.data_management_node:main",
+            "startup_coordinator = agent.startup_coordinator:main",
         ],
     },
 )

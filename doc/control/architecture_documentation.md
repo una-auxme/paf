@@ -3,8 +3,8 @@
 **Summary**:
 The control component applies control theory based on a local trajectory provided
 by the [acting component](./../acting/README.md). It uses knowledge of the current state
-of the vehicle in order to send [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg) commands to the Simulator. This component also sends the [/carla/hero/status](https://leaderboard.carla.org/get_started/) command,
-which starts the simulation.
+of the vehicle in order to send [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg) commands to the Simulator.
+Startup release for [/carla/hero/status](https://leaderboard.carla.org/get_started/) is now handled by the agent-side startup coordinator after the required persistent nodes report readiness.
 
 - [Control Architecture](#control-architecture)
 - [Summary of Control Components](#summary-of-control-components)
@@ -65,7 +65,9 @@ which starts the simulation.
   - **throttle**: Float32
   - **brake**: Float32
   - **pure_pursuit_steer**: Float32
+  - **frame completion side-channel**: UInt64 topics from mapping, motion planning, ACC, pure pursuit, and velocity controller
 - Outputs:
   - **vehicle_control_cmd**: [CarlaEgoVehicleControl](https://carla.readthedocs.io/en/0.9.8/ros_msgs/#CarlaEgoVehicleControlmsg)
-  - **status**: Bool
   - **emergency**: Bool
+
+The vehicle controller now acts as the final frame barrier for synchronous simulation. It releases one control command per simulation frame after the required upstream stages reported completion for that frame, and falls back to a safe stop if the barrier times out.

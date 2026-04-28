@@ -6,10 +6,12 @@ from copy import deepcopy
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.qos import DurabilityPolicy, QoSProfile
 import ros2_numpy
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 import mapping_common.map
 import mapping_common.hero
 from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
@@ -31,7 +33,7 @@ from rcl_interfaces.msg import (
     ParameterDescriptor,
     FloatingPointRange,
 )
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32, UInt64
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
@@ -124,6 +126,9 @@ class MappingDataIntegrationNode(Node):
         # Parameters
 
         self.map_publish_rate = self.declare_parameter("map_publish_rate", 0.05).value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
         # Parameters: Enable entity sources
 
@@ -412,9 +417,22 @@ class MappingDataIntegrationNode(Node):
             topic="/paf/hero/mapping/clusterpoints",
             qos_profile=1,
         )
+        self.startup_ready_pub = self.create_publisher(
+            Bool,
+            startup_topic("hero", "mapping"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
+        self.frame_complete_pub = self.create_publisher(
+            UInt64,
+            frame_complete_topic("hero", "mapping"),
+            qos_profile=10,
+        )
 
         self.create_timer(self.map_publish_rate, self.publish_new_map_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -835,6 +853,14 @@ class MappingDataIntegrationNode(Node):
 
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def get_current_map_filters(self) -> List[MapFilter]:
         """Creates an array of filters for the Map

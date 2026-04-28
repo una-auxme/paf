@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 
@@ -11,7 +11,10 @@ from typing import Type, Dict
 import rclpy
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.subscription import Subscription
+
+from paf_common.sync import startup_topic
 
 
 @dataclass
@@ -74,6 +77,13 @@ class Passthrough(Node):
 
         self.pt_publishers: Dict[str, Publisher] = {}
         self.pt_subscribers: Dict[str, Subscription] = {}
+        self.startup_ready_pub = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "passthrough"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
         for topic in self.mapped_topics:
             self.pt_publishers[topic.pub_name] = self.create_publisher(
                 topic.topic_type, topic.pub_name, qos_profile=1
@@ -86,6 +96,7 @@ class Passthrough(Node):
                 qos_profile=1,
             )
 
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
 

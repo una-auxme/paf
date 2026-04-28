@@ -1,7 +1,6 @@
 from typing import Optional
 
 import rclpy
-import rclpy.clock
 from rclpy.node import Node
 from rclpy.service import Service
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
@@ -9,6 +8,7 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
 from std_msgs.msg import Bool, String
 from carla_msgs.msg import CarlaRoute
 from planning_interfaces.srv import GetOpenDriveString, GetCarlaRoute
+from paf_common.sync import startup_topic
 
 
 class DataManagement(Node):
@@ -57,25 +57,15 @@ class DataManagement(Node):
             Bool, f"/paf/{self.role_name}/data/planning/global_plan_updated", 10
         )
 
-        # Carla status publisher
-        self.status_pub = self.create_publisher(
+        self.startup_ready_pub = self.create_publisher(
             Bool,
-            f"/carla/{self.role_name}/status",
+            startup_topic(self.role_name, "data_management"),
             qos_profile=QoSProfile(
                 depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
             ),
         )
-        # Periodically send out the status signal,
-        # because otherwise, the leaderboard does not start the simulation.
-        # This has to use system time, because the leaderboard
-        # only sends out clock signals AFTER the simulation has started.
-        system_clock = rclpy.clock.Clock(clock_type=rclpy.clock.ClockType.SYSTEM_TIME)
-        self.create_timer(0.5, self.publish_status, clock=system_clock)
 
         self.get_logger().info(f"{type(self).__name__} node initialized.")
-
-    def publish_status(self):
-        self.status_pub.publish(Bool(data=True))
 
     def open_drive_callback(self, data: String):
         self.get_logger().info("Received open drive data.")
@@ -92,6 +82,7 @@ class DataManagement(Node):
                 f"Started {self.open_drive_service.service_name} service."
             )
         self.open_drive_updated_pub.publish(Bool(data=True))
+        self._publish_startup_ready_if_available()
 
     def get_open_drive_service(
         self, req: GetOpenDriveString.Request, res: GetOpenDriveString.Response
@@ -118,6 +109,16 @@ class DataManagement(Node):
                 f"Started {self.global_plan_service.service_name} service."
             )
         self.global_plan_updated_pub.publish(Bool(data=True))
+        self._publish_startup_ready_if_available()
+
+    def _publish_startup_ready_if_available(self) -> None:
+        if (
+            self.open_drive_string is not None
+            and self.global_plan is not None
+            and self.open_drive_service is not None
+            and self.global_plan_service is not None
+        ):
+            self.startup_ready_pub.publish(Bool(data=True))
 
     def get_global_plan_service(
         self, req: GetCarlaRoute.Request, res: GetCarlaRoute.Response
