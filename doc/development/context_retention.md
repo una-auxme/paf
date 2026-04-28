@@ -13,6 +13,9 @@ Long-lived projects lose intent when design decisions only live in chat threads 
    - Capture assumptions, validation, and known gaps in every PR.
 3. Test markers and logs
    - Preserve behavior expectations with marker-based tests and structured logs.
+4. Reasoning notes for non-trivial improvement work
+   - Keep analysis and comparison notes in `doc/reasoning/` when they are worth preserving but are not the canonical source of truth.
+   - Promote the stable parts into `doc/development/`, `doc/<module>/`, or ADRs when the behavior or policy is finalized.
 
 ## When to write an ADR
 

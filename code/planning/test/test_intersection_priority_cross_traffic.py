@@ -64,6 +64,18 @@ def test_priority_cross_traffic_ignores_fast_entity_moving_away():
     assert priority_clear
 
 
+def test_priority_cross_traffic_ignores_fast_entity_missing_conflict_area():
+    hero = _make_car(0.0, 0.0, is_hero=True)
+    offset_vehicle = _make_car(4.0, 24.0, 0.0, -7.5)
+    map_obj = mapping_map.Map(entities=[hero, offset_vehicle])
+
+    priority_clear, _ = intersection.check_priority_cross_traffic(
+        map_obj, FakeTree([offset_vehicle])
+    )
+
+    assert priority_clear
+
+
 def test_priority_check_mask_stays_world_aligned_while_turning():
     hero = _make_car(0.0, 0.0, is_hero=True)
     reference_pose = transform.Transform2D.identity()
@@ -80,3 +92,11 @@ def test_priority_check_mask_stays_world_aligned_while_turning():
     expected_distance = intersection.PRIORITY_CHECK_DISTANCE + hero.get_front_x()
     assert target_point.x() == pytest.approx(0.0)
     assert target_point.y() == pytest.approx(-expected_distance)
+
+
+def test_enter_pass_judge_line_triggers_once_braking_is_no_longer_comfortable():
+    assert intersection._is_over_priority_pass_judge_line(4.0, 5.0)
+
+
+def test_enter_pass_judge_line_allows_recheck_when_conflict_is_still_far():
+    assert not intersection._is_over_priority_pass_judge_line(10.0, 2.0)

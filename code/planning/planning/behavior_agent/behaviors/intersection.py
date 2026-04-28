@@ -114,6 +114,10 @@ PRIORITY_CHECK_DISTANCE = 13.0  # further ahead in the direction of travel
 PRIORITY_CHECK_LENGTH = 25.0
 PRIORITY_CHECK_WIDTH = 50.0
 PRIORITY_CLOSING_SPEED_THRESHOLD = 0.5
+PRIORITY_CONFLICT_MARGIN = 1.5
+PRIORITY_PASS_JUDGE_DECELERATION = 3.0
+PRIORITY_PASS_JUDGE_RESPONSE_TIME = 0.5
+PRIORITY_PASS_JUDGE_MARGIN = 1.0
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
 
 
@@ -171,7 +175,9 @@ def _get_entity_velocity_in_hero_frame(entity) -> Optional[Vector2]:
     return entity.transform * entity.motion.linear_motion
 
 
-def _is_priority_cross_traffic_threat(entity, target_point: Point2) -> bool:
+def _is_priority_cross_traffic_threat(
+    entity, target_point: Point2, hero_width: float
+) -> bool:
     velocity = _get_entity_velocity_in_hero_frame(entity)
     if velocity is None or velocity.length() <= PRIORITY_SPEED_THRESHOLD:
         return False
@@ -181,8 +187,32 @@ def _is_priority_cross_traffic_threat(entity, target_point: Point2) -> bool:
     if to_target.length() == 0.0:
         return True
 
+    direction = velocity.normalized()
     closing_speed = _dot(velocity, to_target.normalized())
-    return closing_speed > PRIORITY_CLOSING_SPEED_THRESHOLD
+    if closing_speed <= PRIORITY_CLOSING_SPEED_THRESHOLD:
+        return False
+
+    along_path = _dot(direction, to_target)
+    if along_path <= 0.0:
+        return False
+
+    miss_vector = to_target - (direction * along_path)
+    conflict_radius = (
+        PRIORITY_CONFLICT_MARGIN + (entity.get_width() * 0.5) + (hero_width * 0.5)
+    )
+    return miss_vector.length() <= conflict_radius
+
+
+def _is_over_priority_pass_judge_line(
+    distance_to_conflict: float, ego_speed: float
+) -> bool:
+    ego_speed = max(ego_speed, 0.0)
+    stopping_distance = (
+        (ego_speed * ego_speed) / (2.0 * PRIORITY_PASS_JUDGE_DECELERATION)
+        + ego_speed * PRIORITY_PASS_JUDGE_RESPONSE_TIME
+        + PRIORITY_PASS_JUDGE_MARGIN
+    )
+    return distance_to_conflict <= stopping_distance
 
 
 def check_priority_cross_traffic(
@@ -202,6 +232,7 @@ def check_priority_cross_traffic(
     hero = map.hero()
     if hero is None:
         return True, None
+    hero_width = hero.get_width()
 
     mask, target_point = _build_priority_check_mask(
         hero,
@@ -213,7 +244,7 @@ def check_priority_cross_traffic(
 
     for se in shapely_entities:
         entity = se.entity
-        if _is_priority_cross_traffic_threat(entity, target_point):
+        if _is_priority_cross_traffic_threat(entity, target_point, hero_width):
             return False, mask
 
     return True, mask
@@ -849,6 +880,18 @@ class Enter(py_trees.behaviour.Behaviour):
         if CURRENT_PRIORITY_CHECK_REFERENCE is None:
             CURRENT_PRIORITY_CHECK_REFERENCE = current_pose
 
+        speedometer = self.blackboard.try_get("/carla/hero/Speed")
+        ego_speed = speedometer.speed if speedometer is not None else 0.0
+        hero = map.hero()
+        pass_judge_distance = None
+        if hero is not None:
+            _, target_point = _build_priority_check_mask(
+                hero,
+                reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
+                current_pose=current_pose,
+            )
+            pass_judge_distance = target_point.vector().length()
+
         priority_clear, priority_mask = check_priority_cross_traffic(
             map,
             tree,
@@ -863,31 +906,36 @@ class Enter(py_trees.behaviour.Behaviour):
             add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
 
         if not priority_clear:
-            # priority cross traffic detected
-            self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
-            set_line_stop(self.stop_client, 0.0)
-
-            speedometer = self.blackboard.try_get("/carla/hero/Speed")
-            ego_speed = speedometer.speed if speedometer is not None else 0.0
-
-            if ego_speed > SELF_EMERGENCY_THRESHOLD:
-                self.emergency_pub.publish(Bool(data=True))
-                reason = (
-                    "ENTER: EMERGENCY – fast cross traffic, "
-                    f"ego_speed={ego_speed:.2f} m/s"
+            if pass_judge_distance is not None and _is_over_priority_pass_judge_line(
+                pass_judge_distance, ego_speed
+            ):
+                add_debug_entry(
+                    self.name,
+                    "[Enter] Over priority pass judge line, ignore new stop",
                 )
-
             else:
-                reason = (
-                    f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
-                    "(no emergency brake)"
-                )
+                # priority cross traffic detected
+                self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
+                set_line_stop(self.stop_client, 0.0)
 
-            return debug_status(
-                self.name,
-                py_trees.common.Status.RUNNING,
-                reason,
-            )
+                if ego_speed > SELF_EMERGENCY_THRESHOLD:
+                    self.emergency_pub.publish(Bool(data=True))
+                    reason = (
+                        "ENTER: EMERGENCY – fast cross traffic, "
+                        f"ego_speed={ego_speed:.2f} m/s"
+                    )
+
+                else:
+                    reason = (
+                        f"ENTER: fast cross traffic, but ego_speed={ego_speed:.2f} m/s "
+                        "(no emergency brake)"
+                    )
+
+                return debug_status(
+                    self.name,
+                    py_trees.common.Status.RUNNING,
+                    reason,
+                )
         unset_line_stop(self.stop_client)
         self.emergency_pub.publish(Bool(data=False))
 

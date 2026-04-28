@@ -13,6 +13,7 @@ This document provides an overview of the structure of the documentation.
 - [`dev_talks`](#dev_talks)
 - [`localization`](#localization)
 - [`control`](#control)
+- [`reasoning`](#reasoning)
 
 ## `general`
 
@@ -60,3 +61,7 @@ The [`localization`](./localization/) folder contains documentation for the whol
 ## `control`
 
 The [`control`](./control/) folder contains documentation for all the controllers.
+
+## `reasoning`
+
+The [`reasoning`](./reasoning/) folder contains development analyses, adaptation notes, and other non-canonical reasoning artifacts that should stay in the repository without replacing the main subsystem or contributor documentation.

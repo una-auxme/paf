@@ -25,3 +25,6 @@ code/*.pt
 
 # VS Code transient browse database files
 .vscode/browse.vc.db*
+
+tmp/*
+!tmp/.gitignore
