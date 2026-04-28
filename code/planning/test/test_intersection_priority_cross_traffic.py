@@ -100,3 +100,45 @@ def test_enter_pass_judge_line_triggers_once_braking_is_no_longer_comfortable():
 
 def test_enter_pass_judge_line_allows_recheck_when_conflict_is_still_far():
     assert not intersection._is_over_priority_pass_judge_line(10.0, 2.0)
+
+
+def test_priority_ttc_conflict_blocks_close_arrival_times():
+    target_point = transform.Point2.new(15.0, 0.0)
+    approaching = _make_car(12.0, 12.0, 0.0, -7.5)
+
+    assert intersection._is_priority_ttc_conflict(approaching, target_point, 6.0)
+
+
+def test_priority_conflict_point_tracks_actual_crossing_location():
+    hero = _make_car(0.0, 0.0, is_hero=True)
+    approaching = _make_car(12.0, 12.0, 0.0, -7.5)
+    centerline = intersection._build_priority_check_centerline(hero)
+    _, target_point = intersection._build_priority_check_mask(hero)
+
+    conflict_point = intersection._get_priority_conflict_point(
+        approaching,
+        target_point,
+        centerline,
+        hero.get_width(),
+    )
+
+    assert conflict_point is not None
+    assert conflict_point.x() == pytest.approx(12.0)
+    assert conflict_point.y() == pytest.approx(0.0)
+
+
+def test_priority_ttc_conflict_ignores_late_arrival_when_ego_is_committed():
+    target_point = transform.Point2.new(15.0, 0.0)
+    delayed = _make_car(24.0, 24.0, 0.0, -7.5)
+
+    assert not intersection._is_priority_ttc_conflict(delayed, target_point, 10.0)
+
+
+def test_priority_hysteresis_delays_new_blocking_decision():
+    assert intersection._apply_priority_decision_hysteresis(False, True, 0.1)
+    assert not intersection._apply_priority_decision_hysteresis(False, True, 0.3)
+
+
+def test_priority_hysteresis_requires_stable_clear_before_release():
+    assert not intersection._apply_priority_decision_hysteresis(True, False, 0.3)
+    assert intersection._apply_priority_decision_hysteresis(True, False, 0.7)

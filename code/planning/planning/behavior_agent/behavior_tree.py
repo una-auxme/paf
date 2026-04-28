@@ -5,9 +5,11 @@ import rclpy.executors
 import rclpy.callback_groups
 from rclpy.callback_groups import CallbackGroup
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import String, Bool
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import startup_topic
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import (
     SetParametersResult,
@@ -104,6 +106,7 @@ def grow_a_tree(
                                             ),
                                             intersection.Enter(
                                                 "Enter Intersection",
+                                                node.get_clock(),
                                                 node.curr_behavior_pub,
                                                 node.stop_marks_client,
                                                 node.emergency_pub,
@@ -264,6 +267,13 @@ class BehaviorTree(Node):
             f"/paf/{self.role_name}/emergency",
             1,
         )
+        self.startup_ready_pub = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "behavior_tree"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         # Service clients
         self.speed_alteration_client = self.create_client(
@@ -307,6 +317,7 @@ class BehaviorTree(Node):
             self.control_loop_rate, self.tick_tree_handler
         )
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]) -> SetParametersResult:

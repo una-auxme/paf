@@ -20,6 +20,7 @@ from mapping_common.markers import debug_marker
 from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Point2, Vector2
 import shapely
+from shapely.ops import nearest_points
 from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
@@ -115,6 +116,12 @@ PRIORITY_CHECK_LENGTH = 25.0
 PRIORITY_CHECK_WIDTH = 50.0
 PRIORITY_CLOSING_SPEED_THRESHOLD = 0.5
 PRIORITY_CONFLICT_MARGIN = 1.5
+PRIORITY_CONFLICT_CORE_LENGTH = 15.0
+PRIORITY_TTC_THRESHOLD = 1.5
+PRIORITY_TTC_EGO_SPEED_FLOOR = 3.0
+PRIORITY_TTC_GATE_MIN_EGO_SPEED = 1.0
+PRIORITY_UNSAFE_HOLD_TIME = 0.2
+PRIORITY_SAFE_HOLD_TIME = 0.6
 PRIORITY_PASS_JUDGE_DECELERATION = 3.0
 PRIORITY_PASS_JUDGE_RESPONSE_TIME = 0.5
 PRIORITY_PASS_JUDGE_MARGIN = 1.0
@@ -169,6 +176,26 @@ def _build_priority_check_mask(
     return rect.to_shapely(mask_transform), mask_transform * target_point
 
 
+def _build_priority_check_centerline(
+    hero,
+    reference_pose: Optional[Transform2D] = None,
+    current_pose: Optional[Transform2D] = None,
+):
+    offset_x = PRIORITY_CHECK_DISTANCE + hero.get_front_x()
+    half_length = PRIORITY_CONFLICT_CORE_LENGTH / 2.0
+    start_point = Point2.new(offset_x - half_length, 0.0)
+    end_point = Point2.new(offset_x + half_length, 0.0)
+
+    if reference_pose is not None and current_pose is not None:
+        mask_transform = current_pose.inverse() * reference_pose
+    else:
+        mask_transform = hero.transform
+
+    start_point = mask_transform * start_point
+    end_point = mask_transform * end_point
+    return shapely.LineString([start_point.to_shapely(), end_point.to_shapely()])
+
+
 def _get_entity_velocity_in_hero_frame(entity) -> Optional[Vector2]:
     if entity.motion is None:
         return None
@@ -178,29 +205,109 @@ def _get_entity_velocity_in_hero_frame(entity) -> Optional[Vector2]:
 def _is_priority_cross_traffic_threat(
     entity, target_point: Point2, hero_width: float
 ) -> bool:
+    return (
+        _get_priority_conflict_point(
+            entity,
+            target_point,
+            shapely.LineString([[0.0, 0.0], [target_point.x(), target_point.y()]]),
+            hero_width,
+        )
+        is not None
+    )
+
+
+def _get_priority_conflict_point(
+    entity,
+    target_point: Point2,
+    priority_centerline: shapely.LineString,
+    hero_width: float,
+) -> Optional[Point2]:
     velocity = _get_entity_velocity_in_hero_frame(entity)
     if velocity is None or velocity.length() <= PRIORITY_SPEED_THRESHOLD:
-        return False
+        return None
 
     entity_position = Point2.from_vector(entity.transform.translation())
     to_target = entity_position.vector_to(target_point)
     if to_target.length() == 0.0:
-        return True
+        return target_point
 
     direction = velocity.normalized()
     closing_speed = _dot(velocity, to_target.normalized())
     if closing_speed <= PRIORITY_CLOSING_SPEED_THRESHOLD:
-        return False
+        return None
 
     along_path = _dot(direction, to_target)
     if along_path <= 0.0:
-        return False
+        return None
 
-    miss_vector = to_target - (direction * along_path)
     conflict_radius = (
         PRIORITY_CONFLICT_MARGIN + (entity.get_width() * 0.5) + (hero_width * 0.5)
     )
-    return miss_vector.length() <= conflict_radius
+    entity_path_end = entity_position + (
+        direction * max(along_path + PRIORITY_CHECK_LENGTH, PRIORITY_CHECK_LENGTH)
+    )
+    entity_path = shapely.LineString(
+        [entity_position.to_shapely(), entity_path_end.to_shapely()]
+    )
+    hero_point, entity_point = nearest_points(
+        priority_centerline,
+        entity_path,
+    )
+    if hero_point.distance(entity_point) >= conflict_radius:
+        return None
+
+    return Point2.new(hero_point.x, hero_point.y)
+
+
+def _is_priority_ttc_conflict(
+    entity,
+    target_point: Point2,
+    ego_speed: float,
+) -> bool:
+    velocity = _get_entity_velocity_in_hero_frame(entity)
+    if velocity is None or ego_speed < PRIORITY_TTC_GATE_MIN_EGO_SPEED:
+        return True
+
+    entity_position = Point2.from_vector(entity.transform.translation())
+    to_target = entity_position.vector_to(target_point)
+    along_path = _dot(velocity.normalized(), to_target)
+    if along_path <= 0.0:
+        return False
+
+    entity_ttc = along_path / velocity.length()
+    ego_ttc = target_point.vector().length() / max(
+        ego_speed, PRIORITY_TTC_EGO_SPEED_FLOOR
+    )
+    return abs(entity_ttc - ego_ttc) <= PRIORITY_TTC_THRESHOLD
+
+
+def _apply_priority_decision_hysteresis(
+    raw_clear: bool, filtered_clear: bool, state_age_seconds: float
+) -> bool:
+    if raw_clear == filtered_clear:
+        return filtered_clear
+
+    if raw_clear:
+        return state_age_seconds >= PRIORITY_SAFE_HOLD_TIME
+
+    return not (state_age_seconds >= PRIORITY_UNSAFE_HOLD_TIME)
+
+
+def _update_priority_decision_state(behavior, raw_clear: bool) -> bool:
+    now = behavior.clock.now()
+    if behavior.priority_raw_clear != raw_clear:
+        behavior.priority_raw_clear = raw_clear
+        behavior.priority_raw_state_since = now
+
+    state_age_seconds = (
+        now - behavior.priority_raw_state_since
+    ).nanoseconds / 1_000_000_000
+    behavior.priority_filtered_clear = _apply_priority_decision_hysteresis(
+        raw_clear,
+        behavior.priority_filtered_clear,
+        state_age_seconds,
+    )
+    return behavior.priority_filtered_clear
 
 
 def _is_over_priority_pass_judge_line(
@@ -213,6 +320,44 @@ def _is_over_priority_pass_judge_line(
         + PRIORITY_PASS_JUDGE_MARGIN
     )
     return distance_to_conflict <= stopping_distance
+
+
+def _find_priority_cross_traffic_threat(
+    map: Map,
+    tree: MapTree,
+    reference_pose: Optional[Transform2D] = None,
+    current_pose: Optional[Transform2D] = None,
+):
+    hero = map.hero()
+    if hero is None:
+        return None, None, None
+    hero_width = hero.get_width()
+
+    mask, target_point = _build_priority_check_mask(
+        hero,
+        reference_pose=reference_pose,
+        current_pose=current_pose,
+    )
+    priority_centerline = _build_priority_check_centerline(
+        hero,
+        reference_pose=reference_pose,
+        current_pose=current_pose,
+    )
+
+    shapely_entities = tree.get_overlapping_entities(mask)
+
+    for se in shapely_entities:
+        entity = se.entity
+        conflict_point = _get_priority_conflict_point(
+            entity,
+            target_point,
+            priority_centerline,
+            hero_width,
+        )
+        if conflict_point is not None:
+            return entity, mask, conflict_point
+
+    return None, mask, target_point
 
 
 def check_priority_cross_traffic(
@@ -229,25 +374,14 @@ def check_priority_cross_traffic(
         priority_clear = True  → no fast cross traffic detected
         priority_clear = False → fast cross traffic detected
     """
-    hero = map.hero()
-    if hero is None:
-        return True, None
-    hero_width = hero.get_width()
-
-    mask, target_point = _build_priority_check_mask(
-        hero,
+    threat_entity, mask, _ = _find_priority_cross_traffic_threat(
+        map,
+        tree,
         reference_pose=reference_pose,
         current_pose=current_pose,
     )
 
-    shapely_entities = tree.get_overlapping_entities(mask)
-
-    for se in shapely_entities:
-        entity = se.entity
-        if _is_priority_cross_traffic_threat(entity, target_point, hero_width):
-            return False, mask
-
-    return True, mask
+    return threat_entity is None, mask
 
 
 def set_line_stop(client: Client, distance: float):
@@ -606,6 +740,9 @@ class Wait(py_trees.behaviour.Behaviour):
         self.was_red = False
         self.intersection_type = self.waypoint.road_option
         self.left_marker_set = False
+        self.priority_raw_clear = True
+        self.priority_filtered_clear = True
+        self.priority_raw_state_since = self.clock.now()
 
     def update(self):
         """
@@ -631,16 +768,18 @@ class Wait(py_trees.behaviour.Behaviour):
             if CURRENT_PRIORITY_CHECK_REFERENCE is None:
                 CURRENT_PRIORITY_CHECK_REFERENCE = current_pose
 
-            # Priority cross traffic check
-            priority_clear, priority_mask = check_priority_cross_traffic(
+            threat_entity, priority_mask, _ = _find_priority_cross_traffic_threat(
                 map,
                 tree,
                 reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
                 current_pose=current_pose,
             )
+            raw_priority_clear = threat_entity is None
+            priority_clear = _update_priority_decision_state(self, raw_priority_clear)
             add_debug_entry(
                 self.name,
-                f"[Wait] Priority cross traffic clear: {priority_clear}",
+                f"[Wait] Priority cross traffic clear: {priority_clear}"
+                f" (raw={raw_priority_clear})",
             )
             if priority_mask is not None:
                 add_debug_marker(
@@ -820,11 +959,13 @@ class Enter(py_trees.behaviour.Behaviour):
     def __init__(
         self,
         name: str,
+        clock: Clock,
         curr_behavior_pub: Publisher,
         stop_client: Client,
         emergency_pub: Publisher,
     ):
         super().__init__(name)
+        self.clock = clock
         self.curr_behavior_pub = curr_behavior_pub
         self.stop_client = stop_client
         self.emergency_pub = emergency_pub
@@ -848,6 +989,9 @@ class Enter(py_trees.behaviour.Behaviour):
             CURRENT_PRIORITY_CHECK_REFERENCE = _get_current_pose_transform(
                 self.blackboard
             )
+        self.priority_raw_clear = True
+        self.priority_filtered_clear = True
+        self.priority_raw_state_since = self.clock.now()
 
     def update(self):
         """
@@ -882,25 +1026,30 @@ class Enter(py_trees.behaviour.Behaviour):
 
         speedometer = self.blackboard.try_get("/carla/hero/Speed")
         ego_speed = speedometer.speed if speedometer is not None else 0.0
-        hero = map.hero()
-        pass_judge_distance = None
-        if hero is not None:
-            _, target_point = _build_priority_check_mask(
-                hero,
+        threat_entity, priority_mask, conflict_point = (
+            _find_priority_cross_traffic_threat(
+                map,
+                tree,
                 reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
                 current_pose=current_pose,
             )
-            pass_judge_distance = target_point.vector().length()
-
-        priority_clear, priority_mask = check_priority_cross_traffic(
-            map,
-            tree,
-            reference_pose=CURRENT_PRIORITY_CHECK_REFERENCE,
-            current_pose=current_pose,
         )
+        pass_judge_distance = (
+            conflict_point.vector().length() if conflict_point is not None else None
+        )
+        raw_priority_clear = threat_entity is None
+        if not raw_priority_clear and conflict_point is not None:
+            raw_priority_clear = not _is_priority_ttc_conflict(
+                threat_entity,
+                conflict_point,
+                ego_speed,
+            )
+
+        priority_clear = _update_priority_decision_state(self, raw_priority_clear)
         add_debug_entry(
             self.name,
-            f"[Enter] Priority cross traffic clear: {priority_clear}",
+            f"[Enter] Priority cross traffic clear: {priority_clear}"
+            f" (raw={raw_priority_clear})",
         )
         if priority_mask is not None:
             add_debug_marker(debug_marker(priority_mask, color=(1.0, 0.0, 0.0, 0.3)))
@@ -909,6 +1058,9 @@ class Enter(py_trees.behaviour.Behaviour):
             if pass_judge_distance is not None and _is_over_priority_pass_judge_line(
                 pass_judge_distance, ego_speed
             ):
+                self.priority_raw_clear = True
+                self.priority_filtered_clear = True
+                self.priority_raw_state_since = self.clock.now()
                 add_debug_entry(
                     self.name,
                     "[Enter] Over priority pass judge line, ignore new stop",
