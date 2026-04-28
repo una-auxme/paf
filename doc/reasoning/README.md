@@ -21,3 +21,10 @@ Each note should identify:
 2. The main sources inspected.
 3. The current conclusion.
 4. Any follow-up work that remains.
+
+## Current Notes
+
+- [2026-04-28-development-hardening.md](./2026-04-28-development-hardening.md)
+- [2026-04-28-intersection-prediction-strategy.md](./2026-04-28-intersection-prediction-strategy.md)
+- [2026-04-28-roboflow-evaluation.md](./2026-04-28-roboflow-evaluation.md)
+- [2026-04-28-deterministic-simulation-synchronization.md](./2026-04-28-deterministic-simulation-synchronization.md)
