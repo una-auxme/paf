@@ -85,13 +85,16 @@ Do not attempt to fix unrelated failing tests/lints outside the requested scope.
 
 - Update docs when behavior, setup, commands, or interfaces change.
 - For developer-facing changes, prefer updating docs under `doc/development/` or package README files.
-- Use `doc/reasoning/` for preserved analysis, comparisons, and handoff notes that should not become the canonical behavior documentation.
+- Use `doc/dev/progress/` for timestamped progress and handoff notes that preserve the current chat or implementation state without becoming the canonical behavior documentation.
+- Use `doc/reasoning/` for preserved analysis, comparisons, migration notes, and longer-form reasoning that should survive the chat session but should not replace canonical docs.
 - Keep Markdown concise, structured, and actionable.
 - Capture non-trivial architectural decisions in `doc/adr/` using the ADR template.
+- When a progress or handoff note is created, add or update documentation hints that make it discoverable from `doc/dev/README.md`, `doc/README.md`, or the most relevant nearby package or development doc.
 
 ## 9.1) Planning and reasoning support
 
 - For non-trivial work, use `.agent/PLANS.md` to make scope, evidence, validation, and follow-ups explicit.
+- For non-trivial or multi-step work, always create or update a timestamped note under `doc/dev/progress/` before finishing or handing off. The note should capture the current chat state, the motivating task, files or systems inspected, validation performed, remaining blockers, and recommended next actions.
 - Treat `doc/dev_talks/paf25/future_work.md` and `doc/dev_talks/paf25/improvements_assessment.md` as direction-setting documents for repository-wide cleanup and development workflow changes.
 
 ## 10) Git and PR hygiene

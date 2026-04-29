@@ -26,7 +26,7 @@ The [`development`](./development/) folder contains guidelines for developing in
 
 ## `dev`
 
-The [`dev`](./dev/README.md) folder contains development handoff and progress notes that capture in-flight work without replacing the canonical subsystem or contributor documentation. The current chat snapshot is stored in [2026-04-29-route-validation-and-map-context-handoff.md](./dev/progress/2026-04-29-route-validation-and-map-context-handoff.md).
+The [`dev`](./dev/README.md) folder contains development handoff and progress notes that capture in-flight work without replacing the canonical subsystem or contributor documentation. Use the [Development Notes index](./dev/README.md) to find the latest handoff and progress snapshots.
 
 ## `research`
 
