@@ -12,15 +12,9 @@ from paf_common.sync import StartupReadinessTracker, normalize_sync_id, startup_
 
 
 DEFAULT_REQUIRED_NODES = [
+    # Route-dependent nodes become ready only after the leaderboard publishes
+    # the global plan, which happens after /carla/<role>/status is released.
     "data_management",
-    "mapping",
-    "motion_planning",
-    "acc",
-    "passthrough",
-    "pure_pursuit",
-    "velocity_controller",
-    "vehicle_controller",
-    "behavior_tree",
 ]
 
 

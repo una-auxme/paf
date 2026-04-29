@@ -21,6 +21,7 @@ from mapping_common.shape import Rectangle
 from mapping_common.transform import Transform2D, Point2, Vector2
 import shapely
 from shapely.ops import nearest_points
+from paf_common.route_metrics import increment_route_metric
 from planning.behavior_agent.blackboard_utils import Blackboard
 
 from . import behavior_names as bs
@@ -126,6 +127,9 @@ PRIORITY_PASS_JUDGE_DECELERATION = 3.0
 PRIORITY_PASS_JUDGE_RESPONSE_TIME = 0.5
 PRIORITY_PASS_JUDGE_MARGIN = 1.0
 SELF_EMERGENCY_THRESHOLD = 10 / 3.6  # m/s ≈ 2.78
+UNNECESSARY_INTERSECTION_STOP_CANDIDATE_METRIC = (
+    "planning.intersection.unnecessary_stop_candidates"
+)
 
 
 def _dot(a: Vector2, b: Vector2) -> float:
@@ -992,6 +996,7 @@ class Enter(py_trees.behaviour.Behaviour):
         self.priority_raw_clear = True
         self.priority_filtered_clear = True
         self.priority_raw_state_since = self.clock.now()
+        self.priority_stop_metric_active = False
 
     def update(self):
         """
@@ -1058,6 +1063,7 @@ class Enter(py_trees.behaviour.Behaviour):
             if pass_judge_distance is not None and _is_over_priority_pass_judge_line(
                 pass_judge_distance, ego_speed
             ):
+                self.priority_stop_metric_active = False
                 self.priority_raw_clear = True
                 self.priority_filtered_clear = True
                 self.priority_raw_state_since = self.clock.now()
@@ -1066,6 +1072,11 @@ class Enter(py_trees.behaviour.Behaviour):
                     "[Enter] Over priority pass judge line, ignore new stop",
                 )
             else:
+                if not self.priority_stop_metric_active:
+                    increment_route_metric(
+                        UNNECESSARY_INTERSECTION_STOP_CANDIDATE_METRIC
+                    )
+                    self.priority_stop_metric_active = True
                 # priority cross traffic detected
                 self.curr_behavior_pub.publish(String(data=bs.int_wait.name))
                 set_line_stop(self.stop_client, 0.0)
@@ -1088,6 +1099,7 @@ class Enter(py_trees.behaviour.Behaviour):
                     py_trees.common.Status.RUNNING,
                     reason,
                 )
+            self.priority_stop_metric_active = False
         unset_line_stop(self.stop_client)
         self.emergency_pub.publish(Bool(data=False))
 

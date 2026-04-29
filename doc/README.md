@@ -4,6 +4,7 @@ This document provides an overview of the structure of the documentation.
 
 - [`general`](#general)
 - [`development`](#development)
+- [`dev`](#dev)
 - [`research`](#research)
 - [`perception`](#perception)
 - [`mapping`](#mapping)
@@ -22,6 +23,10 @@ The [`general`](./general/) folder contains installation instructions for the pr
 ## `development`
 
 The [`development`](./development/) folder contains guidelines for developing inside the project. It also provides templates for documentation files and python classes. Further information can be found in the [README](development/README.md).
+
+## `dev`
+
+The [`dev`](./dev/README.md) folder contains development handoff and progress notes that capture in-flight work without replacing the canonical subsystem or contributor documentation. The current chat snapshot is stored in [2026-04-29-route-validation-and-map-context-handoff.md](./dev/progress/2026-04-29-route-validation-and-map-context-handoff.md).
 
 ## `research`
 

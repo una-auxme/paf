@@ -17,6 +17,7 @@ from std_msgs.msg import Bool, Float32, String, UInt64
 from rosgraph_msgs.msg import Clock
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.route_metrics import increment_route_metric
 from paf_common.sync import (
     FrameBarrier,
     frame_complete_topic,
@@ -32,6 +33,9 @@ DEFAULT_REQUIRED_SYNC_STAGES = [
     "pure_pursuit",
     "velocity_controller",
 ]
+FRAME_BARRIER_FALLBACK_METRIC = (
+    "control.vehicle_controller.frame_barrier_fallback_frames"
+)
 
 
 class VehicleController(Node):
@@ -301,6 +305,7 @@ class VehicleController(Node):
             return
 
         missing_stages = self.frame_barrier.missing_stages(pending_frame_id)
+        increment_route_metric(FRAME_BARRIER_FALLBACK_METRIC)
         self.get_logger().warn(
             "Frame barrier timeout for frame "
             f"{pending_frame_id}: missing stages {missing_stages}. "

@@ -13,6 +13,8 @@ services:
               count: "all"
               capabilities: [ gpu ]
               # https://github.com/carla-simulator/carla/issues/6234#issuecomment-1458372639
+    environment:
+      - VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json
     volumes:
       # This should not be necessary: https://github.com/NVIDIA/nvidia-container-toolkit/issues/16
       - /usr/share/vulkan/icd.d/nvidia_icd.json:/usr/share/vulkan/icd.d/nvidia_icd.json

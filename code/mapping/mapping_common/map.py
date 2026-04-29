@@ -56,6 +56,60 @@ class LaneFreeDirection(Enum):
     RIGHT = True
 
 
+class LanePresence(Enum):
+    PRESENT = 1
+    ABSENT = 0
+    UNKNOWN = -1
+
+    def as_optional_bool(self) -> Optional[bool]:
+        if self is LanePresence.UNKNOWN:
+            return None
+        return self is LanePresence.PRESENT
+
+
+@dataclass
+class LaneContext:
+    direction: LaneFreeDirection
+    presence: LanePresence
+    marking_state: LaneFreeState
+    lane_state: LaneFreeState
+    lane_box: Optional[shapely.Geometry] = None
+
+    def has_lane(self) -> Optional[bool]:
+        return self.presence.as_optional_bool()
+
+    def is_free(self) -> Optional[bool]:
+        if self.lane_state is LaneFreeState.FREE:
+            return True
+        if self.lane_state is LaneFreeState.BLOCKED:
+            return False
+        return None
+
+
+@dataclass
+class AdjacentLaneContext:
+    left: LaneContext
+    right: LaneContext
+
+    def has_left_lane(self) -> Optional[bool]:
+        return self.left.has_lane()
+
+    def has_right_lane(self) -> Optional[bool]:
+        return self.right.has_lane()
+
+
+def _lane_presence_from_marking_state(marking_state: LaneFreeState) -> LanePresence:
+    if marking_state in [
+        LaneFreeState.TO_BE_CHECKED,
+        LaneFreeState.FREE,
+        LaneFreeState.BLOCKED,
+    ]:
+        return LanePresence.PRESENT
+    if marking_state is LaneFreeState.MISSING_LANEMARK_ERR:
+        return LanePresence.ABSENT
+    return LanePresence.UNKNOWN
+
+
 @dataclass
 class Map:
     """2 dimensional map for the intermediate layer
@@ -500,6 +554,158 @@ class MapTree:
         else:
             return None
 
+    def _get_lane_marking_pair(
+        self,
+        right_lane: bool = False,
+        lane_angle: float = 5.0,
+    ) -> Tuple[
+        LaneFreeState,
+        Optional[LineString],
+        Optional[Entity],
+        Optional[Entity],
+    ]:
+        lane_pos = -1 if right_lane else 1
+        y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
+
+        lane_tree = self.map.build_tree(f=FlagFilter(is_lanemark=True))
+        lanemark_y_axis_intersection = lane_tree.query(
+            geo=y_axis_line,
+            predicate="intersects",
+        )
+        if len(lanemark_y_axis_intersection) < 2:
+            return LaneFreeState.MISSING_LANEMARK_ERR, None, None, None
+
+        lane_close_hero = None
+        lane_further_hero = None
+
+        for ent in lanemark_y_axis_intersection:
+            if ent.entity.position_index == lane_pos * 1:
+                lane_close_hero = ent.entity
+            if ent.entity.position_index == lane_pos * 2:
+                lane_further_hero = ent.entity
+
+        if lane_close_hero is None or lane_further_hero is None:
+            return LaneFreeState.MISSING_LANEMARK_ERR, None, None, None
+
+        close_rotation = lane_close_hero.transform.rotation()
+        further_rotation = lane_further_hero.transform.rotation()
+        lanemark_angle = np.rad2deg(abs(close_rotation - further_rotation))
+        if lanemark_angle > lane_angle:
+            get_logger().warn(
+                f"Lane free check: Lanemarkings angle {lanemark_angle} too big, "
+                f"should be < {lane_angle}°. Aborting check."
+            )
+            return (
+                LaneFreeState.LANEMARK_ANGLE_ERR,
+                y_axis_line,
+                lane_close_hero,
+                lane_further_hero,
+            )
+
+        return (
+            LaneFreeState.TO_BE_CHECKED,
+            y_axis_line,
+            lane_close_hero,
+            lane_further_hero,
+        )
+
+    def get_lane_presence(
+        self,
+        right_lane: bool = False,
+        lane_angle: float = 5.0,
+    ) -> LanePresence:
+        """Returns whether an adjacent lane is present, absent, or unknown."""
+
+        marking_state, _, _, _ = self._get_lane_marking_pair(
+            right_lane=right_lane,
+            lane_angle=lane_angle,
+        )
+        return _lane_presence_from_marking_state(marking_state)
+
+    def get_lane_context(
+        self,
+        right_lane: bool = False,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+        reduce_lane: float = 1.5,
+        check_method: Literal[
+            "rectangle",
+            "lanemarking",
+            "fallback",
+        ] = "fallback",
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
+        lane_angle: float = 5.0,
+        motion_aware: bool = True,
+    ) -> LaneContext:
+        """Returns lane presence and occupancy information for one adjacent side."""
+
+        direction = LaneFreeDirection.RIGHT if right_lane else LaneFreeDirection.LEFT
+        marking_state, _, _, _ = self._get_lane_marking_pair(
+            right_lane=right_lane,
+            lane_angle=lane_angle,
+        )
+        lane_state, lane_box = self.is_lane_free(
+            right_lane=right_lane,
+            lane_length=lane_length,
+            lane_transform=lane_transform,
+            reduce_lane=reduce_lane,
+            check_method=check_method,
+            min_coverage_percent=min_coverage_percent,
+            min_coverage_area=min_coverage_area,
+            lane_angle=lane_angle,
+            motion_aware=motion_aware,
+        )
+        return LaneContext(
+            direction=direction,
+            presence=_lane_presence_from_marking_state(marking_state),
+            marking_state=marking_state,
+            lane_state=lane_state,
+            lane_box=lane_box,
+        )
+
+    def get_adjacent_lane_context(
+        self,
+        lane_length: float = 20.0,
+        lane_transform: float = 0.0,
+        reduce_lane: float = 1.5,
+        check_method: Literal[
+            "rectangle",
+            "lanemarking",
+            "fallback",
+        ] = "fallback",
+        min_coverage_percent: float = 0.0,
+        min_coverage_area: float = 0.0,
+        lane_angle: float = 5.0,
+        motion_aware: bool = True,
+    ) -> AdjacentLaneContext:
+        """Returns lane presence and occupancy information for both adjacent sides."""
+
+        return AdjacentLaneContext(
+            left=self.get_lane_context(
+                right_lane=False,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                check_method=check_method,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
+                lane_angle=lane_angle,
+                motion_aware=motion_aware,
+            ),
+            right=self.get_lane_context(
+                right_lane=True,
+                lane_length=lane_length,
+                lane_transform=lane_transform,
+                reduce_lane=reduce_lane,
+                check_method=check_method,
+                min_coverage_percent=min_coverage_percent,
+                min_coverage_area=min_coverage_area,
+                lane_angle=lane_angle,
+                motion_aware=motion_aware,
+            ),
+        )
+
     def is_lane_free(
         self,
         right_lane: bool = False,
@@ -691,47 +897,15 @@ class MapTree:
             Tuple[LaneFreeState, Optional[shapely.Geometry]]: return if lane is free
                 and the checkbox shape
         """
-        # checks which lane should be checked and set the multiplier for
-        # the lane entity translation(>0 = left from car)
-        lane_pos = 1
-        if right_lane:
-            lane_pos = -1
-
-        # create y-axis line for intersection with lanemarks
-        y_axis_line = LineString([[0, 0], [0, lane_pos * 8]])
-        # build map STRtree from map with filter
-        lane_tree = self.map.build_tree(f=FlagFilter(is_lanemark=True))
-        # get entities that intersect with the y-axis line
-        lanemark_y_axis_intersection = lane_tree.query(
-            geo=y_axis_line, predicate="intersects"
-        )
-        # Abort when not enough lane marks got detected
-        if len(lanemark_y_axis_intersection) < 2:
-            return LaneFreeState.MISSING_LANEMARK_ERR, None
-
-        lane_close_hero = None
-        lane_further_hero = None
-
-        # Choose two lanes nearby car
-        for ent in lanemark_y_axis_intersection:
-            if ent.entity.position_index == lane_pos * 1:
-                lane_close_hero = ent.entity
-            if ent.entity.position_index == lane_pos * 2:
-                lane_further_hero = ent.entity
-
-        if lane_close_hero is None or lane_further_hero is None:
-            return LaneFreeState.MISSING_LANEMARK_ERR, None
-
-        # Check if two lanes has a plausible angle to each pother
-        close_rotation = lane_close_hero.transform.rotation()
-        further_rotation = lane_further_hero.transform.rotation()
-        lanemark_angle = np.rad2deg(abs(close_rotation - further_rotation))
-        if lanemark_angle > lane_angle:
-            get_logger().warn(
-                f"Lane free check: Lanemarkings angle {lanemark_angle} too big, \
-                should be < {lane_angle}°. Aborting check."
+        lane_pos = -1 if right_lane else 1
+        lane_state, y_axis_line, lane_close_hero, lane_further_hero = (
+            self._get_lane_marking_pair(
+                right_lane=right_lane,
+                lane_angle=lane_angle,
             )
-            return LaneFreeState.LANEMARK_ANGLE_ERR, None
+        )
+        if lane_state.is_error():
+            return lane_state, None
 
         # create the lane ckeckbox shape
         lane_box = mapping_common.mask.create_lane_box(

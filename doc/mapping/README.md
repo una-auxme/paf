@@ -46,6 +46,7 @@ To do intersection checks on the map:
   - [`map_tree.get_overlapping_entities()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_overlapping_entities)
   - [`map_tree.get_nearest_entity()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_nearest_entity)
   - [`map_tree.is_lane_free()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.is_lane_free)
+  - [`map_tree.get_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_lane_context) and [`map_tree.get_adjacent_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_adjacent_lane_context) to query whether adjacent lanes exist and whether they are currently traversable
 - Functions for creating collision masks can be found in the [mapping_common.mask](/doc/mapping/generated/mapping_common/mask.md) module
 
 For intersection-related traffic checks, dynamic entities can also be evaluated using motion information and speed thresholds.

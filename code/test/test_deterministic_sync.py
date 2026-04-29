@@ -82,6 +82,21 @@ def test_frame_id_from_time_ns_uses_fixed_delta(
 def test_sync_contract_files_reflect_barrier_design() -> None:
     control_xml = (CODE_ROOT / "control/launch/control.xml").read_text()
     control_yaml = (CODE_ROOT / "control/config/control.yaml").read_text()
+    data_management_source = (
+        CODE_ROOT / "agent/agent/data_management_node.py"
+    ).read_text()
+    startup_coordinator_source = (
+        CODE_ROOT / "agent/agent/startup_coordinator.py"
+    ).read_text()
+    paf_agent_source = (
+        CODE_ROOT / "leaderboard_launcher/leaderboard_launcher/paf_agent_base.py"
+    ).read_text()
+    startup_ready_block = data_management_source.split(
+        "def _publish_startup_ready_if_available(self) -> None:\n", maxsplit=1
+    )[1].split("\n\n    def get_global_plan_service", maxsplit=1)[0]
+    startup_required_nodes_block = startup_coordinator_source.split(
+        "DEFAULT_REQUIRED_NODES = [\n", maxsplit=1
+    )[1].split("]\n\n\nclass StartupCoordinator", maxsplit=1)[0]
     ros_bridge_root = ET.parse(
         CODE_ROOT / "leaderboard_launcher/launch/ros_bridge.dev.xml"
     ).getroot()
@@ -93,6 +108,12 @@ def test_sync_contract_files_reflect_barrier_design() -> None:
     assert "loop_sleep_time" not in control_yaml
     assert "frame_barrier_timeout" in control_yaml
     assert "sync_frame_delta_seconds" in control_yaml
+    assert "self.global_plan is not None" not in startup_ready_block
+    assert "self.open_drive_string is not None" in startup_ready_block
+    assert '"ego_vehicle_role_name": "\\"[\'hero\']\\""' in paf_agent_source
+    assert 'wait_for_message(self.ros_node, "/carla/hero/status"' not in paf_agent_source
+    assert '"data_management"' in startup_required_nodes_block
+    assert '"motion_planning"' not in startup_required_nodes_block
 
     wait_for_command_arg = next(
         arg

@@ -24,9 +24,19 @@ class DataManagement(Node):
         self.role_name = self.declare_parameter("role_name", "hero").value
 
         # Services
-        # Get created only after data is available
         self.open_drive_service: Optional[Service] = None
         self.global_plan_service: Optional[Service] = None
+
+        self.open_drive_service = self.create_service(
+            GetOpenDriveString,
+            f"/paf/{self.role_name}/data/planning/get_open_drive",
+            self.get_open_drive_service,
+        )
+        self.global_plan_service = self.create_service(
+            GetCarlaRoute,
+            f"/paf/{self.role_name}/data/planning/get_global_plan",
+            self.get_global_plan_service,
+        )
 
         # Subscriptions
         self.create_subscription(
@@ -72,15 +82,6 @@ class DataManagement(Node):
         self.open_drive_string = data.data
         # with open("/workspace/OpenDriveString.xml", "w") as text_file:
         #     text_file.write(self.open_drive_string)
-        if self.open_drive_service is None:
-            self.open_drive_service = self.create_service(
-                GetOpenDriveString,
-                f"/paf/{self.role_name}/data/planning/get_open_drive",
-                self.get_open_drive_service,
-            )
-            self.get_logger().info(
-                f"Started {self.open_drive_service.service_name} service."
-            )
         self.open_drive_updated_pub.publish(Bool(data=True))
         self._publish_startup_ready_if_available()
 
@@ -99,25 +100,10 @@ class DataManagement(Node):
     def global_plan_callback(self, data: CarlaRoute):
         self.get_logger().info("Received global plan data.")
         self.global_plan = data
-        if self.global_plan_service is None:
-            self.global_plan_service = self.create_service(
-                GetCarlaRoute,
-                f"/paf/{self.role_name}/data/planning/get_global_plan",
-                self.get_global_plan_service,
-            )
-            self.get_logger().info(
-                f"Started {self.global_plan_service.service_name} service."
-            )
         self.global_plan_updated_pub.publish(Bool(data=True))
-        self._publish_startup_ready_if_available()
 
     def _publish_startup_ready_if_available(self) -> None:
-        if (
-            self.open_drive_string is not None
-            and self.global_plan is not None
-            and self.open_drive_service is not None
-            and self.global_plan_service is not None
-        ):
+        if self.open_drive_string is not None and self.open_drive_service is not None:
             self.startup_ready_pub.publish(Bool(data=True))
 
     def get_global_plan_service(
