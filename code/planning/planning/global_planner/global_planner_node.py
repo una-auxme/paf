@@ -4,6 +4,7 @@ from xml.etree import ElementTree as eTree
 import rclpy
 import rclpy.callback_groups
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.service import Service
 
 from transforms3d.euler import euler2quat
@@ -113,13 +114,19 @@ class PrePlanner(Node):
         self.global_trajectory_updated_pub = self.create_publisher(
             msg_type=Bool,
             topic=f"/paf/{self.role_name}/data/planning/global_trajectory_updated",
-            qos_profile=1,
+            qos_profile=QoSProfile(
+                depth=1,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
         )
 
         self.speed_limit_updated_pub = self.create_publisher(
             msg_type=Bool,
             topic=f"/paf/{self.role_name}/data/planning/speed_limits_updated",
-            qos_profile=1,
+            qos_profile=QoSProfile(
+                depth=1,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            ),
         )
 
         # Service clients

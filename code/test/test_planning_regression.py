@@ -49,3 +49,21 @@ def test_position_stability_gate_accepts_after_bounded_unstable_window() -> None
     decisions = [gate.update(float(x), 0.0) for x in range(7)]
 
     assert decisions == [False, False, False, False, False, False, True]
+
+
+def test_global_planner_update_notifications_are_transient_local() -> None:
+    """Late subscribers must still see route data availability notifications."""
+    source = (
+        CODE_ROOT / "planning/planning/global_planner/global_planner_node.py"
+    ).read_text(encoding="utf-8")
+    trajectory_publisher_block = source.split(
+        "self.global_trajectory_updated_pub = self.create_publisher(",
+        maxsplit=1,
+    )[1].split("\n\n        self.speed_limit_updated_pub", maxsplit=1)[0]
+    speed_limit_publisher_block = source.split(
+        "self.speed_limit_updated_pub = self.create_publisher(",
+        maxsplit=1,
+    )[1].split("\n\n        # Service clients", maxsplit=1)[0]
+
+    assert "DurabilityPolicy.TRANSIENT_LOCAL" in trajectory_publisher_block
+    assert "DurabilityPolicy.TRANSIENT_LOCAL" in speed_limit_publisher_block

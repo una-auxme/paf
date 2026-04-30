@@ -16,13 +16,13 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Print environment variables (DEBUG)
         run: |
           echo "AGENT_VERSION=${AGENT_VERSION}"
           echo "COMPOSE_FILE=${COMPOSE_FILE}"
       - name: Download artifact
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -49,27 +49,27 @@ jobs:
         run: unzip artifact.zip
       - name: Return artifact JSON
         id: return-artifact-json
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             let fs = require('fs');
             let data = JSON.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/artifact.json`));
             return data;
 
-      - name: Run docker-compose
+      - name: Run Docker Compose
         run: |
           xhost +local:
           USERNAME=$(whoami) USER_UID=$(id -u) USER_GID=$(id -g) RENDER_OFFSCREEN=-RenderOffScreen docker compose up --quiet-pull --exit-code-from agent
       - name: Copy results
         run: docker compose cp agent:/tmp/simulation_results.json .
-      - name: Stop docker-compose
+      - name: Stop Docker Compose
         # always run this step, to clean up even on error
         if: always()
         run: docker compose down -v
       # add rendered JSON as comment to the pull request
       - name: Create simulation results table
         id: simulation-results
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -94,7 +94,7 @@ jobs:
           echo "${{ steps.simulation-results.outputs.result }}"
       - name: Add simulation results as comment
         if: ${{ steps.return-artifact-json.outputs.result.is_pr }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # this script reads the simulation_results.json and creates a comment on the pull request with the results.

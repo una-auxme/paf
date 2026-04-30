@@ -1,10 +1,15 @@
+import importlib
+
 import pytest
 
 pyproj = pytest.importorskip("pyproj")
 
-from localization.coordinate_transformation import (  # noqa: E402
-    CoordinateTransformer,
-    extract_geo_reference_from_opendrive,
+coordinate_transformation = importlib.import_module(
+    "localization.coordinate_transformation"
+)
+CoordinateTransformer = coordinate_transformation.CoordinateTransformer
+extract_geo_reference_from_opendrive = (
+    coordinate_transformation.extract_geo_reference_from_opendrive
 )
 
 

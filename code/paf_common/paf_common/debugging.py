@@ -26,7 +26,7 @@ def start_debugger(
     host: str = "127.0.0.1",
     port: int = 53000,
     wait_for_client: bool = False,
-)-> None:
+) -> None:
     """Start a debugpy listener for the current node when debugpy is available.
 
     Args:

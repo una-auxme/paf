@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 import sys
 from pathlib import Path
 
@@ -15,12 +16,11 @@ PAF_COMMON_SRC = CODE_ROOT / "paf_common"
 if str(PAF_COMMON_SRC) not in sys.path:
     sys.path.insert(0, str(PAF_COMMON_SRC))
 
-from paf_common.route_metrics import (
-    increment_route_metric,
-    load_route_metrics,
-    merge_route_metrics_into_checkpoint,
-    reset_route_metrics_file,
-)
+route_metrics = importlib.import_module("paf_common.route_metrics")
+increment_route_metric = route_metrics.increment_route_metric
+load_route_metrics = route_metrics.load_route_metrics
+merge_route_metrics_into_checkpoint = route_metrics.merge_route_metrics_into_checkpoint
+reset_route_metrics_file = route_metrics.reset_route_metrics_file
 
 
 def test_increment_route_metric_accumulates_counts(tmp_path: Path) -> None:

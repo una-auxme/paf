@@ -44,11 +44,9 @@ PAF_COMMON_SRC = "/workspace/code/paf_common"
 if PAF_COMMON_SRC not in sys.path:
     sys.path.insert(0, PAF_COMMON_SRC)
 
-from paf_common.route_metrics import (
-    load_route_metrics,
-    merge_route_metrics_into_checkpoint,
-    reset_route_metrics_file,
-)
+route_metrics = importlib.import_module("paf_common.route_metrics")
+merge_route_metrics_into_checkpoint = route_metrics.merge_route_metrics_into_checkpoint
+reset_route_metrics_file = route_metrics.reset_route_metrics_file
 
 
 sensors_to_icons = {

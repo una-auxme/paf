@@ -1,5 +1,5 @@
 Created: 2026-04-30T22:29:21+02:00
-Last updated: 2026-04-30T22:48:01+02:00
+Last updated: 2026-04-30T22:54:59+02:00
 
 # Route Sync Bridge Progress
 
@@ -41,6 +41,17 @@ from the route start before a global trajectory is generated.
 must be stopped, including the simulator, compose stack, and related
 route-validation processes, before handoff or completion.
 
+The follow-up issue sweep handled the checkout-safe subset of open GitHub
+issues:
+
+- local Ruff/code-format issues from `code/` were fixed,
+- stale GitHub Action versions in `drive.yml` and `markdownlint.yml` were
+  updated,
+- Docker Compose wording was updated where it referred to the old binary name
+  rather than compose file names,
+- global-planner update notifications now use transient-local QoS so late
+  subscribers can observe route-data availability.
+
 ## Validation
 
 - Red check: the focused deterministic sync contract test failed before the
@@ -53,6 +64,13 @@ route-validation processes, before handoff or completion.
 - Green check:
   `uv run --with pytest==9.0.2 --with numpy python -m pytest code/test/test_planning_regression.py -q`
   passed with `3 passed`.
+- Green check:
+  `uv run --with ruff==0.14.8 ruff check code` passed.
+- Green check:
+  `uv run --with ruff==0.14.8 ruff format --check code` passed.
+- Green check:
+  `uv run --with pytest==9.0.2 --with numpy python -m pytest code/test -m unit -q`
+  passed with `27 passed`.
 
 ## Remaining blockers
 
@@ -60,6 +78,8 @@ route-validation processes, before handoff or completion.
   now waits for vehicle-control commands in the actual route.
 - Route metrics still need proof from a completed ROS2 drive.
 - Planning behaviors still need to consume the new `MapTree` lane-context API.
+- Several open GitHub issues remain intentionally unclaimed because they need
+  CARLA validation, perception/planning research, or larger architecture work.
 
 ## Recommended next actions
 

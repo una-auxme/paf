@@ -24,11 +24,11 @@ bash scripts/dev-up.sh
 
 After that use `Dev Containers: Reopen in Container` in VS Code. This uses `.devcontainer/devcontainer.json` and opens `/workspace` in the `agent-dev` service.
 
-Manual alternative: head to the `/build` folder and execute the `docker-compose.dev.yaml` file via right-click and selecting `Compose Up` in the menu:
+Manual alternative: head to the `/build` folder and execute the `docker-compose.dev.yaml` Docker Compose file via right-click and selecting `Compose Up` in the menu:
 
 ![devcontainer.png](/doc/assets/development/devcontainer.png)
 
-> This is the default way to execute every docker-compose file. If you try to start a container without it things may break!
+> This is the default way to execute every Docker Compose file. If you try to start a container without it things may break!
 
 Then navigate to the `Docker` tab in VS Code and attach a VS Code window to the `build-agent-dev` container:
 
