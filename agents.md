@@ -35,6 +35,7 @@ If guidance conflicts, prefer repository config files and actively used CI/lint 
 - Python target is **3.12** (`ruff.toml`).
 - Use containerized workflows when project docs expect them.
 - Before compose-based CARLA runs, refresh `build/.env` via `scripts/update-dotenv.sh`; in SSH-forwarded or headless sessions it sets `RENDER_OFFSCREEN=-RenderOffScreen` so the simulator can start without a local desktop renderer.
+- If you run CARLA, always stop the CARLA simulator, compose stack, and any related route-validation processes before handing off or finishing.
 
 ## 5) Code change rules
 
@@ -124,4 +125,3 @@ Before finishing, ensure:
 - Follow `doc/development/developer_contract.md` for PR assumptions, validation summary, and known gaps.
 - Use `pytest` markers defined in `pytest.ini` (`unit`, `integration`, `sim`) to scope validation.
 - Use `ruff-strict.toml` for incremental hardening of packages (docstring and maintainability checks).
-

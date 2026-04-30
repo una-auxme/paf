@@ -33,3 +33,19 @@ def test_linear_interpolation_snapshot(planning_help_functions) -> None:
 def test_scale_vector_zero_is_stable(planning_help_functions) -> None:
     """Check behavior for zero vectors remains deterministic and safe."""
     assert planning_help_functions.scale_vector((0.0, 0.0), 5.0) == (0, 0)
+
+
+def test_position_stability_gate_accepts_after_bounded_unstable_window() -> None:
+    """Prevent startup preplanning from waiting forever on drifting localization."""
+    position_stability = importlib.import_module(
+        "planning.global_planner.position_stability"
+    )
+    gate = position_stability.PositionStabilityGate(
+        sample_count_target=3,
+        stable_distance_m=0.5,
+        max_unstable_samples=4,
+    )
+
+    decisions = [gate.update(float(x), 0.0) for x in range(7)]
+
+    assert decisions == [False, False, False, False, False, False, True]

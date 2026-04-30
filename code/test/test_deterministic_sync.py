@@ -111,7 +111,12 @@ def test_sync_contract_files_reflect_barrier_design() -> None:
     assert "self.global_plan is not None" not in startup_ready_block
     assert "self.open_drive_string is not None" in startup_ready_block
     assert '"ego_vehicle_role_name": "\\"[\'hero\']\\""' in paf_agent_source
-    assert 'wait_for_message(self.ros_node, "/carla/hero/status"' not in paf_agent_source
+    assert '"synchronous_mode_wait_for_vehicle_control_command": True' in (
+        paf_agent_source
+    )
+    assert (
+        'wait_for_message(self.ros_node, "/carla/hero/status"' not in paf_agent_source
+    )
     assert '"data_management"' in startup_required_nodes_block
     assert '"motion_planning"' not in startup_required_nodes_block
 

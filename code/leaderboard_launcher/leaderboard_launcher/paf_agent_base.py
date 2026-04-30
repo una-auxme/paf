@@ -7,7 +7,6 @@ from carla_msgs.srv import DestroyObject, SpawnObject
 from leaderboard.autoagents.autonomous_agent import AutonomousAgent, Track
 from leaderboard.autoagents.ros2_agent import ROS2Agent
 from leaderboard.autoagents.ros_base_agent import ROSLauncher
-import math
 
 import rclpy
 from rclpy.qos import DurabilityPolicy, QoSProfile
@@ -36,6 +35,7 @@ class PAFAgent(ROS2Agent):
                     "port": carla_port,
                     "timeout": 60,
                     "synchronous_mode": True,
+                    "synchronous_mode_wait_for_vehicle_control_command": True,
                     "passive": True,
                     "register_all_sensors": False,
                     "ego_vehicle_role_name": "\"['hero']\"",
@@ -83,7 +83,9 @@ class PAFAgent(ROS2Agent):
                 qos_profile=QoSProfile(depth=1),
             )
 
-            self.spin_thread = threading.Thread(target=rclpy.spin, args=(self.ros_node,))
+            self.spin_thread = threading.Thread(
+                target=rclpy.spin, args=(self.ros_node,)
+            )
             self.spin_thread.start()
         except Exception:
             self._cleanup_partial_ros2_setup()
@@ -206,4 +208,3 @@ class PAFAgent(ROS2Agent):
 
         if bridge_process is not None and bridge_process.is_alive():
             bridge_process.terminate()
-

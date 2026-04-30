@@ -1,5 +1,4 @@
-from collections import deque
-from typing import Deque, Optional
+from typing import Optional
 from xml.etree import ElementTree as eTree
 
 import rclpy
@@ -19,10 +18,9 @@ from planning_interfaces.srv import (
     GetSpeedLimits,
 )
 
-from mapping_common.transform import Point2
-
 from paf_common.exceptions import emsg_with_trace
 
+from .position_stability import PositionStabilityGate
 from .preplanning_trajectory import OpenDriveConverter
 
 # TODO: These definition do not align with the CarlaRoute.RIGHT, etc.. definitions.
@@ -54,9 +52,6 @@ class PrePlanner(Node):
         # Working variables
         self.odc = None
         self.route_recalculation_required: bool = True
-        self.position_stabilized: bool = False
-        self.last_agent_positions: Deque[Point] = deque()
-        self.last_agent_positions_count_target = 5
         self.agent_pos = None
         self.agent_ori = None
 
@@ -70,6 +65,23 @@ class PrePlanner(Node):
             "distance_spawn_to_first_wp",
             100.0,
         ).value
+        position_stabilization_samples = self.declare_parameter(
+            "position_stabilization_samples",
+            5,
+        ).value
+        position_stabilization_distance_m = self.declare_parameter(
+            "position_stabilization_distance_m",
+            0.5,
+        ).value
+        position_stabilization_max_unstable_samples = self.declare_parameter(
+            "position_stabilization_max_unstable_samples",
+            50,
+        ).value
+        self.position_stability_gate = PositionStabilityGate(
+            sample_count_target=position_stabilization_samples,
+            stable_distance_m=position_stabilization_distance_m,
+            max_unstable_samples=position_stabilization_max_unstable_samples,
+        )
 
         # Services
         # Get created only after data is available
@@ -379,30 +391,8 @@ class PrePlanner(Node):
         (needed for the trajectory preplanning)
         :param data: updated CarlaWorldInformation
         """
-        if len(self.last_agent_positions) < self.last_agent_positions_count_target:
-            self.get_logger().info(
-                "Waiting for agent positions", throttle_duration_sec=2
-            )
-            self.last_agent_positions.append(data.pose.position)
-            self.agent_pos = None
-            self.agent_ori = None
-            return
-
         agent_pos = data.pose.position
-        agent_point = Point2.new(agent_pos.x, agent_pos.y)
-
-        # Check if our position has stabilized
-        if not self.position_stabilized:
-            self.position_stabilized = True
-            for pos in self.last_agent_positions:
-                pos_point = Point2.new(pos.x, pos.y)
-                if pos_point.distance_to(agent_point) > 0.5:
-                    self.position_stabilized = False
-
-        self.last_agent_positions.popleft()
-        self.last_agent_positions.append(agent_pos)
-
-        if not self.position_stabilized:
+        if not self.position_stability_gate.update(agent_pos.x, agent_pos.y):
             self.get_logger().info(
                 "Waiting for agent position to stabilize",
                 throttle_duration_sec=2,
