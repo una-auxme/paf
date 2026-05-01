@@ -378,7 +378,7 @@ Services:
 
 Subscriptions:
 
-- ```/paf/hero/mapping/init_mapping``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
+- ```/paf/hero/mapping/init_data``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 
 Publishes:
 
@@ -404,7 +404,7 @@ More information under [ACC.md](/doc/planning/ACC.md).
 Subscriptions:
 
 - ```/paf/hero/curr_behavior``` \(/behavior_agent\) ([std_msgs/String](https://docs.ros.org/en/api/std_msgs/html/msg/String.html))
-- ```/paf/hero/mapping/init_mapping``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
+- ```/paf/hero/mapping/init_data``` \(/mapping_data_integration\) ([mapping/Map](../../code/mapping/msg/Map.msg))
 - ```/paf/hero/pure_pursuit_steer``` \(/pure_pursuit_controller\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/speed_limit``` \(/MotionPlanning\) ([std_msgs/Float32](https://docs.ros.org/en/noetic/api/std_msgs/html/msg/Float32.html))
 - ```/paf/hero/trajectory_local``` \(/MotionPlanning\) ([nav_msgs/Path](https://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))

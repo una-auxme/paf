@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="TODO: Package description",
+    description="Localization (EKF, GNSS, odometry, GPS transform) for the PAF autonomous driving stack",
     license="MIT",
     tests_require=["pytest"],
     entry_points={

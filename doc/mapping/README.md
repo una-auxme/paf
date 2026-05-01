@@ -33,7 +33,7 @@ In addition, radar and lidar data are fused to improve dynamic object understand
 
 The [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode) collects all sensor information and publishes the resulting map to `/paf/hero/mapping/init_data`.
 
-The [mapping](/code/mapping/config/mapping.cfg) and [mapping_visualization](/code/mapping_visualization/config/mapping_visualization.cfg) packages support [dynamic reconfigure](/doc/general/dynamic_reconfigure.md) for managing sensor input and filter parameters.
+The [mapping](/code/mapping/config/mapping.cfg) package supports [dynamic reconfigure](/doc/general/dynamic_reconfigure.md) for managing sensor input and filter parameters.
 
 ### Map usage
 
@@ -54,7 +54,7 @@ This is especially relevant for cross-traffic detection, where static objects sh
 
 ### Visualization
 
-The [visualization node](/code/mapping_visualization/src/visualization.py) in the [mapping_visualization](/code/mapping_visualization/) package converts the map into a ROS MarkerArray.
+The [visualization node](/code/mapping/mapping/visualization.py) in the [mapping](/code/mapping/) package converts the map into a ROS MarkerArray.
 
 The MarkerArray is published to `/paf/hero/mapping/marker_array` and can be visualized and looked at in RViz.
 
@@ -65,9 +65,9 @@ The MarkerArray is published to `/paf/hero/mapping/marker_array` and can be visu
 - [./ext_modules/mapping_common](/code/mapping/ext_modules/mapping_common/) contains the **python classes for working with the intermediate layer**.
   - This library can be used across the project. Just `from mapping_common import ...`
   - **[Get an overview of all available functions in the API documentation](/doc/mapping/generated/mapping_common/index.md)**
-  - This module is compiled with [Cython](https://cython.readthedocs.io/en/latest/). If changes have been made to this package, catkin_make needs to be executed to apply them! \
+  - This module is compiled with [Cython](https://cython.readthedocs.io/en/latest/). If changes have been made to this package, colcon build needs to be executed to apply them! \
     This step is automatically executed when using the [docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml).
-- [./src](/code/mapping/src/) contains the nodes that create and filter the map
+- [./mapping](/code/mapping/mapping/) contains the nodes that create and filter the map
   - The main node is the [**MappingDataIntegrationNode**](/doc/mapping/generated/nodes.md#mappingdataintegrationnode). It collects sensor data and then builds a map from it
   - **[API documentation](/doc/mapping/generated/nodes.md)**
 - [./msg](/code/mapping/msg/) contains the ROS message types for transmitting the map
@@ -89,7 +89,7 @@ flowchart TD
     F3(filter: GrowPedestriansFilter)
     F4(filter: RadarPointAssignmentFilter)
     F5(filter: TrackingFilter)
-    VIS[node: mapping_visualization]
+    VIS[node: mapping/visualization]
 
     %% Flow
     NF --> A
@@ -112,11 +112,11 @@ For this purpose, radar points are spatially associated with lidar entities. Thi
 
 ## Tests
 
-This package contains pytest based unit tests at [./tests/mapping_common](/code/mapping/tests/mapping_common/)
+This package contains pytest based unit tests at [./test](/code/mapping/test/)
 
 The tests can be executed without a running ros/carla instance.
 
-Enter the dev container and execute `catkin_make run_tests` in the catkin_ws to run them. A summary should appear in the console.
+Enter the dev container and execute `colcon test` or `python3 -m pytest` in the mapping package to run them. A summary should appear in the console.
 
 ## Research
 
@@ -126,12 +126,12 @@ Most of the information of the draft has been inserted into the python class doc
 
 ## mapping_common Cython installation
 
-**Important: The mapping_common module is compiled with [Cython](https://cython.readthedocs.io/en/latest/). If changes have been made to mapping_common, catkin_make needs to be executed to apply them!**
+**Important: The mapping_common module is compiled with [Cython](https://cython.readthedocs.io/en/latest/). If changes have been made to mapping_common, colcon build needs to be executed to apply them!**
 This step is automatically executed when using the [docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml).
 
 Cmake executes [cmake_setup.py](/code/mapping/ext_modules/cmake_setup.py) to compile and install the mapping_common module.
 
-The integration of the setup command into catkin_make can be found [here](/code/mapping/CMakeLists.txt#L100).
+The integration of the setup command into colcon build can be found [here](/code/mapping/CMakeLists.txt#L100).
 
 ## Debugging
 

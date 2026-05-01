@@ -17,7 +17,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="TODO: Package description",
+    description="Agent startup coordination, shutdown, and data management for the PAF autonomous driving stack",
     license="MIT",
     tests_require=["pytest"],
     scripts=["scripts/launch_agent.sh"],

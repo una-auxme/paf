@@ -3,7 +3,7 @@
 <package format="3">
   <name>acting</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Acting helpers and vehicle passthrough for the PAF autonomous driving stack</description>
   <maintainer email="paf@todo.todo">paf</maintainer>
   <license>MIT</license>
 

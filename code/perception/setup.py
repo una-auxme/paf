@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="TODO: Package description",
+    description="Perception (lidar, radar, vision, traffic light, lane detection) for the PAF autonomous driving stack",
     license="MIT",
     tests_require=["pytest"],
     entry_points={
