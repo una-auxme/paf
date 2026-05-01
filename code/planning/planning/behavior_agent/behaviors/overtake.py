@@ -7,7 +7,7 @@ from rclpy.client import Client
 from rclpy.publisher import Publisher
 
 import mapping_common.mask
-from mapping_common.map import Map, MapTree, LaneFreeState
+from mapping_common.map import Map, MapTree
 from mapping_common.entity import ShapelyEntity, Entity, StopMark
 from mapping_common.markers import debug_marker
 from mapping_common.transform import Transform2D, Vector2, Point2
@@ -72,6 +72,17 @@ def unset_space_stop_mark(client: Client):
 """
 Source: https://github.com/ll7/psaf2
 """
+
+
+def _add_overtake_lane_context_debug(behavior_name: str, context) -> None:
+    add_debug_entry(behavior_name, f"Overtake lane present?: {context.has_lane()}")
+    add_debug_entry(
+        behavior_name,
+        f"Overtake lane traversable?: {context.is_traversable()} "
+        f"({context.lane_state.name})",
+    )
+    if isinstance(context.lane_box, shapely.Polygon):
+        add_debug_marker(debug_marker(context.lane_box, color=OVERTAKE_MARKER_COLOR))
 
 
 def calculate_obstacle(
@@ -328,16 +339,14 @@ class Approach(py_trees.behaviour.Behaviour):
 
         # slow down before overtake if blocked
         if self.ot_distance < 15.0:
-            ot_free, ot_mask = tree.is_lane_free(
+            lane_context = tree.get_lane_context(
                 right_lane=False,
                 lane_length=self.clear_distance,
                 lane_transform=10.0,
                 check_method="fallback",
             )
-            if isinstance(ot_mask, shapely.Polygon):
-                add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-            add_debug_entry(self.name, f"Overtake free?: {ot_free.name}")
-            if ot_free is LaneFreeState.FREE:
+            _add_overtake_lane_context_debug(self.name, lane_context)
+            if lane_context.is_traversable() is True:
                 self.ot_counter += 1
                 # using a counter to account for inconsistencies
                 if self.ot_counter > 3:
@@ -357,10 +366,10 @@ class Approach(py_trees.behaviour.Behaviour):
                         f"Overtake free count: {self.ot_counter}",
                     )
             else:
-                if ot_free is LaneFreeState.BLOCKED:
+                if lane_context.is_traversable() is False:
                     self.ot_counter = 0
                 add_debug_entry(
-                    self.name, "Overtake Approach: oncoming blocked slowing down"
+                    self.name, "Overtake Approach: oncoming unavailable slowing down"
                 )
                 self.curr_behavior_pub.publish(String(data=bs.ot_app_blocked.name))
 
@@ -469,17 +478,15 @@ class Wait(py_trees.behaviour.Behaviour):
         set_space_stop_mark(self.stop_client, obstacle=entity)
 
         self.curr_behavior_pub.publish(String(data=bs.ot_wait.name))
-        ot_free, ot_mask = tree.is_lane_free(
+        lane_context = tree.get_lane_context(
             right_lane=False,
             lane_length=self.clear_distance,
             lane_transform=10.0,
             check_method="fallback",
         )
 
-        if isinstance(ot_mask, shapely.Polygon):
-            add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-        add_debug_entry(self.name, f"Overtake free?: {ot_free.name}")
-        if ot_free is LaneFreeState.FREE:
+        _add_overtake_lane_context_debug(self.name, lane_context)
+        if lane_context.is_traversable() is True:
             self.ot_counter += 1
             if self.ot_counter > 3:
                 self.curr_behavior_pub.publish(String(data=bs.ot_wait_free.name))
@@ -492,7 +499,7 @@ class Wait(py_trees.behaviour.Behaviour):
                     self.name, Status.RUNNING, f"Overtake free count: {self.ot_counter}"
                 )
         else:
-            if ot_free is LaneFreeState.BLOCKED:
+            if lane_context.is_traversable() is False:
                 self.ot_counter = 0
             return debug_status(self.name, Status.RUNNING, "Overtake blocked")
 
@@ -623,16 +630,14 @@ class Leave(py_trees.behaviour.Behaviour):
 
         if status.status == OvertakeStatus.Response.OVERTAKING:
             # First: check if our right lane is free and end overtake if possible
-            ot_free, ot_mask = tree.is_lane_free(
+            lane_context = tree.get_lane_context(
                 right_lane=True,
                 lane_length=15.0,
                 lane_transform=7.5,
                 check_method="lanemarking",
             )
-            add_debug_entry(self.name, f"Right lane free?: {ot_free.name}")
-            if isinstance(ot_mask, shapely.Polygon):
-                add_debug_marker(debug_marker(ot_mask, color=OVERTAKE_MARKER_COLOR))
-            if ot_free is LaneFreeState.FREE:
+            _add_overtake_lane_context_debug(self.name, lane_context)
+            if lane_context.is_traversable() is True:
                 request_end_overtake(self.end_overtake_client)
                 return debug_status(
                     self.name,

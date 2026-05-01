@@ -67,3 +67,50 @@ def test_global_planner_update_notifications_are_transient_local() -> None:
 
     assert "DurabilityPolicy.TRANSIENT_LOCAL" in trajectory_publisher_block
     assert "DurabilityPolicy.TRANSIENT_LOCAL" in speed_limit_publisher_block
+
+
+def test_global_route_alignment_accepts_later_nearby_start() -> None:
+    """Allow startup to recover when the first route pose is behind the ego pose."""
+    route_alignment = importlib.import_module("planning.global_planner.route_alignment")
+
+    route_points = [(0.0, 0.0), (100.0, 0.0), (205.0, 0.0), (300.0, 0.0)]
+
+    assert (
+        route_alignment.find_route_alignment_index(
+            agent_position=(201.0, 3.0),
+            route_points=route_points,
+            max_distance_m=10.0,
+        )
+        == 2
+    )
+
+
+def test_global_route_alignment_rejects_route_without_nearby_pose() -> None:
+    """Keep rejecting global routes that do not match the ego pose at all."""
+    route_alignment = importlib.import_module("planning.global_planner.route_alignment")
+
+    route_points = [(0.0, 0.0), (100.0, 0.0), (200.0, 0.0)]
+
+    assert (
+        route_alignment.find_route_alignment_index(
+            agent_position=(350.0, 0.0),
+            route_points=route_points,
+            max_distance_m=10.0,
+        )
+        is None
+    )
+
+
+def test_planning_behaviors_use_lane_context_for_adjacent_lane_decisions() -> None:
+    """Keep absent-lane checks distinct from blocked-lane checks in behaviors."""
+    behavior_dir = CODE_ROOT / "planning/planning/behavior_agent/behaviors"
+
+    lane_change_source = (behavior_dir / "lane_change.py").read_text(encoding="utf-8")
+    overtake_source = (behavior_dir / "overtake.py").read_text(encoding="utf-8")
+    parking_source = (behavior_dir / "leave_parking_space.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert lane_change_source.count("get_lane_context(") >= 2
+    assert overtake_source.count("get_lane_context(") >= 3
+    assert parking_source.count("get_lane_context(") >= 1

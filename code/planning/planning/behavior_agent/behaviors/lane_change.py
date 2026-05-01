@@ -13,7 +13,7 @@ from planning_interfaces.srv import OvertakeStatus
 from perception_interfaces.msg import Waypoint
 
 import mapping_common.mask
-from mapping_common.map import Map, LaneFreeState, LaneFreeDirection
+from mapping_common.map import Map, LaneFreeDirection
 from mapping_common.entity import FlagFilter
 from mapping_common.transform import Point2, Transform2D, Vector2
 from mapping_common.markers import debug_marker
@@ -47,6 +47,17 @@ LANECHANGE_STOPMARK_ID = "lanechange"
 """
 Source: https://github.com/ll7/psaf2
 """
+
+
+def _add_lane_context_debug(behavior_name: str, context) -> None:
+    add_debug_entry(behavior_name, f"Lane change: Lane present? {context.has_lane()}")
+    add_debug_entry(
+        behavior_name,
+        f"Lane change: Is lane traversable? {context.is_traversable()} "
+        f"({context.lane_state.name})",
+    )
+    if isinstance(context.lane_box, shapely.Polygon):
+        add_debug_marker(debug_marker(context.lane_box, color=LANECHANGE_MARKER_COLOR))
 
 
 class Ahead(py_trees.behaviour.Behaviour):
@@ -305,16 +316,14 @@ class Approach(py_trees.behaviour.Behaviour):
         # if change to right, do not change early
         # (as there could be no road till change point!)
         if self.change_detected and self.change_direction is LaneFreeDirection.LEFT:
-            lc_free, lc_mask = tree.is_lane_free(
+            lane_context = tree.get_lane_context(
                 right_lane=self.change_direction.value,
                 lane_length=22.5,
                 lane_transform=-5.0,
                 check_method="fallback",
             )
-            if isinstance(lc_mask, shapely.Polygon):
-                add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
-            add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
-            if lc_free is LaneFreeState.FREE:
+            _add_lane_context_debug(self.name, lane_context)
+            if lane_context.is_traversable() is True:
                 self.counter_lanefree += 1
                 # using a counter to account for inconsistencies
                 if self.counter_lanefree > 1:
@@ -354,11 +363,12 @@ class Approach(py_trees.behaviour.Behaviour):
                         f"Lane Change: Free with count {self.counter_lanefree}/2",
                     )
             else:
-                if lc_free is LaneFreeState.BLOCKED:
+                if lane_context.is_traversable() is False:
                     self.counter_lanefree = 0
                     add_debug_entry(
                         self.name,
-                        "Lane Change: Lane blocked, reset count, stay in current lane",
+                        "Lane Change: Lane unavailable, reset count, "
+                        "stay in current lane",
                     )
                 else:
                     add_debug_entry(
@@ -458,16 +468,14 @@ class Wait(py_trees.behaviour.Behaviour):
                 "Lane Change: At least one change parameter is None",
             )
 
-        lc_free, lc_mask = tree.is_lane_free(
+        lane_context = tree.get_lane_context(
             right_lane=self.change_direction.value,
             lane_length=22.5,
             lane_transform=-5.0,
             check_method="fallback",
         )
-        if isinstance(lc_mask, shapely.Polygon):
-            add_debug_marker(debug_marker(lc_mask, color=LANECHANGE_MARKER_COLOR))
-        add_debug_entry(self.name, f"Lane change: Is lane free? {lc_free.name}")
-        if lc_free is LaneFreeState.FREE:
+        _add_lane_context_debug(self.name, lane_context)
+        if lane_context.is_traversable() is True:
             self.counter_lanefree += 1
             # using a counter to account for inconsistencies
             if self.counter_lanefree > 1:
@@ -493,12 +501,13 @@ class Wait(py_trees.behaviour.Behaviour):
                 )
         else:
             self.curr_behavior_pub.publish(String(data=bs.lc_wait.name))
-            if lc_free is LaneFreeState.BLOCKED:
+            if lane_context.is_traversable() is False:
                 self.counter_lanefree = 0
                 return debug_status(
                     self.name,
                     Status.RUNNING,
-                    "Lane Change Wait: Lane blocked, reset count, stay in current lane",
+                    "Lane Change Wait: Lane unavailable, reset count, "
+                    "stay in current lane",
                 )
             else:
                 return debug_status(

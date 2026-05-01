@@ -104,3 +104,19 @@ def test_get_lane_context_preserves_absent_lane_information_with_fallback():
     assert lane_context.has_lane() is False
     assert lane_context.presence is LanePresence.ABSENT
     assert lane_context.lane_state is LaneFreeState.BLOCKED
+
+
+def test_lane_context_only_traversable_when_lane_exists_and_is_free():
+    road_map = Map(
+        entities=[
+            get_hero(),
+        ]
+    )
+
+    lane_context = road_map.build_tree(
+        entity.FlagFilter(is_collider=True, is_hero=False)
+    ).get_lane_context(check_method="rectangle")
+
+    assert lane_context.has_lane() is False
+    assert lane_context.lane_state is LaneFreeState.FREE
+    assert lane_context.is_traversable() is False

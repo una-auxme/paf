@@ -85,6 +85,14 @@ class LaneContext:
             return False
         return None
 
+    def is_traversable(self) -> Optional[bool]:
+        """Return whether the adjacent lane exists and is currently free."""
+        if self.presence is LanePresence.ABSENT:
+            return False
+        if self.presence is LanePresence.UNKNOWN:
+            return None
+        return self.is_free()
+
 
 @dataclass
 class AdjacentLaneContext:

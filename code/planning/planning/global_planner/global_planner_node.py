@@ -23,6 +23,7 @@ from paf_common.exceptions import emsg_with_trace
 
 from .position_stability import PositionStabilityGate
 from .preplanning_trajectory import OpenDriveConverter
+from .route_alignment import find_route_alignment_index
 
 # TODO: These definition do not align with the CarlaRoute.RIGHT, etc.. definitions.
 # -> Check for possible bugs
@@ -244,8 +245,49 @@ class PrePlanner(Node):
 
         x_start = self.agent_pos.x  # 983.5
         y_start = self.agent_pos.y  # -5433.2
-        x_target = data.poses[0].position.x
-        y_target = data.poses[0].position.y
+        poses = list(data.poses)
+        road_options = list(data.road_options)
+        if len(poses) != len(road_options):
+            self.get_logger().warn(
+                "Global route pose and road option counts do not match."
+            )
+            return False
+
+        route_start_index = find_route_alignment_index(
+            agent_position=(x_start, y_start),
+            route_points=[(pose.position.x, pose.position.y) for pose in poses],
+            max_distance_m=self.distance_spawn_to_first_wp,
+        )
+        if route_start_index is None:
+            if poses:
+                x_target = poses[0].position.x
+                y_target = poses[0].position.y
+                route_distance_message = (
+                    f" first route pose delta=({x_start - x_target:.2f}, "
+                    f"{y_start - y_target:.2f})"
+                )
+            else:
+                route_distance_message = ""
+            self.get_logger().warn(
+                "Current agent-pose does not match the given global route."
+                f"{route_distance_message}"
+            )
+            return False
+
+        if route_start_index > 0:
+            self.get_logger().info(
+                "Aligning global route to current agent pose at "
+                f"route index {route_start_index}/{len(poses) - 1}."
+            )
+            poses = poses[route_start_index:]
+            road_options = road_options[route_start_index:]
+
+        if len(poses) < 2:
+            self.get_logger().warn("Global route does not contain enough poses.")
+            return False
+
+        x_target = poses[0].position.x
+        y_target = poses[0].position.y
         if (
             abs(x_start - x_target) > self.distance_spawn_to_first_wp
             or abs(y_start - y_target) > self.distance_spawn_to_first_wp
@@ -259,10 +301,10 @@ class PrePlanner(Node):
         x_turn = None
         y_turn = None
         ind = 0
-        for i, opt in enumerate(data.road_options):
+        for i, opt in enumerate(road_options):
             if opt == LEFT or opt == RIGHT or opt == FORWARD:
-                x_turn = data.poses[i].position.x
-                y_turn = data.poses[i].position.y
+                x_turn = poses[i].position.x
+                y_turn = poses[i].position.y
                 ind = i
                 break
         if x_turn is None or y_turn is None:
@@ -273,8 +315,12 @@ class PrePlanner(Node):
             x_target = None
             y_target = None
 
-        x_turn_follow = data.poses[ind + 1].position.x
-        y_turn_follow = data.poses[ind + 1].position.y
+        if ind + 1 >= len(poses):
+            self.get_logger().warn("Global route turn command has no following pose")
+            return False
+
+        x_turn_follow = poses[ind + 1].position.x
+        y_turn_follow = poses[ind + 1].position.y
 
         # Trajectory for the starting road segment
         self.odc.initial_road_trajectory(
@@ -287,30 +333,30 @@ class PrePlanner(Node):
             x_target,
             y_target,
             0,
-            data.road_options[0],
+            road_options[0],
         )
 
-        n = len(data.poses)
+        n = len(poses)
         # iterating through global route to create trajectory
         for i in range(1, n - 1):
             self.get_logger().info(f"Preplanner going throug global plan {i + 1}/{n}")
 
-            x_target = data.poses[i].position.x
-            y_target = data.poses[i].position.y
-            action = data.road_options[i]
+            x_target = poses[i].position.x
+            y_target = poses[i].position.y
+            action = road_options[i]
 
-            x_target_next = data.poses[i + 1].position.x
-            y_target_next = data.poses[i + 1].position.y
+            x_target_next = poses[i + 1].position.x
+            y_target_next = poses[i + 1].position.y
             self.odc.target_road_trajectory(
                 x_target, y_target, x_target_next, y_target_next, action
             )
 
         self.odc.target_road_trajectory(
-            data.poses[n - 1].position.x,
-            data.poses[n - 1].position.y,
+            poses[n - 1].position.x,
+            poses[n - 1].position.y,
             None,
             None,
-            data.road_options[n - 1],
+            road_options[n - 1],
         )
         # trajectory is now stored in the waypoints
         # waypoints = self.odc.waypoints
