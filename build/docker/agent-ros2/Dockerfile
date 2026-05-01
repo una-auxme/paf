@@ -19,8 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  add-apt-repository -y ppa:kisak/turtle && apt-get update && \
-  apt-get upgrade -y && apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
+  if timeout 60s add-apt-repository -y ppa:kisak/turtle; then \
+  apt-get update && apt-get upgrade -y; \
+  else \
+  echo "WARNING: ppa:kisak/turtle unavailable, using Ubuntu Mesa/Vulkan packages"; \
+  apt-get update; \
+  fi && \
+  apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
 
 FROM agent-base-gpu AS agent-base-rocm
 # No changes needed here, only pytorch installation requires changes
