@@ -83,6 +83,7 @@ pre-commit run --all-files
    - `Run ROS-backed unit tests (dev container)`
    - `Dependency check in dev container`
    - `Pre-PR quality check`
+   - Or from a plain host shell: `bash scripts/run-host-smoke-tests.sh`
 5. Commit only related files and open a focused PR.
 
 ## 7) Common problems

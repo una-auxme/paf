@@ -9,6 +9,8 @@ This project is developed inside the `agent-dev` container. Dependency changes m
 - Python dev/tooling dependencies: `code/requirements_infrastructure.txt`.
 - Ruff tool version pin: `build/pins/ruff.env`.
 
+For host-only smoke tests outside the container, use `scripts/bootstrap-host-python.sh`. It creates a local `.venv-host` from committed manifests instead of relying on ad-hoc global installs.
+
 ## Rules
 
 1. Do not install long-term dependencies manually with `pip install <pkg>` in the container shell.

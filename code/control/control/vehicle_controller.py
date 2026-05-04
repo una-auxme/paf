@@ -25,6 +25,12 @@ from paf_common.sync import (
     startup_topic,
 )
 
+from .vehicle_control_logic import (
+    VehicleControlState,
+    build_safe_stop_command,
+    build_vehicle_control_command,
+)
+
 
 DEFAULT_REQUIRED_SYNC_STAGES = [
     "mapping",
@@ -199,30 +205,30 @@ class VehicleController(Node):
 
     def build_control_message(self) -> CarlaEgoVehicleControl:
         """Build the control message based on the current state."""
-        message = CarlaEgoVehicleControl()
-
-        if self.manual_override_active:
-            message.reverse = self.manual_throttle < 0
-            message.throttle = abs(self.manual_throttle)
-            message.steer = self.manual_steer
-            message.brake = 0.0
-            message.hand_brake = False
-        elif self.__emergency:
-            self._apply_emergency_brake(message)
-        else:
-            steer = (
-                self._p_steer
-                if self.__curr_behavior == "us_unstuck"
-                else -self._p_steer
+        command = build_vehicle_control_command(
+            VehicleControlState(
+                manual_override_active=self.manual_override_active,
+                manual_steer=self.manual_steer,
+                manual_throttle=self.manual_throttle,
+                emergency=self.__emergency,
+                current_behavior=self.__curr_behavior,
+                reverse=self.__reverse,
+                throttle=self.__throttle,
+                brake=self.__brake,
+                pure_pursuit_steer=self._p_steer,
             )
+        )
+        return self._message_from_command(command)
 
-            message.reverse = self.__reverse
-            message.throttle = self.__throttle
-            message.brake = self.__brake
-            message.steer = steer
-            message.hand_brake = False
-            message.manual_gear_shift = False
-
+    def _message_from_command(self, command) -> CarlaEgoVehicleControl:
+        """Convert a pure command description into the ROS/CARLA message type."""
+        message = CarlaEgoVehicleControl()
+        message.reverse = command.reverse
+        message.throttle = command.throttle
+        message.brake = command.brake
+        message.steer = command.steer
+        message.hand_brake = command.hand_brake
+        message.manual_gear_shift = command.manual_gear_shift
         return message
 
     # Subscriber callbacks
@@ -254,22 +260,8 @@ class VehicleController(Node):
     def __set_pure_pursuit_steer(self, data: Float32):
         self._p_steer = data.data / (math.pi / 2)
 
-    def _apply_emergency_brake(self, message: CarlaEgoVehicleControl) -> None:
-        message.throttle = 0.0
-        message.steer = 0.0
-        message.brake = 1.0
-        message.reverse = False
-        message.hand_brake = True
-
     def _build_safe_stop_message(self) -> CarlaEgoVehicleControl:
-        message = CarlaEgoVehicleControl()
-        message.throttle = 0.0
-        message.steer = 0.0
-        message.brake = 1.0
-        message.reverse = False
-        message.hand_brake = True
-        message.manual_gear_shift = False
-        return message
+        return self._message_from_command(build_safe_stop_command())
 
     def loop(self, clock: Clock):
         """Begin a new pending simulation frame and wait for stage completion."""

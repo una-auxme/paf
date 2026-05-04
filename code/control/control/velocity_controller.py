@@ -13,6 +13,13 @@ from paf_common.exceptions import emsg_with_trace
 from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 from rclpy.parameter import Parameter
 
+from .velocity_control_logic import (
+    VelocityControlCommand,
+    finalize_velocity_control,
+    plan_velocity_control,
+    select_target_velocity,
+)
+
 
 class VelocityController(Node):
     """
@@ -167,39 +174,30 @@ class VelocityController(Node):
         self.pid_t.Ki = self.pid_i
         self.pid_t.Kd = self.pid_d
 
-        target_velocity = (
-            self.__target_velocity if not self.fixed_speed_active else self.fixed_speed
+        target_velocity = select_target_velocity(
+            requested_target_velocity=self.__target_velocity,
+            fixed_speed_active=self.fixed_speed_active,
+            fixed_speed=self.fixed_speed,
         )
-        # revert driving
-        if target_velocity < 0:
-            reverse = True
-            v = abs(target_velocity)
-            self.pid_t.setpoint = v
-            brake = 0
-            throttle = self.pid_t(-self.__current_velocity)
-            if throttle < 0:
-                brake = abs(throttle)
-                throttle = 0
-        # very low target_velocities -> stand
-        elif target_velocity < 0.1:
-            reverse = False
-            brake = 1
-            throttle = 0
-        else:
-            reverse = False
-            v = target_velocity
-            self.pid_t.setpoint = v
-            throttle = self.pid_t(self.__current_velocity)
-            # any throttle < 0 is used as brake signal
-            if throttle < 0:
-                brake = abs(throttle)
-                throttle = 0
-            else:
-                brake = 0
+        control_plan = plan_velocity_control(target_velocity, self.__current_velocity)
 
-        self.reverse_pub.publish(Bool(data=reverse))
-        self.brake_pub.publish(Float32(data=float(brake)))
-        self.throttle_pub.publish(Float32(data=float(throttle)))
+        if control_plan.setpoint is None or control_plan.measurement is None:
+            control_command = VelocityControlCommand(
+                reverse=control_plan.reverse,
+                throttle=control_plan.throttle,
+                brake=control_plan.brake,
+            )
+        else:
+            self.pid_t.setpoint = control_plan.setpoint
+            pid_output = self.pid_t(control_plan.measurement)
+            control_command = finalize_velocity_control(
+                reverse=control_plan.reverse,
+                pid_output=pid_output,
+            )
+
+        self.reverse_pub.publish(Bool(data=control_command.reverse))
+        self.brake_pub.publish(Float32(data=float(control_command.brake)))
+        self.throttle_pub.publish(Float32(data=float(control_command.throttle)))
         self.frame_complete_pub.publish(
             UInt64(
                 data=frame_id_from_time_ns(

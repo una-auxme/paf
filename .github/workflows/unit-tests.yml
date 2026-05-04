@@ -17,12 +17,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r code/requirements_infrastructure.txt
-          python -m pip install numpy
-      - name: Run host smoke tests (plugin autoload disabled)
-        env:
-          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-        run: python -m pytest code/test -m unit
+      - name: Run host smoke tests
+        run: bash scripts/run-host-smoke-tests.sh

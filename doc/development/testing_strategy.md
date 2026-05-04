@@ -16,7 +16,8 @@
 
 Repository markers are defined in `pytest.ini`.
 
-- Run host smoke tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit`
+- Bootstrap a host-side test/lint venv: `bash scripts/bootstrap-host-python.sh`
+- Run host smoke tests: `bash scripts/run-host-smoke-tests.sh`
 - Run unit tests in the current environment: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m unit`
 - Run integration tests: `pytest -m integration`
 - Run simulation tests: `pytest -m sim`
@@ -26,7 +27,7 @@ Repository markers are defined in `pytest.ini`.
 
 Use two different fast loops:
 
-- Host smoke tests: `code/test` only. These must stay runnable outside the dev container and should not depend on `/workspace`, sourced ROS overlays, or generated interfaces.
+- Host smoke tests: `code/test` only. These must stay runnable outside the dev container and should not depend on `/workspace`, sourced ROS overlays, or generated interfaces. Use `bash scripts/run-host-smoke-tests.sh` so the same bootstrap path works in CI and on contributor machines.
 - ROS-backed unit tests: package-local tests such as `code/perception/tests`, `code/mapping/test`, and `code/planning/test`. These run inside the dev container after building the required package closure.
 
 Example ROS-backed unit test loop inside the dev container:

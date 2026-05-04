@@ -1,6 +1,8 @@
 .DS_Store
 .idea
 .gitconfig
+.venv/
+.venv-host/
 
 /volumes
 
