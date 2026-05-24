@@ -1,6 +1,8 @@
 .DS_Store
 .idea
 .gitconfig
+.venv/
+.venv-host/
 
 /volumes
 
@@ -22,3 +24,9 @@ __pycache__/
 # Auto downloaded models
 code/*.pt
 /*.pt
+
+# VS Code transient browse database files
+.vscode/browse.vc.db*
+
+tmp/*
+!tmp/.gitignore

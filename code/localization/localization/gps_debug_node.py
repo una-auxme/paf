@@ -7,7 +7,10 @@ from geometry_msgs.msg import PoseStamped, Pose
 
 import carla
 
-from localization.coordinate_transformation import CoordinateTransformer
+from localization.coordinate_transformation import (
+    CoordinateTransformer,
+    extract_geo_reference_from_opendrive,
+)
 
 
 class GpsDebug(Node):
@@ -16,11 +19,7 @@ class GpsDebug(Node):
     def __init__(self):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
         self.create_subscription(
             NavSatFix,
@@ -56,6 +55,15 @@ class GpsDebug(Node):
             raise RuntimeError(msg)
 
         self.transformer = CoordinateTransformer()
+        try:
+            self.transformer.configure_from_geo_reference(
+                extract_geo_reference_from_opendrive(self.map.to_opendrive())
+            )
+        except AttributeError:
+            self.get_logger().warn(
+                "CARLA map does not expose OpenDRIVE directly; "
+                "falling back to the legacy GNSS transform."
+            )
 
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 

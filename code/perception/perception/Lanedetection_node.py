@@ -25,11 +25,7 @@ class Lanedetection_node(Node):
         super().__init__(type(self).__name__)
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
         # load model
         self.model = torch.hub.load("hustvl/yolop", "yolop", pretrained=True)

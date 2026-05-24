@@ -1,6 +1,10 @@
+import pytest
+
 from mapping_common.map import Map
 
 import test_entity
+
+pytestmark = pytest.mark.unit
 
 
 def test_map_conversion():

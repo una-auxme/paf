@@ -1,0 +1,46 @@
+{
+  "name": "PAF Agent Dev (CUDA)",
+  "dockerComposeFile": [
+    "../build/docker-compose.dev.cuda.yml"
+  ],
+  "service": "agent-dev",
+  "runServices": [
+    "agent-dev"
+  ],
+  "workspaceFolder": "/workspace",
+  "containerEnv": {
+    "PAF_LAUNCH_CONTAINER_VSCODE": "0"
+  },
+  "initializeCommand": "bash ${localWorkspaceFolder}/scripts/update-dotenv.sh",
+  "shutdownAction": "stopCompose",
+  "overrideCommand": false,
+  "postStartCommand": "bash -lc 'source /internal_workspace/dev.bashrc >/dev/null 2>&1 && ros2 --version'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "davidanson.vscode-markdownlint",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-pull-request-github",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.cmake-tools",
+        "ms-vscode-remote.remote-containers",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "editorconfig.editorconfig",
+        "augustocdias.tasks-shell-input",
+        "ranch-hand-robotics.rde-pack",
+        "ktnrg45.vscode-cython",
+        "timonwong.shellcheck",
+        "phil294.git-log--graph",
+        "richardkotze.git-mob",
+        "bierner.markdown-mermaid",
+        "valentjn.vscode-ltex",
+        "vscode-icons-team.vscode-icons",
+        "yzhang.markdown-all-in-one",
+        "njpwerner.autodocstring"
+      ]
+    }
+  }
+}

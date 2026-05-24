@@ -16,11 +16,19 @@ After you cloned the repository open the corresponding folder with VS Code. The 
 
 ## Start the development container
 
-In order to make changes to the code or add new functionality you can edit the files directly in VS Code now. However, for the default development environment head to the `/build` folder and execute the `docker-compose.dev.yaml` file via right-click and selecting `Compose Up` in the menu:
+In order to make changes to the code or add new functionality you can edit the files directly in VS Code now. However, for the default development environment run:
+
+```bash
+bash scripts/dev-up.sh
+```
+
+After that use `Dev Containers: Reopen in Container` in VS Code. This uses `.devcontainer/devcontainer.json` and opens `/workspace` in the `agent-dev` service.
+
+Manual alternative: head to the `/build` folder and execute the `docker-compose.dev.yaml` Docker Compose file via right-click and selecting `Compose Up` in the menu:
 
 ![devcontainer.png](/doc/assets/development/devcontainer.png)
 
-> This is the default way to execute every docker-compose file. If you try to start a container without it things may break!
+> This is the default way to execute every Docker Compose file. If you try to start a container without it things may break!
 
 Then navigate to the `Docker` tab in VS Code and attach a VS Code window to the `build-agent-dev` container:
 

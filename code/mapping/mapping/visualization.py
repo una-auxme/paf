@@ -30,35 +30,25 @@ class Visualization(Node):
         super().__init__("mapping_visualization")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.map_topic = (
-            self.declare_parameter("map_topic", "/paf/hero/mapping/init_data")
-            .get_parameter_value()
-            .string_value
-        )
+        self.map_topic = self.declare_parameter(
+            "map_topic", "/paf/hero/mapping/init_data"
+        ).value
 
-        self.show_meta_markers = (
-            self.declare_parameter(
-                "show_meta_markers",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Show meta information for entities",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.show_meta_markers = self.declare_parameter(
+            "show_meta_markers",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Show meta information for entities",
+            ),
+        ).value
 
-        self.show_tracking_info = (
-            self.declare_parameter(
-                "show_tracking_info",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Show tracking information for entities",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.show_tracking_info = self.declare_parameter(
+            "show_tracking_info",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Show tracking information for entities",
+            ),
+        ).value
 
         self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray, "/paf/hero/mapping/marker_array", qos_profile=1
@@ -81,11 +71,7 @@ class Visualization(Node):
             "flag_ignored",
             "flag_hero",
         ]:
-            value = (
-                self.declare_parameter(flag, 0, descriptor=flag_descriptor)
-                .get_parameter_value()
-                .integer_value
-            )
+            value = self.declare_parameter(flag, 0, descriptor=flag_descriptor).value
             setattr(self, flag, value)
 
         self.add_on_set_parameters_callback(self._set_parameters_callback)

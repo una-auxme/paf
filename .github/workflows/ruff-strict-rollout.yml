@@ -1,0 +1,32 @@
+name: "Ruff strict rollout"
+
+on:
+    pull_request:
+        branches:
+            - main
+    push:
+        branches:
+            - main
+
+jobs:
+    ruff-strict-starter:
+        name: Lint paf_common with Ruff strict
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Load Ruff version
+              id: ruff-version
+              run: |
+                  VERSION_LINE=$(grep -E '^RUFF_VERSION=' build/pins/ruff.env || true)
+                  VERSION=${VERSION_LINE#RUFF_VERSION=}
+                  if [ -z "${VERSION}" ]; then
+                    echo "Ruff version missing in build/pins/ruff.env" >&2
+                    exit 1
+                  fi
+                  echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            - name: Install Ruff
+              uses: astral-sh/ruff-action@v3
+              with:
+                  version: ${{ steps.ruff-version.outputs.version }}
+            - name: Lint starter package with strict profile
+              run: ruff check code/paf_common --config ruff-strict.toml

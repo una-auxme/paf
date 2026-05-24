@@ -69,6 +69,10 @@ Fast moving objects (e.g. cross traffic) are detected based on a velocity thresh
 
 A velocity threshold is used to filter relevant traffic. Static or slow-moving objects are ignored to reduce false positives.
 
+Fast entities are only considered relevant if their motion points toward the center of the priority-check area. Fast objects inside the box that are already moving away from the conflict region are ignored.
+
+While the ego vehicle waits and then enters the intersection, the priority-check area is anchored to the pose where the check started. This keeps the red debug box stable in world space even if the ego vehicle starts turning.
+
 ### Emergency Handling
 
 If fast cross traffic is detected while the ego vehicle is still moving above a certain speed, an emergency signal is triggered.
@@ -77,13 +81,9 @@ This signal is published to notify about a potentially dangerous situation.
 
 ### Current Limitations
 
-The current cross traffic check does not yet consider the motion direction of detected objects.
+The current check is still conservative because it uses a rectangular conflict region and a closing-speed heuristic instead of full trajectory prediction.
 
-As a result, the vehicle may brake whenever an object inside the check area moves above the configured speed threshold, even if that object is moving away from the ego vehicle and does not actually pose a risk.
-
-In addition, the rectangular check area currently rotates together with the ego vehicle. This can affect the relevance of the checked region during turning maneuvers.
-
-The current check should therefore be understood as a conservative safety mechanism.
+If the blackboard does not provide global pose and heading, the implementation falls back to the ego-aligned rectangle for that cycle.
 
 In the long term, this check may become less relevant or unnecessary if the collision check becomes sufficiently reliable.
 
@@ -97,4 +97,5 @@ The following parameters are used for cross traffic detection:
 - PRIORITY_SPEED_THRESHOLD: Speed threshold for prioritizing traffic (25.0/3.6 m/s ≈ 6.94 m/s)
 - PRIORITY_CHECK_DISTANCE: Distance for priority traffic detection (13.0 m)
 - PRIORITY_CHECK_LENGTH / WIDTH: Size of the priority check area (25.0 m / 50.0 m)
+- PRIORITY_CLOSING_SPEED_THRESHOLD: Minimum closing speed toward the conflict region (0.5 m/s)
 - SELF_EMERGENCY_THRESHOLD: Ego speed above which emergency handling is triggered (10.0/3.6 m/s ≈ 2.78 m/s)

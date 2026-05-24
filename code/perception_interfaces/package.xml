@@ -3,7 +3,7 @@
 <package format="3">
   <name>perception_interfaces</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROS message definitions for perception interfaces used by the PAF stack</description>
   <maintainer email="peter.viechter@student.uni-augsburg.de">peter</maintainer>
   <license>MIT</license>
 

@@ -12,6 +12,7 @@ shapely==2.0.6
 
 # Localization
 pymap3d==3.2.0
+pyproj==3.7.2
 
 # Perception
 dvclive==3.48.5

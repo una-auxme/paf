@@ -6,7 +6,7 @@
 
 - [General](#general)
 - [The `build-and-push-image` job](#the-build-and-push-image-job)
-  - [1. Checkout repository (`actions/checkout@v3`)](#1-checkout-repository-actionscheckoutv3)
+  - [1. Checkout repository (`actions/checkout@v5`)](#1-checkout-repository-actionscheckoutv5)
   - [2. Set up Docker Buildx (`docker/setup-buildx-action@v2`)](#2-set-up-docker-buildx-dockersetup-buildx-actionv2)
   - [3. Cache Docker layers](#3-cache-docker-layers)
   - [4. Log in to the Container registry (`docker/login-action@v2`)](#4-log-in-to-the-container-registry-dockerlogin-actionv2)
@@ -32,7 +32,7 @@ After the action is finished the `drive` action is triggered.
 
 ## The `build-and-push-image` job
 
-### 1. Checkout repository ([`actions/checkout@v3`](https://github.com/actions/checkout))
+### 1. Checkout repository ([`actions/checkout@v5`](https://github.com/actions/checkout))
 
 Trivial, just checks out the repo.
 

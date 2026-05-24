@@ -13,7 +13,7 @@ from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
 
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32, String, Bool
+from std_msgs.msg import Float32, String, Bool, UInt64
 from visualization_msgs.msg import Marker, MarkerArray
 
 import mapping_common.mask
@@ -24,6 +24,7 @@ from mapping_common.transform import Vector2, Point2, Transform2D
 from mapping_interfaces.msg import Map as MapMsg
 
 from planning_interfaces.srv import SpeedAlteration
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 
 MARKER_NAMESPACE: str = "acc"
 ACC_MARKER_COLOR = (0.0, 1.0, 1.0, 0.5)
@@ -51,184 +52,135 @@ class ACC(Node):
         mapping_common.set_logger(self.get_logger())
 
         # Parameters
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
-        self.k_p = (
-            self.declare_parameter(
-                "k_p",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Kp used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.k_i = (
-            self.declare_parameter(
-                "k_i",
-                1.2,
-                descriptor=ParameterDescriptor(
-                    description="Ki used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.t_gap = (
-            self.declare_parameter(
-                "t_gap",
-                1.9,
-                descriptor=ParameterDescriptor(
-                    description="Time gap used for the PI controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.d_min = (
-            self.declare_parameter(
-                "d_min",
-                0.7,
-                descriptor=ParameterDescriptor(
-                    description="Minimal distance to the object in front when standing",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.k_p = self.declare_parameter(
+            "k_p",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Kp used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.k_i = self.declare_parameter(
+            "k_i",
+            1.2,
+            descriptor=ParameterDescriptor(
+                description="Ki used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.t_gap = self.declare_parameter(
+            "t_gap",
+            1.9,
+            descriptor=ParameterDescriptor(
+                description="Time gap used for the PI controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.d_min = self.declare_parameter(
+            "d_min",
+            0.7,
+            descriptor=ParameterDescriptor(
+                description="Minimal distance to the object in front when standing",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.hard_approach_distance = (
-            self.declare_parameter(
-                "hard_approach_distance",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Minimum distance when closely approaching an obstacle",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.hard_approach_speed = (
-            self.declare_parameter(
-                "hard_approach_speed",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimum speed when closely approaching an obstacle",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.hard_approach_distance = self.declare_parameter(
+            "hard_approach_distance",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Minimum distance when closely approaching an obstacle",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.hard_approach_speed = self.declare_parameter(
+            "hard_approach_speed",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Minimum speed when closely approaching an obstacle",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.acceleration_factor = (
-            self.declare_parameter(
-                "acceleration_factor",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Adjusts the acceleration",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.acceleration_factor = self.declare_parameter(
+            "acceleration_factor",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Adjusts the acceleration",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.curve_line_angle = (
-            self.declare_parameter(
-                "curve_line_angle",
-                15.0,
-                descriptor=ParameterDescriptor(
-                    description="Angle (deg!) of the line "
-                    "used to calculate the curve distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_curve_speed = (
-            self.declare_parameter(
-                "min_curve_speed",
-                4.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimum desired curve speed at min_curve_distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_curve_distance = (
-            self.declare_parameter(
-                "min_curve_distance",
-                2.0,
-                descriptor=ParameterDescriptor(
-                    description="Distance to the intersection with the trajectory",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_curve_speed = (
-            self.declare_parameter(
-                "max_curve_speed",
-                30.0,
-                descriptor=ParameterDescriptor(
-                    description="Maximum desired curve speed at max_curve_distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=50.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_curve_distance = (
-            self.declare_parameter(
-                "max_curve_distance",
-                50.0,
-                descriptor=ParameterDescriptor(
-                    description="Distance to the intersection with the trajectory",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.curve_line_angle = self.declare_parameter(
+            "curve_line_angle",
+            15.0,
+            descriptor=ParameterDescriptor(
+                description="Angle (deg!) of the line "
+                "used to calculate the curve distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=90.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.min_curve_speed = self.declare_parameter(
+            "min_curve_speed",
+            4.0,
+            descriptor=ParameterDescriptor(
+                description="Minimum desired curve speed at min_curve_distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.min_curve_distance = self.declare_parameter(
+            "min_curve_distance",
+            2.0,
+            descriptor=ParameterDescriptor(
+                description="Distance to the intersection with the trajectory",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.max_curve_speed = self.declare_parameter(
+            "max_curve_speed",
+            30.0,
+            descriptor=ParameterDescriptor(
+                description="Maximum desired curve speed at max_curve_distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=50.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.max_curve_distance = self.declare_parameter(
+            "max_curve_distance",
+            50.0,
+            descriptor=ParameterDescriptor(
+                description="Distance to the intersection with the trajectory",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=200.0, step=0.1)
+                ],
+            ),
+        ).value
 
         # Get Map
         self.map_sub: Subscription = self.create_subscription(
@@ -274,6 +226,18 @@ class ACC(Node):
         self.velocity_pub: Publisher = self.create_publisher(
             Float32, f"/paf/{self.role_name}/acc_velocity", qos_profile=1
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "acc"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "acc"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         # Publish to emergency break if needed
         self.emergency_pub = self.create_publisher(
@@ -296,6 +260,7 @@ class ACC(Node):
         )
 
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -340,7 +305,7 @@ class ACC(Node):
         """
         if self.map is None or self.trajectory_local is None:
             # We don't have the necessary data to drive safely
-            self.velocity_pub.publish(Float32(data=0.0))
+            self._publish_velocity(0.0)
             return
 
         hero = self.map.hero()
@@ -348,7 +313,7 @@ class ACC(Node):
             # We currenly have no hero data.
             # -> cannot drive safely
             self.get_logger().error("ACC: No hero with motion found in map!")
-            self.velocity_pub.publish(Float32(data=0.0))
+            self._publish_velocity(0.0)
             return
         hero_width = max(1.0, hero.get_width())
 
@@ -481,12 +446,23 @@ class ACC(Node):
             )
         )
 
-        self.velocity_pub.publish(Float32(data=desired_speed))
+        self._publish_velocity(desired_speed)
 
         marker_array = debug_marker_array(
             MARKER_NAMESPACE, debug_markers, self.get_clock().now().to_msg()
         )
         self.marker_publisher.publish(marker_array)
+
+    def _publish_velocity(self, desired_speed: float) -> None:
+        self.velocity_pub.publish(Float32(data=desired_speed))
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def calculate_velocity_based_on_lead(
         self, hero_velocity: float, lead_distance: float, delta_v: float

@@ -5,11 +5,12 @@ from math import atan, sin
 import rclpy
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.subscription import Subscription
 
 from carla_msgs.msg import CarlaSpeedometer
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32, UInt64
 from visualization_msgs.msg import MarkerArray
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
@@ -21,6 +22,7 @@ from mapping_common.markers import debug_marker, debug_marker_array
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 
 
 # Constant: wheelbase of car
@@ -36,73 +38,52 @@ class PurePursuitController(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
-        self.k_lad = (
-            self.declare_parameter(
-                "k_lad",
-                0.85,
-                descriptor=ParameterDescriptor(
-                    description="Impact of velocity on lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_la_distance = (
-            self.declare_parameter(
-                "min_la_distance",
-                3.0,
-                descriptor=ParameterDescriptor(
-                    description="Minimal lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.max_la_distance = (
-            self.declare_parameter(
-                "max_la_distance",
-                25.0,
-                descriptor=ParameterDescriptor(
-                    description="Maximal lookahead distance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=10.0, to_value=50.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.k_pub = (
-            self.declare_parameter(
-                "k_pub",
-                0.8,
-                descriptor=ParameterDescriptor(
-                    description="Proportional factor of published steer",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.1, to_value=3.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.k_lad = self.declare_parameter(
+            "k_lad",
+            0.85,
+            descriptor=ParameterDescriptor(
+                description="Impact of velocity on lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.min_la_distance = self.declare_parameter(
+            "min_la_distance",
+            3.0,
+            descriptor=ParameterDescriptor(
+                description="Minimal lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.max_la_distance = self.declare_parameter(
+            "max_la_distance",
+            25.0,
+            descriptor=ParameterDescriptor(
+                description="Maximal lookahead distance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=10.0, to_value=50.0, step=0.1)
+                ],
+            ),
+        ).value
+        self.k_pub = self.declare_parameter(
+            "k_pub",
+            0.8,
+            descriptor=ParameterDescriptor(
+                description="Proportional factor of published steer",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.1, to_value=3.0, step=0.01)
+                ],
+            ),
+        ).value
 
         self.trajectory_sub: Subscription = self.create_subscription(
             Path, "/paf/acting/trajectory_local", self.__set_trajectory, qos_profile=1
@@ -125,12 +106,25 @@ class PurePursuitController(Node):
             f"/paf/{self.role_name}/control/pp_debug_markers",
             qos_profile=1,
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "pure_pursuit"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "pure_pursuit"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         self.__path: Optional[Path] = None
         self.__velocity: Optional[float] = None
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -164,6 +158,14 @@ class PurePursuitController(Node):
             )
         else:
             self.pure_pursuit_steer_pub.publish(Float32(data=steering_angle))
+            self.frame_complete_pub.publish(
+                UInt64(
+                    data=frame_id_from_time_ns(
+                        self.get_clock().now().nanoseconds,
+                        self.sync_frame_delta_seconds,
+                    )
+                )
+            )
 
     def loop_handler(self):
         try:

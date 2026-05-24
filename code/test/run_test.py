@@ -40,6 +40,14 @@ from leaderboard.autoagents.agent_wrapper import (
 from leaderboard.utils.statistics_manager import StatisticsManager, FAILURE_MESSAGES
 from leaderboard.utils.route_indexer import RouteIndexer
 
+PAF_COMMON_SRC = "/workspace/code/paf_common"
+if PAF_COMMON_SRC not in sys.path:
+    sys.path.insert(0, PAF_COMMON_SRC)
+
+route_metrics = importlib.import_module("paf_common.route_metrics")
+merge_route_metrics_into_checkpoint = route_metrics.merge_route_metrics_into_checkpoint
+reset_route_metrics_file = route_metrics.reset_route_metrics_file
+
 
 sensors_to_icons = {
     "sensor.camera.rgb": "carla_camera",
@@ -568,14 +576,20 @@ def main():
     )
 
     arguments = parser.parse_args()
+    reset_route_metrics_file()
 
     statistics_manager = StatisticsManager(
         arguments.checkpoint, arguments.debug_checkpoint
     )
     test_evaluator = TestScenario(arguments, statistics_manager)
     crashed = test_evaluator.run(arguments)
+    route_metrics = merge_route_metrics_into_checkpoint(arguments.checkpoint)
 
     route_records = test_evaluator.statistics_manager._results.checkpoint.records
+    if route_metrics.get("metrics"):
+        print(Fore.CYAN + "PAF ROUTE METRICS")
+        for metric_name, metric_value in sorted(route_metrics["metrics"].items()):
+            print(f"{metric_name}: {metric_value}")
     flags = []
     for i, route_record in enumerate(route_records):
         flag = False

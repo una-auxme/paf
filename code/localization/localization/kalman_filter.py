@@ -28,9 +28,11 @@ from std_msgs.msg import Float32, String
 from sensor_msgs.msg import NavSatFix, Imu
 from carla_msgs.msg import CarlaSpeedometer
 import math
-from localization.coordinate_transformation import CoordinateTransformer
-from localization.coordinate_transformation import quat_to_heading
-from xml.etree import ElementTree as eTree
+from localization.coordinate_transformation import (
+    CoordinateTransformer,
+    extract_geo_reference_from_opendrive,
+    quat_to_heading,
+)
 from paf_common.parameters import update_attributes
 
 GPS_RUNNING_AVG_ARGS = 10
@@ -94,16 +96,10 @@ class KalmanFilter(Node):
 
         # basic info
         self.transformer = None  # for coordinate transformation
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.001)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate", 0.001
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
         self.frame_id = "map"
 
         self.dt = self.control_loop_rate
@@ -430,25 +426,9 @@ class KalmanFilter(Node):
         Args:
             opendrive (String): OpenDrive Map from Carla
         """
-        root = eTree.fromstring(opendrive.data)
-        header = root.find("header")
-        geoRefText = header.find("geoReference").text
-
-        latString = "+lat_0="
-        lonString = "+lon_0="
-
-        indexLat = geoRefText.find(latString)
-        indexLon = geoRefText.find(lonString)
-
-        indexLatEnd = geoRefText.find(" ", indexLat)
-        indexLonEnd = geoRefText.find(" ", indexLon)
-
-        latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
-        lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
-
-        CoordinateTransformer.la_ref = latValue
-        CoordinateTransformer.ln_ref = lonValue
-        CoordinateTransformer.ref_set = True
+        CoordinateTransformer.configure_from_geo_reference(
+            extract_geo_reference_from_opendrive(opendrive.data)
+        )
         self.transformer = CoordinateTransformer()
 
 

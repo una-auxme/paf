@@ -7,6 +7,8 @@ from perception.perception_utils import (
     ego_motion_compensation,
 )
 
+pytestmark = pytest.mark.unit
+
 
 # --- Mock Data Structures ---
 

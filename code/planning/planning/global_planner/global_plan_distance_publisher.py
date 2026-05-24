@@ -27,11 +27,7 @@ class GlobalPlanDistance(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # basic info
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
         self.current_pos = None
         self.trajectory_local = None

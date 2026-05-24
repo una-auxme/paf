@@ -33,14 +33,8 @@ class EKFStatePublisher(Node):
         super().__init__("ekf_state_publisher")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
         # Parameters
-        self.loop_rate = (
-            self.declare_parameter("loop_rate", 0.05).get_parameter_value().double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.loop_rate = self.declare_parameter("loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
 
         # Publishes global ekf_pos and ekf_heading from hero frame out of tf-graph
         self.global_position_publisher: Publisher = self.create_publisher(

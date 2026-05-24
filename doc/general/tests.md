@@ -37,7 +37,7 @@ For creating a new route, the following must be considered:
 
 ## Start Test
 
-To start a test, simply run the file build/docker-compose.test.yaml with compose up.
+To start a test, run `docker compose -f build/docker-compose.test.yaml up`.
 Make sure that test.xml is set as the ROUTE variable in build/agent_service_test.yaml.
 
 ## Output

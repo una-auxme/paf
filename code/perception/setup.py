@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="TODO: Package description",
+    description="Perception (vision, lidar, radar, traffic) for the PAF stack",
     license="MIT",
     tests_require=["pytest"],
     entry_points={

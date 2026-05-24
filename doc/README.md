@@ -4,6 +4,7 @@ This document provides an overview of the structure of the documentation.
 
 - [`general`](#general)
 - [`development`](#development)
+- [`dev`](#dev)
 - [`research`](#research)
 - [`perception`](#perception)
 - [`mapping`](#mapping)
@@ -13,6 +14,7 @@ This document provides an overview of the structure of the documentation.
 - [`dev_talks`](#dev_talks)
 - [`localization`](#localization)
 - [`control`](#control)
+- [`reasoning`](#reasoning)
 
 ## `general`
 
@@ -21,6 +23,10 @@ The [`general`](./general/) folder contains installation instructions for the pr
 ## `development`
 
 The [`development`](./development/) folder contains guidelines for developing inside the project. It also provides templates for documentation files and python classes. Further information can be found in the [README](development/README.md).
+
+## `dev`
+
+The [`dev`](./dev/README.md) folder contains development handoff and progress notes that capture in-flight work without replacing the canonical subsystem or contributor documentation. Use the [Development Notes index](./dev/README.md) to find the latest handoff and progress snapshots.
 
 ## `research`
 
@@ -60,3 +66,7 @@ The [`localization`](./localization/) folder contains documentation for the whol
 ## `control`
 
 The [`control`](./control/) folder contains documentation for all the controllers.
+
+## `reasoning`
+
+The [`reasoning`](./reasoning/) folder contains development analyses, adaptation notes, and other non-canonical reasoning artifacts that should stay in the repository without replacing the main subsystem or contributor documentation.

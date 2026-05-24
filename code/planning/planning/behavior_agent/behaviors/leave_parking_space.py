@@ -9,7 +9,7 @@ from rclpy.publisher import Publisher
 from std_msgs.msg import String, Float32
 
 import mapping_common.map
-from mapping_common.map import Map, LaneFreeState
+from mapping_common.map import Map
 from mapping_common.markers import debug_marker
 from mapping_common.transform import Point2
 from planning.behavior_agent.blackboard_utils import Blackboard
@@ -110,18 +110,28 @@ class LeaveParkingSpace(py_trees.behaviour.Behaviour):
 
                 # checks if the left lane of the car is free,
                 tree = map.build_tree(mapping_common.map.lane_free_filter())
-                state, mask = tree.is_lane_free(
+                lane_context = tree.get_lane_context(
                     right_lane=False,
                     lane_length=25,
                     lane_transform=-15,
                     check_method="fallback",
                     reduce_lane=0.5,
                 )
-                if mask is not None:
-                    add_debug_marker(debug_marker(mask, color=UNPARKING_MARKER_COLOR))
-                add_debug_entry(self.name, f"Lane state: {state.name}")
+                if lane_context.lane_box is not None:
+                    add_debug_marker(
+                        debug_marker(
+                            lane_context.lane_box,
+                            color=UNPARKING_MARKER_COLOR,
+                        )
+                    )
+                add_debug_entry(self.name, f"Lane present: {lane_context.has_lane()}")
+                add_debug_entry(
+                    self.name,
+                    f"Lane traversable: {lane_context.is_traversable()} "
+                    f"({lane_context.lane_state.name})",
+                )
                 if (
-                    state is LaneFreeState.FREE
+                    lane_context.is_traversable() is True
                     or hero_transform.translation()
                     .point()
                     .distance_to(self.init_position)

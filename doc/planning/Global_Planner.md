@@ -53,6 +53,12 @@ The received agent spawn position is valid if it´s closer to the first waypoint
 parameter expresses. This is necessary to prevent unwanted behaviour in the startup phase where the
 current agent position is faulty.
 
+Before this distance check runs, the planner waits for the incoming `/paf/{role_name}/global_current_pos`
+stream to stabilize. The stabilization gate is controlled by `position_stabilization_samples`,
+`position_stabilization_distance_m`, and `position_stabilization_max_unstable_samples`. If localization keeps
+drifting for the bounded unstable sample window, preplanning continues with the latest pose and still relies on
+`distance_spawn_to_first_wp` to reject poses that are too far away from the route start.
+
 When the ODC is initialised, the current agent position is received and the global plan is obtained from
 the leaderboard. The trajectory can be calculated by iterating through the global route and passing it to the ODC.
 After smaller outliners are removed the x and y coordinates as well as the yaw-orientation and the prevailing

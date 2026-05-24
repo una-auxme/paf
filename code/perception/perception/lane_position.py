@@ -33,148 +33,98 @@ class lane_position(Node):
         self.dist_arrays = []
 
         # get parameters from launch file
-        self.line_length = (
-            self.declare_parameter(
-                "line_length",
-                15.0,
-                descriptor=ParameterDescriptor(
-                    description="predefined length of the lanemarkings",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.line_width = (
-            self.declare_parameter(
-                "line_width",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="width of the lanemarkings",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.epsilon = (
-            self.declare_parameter(
-                "epsilon",
-                1.8,
-                descriptor=ParameterDescriptor(
-                    description="epsilon for clustering algorithm",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.min_samples = (
-            self.declare_parameter(
-                "min_samples",
-                4,
-                descriptor=ParameterDescriptor(
-                    description="min samples for clustering",
-                ),
-            )
-            .get_parameter_value()
-            .integer_value
-        )
+        self.line_length = self.declare_parameter(
+            "line_length",
+            15.0,
+            descriptor=ParameterDescriptor(
+                description="predefined length of the lanemarkings",
+            ),
+        ).value
+        self.line_width = self.declare_parameter(
+            "line_width",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="width of the lanemarkings",
+            ),
+        ).value
+        self.epsilon = self.declare_parameter(
+            "epsilon",
+            1.8,
+            descriptor=ParameterDescriptor(
+                description="epsilon for clustering algorithm",
+            ),
+        ).value
+        self.min_samples = self.declare_parameter(
+            "min_samples",
+            4,
+            descriptor=ParameterDescriptor(
+                description="min samples for clustering",
+            ),
+        ).value
 
         # confidence parameters:
-        self.angle_weight = (
-            self.declare_parameter(
-                "angle_weight",
-                0.3,
-                descriptor=ParameterDescriptor(
-                    description="weight for confidence calculation",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.size_weight = (
-            self.declare_parameter(
-                "size_weight",
-                0.3,
-                descriptor=ParameterDescriptor(
-                    description="weight for confidence calculation",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.std_dev_weight = (
-            self.declare_parameter(
-                "std_dev_weight",
-                0.4,
-                descriptor=ParameterDescriptor(
-                    description="weight for confidence calculation",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.angle_normalization = (
-            self.declare_parameter(
-                "angle_normalization",
-                25.0,
-                descriptor=ParameterDescriptor(
-                    description="max acceptable angle for normalization",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.size_normalization = (
-            self.declare_parameter(
-                "size_normalization",
-                15.0,
-                descriptor=ParameterDescriptor(
-                    description="max acceptable cluster size for normalization",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.std_dev_normalization = (
-            self.declare_parameter(
-                "std_dev_normalization",
-                0.1,
-                descriptor=ParameterDescriptor(
-                    description="max acceptable standard deviation "
-                    "in linearregression for normalization",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.angle_prediction_threshold = (
-            self.declare_parameter(
-                "angle_prediction_threshold",
-                5.0,
-                descriptor=ParameterDescriptor(
-                    description="predictions currently disabled",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.confidence_threshold = (
-            self.declare_parameter("confidence_threshold", 0.6)
-            .get_parameter_value()
-            .double_value
-        )
+        self.angle_weight = self.declare_parameter(
+            "angle_weight",
+            0.3,
+            descriptor=ParameterDescriptor(
+                description="weight for confidence calculation",
+            ),
+        ).value
+        self.size_weight = self.declare_parameter(
+            "size_weight",
+            0.3,
+            descriptor=ParameterDescriptor(
+                description="weight for confidence calculation",
+            ),
+        ).value
+        self.std_dev_weight = self.declare_parameter(
+            "std_dev_weight",
+            0.4,
+            descriptor=ParameterDescriptor(
+                description="weight for confidence calculation",
+            ),
+        ).value
+        self.angle_normalization = self.declare_parameter(
+            "angle_normalization",
+            25.0,
+            descriptor=ParameterDescriptor(
+                description="max acceptable angle for normalization",
+            ),
+        ).value
+        self.size_normalization = self.declare_parameter(
+            "size_normalization",
+            15.0,
+            descriptor=ParameterDescriptor(
+                description="max acceptable cluster size for normalization",
+            ),
+        ).value
+        self.std_dev_normalization = self.declare_parameter(
+            "std_dev_normalization",
+            0.1,
+            descriptor=ParameterDescriptor(
+                description="max acceptable standard deviation "
+                "in linearregression for normalization",
+            ),
+        ).value
+        self.angle_prediction_threshold = self.declare_parameter(
+            "angle_prediction_threshold",
+            5.0,
+            descriptor=ParameterDescriptor(
+                description="predictions currently disabled",
+            ),
+        ).value
+        self.confidence_threshold = self.declare_parameter(
+            "confidence_threshold", 0.6
+        ).value
 
-        self.y_tolerance = (
-            self.declare_parameter(
-                "y_tolerance",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="min distance that lanemarkings have to have, "
-                    "new lanemarkings within this distance are ignored",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.y_tolerance = self.declare_parameter(
+            "y_tolerance",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="min distance that lanemarkings have to have, "
+                "new lanemarkings within this distance are ignored",
+            ),
+        ).value
 
         self.setup_subscriptions()
         self.setup_publishers()

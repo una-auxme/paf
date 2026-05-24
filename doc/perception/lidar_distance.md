@@ -183,7 +183,7 @@ LocalCompensation active:
 
 - **Topic Name:** `/carla/hero/IMU`
 - **Data Type:** `sensor_msgs/Imu`
-- **Description:** Provides data used for calculating the heading.
+- **Description:** Provides orientation data used for calculating the heading and the current pitch angle for pitch-aware ground filtering.
 
 ## 4. Processing Pipeline
 
@@ -202,6 +202,7 @@ LocalCompensation active:
 
 - Removes points representing the ego vehicle (`start_clustering`).
 - Filters out points below a certain height (`clustering_lidar_z_min`) to avoid clustering the road surface (`start_clustering`).
+- Optionally tilts the lower height bound with the current IMU pitch (`enable_pitch_ground_filter`) so that road points do not drift into the obstacle set during acceleration, braking, or other pitch motion.
 - Filters out points above a maximum height (`clustering_lidar_z_max`) to exclude high objects like tree leaves or overhead structures.
 
 ### 4.4 Clustering the LiDAR Data
@@ -237,7 +238,7 @@ LocalCompensation active:
 - **Left:** `~image_distance_topic` (Default: `/paf/hero/Left/dist_array`)
 - **Right:** `~image_distance_topic` (Default: `/paf/hero/Right/dist_array`)
 - **Data Type:** `sensor_msgs/Image`
-- **Description:** Contains the calculated minimum distance to objects in various directions. Although the _Back_, _Left_, and _Right_ directions are still actively processed in this node's image pipeline from PAF23, the current vision node only subscribes to and utilizes the _Center_S image.  
+- **Description:** Contains the calculated minimum distance to objects in various directions. Although the _Back_, _Left_, and _Right_ directions are still actively processed in this node's image pipeline from PAF23, the current vision node only subscribes to and utilizes the _Center_S image.
   Support for the other directions has been intentionally preserved to allow future teams to easily extend the system with additional camera perspectives if needed.
 
 ### Marker Visualization

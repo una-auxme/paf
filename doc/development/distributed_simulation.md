@@ -7,8 +7,8 @@
 - [General](#general)
 - [Remote Machine Setup](#remote-machine-setup)
 - [Local Machine Setup](#local-machine-setup)
-  - [Ensure similarity between normal docker-compose and distributed docker-compose files](#ensure-similarity-between-normal-docker-compose-and-distributed-docker-compose-files)
-  - [Set the `<ip-address>` of the carla simulator in docker-compose distributed files](#set-the-ip-address-of-the-carla-simulator-in-docker-compose-distributed-files)
+  - [Ensure similarity between normal Docker Compose and distributed Docker Compose files](#ensure-similarity-between-normal-docker-compose-and-distributed-docker-compose-files)
+  - [Set the `<ip-address>` of the carla simulator in Docker Compose distributed files](#set-the-ip-address-of-the-carla-simulator-in-docker-compose-distributed-files)
   - [Start the agent on your local machine](#start-the-agent-on-your-local-machine)
 - [How do you know that you do not have enough compute resources?](#how-do-you-know-that-you-do-not-have-enough-compute-resources)
 
@@ -32,12 +32,12 @@ As far as we know, you need more than **10 GB of VRAM** to run the server and th
 - set the host ip address from the remote machine as the new carla-ip address
 - start the agent on your local machine
 
-### Ensure similarity between normal docker-compose and distributed docker-compose files
+### Ensure similarity between normal Docker Compose and distributed Docker Compose files
 
 Carefully compare that their are no major differences between the `docker-compose.*.yaml` and `docker-compose.*-distributed.yaml` files.
 Mainly, the `carla-simulator` service will not be executed in the non-distributed version.
 
-### Set the `<ip-address>` of the carla simulator in docker-compose distributed files
+### Set the `<ip-address>` of the carla simulator in Docker Compose distributed files
 
 Replace the argument `<carla-server-ip-address>` with the ip address of the remote machine.
 You can find the ip address of the remote machine by executing the following command on the remote machine:

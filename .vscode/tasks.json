@@ -44,6 +44,13 @@
       "detail": "Manually trigger the ruff linter to check the python files and apply the safe fixes that it encounters during linting.",
     },
     {
+      "label": "Lint python code with ruff (strict profile)",
+      "type": "shell",
+      "command": "ruff check /workspace/code/ --config /workspace/ruff-strict.toml",
+      "problemMatcher": [],
+      "detail": "Runs stricter lint rules including docstring checks for incremental quality hardening."
+    },
+    {
       "label": "Check python code formatting with ruff",
       "type": "shell",
       "command": "ruff format /workspace/code/ --check",
@@ -56,6 +63,118 @@
       "command": "ruff format /workspace/code/",
       "problemMatcher": [],
       "detail": "Manually trigger the ruff formatter to format the python files.",
+    },
+    {
+      "label": "Start dev container stack (CUDA)",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/dev-up.sh",
+      "problemMatcher": [],
+      "detail": "Updates build/.env, checks NVIDIA driver, and starts agent-dev via Docker Compose."
+    },
+    {
+      "label": "Lint current Python file with ruff",
+      "type": "shell",
+      "command": "ruff check ${file}",
+      "problemMatcher": [],
+      "detail": "Runs ruff check for the currently active file."
+    },
+    {
+      "label": "Format current Python file with ruff",
+      "type": "shell",
+      "command": "ruff format ${file}",
+      "problemMatcher": [],
+      "detail": "Runs ruff format for the currently active file."
+    },
+    {
+      "label": "Lint active package with ruff",
+      "type": "shell",
+      "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; ruff check /workspace/code/${pkg}; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
+      "problemMatcher": [],
+      "detail": "Runs ruff check on the package derived from the currently active file path."
+    },
+    {
+      "label": "Check active package formatting with ruff",
+      "type": "shell",
+      "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; ruff format /workspace/code/${pkg} --check; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
+      "problemMatcher": [],
+      "detail": "Checks ruff formatting for the package derived from the currently active file path."
+    },
+    {
+      "label": "Run host smoke tests",
+      "type": "shell",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit",
+      "problemMatcher": [],
+      "detail": "Runs the host-runnable smoke test subset under code/test."
+    },
+    {
+      "label": "Run ROS-backed unit tests (dev container)",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && colcon build --symlink-install --continue-on-error --packages-up-to mapping perception planning && devsource && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest /workspace/code/perception/tests /workspace/code/mapping/test /workspace/code/planning/test -m unit'",
+      "problemMatcher": [],
+      "detail": "Builds mapping, perception, and planning plus dependencies in the dev container and runs ROS-backed unit tests."
+    },
+    {
+      "label": "Run pytest (integration)",
+      "type": "shell",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m integration",
+      "problemMatcher": [],
+      "detail": "Runs integration tests marked with @pytest.mark.integration."
+    },
+    {
+      "label": "Run pytest (simulation)",
+      "type": "shell",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -m sim",
+      "problemMatcher": [],
+      "detail": "Runs simulation tests marked with @pytest.mark.sim."
+    },
+    {
+      "label": "Run pytest with coverage",
+      "type": "shell",
+      "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest --cov=code --cov-report=term-missing",
+      "problemMatcher": [],
+      "detail": "Runs all tests and reports coverage for the code workspace."
+    },
+    {
+      "label": "Dependency check in dev container",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.check'",
+      "problemMatcher": [],
+      "detail": "Validates rosdep and pip dependency health in the running agent-dev container environment."
+    },
+    {
+      "label": "Synchronize dependencies in dev container",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.sync'",
+      "problemMatcher": [],
+      "detail": "Installs rosdep and pip dependencies from package.xml and requirements manifests."
+    },
+    {
+      "label": "Validate live GNSS projection",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/validate-gnss-projection.sh",
+      "problemMatcher": [],
+      "detail": "While leaderboard.test is running, starts a sidecar gps_transform with position_use_ground_truth=false and measures its error against CARLA ground truth."
+    },
+    {
+      "label": "Build active package with colcon",
+      "type": "shell",
+      "command": "bash -lc 'if [[ \"${relativeFile}\" == code/* ]]; then pkg=${relativeFile#code/}; pkg=${pkg%%/*}; source /internal_workspace/dev.bashrc && devbuild.pkg ${pkg}; else echo \"Open a file inside code/<package>/... first.\"; exit 1; fi'",
+      "problemMatcher": [],
+      "detail": "Builds only the package derived from the currently active file path."
+    },
+    {
+      "label": "Pre-PR quality check",
+      "type": "shell",
+      "command": "bash -lc 'source /internal_workspace/dev.bashrc && dep.check && ruff check /workspace/code/ && ruff format /workspace/code/ --check && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest code/test -m unit'",
+      "problemMatcher": [],
+      "detail": "Runs dependency check, lint, format, and the host smoke test subset before opening a PR."
+    },
+    {
+      "label": "Run dependency doctor",
+      "type": "shell",
+      "command": "bash ${workspaceFolder}/scripts/dependency-doctor.sh",
+      "problemMatcher": [],
+      "detail": "Checks requirements pinning and cross-file version conflicts."
     },
   ],
   "inputs": [

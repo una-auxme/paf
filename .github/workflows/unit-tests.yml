@@ -1,0 +1,21 @@
+name: Host smoke tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  host-smoke-tests:
+    name: Run host smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run host smoke tests
+        run: bash scripts/run-host-smoke-tests.sh

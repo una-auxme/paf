@@ -17,9 +17,14 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Bool
 from paf_common.parameters import update_attributes
+from planning_interfaces.srv import GetOpenDriveString
 
-from localization.coordinate_transformation import CoordinateTransformer
+from localization.coordinate_transformation import (
+    CoordinateTransformer,
+    extract_geo_reference_from_opendrive,
+)
 
 
 class GpsTransform(Node):
@@ -27,16 +32,15 @@ class GpsTransform(Node):
         super().__init__("gps_transform")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
         self.transformer = CoordinateTransformer()
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.position_use_ground_truth = self.declare_parameter(
+            "position_use_ground_truth", False
+        ).value
+        self.open_drive_client = self.create_client(
+            GetOpenDriveString,
+            f"/paf/{self.role_name}/data/planning/get_open_drive",
         )
-        self.position_use_ground_truth = (
-            self.declare_parameter("position_use_ground_truth", False)
-            .get_parameter_value()
-            .bool_value
-        )
+        self._geo_reference_request_in_flight = False
 
         # Initalize publisher for Odometry data
         self.odometry_publisher: Publisher = self.create_publisher(
@@ -50,10 +54,55 @@ class GpsTransform(Node):
             self.gps_callback,
             qos_profile=10,
         )
+        self.create_subscription(
+            Bool,
+            f"/paf/{self.role_name}/data/planning/open_drive_updated",
+            self.request_geo_reference,
+            qos_profile=10,
+        )
 
         self.map = None
 
         self.get_logger().info(f"{type(self).__name__} node initialized.")
+
+    def request_geo_reference(self, _=None):
+        if self.position_use_ground_truth or self.transformer.ref_set:
+            return
+        if self._geo_reference_request_in_flight:
+            return
+        if not self.open_drive_client.wait_for_service(timeout_sec=0.0):
+            return
+
+        self._geo_reference_request_in_flight = True
+        future = self.open_drive_client.call_async(GetOpenDriveString.Request())
+        future.add_done_callback(self._handle_geo_reference_response)
+
+    def _handle_geo_reference_response(self, future):
+        self._geo_reference_request_in_flight = False
+
+        try:
+            response = future.result()
+        except Exception as exc:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} request failed: {exc}"
+            )
+            return
+
+        if response is None:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service returned None."
+            )
+            return
+        if not response.success:
+            self.get_logger().warn(
+                f"{self.open_drive_client.service_name} service failed: {response.msg}."
+            )
+            return
+
+        self.transformer.configure_from_geo_reference(
+            extract_geo_reference_from_opendrive(response.data)
+        )
+        self.get_logger().info("Geo ref updated.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
         """Callback for parameter updates."""
@@ -65,6 +114,10 @@ class GpsTransform(Node):
         Args:
             gps (NavSatFix): GPS Data to process
         """
+        if not self.position_use_ground_truth and not self.transformer.ref_set:
+            self.request_geo_reference()
+            return
+
         if self.position_use_ground_truth and self.map is None:
             import carla
             import os

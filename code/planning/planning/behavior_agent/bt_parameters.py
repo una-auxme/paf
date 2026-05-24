@@ -48,16 +48,7 @@ def _register_parameter(
             param_desc.floating_point_range = [float_range]
 
     parameter = node.declare_parameter(name, default_value, param_desc)
-    if isinstance(default_value, str):
-        return_value = parameter.get_parameter_value().string_value
-    elif isinstance(default_value, bool):
-        return_value = parameter.get_parameter_value().bool_value
-    elif isinstance(default_value, int):
-        return_value = parameter.get_parameter_value().integer_value
-    elif isinstance(default_value, float):
-        return_value = parameter.get_parameter_value().double_value
-    else:
-        raise RuntimeError(f"Parameter type error on parameter {name}")
+    return_value = parameter.value
     blackboard.set(f"/params/{name}", return_value)
     return return_value
 

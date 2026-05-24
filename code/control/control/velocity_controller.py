@@ -3,13 +3,22 @@ from carla_msgs.msg import CarlaSpeedometer
 import rclpy
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.subscription import Subscription
 from simple_pid import PID
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, UInt64
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 from rclpy.parameter import Parameter
+
+from .velocity_control_logic import (
+    VelocityControlCommand,
+    finalize_velocity_control,
+    plan_velocity_control,
+    select_target_velocity,
+)
 
 
 class VelocityController(Node):
@@ -22,88 +31,63 @@ class VelocityController(Node):
         super().__init__("velocity_controller")
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
-        self.control_loop_rate = (
-            self.declare_parameter(
-                "control_loop_rate",
-                0.05,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter(
+            "control_loop_rate",
+            0.05,
+        ).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
-        self.fixed_speed = (
-            self.declare_parameter(
-                "fixed_speed",
-                0.0,
-                descriptor=ParameterDescriptor(
-                    description="Drive with fixed speed / disregard input",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.fixed_speed_active = (
-            self.declare_parameter(
-                "fixed_speed_active",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Activate fixed speed mode disregards input"
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.fixed_speed = self.declare_parameter(
+            "fixed_speed",
+            0.0,
+            descriptor=ParameterDescriptor(
+                description="Drive with fixed speed / disregard input",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-10.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.fixed_speed_active = self.declare_parameter(
+            "fixed_speed_active",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Activate fixed speed mode disregards input"
+            ),
+        ).value
 
-        self.pid_p = (
-            self.declare_parameter(
-                "pid_p",
-                0.60,
-                descriptor=ParameterDescriptor(
-                    description="P for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.pid_i = (
-            self.declare_parameter(
-                "pid_i",
-                0.00076,
-                descriptor=ParameterDescriptor(
-                    description="I for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.pid_d = (
-            self.declare_parameter(
-                "pid_d",
-                0.63,
-                descriptor=ParameterDescriptor(
-                    description="D for PID controller",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.pid_p = self.declare_parameter(
+            "pid_p",
+            0.60,
+            descriptor=ParameterDescriptor(
+                description="P for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.001, to_value=10.0, step=0.001)
+                ],
+            ),
+        ).value
+        self.pid_i = self.declare_parameter(
+            "pid_i",
+            0.00076,
+            descriptor=ParameterDescriptor(
+                description="I for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=0.1, step=0.00001)
+                ],
+            ),
+        ).value
+        self.pid_d = self.declare_parameter(
+            "pid_d",
+            0.63,
+            descriptor=ParameterDescriptor(
+                description="D for PID controller",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
 
         self.target_velocity_sub: Subscription = self.create_subscription(
             Float32,
@@ -130,6 +114,18 @@ class VelocityController(Node):
         self.reverse_pub: Publisher = self.create_publisher(
             Bool, f"/paf/{self.role_name}/reverse", qos_profile=1
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "velocity_controller"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "velocity_controller"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         self.__current_velocity: Optional[float] = None
         self.__target_velocity: Optional[float] = None
@@ -143,6 +139,7 @@ class VelocityController(Node):
 
         self.loop_timer = self.create_timer(self.control_loop_rate, self.loop_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -177,39 +174,38 @@ class VelocityController(Node):
         self.pid_t.Ki = self.pid_i
         self.pid_t.Kd = self.pid_d
 
-        target_velocity = (
-            self.__target_velocity if not self.fixed_speed_active else self.fixed_speed
+        target_velocity = select_target_velocity(
+            requested_target_velocity=self.__target_velocity,
+            fixed_speed_active=self.fixed_speed_active,
+            fixed_speed=self.fixed_speed,
         )
-        # revert driving
-        if target_velocity < 0:
-            reverse = True
-            v = abs(target_velocity)
-            self.pid_t.setpoint = v
-            brake = 0
-            throttle = self.pid_t(-self.__current_velocity)
-            if throttle < 0:
-                brake = abs(throttle)
-                throttle = 0
-        # very low target_velocities -> stand
-        elif target_velocity < 0.1:
-            reverse = False
-            brake = 1
-            throttle = 0
-        else:
-            reverse = False
-            v = target_velocity
-            self.pid_t.setpoint = v
-            throttle = self.pid_t(self.__current_velocity)
-            # any throttle < 0 is used as brake signal
-            if throttle < 0:
-                brake = abs(throttle)
-                throttle = 0
-            else:
-                brake = 0
+        control_plan = plan_velocity_control(target_velocity, self.__current_velocity)
 
-        self.reverse_pub.publish(Bool(data=reverse))
-        self.brake_pub.publish(Float32(data=float(brake)))
-        self.throttle_pub.publish(Float32(data=float(throttle)))
+        if control_plan.setpoint is None or control_plan.measurement is None:
+            control_command = VelocityControlCommand(
+                reverse=control_plan.reverse,
+                throttle=control_plan.throttle,
+                brake=control_plan.brake,
+            )
+        else:
+            self.pid_t.setpoint = control_plan.setpoint
+            pid_output = self.pid_t(control_plan.measurement)
+            control_command = finalize_velocity_control(
+                reverse=control_plan.reverse,
+                pid_output=pid_output,
+            )
+
+        self.reverse_pub.publish(Bool(data=control_command.reverse))
+        self.brake_pub.publish(Float32(data=float(control_command.brake)))
+        self.throttle_pub.publish(Float32(data=float(control_command.throttle)))
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def loop_handler(self):
         try:

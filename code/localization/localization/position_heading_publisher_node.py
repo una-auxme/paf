@@ -35,9 +35,11 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix, Imu
 
 from std_msgs.msg import Float32, Bool
-from localization.coordinate_transformation import CoordinateTransformer
-from localization.coordinate_transformation import quat_to_heading
-from xml.etree import ElementTree as eTree
+from localization.coordinate_transformation import (
+    CoordinateTransformer,
+    extract_geo_reference_from_opendrive,
+    quat_to_heading,
+)
 from paf_common.parameters import update_attributes
 from rcl_interfaces.msg import (
     ParameterDescriptor,
@@ -58,44 +60,26 @@ class PositionHeadingPublisherNode(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Configuration parameters
-        self.control_loop_rate = (
-            self.declare_parameter("control_loop_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.control_loop_rate = self.declare_parameter("control_loop_rate", 0.05).value
+        self.role_name = self.declare_parameter("role_name", "hero").value
         # Filter used:
         """
         Possible Filters:
         Pos: EKF, Kalman, RunningAvg, None
         Heading: EKF, Kalman, None
         """
-        self.pos_filter = (
-            self.declare_parameter(
-                "pos_filter",
-                "EKF",
-                descriptor=ParameterDescriptor(
-                    description="Options: EKF, Kalman, RunningAvg, None"
-                ),
-            )
-            .get_parameter_value()
-            .string_value
-        )
-        self.heading_filter = (
-            self.declare_parameter(
-                "heading_filter",
-                "EKF",
-                descriptor=ParameterDescriptor(
-                    description="Options: EKF, Kalman, None"
-                ),
-            )
-            .get_parameter_value()
-            .string_value
-        )
+        self.pos_filter = self.declare_parameter(
+            "pos_filter",
+            "EKF",
+            descriptor=ParameterDescriptor(
+                description="Options: EKF, Kalman, RunningAvg, None"
+            ),
+        ).value
+        self.heading_filter = self.declare_parameter(
+            "heading_filter",
+            "EKF",
+            descriptor=ParameterDescriptor(description="Options: EKF, Kalman, None"),
+        ).value
         self.get_logger().info(
             f"Pos Filter: {self.pos_filter}, Heading Filter: {self.heading_filter}"
         )
@@ -435,27 +419,9 @@ class PositionHeadingPublisherNode(Node):
                 f"{self.open_drive_client.service_name} service failed: {response.msg}."
             )
             return False
-        opendrive: str = response.data
-
-        root = eTree.fromstring(opendrive)
-        header = root.find("header")
-        geoRefText = header.find("geoReference").text
-
-        latString = "+lat_0="
-        lonString = "+lon_0="
-
-        indexLat = geoRefText.find(latString)
-        indexLon = geoRefText.find(lonString)
-
-        indexLatEnd = geoRefText.find(" ", indexLat)
-        indexLonEnd = geoRefText.find(" ", indexLon)
-
-        latValue = float(geoRefText[indexLat + len(latString) : indexLatEnd])
-        lonValue = float(geoRefText[indexLon + len(lonString) : indexLonEnd])
-
-        self.transformer.la_ref = latValue
-        self.transformer.ln_ref = lonValue
-        self.transformer.ref_set = True
+        self.transformer.configure_from_geo_reference(
+            extract_geo_reference_from_opendrive(response.data)
+        )
         self.get_logger().info("Geo ref updated.")
 
 

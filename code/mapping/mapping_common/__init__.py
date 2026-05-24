@@ -20,7 +20,7 @@ methods.
 This module is compiled with [Cython](https://cython.readthedocs.io/en/latest/).
 
 If changes have been made to this package,
-catkin_make needs to be executed to apply them!
+colcon build needs to be executed to apply them!
 This step is automatically executed when using the
 [docker-compose.leaderboard.yaml](/build/docker-compose.leaderboard.yaml).
 

@@ -1,3 +1,5 @@
+"""Setuptools entrypoint for the paf_common package."""
+
 from setuptools import find_packages, setup
 
 package_name = "paf_common"

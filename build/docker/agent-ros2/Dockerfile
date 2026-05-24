@@ -19,8 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # GPU vulkan driver install (amd + intel)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  add-apt-repository -y ppa:kisak/turtle && apt-get update && \
-  apt-get upgrade -y && apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
+  if timeout 60s add-apt-repository -y ppa:kisak/turtle; then \
+  apt-get update && apt-get upgrade -y; \
+  else \
+  echo "WARNING: ppa:kisak/turtle unavailable, using Ubuntu Mesa/Vulkan packages"; \
+  apt-get update; \
+  fi && \
+  apt-get install -y libvulkan1 vulkan-tools mesa-vulkan-drivers
 
 FROM agent-base-gpu AS agent-base-rocm
 # No changes needed here, only pytorch installation requires changes
@@ -368,6 +373,7 @@ WORKDIR ${INTERNAL_WORKSPACE_DIR}
 COPY --chown=${PAF_UID}:${PAF_GID} ${DOCKER_RESOURCE_BASE}/scripts/dev.bashrc ./
 COPY --chmod=755 ${DOCKER_RESOURCE_BASE}/scripts/entrypoint-dev.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/devfunctions.bash \
+  ${DOCKER_RESOURCE_BASE}/scripts/dependency-sync.sh \
   ${DOCKER_RESOURCE_BASE}/scripts/reset_env.bash \
   ./scripts/
 
@@ -383,7 +389,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   sudo apt-get update && \
   rosdep update --rosdistro ${ROS_DISTRO} && \
   ((rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y -r |& tee ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log; exit \${PIPESTATUS[0]}) \
-  || echo \"echo -e \\\"\\\\e[31mERROR: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  || echo -e \"\\e[33mWARNING: rosdep install failed, check ${INTERNAL_WORKSPACE_DIR}/rosdep_install.log in the container\\e[0m\") \
   "
 
 # Install python requirements.txt dependencies (but allow it to fail, because this is a dev container)
@@ -392,7 +398,7 @@ RUN --mount=type=cache,target=${PIP_CACHE_DIR},sharing=locked,uid="${PAF_UID}",g
   bash -c " \
   source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc && \
   ((${INTERNAL_WORKSPACE_DIR}/scripts/install-python-requirements.sh |& tee ${INTERNAL_WORKSPACE_DIR}/pip_install.log; exit \${PIPESTATUS[0]}) \
-  || echo \"echo -e \\\"\\\\e[31mERROR: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\\\e[0m\\\"\" >> ${INTERNAL_WORKSPACE_DIR}/dev.bashrc) \
+  || echo -e \"\\e[33mWARNING: pip install failed, check ${INTERNAL_WORKSPACE_DIR}/pip_install.log in the container\\e[0m\") \
   "
 
 RUN echo source ${INTERNAL_WORKSPACE_DIR}/dev.bashrc >> ~/.bashrc

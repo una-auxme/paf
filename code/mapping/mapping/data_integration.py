@@ -1,15 +1,17 @@
 from visualization_msgs.msg import Marker
 import numpy as np
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from copy import deepcopy
 
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.qos import DurabilityPolicy, QoSProfile
 import ros2_numpy
 
 from paf_common.parameters import update_attributes
 from paf_common.exceptions import emsg_with_trace
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 import mapping_common.map
 import mapping_common.hero
 from mapping_common.entity import Entity, Flags, Car, Motion2D, Pedestrian, StopMark
@@ -31,12 +33,53 @@ from rcl_interfaces.msg import (
     ParameterDescriptor,
     FloatingPointRange,
 )
-from std_msgs.msg import Float32
+from std_msgs.msg import Bool, Float32, UInt64
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import PointCloud2
 from carla_msgs.msg import CarlaSpeedometer
 from shapely.geometry import MultiPoint
 import shapely
+
+
+def _select_tracking_points(
+    cluster_points_xy: np.ndarray, is_buffered_mask: Optional[np.ndarray]
+) -> np.ndarray:
+    if (
+        is_buffered_mask is None
+        or is_buffered_mask.shape[0] != cluster_points_xy.shape[0]
+    ):
+        return cluster_points_xy
+
+    fresh_points_xy = cluster_points_xy[~is_buffered_mask]
+    if fresh_points_xy.shape[0] == 0:
+        return cluster_points_xy
+
+    return fresh_points_xy
+
+
+def _build_polygon_shape_and_transform(
+    cluster_points_xy: np.ndarray, tracking_points_xy: np.ndarray
+) -> Optional[Tuple[Polygon, Transform2D]]:
+    cluster_polygon_hull = MultiPoint(cluster_points_xy).convex_hull
+    if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+        return None
+    if not isinstance(cluster_polygon_hull, shapely.Polygon):
+        return None
+
+    if tracking_points_xy.shape[0] == 0:
+        tracking_points_xy = cluster_points_xy
+
+    tracking_anchor = MultiPoint(tracking_points_xy).convex_hull.centroid
+    anchor_x = tracking_anchor.x
+    anchor_y = tracking_anchor.y
+
+    hull_coords = np.asarray(cluster_polygon_hull.exterior.coords[:-1], dtype=float)
+    if hull_coords.shape[0] < 3:
+        return None
+
+    shape = Polygon([Point2.new(x - anchor_x, y - anchor_y) for x, y in hull_coords])
+    transform = Transform2D.new_translation(Vector2.new(anchor_x, anchor_y))
+    return shape, transform
 
 
 class MappingDataIntegrationNode(Node):
@@ -82,299 +125,209 @@ class MappingDataIntegrationNode(Node):
 
         # Parameters
 
-        self.map_publish_rate = (
-            self.declare_parameter("map_publish_rate", 0.05)
-            .get_parameter_value()
-            .double_value
-        )
+        self.map_publish_rate = self.declare_parameter("map_publish_rate", 0.05).value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
         # Parameters: Enable entity sources
 
-        self.enable_radar_cluster = (
-            self.declare_parameter(
-                "enable_radar_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Radar Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_lidar_cluster = (
-            self.declare_parameter(
-                "enable_lidar_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Lidar Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_vision_cluster = (
-            self.declare_parameter(
-                "enable_vision_cluster",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Vision Node Cluster integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_raw_lidar_points = (
-            self.declare_parameter(
-                "enable_raw_lidar_points",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Enable raw lidar input",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_lane_marker = (
-            self.declare_parameter(
-                "enable_lane_marker",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable Lane Mark integration",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.enable_stop_marks = (
-            self.declare_parameter(
-                "enable_stop_marks",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable stop marks from the UpdateStopMarks service",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.radar_lidar_assoc_buffer = (
-            self.declare_parameter(
-                "radar_lidar_assoc_buffer",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Buffer [m] around lidar polygon for radar association"
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.enable_radar_cluster = self.declare_parameter(
+            "enable_radar_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Radar Cluster integration",
+            ),
+        ).value
+        self.enable_lidar_cluster = self.declare_parameter(
+            "enable_lidar_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Lidar Cluster integration",
+            ),
+        ).value
+        self.enable_vision_cluster = self.declare_parameter(
+            "enable_vision_cluster",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Vision Node Cluster integration",
+            ),
+        ).value
+        self.enable_raw_lidar_points = self.declare_parameter(
+            "enable_raw_lidar_points",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Enable raw lidar input",
+            ),
+        ).value
+        self.enable_lane_marker = self.declare_parameter(
+            "enable_lane_marker",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable Lane Mark integration",
+            ),
+        ).value
+        self.enable_stop_marks = self.declare_parameter(
+            "enable_stop_marks",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable stop marks from the UpdateStopMarks service",
+            ),
+        ).value
+        self.radar_lidar_assoc_buffer = self.declare_parameter(
+            "radar_lidar_assoc_buffer",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Buffer [m] around lidar polygon for radar association"
+            ),
+        ).value
 
         # Parameters: Filtering
 
-        self.filter_enable_lane_index = (
-            self.declare_parameter(
-                "filter_enable_lane_index",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the lane index filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_enable_pedestrian_grow = (
-            self.declare_parameter(
-                "filter_enable_pedestrian_grow",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the pedestrian grow filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_enable_merge = (
-            self.declare_parameter(
-                "filter_enable_merge",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the merging filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
-        self.filter_merge_growth_distance = (
-            self.declare_parameter(
-                "filter_merge_growth_distance",
-                0.3,
-                descriptor=ParameterDescriptor(
-                    description="Amount shapes grow before merging in meters",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.filter_merge_min_overlap_percent = (
-            self.declare_parameter(
-                "filter_merge_min_overlap_percent",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Min overlap of the grown shapes in percent",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.filter_merge_min_overlap_area = (
-            self.declare_parameter(
-                "filter_merge_min_overlap_area",
-                0.5,
-                descriptor=ParameterDescriptor(
-                    description="Min overlap of the grown shapes in m2",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.polygon_simplify_tolerance = (
-            self.declare_parameter(
-                "polygon_simplify_tolerance",
-                0.1,
-                descriptor=ParameterDescriptor(
-                    description="The polygon simplify tolerance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.01, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.filter_enable_lane_index = self.declare_parameter(
+            "filter_enable_lane_index",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the lane index filter",
+            ),
+        ).value
+        self.filter_enable_pedestrian_grow = self.declare_parameter(
+            "filter_enable_pedestrian_grow",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the pedestrian grow filter",
+            ),
+        ).value
+        self.filter_enable_merge = self.declare_parameter(
+            "filter_enable_merge",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the merging filter",
+            ),
+        ).value
+        self.filter_merge_growth_distance = self.declare_parameter(
+            "filter_merge_growth_distance",
+            0.3,
+            descriptor=ParameterDescriptor(
+                description="Amount shapes grow before merging in meters",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.filter_merge_min_overlap_percent = self.declare_parameter(
+            "filter_merge_min_overlap_percent",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Min overlap of the grown shapes in percent",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.filter_merge_min_overlap_area = self.declare_parameter(
+            "filter_merge_min_overlap_area",
+            0.5,
+            descriptor=ParameterDescriptor(
+                description="Min overlap of the grown shapes in m2",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=5.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.polygon_simplify_tolerance = self.declare_parameter(
+            "polygon_simplify_tolerance",
+            0.1,
+            descriptor=ParameterDescriptor(
+                description="The polygon simplify tolerance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.01, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
 
-        self.filter_tracking_entities = (
-            self.declare_parameter(
-                "filter_tracking_entities",
-                True,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable the tracking filter",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.filter_tracking_entities = self.declare_parameter(
+            "filter_tracking_entities",
+            True,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable the tracking filter",
+            ),
+        ).value
 
-        self.update_tracking_velocity = (
-            self.declare_parameter(
-                "update_tracking_velocity",
-                False,
-                descriptor=ParameterDescriptor(
-                    description="Enable or disable to update tracking motion data ",
-                ),
-            )
-            .get_parameter_value()
-            .bool_value
-        )
+        self.update_tracking_velocity = self.declare_parameter(
+            "update_tracking_velocity",
+            False,
+            descriptor=ParameterDescriptor(
+                description="Enable or disable to update tracking motion data ",
+            ),
+        ).value
 
         self.tracking_filter = TrackingFilter()
         self.radar_point_assignment_filter = RadarPointAssignmentFilter()
 
         # Parameters: Lidar (Only relevant for the raw lider point input)
 
-        self.lidar_z_min = (
-            self.declare_parameter(
-                "lidar_z_min",
-                -1.5,
-                descriptor=ParameterDescriptor(
-                    description="Excludes lidar points below this height",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=-10.0, to_value=2.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_z_max = (
-            self.declare_parameter(
-                "lidar_z_max",
-                1.0,
-                descriptor=ParameterDescriptor(
-                    description="Exclude lidar points above this height",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_shape_radius = (
-            self.declare_parameter(
-                "lidar_shape_radius",
-                0.15,
-                descriptor=ParameterDescriptor(
-                    description="The radius with which lidar points get added to map",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_priority = (
-            self.declare_parameter(
-                "lidar_priority",
-                0.25,
-                descriptor=ParameterDescriptor(
-                    description="The priority lidar points have in the map",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.lidar_discard_probability = (
-            self.declare_parameter(
-                "lidar_discard_probability",
-                0.9,
-                descriptor=ParameterDescriptor(
-                    description="Discard this many lidar points. "
-                    "Important for performance",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.lidar_z_min = self.declare_parameter(
+            "lidar_z_min",
+            -1.5,
+            descriptor=ParameterDescriptor(
+                description="Excludes lidar points below this height",
+                floating_point_range=[
+                    FloatingPointRange(from_value=-10.0, to_value=2.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_z_max = self.declare_parameter(
+            "lidar_z_max",
+            1.0,
+            descriptor=ParameterDescriptor(
+                description="Exclude lidar points above this height",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=10.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_shape_radius = self.declare_parameter(
+            "lidar_shape_radius",
+            0.15,
+            descriptor=ParameterDescriptor(
+                description="The radius with which lidar points get added to map",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_priority = self.declare_parameter(
+            "lidar_priority",
+            0.25,
+            descriptor=ParameterDescriptor(
+                description="The priority lidar points have in the map",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
+        self.lidar_discard_probability = self.declare_parameter(
+            "lidar_discard_probability",
+            0.9,
+            descriptor=ParameterDescriptor(
+                description="Discard this many lidar points. Important for performance",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)
+                ],
+            ),
+        ).value
         # Parameter Radar classification
-        self.classification_threshold = (
-            self.declare_parameter(
-                "classification_threshold",
-                1.5,
-                descriptor=ParameterDescriptor(
-                    description="Threshold when an entity is classified as stationary",
-                    floating_point_range=[
-                        FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
-                    ],
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.classification_threshold = self.declare_parameter(
+            "classification_threshold",
+            1.5,
+            descriptor=ParameterDescriptor(
+                description="Threshold when an entity is classified as stationary",
+                floating_point_range=[
+                    FloatingPointRange(from_value=0.0, to_value=3.0, step=0.1)
+                ],
+            ),
+        ).value
         # For the stop marks:
         self.stop_marks = {}
 
@@ -464,9 +417,22 @@ class MappingDataIntegrationNode(Node):
             topic="/paf/hero/mapping/clusterpoints",
             qos_profile=1,
         )
+        self.startup_ready_pub = self.create_publisher(
+            Bool,
+            startup_topic("hero", "mapping"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
+        self.frame_complete_pub = self.create_publisher(
+            UInt64,
+            frame_complete_topic("hero", "mapping"),
+            qos_profile=10,
+        )
 
         self.create_timer(self.map_publish_rate, self.publish_new_map_handler)
         self.add_on_set_parameters_callback(self._set_parameters_callback)
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -673,6 +639,21 @@ class MappingDataIntegrationNode(Node):
             else None
         )
 
+        is_buffered_array = (
+            np.array(data.is_buffered_array, dtype=bool)
+            if data.is_buffered_array
+            else None
+        )
+        if (
+            is_buffered_array is not None
+            and is_buffered_array.shape[0] != clusterpointsarray.shape[0]
+        ):
+            self.get_logger().warn(
+                "Clustered point buffer mask size mismatch. Ignoring mask.",
+                throttle_duration_sec=2.0,
+            )
+            is_buffered_array = None
+
         objectclassarray = np.array(data.object_class) if data.object_class else None
 
         unique_labels = np.unique(indexarray)
@@ -687,6 +668,14 @@ class MappingDataIntegrationNode(Node):
             # Filter points for current cluster
             cluster_mask = indexarray == label
             cluster_points_xy = clusterpointsarray[cluster_mask, :2]
+            cluster_is_buffered = (
+                is_buffered_array[cluster_mask]
+                if is_buffered_array is not None
+                else None
+            )
+            tracking_points_xy = _select_tracking_points(
+                cluster_points_xy, cluster_is_buffered
+            )
 
             # Check if enough points for polygon are available
             if cluster_points_xy.shape[0] < 3:
@@ -698,29 +687,14 @@ class MappingDataIntegrationNode(Node):
                 else:
                     continue
             else:
-                if not np.array_equal(cluster_points_xy[0], cluster_points_xy[-1]):
-                    # add startpoint to close polygon
-                    cluster_points_xy = np.vstack(
-                        [cluster_points_xy, cluster_points_xy[0]]
-                    )
-
-                cluster_polygon = MultiPoint(cluster_points_xy)
-                cluster_polygon_hull = cluster_polygon.convex_hull
-                if cluster_polygon_hull.is_empty or not cluster_polygon_hull.is_valid:
+                polygon_shape = _build_polygon_shape_and_transform(
+                    cluster_points_xy,
+                    tracking_points_xy,
+                )
+                if polygon_shape is None:
                     self.get_logger().debug("Empty hull", throttle_duration_sec=2.0)
                     continue
-                if not isinstance(cluster_polygon_hull, shapely.Polygon):
-                    self.get_logger().debug(
-                        "Cluster is not polygon, continue", throttle_duration_sec=2.0
-                    )
-                    continue
-
-                shape = Polygon.from_shapely(
-                    cluster_polygon_hull,
-                    make_centered=True,  # type: ignore
-                )
-                transform = shape.offset
-                shape.offset = Transform2D.identity()
+                shape, transform = polygon_shape
 
             motion = None
             if motion_array_converted is not None:
@@ -879,6 +853,14 @@ class MappingDataIntegrationNode(Node):
 
         msg = map.to_ros_msg()
         self.map_publisher.publish(msg)
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def get_current_map_filters(self) -> List[MapFilter]:
         """Creates an array of filters for the Map

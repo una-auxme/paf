@@ -17,13 +17,14 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="TODO: Package description",
+    description="Agent startup, shutdown, and data management for the PAF stack",
     license="MIT",
     tests_require=["pytest"],
     scripts=["scripts/launch_agent.sh"],
     entry_points={
         "console_scripts": [
             "data_management_node = agent.data_management_node:main",
+            "startup_coordinator = agent.startup_coordinator:main",
         ],
     },
 )

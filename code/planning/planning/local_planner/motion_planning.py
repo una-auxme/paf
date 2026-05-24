@@ -11,10 +11,11 @@ import rclpy
 import rclpy.callback_groups
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+from rclpy.qos import DurabilityPolicy, QoSProfile
 
 from geometry_msgs.msg import Pose, PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import Float32, Float32MultiArray, Bool
+from std_msgs.msg import Float32, Float32MultiArray, Bool, UInt64
 from planning_interfaces.srv import (
     StartOvertake,
     EndOvertake,
@@ -28,6 +29,7 @@ from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.duration import Duration
 
 from paf_common.parameters import update_attributes
+from paf_common.sync import frame_complete_topic, frame_id_from_time_ns, startup_topic
 
 import mapping_common.hero
 import mapping_common.mask
@@ -72,35 +74,26 @@ class MotionPlanning(Node):
 
         mapping_common.set_logger(self.get_logger())
 
-        self.role_name = (
-            self.declare_parameter("role_name", "hero")
-            .get_parameter_value()
-            .string_value
-        )
+        self.role_name = self.declare_parameter("role_name", "hero").value
+        self.sync_frame_delta_seconds = self.declare_parameter(
+            "sync_frame_delta_seconds", 0.05
+        ).value
 
-        self.time_horizon = (
-            self.declare_parameter(
-                "time_horizon",
-                3.0,
-                descriptor=ParameterDescriptor(
-                    description="Set time_horizon in seconds for trajectory prediction",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.time_horizon = self.declare_parameter(
+            "time_horizon",
+            3.0,
+            descriptor=ParameterDescriptor(
+                description="Set time_horizon in seconds for trajectory prediction",
+            ),
+        ).value
 
-        self.crash_threshold = (
-            self.declare_parameter(
-                "crash_threshold",
-                2.0,
-                descriptor=ParameterDescriptor(
-                    description="Set crash_threshold in seconds",
-                ),
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.crash_threshold = self.declare_parameter(
+            "crash_threshold",
+            2.0,
+            descriptor=ParameterDescriptor(
+                description="Set crash_threshold in seconds",
+            ),
+        ).value
         self.add_on_set_parameters_callback(self._set_parameters_callback)
 
         # Overtake related stuff
@@ -197,6 +190,18 @@ class MotionPlanning(Node):
         self.marker_publisher: Publisher = self.create_publisher(
             MarkerArray, "/paf/hero/planning/collision_trajectories", qos_profile=1
         )
+        self.frame_complete_pub: Publisher = self.create_publisher(
+            UInt64,
+            frame_complete_topic(self.role_name, "motion_planning"),
+            qos_profile=10,
+        )
+        self.startup_ready_pub: Publisher = self.create_publisher(
+            Bool,
+            startup_topic(self.role_name, "motion_planning"),
+            qos_profile=QoSProfile(
+                depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL
+            ),
+        )
 
         # Service clients
         self.client_callback_group = (
@@ -222,6 +227,7 @@ class MotionPlanning(Node):
         self.counter = 0
         self.current_map = None
         self.hero_transform: Transform2D | None = None
+        self.startup_ready_pub.publish(Bool(data=True))
         self.get_logger().info(f"{type(self).__name__} node initialized.")
 
     def _set_parameters_callback(self, params: List[Parameter]):
@@ -400,6 +406,15 @@ class MotionPlanning(Node):
                 "Motion planning: No speed limit available for current waypoint",
                 throttle_duration_sec=1.0,
             )
+
+        self.frame_complete_pub.publish(
+            UInt64(
+                data=frame_id_from_time_ns(
+                    self.get_clock().now().nanoseconds,
+                    self.sync_frame_delta_seconds,
+                )
+            )
+        )
 
     def check_trajectory_collisions(
         self,

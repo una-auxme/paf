@@ -30,6 +30,9 @@ This sets up important docker compose environment variables.
 
 In order to start the default leaderboard execution simply navigate to the [build](../../build/) folder and select the `Compose up` option in the right-click menu of the `docker-compose.dev.<your-gpu-type>.yml` file. As `<your-gpu-type>` `cuda` should be used for the lab PCs.
 
+The helper script [scripts/update-dotenv.sh](../../scripts/update-dotenv.sh) writes the compose environment file [build/.env](../../build/.env).
+When it detects a headless or SSH-forwarded session, it also sets `RENDER_OFFSCREEN=-RenderOffScreen` so that the CARLA simulator can start without an attached desktop renderer.
+
 ## Directory Structure
 
 The `build` directory contains the necessary configuration and setup files for building and running the project services. Below is an overview of the key files:
@@ -54,6 +57,7 @@ Defines the configuration for the `carla-simulator` service, which runs the CARL
 - **Image**: Uses the CARLA simulator image tailored for the project. The image can be built manually with [`build_carla.sh`](../../build/docker/carla/build_carla.sh), but is pulled from the container registry by default.
 - **Command**: Starts the simulator with specific settings such as resolution, quality level, and disabling sound.
 - **Environment Variables**: Sets up desktop→docker pass-through
+- **Headless fallback**: The compose environment can set `RENDER_OFFSCREEN=-RenderOffScreen` for SSH-forwarded or headless sessions. This keeps CARLA startup working when no usable local display is available.
 - **Volumes**:
   - Desktop: X11 UNIX socket + `${XDG_RUNTIME_DIR}`
   - Custom CARLA settings

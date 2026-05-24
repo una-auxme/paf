@@ -2,6 +2,7 @@ from typing import List
 
 from joblib import Parallel, delayed
 import numpy as np
+from scipy.spatial.transform import Rotation
 from sklearn.cluster import DBSCAN
 from cv_bridge import CvBridge
 from transforms3d.quaternions import mat2quat
@@ -33,7 +34,11 @@ from .perception_utils import (
     apply_local_motion_compensation,
     quaternion_to_heading,
 )
-from .lidar_filter_utility import bounding_box, remove_field_name
+from .lidar_filter_utility import (
+    bounding_box,
+    ground_filter_mask,
+    remove_field_name,
+)
 
 
 class LidarDistance(Node):
@@ -46,55 +51,38 @@ class LidarDistance(Node):
         self.get_logger().info(f"{type(self).__name__} node initializing...")
 
         # Parameters
-        self.clustering_w = (
-            self.declare_parameter(
-                "clustering_w",
-                0.0285,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_w = self.declare_parameter(
+            "clustering_w",
+            0.0285,
+        ).value
 
-        self.clustering_lidar_z_min = (
-            self.declare_parameter(
-                "clustering_lidar_z_min",
-                -1.4,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_lidar_z_min = self.declare_parameter(
+            "clustering_lidar_z_min",
+            -1.4,
+        ).value
 
-        self.clustering_lidar_z_max = (
-            self.declare_parameter(
-                "clustering_lidar_z_max",
-                1.5,
-            )
-            .get_parameter_value()
-            .double_value
-        )
+        self.clustering_lidar_z_max = self.declare_parameter(
+            "clustering_lidar_z_max",
+            1.5,
+        ).value
 
-        self.dbscan_eps = (
-            self.declare_parameter(
-                "dbscan_eps",
-                0.03375,
-            )
-            .get_parameter_value()
-            .double_value
-        )
-        self.dbscan_min_samples = (
-            self.declare_parameter(
-                "dbscan_min_samples",
-                10,
-            )
-            .get_parameter_value()
-            .integer_value
-        )
+        self.enable_pitch_ground_filter = self.declare_parameter(
+            "enable_pitch_ground_filter",
+            True,
+        ).value
 
-        self.compensation_strategy = (
-            self.declare_parameter("compensation_strategy", "LocalCompensation")
-            .get_parameter_value()
-            .string_value
-        )
+        self.dbscan_eps = self.declare_parameter(
+            "dbscan_eps",
+            0.03375,
+        ).value
+        self.dbscan_min_samples = self.declare_parameter(
+            "dbscan_min_samples",
+            10,
+        ).value
+
+        self.compensation_strategy = self.declare_parameter(
+            "compensation_strategy", "LocalCompensation"
+        ).value
 
         compensation_dict = {
             "NoCompensation": NoCompensation,
@@ -106,6 +94,7 @@ class LidarDistance(Node):
         self.Compensation: CompensationStrategy = compensation_dict[
             self.compensation_strategy
         ]()
+        self.current_pitch = 0.0
 
         self.bridge = CvBridge()  # OpenCV bridge for image conversions
 
@@ -169,6 +158,10 @@ class LidarDistance(Node):
                 qos_profile=1,
             )
 
+        if (
+            self.compensation_strategy == "LocalCompensation"
+            or self.enable_pitch_ground_filter
+        ):
             self.create_subscription(
                 msg_type=Imu,
                 topic="/carla/hero/IMU",
@@ -244,26 +237,27 @@ class LidarDistance(Node):
 
     def imu_callback(self, imu_data: Imu):
         """
-        Receives IMU data and passes the extracted heading
-        to the LocalCompensation strategy.
+        Receives IMU data, updates the current pitch estimate for ground filtering,
+        and passes the extracted heading to the LocalCompensation strategy.
 
         :param imu_data: The IMU message containing orientation data.
         """
-
-        if self.compensation_strategy != "LocalCompensation":
-            self.get_logger().warn(
-                f"{type(self).__name__}"
-                "IMU callback is only active for LocalCompensation."
-            )
-            return
 
         x = imu_data.orientation.x
         y = imu_data.orientation.y
         z = imu_data.orientation.z
         w = imu_data.orientation.w
 
-        heading = quaternion_to_heading(x, y, z, w)
-        self.Compensation.set_motion_data(heading=heading)
+        try:
+            self.current_pitch = Rotation.from_quat((x, y, z, w)).as_euler(
+                "xyz", degrees=False
+            )[1]
+        except ValueError:
+            self.current_pitch = 0.0
+
+        if self.compensation_strategy == "LocalCompensation":
+            heading = quaternion_to_heading(x, y, z, w)
+            self.Compensation.set_motion_data(heading=heading)
 
     def start_clustering(self, data):
         """
@@ -284,20 +278,31 @@ class LidarDistance(Node):
         # Convert PointCloud2 data to a NumPy structured array
         coordinates = ros2_numpy.point_cloud2.pointcloud2_to_array(data)
 
-        filtered_coordinates = coordinates[
-            ~(
-                (coordinates["x"] >= -2)
-                & (coordinates["x"] <= 2)  # Exclude ego vehicle in x-axis
-                & (coordinates["y"] >= -1)
-                & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
-            )
-            & (
-                (coordinates["z"] > self.clustering_lidar_z_min)
-                & (coordinates["z"] < self.clustering_lidar_z_max)
-            )
-            # Exclude points below a certain height (street)
-            # Exclude points above a certain height (e.g. leafs of tree)
-        ]
+        point_buffer_mask = self.Compensation.get_point_buffer_mask()
+        if (
+            point_buffer_mask is None
+            or point_buffer_mask.shape[0] != coordinates.shape[0]
+        ):
+            point_buffer_mask = np.zeros(coordinates.shape[0], dtype=bool)
+
+        non_ego_mask = ~(
+            (coordinates["x"] >= -2)
+            & (coordinates["x"] <= 2)  # Exclude ego vehicle in x-axis
+            & (coordinates["y"] >= -1)
+            & (coordinates["y"] <= 1)  # Exclude ego vehicle in y-axis
+        )
+        filtered_coordinates = coordinates[non_ego_mask]
+        point_buffer_mask = point_buffer_mask[non_ego_mask]
+
+        ground_mask = ground_filter_mask(
+            filtered_coordinates,
+            z_min=self.clustering_lidar_z_min,
+            z_max=self.clustering_lidar_z_max,
+            pitch_rad=self.current_pitch,
+            enable_pitch_compensation=self.enable_pitch_ground_filter,
+        )
+        filtered_coordinates = filtered_coordinates[ground_mask]
+        point_buffer_mask = point_buffer_mask[ground_mask]
 
         # Perform DBSCAN clustering
         clustered_points, cluster_labels = cluster_lidar_data_from_pointcloud(
@@ -320,6 +325,7 @@ class LidarDistance(Node):
         valid_indices = cluster_labels != -1
         filtered_xyz = filtered_xyz[valid_indices]
         cluster_labels = cluster_labels[valid_indices]
+        point_buffer_mask = point_buffer_mask[valid_indices]
 
         # Combine coordinates with their cluster labels
         points_with_labels = np.hstack((filtered_xyz, cluster_labels.reshape(-1, 1)))
@@ -346,6 +352,7 @@ class LidarDistance(Node):
             self.get_clock().now(),
             cluster_points_np,
             index_array,
+            is_buffered_array=point_buffer_mask,
             header_id="hero/LIDAR",
         )
         self.clustered_points_publisher.publish(clustered_points_msg)
@@ -788,6 +795,7 @@ class CompensationStrategy(ABC):
         super().__init__()
         self._cur_lidar_data: Optional[PointCloud2] = None
         self._prev_lidar_data: Optional[PointCloud2] = None
+        self._point_buffer_mask: Optional[np.ndarray] = None
 
     def set_lidar_data(self, data: PointCloud2):
         """
@@ -821,6 +829,19 @@ class CompensationStrategy(ABC):
 
         return True
 
+    def get_point_buffer_mask(self) -> Optional[np.ndarray]:
+        if self._point_buffer_mask is None:
+            return None
+        return self._point_buffer_mask.copy()
+
+    def _set_current_only_mask(self):
+        if self._cur_lidar_data is None:
+            self._point_buffer_mask = None
+            return
+
+        cur_points = ros2_numpy.point_cloud2.pointcloud2_to_array(self._cur_lidar_data)
+        self._point_buffer_mask = np.zeros(cur_points.shape[0], dtype=bool)
+
     def prepare_data(self):
         """
         Converts buffered PointCloud2 messages to NumPy arrays and segments
@@ -834,9 +855,14 @@ class CompensationStrategy(ABC):
             self._prev_lidar_data
         )
 
+        self.cur_is_buffered = np.zeros(self.cur_points.shape[0], dtype=bool)
+        self.prev_is_buffered = np.ones(self.prev_points.shape[0], dtype=bool)
+
         ego_mask = create_ego_vehicle_mask(self.prev_points)
         self.prev_ego_points = self.prev_points[ego_mask]
         self.prev_env_points = self.prev_points[~ego_mask]
+        self.prev_ego_is_buffered = self.prev_is_buffered[ego_mask]
+        self.prev_env_is_buffered = self.prev_is_buffered[~ego_mask]
 
     @abstractmethod
     def set_motion_data(self, **kwargs):
@@ -874,6 +900,7 @@ class NoCompensation(CompensationStrategy):
         """
 
         self.valid_lidar_data()  # Ensures the current data is set
+        self._set_current_only_mask()
         return self._cur_lidar_data
 
 
@@ -896,11 +923,15 @@ class Buffer(CompensationStrategy):
         """
 
         if not self.valid_lidar_data():
+            self._set_current_only_mask()
             return self._cur_lidar_data
 
         self.prepare_data()
 
         lidar_data = np.concatenate([self.cur_points, self.prev_points])
+        self._point_buffer_mask = np.concatenate(
+            [self.cur_is_buffered, self.prev_is_buffered]
+        )
         lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_data)
         lidar_cloud.header = self._cur_lidar_data.header
         return lidar_cloud
@@ -954,6 +985,7 @@ class EgoMotionCompensation(CompensationStrategy):
         """
 
         if not self.valid_lidar_data() or not self.valid_ekf_data():
+            self._set_current_only_mask()
             return self._cur_lidar_data
 
         self.prepare_data()
@@ -963,6 +995,13 @@ class EgoMotionCompensation(CompensationStrategy):
 
         lidar_points = np.concatenate(
             [self.cur_points, comp_env_points, self.prev_ego_points]
+        )
+        self._point_buffer_mask = np.concatenate(
+            [
+                self.cur_is_buffered,
+                self.prev_env_is_buffered,
+                self.prev_ego_is_buffered,
+            ]
         )
 
         lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
@@ -1040,6 +1079,7 @@ class LocalCompensation(CompensationStrategy):
             or not self.valid_heading_data()
             or not self.valid_velocity_data()
         ):
+            self._set_current_only_mask()
             return self._cur_lidar_data
 
         self.prepare_data()
@@ -1063,6 +1103,13 @@ class LocalCompensation(CompensationStrategy):
 
         lidar_points = np.concatenate(
             [self.cur_points, comp_env_points, self.prev_ego_points]
+        )
+        self._point_buffer_mask = np.concatenate(
+            [
+                self.cur_is_buffered,
+                self.prev_env_is_buffered,
+                self.prev_ego_is_buffered,
+            ]
         )
 
         lidar_cloud = ros2_numpy.point_cloud2.array_to_pointcloud2(lidar_points)
