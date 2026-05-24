@@ -94,7 +94,7 @@ pre-commit run --all-files
   - `/internal_workspace/rosdep_install.log`
   - `/internal_workspace/pip_install.log`
 - If dependency drift appears after changing `requirements*.txt` or `package.xml`, run:
-   - `dep.sync`
-   - `devbuild`
+  - `dep.sync`
+  - `devbuild`
 - If requirements consistency is unclear across files, run:
-   - `Run dependency doctor` task or `bash scripts/dependency-doctor.sh`
+  - `Run dependency doctor` task or `bash scripts/dependency-doctor.sh`

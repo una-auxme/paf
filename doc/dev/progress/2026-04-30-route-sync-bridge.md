@@ -1,7 +1,7 @@
+# Route Sync Bridge Progress
+
 Created: 2026-04-30T22:29:21+02:00
 Last updated: 2026-04-30T22:54:59+02:00
-
-# Route Sync Bridge Progress
 
 ## Motivation
 

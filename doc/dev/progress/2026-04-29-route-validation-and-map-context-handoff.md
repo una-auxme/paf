@@ -1,7 +1,7 @@
+# Route Validation And Map Context Handoff
+
 Created: 2026-04-29T08:50:23+02:00
 Last updated: 2026-04-29T08:50:23+02:00
-
-# Route Validation And Map Context Handoff
 
 ## Motivation
 

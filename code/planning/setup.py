@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="Planning (global/local planner, behavior tree, motion planning) for the PAF autonomous driving stack",
+    description="Planning (planner, behavior tree, motion) for the PAF stack",
     license="MIT",
     tests_require=["pytest"],
     entry_points={

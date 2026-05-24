@@ -23,7 +23,8 @@ The **Intermediate Layer** receives most sensor information (everything except t
 - and then forwards it to [planning](/doc/README.md#planning)/[acting](/doc/README.md#acting)
 
 The base data type is the [Map](/doc/mapping/generated/mapping_common/map.md#map). It consists of [Entities](/doc/mapping/generated/mapping_common/entity.md#entity).
-These entities all have a [transform](/doc/mapping/generated/mapping_common/transform.md#transform2d) and a [shape](/doc/mapping/generated/mapping_common/shape.md#shape2d) and can be all kinds of colliders (car, pedestrian, etc.), lanemarkings or other localized things of interest around the hero car.
+These entities all have a [transform](/doc/mapping/generated/mapping_common/transform.md#transform2d) and a [shape](/doc/mapping/generated/mapping_common/shape.md#shape2d) and can be all kinds of colliders
+(car, pedestrian, etc.), lanemarkings or other localized things of interest around the hero car.
 
 Entities also store information about the sensor sources they originate from.
 This information is stored in the `sensor_id` field as a list of strings. A list is used because a single entity may be associated with multiple sensors during data integration.
@@ -46,7 +47,9 @@ To do intersection checks on the map:
   - [`map_tree.get_overlapping_entities()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_overlapping_entities)
   - [`map_tree.get_nearest_entity()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_nearest_entity)
   - [`map_tree.is_lane_free()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.is_lane_free)
-  - [`map_tree.get_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_lane_context) and [`map_tree.get_adjacent_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_adjacent_lane_context) to query whether adjacent lanes exist and whether they are currently traversable
+  - [`map_tree.get_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_lane_context) and
+    [`map_tree.get_adjacent_lane_context()`](/doc/mapping/generated/mapping_common/map.md#mapping_common.map.MapTree.get_adjacent_lane_context)
+    to query whether adjacent lanes exist and whether they are currently traversable
 - Functions for creating collision masks can be found in the [mapping_common.mask](/doc/mapping/generated/mapping_common/mask.md) module
 
 For intersection-related traffic checks, dynamic entities can also be evaluated using motion information and speed thresholds.

@@ -13,7 +13,11 @@
 The [Vehicle Controller](../../code/control/control/vehicle_controller.py) collects the control outputs ```throttle```, ```brake```, ```reverse```, and ```pure_pursuit_steer```
 to fill the CARLA vehicle command message ```vehicle_control_cmd``` and send it to the CARLA simulator.
 
-The controller no longer uses a sleep-based hotfix to pace the simulator. In the current synchronous setup, it waits until the critical upstream stages for the current frame report completion and only then publishes the final command for that frame. The required stages are currently mapping, motion planning, ACC, pure pursuit, and the velocity controller.
+The controller no longer uses a sleep-based hotfix to pace the simulator.
+In the current synchronous setup, it waits until the critical upstream stages
+for the current frame report completion and only then publishes the final
+command for that frame. The required stages are currently mapping, motion
+planning, ACC, pure pursuit, and the velocity controller.
 
 If the barrier does not complete within the configured ```frame_barrier_timeout```, the controller publishes a safe stop command instead of releasing a stale or partial command.
 

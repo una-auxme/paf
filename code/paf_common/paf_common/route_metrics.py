@@ -6,14 +6,14 @@ import fcntl
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 DEFAULT_ROUTE_METRICS_PATH = Path("/tmp/paf_route_metrics.json")
 ROUTE_METRICS_ENV_VAR = "PAF_ROUTE_METRICS_PATH"
 
 
-def get_route_metrics_path(path: Optional[str | os.PathLike[str]] = None) -> Path:
+def get_route_metrics_path(path: str | os.PathLike[str] | None = None) -> Path:
     """Resolve the route metrics file path."""
     if path is not None:
         return Path(path)
@@ -26,7 +26,7 @@ def get_route_metrics_path(path: Optional[str | os.PathLike[str]] = None) -> Pat
 
 
 def reset_route_metrics_file(
-    path: Optional[str | os.PathLike[str]] = None,
+    path: str | os.PathLike[str] | None = None,
 ) -> Path:
     """Delete any stale route metrics file before a fresh run."""
     metrics_path = get_route_metrics_path(path)
@@ -39,7 +39,7 @@ def increment_route_metric(
     metric_name: str,
     *,
     amount: int = 1,
-    path: Optional[str | os.PathLike[str]] = None,
+    path: str | os.PathLike[str] | None = None,
 ) -> int:
     """Atomically increment a route metric and return the new counter value."""
     metrics_path = get_route_metrics_path(path)
@@ -67,7 +67,7 @@ def increment_route_metric(
 
 
 def load_route_metrics(
-    path: Optional[str | os.PathLike[str]] = None,
+    path: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
     """Load the current route metrics snapshot from disk."""
     metrics_path = get_route_metrics_path(path)
@@ -83,7 +83,7 @@ def load_route_metrics(
 def merge_route_metrics_into_checkpoint(
     checkpoint_path: str | os.PathLike[str],
     *,
-    metrics_path: Optional[str | os.PathLike[str]] = None,
+    metrics_path: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
     """Merge route metrics into the leaderboard checkpoint json."""
     metrics = load_route_metrics(metrics_path)

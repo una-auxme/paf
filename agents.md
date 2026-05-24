@@ -55,10 +55,10 @@ Python linting/formatting is done with **Ruff**.
 Run one of:
 
 - VS Code tasks (preferred in this workspace):
-	- `Lint python code with ruff`
-	- `Lint python code with ruff and apply safe fixes`
-	- `Check python code formatting with ruff`
-	- `Format python code with ruff`
+  - `Lint python code with ruff`
+  - `Lint python code with ruff and apply safe fixes`
+  - `Check python code formatting with ruff`
+  - `Format python code with ruff`
 - Or Compose-based linting from docs:
 
 ```bash
@@ -95,7 +95,8 @@ Do not attempt to fix unrelated failing tests/lints outside the requested scope.
 ## 9.1) Planning and reasoning support
 
 - For non-trivial work, use `.agent/PLANS.md` to make scope, evidence, validation, and follow-ups explicit.
-- For non-trivial or multi-step work, always create or update a timestamped note under `doc/dev/progress/` before finishing or handing off. The note should capture the current chat state, the motivating task, files or systems inspected, validation performed, remaining blockers, and recommended next actions.
+- For non-trivial or multi-step work, always create or update a timestamped note under `doc/dev/progress/` before finishing or handing off.
+  The note should capture the current chat state, the motivating task, files or systems inspected, validation performed, remaining blockers, and recommended next actions.
 - Treat `doc/dev_talks/paf25/future_work.md` and `doc/dev_talks/paf25/improvements_assessment.md` as direction-setting documents for repository-wide cleanup and development workflow changes.
 
 ## 10) Git and PR hygiene

@@ -30,7 +30,8 @@ This sets up important docker compose environment variables.
 
 In order to start the default leaderboard execution simply navigate to the [build](../../build/) folder and select the `Compose up` option in the right-click menu of the `docker-compose.dev.<your-gpu-type>.yml` file. As `<your-gpu-type>` `cuda` should be used for the lab PCs.
 
-The helper script [scripts/update-dotenv.sh](../../scripts/update-dotenv.sh) writes the compose environment file [build/.env](../../build/.env). When it detects a headless or SSH-forwarded session, it also sets `RENDER_OFFSCREEN=-RenderOffScreen` so that the CARLA simulator can start without an attached desktop renderer.
+The helper script [scripts/update-dotenv.sh](../../scripts/update-dotenv.sh) writes the compose environment file [build/.env](../../build/.env).
+When it detects a headless or SSH-forwarded session, it also sets `RENDER_OFFSCREEN=-RenderOffScreen` so that the CARLA simulator can start without an attached desktop renderer.
 
 ## Directory Structure
 

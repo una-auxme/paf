@@ -1,7 +1,7 @@
+# Build Validation Progress
+
 Created: 2026-05-01T08:14:00+02:00
 Last updated: 2026-05-01T08:31:00+02:00
-
-# Build Validation Progress
 
 ## Motivation
 

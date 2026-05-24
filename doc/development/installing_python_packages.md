@@ -13,15 +13,15 @@ Every dependency must be pinned with `==`.
 ## Add a dependency safely
 
 1. Edit the matching `requirements*.txt` file.
-2. Open a shell in the `agent-dev` container.
-3. Run:
+1. Open a shell in the `agent-dev` container.
+1. Run:
 
 ```bash
 dep.sync
 devbuild
 ```
 
-4. Validate with:
+1. Validate with:
 
 ```bash
 python3 -m pip check

@@ -47,7 +47,8 @@ The emphasis of this report is on:
 
 Compared to `paf25.start`, the repository has evolved from a more fragmented and partly legacy-heavy codebase into a more ROS2-focused, fusion-oriented stack with much stronger perception-to-mapping integration.
 
-The most important technical shift is that perception is no longer only publishing geometric detections. It now publishes richer intermediate data that includes grouped traffic-light crops, lidar clusters, radar-derived motion and class information, and heading changes. Mapping and planning consume that richer data to do radar-lidar association, entity tracking, motion estimation and collision-aware behavior.
+The most important technical shift is that perception is no longer only publishing geometric detections. It now publishes richer intermediate data that includes grouped traffic-light crops, lidar clusters, radar-derived motion and class information, and heading changes.
+Mapping and planning consume that richer data to do radar-lidar association, entity tracking, motion estimation and collision-aware behavior.
 
 The most visible organizational changes are:
 
@@ -56,7 +57,8 @@ The most visible organizational changes are:
 - significantly expanded documentation effort
 - introduction of a local automated route-test harness for ROS2 and CARLA leaderboard runs
 
-Overall, the repository has clearly matured. The biggest strengths are perception and mapping integration, better traffic-light robustness, better lidar compensation and tracking, and much better route-level testing support. The biggest remaining weaknesses are documentation drift, incomplete test depth outside route tests, and known radar-motion limitations that are already documented by the team.
+Overall, the repository has clearly matured. The biggest strengths are perception and mapping integration, better traffic-light robustness, better lidar compensation and tracking, and much better route-level testing support.
+The biggest remaining weaknesses are documentation drift, incomplete test depth outside route tests, and known radar-motion limitations that are already documented by the team.
 
 ## 3. Repository Evolution
 
@@ -443,4 +445,5 @@ The main remaining weaknesses are:
 - known radar-motion limitations that are documented but not fully solved
 - increasing complexity in a few large core modules
 
-In summary, the repository did not merely accumulate new features during the last months. It became architecturally more coherent, more ROS2-focused, more fusion-aware and more testable. The remaining work is mostly in consolidation: align the documentation with the final code, keep reducing legacy leftovers, and add more targeted automated tests for the new planning and fusion logic.
+In summary, the repository did not merely accumulate new features during the last months. It became architecturally more coherent, more ROS2-focused, more fusion-aware and more testable.
+The remaining work is mostly in consolidation: align the documentation with the final code, keep reducing legacy leftovers, and add more targeted automated tests for the new planning and fusion logic.

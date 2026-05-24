@@ -17,7 +17,7 @@ setup(
     zip_safe=True,
     maintainer="peter",
     maintainer_email="peter.viechter@student.uni-augsburg.de",
-    description="Acting package (passthrough to vehicle controller) for the PAF autonomous driving stack",
+    description="Acting package (passthrough to vehicle controller) for the PAF stack",
     license="MIT",
     tests_require=["pytest"],
     entry_points={
