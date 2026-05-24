@@ -238,7 +238,7 @@ LocalCompensation active:
 - **Left:** `~image_distance_topic` (Default: `/paf/hero/Left/dist_array`)
 - **Right:** `~image_distance_topic` (Default: `/paf/hero/Right/dist_array`)
 - **Data Type:** `sensor_msgs/Image`
-- **Description:** Contains the calculated minimum distance to objects in various directions. Although the _Back_, _Left_, and _Right_ directions are still actively processed in this node's image pipeline from PAF23, the current vision node only subscribes to and utilizes the _Center_S image.  
+- **Description:** Contains the calculated minimum distance to objects in various directions. Although the _Back_, _Left_, and _Right_ directions are still actively processed in this node's image pipeline from PAF23, the current vision node only subscribes to and utilizes the _Center_S image.
   Support for the other directions has been intentionally preserved to allow future teams to easily extend the system with additional camera perspectives if needed.
 
 ### Marker Visualization
